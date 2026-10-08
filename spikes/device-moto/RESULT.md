@@ -18,7 +18,7 @@
 
 | Item | Result | Notes |
 |---|---|---|
-| A0 baseline | yes | Pre- and post-reset baselines recorded. Trusted reset done 2026-10-08 19:54Z through Settings. After setup, 8 third-party apps installed themselves with no account (see A0). |
+| A0 baseline | yes | Pre- and post-reset baselines recorded. Trusted reset done 2026-10-08 19:54Z through Settings. After setup, with no account, 7 apps were pushed (4 by Digital Turbine, 3 by Play) and 1 preload appeared (see A0). |
 | A1 Q3 adb Device Owner | **yes** | Unapproved testOnly DPC set as Device Owner over adb on a certified Motorola. No allowlist message. |
 | A2 way back | **yes** | `remove-active-admin` and the in-app RELEASE both return the phone to `no owners` with no wipe; provisioning again works each time. |
 | A3 Q1 lock task | **partly** | Launch matrix done for BLOCK off/on with a no-lock-task control. Reboot check incomplete: adb became `unauthorized` after the reboot (see A3). Power menu not shown via adb injection. |
@@ -103,7 +103,17 @@ Raw: `evidence/a0-reset/post-reset-baseline.txt`, `post-reset-system-packages.tx
 | System packages | 467, 118 disabled, identical list to before the reset |
 | HOME role | `com.motorola.launcher3` |
 
-**Finding: apps install themselves after setup, with no Google account.** Within 8 minutes of first boot:
+**Finding: apps install themselves after setup, with no Google account.** Within 8 minutes of first boot,
+**7 apps were pushed and 1 preload appeared** (8 rows below):
+- **4 games** pushed by `com.dti.motorola`;
+- **3 Google apps** pushed by `com.android.vending`;
+- **1 preload**, `com.facebook.katana`, with installer `null`.
+
+*Count correction (PLA-7 R8):* my 20:07 issue comment said "8 installs, including 5 Digital Turbine games", and a run
+summary said 9. Both were wrong. The recorded evidence names only the 8 packages below, with 4 games. I recorded no
+fifth game, and this snapshot is the only post-reset install list taken.
+Wi-Fi was already joined during setup, so this snapshot can't separate what arrives with no network from what
+arrives only after Wi-Fi joins.
 
 | Package | Installer | First install (PDT) |
 |---|---|---|
