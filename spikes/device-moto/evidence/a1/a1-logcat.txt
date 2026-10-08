@@ -1,0 +1,7 @@
+10-08 13:08:20.957 I/Finsky:background(18589): [121] Session is stale, session is not alive: getNames not allowed after destruction
+10-08 13:08:20.993 I/DevicePolicyManager( 1869): Device owner set: ComponentInfo{com.plainphone.spike.dpc/com.plainphone.spike.dpc.AdminReceiver} on user 0
+10-08 13:08:21.124 I/ActivityManager( 1869): Start proc 22835:com.plainphone.spike.dpc/u0a438 for broadcast {com.plainphone.spike.dpc/com.plainphone.spike.dpc.AdminReceiver}
+10-08 13:08:21.913 I/PPSPIKE (22835): admin enabled; deviceOwner=true
+10-08 13:08:21.935 I/PPSPIKE (22835): DebugLiftReceiver: android.intent.action.LOCKED_BOOT_COMPLETED
+10-08 13:08:21.952 I/PPSPIKE (22835): DebugLiftReceiver: android.intent.action.BOOT_COMPLETED
+10-08 13:08:22.324 I/PPSPIKE (22835): cmd [status] -> deviceOwner=true lockTaskModeState=0 lockTaskPackages=[] lockTaskFeatures=GLOBAL_ACTIONS restrictions=[] hidden=[] suspended=[] locked=false debugLiftAt=0

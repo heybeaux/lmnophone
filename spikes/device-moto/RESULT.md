@@ -19,7 +19,9 @@
 | Item | Result | Notes |
 |---|---|---|
 | A0 baseline | yes | Pre- and post-reset baselines recorded. Trusted reset done 2026-10-08 19:54Z through Settings. After setup, 8 third-party apps installed themselves with no account (see A0). |
-| A1–A7 | not yet run | Waiting for the board to confirm they're done at the phone (setup wizard, USB debugging). |
+| A1 Q3 adb Device Owner | **yes** | Unapproved testOnly DPC set as Device Owner over adb on a certified Motorola. No allowlist message. |
+| A2 way back | **yes** | `remove-active-admin` and the in-app RELEASE both return the phone to `no owners` with no wipe; provisioning again works each time. |
+| A3–A7 | not yet run | |
 | S1–S4, S7 | not yet run | Phase B, needs Beaux's sign-in. |
 
 ## A0. Baseline
@@ -128,3 +130,56 @@ it is **not** evidence for any device question.
 - `dpm remove-active-admin com.plainphone.spike.dpc/.AdminReceiver` → `Success: Admin removed …`, `dpm list-owners` → `no owners`
 - Provision again, hide an app, add `no_add_user`, then `release` → `RELEASED deviceOwner=false; cleared no_add_user; unhid com.plainphone.spike.target`
 - Provision again, lock task on, in-app RELEASE button tapped twice → lock task exits, `dpm list-owners` → `no owners`
+
+## A1. Q3: adb setup of an unapproved DPC on a certified Motorola
+
+**Result: yes.** Fingerprint `motorola/cancunn_g_sys/cancunn:15/V1UDS35H.26-14-6-2-11/27ec35b-72bc9:user/release-keys`.
+Raw: `evidence/a1/a1-set-device-owner.txt`, `evidence/a1/a1-logcat.txt`. Run 2026-10-08T20:08Z, right after the reset
+(0 accounts, 1 user, setup wizard finished).
+
+```sh
+adb -s SPARE_DEVICE_SERIAL install -t dpc/app/build/outputs/apk/debug/app-debug.apk
+#   Success
+adb -s SPARE_DEVICE_SERIAL shell dpm set-device-owner com.plainphone.spike.dpc/.AdminReceiver
+#   Success: Device owner set to package com.plainphone.spike.dpc/.AdminReceiver
+#   Active admin set to component com.plainphone.spike.dpc/.AdminReceiver
+adb -s SPARE_DEVICE_SERIAL shell dpm list-owners
+#   User  0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+```
+Logcat: `I/DevicePolicyManager: Device owner set: ComponentInfo{com.plainphone.spike.dpc/...AdminReceiver} on user 0`.
+No allowlist, Play Integrity or "unsupported DPC" message appeared anywhere in logcat.
+
+Scope of this answer: it covers the **adb** path only (`dpm set-device-owner` after setup with zero accounts).
+It says nothing about QR or `afw#` provisioning in the setup wizard, which this spike did not test.
+Precondition seen in practice: the Digital Turbine and Play auto-installs (A0) don't block it, because they add apps, not accounts.
+
+## A2. Way back
+
+**Result: yes.** Raw: `evidence/a2/a2-way-back.txt`, screenshots `evidence/a2/`.
+
+| Step | Command / action | Observed |
+|---|---|---|
+| 1 | `adb -s SPARE_DEVICE_SERIAL shell dpm remove-active-admin com.plainphone.spike.dpc/.AdminReceiver` | `Success: Admin removed …`; `dpm list-owners` → `no owners` |
+| 2 | `dpm set-device-owner …` | `Success: Device owner set …` |
+| 3 | spike: `hide com.block.juggle`, `restrict-add no_add_user` | `hide … -> true`, `OK added no_add_user` |
+| 4 | in-app **RELEASE** tapped twice within 3 s (`tools/release-tap.sh`) | `RELEASED deviceOwner=false; cleared no_add_user; unhid com.block.juggle`; `no owners`; `com.block.juggle` listed again; `no_add_user` gone from `dumpsys user` |
+| 5 | `dpm set-device-owner …` | `Success`; status `restrictions=[] hidden=[]` |
+
+`remove-active-admin` works because the DPC is `TEST_ONLY` (`dumpsys package` flags `[ DEBUGGABLE … TEST_ONLY … ]`).
+A production DPC would not be `testOnly`, so only the in-app path (`clearDeviceOwnerApp()`) or a wipe would be available there.
+
+Hiccups (not device findings): the first in-app attempt did nothing because the screen was off (the reset cleared
+"stay awake"; fixed with `adb shell svc power stayon usb`). The second missed the 3 s confirm window because a
+`uiautomator dump` between taps takes longer than 3 s; `tools/release-tap.sh` finds the button once and taps it twice.
+
+### Tested "return to an unmanaged phone" procedure
+
+1. Over adb (spike DPC only, because it is testOnly):
+   `adb -s SPARE_DEVICE_SERIAL shell am broadcast -n com.plainphone.spike.dpc/.CommandReceiver -a com.plainphone.spike.CMD --es cmd release`
+   (clears restrictions, unhides apps, ends lock task, calls `clearDeviceOwnerApp()`), then
+   `adb -s SPARE_DEVICE_SERIAL shell dpm list-owners` → `no owners`.
+2. If that fails: `adb -s SPARE_DEVICE_SERIAL shell dpm remove-active-admin com.plainphone.spike.dpc/.AdminReceiver`.
+   Note this does **not** clear restrictions or unhide apps first, so prefer step 1.
+3. Without adb: open the spike app (it is the home screen while provisioned) and tap **RELEASE** twice within 3 s.
+4. Then `adb -s SPARE_DEVICE_SERIAL uninstall com.plainphone.spike.dpc`.
+5. Last resort only: Settings > System > Reset options > Erase all data. Never recovery mode.

@@ -1,0 +1,61 @@
+# A2 2026-10-08T20:08:55Z
+## 1. remove-active-admin
+$ adb -s SPARE_DEVICE_SERIAL shell dpm remove-active-admin com.plainphone.spike.dpc/.AdminReceiver
+Success: Admin removed ComponentInfo{com.plainphone.spike.dpc/com.plainphone.spike.dpc.AdminReceiver}
+$ dpm list-owners
+no owners
+## 2. provision again
+$ adb -s SPARE_DEVICE_SERIAL shell dpm set-device-owner com.plainphone.spike.dpc/.AdminReceiver
+Success: Device owner set to package com.plainphone.spike.dpc/.AdminReceiver
+Active admin set to component com.plainphone.spike.dpc/.AdminReceiver
+$ dpm list-owners
+1 owner:
+User  0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+## 3. give it something to undo: hide a target app, add no_add_user
+hide com.block.juggle -> true
+OK added no_add_user
+deviceOwner=true lockTaskModeState=0 lockTaskPackages=[] lockTaskFeatures=GLOBAL_ACTIONS restrictions=[no_add_user] hidden=[com.block.juggle:true] suspended=[] locked=false debugLiftAt=0
+## 4. release with in-app button (tap twice)
+$ dpm list-owners
+1 owner:
+User  0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+$ pm list packages com.block.juggle (visible again?)
+$ dumpsys user restrictions
+      no_add_user
+    no_add_user
+## 4. release with in-app button (tap twice), retry after waking the screen (2026-10-08T20:09:59Z)
+(first try at step 4 did nothing: the screen was off after the reset cleared 'stay awake'; fixed with 'svc power stayon usb')
+tapped 540,419
+saved evidence/a2/a2-release-confirm-prompt.png
+tapped 540,302
+saved evidence/a2/a2-after-inapp-release.png
+text="Tap RELEASE again within 3 s to confirm."
+$ dpm list-owners
+1 owner:
+User  0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+$ pm list packages com.block.juggle (visible again?)
+$ dumpsys user | grep no_add_user
+2
+$ logcat PPSPIKE
+## 4b. in-app RELEASE, two taps 0.5 s apart via tools/release-tap.sh (2026-10-08T20:11:00Z)
+tapped RELEASE twice at 540,302
+saved evidence/a2/a2-after-inapp-release.png
+text="RELEASED deviceOwner=false; cleared no_add_user; unhid com.block.juggle"
+$ dpm list-owners
+no owners
+$ pm list packages com.block.juggle (visible again?)
+package:com.block.juggle
+$ dumpsys user | grep -c no_add_user
+0
+$ logcat PPSPIKE
+10-08 13:11:03.501 22835 22835 I PPSPIKE : DISALLOW_DEBUGGING_FEATURES lifted: release
+10-08 13:11:03.909 22835 22835 I PPSPIKE : RELEASED deviceOwner=false; cleared no_add_user; unhid com.block.juggle
+10-08 13:11:03.925 22835 22835 I PPSPIKE : admin disabled
+## 5. provision again (2026-10-08T20:11:28Z)
+Success: Device owner set to package com.plainphone.spike.dpc/.AdminReceiver
+Active admin set to component com.plainphone.spike.dpc/.AdminReceiver
+1 owner:
+User  0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+deviceOwner=true lockTaskModeState=0 lockTaskPackages=[] lockTaskFeatures=GLOBAL_ACTIONS restrictions=[] hidden=[] suspended=[] locked=false debugLiftAt=0
+$ dumpsys package com.plainphone.spike.dpc | grep flags (TEST_ONLY => removable via remove-active-admin)
+    flags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ALLOW_BACKUP ]
