@@ -15,7 +15,7 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 
 - [ ] 1.1 AE: Google Play emulator images: API 35, API 36 or newest, and API 37 if available. Record exact setup commands and build IDs in `spikes/README.md`.
 - [ ] 1.2 AE: A minimal throwaway Device Owner app in `spikes/dpc/`, plus a negative-control harness. The Q2 update source is preinstalled Google apps rolled back with `pm uninstall-system-updates`. Nothing is published to Play.
-- [x] 1.3 Lead: Beaux's must-have apps are Slack, Spotify, and maybe Telegram (Telegram 4446). Q4 tests them on the spare, and Telegram's in-app browser goes on the web-leak list. the trusted person's list is still to come.
+- [x] 1.3 Lead: Beaux's must-have apps are Slack, Spotify, and maybe Telegram (Telegram 4446). Q4 tests them on the spare, and Telegram's in-app browser goes on the web-leak list. the trusted person's must-have apps are Gmail and Outlook (Telegram 4448/4451); Q4 tests them too, with web-leak notes on how each opens links in mail.
 
 ## 2. Spike: go/no-go questions (answer before any MVP code)
 

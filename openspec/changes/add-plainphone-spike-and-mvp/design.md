@@ -294,16 +294,19 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 
 **Answered by Beaux (Telegram 4446/4448, 2026-10-08, relayed by Scout):**
 1. **Device.** The spare XT2415 is the device for the spike and the MVP. The daily-use model is deferred and needs its own OK.
-2. **People.** Beaux and the trusted person are each other's trusted person. The backup is a separate Google account that Beaux controls. *Lead note:* on Beaux's own phone, that backup lets Beaux pass reset protection after a wipe. This weakens the check the trusted person provides on his phone. It is fine for the trusted person's phone. Beaux to confirm.
+2. **People.** Beaux and the trusted person are each other's trusted person. The backup is a separate Google account that Beaux controls. *Lead note:* on Beaux's own phone, that backup lets Beaux pass reset protection after a wipe. This weakens the check the trusted person provides on his phone. It is fine for the trusted person's phone. **Beaux confirmed (Telegram 4448/4451): keep it.** He accepts the weaker check on his own phone. the trusted person's phone is unchanged.
 3. **License.** Apache-2.0.
-4. **Must-have apps.** Beaux: Slack, Spotify, and maybe Telegram. the trusted person's list is still to come. *Lead note:* Telegram has its own in-app browser (lead, verify in Q4), which is a likely web-leak route.
+4. **Must-have apps.** Beaux: Slack, Spotify, and maybe Telegram. the trusted person (Telegram 4448/4451): Gmail and Outlook. *Lead notes, all leads to verify in Q4:*
+   - Telegram has its own in-app browser, which is a likely web-leak route.
+   - Gmail and Outlook both render HTML mail and open links. Each may open links inside the app (an in-app browser or Custom Tab) rather than handing them to Android, so the blocked-link screen may never see them.
+   - Gmail is preinstalled on the Motorola, so it is a system app, and it carries other Google surfaces (Chat, Meet tabs).
+   - Outlook's sign-in, and adding a Google account to Outlook, may go through a web sign-in page. With every browser hidden, that sign-in may fail.
 5. **Carrier.** Rogers, which is on Apple's RCS-with-iPhone list.
 6. **Helper and signing key.** Beaux is the helper and keeps the key. The offline backup is on an encrypted USB stick or in his password manager, kept away from the laptop.
 
+7. **Plan, leftover risks and custody limit.** Accepted with the plan (PLA-1 confirmation eb7a21ba).
+
 **Still open for Beaux:**
-- whether he accepts the leftover risks and the custody limit (the plan-approval card);
-- the Wi-Fi sign-in and Wi-Fi calling question;
-- the trusted person's must-have apps;
-- whether to keep the backup account arrangement for his own phone.
+- **Wi-Fi sign-in and Wi-Fi calling.** No firm answer yet (Telegram 4448/4451). Beaux asked the team to assess a **time-boxed manual override**, about 5 minutes, that the user or the trusted person can turn on to get through a sign-in page (BC Ferries, a hotel, a hospital). This is a design request, not an approval. Until Beaux approves a recommendation, sign-in Wi-Fi stays unsupported as in D4, and the MVP proceeds on that basis. Whether either of them relies on Wi-Fi calling where there is no cell signal is still unanswered.
 
 **For the spike:** Q1–Q14 in `docs/feasibility-questions.md`.
