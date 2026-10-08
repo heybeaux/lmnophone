@@ -1,0 +1,31 @@
+# Q1 attach photo in Messages via its own picker, API 35, flag ON
+top: com.google.android.apps.messaging/.ui.ConversationListActivity
+texts: "Unread" "Hello from the spike" "555-1234 said  Hello from the spike 4:48 PM ." "Texting with 555-1234 (SMS/MMS)" "Show attach content screen" "Hide attach media screen" "Text message" "Show attach emoji and stickers screen" "Show record a voice message screen" "Flip Camera" "Open Full Screen Camera" "Take Photo" "Folders" "Select this image taken at Thu, Oct 8, 2026, 4:47 PM with double tap" "Save 5551234?" "Saving this number will add a new contact" "Close" "Report spam" "Add contact" "Back" "
+NO NODE Select this image taken at Thu, Oct 8, 2026, 4:47 PM with double tap
+after select texts: "Unread" "Hello from the spike" "555-1234 said  Hello from the spike 4:48 PM ." "Texting with 555-1234 (SMS/MMS)" "Show attach content screen" "Hide attach media screen" "Text message" "Show attach emoji and stickers screen" "Show record a voice message screen" "Flip Camera" "Open Full Screen Camera" "Take Photo" "Folders" "Select this image taken at Thu, Oct 8, 2026, 4:47 PM with double tap" "Sav
+NO NODE Send MMS
+NO NODE Send message
+NO NODE Send SMS
+NO NODE MMS
+after send texts: "Unread" "Hello from the spike" "555-1234 said  Hello from the spike 4:48 PM ." "Texting with 555-1234 (SMS/MMS)" "Show attach content screen" "Hide attach media screen" "Text message" "Show attach emoji and stickers screen" "Show record a voice message screen" "Flip Camera" "Open Full Screen Camera" "Take Photo" "Folders" "Select this image taken at Thu, Oct 8, 2026, 4:47 PM with double tap" "Save 5551234?" "Saving this number will add a new contact" "Close" "Report spam" "Add contact" "Back" "
+$ content query --uri content://mms --projection _id:msg_box:m_type:date
+No result found.
+$ content query --uri content://mms/part --projection mid:ct:_data
+Row: 0 mid=2047483647, ct=NULL
+## retry select with partial match
+after select texts: "Attachments are not supported in this conversation" "OK" 
+## retry in a conversation with a 10-digit number (smsto:6505551234)
+OK relayed launch (result in logcat PPEMU)
+top: com.google.android.apps.messaging/.main.MainActivity
+after select texts: "Attachments are not supported in this conversation" "OK" 
+## diagnostic control: lock task stopped, same attach
+OK relayed lt-stop (result in logcat PPEMU)
+lockTaskModeState=0
+lock task OFF, after select texts: "Attachments are not supported in this conversation" "OK" 
+OK relayed lt-start (result in logcat PPEMU)
+lockTaskModeState=1
+## outgoing SMS text in the 6505551234 conversation, lock task ON
+texts: "Outgoing from spike" "You said  Outgoing from spike 4:52 PM ." "Hello from the spike" "555-1234 said  Hello from the spike 4:48 PM ." "Texting with 555-1234 (SMS/MMS)" "Show attach content screen" "Show attach media screen" "Text message" "Show attach emoji and stickers screen" "Show record a voice
+$ content query --uri content://sms --projection address:type:body
+Row: 0 address=5551234, type=2, body=Outgoing from spike
+Row: 1 address=5551234, type=1, body=Hello from the spike

@@ -22,3 +22,6 @@ msgs() { for i in 1 2 3; do A shell input keyevent KEYCODE_HOME; sleep 1; tapt "
 mmenu() { msgs; tapd "Sign in" >/dev/null; sleep 1.8; }
 mmenu() { msgs; ui | grep -q 'Use Messages without an account' && { tapt "Use Messages without an account" >/dev/null; sleep 2; }; tapd "Sign in" >/dev/null; sleep 1.8; }
 mmenu() { A shell am force-stop com.google.android.apps.messaging; msgs; ui | grep -q 'Use Messages without an account' && { tapt "Use Messages without an account" >/dev/null; sleep 2; }; tapd "Sign in" >/dev/null; sleep 1.8; }
+
+# tap the first node whose content-desc or text contains $1
+tapp() { local b; b=$(ui | tr '>' '\n' | grep -m1 -E "(content-desc|text)=\"[^\"]*$1" | grep -o 'bounds="[^"]*"' | grep -oE '[0-9]+' | head -4 | tr '\n' ' '); [ -z "$b" ] && { echo "NO NODE ~$1"; return 1; }; set -- $b; A shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 )); }

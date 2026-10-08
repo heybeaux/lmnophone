@@ -1,0 +1,14 @@
+# Q1 SMS in + notification, API 35, flag ON
+$ adb emu sms send 5551234 "Hello from the spike"
+OK
+## notification record
+    NotificationRecord(0x0836fe14: pkg=com.google.android.apps.messaging user=UserHandle{0} id=2 tag=com.google.android.apps.messaging:incoming_message:1 importance=4 key=0|com.google.android.apps.messaging|2|com.google.android.apps.messaging:incoming_message:1|10140: Notification(channel=bugle_default_channel shortcut=1 contentView=null vibrate=null sound=null tick defaults=0 flags=ONLY_ALERT_ONCE|AUTO_CANCEL color=0xff1a73e8 category=msg groupKey=incoming_message_group_key actions=2 vis=PRIVATE))
+      icon=Icon(typ=RESOURCE pkg=com.google.android.apps.messaging id=0x7f0804d3)
+shade texts: "555-1234" "•" "now" "Alerted" "Hello from the spike" "Expand" "Mark as read" "Mark as read" "Reply" "Reply" "Show bubble" "Permission controller" "Expand" "3" "Phone has location access" "Your organization allows Phone to access your location" "Messages has location access" "Your organization allow
+NO NODE 5551234
+NO NODE (555) 123-4
+top after tapping notification: com.plainphone.spike.emu/.MainActivity
+texts: "555-1234" "•" "now" "Alerted" "Hello from the spike" "Expand" "Mark as read" "Mark as read" "Reply" "Reply" "Show bubble" "Permission controller" "Expand" "3" "Phone has location access" "Your organization allows Phone to access your location" "Messages has location access" "Your organization allow
+top after tapping notification: com.google.android.apps.messaging/.ui.ConversationListActivity
+texts: "Unread" "Hello from the spike" "555-1234 said  Hello from the spike 4:48 PM ." "Texting with 555-1234 (SMS/MMS)" "Show attach content screen" "Show attach media screen" "Text message" "Show attach emoji and stickers screen" "Show record a voice message screen" "Save 5551234?" "Saving this number wi
+10-08 16:49:02.632   553  1882 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x1400c001 pkg=com.google.android.apps.messaging cmp=com.google.android.apps.messaging/.ui.ConversationListActiv

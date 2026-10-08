@@ -1,0 +1,45 @@
+# Q1 permissions, API 35, flag ON. google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.036/12592187:user/release-keys
+$ cmd can-grant-sensors
+canAdminGrantSensorsPermissions=true
+## negative control: camera2 CAMERA left at default and revoked; open Camera
+setPermissionGrantState(com.android.camera2,android.permission.CAMERA,default) -> true; getPermissionGrantState=0 checkPermission=GRANTED
+getPermissionGrantState=0 checkPermission=DENIED
+top: android/com.android.internal.app.BlockedAppActivity
+texts: "App is not available" "Permission controller is not available right now." "OK" 
+10-08 16:46:22.107   553   572 V WindowManager:         {null m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{e1a91df u0 android/com.android.internal.app.BlockedAppActivity)/@0x9d12e3a sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 1080, 2400)
+10-08 16:46:22.108   929   974 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=749 t=OPEN f=0x0 trk=0 opt={t=FROM_STYLE} r=[0@Point(0, 0)] c=[{null m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=Act
+10-08 16:46:22.108   929   974 V WindowManagerShell: start default transition animation, info = {id=749 t=OPEN f=0x0 trk=0 opt={t=FROM_STYLE} r=[0@Point(0, 0)] c=[{null m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{e1a91df u0 andr
+## pre-grant with setPermissionGrantState
+setPermissionGrantState(com.android.camera2,android.permission.CAMERA,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.android.camera2,android.permission.RECORD_AUDIO,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.android.camera2,android.permission.ACCESS_FINE_LOCATION,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.android.camera2,android.permission.ACCESS_COARSE_LOCATION,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.android.camera2,android.permission.READ_MEDIA_IMAGES,granted) -> true; getPermissionGrantState=0 checkPermission=DENIED
+setPermissionGrantState(com.android.camera2,android.permission.READ_MEDIA_VIDEO,granted) -> true; getPermissionGrantState=0 checkPermission=DENIED
+setPermissionGrantState(com.android.camera2,android.permission.READ_CONTACTS,granted) -> true; getPermissionGrantState=0 checkPermission=DENIED
+setPermissionGrantState(com.android.camera2,android.permission.CALL_PHONE,granted) -> true; getPermissionGrantState=0 checkPermission=DENIED
+setPermissionGrantState(com.android.camera2,android.permission.SEND_SMS,granted) -> true; getPermissionGrantState=0 checkPermission=DENIED
+setPermissionGrantState(com.android.camera2,android.permission.POST_NOTIFICATIONS,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.apps.messaging,android.permission.CAMERA,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.apps.messaging,android.permission.RECORD_AUDIO,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.apps.messaging,android.permission.ACCESS_FINE_LOCATION,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.apps.messaging,android.permission.ACCESS_COARSE_LOCATION,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.apps.messaging,android.permission.READ_MEDIA_IMAGES,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.apps.messaging,android.permission.READ_MEDIA_VIDEO,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.apps.messaging,android.permission.READ_CONTACTS,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.apps.messaging,android.permission.CALL_PHONE,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.apps.messaging,android.permission.SEND_SMS,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.apps.messaging,android.permission.POST_NOTIFICATIONS,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.dialer,android.permission.CAMERA,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.dialer,android.permission.RECORD_AUDIO,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.dialer,android.permission.ACCESS_FINE_LOCATION,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.dialer,android.permission.ACCESS_COARSE_LOCATION,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.dialer,android.permission.READ_MEDIA_IMAGES,granted) -> true; getPermissionGrantState=0 checkPermission=DENIED
+setPermissionGrantState(com.google.android.dialer,android.permission.READ_MEDIA_VIDEO,granted) -> true; getPermissionGrantState=0 checkPermission=DENIED
+setPermissionGrantState(com.google.android.dialer,android.permission.READ_CONTACTS,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.dialer,android.permission.CALL_PHONE,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.dialer,android.permission.SEND_SMS,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.google.android.dialer,android.permission.POST_NOTIFICATIONS,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+top: com.android.camera2/com.android.camera.CameraActivity
+texts: "Remember photo locations?" "Tag your photos and videos with the locations where they're taken." "NEXT" 
+10-08 16:46:33.398   553  1881 I ActivityTaskManager: START u0 {act=android.media.action.STILL_IMAGE_CAMERA cmp=com.android.camera2/com.android.camera.CameraActivity} with LAUNCH_SINGLE_TASK from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
