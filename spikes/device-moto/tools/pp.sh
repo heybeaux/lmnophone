@@ -23,6 +23,12 @@ case "$sub" in
            | sed -n 's/.*bounds="\[\([0-9]*\),\([0-9]*\)\]\[\([0-9]*\),\([0-9]*\)\]".*/\1 \2 \3 \4/p')
        [ -z "$b" ] && { echo "no node starting with: $1"; exit 1; }
        set -- $b; x=$(( ($1+$3)/2 )); y=$(( ($2+$4)/2 )); a shell input tap $x $y; echo "tapped $x,$y" ;;
+  # tap the first on-screen node whose text is exactly $1
+  tapx) a shell uiautomator dump /sdcard/pp-ui.xml >/dev/null
+       b=$(a shell cat /sdcard/pp-ui.xml | tr '>' '\n' | grep -F "text=\"$1\"" | head -1 \
+           | sed -n 's/.*bounds="\[\([0-9]*\),\([0-9]*\)\]\[\([0-9]*\),\([0-9]*\)\]".*/\1 \2 \3 \4/p')
+       [ -z "$b" ] && { echo "no node with text: $1"; exit 1; }
+       set -- $b; x=$(( ($1+$3)/2 )); y=$(( ($2+$4)/2 )); a shell input tap $x $y; echo "tapped $x,$y" ;;
   ui) a shell uiautomator dump /sdcard/pp-ui.xml >/dev/null; a shell cat /sdcard/pp-ui.xml | tr '>' '\n' \
         | grep -oE '(text|content-desc)="[^"]+"' | sort -u ;;
   log) a logcat -d | grep -E 'PPSPIKE|LockTaskController|Displayed .*BlockedAppActivity|User restriction prevents' || true ;;

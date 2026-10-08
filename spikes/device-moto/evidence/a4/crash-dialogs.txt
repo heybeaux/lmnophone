@@ -1,0 +1,21 @@
+# A4 crash dialogs, 2026-10-08T21:16:22Z
+[control-no-locktask] before: top=com.plainphone.spike.dpc/.MainActivity lockTask=NONE
+[control-no-locktask] crash 1: focus=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE dialog=[none]
+[control-no-locktask]   log: E AndroidRuntime: FATAL EXCEPTION: main
+[control-no-locktask] crash 2: focus=Application Error: com.plainphone.spike.dpc top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE dialog=[text="App info" text="Close app" text="Plainphone spike keeps stopping" ]
+[control-no-locktask]   log: E AndroidRuntime: FATAL EXCEPTION: main
+[control-no-locktask]   log: I ActivityManager: Showing crash dialog for package com.plainphone.spike.dpc u0
+[control-no-locktask] tapped App info: top=com.android.settings/.spa.SpaActivity focus=com.android.settings/com.android.settings.spa.SpaActivity lockTask=NONE
+[control-no-locktask] after: top=com.plainphone.spike.dpc/.MainActivity lockTask=NONE status: deviceOwner=true lockTaskModeState=0 locked=false 
+[locktask-block-off] before: top=com.plainphone.spike.dpc/.MainActivity lockTask=LOCKED
+[locktask-block-off] crash 1: focus=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE dialog=[none]
+[locktask-block-off]   log: E AndroidRuntime: FATAL EXCEPTION: main
+[locktask-block-off] crash 2: focus=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE dialog=[none]
+[locktask-block-off]   log: E AndroidRuntime: FATAL EXCEPTION: main
+[locktask-block-off] after: top=com.plainphone.spike.dpc/.MainActivity lockTask=LOCKED status: deviceOwner=true lockTaskModeState=1 locked=true 
+[locktask-block-on] before: top=com.plainphone.spike.dpc/.MainActivity lockTask=LOCKED
+[locktask-block-on] crash 1: focus=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE dialog=[none]
+[locktask-block-on]   log: E AndroidRuntime: FATAL EXCEPTION: main
+[locktask-block-on] crash 2: focus=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE dialog=[none]
+[locktask-block-on]   log: E AndroidRuntime: FATAL EXCEPTION: main
+[locktask-block-on] after: top=com.plainphone.spike.dpc/.MainActivity lockTask=LOCKED status: deviceOwner=true lockTaskModeState=1 locked=true 

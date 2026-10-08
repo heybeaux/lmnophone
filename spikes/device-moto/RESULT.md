@@ -22,7 +22,8 @@
 | A1 Q3 adb Device Owner | **yes** | Unapproved testOnly DPC set as Device Owner over adb on a certified Motorola. No allowlist message. |
 | A2 way back | **yes** | `remove-active-admin` and the in-app RELEASE both return the phone to `no owners` with no wipe; provisioning again works each time. |
 | A3 Q1 lock task | **partly** | Launch matrix done for BLOCK off/on with a no-lock-task control. Reboot: lock task comes back by itself. A non-always-allowed adb key **cannot be re-authorized while lock task is on**. Not tested: power menu (needs the physical button), lock-screen emergency, calls/SMS. |
-| A4–A7 | not yet run | Need adb back first. |
+| A4 Q5 baseline escapes | **partly** | Factory reset, OEM unlock, add user and Quick Settings are closed by their controls. `no_config_default_apps` does **not** stop a Home-app change (the DPC HOME pin does). **A DPC crash ends lock task and drops to the Moto launcher, unlocked, until Home is pressed.** Safe mode not tested (needs the physical buttons). |
+| A5–A7 | not yet run | |
 | S1–S4, S7 | not yet run | Phase B, needs Beaux's sign-in. |
 
 ## A0. Baseline
@@ -307,3 +308,34 @@ this Mac's key always-allowed before any lock-task reboot.
 - The emergency dialer needs `com.android.phone` on the lock task allowlist.
 - Photo sharing to Messages needs our own path (a direct `ACTION_SEND` with `setPackage(Messages)` works);
   the Camera → Photos → Share route fails in lock task.
+
+## A4. Q5 baseline escapes, each restriction on its own
+
+**Result: partly.** Fingerprint unchanged. Run 2026-10-08 21:09–21:20Z, Device Owner set, **lock task stopped**
+except for the crash case, and **one restriction at a time** (rule 4; `DISALLOW_DEBUGGING_FEATURES` not used here).
+Raw: `evidence/a4/*.txt` and screenshots. Helpers: `tools/pref-state.sh` (reads a Settings row's enabled/checked state;
+never taps it), `tools/a4-crash.sh`, `tools/pp.sh tapx` (exact-text tap).
+
+| Escape | Control (no restriction) | With the restriction / policy | Verdict |
+|---|---|---|---|
+| **OEM unlocking** toggle, `no_factory_reset` | Developer options > OEM unlocking: `enabled=true`, **`checked=true`** (someone at the phone had turned it on after the reset; `sys.oem_unlock_allowed=1`) | `checked=false enabled=false`, summary "Disabled by admin"; `sys.oem_unlock_allowed=0` | closed |
+| | | After `restrict-clear no_factory_reset`: toggle stays **off** (`checked=false enabled=true`, `sys.oem_unlock_allowed=0`). The restriction switched it off and doesn't restore it. Left off; not re-enabled by the agent. | note |
+| Factory reset entry, `no_factory_reset` | (not tapped in the control) | System > Reset options: row greyed (`title_enabled=false`); tap → `settings/.enterprise.ActionDisabledByAdminDialog` "Blocked by work policy … contact your IT admin" | closed (wording is enterprise-speak) |
+| **Add user**, `no_add_user` | `pm create-user pp-spike-control` → `Success: created user id 10`, then `pm remove-user 10` → `Success`; "Allow multiple users" `checked=true enabled=true` | `pm create-user` → `Cannot add user: no_add_user is enabled.`; "Allow multiple users" greyed (`switch_enabled=false`) | closed |
+| **Quick Settings**, `setStatusBarDisabled(true)` | `cmd statusbar expand-settings` → NotificationShade focused, 5 QS tile/gear descriptions | expand → focus stays on the spike, 0 tiles; manual swipe from the top edge → nothing | closed (also hides notifications; inside lock task, QS tiles are already hidden, see A3) |
+| **Default launcher**, user path Settings > Default apps > Home app | no pin: tap "Moto App Launcher" → HOME opens `com.motorola.launcher3`, role = Moto | DPC `addPersistentPreferredActivity(HOME → spike)`: role switches to spike; user taps Moto again → HOME still opens the spike | closed by the **pin** |
+| | | `no_config_default_apps` (API 34+), no pin: picker still opens, rows not greyed; tap Moto → **role = `com.motorola.launcher3`, HOME opens Moto** | **open**: this restriction does not cover the Home app here |
+| **Crash dialogs** (spike crashes twice, `Commands.kt crash`) | first crash: no dialog; second: "Plainphone spike keeps stopping" with **App info** → `settings/.spa.SpaActivity` | Under lock task (BLOCK off and on): **no dialog**, but **lock task ends** (`mLockTaskModeState=NONE`) and the top becomes `com.motorola.launcher3` | **open**, see below |
+| **Safe mode**, `no_safe_boot` | 0 entries in `dumpsys user` | `no_safe_boot` listed in `dumpsys user` and `getUserRestrictions` | restriction applies; **behaviour not tested**: no shell route to safe mode on this build, needs a physical long-press on Power off or Volume Down at boot |
+
+### DPC crash ends lock task (`evidence/a4/crash-escape-window.txt`)
+
+With lock task on (BLOCK on), HOME role = spike and the persistent preferred HOME = spike, one crash of the spike's activity gives:
+`t+2s … t+60s: top=com.motorola.launcher3/…CustomizationPanelLauncher lockTask=NONE spikeProc=none`.
+Nothing restarts the spike by itself. When the user presses **Home**, the spike comes back and re-locks (`onResume` → `startLockTask`).
+During that window the full Moto launcher is usable (Chrome, Play Store and Settings icons are visible; see `launcher-no-config-tap.png`).
+Hidden apps and user restrictions still apply, because they're Device Owner policy, not lock task.
+
+Spike-level implications (not a spec): the Plainphone home/lock-task activity must not crash, or something must
+bring it back with no user action. Things to try: hide the stock launcher (A5) so there's no fallback home; a
+separate watchdog process; restarting on `BOOT`/package events. Feeds Q12 (crash-loop custody limit).

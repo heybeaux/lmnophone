@@ -1,0 +1,25 @@
+# A4 add user, 2026-10-08T21:12:35Z
+## control: no restriction
+restrictions=[]
+top: com.android.settings/.Settings$UserSettingsActivity
+texts: text="Allow multiple users" text="Owner" text="Share your phone by adding new users. Each user has a personal space on your phone for custom Home screens, accounts, apps, settings, and more." text="Users" text="You (Owner)" 
+row=Add user NOT FOUND
+$ pm create-user pp-spike-control
+Success: created user id 10
+$ pm remove-user 10
+Success: removed user
+users now: Users:UserInfo{0:Owner:4c13} running
+## with no_add_user
+OK added no_add_user
+top: com.android.settings/.Settings$UserSettingsActivity
+texts: text="Allow multiple users" text="Owner" text="Users" text="You (Owner)" 
+row=Add user NOT FOUND
+$ pm create-user pp-spike-restricted
+Error: android.os.ServiceSpecificException: Cannot add user: no_add_user is enabled. (code 1)
+Error: couldn't create User.
+users now: Users:UserInfo{0:Owner:4c13} running
+OK cleared no_add_user
+## 'Allow multiple users' toggle
+control: row='Allow multiple users' enabled=true title_enabled=true texts=['Allow multiple users'] switch_checked=true switch_enabled=true
+no_add_user: row='Allow multiple users' enabled=true title_enabled=false texts=['Allow multiple users'] switch_checked=true switch_enabled=false
+OK cleared no_add_user

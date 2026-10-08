@@ -1,0 +1,8 @@
+# A4 Quick Settings, 2026-10-08T21:13:41Z
+## control (lock task off, status bar enabled)
+QS tile/gear descs found: 5; focus=NotificationShade
+## setStatusBarDisabled(true)
+setStatusBarDisabled(true) -> true
+QS tile/gear descs found: 0; focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity
+manual swipe from top: focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity
+setStatusBarDisabled(false) -> true

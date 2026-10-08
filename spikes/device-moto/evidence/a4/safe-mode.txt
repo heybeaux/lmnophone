@@ -1,0 +1,8 @@
+# A4 safe mode, 2026-10-08T21:19:33Z
+control: 0 no_safe_boot entries
+OK added no_safe_boot
+with restriction: no_safe_boot no_safe_boot
+getUserRestrictions: restrictions=[no_safe_boot]
+shell route to safe mode: none found ('svc power reboot [reason]' only; no safemode verb in 'cmd power'). Behaviour test needs the physical power menu (long-press Power off) or Volume Down at boot: NOT TESTED.
+OK cleared no_safe_boot
+cleared: restrictions=[]

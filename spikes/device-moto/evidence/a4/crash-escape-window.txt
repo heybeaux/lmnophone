@@ -1,0 +1,12 @@
+# A4 crash escape window (no relaunch), 2026-10-08T21:18:03Z
+role HOME: com.plainphone.spike.dpc
+before: top=com.plainphone.spike.dpc/.MainActivity lockTask=LOCKED features=lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK
+t+2s: top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE spikeProc=none
+t+5s: top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE spikeProc=none
+t+10s: top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE spikeProc=none
+t+20s: top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE spikeProc=none
+t+30s: top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE spikeProc=none
+t+45s: top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE spikeProc=none
+t+60s: top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher lockTask=NONE spikeProc=none
+user presses HOME:
+  top=com.plainphone.spike.dpc/.MainActivity lockTask=LOCKED

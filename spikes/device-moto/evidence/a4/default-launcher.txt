@@ -1,0 +1,28 @@
+# A4 default launcher, 2026-10-08T21:14:33Z
+## control: no persistent preferred HOME
+tapped 527,638
+HOME -> com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher; role=com.motorola.launcher3
+## DPC addPersistentPreferredActivity(HOME -> spike), role still Moto
+OK persistent preferred HOME = spike
+HOME -> com.plainphone.spike.dpc/.MainActivity; role=com.plainphone.spike.dpc
+## user picks Moto again in Default home app while pinned
+picker: com.google.android.permissioncontroller/com.android.permissioncontroller.role.ui.DefaultAppActivity
+tapped 527,638
+HOME -> com.plainphone.spike.dpc/.MainActivity; role=com.plainphone.spike.dpc
+## + no_config_default_apps
+OK added no_config_default_apps
+picker: com.google.android.permissioncontroller/com.android.permissioncontroller.role.ui.DefaultAppActivity texts: text="Apps, often called launchers, that replace the Home screens on your Android device and give you access to the contents and features of your device" text="Moto App Launcher" text="Plainphone spike" 
+OK cleared no_config_default_apps
+OK added no_config_default_apps
+no_config_default_apps picker row: row='Moto App Launcher' enabled=true title_enabled=true texts=['Moto App Launcher'] switch_checked=false switch_enabled=true
+OK cleared no_config_default_apps
+## no_config_default_apps, no pin, role=spike: user taps Moto
+OK home cleared
+com.plainphone.spike.dpc
+OK added no_config_default_apps
+tapped 527,638
+after tap: top=com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher texts=text="02&#10;15" text="Assistant" text="Camera" text="Chrome" text="Google" text="Messages" text="Moto" text="Phone" text="Play Store" 
+HOME -> com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher; role=com.motorola.launcher3
+OK cleared no_config_default_apps
+OK persistent preferred HOME = spike
+restored pin: HOME -> com.plainphone.spike.dpc/.MainActivity

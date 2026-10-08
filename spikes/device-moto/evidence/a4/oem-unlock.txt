@@ -1,0 +1,36 @@
+# A4 OEM unlock under DISALLOW_FACTORY_RESET, 2026-10-08T21:09:42Z
+sys.oem_unlock_allowed=1 ro.boot.flash.locked=1
+## control: no restriction
+restrictions: restrictions=[]
+row='OEM unlocking' enabled=true title_enabled=true texts=['OEM unlocking', 'Allow the bootloader to be unlocked'] switch_checked=true switch_enabled=true
+## with no_factory_reset
+OK added no_factory_reset
+row='OEM unlocking' enabled=true title_enabled=false texts=['OEM unlocking', 'Allow the bootloader to be unlocked', 'Disabled by admin'] switch_checked=false switch_enabled=false
+sys.oem_unlock_allowed=0
+## factory reset entry with no_factory_reset (restriction on): 21:10:28Z
+restrictions=[no_factory_reset]
+topResumedActivity=ActivityRecord{4e0216f u0 com.android.settings/.Settings t62}
+row=Erase all data (factory reset) NOT FOUND
+after tap: topResumedActivity=ActivityRecord{4e0216f u0 com.android.settings/.Settings t62}
+text="About phone"
+text="App security, device lock, permissions"
+text="Digital Wellbeing &amp; parental controls"
+text="Emergency SOS, medical info, alerts"
+text="Google"
+text="Help"
+text="Languages, time, backup"
+text="Passwords, passkeys &amp; accounts"
+## clear no_factory_reset, re-read OEM unlocking
+OK cleared no_factory_reset
+row='OEM unlocking' enabled=true title_enabled=true texts=['OEM unlocking', 'Allow the bootloader to be unlocked'] switch_checked=false switch_enabled=true
+sys.oem_unlock_allowed=0
+## factory reset entry with no_factory_reset, via System > Reset options: 21:11:49Z
+OK added no_factory_reset
+tapped 269,1926
+tapped 365,1652
+row='Erase all data (factory reset)' enabled=true title_enabled=false texts=['Erase all data (factory reset)'] switch_checked=None switch_enabled=None
+tapped 419,1424
+after tap: topResumedActivity=ActivityRecord{40b0d82 u0 com.android.settings/.enterprise.ActionDisabledByAdminDialog t65}
+texts: text="Blocked by work policy" text="Close" text="For more info, contact your IT admin" 
+OK cleared no_factory_reset
+restrictions=[]
