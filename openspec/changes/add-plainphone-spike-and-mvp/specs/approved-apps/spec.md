@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Unapproved apps cannot be opened
-Every installed app that is not on the allowlist SHALL be hidden with `setApplicationHidden`. Three groups are exempt: the never-hide list, the Play Store, and a reviewed list of packages that cannot be hidden without breaking the phone.
+Every installed app that is not on the allowlist SHALL be hidden with `setApplicationHidden`. Packages in the build inventory are exempt; see device-lockdown. That inventory includes the Play Store and every never-hide dependency.
 
 **What is promised.** An unapproved app cannot be **opened**, from the first interactive frame after unlock. It is not promised that the app is never installed, or never runs any code.
 
@@ -19,24 +19,31 @@ Every installed app that is not on the allowlist SHALL be hidden with `setApplic
 - **WHEN** hiding a new package fails
 - **THEN** Plainphone retries, lock task still prevents the app opening, and trusted-person mode shows "Plainphone needs attention"
 
-### Requirement: Approved apps keep receiving updates, and the trusted person checks monthly
-Plainphone SHALL keep the Play Store installed, enabled and signed in to the user's own account, and outside the lock-task UI list except during a Play session. Setup SHALL include a step where the helper confirms Play auto-update is on.
+### Requirement: Approved apps keep receiving updates, and the monthly check cannot silently lapse
+Plainphone SHALL keep the Play Store installed, enabled and signed in to the user's own account. Play SHALL stay outside the lock-task UI list except during a Play session. Setup SHALL include a step where the helper confirms Play auto-update is on.
 
-**Per-app record.** Plainphone SHALL record each approved app's version and last update time.
+**Per-app record.** Plainphone SHALL keep a record for each approved app: its version and when it was last updated.
 
-**Monthly check.** Once a month, Plainphone SHALL text the trusted person: "Time for the monthly update check on [user]'s phone." The check SHALL be a Play session that opens Play's update list, where Play itself shows any updates that are waiting.
+**Monthly check:**
+- **Stored state.** Plainphone SHALL store the monthly check's due date and the date it was last completed.
+- **Reminders.** On the due date it SHALL text the trusted person. If the text fails, it SHALL retry once a day, for up to 7 days, without sending duplicates.
+- **Overdue note.** If the check is more than 7 days overdue, or every send failed, the user's home screen SHALL show one calm line: "Ask [trusted person] to do the monthly phone check."
+- **Completion.** The check counts as completed only when the trusted person, in the Play session opened from the check, confirms with their PIN that they reviewed Play's update list. They SHALL record any app whose update failed. Unresolved failures SHALL stay listed in trusted-person mode.
+- **Play services.** If Google Play services has not changed in 30 days, the reminder SHALL say so neutrally. It SHALL NOT call the phone insecure.
 
-**Play services warning.** If Google Play services has not updated in 30 days, Plainphone SHALL also text the trusted person.
-
-**What Plainphone can claim.** Plainphone SHALL NOT claim to know whether a newer version exists.
+Plainphone SHALL NOT claim to know whether a newer version of any app exists.
 
 #### Scenario: Background update of an approved app
 - **WHEN** Play is offering a newer version of an approved app and auto-update is on
-- **THEN** the app updates without the user opening Play, and stays approved and visible. Q2 sets the test conditions, which include an unattended run.
+- **THEN** the app updates without the user opening Play, and stays approved and visible. Q2's unattended run sets the test conditions.
 
-#### Scenario: One essential app stuck
-- **WHEN** one approved app keeps failing to update while others update normally
-- **THEN** the next monthly check shows the waiting update in Play's own list, during a session the trusted person controls
+#### Scenario: Reminder text fails
+- **WHEN** the monthly text cannot be sent, for example because there is no service or no SMS permission
+- **THEN** Plainphone retries daily, and after 7 days the user's home screen shows the "Ask [trusted person]" line until the check is completed
+
+#### Scenario: Reminder delivered but check skipped
+- **WHEN** the text arrives but nobody runs the check
+- **THEN** the check stays overdue, and the home-screen line appears after 7 days
 
 #### Scenario: Approved app opens a Play Store link
 - **WHEN** an approved app opens a `market://` or Play web link, in a new task or the same task

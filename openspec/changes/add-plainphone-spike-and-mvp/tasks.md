@@ -19,7 +19,8 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 
 ## 2. Spike: go/no-go questions (answer before any MVP code)
 
-- [x] 2.1 AE: Q3. adb setup works on the spare Motorola XT2415 / Android 15 (PLA-5 A1), and the way back needs no wipe (A2). Emulator re-check still to do.
+- [x] 2.1a AE: Q3 on the device. adb setup works on the spare Motorola XT2415 / Android 15 (PLA-5 A1), and the way back needs no wipe (A2).
+- [ ] 2.1b AE: Q3 emulator re-check on Google Play images.
 - [ ] 2.2 AE: Q1, a normal day under lock task, with the block flag on and off, plus the UI exceptions list with negative tests.
 - [ ] 2.3 AE: Q2, updates (S1–S4, S7, and the API 37 constant).
 - [ ] 2.4 AE: Q4, must-have apps, browser classifier, link matrix, Wi-Fi sign-in page, reachable system screens.
@@ -32,7 +33,11 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [ ] 3.2 AE: Q6, boot, replacement and policy damage.
 - [ ] 3.3 AE: Q7, turning off: resumable, and without a wipe.
 - [ ] 3.4 AE: Q10, reset protection with the trusted person's `userId`.
-- [ ] 3.5 AE: Q12, servicing go/no-go. Supervised sessions can't be escaped or left open, including with a build that crashes on every start. The local-Wi-Fi Plainphone update refuses a wrong signer or lower version.
+- [ ] 3.5 AE: Q12, for both Play and Settings sessions.
+  - Revocation runs first on every start where Plainphone can run (G0).
+  - With a build that crashes on every start: measure what stays reachable and report it against the custody limit Beaux accepted.
+  - The protected-state check restores protections.
+  - The local-Wi-Fi update fixtures pass (R4).
 - [ ] 3.6 AE: Q14, emergency behavioral gate with a negative control. Q8, texting and calling defaults.
 - [ ] 3.7 AE: Optional Q9 and Q11 if cheap. Otherwise record why they were deferred.
 - [ ] 3.8 VE: Escape-artist pass on the emulator against E01–E29 and F1–F14. Every bypass gets reproduction steps.
@@ -50,7 +55,8 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [ ] 4.8 AE: PIN and recovery code (separate counters), fresh authority, requests, supervised session contract and journal, Plainphone update over local Wi-Fi, turning off with the full restore list (trusted-person-controls).
 - [ ] 4.9 AE: Plainphone's own settings screens (Wi-Fi, Bluetooth, volume, brightness, text size, battery).
 - [ ] 4.10 AE: Setup flow, preinstall sweep before Wi-Fi, reset-protection IDs with a backup person, key attestation check, handover self-check (guided-setup).
-- [ ] 4.11 AE: Built-in safe policy, and the first-frame lock task invariant (device-lockdown).
+- [ ] 4.11 AE: Build inventory for each supported build, the emergency-safe baseline, the locked-boot path, and the first-frame lock task invariant (device-lockdown).
+- [ ] 4.12 AE: Monthly check state machine (stored due date, retries, home-screen line) and the SMS permission setup (approved-apps).
 
 ## 5. MVP: words and flows
 
@@ -62,5 +68,5 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 
 - [ ] 6.1 VE: Full escape-artist review and code review of the MVP on the emulator. Verdict: approve, request changes, or blocked.
 - [ ] 6.2 AE: Fix every confirmed finding, or Lead records it as a leftover risk accepted by Beaux.
-- [ ] 6.3 Lead: Ask Beaux to approve the target phone model and one unit. Include the checklist to complete before handover: Q3 on that build; Q10 with a board-approved recovery-wipe procedure; Q13 manufacturer extras; Q14 device emergency checks (no live call unless there is an agreed procedure); RCS on the carrier; iPhone group texts; must-have apps.
+- [ ] 6.3 Lead: Ask Beaux to approve the target phone model and one unit, and to record acceptance of the custody limit and the leftover risks. Include the checklist to complete before handover: Q3 on that build; Q10 with a board-approved recovery-wipe procedure; Q13 manufacturer extras; Q14 device emergency checks (no live call unless there is an agreed procedure); RCS on the carrier; iPhone group texts; must-have apps.
 - [ ] 6.4 Lead: After two weeks on Beaux's phone, ask Beaux to approve the trusted person's phone.

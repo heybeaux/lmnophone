@@ -78,8 +78,8 @@ The escape threat list is in `research/evidence/webview-and-escape-threats.md` (
   1. Keep Play installed, enabled and signed in to the **user's own** account, so it can update apps in the background.
   2. Keep Play out of lock task and off the home screen.
   3. Hide any app that wasn't approved. This includes first-boot pushes.
-     - On the spare Motorola, 8 apps installed themselves within 8 minutes of first boot with Wi-Fi and no account: 5 Digital Turbine games, plus Google One, Fit and Wallet. Facebook comes preloaded.
-     - So Plainphone sweeps all apps before the phone joins Wi-Fi.
+     - On the spare Motorola, the committed A0 table records **7 pushed installs plus 1 preload** within 8 minutes of first boot, with Wi-Fi and no account: 4 Digital Turbine games; Google One, Fit and Wallet; and Facebook preloaded. The engineer's comment said 5 games; PLA-5 is asked to reconcile the count.
+     - So Plainphone sweeps all apps while the phone has **no network at all**: the script checks this, and the SIM is inserted only afterwards.
   4. The trusted person runs a supervised update check once a month, in Play's own update list. Plainphone can't tell on its own whether a newer version exists.
 - **What we promise:** an unapproved app can't be **opened**. We do not promise that one can't be **installed**, or that it never runs any code. If Beaux needs "never runs any code", this architecture can't promise it; see the go/no-go conditions.
 
@@ -143,7 +143,10 @@ The candidate becomes the decision only if, on the emulator, and later on one ph
 4. **Recovery works:** turning Plainphone off (Q7) and reset protection (Q10) both behave as the specs say.
 5. **Leftover web access is limited to what the trusted person accepted in writing.**
 6. **Setup and support effort stays within the guide's limits.**
-7. **Supervised sessions don't leave the phone open (Q12).** If Plainphone can't run while a session is open, the relaxation stays until a helper fixes the phone. That is accepted only if Q12 shows it can't happen without a deliberately broken build, and Beaux accepts the disclosed risk. Otherwise, revise the ADR.
+7. **Beaux explicitly accepts the session custody limit.** If Plainphone can't run for any reason while a supervised session is open, nothing revokes the relaxation automatically, and it stays until a helper fixes the phone. The reason could be a real bad update, a storage or startup fault, or a crash loop.
+   - **What Q12 is for.** Q12 measures what is reachable in that state, and confirms that revocation runs first whenever Plainphone *can* run. It cannot prove the failure never happens.
+   - **Handback.** The phone is never handed back until the policy reads back correctly.
+   - **If Beaux does not accept this:** an independent revocation mechanism becomes a G0 feasibility question, and the ADR is revised.
 
 **If the adb setup route is blocked on a real phone (Q3):**
 - This alone does not switch us to B.
@@ -188,3 +191,16 @@ Each PLA-3 finding, and where it is addressed:
 | N9 update health | Per-app record, monthly texted update check in Play's own list, Play services 30-day warning; no claim to know about newer versions (approved-apps) |
 | N10 Play test source | Preinstalled Google apps rolled back with `pm uninstall-system-updates`, compared against an unrestricted run. "Inconclusive" if Play offers no update. Publishing removed (feasibility Q2, tasks 1.2) |
 | N11 evidence and wording | Canada evidence superseded notes. RCS works over Wi-Fi. "No Android 16" kept as an inference. Spare-device facts. No Q10 recovery wipe on the spare (evidence, ADR Risk 5) |
+
+**Revision 4 (PLA-7 R1–R8):**
+
+| PLA-7 finding | Where addressed |
+|---|---|
+| R1 crash-loop gate contradiction | One contract. The custody limit covers any reason Plainphone can't run, and Beaux must accept it explicitly. Q12 measures and does not "prove". ADR go/no-go #7, Q12, the matrix and task 3.5 now agree. |
+| R2 Settings session scope | A table of packages per session kind. A protected-state check before handback restores protections and keeps ordinary changes. Q12 covers both kinds. In-session web content disclosed. (trusted-person-controls) |
+| R3 inventory, baseline, sweep | One versioned build inventory, compiled into the app, lists the never-hide dependencies and minimum UI entries. The emergency-safe baseline is built from it. No inventory means no sweep and no Ready. A damaged journal means revoke everything. The sweep runs only with no network active, which the script checks, and the SIM goes in afterwards. (device-lockdown, guided-setup) |
+| R4 updater binding | Exact package name, valid signature, pinned signer and a strictly higher `longVersionCode`. The exact bytes are staged in private storage and installed through a session bound to Plainphone's package name. Size, timeout and redirect limits. Install success is checked separately from a working start. Key custody, a lost-key procedure and a compromised-key procedure. No promise of rollback. (trusted-person-controls) |
+| R5 Alert Ready at handover | The alert must be observed on the target build before handover. Otherwise the phone stays in custody, or Beaux accepts the narrower promise. An emulator that can't inject an alert gives "inconclusive", which blocks release. (essential-calling-and-texting) |
+| R6 monthly check | Due date and last completion are stored. Daily retries for 7 days. If the check is overdue, a single line appears on the home screen. Completion needs a PIN after reviewing Play's list. SMS setup is tested end to end at handover. (approved-apps, trusted-person-controls, guided-setup) |
+| R7 People API account selection | The trusted person picks the exact account in Google's picker, not by display name. New accounts wait 72 hours and are re-tested. The guide is dry-run with accounts that share a display name. (guided-setup) |
+| R8 counts and references | A0 count corrected to 7 + 1, with a reconcile request to PLA-5. Q7 step count, Q14 and matrix design references fixed. The stale 60-second deadline removed. Task 2.1 split. |

@@ -9,7 +9,7 @@
   - Device results so far come from the spare Motorola ([PLA-5](/PLA/issues/PLA-5), `spikes/device-moto/RESULT.md`):
     - **A1 / Q3: yes.** Our unapproved, test-only Device Owner app was set up over adb on a certified Android 15 Motorola. No allowlist message appeared.
     - **A2: yes.** `dpm remove-active-admin` and `clearDeviceOwnerApp()` both returned the phone to unmanaged with no wipe.
-    - Within 8 minutes of first boot with Wi-Fi and no account, 8 apps were installed: 5 games from Digital Turbine (`com.dti.motorola`) plus Google One, Fit and Wallet via Play. Facebook comes preloaded.
+    - Within 8 minutes of first boot, with Wi-Fi and no account, the committed A0 table shows 7 pushed installs: 4 Digital Turbine games (`com.dti.motorola`), plus Google One, Fit and Wallet via Play. Facebook comes preloaded. The count still needs reconciling with PLA-5's comment, which said 5 games.
 - **Reviews.** Revision 3 answers PLA-4 (N1–N11) on top of PLA-3 (F1–F17). Every requirement traces to `docs/verification-matrix.md`.
 - **Policy constraints:**
   - Physical work only on the board-approved spare (serial SPARE_DEVICE_SERIAL), within its rules: Settings resets only, no recovery wipes, test-only DPC.
@@ -65,7 +65,18 @@ The home activity starts lock task before it draws its first interactive frame. 
 5. On ending, Plainphone revokes the relaxation, reads the policy back, and then clears the journal.
 6. On every Plainphone start, including a Direct-Boot-aware `LOCKED_BOOT_COMPLETED`, Plainphone revokes anything still in the journal before doing anything else.
 
-**What we promise (N1).** We do not promise a session closes itself if Plainphone cannot run at all. The relaxation then stays until a helper fixes the phone. The screen says "Stay with the phone until you tap Done", and the risk is disclosed. Q12 measures this. If Q12 shows a relaxation can stay live long enough to matter, that triggers a no-go and a revised ADR (ADR go/no-go #6).
+**What we promise (N1, R1).** If Plainphone cannot run, nothing closes the session automatically, whatever the cause: a real bad update, a storage fault, or a crash loop. The relaxation stays until a helper fixes the phone.
+- The screen says "Stay with the phone until you tap Done".
+- The phone is never handed back until the policy reads back correctly.
+- Beaux must explicitly accept this limit (ADR go/no-go #7).
+- Q12 measures what stays reachable in that state, and checks that revocation runs first whenever Plainphone can run. It does not prove the failure never happens.
+
+**Session scope (R2).**
+- **Play sessions** add only `com.android.vending`.
+- **Settings sessions** add only the build's Settings package and the same-UID siblings listed in the build inventory.
+- **On close,** a protected-state check restores anything that breaks a protection, while keeping ordinary changes such as ringtone or Wi-Fi. It covers: restrictions, lock task, the never-hide inventory, browser role, default SMS app, SMS permission, keyboards and accessibility services, and alert settings.
+- **A damaged journal** means every relaxation is revoked.
+- **The locked-boot path** uses device-protected data only.
 
 **Why not adb maintenance.** It was cut (N2). Its scope can't be narrowed, and it relies on Settings and host authorisation.
 
@@ -80,7 +91,7 @@ The home activity starts lock task before it draws its first interactive frame. 
 
 **Update record and check (N9).**
 - Plainphone records each approved app's version and the time it last updated.
-- Once a month it texts the trusted person to run the update check, a Play session that opens Play's own update list. That list shows which updates are waiting and which have failed. Plainphone does not claim to know this itself.
+- Once a month (with the due date and last-completed date stored, daily retries for 7 days, then a single line on the home screen: "Ask [trusted person] to do the monthly phone check"; R6) it texts the trusted person to run the update check, a Play session that opens Play's own update list. That list shows which updates are waiting and which have failed. Plainphone does not claim to know this itself.
 - If Google Play services goes 30 days without an update, Plainphone texts the trusted person.
 
 ### D4. Web: classifier with self-exemption, scoped link promise, no Wi-Fi sign-in pages
@@ -153,6 +164,14 @@ A live 9-1-1 call needs a separate procedure agreed with E-Comm or the carrier, 
 **Plainphone's own updates (N2).**
 - The helper's computer serves the APK on the local Wi-Fi.
 - The trusted person enters the PIN and the URL.
+- **Binding (R4).**
+  - The APK is downloaded to private storage: at most 100 MB, a 2-minute timeout, no redirects.
+  - The staged file is checked: exact package name, valid signature, the pinned signer, and a strictly higher `longVersionCode`.
+  - Exactly those bytes are installed through a PackageInstaller session with `setAppPackageName` set.
+  - Any open session is closed and read back first.
+  - After the update, Plainphone runs the handover self-check; installing successfully is not the same as starting successfully.
+  - There is no rollback promise.
+  - The key has an offline backup custodian, plus lost-key and compromised-key procedures.
 - Plainphone checks that the APK's signing-certificate digest matches the one built into it and that its version is higher. Then it installs silently as Device Owner.
 - No adb and no Settings are involved.
 - Release builds are `testOnly=false` and `debuggable=false`.
@@ -182,7 +201,7 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 **Order of steps:**
 1. Back up the phone.
 2. Reset it through Settings.
-3. In the first-boot wizard, skip Wi-Fi, accounts and app recommendations. Without Wi-Fi, nothing gets installed before Plainphone is in control.
+3. With the SIM removed and eSIM disabled, go through the first-boot wizard and skip Wi-Fi, accounts and app recommendations. The script refuses to continue if any network is active, or if there is no build inventory for this phone.
 4. Turn on USB debugging.
 5. Run the script. It checks that the model and build are approved, the bootloader is locked and verified boot is green, then runs `set-device-owner`.
 6. Plainphone hides every package that isn't on the never-hide, essential or approved lists.
@@ -211,7 +230,12 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 
 - **Writing.** The policy is written atomically and checked against its schema. A last-known-good copy is kept.
 - **Direct Boot copy.** A minimal copy is kept in device-protected storage: setup-complete flag, never-hide list, lock-task list, counters and the session journal.
-- **If both copies are invalid,** a **safe policy built into the APK** applies. It allows only Plainphone, Phone and Messages, applies every restriction and keeps the never-hide list. Plainphone then shows "Plainphone needs attention".
+- **Build inventory (R3).** One versioned inventory per supported model and build fingerprint, compiled into the APK. It lists:
+  - never-hide dependencies: dialer, Telecom, in-call UI, cell broadcast service, receiver and alert display, Play services, Play Store, default SMS app, selected keyboard, permission controller, WebView provider, setup and account components, and manufacturer emergency components;
+  - minimum UI entries.
+
+  The inventory outranks the allowlist and the classifier. If the inventory is missing or invalid, there is no broad sweep and no Ready.
+- **If both policy copies are invalid,** the **emergency-safe baseline** applies. It is compiled from the build inventory and does not depend on any copy that can change: never-hide dependencies, minimum UI entries, Messages, and every restriction. Plainphone then shows "Plainphone needs attention". The baseline helps only while Plainphone can run.
 - **Order of application:** journal revoke → restrictions → never-hide guard → hides → lock task → home preference. Each step is read back.
 - **When it runs:** at locked and unlocked boot, on package events, after trusted-person actions, and every 15 minutes.
 - **The policy engine** is a pure function.
@@ -230,7 +254,7 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 - **[The in-task block flag breaks a normal day]** → Q1, run with the flag on and off. The UI exceptions list has negative tests. Otherwise, a revised ADR.
 - **[Play doesn't update unattended]** → Q2: the monthly check plus a Play services warning. If Q2 fails outright, a revised ADR.
 - **[Must-have apps break]** → Q4 against the real app list counts as go/no-go.
-- **[Sessions stay open if Plainphone can't run]** → custody, the journal, revoking at every start, and disclosure. If Q12 measures an unbounded gap, that is a go/no-go failure.
+- **[Sessions stay open if Plainphone can't run]** → custody, the journal, revoking at every start, a protected-state check before handback, and disclosure. Beaux's explicit acceptance is required. Without it, an independent revocation mechanism becomes a G0 question.
 - **[A Plainphone update crashes]** → signature and version checks, the Q6 crash test, and the recovery path.
 - **[Recovery wipe]** → reset protection with the trusted person's and a backup person's IDs. Their ability to sign in elsewhere is checked. FRP does not reinstall Plainphone.
 - **[Preinstalls and pushed apps]** → sweep before Wi-Fi, then the package watcher.
@@ -257,8 +281,9 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 2. Who is the trusted person for each phone, and who is the backup person?
 3. License: Apache-2.0?
 4. What are the must-have apps on each phone?
-5. Do you accept the stated leftover risks?
+5. Do you accept the stated leftover risks, and the **custody limit**? (If Plainphone can't run during a supervised session, the session stays open until a helper fixes the phone.)
 6. Which carrier and plan?
-7. Who holds the release signing key?
+7. Who holds the release signing key, and who keeps its offline backup?
+8. Do either of you rely on Wi-Fi that needs a sign-in page (hotels, hospitals, ferries, work), or on Wi-Fi calling where there is no mobile signal?
 
 **For the spike:** Q1–Q14 in `docs/feasibility-questions.md`.

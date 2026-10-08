@@ -33,6 +33,7 @@
 
 **Q2. Do approved apps keep getting updates while the user can't reach Play?**
 - Tests S1–S4 and S7 from `research/evidence/app-updates-under-lockdown.md`.
+- **Monthly check (R6):** SMS failure, no service, permission revoked, dual-SIM with no default selected. Confirm the reminder retries and the home-screen line appears after 7 days.
 - **Update source (N10):** preinstalled Google apps rolled back with `adb shell pm uninstall-system-updates <pkg>`, so Play has a real update waiting. Run the same app and account without restrictions as the comparison. If Play offers no update, the result is **inconclusive**, not a failure. Nothing is published to Play.
 - **Forced vs. unattended:** run the forced update job (`cmd jobscheduler`) as a diagnostic, then separately run 72 hours unattended with no forcing. Only the unattended run counts as automatic updating.
 - **S7:** measure the time from install to hidden. Check whether a deep link or the share sheet can open the new app during that gap.
@@ -63,7 +64,7 @@
 - Check that hidden apps and restrictions survive a Play update of an allowed app, a Play update of a hidden app, and a system image update.
 
 **Q7. Can turning Plainphone off finish without a wipe, and resume after interruptions?** *(device: releasing without a wipe is **yes** for the test-only spike, PLA-5 A2. The full restore list is still open.)*
-- Kill the process after each of the 6 turn-off steps, then reboot. Check that it resumes, that "Off" is reported only when every step is done, and that photos and messages survive.
+- Kill the process after each item on the turn-off restore list, and again just before and just after Device Owner removal, then reboot. Check that it resumes, that "Off" is reported only when every step is done, and that photos and messages survive.
 - Test that every item on the restore list is read back. Test that another home screen and the dialer resolve before Device Owner is removed. *If turning off can't avoid a wipe:* revise the promise and get Beaux's approval. Never fall back to a wipe silently.
 
 **Q10. Does reset protection with the trusted person's `userId` block setup after a recovery-mode wipe?**
@@ -76,15 +77,18 @@
 - Turn the screen off, take an incoming call, kill Plainphone, reboot, let the deadline pass in the middle of an install, and leave nested Play, account and help screens open.
 - After each, try to reach Play, approve an app, or use adb.
 - **Failure model:** use a build that crashes on every start while a session is journaled. Measure how long the relaxation stays live, checked continuously, not only after Plainphone reopens. Repeat before the first unlock.
-- **Results:** *pass* = the journal is revoked at every start, including locked boot. *No-go* = a relaxation outlives the session without a deliberately broken build. That means revising the ADR.
+- Run everything for **both** session kinds, Play and Settings. In a Settings session, also go through: search, app info and defaults, account, help and privacy screens, keyboards and accessibility, connected devices, and alert settings. Try to change the default SMS app, Plainphone's SMS permission and the keyboards. Then confirm the protected-state check restores them.
+- **What gets recorded (R1):**
+  - whether revocation runs first on every start where Plainphone can run, including locked boot. A *no* here is a no-go.
+  - for a build that crashes on every start, how long and how much stays reachable. This is **reported against the custody limit Beaux accepted**. It is not a pass/fail of "cannot happen". If Beaux has not accepted that limit, an independent revocation mechanism becomes a G0 question.
 - **Plainphone update from local Wi-Fi:** wrong signer refused, lower version refused, adb never enabled.
 
 **Q14. Does the emergency gate behave correctly?**
-- Run the D4 UI test in every listed state, including the negative-control build, which must fail.
+- Run the D5 / essential-calling UI test in every listed state, including the negative-control build, which must fail.
 - Run with the block flag on, during setup, during a PIN lockout and during a Play session.
-- Check that Alert Ready–style cell broadcasts still show where the emulator can inject them; otherwise record **not verified**. Negative controls: Emergency goes nowhere, dialer missing from lock task, alert display disabled. Each must fail the gate.
+- Check that Alert Ready–style cell broadcasts still show where the emulator can inject them. Where it can't, record **inconclusive**, which blocks release until covered. Negative controls: Emergency goes nowhere, dialer missing from lock task, alert display disabled. Each must fail the gate.
 - States: before first unlock, lock screen, home, inside an approved app via Home, setup, PIN lockout, supervised session, Plainphone update, turning off, after restart, Plainphone can't start.
-- **[device, before handover]** Emergency dialer in every state without placing a call; an incoming call answered and its keypad sending tones; alert receiver present; manufacturer emergency components on the never-hide list. A live 9-1-1 call only under a separate procedure agreed with E-Comm or the carrier and approved by Beaux.
+- **[device, before handover]** Emergency dialer in every state without placing a call; an incoming call answered and its keypad sending tones; an alert **observed** on screen (a scheduled Alert Ready test or an approved test method), or else the phone stays in custody or Beaux records acceptance of a narrower promise; manufacturer emergency components on the never-hide list. A live 9-1-1 call only under a separate procedure agreed with E-Comm or the carrier and approved by Beaux.
 
 **Q8. Do texting and calling defaults work?**
 - `setDefaultSmsApplication` → Google Messages persists.

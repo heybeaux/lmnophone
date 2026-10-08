@@ -6,7 +6,7 @@ The repo SHALL include `docs/setup-guide.md` and one setup script.
 The guide SHALL list, in order:
 1. back up the phone;
 2. remove its accounts and reset it **through Settings**;
-3. in the first-boot wizard, skip Wi-Fi, every account and every app recommendation;
+3. with the SIM removed and eSIM profiles disabled, go through the first-boot wizard, skipping Wi-Fi, every account and every app recommendation;
 4. enable USB debugging;
 5. run the script;
 6. finish setup on the phone.
@@ -15,7 +15,9 @@ The script SHALL refuse to continue unless all of these hold:
 - the phone model and build are on the approved list;
 - `ro.boot.verifiedbootstate` is green;
 - the bootloader reports locked;
-- no accounts are present.
+- no accounts are present;
+- no network is active (no Wi-Fi, no mobile data);
+- a build inventory exists for this model and build fingerprint.
 
 It SHALL then install Plainphone and run `dpm set-device-owner`.
 
@@ -29,14 +31,22 @@ Timing SHALL be measured from the first script command to the green handover che
 - **WHEN** the script runs on a phone whose bootloader is unlocked or whose verified boot is not green
 - **THEN** it stops, explains why, and does not install Plainphone
 
-### Requirement: Preinstalled and pushed apps are swept before Wi-Fi
-Before the phone joins any network, Plainphone SHALL hide every package that is not on the never-hide list, the essential list, or the allowlist. This includes manufacturer preinstall services, for example Digital Turbine `com.dti.motorola`.
+### Requirement: Preinstalled and pushed apps are swept before any network
+While the phone has no active network, Plainphone SHALL hide every package that is not in the build inventory and not on the allowlist. This includes manufacturer preinstall services, for example Digital Turbine `com.dti.motorola`, and preloaded apps such as Facebook.
 
-After joining Wi-Fi, the package-added watcher SHALL catch anything pushed later.
+The inventory's Play Store, keyboard, setup and account components SHALL stay usable.
+
+Before the sweep, Plainphone SHALL first test the emergency-safe baseline (calls, Emergency, SMS).
+
+Only after the sweep SHALL the guide have the helper insert the SIM and join Wi-Fi. After that, the package-added watcher SHALL catch anything pushed later.
 
 #### Scenario: Preinstall service pushes games
-- **WHEN** the phone joins Wi-Fi after provisioning, and a preinstall service installs games
+- **WHEN** the phone joins Wi-Fi after the sweep, and a preinstall service installs games
 - **THEN** none of them can be opened, and the handover check lists them as hidden
+
+#### Scenario: Network already active
+- **WHEN** the script finds Wi-Fi or mobile data active before provisioning
+- **THEN** it stops and asks the helper to disconnect, and does not provision
 
 ### Requirement: On-phone setup is a helper-custody phase with authenticated resume
 After provisioning, Plainphone SHALL take the helper through these steps:
@@ -54,20 +64,28 @@ Once the PIN exists, resuming setup SHALL require it. Plainphone SHALL NOT enter
 - **WHEN** the phone restarts after step 2, and someone other than the helper picks it up
 - **THEN** setup asks for the PIN before it continues
 
-### Requirement: Reset-protection account IDs are collected without secrets
-The guide SHALL have the trusted person, on **their own** device, open Google's People API `people.get` "Try it" page with `resourceName=people/me` and `personFields=names`. They SHALL check that the returned name is theirs, and copy only the digits after `people/`.
+### Requirement: Reset-protection account IDs are collected without secrets, from the right account
+The guide SHALL walk the trusted person through these steps, on **their own** device:
+1. Open Google's People API `people.get` "Try it" page.
+2. Pick the exact intended account in Google's account picker. A display name alone is not enough.
+3. Authenticate the request with `resourceName=people/me` and `personFields=names`.
+4. Copy the digits after `people/` as text.
 
-Plainphone SHALL show the digits back for confirmation. No token, password or other account data SHALL be collected.
+Plainphone SHALL show the digits back for confirmation. No email, token, password or other account data SHALL be collected or logged.
 
 The helper SHALL record that the trusted person confirmed both of these:
-- they can sign in to that Google account from a device other than either Plainphone phone;
-- their second factor does not live only on a Plainphone phone.
+- they can sign in to that account from a device other than either Plainphone phone;
+- their second factor is not only on a Plainphone phone.
 
-The guide SHALL note that new Google accounts can take 72 hours before they work for reset protection. If Beaux and the trusted person are each other's trusted person, the guide SHALL recommend a backup person.
+**New accounts.** An account under 72 hours old SHALL be entered, then re-tested after 72 hours. A matching readback is not proof that reset protection is ready. Q10 on the target phone gates handover.
 
-#### Scenario: Wrong account selected
-- **WHEN** the returned name is not the trusted person's
-- **THEN** the guide tells them to switch accounts and repeat, and setup does not continue until the name matches
+**Backup person.** If Beaux and the trusted person are each other's trusted person, the guide SHALL recommend adding a backup person.
+
+The guide SHALL be dry-run, before release, by someone who did not write it, on a computer signed in to several accounts with the same display name.
+
+#### Scenario: Same-name accounts
+- **WHEN** the trusted person's computer has two Google accounts with the same display name
+- **THEN** the guide's account-picker step makes them choose by account address, and the dry run confirms the right ID was copied
 
 ### Requirement: Handover check gates "Ready"
 At the end of setup, Plainphone SHALL run a self-check. For each item it SHALL show green, or a plain-language failure with the fix:
@@ -80,7 +98,8 @@ At the end of setup, Plainphone SHALL run a self-check. For each item it SHALL s
 - the never-hide list is intact, including manufacturer emergency components;
 - the emergency self-test passes;
 - Play auto-update confirmed;
-- the preinstall sweep is complete.
+- the preinstall sweep is complete;
+- an end-to-end test text reached the trusted person, who confirmed it.
 
 Plainphone SHALL NOT say "Ready" while any item fails. The one exception is reset protection, which may pass with Beaux's explicit recorded acceptance.
 

@@ -41,12 +41,12 @@ The lock task packages SHALL be exactly the **lock-task UI list**:
 - Plainphone
 - the approved apps
 - the system dialer, and the in-call screen package if it is separate
-- the reviewed UI exceptions list
+- the minimum UI entries in the build inventory
 - the packages of an open supervised session, while that session is open
 
 Lock task features SHALL include `HOME`, `KEYGUARD`, `GLOBAL_ACTIONS`, `NOTIFICATIONS`, `SYSTEM_INFO` and `BLOCK_ACTIVITY_START_IN_TASK`. They SHALL NOT include `OVERVIEW`.
 
-Each UI exception SHALL have a negative test showing that Settings, the Play Store and web content cannot be reached through it. Packages that share a UID with a lock-task package SHALL be listed and covered by the same tests.
+Each minimum UI entry, apart from Plainphone and approved apps, SHALL have a negative test showing that Settings, the Play Store and web content cannot be reached through it. Packages that share a UID with a lock-task package SHALL be listed and covered by the same tests.
 
 #### Scenario: An approved app opens Settings in a new task
 - **WHEN** an approved app starts a Settings activity with `FLAG_ACTIVITY_NEW_TASK`
@@ -93,36 +93,73 @@ From unlock until lock task starts, no unapproved app SHALL be openable from:
 - **WHEN** the user unlocks right after a reboot and taps a queued notification from an unapproved app
 - **THEN** the app does not open
 
-### Requirement: Policy storage is atomic, validated, and falls back to a built-in safe policy
-Plainphone SHALL write its policy atomically, check the schema version before applying it, and keep a last-known-good copy.
+### Requirement: One reviewed inventory per supported build drives protection, sweeping and fallback
+Plainphone SHALL ship, compiled into the APK, a versioned **build inventory** for each supported phone model and build fingerprint. Each inventory has two lists.
 
-A minimal copy SHALL be kept in device-protected storage. It holds:
-- the setup-complete flag
-- the never-hide list
-- the lock-task UI list
-- the PIN and recovery counters
-- the supervised-session journal
+**(a) Never-hide dependencies.** These SHALL never be hidden, suspended or disabled:
+- system dialer, Telecom and the in-call UI;
+- cell broadcast service, receiver and alert display;
+- Google Play services and the Play Store;
+- the default SMS app;
+- the selected keyboard;
+- the permission controller;
+- the WebView provider;
+- setup and account components needed on that build;
+- manufacturer emergency components found by Q13.
 
-If both the policy and the last-known-good copy are invalid, Plainphone SHALL apply a **built-in safe policy** compiled into the APK. It allows only Plainphone, Phone and Messages, applies every restriction, and keeps the never-hide list. Plainphone SHALL then show "Plainphone needs attention".
+**(b) Minimum UI entries.** The packages whose screens lock task SHALL allow:
+- Plainphone;
+- the system dialer and in-call UI;
+- Messages;
+- any others Q1 proves necessary.
 
-Policy SHALL be applied in this order, with each step read back:
-1. revoke anything left open in the session journal
-2. restrictions
-3. never-hide guard
-4. hides
-5. lock-task packages and features
-6. home preference
+**Rules:**
+- **Precedence.** Inventory entries outrank allowlist decisions and classifier results.
+- **No inventory, no sweep.** If the running build has no inventory, or its inventory fails validation, Plainphone SHALL NOT run a broad hide sweep, and setup SHALL NOT report Ready.
 
-Plainphone SHALL re-apply the policy:
-- on `LOCKED_BOOT_COMPLETED` and `BOOT_COMPLETED`
-- on every package event
-- after every trusted-person action
-- every 15 minutes
+#### Scenario: Unknown build
+- **WHEN** Plainphone runs on a build fingerprint that has no inventory, for example after an OTA
+- **THEN** it keeps the current hidden state, hides nothing new except packages that match the browser classifier, and shows "Plainphone needs attention: this phone software isn't reviewed yet"
+
+### Requirement: Policy storage is atomic, validated, and falls back to an emergency-safe baseline
+Plainphone SHALL write its policy atomically, check its schema version before applying it, and keep a last-known-good copy.
+
+**Device-protected copy.** A minimal copy, protected by a checksum, SHALL be kept in device-protected storage. It holds:
+- the setup-complete flag;
+- the PIN and recovery counters;
+- the supervised-session journal.
+
+**Emergency-safe baseline.** The baseline SHALL be compiled into the APK and SHALL NOT depend on any copy that can change. It consists of:
+- the build inventory's never-hide dependencies and minimum UI entries;
+- Messages;
+- every restriction.
+
+**When the baseline applies.** If both the policy and its last-known-good copy are invalid, Plainphone SHALL apply the baseline and show "Plainphone needs attention".
+
+**Order of application.** Plainphone SHALL apply policy in this order, reading back each step:
+1. revoke the session journal (a damaged journal means revoke all relaxations);
+2. restrictions;
+3. never-hide guard;
+4. hides;
+5. lock-task packages and features;
+6. home preference.
+
+**Locked-boot path.** The path that runs at `LOCKED_BOOT_COMPLETED` SHALL use only device-protected data. It SHALL do only steps 1 and 2 and the never-hide guard, then read them back.
+
+**When to re-apply.** Plainphone SHALL re-apply policy at locked boot and unlocked boot, on every package event, after every trusted-person action, and every 15 minutes.
+
+**Limits that SHALL be disclosed:**
+- The baseline helps only while Plainphone can run.
+- When Plainphone cannot run, the phone relies on the system lock screen, the system dialer, and the recovery path.
 
 #### Scenario: Corrupt policy and backup
-- **WHEN** both the policy file and the last-known-good copy are truncated
-- **THEN** Plainphone applies the built-in safe policy, Phone, Messages and Emergency work, and "Plainphone needs attention" is shown
+- **WHEN** both the policy file and its last-known-good copy are truncated
+- **THEN** Plainphone applies the emergency-safe baseline. Calls (incoming and outgoing), the in-call UI, Emergency, alerts and SMS keep working, and "Plainphone needs attention" is shown.
+
+#### Scenario: Damaged journal
+- **WHEN** the session journal's checksum fails
+- **THEN** Plainphone removes every possible session package from lock task and runs the protected-state check before the user can use the phone
 
 #### Scenario: An update unhides a package
-- **WHEN** an unapproved package becomes visible after a system or app update
+- **WHEN** an unapproved package becomes visible after a system or app update on a build that has an inventory
 - **THEN** Plainphone hides it again within 15 minutes, and lock task stops it opening in the meantime

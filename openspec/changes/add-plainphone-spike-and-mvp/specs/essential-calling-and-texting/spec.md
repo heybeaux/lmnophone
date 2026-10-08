@@ -1,13 +1,12 @@
 ## ADDED Requirements
 
 ### Requirement: Plainphone never obstructs emergency access
-The **never-hide list** SHALL contain:
-- the system dialer
-- Telecom
-- the cell broadcast receiver, along with any separate alert-display package
-- Google Play services
-- the default SMS app
-- every manufacturer emergency component found on the supported build by Q13, such as an SOS or emergency-information app on Motorola
+The **never-hide list** SHALL be the build inventory's never-hide dependencies (device-lockdown). It covers at least:
+- the system dialer, Telecom and the in-call UI;
+- the cell broadcast service, receiver and alert display;
+- Google Play services;
+- the default SMS app;
+- every manufacturer emergency component found on that build by Q13, such as an SOS or emergency-information app on Motorola.
 
 The policy engine SHALL refuse any policy that would hide, suspend, disable or uninstall a package on this list, or disable any of its components.
 
@@ -40,7 +39,7 @@ The build SHALL include an instrumented test of the emergency flow. It SHALL:
 - dial an emulator-simulated emergency number through Telecom;
 - check that an emulator-injected cell broadcast alert is displayed, where the image supports injection.
 
-Results SHALL be recorded honestly. Where injection is not possible, the alert check SHALL be recorded as "not verified", never as "pass".
+Results SHALL be recorded honestly. Where the image cannot inject an alert, the alert check and its negative control SHALL be recorded as **inconclusive**. Inconclusive is never a pass, and it blocks release until a supported image or the device check below covers it.
 
 The gate SHALL **fail** for each of these negative-control builds:
 - Emergency resolves to nothing;
@@ -54,21 +53,30 @@ A failing gate SHALL block release. Emulator results SHALL NOT be presented as p
 - **THEN** the gate fails
 
 ### Requirement: Real-device emergency checks before handover to a user
-Before a phone is handed to Beaux or the trusted person for daily use, each of these SHALL pass on that phone's model and build:
-- the emergency dialer opens in every state above, without placing a call;
-- an incoming call can be answered, and its in-call keypad sends tones (DTMF) to the caller during lock task. E-Comm's automatic callback menu needs a keypress;
-- the alert receiver and its settings are present and not hidden;
-- the manufacturer emergency components found by Q13 are on the never-hide list.
+Before a phone is handed to Beaux or the trusted person for daily use, all of the following SHALL pass on that phone's model and build:
 
-A live 9-1-1 test call SHALL be placed only under a separate procedure agreed with E-Comm or the carrier and approved by Beaux.
+- **Emergency dialer.** It opens in every state listed above, without placing a call.
+- **Incoming calls.** An incoming call can be answered under lock task, and its in-call keypad sends tones (DTMF) to the caller. E-Comm's automatic callback needs a keypress.
+- **Alert display, observed.** An alert is actually seen on the phone, using one of these:
+  - an Alert Ready scheduled public test that is observed on the phone;
+  - a carrier- or manufacturer-supported test method that Beaux approves.
 
-An Alert Ready message that could not be observed SHALL be recorded as "not verified".
+  Seeing that the receiver is present is not enough.
+- **Manufacturer components.** The manufacturer emergency components found by Q13 are on the never-hide list.
 
-Until all of these checks pass, the phone stays in supervised test custody.
+**If alert display cannot be observed,** the phone SHALL do one of these:
+- stay in supervised test custody;
+- be handed over only after Beaux explicitly accepts, in a recorded decision, that alert display is unverified on that build. The promise is then narrowed to "alerts are not blocked by Plainphone's policy".
+
+**Live 9-1-1 test call.** One SHALL be placed only under a separate procedure, agreed with E-Comm or the carrier and approved by Beaux.
 
 #### Scenario: Callback keypad
 - **WHEN** a test call comes in on the phone in lock task, and the user presses 1 on the in-call keypad
 - **THEN** the caller hears the tone
+
+#### Scenario: Alert not observable
+- **WHEN** no Alert Ready test happens during the test window, and there is no approved test method
+- **THEN** the phone is not handed over unless Beaux has recorded his acceptance of the narrowed promise
 
 ### Requirement: Incoming calls are never filtered
 Plainphone SHALL NOT block, screen, silence or hide incoming calls, and SHALL NOT interfere with E-Comm's automatic callback after a 9-1-1 hang-up.
