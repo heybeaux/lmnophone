@@ -29,7 +29,7 @@ A session SHALL NOT relax anything other than what this table names. Every sessi
 | Invariant | Expected | Readback | Repair | If repair fails |
 |---|---|---|---|---|
 | User restrictions | the policy set | `getUserRestrictions` | re-add | non-handback state |
-| Lock-task packages and features | policy list + floor; features incl. BLOCK | `getLockTaskPackages`/`Features` | re-set | non-handback state |
+| Lock-task packages and features | policy list + emergency UI subset (not the whole floor); features incl. BLOCK | `getLockTaskPackages`/`Features` | re-set | non-handback state |
 | Floor and never-hide packages | unhidden and enabled | `isApplicationHidden`, enabled state | unhide | non-handback state |
 | Browser role | Plainphone | `RoleManager` | re-request role | non-handback state |
 | Default SMS | Google Messages | `ROLE_SMS` holder | `setDefaultSmsApplication` | non-handback state |

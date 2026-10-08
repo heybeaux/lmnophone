@@ -1,6 +1,6 @@
 # Plainphone: what we're asking Beaux to approve
 
-Draft, revision 2, 2026-10-08. Prepared by the Plainphone Lead. It goes to Beaux only after the Verifier's cross-model review passes.
+Revision 3, 2026-10-08. Prepared by the Plainphone Lead (Claude). Cross-model review by the Verifier & Escape Artist (OpenAI model) across PLA-3, PLA-4, PLA-7, PLA-8, PLA-9 and PLA-10. Final verdict: **approve with changes**; the changes are applied here, and none needed re-review.
 
 ## The short version
 
@@ -80,7 +80,7 @@ These are requirements we test against. They are **not yet proven** on the phone
   - we prepare and review that build's list of protected system apps;
   - we send it as a signed Plainphone update;
   - the helper installs it from a laptop on your Wi-Fi;
-  - we re-run the emergency and alert checks on that build before normal support resumes.
+  - before normal support resumes, we run the handover self-check and re-run the emergency and alert checks on that build.
 
   Android lets us **postpone** an update by up to 30 days, but some security updates may install anyway. So not every update can wait for our review. This lasts as long as the phones are in use.
 - **Helper, occasionally.** Install Plainphone's own updates, and help with recovery.
@@ -97,7 +97,7 @@ These are things Plainphone **can't** fully stop or promise. We'd rather say so 
 - **Wi-Fi that needs a sign-in page** (hotels, hospitals, ferries, some workplaces) won't work. Mobile data and normal Wi-Fi are fine. The emergency button doesn't depend on Wi-Fi. But no phone can call without either a cell signal or working Wi-Fi. If either of you relies on sign-in Wi-Fi, or on Wi-Fi calling where there's no cell signal, tell us.
 - **The custody limit.** The trusted person can unlock the Play Store or Settings for a few minutes, and must stay with the phone while it's unlocked. During that time, Play Store and Settings help and account pages can show web content. If Plainphone stops working while unlocked, the unlock stays open until a helper repairs the phone. That could be from a crash, a bad update, or a storage fault. The phone is never handed back until everything checks out. If you don't accept this, we have to find a different mechanism first, and that becomes a go/no-go question.
 - **Background activity.** An app installed without approval can't be **opened**. But if hiding it fails, it may run in the background **without a guaranteed time limit**.
-- **After an Android update, before our review.** Plainphone keeps the phone in locked mode, keeps emergency features working, and doesn't hide newly appeared system apps until we've reviewed them. Two gaps remain until the review is done:
+- **After an Android update, before our review.** Plainphone keeps the phone in locked mode and is designed to preserve emergency access; that build still needs the checks above. It doesn't hide newly appeared system apps until we've reviewed them. Two gaps remain until the review is done:
   - an update could add a new route inside an app that is already allowed;
   - an update could add an app that Android groups with an allowed one (they share an identity).
 
@@ -110,7 +110,7 @@ These are things Plainphone **can't** fully stop or promise. We'd rather say so 
   - the phone stays with us; or
   - you separately accept a narrower promise for **that build only**.
 
-  An exception for one build never carries over to the next.
+  That separate exception records what we could not verify, including whether we proved that our test catches a disabled alert display. It applies only to alerts on that exact build. An exception for one build never carries over to the next.
 
 ## What happens after you approve
 

@@ -40,7 +40,7 @@ Plainphone SHALL run in multi-app lock task mode.
 The lock task packages SHALL be exactly the **lock-task UI list**:
 - Plainphone
 - the approved apps
-- the system dialer, and the in-call screen package if it is separate
+- the **emergency UI subset** from the runtime emergency floor: the system dialer, the system emergency-dialer package, and the system dialer's in-call UI package
 - the minimum UI entries in the build inventory
 - the packages of an open supervised session, while that session is open
 
@@ -167,14 +167,14 @@ Plainphone SHALL ship, compiled into the APK, a versioned **build inventory** fo
 **Ownership.** The Plainphone team owns reviewing each new build and delivering its inventory. The Android Platform Engineer prepares it; the Verifier reviews it. Delivery is a signed Plainphone update over local Wi-Fi.
 
 **On a fingerprint with no inventory (an unknown build), Plainphone SHALL:**
-1. keep lock task running, with the previous UI list plus the runtime emergency floor;
-2. unhide any previously hidden package the floor now computes, so emergency dependencies fail open;
+1. keep lock task running, with the previous UI list plus the emergency UI subset;
+2. unhide any previously hidden package that the floor now computes, so emergency dependencies fail open. Only the emergency UI subset is added to lock task; other floor members (keyboards, WebView, permission controller) are unhidden but get no UI access;
 3. hide nothing new except user-installed (non-system) packages. It SHALL NOT hide newly classified system packages.
 4. record which packages were added or changed compared with the last supported build, and show them in trusted-person mode under "Phone software changed – review pending";
 5. text the trusted person and the helper.
 
 **What still holds on an unknown build.**
-- Nothing outside the lock-task list can be opened in the foreground.
+- Foreground eligibility remains limited to the lock-task UI list and Android's shared-UID extensions, subject to the residual risks below.
 - New system packages are neither hidden nor approved. They cannot be opened in the foreground unless Android treats them as lock-task-eligible because they share a UID with an allowed package. That exception is the residual risk below.
 - Residual risk: a new route inside an already-allowed package, or a new package that shares a UID with one. This SHALL be disclosed, and Beaux SHALL accept it as part of the custody and leftover-risk acceptance.
 
@@ -185,7 +185,7 @@ Plainphone SHALL ship, compiled into the APK, a versioned **build inventory** fo
 
 #### Scenario: OTA to an unknown build
 - **WHEN** the phone updates to a fingerprint that has no inventory
-- **THEN** lock task stays on, emergency floor packages are unhidden and allowed, no system package is newly hidden, the trusted person and helper are texted, and trusted-person mode lists the changed packages
+- **THEN** lock task stays on, emergency floor packages are unhidden, only the emergency UI subset is added to lock task, no system package is newly hidden, the trusted person and helper are texted, and trusted-person mode lists the changed packages
 
 #### Scenario: A previously hidden package becomes an emergency dependency
 - **WHEN** after an OTA, a **system** package Plainphone had hidden now resolves the emergency dialer intent under `MATCH_SYSTEM_ONLY`
@@ -220,7 +220,9 @@ Plainphone SHALL write its policy atomically, check its schema version before ap
 6. lock-task packages and features;
 7. home preference.
 
-**Locked-boot path.** At `LOCKED_BOOT_COMPLETED`, Plainphone SHALL use only device-protected data. It SHALL do only steps 1–3 and the never-hide guard, then read them back.
+**Locked-boot path.** At `LOCKED_BOOT_COMPLETED`, Plainphone SHALL use only device-protected data. It SHALL do only these steps, then read them back:
+- steps 1–3, where step 3 includes restoring the emergency UI subset's lock-task membership;
+- the never-hide guard.
 
 **When to re-apply.** Plainphone SHALL re-apply policy at locked and unlocked boot, on package events, after trusted-person actions, and every 15 minutes.
 

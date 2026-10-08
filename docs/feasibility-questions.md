@@ -76,7 +76,7 @@
 - Escape list items: E01, E04, E05 (including a previously authorised adb host), E06, E12, E13, E15, E21, E25, E29.
 - The Verifier's vectors F1–F14 from the PLA-3 review.
 
-**Q6. Do boot, Plainphone replacement and policy damage recover safely?** *(N4: the result must be "no unapproved app opened in the foreground at any point during recovery")*
+**Q6. Do boot, Plainphone replacement and policy damage recover safely?** *(N4: the result must be "no unapproved app opened in the foreground at any point during recovery", apart from the disclosed unknown-build exceptions: new routes inside allowed packages, and shared-UID eligibility. The user-installed emergency-filter fixture must fail unconditionally.)*
 - Reboot and stay at the lock screen. Install a package before the first unlock. Kill Plainphone between policy steps. Update Plainphone to a build signed with the same key. Feed it a truncated policy and a policy with an unknown version.
 - Unlock immediately after a reboot, and try to open an unapproved app with a queued notification, an explicit intent and a deep link before Plainphone's home screen appears.
 - With both policy copies corrupt: the emergency-safe baseline must apply.
