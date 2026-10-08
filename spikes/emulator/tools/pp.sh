@@ -4,7 +4,7 @@
 S="${1:?serial}"
 case "$S" in emulator-5590|emulator-5604|SPARE_DEVICE_SERIAL) echo "REFUSED: $S is not ours"; return 1 2>/dev/null || exit 1;; esac
 A() { adb -s "$S" "$@" < /dev/null; }
-cmd() { A shell am broadcast -a com.plainphone.spike.emu.CMD -n com.plainphone.spike.emu/.CommandReceiver --es cmd "'$*'" | sed -n 's/.*data="\(.*\)"/\1/p;s/^Broadcast completed: result=0$/(no data)/p'; }
+cmd() { A shell am broadcast -a com.plainphone.spike.emu.CMD -n com.plainphone.spike.emu/.CommandReceiver --es cmd "'$*'" | perl -0ne 'if (/data="(.*)"\s*$/s) { print "$1\n" } elsif (/result=0\s*$/) { print "(no data)\n" }'; }
 shot() { A exec-out screencap -p > "$1"; }
 top() { A shell dumpsys activity activities | grep -E "topResumedActivity|ResumedActivity:" | head -2; }
 ui() { A shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; A shell cat /sdcard/ui.xml; }
