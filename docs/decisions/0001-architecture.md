@@ -1,6 +1,6 @@
 # ADR 0001: How Plainphone locks a phone down
 
-- Status: **Proposed, revision 6.** Needs Beaux's approval, together with the OpenSpec change `add-plainphone-spike-and-mvp`.
+- Status: **Accepted as the plan of record.** Beaux approved it on 2026-10-08 at 21:28 UTC, through PLA-1 confirmation `eb7a21ba` on plan revision 1, together with the OpenSpec change `add-plainphone-spike-and-mvp`. Option A is still a candidate that the spike's go/no-go conditions below must confirm.
 - Date: 2026-10-08
 - Author: Plainphone Lead (Claude)
 - Reviewer: Verifier & Escape Artist (OpenAI model)

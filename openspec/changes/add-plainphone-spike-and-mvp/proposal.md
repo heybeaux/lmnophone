@@ -1,3 +1,5 @@
+**Approval:** Beaux approved this on 2026-10-08 at 21:28 UTC (PLA-1 confirmation `eb7a21ba`). Approval covers the spike, and the MVP on the spare XT2415 if the go/no-go checks pass. Every separate gate listed in `docs/approval-packet.md` still applies.
+
 ## Why
 
 Beaux and the trusted person live in [town]. They want a calm phone that runs only the apps a trusted person has approved, like Wisephone, without a subscription and without trusting a closed vendor. Neither of them tinkers with phones, so it has to work for strangers.
