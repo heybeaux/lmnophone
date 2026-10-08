@@ -1,0 +1,52 @@
+## S4.1 hidden Play 2026-10-08T22:59:10Z
+--- versions before
+com.google.ar.core versionName=0 lastUpdateTime=2026-10-08 12:56:35
+com.google.android.gms versionName=26.37.37 lastUpdateTime=2026-10-08 13:04:39
+com.android.vending versionName=53.4.34-34 lastUpdateTime=2026-10-08 13:03:06
+com.google.android.apps.messaging versionName=messages.android_20240806_01_RC02.phone_dynamic lastUpdateTime=2026-10-08 12:56:35
+com.google.android.GoogleCamera  
+com.google.android.apps.photos versionName=7.11.0.705590205 lastUpdateTime=2026-10-08 12:56:35
+com.google.android.gm versionName=2024.08.18.666993204.Release lastUpdateTime=2026-10-08 12:56:35
+hide com.android.vending -> true
+hidden=true
+Running job [FORCED]
+Running job [FORCED]
+Running job [FORCED]
+Running job [FORCED]
+Running job [FORCED]
+Running job [FORCED]
+Running job [FORCED]
+Running job [FORCED]
+--- logcat 60 s after forcing jobs (Finsky / install lines)
+10-08 15:59:13.825 D/BatteryCare( 5858): [BatteryInfoRepository] removeUninstallPackage: com.android.vending
+10-08 15:59:13.826 D/JobScheduler( 1860): executeRunCommand(): com.android.vending/null/0 10209 s=false f=true
+10-08 15:59:13.829 W/ActivityManager( 1860): Unable to start service Intent { flg=0x4 cmp=com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground } U=0: not found
+10-08 15:59:13.829 E/JobScheduler.Concurrency( 1860): Error executing JobStatus{9f98a8 #u0a270/10209 com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground u=0 s=10270 NET CHARGING IDLE system stops=1 READY}
+10-08 15:59:13.866 D/JobScheduler( 1860): executeRunCommand(): com.android.vending/null/0 10229 s=false f=true
+10-08 15:59:13.868 W/ActivityManager( 1860): Unable to start service Intent { flg=0x4 cmp=com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground } U=0: not found
+10-08 15:59:13.868 E/JobScheduler.Concurrency( 1860): Error executing JobStatus{92cf665 #u0a270/10229 com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground u=0 s=10270 TIME=+9h0m46s149ms:+12h0m46s149ms NET IDLE READY}
+10-08 15:59:13.869 W/ActivityManager( 1860): Unable to start service Intent { flg=0x4 cmp=com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground } U=0: not found
+10-08 15:59:13.869 E/JobScheduler.Concurrency( 1860): Error executing JobStatus{9f98a8 #u0a270/10209 com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground u=0 s=10270 NET CHARGING IDLE system stops=1 READY}
+10-08 15:59:13.904 D/JobScheduler( 1860): executeRunCommand(): com.android.vending/null/0 10230 s=false f=true
+10-08 15:59:13.907 W/ActivityManager( 1860): Unable to start service Intent { flg=0x4 cmp=com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground } U=0: not found
+10-08 15:59:13.908 E/JobScheduler.Concurrency( 1860): Error executing JobStatus{92cf665 #u0a270/10229 com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground u=0 s=10270 TIME=+9h0m46s109ms:+12h0m46s109ms NET IDLE READY}
+10-08 15:59:13.909 W/ActivityManager( 1860): Unable to start service Intent { flg=0x4 cmp=com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground } U=0: not found
+10-08 15:59:13.909 E/JobScheduler.Concurrency( 1860): Error executing JobStatus{255df3a #u0a270/10230 com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground u=0 s=10270 TIME=+2h58m22s574ms:+8h58m22s573ms IDLE READY}
+10-08 15:59:13.909 W/ActivityManager( 1860): Unable to start service Intent { flg=0x4 cmp=com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground } U=0: not found
+10-08 15:59:13.910 E/JobScheduler.Concurrency( 1860): Error executing JobStatus{9f98a8 #u0a270/10209 com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground u=0 s=10270 NET CHARGING IDLE system stops=1 READY}
+10-08 15:59:13.946 D/JobScheduler( 1860): executeRunCommand(): com.android.vending/null/0 9859 s=false f=true
+10-08 15:59:13.951 W/ActivityManager( 1860): Unable to start service Intent { flg=0x4 cmp=com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground } U=0: not found
+10-08 15:59:13.951 E/JobScheduler.Concurrency( 1860): Error executing JobStatus{92cf665 #u0a270/10229 com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground u=0 s=10270 TIME=+9h0m46s67ms:+12h0m46s67ms NET IDLE READY}
+10-08 15:59:13.951 W/ActivityManager( 1860): Unable to start service Intent { flg=0x4 cmp=com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground } U=0: not found
+10-08 15:59:13.952 E/JobScheduler.Concurrency( 1860): Error executing JobStatus{255df3a #u0a270/10230 com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground u=0 s=10270 TIME=+2h58m22s531ms:+8h58m22s530ms IDLE READY}
+10-08 15:59:13.952 W/ActivityManager( 1860): Unable to start service Intent { flg=0x4 cmp=com.android.vending/com.google.android.finsky.scheduler.process.mainimpl.PhoneskyJobServiceMain } U=0: not found
+10-08 15:59:13.953 E/JobScheduler.Concurrency( 1860): Error executing JobStatus{83f3167 #u0a270/9859 com.android.vending/com.google.android.finsky.scheduler.process.mainimpl.PhoneskyJobServiceMain u=0 s=10270 TIME=+18h25m36s812ms:+15d18h25m36s812ms NET READY}
+10-08 15:59:13.954 W/ActivityManager( 1860): Unable to start service Intent { flg=0x4 cmp=com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground } U=0: not found
+10-08 15:59:13.954 E/JobScheduler.Concurrency( 1860): Error executing JobStatus{9f98a8 #u0a270/10209 com.android.vending/com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground u=0 s=10270 NET CHARGING IDLE system stops=1 READY}
+--- vending jobs still registered: 8
+--- vending process: 
+--- side check: DPC reinstall of t2 while Play (required verifier) is hidden
+OK session 1431850870 committed (result in logcat PPSPIKE)
+10-08 16:00:26.682 D/SdkSandboxVerifier( 1860): Received sdk sandbox verification intent Intent { act=android.intent.action.PACKAGE_NEEDS_VERIFICATION dat=file:///... typ=application/vnd.android.package-archive flg=0x10000011 (has extras) }
+10-08 16:00:26.682 D/SdkSandboxVerifier( 1860): Extras Bundle[{android.content.pm.extra.USER_ACTION_REQUIRED=false, android.content.pm.extra.VERIFICATION_INSTALLER_UID=10438, android.content.pm.extra.VERIFICATION_ID=8, android.content.pm.extra.VERIFICATION_PACKAGE_NAME=com.plainphone.spike.target, android.content.pm.extra.VERIFICATION_INSTALL_FLAGS=71303186, android.content.pm.extra.DATA_LOADER_TYPE=0, android.content.pm.extra.VERIFICATION_LONG_VERSION_CODE=2, android.content.pm.extra.SESSION_ID=1431850870, android.content.pm.extra.VERIFICATION_VERSION_CODE=2, android.content.pm.extra.VERIFICATION_INSTALLER_PACKAGE=com.plainphone.spike.dpc}]
+10-08 16:00:26.682 D/SdkSandboxVerifier( 1860): Restrictions disabled. Sent VERIFICATION_ALLOW

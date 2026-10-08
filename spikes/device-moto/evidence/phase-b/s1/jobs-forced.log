@@ -1,0 +1,158 @@
+T0=2026-10-08T22:52:18Z
+10-08 15:52:19.014 I/Finsky:background(11802): [2] IQ: Connection has changed false
+10-08 15:52:19.089 I/Finsky:background(11802): [43] IQ: start evaluating install requests.
+10-08 15:52:19.198 I/Finsky:background(11802): [43] IQ: There are 4 installs pending for job 34: [com.google.android.tzdata6, mainline_train_primary, com.google.mainline.telemetry, com.google.mainline.adservices]
+10-08 15:52:19.223 I/Finsky:background(11802): [43] IQ: 4 scheduled install statuses found to proceed. 
+10-08 15:52:19.263 E/Finsky:background(11802): [2] IQ: Error checking active profile paused app updates
+10-08 15:52:19.277 I/Finsky:background(11802): [2] IQ: Connection has changed false
+10-08 15:52:20.387 I/Finsky:background(11802): [46] IQ: proceed install request for [Package:com.google.mainline.telemetry, isid:XzyHpR7rTIizpi_2re89rw].
+10-08 15:52:20.389 I/Finsky:background(11802): [46] IQ: Notifying installation update. [Package:com.google.mainline.telemetry, isid:XzyHpR7rTIizpi_2re89rw] state:DOWNLOAD_PENDING, status=DOWNLOAD_PENDING, status_code=0, reason=auto_update, tsc=PT2M17.479S, attempt=0
+10-08 15:52:20.544 I/Finsky:background(11802): [44] IQ: Requesting install request=package_name=com.google.mainline.telemetry, pm_package_name=com.google.mainline.telemetry, version=372059000, priority=3, reason=auto_update, account_name=[[redacted]], type=0, isid=XzyHpR7rTIizpi_2re89rw, install_tier_type=INSTALL_TIER_TYPE_UNSPECIFIED, group_info=com.google.mainline.telemetry:372059000:2057766808, package_install_infos=com.google.android.os.statsd:372040000,com.google.mainline.telemetry:372059000, constraints=((REQ_CHARGING, REQ_DEVICE_IDLE, REQ_GEARHEAD_PROJECTION_OFF, IGNORE_HOLDOFF=true, NETWORK=UNMETERED, PROVISIONING_STATE=PROVISIONED, BACKUP_MANAGER_STATE=BACKUP_READY, AUTHENTICATION_REQUIRED),), install_primary_identifier=UNKNOWN_ACTION_SURFACE using installer.
+10-08 15:52:20.554 I/Finsky:background(11802): [143] IV2::EIU: install request for [Package:com.google.mainline.telemetry, isid:XzyHpR7rTIizpi_2re89rw] doesn't require existing install.
+10-08 15:52:20.554 I/Finsky:background(11802): [143] IV2::FGCV: Foreground check passed for com.google.mainline.telemetry
+10-08 15:52:20.575 I/Finsky:background(11802): [43] IV2::DRV: install for [Package:com.google.mainline.telemetry, isid:XzyHpR7rTIizpi_2re89rw] not tracked by installer.
+10-08 15:52:20.620 I/Finsky:background(11802): [143] IV2: adding timeout to install 21
+10-08 15:52:20.637 I/Finsky  (16470): [38] VerifyApps: Setup app restrictions monitor
+10-08 15:52:20.663 I/Finsky  (16470): [38] VerifyApps: Device wide unknown source restriction updated
+10-08 15:52:20.755 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:20.769 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:20.785 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:20.786 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:20.786 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.os.statsd, isid:-3gs3mXqShGDhU0oiJ9vqg] statusCode=5402.
+10-08 15:52:20.787 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.mainline.telemetry, isid:p4evsBaFTmu6-ZMhR-dgTQ] statusCode=5402.
+10-08 15:52:20.836 I/Finsky:background(11802): [143] IV2: stopping install timeout for 21
+10-08 15:52:20.863 E/Finsky:background(11802): [143] IV2: Rejecting request for [Package:com.google.mainline.telemetry, isid:XzyHpR7rTIizpi_2re89rw] statusCode: 5402
+10-08 15:52:20.986 I/Finsky:background(11802): [138] IQ: Using RuleBased RetryStrategyFactoryImpl.
+10-08 15:52:20.988 I/Finsky:background(11802): [138] IQ: Notifying installation update. [Package:com.google.mainline.telemetry, isid:XzyHpR7rTIizpi_2re89rw] state:INSTALL_ERROR, status=INSTALL_ERROR, status_code=5402, reason=auto_update, tsc=PT2M18.079S, attempt=0
+10-08 15:52:21.084 I/Finsky:background(11802): [46] IQ: proceed install request for [Package:mainline_train_primary, isid:RQm_d7eUTEilqKjlNU-HNA].
+10-08 15:52:21.086 I/Finsky:background(11802): [46] IQ: Notifying installation update. [Package:mainline_train_primary, isid:RQm_d7eUTEilqKjlNU-HNA] state:DOWNLOAD_PENDING, status=DOWNLOAD_PENDING, status_code=0, reason=auto_update, tsc=PT2M18.174S, attempt=0
+10-08 15:52:21.150 I/Finsky:background(11802): [46] IQ: Requesting install request=package_name=mainline_train_primary, pm_package_name=mainline_train_primary, version=372546000, priority=3, reason=auto_update, account_name=[[redacted]], type=0, isid=RQm_d7eUTEilqKjlNU-HNA, install_tier_type=INSTALL_TIER_TYPE_UNSPECIFIED, group_info=mainline_train_primary:372546000:2090443145, package_install_infos=com.google.android.conscrypt:372042640,com.google.android.media:372038420,com.google.android.sdkext:372038020,com.google.android.healthfitness:372042540,com.google.android.modulemetadata:372546000,com.google.android.wifi:372042280,com.google.android.appsearch:372042080,com.google.android.media.swcodec:372042380,com.google.android.art:372042720,com.google.android.cellbroadcast:372042180,com.google.android.permission:372527060,com.google.android.tethering:372038420,com.google.android.neuralnetworks:372038020,com.google.android.captiveportallogin:372038020,com.google.android.extservices:372038023,com.google.android.adbd:372038020,com.google.android.documentsui:372519000,com.google.android.ipsec:372038020,com.google.android.resolv:372038020,com.google.android.networkstack:372042760,com.google.android.scheduling:372038320,com.google.android.mediaprovider:372042780,com.google.android.configinfrastructure:372038020, constraints=((REQ_CHARGING, REQ_DEVICE_IDLE, REQ_GEARHEAD_PROJECTION_OFF, IGNORE_HOLDOFF=true, NETWORK=UNMETERED, PROVISIONING_STATE=PROVISIONED, BACKUP_MANAGER_STATE=BACKUP_READY, AUTHENTICATION_REQUIRED),), install_primary_identifier=UNKNOWN_ACTION_SURFACE using installer.
+10-08 15:52:21.161 I/Finsky:background(11802): [143] IV2::EIU: install request for [Package:mainline_train_primary, isid:RQm_d7eUTEilqKjlNU-HNA] doesn't require existing install.
+10-08 15:52:21.162 I/Finsky:background(11802): [143] IV2::FGCV: Foreground check passed for mainline_train_primary
+10-08 15:52:21.164 I/Finsky:background(11802): [48] IV2::DRV: install for [Package:mainline_train_primary, isid:RQm_d7eUTEilqKjlNU-HNA] not tracked by installer.
+10-08 15:52:21.223 I/Finsky:background(11802): [143] IV2: adding timeout to install 22
+10-08 15:52:21.475 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.477 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.480 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.480 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.481 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.conscrypt, isid:NGjc3MlPRoCYSI28e_OczA] statusCode=5402.
+10-08 15:52:21.484 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.486 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.487 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.488 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.media, isid:Z1mCW1ZwTNamr5xcr79bHw] statusCode=5402.
+10-08 15:52:21.488 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.490 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.491 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.493 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.494 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.496 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.497 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.499 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.500 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.502 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.503 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.505 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.507 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.508 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.510 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.512 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.514 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.516 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.517 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.sdkext, isid:C_YCugGYQUKEYUQwFjUFjg] statusCode=5402.
+10-08 15:52:21.517 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.519 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.519 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.healthfitness, isid:njuIeDVeROagPi5keQCrxg] statusCode=5402.
+10-08 15:52:21.519 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.520 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.520 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.modulemetadata, isid:jyOaSAYZQ-iSGluPGtiOQA] statusCode=5402.
+10-08 15:52:21.520 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.wifi, isid:HR0ylDC2QaOABHGdyolHOQ] statusCode=5402.
+10-08 15:52:21.520 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.521 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.521 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.522 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.522 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.522 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.522 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.522 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.523 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.523 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.523 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.524 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.524 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.appsearch, isid:rGntteNMR7avaJSlJ7xNuQ] statusCode=5402.
+10-08 15:52:21.524 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.524 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.524 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.524 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.media.swcodec, isid:DRlOecC5QpuCj3U2PlB8zg] statusCode=5402.
+10-08 15:52:21.524 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.525 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.525 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.art, isid:8uGVwK-PTw-nnreEgjXezg] statusCode=5402.
+10-08 15:52:21.525 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.cellbroadcast, isid:sWJYdvAwTNekBYSR30ByZA] statusCode=5402.
+10-08 15:52:21.526 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.permission, isid:YHzOgNLrTomVkq_0MoUH3A] statusCode=5402.
+10-08 15:52:21.526 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.tethering, isid:OUQ05lCfTh-xXwkd22Hpsg] statusCode=5402.
+10-08 15:52:21.527 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.neuralnetworks, isid:MrlP0DyBQnappej81h_yUg] statusCode=5402.
+10-08 15:52:21.527 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.captiveportallogin, isid:FVNXcqSURcSRIhz2Hf7-1A] statusCode=5402.
+10-08 15:52:21.528 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.extservices, isid:ADAbkyZSTVSXHcYyXHl7kQ] statusCode=5402.
+10-08 15:52:21.528 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.adbd, isid:Nj-34sVuTN6uRScit9ttdA] statusCode=5402.
+10-08 15:52:21.529 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.documentsui, isid:mf29545SS8e74JZbGWHeyQ] statusCode=5402.
+10-08 15:52:21.529 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.ipsec, isid:eQc71J-uQ7iPp2n3OZfpKw] statusCode=5402.
+10-08 15:52:21.529 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.resolv, isid:luw4OheURmWCMyeJoLqRbQ] statusCode=5402.
+10-08 15:52:21.530 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.networkstack, isid:H0tn4PSNTlyeXZmnsRvkMg] statusCode=5402.
+10-08 15:52:21.530 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.scheduling, isid:J9_dbnrMQs-H_aQ74DXqSA] statusCode=5402.
+10-08 15:52:21.531 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.mediaprovider, isid:yR69EgzrT-aUE-ufwPC-nw] statusCode=5402.
+10-08 15:52:21.532 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.configinfrastructure, isid:FzwezsffRXCyqUbHmGP27Q] statusCode=5402.
+10-08 15:52:21.540 I/Finsky:background(11802): [143] IV2: stopping install timeout for 22
+10-08 15:52:21.545 E/Finsky:background(11802): [143] IV2: Rejecting request for [Package:mainline_train_primary, isid:RQm_d7eUTEilqKjlNU-HNA] statusCode: 5402
+10-08 15:52:21.707 I/Finsky:background(11802): [138] IQ: Using RuleBased RetryStrategyFactoryImpl.
+10-08 15:52:21.711 I/Finsky:background(11802): [138] IQ: Notifying installation update. [Package:mainline_train_primary, isid:RQm_d7eUTEilqKjlNU-HNA] state:INSTALL_ERROR, status=INSTALL_ERROR, status_code=5402, reason=auto_update, tsc=PT2M18.8S, attempt=0
+10-08 15:52:21.715 I/Finsky:background(11802): [43] IQ: proceed install request for [Package:com.google.android.tzdata6, isid:vyYbL_YVS6uVGMQE1gKxOA].
+10-08 15:52:21.716 I/Finsky:background(11802): [43] IQ: Notifying installation update. [Package:com.google.android.tzdata6, isid:vyYbL_YVS6uVGMQE1gKxOA] state:DOWNLOAD_PENDING, status=DOWNLOAD_PENDING, status_code=0, reason=auto_update, tsc=PT2M18.804S, attempt=0
+10-08 15:52:21.746 I/Finsky:background(11802): [44] IQ: Requesting install request=package_name=com.google.android.tzdata6, pm_package_name=com.google.android.tzdata6, version=372038420, priority=3, reason=auto_update, account_name=[[redacted]], type=0, isid=vyYbL_YVS6uVGMQE1gKxOA, install_tier_type=INSTALL_TIER_TYPE_UNSPECIFIED, group_info=com.google.android.tzdata6:372038420:-1084553437, package_install_infos=com.google.android.tzdata6:372038420, constraints=((REQ_CHARGING, REQ_DEVICE_IDLE, REQ_GEARHEAD_PROJECTION_OFF, IGNORE_HOLDOFF=true, NETWORK=UNMETERED, PROVISIONING_STATE=PROVISIONED, BACKUP_MANAGER_STATE=BACKUP_READY, AUTHENTICATION_REQUIRED),), install_primary_identifier=UNKNOWN_ACTION_SURFACE using installer.
+10-08 15:52:21.749 I/Finsky:background(11802): [143] IV2::EIU: install request for [Package:com.google.android.tzdata6, isid:vyYbL_YVS6uVGMQE1gKxOA] doesn't require existing install.
+10-08 15:52:21.749 I/Finsky:background(11802): [143] IV2::FGCV: Foreground check passed for com.google.android.tzdata6
+10-08 15:52:21.752 I/Finsky:background(11802): [46] IV2::DRV: install for [Package:com.google.android.tzdata6, isid:vyYbL_YVS6uVGMQE1gKxOA] not tracked by installer.
+10-08 15:52:21.767 I/Finsky:background(11802): [143] IV2: adding timeout to install 23
+10-08 15:52:21.790 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.792 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.793 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.tzdata6, isid:GEyQsBbRR5unmG1mNLed9A] statusCode=5402.
+10-08 15:52:21.800 I/Finsky:background(11802): [143] IV2: stopping install timeout for 23
+10-08 15:52:21.805 E/Finsky:background(11802): [143] IV2: Rejecting request for [Package:com.google.android.tzdata6, isid:vyYbL_YVS6uVGMQE1gKxOA] statusCode: 5402
+10-08 15:52:21.823 I/Finsky:background(11802): [138] IQ: Using RuleBased RetryStrategyFactoryImpl.
+10-08 15:52:21.825 I/Finsky:background(11802): [138] IQ: Notifying installation update. [Package:com.google.android.tzdata6, isid:vyYbL_YVS6uVGMQE1gKxOA] state:INSTALL_ERROR, status=INSTALL_ERROR, status_code=5402, reason=auto_update, tsc=PT2M18.913S, attempt=0
+10-08 15:52:21.826 I/Finsky:background(11802): [48] IQ: proceed install request for [Package:com.google.mainline.adservices, isid:3wmZJxbkT-auANSukjVRjA].
+10-08 15:52:21.827 I/Finsky:background(11802): [48] IQ: Notifying installation update. [Package:com.google.mainline.adservices, isid:3wmZJxbkT-auANSukjVRjA] state:DOWNLOAD_PENDING, status=DOWNLOAD_PENDING, status_code=0, reason=auto_update, tsc=PT2M18.914S, attempt=0
+10-08 15:52:21.860 I/Finsky:background(11802): [44] IQ: Requesting install request=package_name=com.google.mainline.adservices, pm_package_name=com.google.mainline.adservices, version=372057000, priority=3, reason=auto_update, account_name=[[redacted]], type=0, isid=3wmZJxbkT-auANSukjVRjA, install_tier_type=INSTALL_TIER_TYPE_UNSPECIFIED, group_info=com.google.mainline.adservices:372057000:196455848, package_install_infos=com.google.android.adservices:372038020,com.google.mainline.adservices:372057000,com.google.android.ondevicepersonalization:372038020, constraints=((REQ_CHARGING, REQ_DEVICE_IDLE, REQ_GEARHEAD_PROJECTION_OFF, IGNORE_HOLDOFF=true, NETWORK=UNMETERED, PROVISIONING_STATE=PROVISIONED, BACKUP_MANAGER_STATE=BACKUP_READY, AUTHENTICATION_REQUIRED),), install_primary_identifier=UNKNOWN_ACTION_SURFACE using installer.
+10-08 15:52:21.870 I/Finsky:background(11802): [143] IV2::EIU: install request for [Package:com.google.mainline.adservices, isid:3wmZJxbkT-auANSukjVRjA] doesn't require existing install.
+10-08 15:52:21.871 I/Finsky:background(11802): [143] IV2::FGCV: Foreground check passed for com.google.mainline.adservices
+10-08 15:52:21.871 I/Finsky:background(11802): [48] IV2::DRV: install for [Package:com.google.mainline.adservices, isid:3wmZJxbkT-auANSukjVRjA] not tracked by installer.
+10-08 15:52:21.884 I/Finsky:background(11802): [143] IV2: adding timeout to install 24
+10-08 15:52:21.919 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.921 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.923 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:21.926 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.926 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.adservices, isid:dd_OsyDKTJa_ObC5mDblSA] statusCode=5402.
+10-08 15:52:21.927 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.927 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.mainline.adservices, isid:ijDgKlO0SdWSkuB9tQDvBA] statusCode=5402.
+10-08 15:52:21.928 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:21.929 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.android.ondevicepersonalization, isid:z7NAcEV9RPqbAVEyMkidFg] statusCode=5402.
+10-08 15:52:21.942 I/Finsky:background(11802): [143] IV2: stopping install timeout for 24
+10-08 15:52:21.949 E/Finsky:background(11802): [143] IV2: Rejecting request for [Package:com.google.mainline.adservices, isid:3wmZJxbkT-auANSukjVRjA] statusCode: 5402
+10-08 15:52:21.977 I/Finsky:background(11802): [44] IQ: start evaluating install requests.
+10-08 15:52:21.978 I/Finsky:background(11802): [138] IQ: Using RuleBased RetryStrategyFactoryImpl.
+10-08 15:52:21.981 I/Finsky:background(11802): [138] IQ: Notifying installation update. [Package:com.google.mainline.adservices, isid:3wmZJxbkT-auANSukjVRjA] state:INSTALL_ERROR, status=INSTALL_ERROR, status_code=5402, reason=auto_update, tsc=PT2M19.067S, attempt=0
+10-08 15:52:22.021 I/Finsky:background(11802): [44] IQ: There are 0 installs pending for job 34: []
+10-08 15:52:22.068 I/Finsky:background(11802): [44] IQ: There are 1 installs pending for job 36: [com.google.ar.core]
+10-08 15:52:22.108 I/Finsky:background(11802): [44] IQ: 1 scheduled install statuses found to proceed. 
+10-08 15:52:22.113 I/Finsky:background(11802): [43] IQ: proceed install request for [Package:com.google.ar.core, isid:nnCun8tLRRe5lRxtjTSEtw].
+10-08 15:52:22.115 I/Finsky:background(11802): [43] IQ: Notifying installation update. [Package:com.google.ar.core, isid:nnCun8tLRRe5lRxtjTSEtw] state:DOWNLOAD_PENDING, status=DOWNLOAD_PENDING, status_code=0, reason=auto_update, tsc=PT2M19.786S, attempt=0
+10-08 15:52:22.134 I/Finsky:background(11802): [48] IQ: Requesting install request=package_name=com.google.ar.core, pm_package_name=com.google.ar.core, version=262080393, priority=2, reason=auto_update, account_name=[[redacted]], type=0, isid=nnCun8tLRRe5lRxtjTSEtw, install_tier_type=INSTALL_TIER_TYPE_UNSPECIFIED, constraints=((REQ_CHARGING, REQ_DEVICE_IDLE, REQ_GEARHEAD_PROJECTION_OFF, NETWORK=UNMETERED, PROVISIONING_STATE=PROVISIONED, BACKUP_MANAGER_STATE=BACKUP_READY, AUTHENTICATION_REQUIRED, PROCESS_IMPORTANCE_THRESHOLD=125),), install_primary_identifier=UNKNOWN_ACTION_SURFACE using installer.
+10-08 15:52:22.137 I/Finsky:background(11802): [143] IV2::EIU: Existing install found for update [Package:com.google.ar.core, isid:nnCun8tLRRe5lRxtjTSEtw].
+10-08 15:52:22.137 I/Finsky:background(11802): [143] IV2::FGCV: Foreground check passed for com.google.ar.core
+10-08 15:52:22.138 I/Finsky:background(11802): [43] IV2::DRV: install for [Package:com.google.ar.core, isid:nnCun8tLRRe5lRxtjTSEtw] not tracked by installer.
+10-08 15:52:22.157 I/Finsky:background(11802): [143] IV2: adding timeout to install 25
+10-08 15:52:22.174 I/Finsky:background(11802): [148] IV2: Setting install scenario: 0
+10-08 15:52:22.176 E/Finsky:background(11802): java.lang.SecurityException: User restriction prevents installing
+10-08 15:52:22.176 E/Finsky:background(11802): [143] IV2: failed to create session for [Package:com.google.ar.core, isid:nnCun8tLRRe5lRxtjTSEtw] statusCode=5402.
+10-08 15:52:22.182 I/Finsky:background(11802): [143] IV2: stopping install timeout for 25
+10-08 15:52:22.189 E/Finsky:background(11802): [143] IV2: Rejecting request for [Package:com.google.ar.core, isid:nnCun8tLRRe5lRxtjTSEtw] statusCode: 5402
+10-08 15:52:22.202 I/Finsky:background(11802): [138] IQ: Using RuleBased RetryStrategyFactoryImpl.
+10-08 15:52:22.204 I/Finsky:background(11802): [138] IQ: Notifying installation update. [Package:com.google.ar.core, isid:nnCun8tLRRe5lRxtjTSEtw] state:INSTALL_ERROR, status=INSTALL_ERROR, status_code=5402, reason=auto_update, tsc=PT2M19.875S, attempt=0

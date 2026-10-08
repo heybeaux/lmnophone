@@ -1,0 +1,88 @@
+## S4.2 Play unhidden, lock task (spike + target only) 2026-10-08T23:01:02Z
+unhide com.android.vending -> true
+OK lockTaskPackages=[com.plainphone.spike.target, com.plainphone.spike.dpc]
+ERROR NumberFormatException: For input string: "BLOCK_ACTIVITY_START_IN_TASK"
+OK relayed lt-start to MainActivity (result in logcat PPSPIKE)
+    mLockTaskModeState=LOCKED
+topResumedActivity=ActivityRecord{30b24e0 u0 com.plainphone.spike.dpc/.MainActivity t94}
+OK lockTaskFeatures=HOME|GLOBAL_ACTIONS|BLOCK (84)
+$ launch market://details?id=org.telegram.messenger (from spike, new task)
+topResumedActivity=ActivityRecord{30b24e0 u0 com.plainphone.spike.dpc/.MainActivity t94}
+$ launch same, same task
+topResumedActivity=ActivityRecord{30b24e0 u0 com.plainphone.spike.dpc/.MainActivity t94}
+text="App info"
+text="Close app"
+text="Moto App Launcher keeps stopping"
+$ press back
+topResumedActivity=ActivityRecord{30b24e0 u0 com.plainphone.spike.dpc/.MainActivity t94}
+--- logcat
+$ launch market://details?id=org.telegram.messenger (from spike, new task)
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+topResumedActivity=ActivityRecord{4a00c0 u0 android/com.android.internal.app.BlockedAppActivity t94}
+$ launch same, same task
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+topResumedActivity=ActivityRecord{40aa4bd u0 android/com.android.internal.app.BlockedAppActivity t94}
+text="App is not available"
+text="Google Play Store is not available right now."
+text="OK"
+--- logcat
+10-08 16:01:33.068 I/ActivityTaskManager( 1860): START u0 {flg=0x30000000 cmp=com.plainphone.spike.dpc/.MainActivity (has extras)} with LAUNCH_SINGLE_TASK from uid 10438 (startActivityAsUser) (BAL_ALLOW_VISIBLE_WINDOW) result code=3
+10-08 16:01:33.068 I/PPSPIKE ( 3424): cmd [launch action=android.intent.action.VIEW data=market://details?id=org.telegram.messenger newtask=1] -> OK relayed launch to MainActivity (result in logcat PPSPIKE)
+10-08 16:01:33.069 I/ActivityManager( 1860): Broadcast completed: result=1, data="OK relayed launch to MainActivity (result in logcat PPSPIKE)"
+10-08 16:01:33.089 I/BufferQueueDebug( 1233): [ActivityRecord{4a00c0 u0 android/com.android.internal.app.BlockedAppActivity#400](this:0xb4000077d15eb2f0,id:-1,api:0,p:-1,c:-1) BufferQueue core=(1233:/system/bin/surfaceflinger)
+10-08 16:01:33.094 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=market://details/... flg=0x10000000 cmp=com.android.vending/com.google.android.finsky.activities.MarketDeepLinkHandlerActivity} with LAUNCH_MULTIPLE from uid 10438 (startActivityAsUser) (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+10-08 16:01:33.096 I/PPSPIKE ( 3424): launch [action=android.intent.action.VIEW data=market://details?id=org.telegram.messenger newtask=1] startActivity returned normally: Intent { act=android.intent.action.VIEW dat=market://details/... flg=0x10000000 }
+10-08 16:01:33.098 V/WindowManagerShell( 2220): Transition requested (#40): android.os.BinderProxy@976a1b0 TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=94 displayId=0 isRunning=true baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.plainphone.spike.dpc/.MainActivity } baseActivity=ComponentInfo{com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity} topActivity=ComponentInfo{android/com.android.internal.app.BlockedAppActivity} origActivity=null realActivity=ComponentInfo{com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity} numActivities=2 lastActiveTime=4900418 supportsMultiWindow=false supportsGlobalFreeform=true resizeMode=0 isResizeable=false isAppLocked=false isShowDecorCaptionWindowRequest=false canKillAndRestart=false minWidth=-1 minHeight=-1 defaultMinSize=200 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@ae6a829} topActivityType=2 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=null topActivityInfo=ActivityInfo{42847ae com.android.internal.app.BlockedAppActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=true appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= falseisLetterboxEducationEnabled= false isLetterboxDoubleTapEnabled= false topActivityEligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=1080 topActivityLetterboxHeight=2400 isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false cameraCompatTaskInfo=CameraCompatTaskInfo { cameraCompatControlState=hidden freeformCameraCompatMode=inactive}}}, pipTask = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 40 }
+10-08 16:01:33.099 I/PPSPIKE ( 3424): lock(): state=1 permitted=true
+10-08 16:01:33.111 I/ActivityManager( 1860): Start proc 18987:android:ui/1000 for next-activity {android/com.android.internal.app.BlockedAppActivity}
+10-08 16:01:33.141 I/PowerHalWrapper( 1860): amsBoostNotify pid:18987,activity:com.android.internal.app.BlockedAppActivity, package:android, mProcessCreatePackandroid 
+10-08 16:01:33.145 I/mtkpower_client( 1860): [PowerHal_Wrap_notifyAppState] android/com.android.internal.app.BlockedAppActivity pid=18987 activityId:4849856 state:1
+10-08 16:01:33.145 I/mtkpower_client( 1860): [Legacy][PowerHal_Wrap_notifyAppState] android/com.android.internal.app.BlockedAppActivity pid=18987 state:4849856
+--- 2026-10-08T23:01:55Z forcing vending jobs under lock task (mLockTaskModeState=mLockTaskModeState=LOCKED)
+   1 com.google.android.apps.docs INSTALLED 0 auto_update
+   1 com.google.android.dialer DOWNLOAD_PENDING 0 auto_update
+   1 com.google.android.dialer INSTALL_ERROR 1055 auto_update
+   8 com.google.android.marvin.talkback DOWNLOADING 0 auto_update
+   1 com.google.android.marvin.talkback DOWNLOAD_PENDING 0 auto_update
+   1 com.google.android.marvin.talkback INSTALLED 0 auto_update
+   1 com.google.android.marvin.talkback INSTALLING 0 auto_update
+  12 com.google.android.projection.gearhead DOWNLOADING 0 auto_update
+   1 com.google.android.projection.gearhead DOWNLOAD_PENDING 0 auto_update
+   1 com.google.android.projection.gearhead INSTALLING 0 auto_update
+  10 com.google.android.videos DOWNLOADING 0 auto_update
+   1 com.google.android.videos INSTALLED 0 auto_update
+   1 com.google.android.videos INSTALLING 0 auto_update
+   2 com.motorola.audiorecorder DOWNLOADING 0 auto_update
+   1 com.motorola.audiorecorder DOWNLOAD_PENDING 0 auto_update
+--- 2026-10-08T23:07:55Z lock task still: mLockTaskModeState=LOCKED; top: u0 com.plainphone.spike.dpc/.MainActivity
+--- final state per package (last line wins), with first/last timestamps
+com.google.android.calculator first=16:07:26.135 last=16:07:28.614 INSTALLING 0
+com.motorola.aiservices first=16:07:11.719 last=16:07:25.180 INSTALLING 0
+com.motorola.fmplayer first=16:07:28.684 last=16:07:30.723 INSTALLING 0
+com.motorola.securevault first=16:07:25.242 last=16:07:26.089 INSTALLING 0
+com.motorola.securityhub first=16:07:30.796 last=16:07:33.685 INSTALLING 0
+--- version diff (before -> after)
+> [com.google.ambient.streaming] versionName=1.0.1305.987761788 lastUpdateTime=2026-10-08 16:02:27
+> [com.google.android.apps.docs] versionName=2.26.397.0.all.alldpi lastUpdateTime=2026-10-08 16:03:58
+> [com.google.android.apps.googleassistant] versionName=0.1.884448652 lastUpdateTime=2026-10-08 16:03:41
+> [com.google.android.apps.maps] versionName=26.40.00.989295350 lastUpdateTime=2026-10-08 16:05:49
+> [com.google.android.apps.messaging] versionName=messages.android_20261002_00_RC00.phone_dynamic lastUpdateTime=2026-10-08 16:06:39
+> [com.google.android.apps.photos] versionName=7.96.0.993165104 lastUpdateTime=2026-10-08 16:03:24
+> [com.google.android.apps.safetyhub] versionName=2026.09.16.982745548.0-release_gms lastUpdateTime=2026-10-08 16:05:27
+> [com.google.android.apps.tachyon] versionName=379.0.989469524.duo.android_20260928.02_p0 lastUpdateTime=2026-10-08 16:06:21
+> [com.google.android.apps.wellbeing] versionName=1.48.975819457 lastUpdateTime=2026-10-08 16:02:43
+> [com.google.android.apps.youtube.music] versionName=9.40.51 lastUpdateTime=2026-10-08 16:03:43
+> [com.google.android.as.oss] versionName=1.0.release.867877151 lastUpdateTime=2026-10-08 16:02:31
+> [com.google.android.as] versionName=V.41.playstore.oemfull.843410720 lastUpdateTime=2026-10-08 16:02:10
+> [com.google.android.deskclock] versionName=9.1 lastUpdateTime=2026-10-08 16:04:51
+> [com.google.android.euicc] versionName=D.2.1.975645525-gms lastUpdateTime=2026-10-08 16:02:39
+> [com.google.android.googlequicksearchbox] versionName=17.64.15.ve.arm64 lastUpdateTime=2026-10-08 16:07:12
+> [com.google.android.marvin.talkback] versionName=17.0.1.926549743 lastUpdateTime=2026-10-08 16:04:22
+> [com.google.android.partnersetup] versionName=100.966231907 lastUpdateTime=2026-10-08 16:01:59
+> [com.google.android.projection.gearhead] versionName=17.7.663654-release lastUpdateTime=2026-10-08 16:04:26
+> [com.google.android.tts] versionName=googletts.google-speech-apk_20260817.01_p0.966249458 lastUpdateTime=2026-10-08 16:02:50
+> [com.google.android.videos] versionName=4.39.4903.975565386.7-release lastUpdateTime=2026-10-08 16:04:09
+> [com.google.android.webview] versionName=154.0.8037.106 lastUpdateTime=2026-10-08 16:02:24
+> [com.motorola.audiorecorder] versionName=03.06.053 lastUpdateTime=2026-10-08 16:04:40
+> [com.motorola.timeweatherwidget] versionName=4.13.310 lastUpdateTime=2026-10-08 16:04:49
+--- dialer error

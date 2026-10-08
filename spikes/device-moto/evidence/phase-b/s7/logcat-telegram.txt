@@ -1,0 +1,83 @@
+10-08 16:10:57.567 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:10:57.575 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:57.575 I/WindowManager( 1860):   Force removing ActivityRecord{6d161a5 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t104}
+10-08 16:10:57.822 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:10:57.862 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:57.862 I/WindowManager( 1860):   Force removing ActivityRecord{dbf52aa u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t105}
+10-08 16:10:57.879 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:57.881 I/WindowManager( 1860):   Force removing ActivityRecord{dbf52aa u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t105 f} isExiting}
+10-08 16:10:57.885 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:57.885 I/WindowManager( 1860):   Force removing ActivityRecord{dbf52aa u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t105 f} isExiting}
+10-08 16:10:58.112 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:10:58.130 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:58.130 I/WindowManager( 1860):   Force removing ActivityRecord{f38fe28 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t106}
+10-08 16:10:58.200 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:58.203 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:58.380 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:10:58.392 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:58.399 I/WindowManager( 1860):   Force removing ActivityRecord{248e01e u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t107}
+10-08 16:10:58.619 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:10:58.676 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:58.676 I/WindowManager( 1860):   Force removing ActivityRecord{36adade u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t108}
+10-08 16:10:58.734 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:58.747 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:58.870 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:10:58.886 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:58.906 I/WindowManager( 1860):   Force removing ActivityRecord{ff64add u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t109}
+10-08 16:10:58.946 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:59.011 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:59.148 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:10:59.193 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:59.193 I/WindowManager( 1860):   Force removing ActivityRecord{6f9bb47 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t110}
+10-08 16:10:59.258 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:59.258 I/WindowManager( 1860):   Force removing ActivityRecord{6f9bb47 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t110 f} isExiting}
+10-08 16:10:59.307 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:59.485 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:10:59.514 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:59.514 I/WindowManager( 1860):   Force removing ActivityRecord{9fbcfca u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t111}
+10-08 16:10:59.581 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:59.597 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:59.775 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:10:59.802 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:59.802 I/WindowManager( 1860):   Force removing ActivityRecord{8c0e493 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t112}
+10-08 16:10:59.810 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:10:59.810 I/WindowManager( 1860):   Force removing ActivityRecord{8c0e493 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t112 f} isExiting}
+10-08 16:10:59.836 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:00.009 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:11:00.028 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:00.028 I/WindowManager( 1860):   Force removing ActivityRecord{5ce763a u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t113}
+10-08 16:11:00.285 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:11:00.294 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:00.295 I/WindowManager( 1860):   Force removing ActivityRecord{aec6289 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t114}
+10-08 16:11:00.439 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:00.443 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:00.525 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:11:00.547 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:00.547 I/WindowManager( 1860):   Force removing ActivityRecord{d168ba2 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t115}
+10-08 16:11:00.577 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:00.577 I/WindowManager( 1860):   Force removing ActivityRecord{d168ba2 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t115 f} isExiting}
+10-08 16:11:00.580 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:00.581 I/WindowManager( 1860):   Force removing ActivityRecord{d168ba2 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t115 f} isExiting}
+10-08 16:11:00.770 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:11:00.776 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:00.792 I/WindowManager( 1860):   Force removing ActivityRecord{49c2c4d u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t116}
+10-08 16:11:01.005 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:11:01.012 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:01.013 I/WindowManager( 1860):   Force removing ActivityRecord{af5147b u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t117}
+10-08 16:11:01.252 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:11:01.269 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:01.269 I/WindowManager( 1860):   Force removing ActivityRecord{1d81274 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t118}
+10-08 16:11:01.285 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:01.285 I/WindowManager( 1860):   Force removing ActivityRecord{1d81274 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t118 f} isExiting}
+10-08 16:11:01.292 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: start failure
+10-08 16:11:01.293 I/WindowManager( 1860):   Force removing ActivityRecord{1d81274 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t118 f} isExiting}
+10-08 16:11:01.602 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:11:01.738 I/ActivityManager( 1860): Start proc 29585:org.telegram.messenger/u0a444 for next-top-activity {org.telegram.messenger/org.telegram.ui.LaunchActivity}
+10-08 16:11:01.958 I/ActivityTaskManager( 1860): START u0 {act=android.intent.action.VIEW dat=tg://resolve/... flg=0x10000000 cmp=org.telegram.messenger/org.telegram.ui.LaunchActivity} with LAUNCH_SIN
+10-08 16:11:02.089 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: pkg removed
+10-08 16:11:02.101 W/ActivityTaskManager( 1860): Force removing ActivityRecord{ca37cc2 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t119 f}}: app died, no saved state
+10-08 16:11:02.276 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: pkg removed
+10-08 16:11:02.276 I/WindowManager( 1860):   Force removing ActivityRecord{ca37cc2 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t119 f} isExiting}
+10-08 16:11:02.357 I/ActivityManager( 1860): Force stopping org.telegram.messenger appid=10444 user=0: hiding pkg
+10-08 16:11:02.357 I/WindowManager( 1860):   Force removing ActivityRecord{ca37cc2 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t119 f} isExiting}
+10-08 16:11:29.099 I/PPSPIKE ( 3424): watch: com.google.android.calendar added (replacing=true) allowed, left visible

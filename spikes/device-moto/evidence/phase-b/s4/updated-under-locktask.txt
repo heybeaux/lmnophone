@@ -1,0 +1,25 @@
+# packages updated by Play after 23:01:55Z (16:01:55 local) with lock task LOCKED; time is local PDT
+16:01:59  com.google.android.partnersetup  100.642292252 -> 100.966231907
+16:02:10  com.google.android.as  V.5.playstore.oemfull.651703547 -> V.41.playstore.oemfull.843410720
+16:02:24  com.google.android.webview  127.0.6533.103 -> 154.0.8037.106
+16:02:27  com.google.ambient.streaming  1.0 -> 1.0.1305.987761788
+16:02:31  com.google.android.as.oss  1.0.release.650247599 -> 1.0.release.867877151
+16:02:39  com.google.android.euicc  D.2.1.668067476-gms -> D.2.1.975645525-gms
+16:02:43  com.google.android.apps.wellbeing  1.15.657317133 -> 1.48.975819457
+16:02:50  com.google.android.tts  googletts.google-speech-apk_20240805.01_p0.659565918 -> googletts.google-speech-apk_20260817.01_p0.966249458
+16:03:24  com.google.android.apps.photos  7.11.0.705590205 -> 7.96.0.993165104
+16:03:41  com.google.android.apps.googleassistant  0.1.601924805 -> 0.1.884448652
+16:03:43  com.google.android.apps.youtube.music  7.16.52 -> 9.40.51
+16:03:58  com.google.android.apps.docs  2.24.337.1.all.alldpi -> 2.26.397.0.all.alldpi
+16:04:09  com.google.android.videos  4.39.1453.597601570.6-release -> 4.39.4903.975565386.7-release
+16:04:22  com.google.android.marvin.talkback  15.0.0.639625893 -> 17.0.1.926549743
+16:04:26  com.google.android.projection.gearhead  1.2.541450-stub -> 17.7.663654-release
+16:04:40  com.motorola.audiorecorder  03.02.313 -> 03.06.053
+16:04:49  com.motorola.timeweatherwidget  4.11.11 -> 4.13.310
+16:04:51  com.google.android.deskclock  7.9.1 -> 9.1
+16:05:27  com.google.android.apps.safetyhub  2024.06.27.647248839.release_gms -> 2026.09.16.982745548.0-release_gms
+16:05:49  com.google.android.apps.maps  11.143.0305 -> 26.40.00.989295350
+16:06:21  com.google.android.apps.tachyon  259.0.664552474.duo.android_20240818.16_p0 -> 379.0.989469524.duo.android_20260928.02_p0
+16:06:39  com.google.android.apps.messaging  messages.android_20240806_01_RC02.phone_dynamic -> messages.android_20261002_00_RC00.phone_dynamic
+16:07:12  com.google.android.googlequicksearchbox  15.33.38.28.arm64 -> 17.64.15.ve.arm64
+# total: 23

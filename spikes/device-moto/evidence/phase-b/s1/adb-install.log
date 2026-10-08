@@ -1,0 +1,55 @@
+## 2026-10-08T22:56:42Z restriction set: restrictions=[no_install_apps]
+$ adb install t1.apk  (new install, restricted)
+Performing Streamed Install
+adb: failed to install /Users/user/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t1.apk: 
+Exception occurred while executing 'install':
+java.lang.SecurityException: User restriction prevents installing
+	at com.android.server.pm.PackageInstallerService.createSessionInternal(PackageInstallerService.java:672)
+	at com.android.server.pm.PackageInstallerService.createSession(PackageInstallerService.java:658)
+	at com.android.server.pm.PackageManagerShellCommand.doCreateSession(PackageManagerShellCommand.java:4031)
+	at com.android.server.pm.PackageManagerShellCommand.doRunInstall(PackageManagerShellCommand.java:1643)
+	at com.android.server.pm.PackageManagerShellCommand.runInstall(PackageManagerShellCommand.java:1585)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:256)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6788)
+	at android.os.Binder.shellC
+$ restrict-clear no_install_apps
+OK cleared no_install_apps
+$ adb install t1.apk  (baseline, unrestricted)
+Performing Streamed Install
+adb: failed to install /Users/user/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t1.apk: Failure [INSTALL_FAILED_TEST_ONLY: Failed to install test-only apk. Did you forget to add -t?]
+
+$ restrict-add no_install_apps
+OK added no_install_apps
+$ adb install -r t2.apk  (update, restricted)
+Performing Streamed Install
+adb: failed to install /Users/user/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t2.apk: 
+Exception occurred while executing 'install':
+java.lang.SecurityException: User restriction prevents installing
+	at com.android.server.pm.PackageInstallerService.createSessionInternal(PackageInstallerService.java:672)
+	at com.android.server.pm.PackageInstallerService.createSession(PackageInstallerService.java:658)
+	at com.android.server.pm.PackageManagerShellCommand.doCreateSession(PackageManagerShellCommand.java:4031)
+	at com.android.server.pm.PackageManagerShellCommand.doRunInstall(PackageManagerShellCommand.java:1643)
+	at com.android.server.pm.PackageManagerShellCommand.runInstall(PackageManagerShellCommand.java:1585)
+	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:256)
+	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+	at android.os.ShellCommand.exec(ShellCommand.java:38)
+	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6788)
+	at android.os.Binder.shellC
+
+## rerun with -t (target is testOnly) 2026-10-08T22:56:50Z
+$ restrict-clear no_install_apps
+OK cleared no_install_apps
+$ adb install -t t1.apk  (baseline, unrestricted)
+Performing Streamed Install
+Success
+    versionCode=1 minSdk=34 targetSdk=35
+$ restrict-add no_install_apps
+OK added no_install_apps
+$ adb install -r -t t2.apk  (update of installed app, restricted)
+Performing Streamed Install
+adb: failed to install /Users/user/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t2.apk: 
+Exception occurred while executing 'install':
+java.lang.SecurityException: User restriction prevents installing
+    versionCode=1 minSdk=34 targetSdk=35

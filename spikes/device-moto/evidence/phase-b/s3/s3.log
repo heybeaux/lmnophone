@@ -1,0 +1,31 @@
+## S3 2026-10-08T22:58:53Z
+OK cleared no_install_apps
+$ dumpsys package | grep -A3 -i verifiers
+  Verifier:
+    com.android.vending
+  Browser:
+    com.android.chrome
+--
+Verifiers:
+  Required: com.android.vending (uid=10270)
+
+Domain Verifier:
+  Using: com.google.android.gms (uid=10244)
+
+Libraries:
+--
+        7e5f52c com.google.android.verifier/.features.lite.impl.standard.LiteAuthorizationActivity
+      app:
+        51d7241 com.motorola.demo/.ui.display.ScreensaverActivity
+        38a5fd6 com.motorola.coresettingsext/.motosecure.FeatureTipActivity
+--
+        7e5f52c com.google.android.verifier/.features.lite.impl.standard.LiteAuthorizationActivity
+        fda70af com.facebook.appmanager/com.facebook.oxygen.appmanager.webinstall.WebInstallAppLinkFB4ARestrictedActivity
+$ suspend com.android.vending
+suspend com.android.vending -> refused=[com.android.vending]
+    User 0: ceDataInode=4661 deDataInode=1902 installed=true hidden=false suspended=false distractionFlags=0 stopped=false notLaunched=false enabled=1 instant=false virtual=false quarantined=false
+    User 0: ceDataInode=0 deDataInode=0 installed=true hidden=false suspended=false distractionFlags=0 stopped=false notLaunched=false enabled=0 instant=false virtual=false quarantined=false
+$ also: suspend gms
+suspend com.google.android.gms -> refused=[]
+unsuspend com.google.android.gms -> refused=[]
+deviceOwner=true lockTaskModeState=0 lockTaskPackages=[] lockTaskFeatures=GLOBAL_ACTIONS restrictions=[] hidden=[] suspended=[com.android.vending] locked=false debugLiftAt=0

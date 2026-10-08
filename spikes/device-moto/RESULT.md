@@ -26,7 +26,12 @@
 | A5 Q13 Motorola extras | **yes** | 20 extras + 3 Facebook installer packages hide cleanly; hiding breaks nothing core; BLOCK off leaks same-task starts of 6 of them until hidden. Hiding the Moto launcher closes the A4 crash escape (≥60 s → ~0.5 s). Clone/private/managed profiles are blocked by DO base restrictions. Gestures not tested (physical). |
 | A6 Q6 reboot survival | **yes** | 21 hidden apps, 4 restrictions and the HOME pin all survive a reboot. `no_config_default_apps` never takes effect on this build. |
 | A7 Q7 release without wipe | **yes** | `clearDeviceOwnerApp()` from inside lock task: no owners, all unhidden, restrictions cleared, no wipe, both test photos byte-identical (MD5). |
-| S1–S4, S7 | not yet run | Phase B, needs Beaux's sign-in. |
+| Phase B sign-in | done | **Test account, signed in by the agent** (board comment 9a1887c6), not Beaux's personal account. No 2-step prompt. All 7 sync items turned off. |
+| S1 `DISALLOW_INSTALL_APPS` vs Play | **yes, it blocks** | Play auto-updates fail with `SecurityException: User restriction prevents installing` (Finsky status 5402); `adb install -r` also fails. |
+| S2 clear → install → re-add | **yes** | DO install while restricted fails at `createSession`; clear → silent install (588 ms, no prompt) → re-add: about 0.83 s window on the phone. |
+| S3 suspend Play | **no** | `setPackagesSuspended([com.android.vending])` is refused: Play is the required package verifier. |
+| S4 hidden Play vs lock task | **lock task: yes; hidden: no** | Hidden Play: its jobs can't start, so nothing updates. Lock task with Play unhidden: `market://` is blocked, and **23 apps updated in the background within 6 min**. |
+| S7 install race | **partly** | DPC hid a newly installed app 4.6 s after `firstInstallTime`. Deep links failed for ~4 s (package frozen), but the app's **process started ~0.35 s before the hide**; no window was displayed. |
 
 ## A0. Baseline
 
@@ -464,7 +469,143 @@ Harness notes (not device findings): the first two release attempts missed. Firs
 Then Motorola's USB-mode chooser popped up, and the long status text moved the RELEASE button after the first tap, so the second
 tap landed on "Start lock task". `tools/release-tap.sh` now arms, re-finds the button and double-taps the settled position.
 
-## Current state (2026-10-08T21:44Z, ready for Phase B)
+## Phase B. Play sign-in (2026-10-08T22:47Z)
+
+**Phase B ran on a Google test account that the agent signed in to, not on Beaux's personal account.**
+Board comment `9a1887c6` (Beaux, Telegram 4453, relayed by Scout) authorized this for SPARE_DEVICE_SERIAL only,
+because Beaux was away. The account is a Google Workspace account on Beaux's own domain. Its address is not recorded here.
+
+- Path: `am start -a android.settings.ADD_ACCOUNT_SETTINGS --esa account_types com.google`, which opens GMS
+  `MinuteMaidActivity`.
+- **Finding:** because the phone is Device Owner-managed (`isOrganizationOwnedDevice=true`), Google's screen reads
+  **"Sign in with your work account"** / "Work email" (`evidence/phase-b/signin-01-email-screen.png`). A consumer account
+  wasn't tried.
+- The email went in with `adb shell input text`. The password went in one character at a time with `adb shell input text`,
+  read from the adapter env and never printed. Afterwards only the field length was checked (17 = 17, read from the masked a11y node).
+  "Show password" stayed unticked. No screenshot was taken with characters in the field
+  (`signin-02-password-screen-empty.png` was taken before typing; the account address is blacked out).
+- Google asked for **no** 2-step verification, device prompt, SMS code or CAPTCHA. The next screen was the standard
+  Terms "Welcome / I agree" (`signin-03-terms.png`, address blacked out); I tapped I agree.
+- Result: `dumpsys account` → 1 account, `type=com.google`. Device Owner unchanged.
+- **Sync:** Android offers per-item sync switches (Settings > Passwords, passkeys & accounts > account > Account sync).
+  **All 7 were on, and the first sync had already run at 15:49–15:50 local**, before I could turn them off. That data
+  (calendar, contacts, Drive, Gmail metadata) was not opened or read. I turned off all 7: Calendar, Contacts, Drive,
+  Gmail, Google Calendar, Google Play Movies, Tasks in Calendar. Each now shows "Sync is OFF".
+- Harness slips (not device findings):
+  - My first "Next" tap landed on the keyboard's backspace and deleted the last character of the email. I retyped it,
+    checked the field against the env value, and submitted with Enter. Only one password attempt was made.
+  - `stay_on_while_plugged_in` had gone back to 0 by the time of sign-in (cause not traced). I set it to USB again
+    (`svc power stayon usb`).
+- Reset protection is now tied to this account. **Before any recovery wipe, remove the account from the phone first.**
+
+### Update source
+
+The plan was to roll 2–3 preinstalled Google apps back with `pm uninstall-system-updates`. That wasn't needed:
+after the Settings reset, only `com.google.android.apps.restore` had been updated. Every other preinstalled Google app
+was still at its factory version (for example Messages `20240806`, WebView 127, Photos 7.11), so Play had dozens of
+real updates waiting as soon as the account was added.
+
+## S1. Does `DISALLOW_INSTALL_APPS` block Play updates?
+
+**Result: yes, it blocks them.** Evidence: `evidence/phase-b/s1/`.
+
+- `restrict-add no_install_apps` at 22:52:05Z, then every `com.android.vending` job forced with
+  `cmd jobscheduler run -f com.android.vending <id>` (8 jobs, IDs are dynamic).
+- Play tried 5 auto-updates, and every one failed with `java.lang.SecurityException: User restriction prevents installing`,
+  shown in Finsky as `state:INSTALL_ERROR, status_code=5402, reason=auto_update` (`jobs-forced.log`, 30 exceptions):
+  - one ordinary app: `com.google.ar.core`;
+  - four mainline/system items: `com.google.android.tzdata6`, `mainline_train_primary`, `com.google.mainline.telemetry`,
+    `com.google.mainline.adservices`. So the restriction blocks Play-delivered mainline updates as well; this partly covers S6.
+- Play > Manage apps & device stayed on "Checking for updates…" for over a minute under the restriction
+  (`play-manage-restricted.png`). I didn't tap "Update all" because no list appeared.
+- `adb install` (step 5, `adb-install.log`):
+  - new install while restricted → `SecurityException: User restriction prevents installing` at
+    `PackageInstallerService.createSessionInternal(PackageInstallerService.java:672)`;
+  - control: the restriction cleared, then `adb install -t` v1 → `Success`;
+  - update `adb install -r -t` v2 while restricted → the same `SecurityException`, and `versionCode` stays 1.
+- Before the restriction (15:50 local), Play had already installed `com.google.android.contactkeys` with `reason=auto_update`.
+  Play starts pushing within a minute of sign-in.
+
+## S2. Device Owner install while restricted; clear → install → re-add
+
+**Result: yes.** Evidence: `evidence/phase-b/s2/s2.log` (runs 1–3 were harness misses: the APK wasn't in the DPC's
+`files/`, then the target was `testOnly`; I rebuilt the target without `testOnly`, because only the DPC needs it).
+
+| Step | Result |
+|---|---|
+| DPC `PackageInstaller.createSession` with `no_install_apps` set | `SecurityException: User restriction prevents installing` |
+| `clearUserRestriction` → DPC install v2 → `addUserRestriction` | `INSTALL_SUCCEEDED`, `versionCode=2`, **588 ms**, no user prompt |
+| Window with the restriction lifted (on-phone logcat, clear at 15:58:44.755 → re-add at 15:58:45.583) | **about 0.83 s** (driven over adb, so a DPC doing it in-process would be shorter) |
+
+Side check during S4 (`evidence/phase-b/s4/s4-hidden.log`): with Play **hidden**, the same DPC install still succeeds,
+but takes **17.3 s** instead of 0.6 s. Play is the required verifier; the platform waits for verification to time out
+(`Integrity check passed` 16:00:26.690 → `Continuing with installation` 16:00:43.696).
+
+## S3. Can Play be suspended?
+
+**Result: no.** Evidence: `evidence/phase-b/s3/s3.log`.
+
+- `dumpsys package` → `Verifiers: Required: com.android.vending (uid=10270)`.
+- `setPackagesSuspended([com.android.vending], true)` → returned `[com.android.vending]` (refused), and `dumpsys` shows
+  `suspended=false`. The background-update half of S3 doesn't apply.
+- I also suspended GMS (`com.google.android.gms`), which wasn't planned. It was **not** refused, and I unsuspended it straight
+  away (`suspended=false` confirmed). Not followed up; note only that the DPC can suspend GMS on this build.
+
+## S4. Hidden Play vs Play shut out by lock task
+
+**Result: lock task, yes (Play keeps updating apps in the background); hidden Play, no (nothing updates).**
+Evidence: `evidence/phase-b/s4/`.
+
+**S4.1 hidden Play** (`s4-hidden.log`): `setApplicationHidden(com.android.vending, true)` → `true`. Forcing the 8 Play
+jobs then gave `Unable to start service … PhoneskyJobServiceBackground … not found` and
+`Error executing JobStatus` for each; no Play process was running. Hiding Play stops all Play updates.
+
+**S4.2 Play unhidden, lock task on** (`s4-locktask.log`):
+- Lock task packages: the spike and `com.plainphone.spike.target` only. Features `HOME|GLOBAL_ACTIONS|BLOCK` (84).
+  `mLockTaskModeState=LOCKED`.
+- `market://details?id=org.telegram.messenger` from the spike (new task, and same task) → system
+  `BlockedAppActivity` "App is not available / Google Play Store is not available right now."
+  (`market-link-under-locktask.png`).
+- Forced Play's jobs at 23:01:55Z. Over the next 6 minutes, with lock task still `LOCKED` and the spike on top, Play
+  **updated 23 apps in the background** (`updated-under-locktask.txt`). The first finished at +4 s, and the 12th of 23 at +2 min 3 s
+  (16:03:58). Examples:
+  - `com.google.android.apps.messaging` `20240806` → `20261002` (an app Plainphone allows);
+  - `com.google.android.webview` 127 → 154;
+  - Photos 7.11 → 7.96, Maps, Duo/Meet, Clock, TalkBack, TTS, and 2 Motorola apps.
+  More were still installing when I stopped watching. One failed: `com.google.android.dialer`, `INSTALL_ERROR 1055`
+  (not traced).
+- **Bonus finding:** while Play was hidden and then unhidden, a "Moto App Launcher keeps stopping" dialog appeared
+  over lock task. It was dismissed with Back, and lock task stayed `LOCKED`.
+
+**What this means for Plainphone (spike-level):** "Play enabled and signed in, but shut out by lock task" keeps both apps
+and GMS updating, with no user-visible Play. Hiding or suspending Play is not an option. Permanent `DISALLOW_INSTALL_APPS`
+stops all Play updates, including mainline.
+
+## S7. Remove-after-install race
+
+**Result: partly. The DPC wins, but not before the app's process can start.** Evidence: `evidence/phase-b/s7/`.
+
+Setup: lock task stopped (supervised window), DPC `watch-on` with an empty allowlist (hide any new, non-replacing
+package on `ACTION_PACKAGE_ADDED`). A loop on the phone fired `am start -a VIEW -d tg://resolve?domain=telegram`
+every ~250 ms (`deeplink-loop.out`). Telegram (`org.telegram.messenger` 12.10.6) was installed from Play through
+`market://details?id=org.telegram.messenger` → Install. The same install is the Telegram install for B-Q4.
+
+| Time (local) | Event |
+|---|---|
+| 16:10:57.448 | `firstInstallTime` |
+| 16:10:57.567 → 16:11:01.6 | 25 deep-link starts resolve to `org.telegram.ui.LaunchActivity` (`result code=0`), but each is `Force removing` / `Force stopping …: start failure` (package still frozen by the install) |
+| **16:11:01.738** | **`Start proc … org.telegram.messenger`**: the app's process starts |
+| 16:11:01.953 | DPC receives `PACKAGE_ADDED` (4.5 s after `firstInstallTime`) |
+| 16:11:02.075 | `setApplicationHidden` → `true` (the call took 127 ms); **4.6 s after `firstInstallTime`** |
+| 16:11:02.101 | Telegram activity force-removed; later deep links get `result code=-91` (no resolve) |
+| 16:11:02.962 | Finsky reports `INSTALLED` (after the hide) |
+
+- No `Displayed org.telegram…` line appeared, so no Telegram window reached the screen. But the process ran for about
+  0.35 s, so `Application.onCreate` and whatever the app starts there did run.
+- Implication: a hide-on-`PACKAGE_ADDED` DPC leaves a gap of about 4–5 s. Most of it is platform latency before the
+  broadcast, not DPC work. To close it, the DPC would have to stop new installs (S1/S2), not race them.
+
+## State before Phase B (2026-10-08T21:44Z)
 
 `evidence/phase-b-prep/state.txt`: spike DPC is Device Owner (`testOnly`, removable with `remove-active-admin`);
 **no DPC restrictions** (only the 3 base profile restrictions that come with DO); nothing hidden; lock task off and no

@@ -1,0 +1,64 @@
+## S2 rerun 2026-10-08T22:57:31Z (first attempt: harness miss, files/ dir missing)
+restrictions=[no_install_apps]
+$ DPC install t2.apk (restricted)
+NO_FILE /data/user/0/com.plainphone.spike.dpc/files/t2.apk
+    versionCode=1 minSdk=34 targetSdk=35
+$ clear -> DPC install -> re-add
+OK cleared no_install_apps
+NO_FILE /data/user/0/com.plainphone.spike.dpc/files/t2.apk
+OK added no_install_apps
+versionCode=1; window (clear->re-add, host-measured incl. adb round trips) = 11999 ms
+--- logcat
+10-08 15:57:31.743 I/PPSPIKE ( 3424): cmd [status] -> deviceOwner=true lockTaskModeState=0 lockTaskPackages=[] lockTaskFeatures=GLOBAL_ACTIONS restrictions=[no_install_apps] hidden=[] suspended=[] locked=false debugLiftAt=0
+10-08 15:57:31.884 I/PPSPIKE ( 3424): cmd [install t2.apk] -> NO_FILE /data/user/0/com.plainphone.spike.dpc/files/t2.apk
+10-08 15:57:35.220 I/PPSPIKE ( 3424): cmd [restrict-clear no_install_apps] -> OK cleared no_install_apps
+10-08 15:57:35.374 I/PPSPIKE ( 3424): cmd [install t2.apk] -> NO_FILE /data/user/0/com.plainphone.spike.dpc/files/t2.apk
+10-08 15:57:46.982 I/PPSPIKE ( 3424): cmd [restrict-add no_install_apps] -> OK added no_install_apps
+--- user prompt?
+topResumedActivity=ActivityRecord{bf2046b u0 com.android.vending/.AssetBrowserActivity t100}
+## S2 run 3 2026-10-08T22:58:00Z (runs 1-2 above: harness miss, APK not in DPC files/)
+restrictions=[no_install_apps]
+$ DPC install t2.apk (restricted)
+createSession SecurityException: User restriction prevents installing
+    versionCode=1 minSdk=34 targetSdk=35
+$ clear -> DPC install -> re-add
+OK cleared no_install_apps
+OK session 135207272 committed (result in logcat PPSPIKE)
+OK added no_install_apps
+versionCode=1; window (clear->re-add, host-measured incl. adb round trips) = 12102 ms
+--- logcat
+10-08 15:58:01.165 I/PPSPIKE ( 3424): cmd [status] -> deviceOwner=true lockTaskModeState=0 lockTaskPackages=[] lockTaskFeatures=GLOBAL_ACTIONS restrictions=[no_install_apps] hidden=[] suspended=[] locked=false debugLiftAt=0
+10-08 15:58:01.325 I/PPSPIKE ( 3424): cmd [install t2.apk] -> createSession SecurityException: User restriction prevents installing
+10-08 15:58:01.326 I/ActivityManager( 1860): Broadcast completed: result=1, data="createSession SecurityException: User restriction prevents installing"
+10-08 15:58:04.631 I/PPSPIKE ( 3424): cmd [restrict-clear no_install_apps] -> OK cleared no_install_apps
+10-08 15:58:04.844 I/PPSPIKE ( 3424): cmd [install t2.apk] -> OK session 135207272 committed (result in logcat PPSPIKE)
+10-08 15:58:04.845 I/ActivityManager( 1860): Broadcast completed: result=1, data="OK session 135207272 committed (result in logcat PPSPIKE)"
+10-08 15:58:05.201 I/PPSPIKE ( 3424): install result pkg=com.plainphone.spike.target status=4 msg=INSTALL_FAILED_TEST_ONLY: Failed to install test-only apk. Did you forget to add -t? versionCode=1 after 430ms
+10-08 15:58:16.541 I/PPSPIKE ( 3424): cmd [restrict-add no_install_apps] -> OK added no_install_apps
+--- top (any user prompt?)
+topResumedActivity=ActivityRecord{bf2046b u0 com.android.vending/.AssetBrowserActivity t100}
+
+## S2 run 4 2026-10-08T22:58:39Z: target rebuilt WITHOUT testOnly (run 3's DPC install failed INSTALL_FAILED_TEST_ONLY)
+OK cleared no_install_apps
+Success
+Performing Streamed Install
+Success
+    versionCode=1 minSdk=34 targetSdk=35
+/Users/user/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t2.apk: 1 file pushed, 0 skipped. 199.1 MB/s (2377049 bytes in 0.011s)
+OK added no_install_apps
+$ DPC install t2.apk (restricted)
+createSession SecurityException: User restriction prevents installing
+    versionCode=1 minSdk=34 targetSdk=35
+$ clear -> DPC install -> re-add
+OK cleared no_install_apps
+OK session 1770387604 committed (result in logcat PPSPIKE)
+OK added no_install_apps
+versionCode=2; window (clear->re-add, host-measured incl. adb round trips) = 1002 ms
+--- logcat
+10-08 15:58:41.455 I/PPSPIKE ( 3424): cmd [install t2.apk] -> createSession SecurityException: User restriction prevents installing
+10-08 15:58:44.755 I/PPSPIKE ( 3424): cmd [restrict-clear no_install_apps] -> OK cleared no_install_apps
+10-08 15:58:44.945 I/PPSPIKE ( 3424): cmd [install t2.apk] -> OK session 1770387604 committed (result in logcat PPSPIKE)
+10-08 15:58:45.483 I/PPSPIKE ( 3424): install result pkg=com.plainphone.spike.target status=0 msg=INSTALL_SUCCEEDED: Session installed versionCode=2 after 588ms
+10-08 15:58:45.583 I/PPSPIKE ( 3424): cmd [restrict-add no_install_apps] -> OK added no_install_apps
+--- top (any user prompt?)
+topResumedActivity=ActivityRecord{bf2046b u0 com.android.vending/.AssetBrowserActivity t100}
