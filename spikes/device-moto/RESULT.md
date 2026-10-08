@@ -21,7 +21,7 @@
 | A0 baseline | yes | Pre- and post-reset baselines recorded. Trusted reset done 2026-10-08 19:54Z through Settings. After setup, with no account, 7 apps were pushed (4 by Digital Turbine, 3 by Play) and 1 preload appeared (see A0). |
 | A1 Q3 adb Device Owner | **yes** | Unapproved testOnly DPC set as Device Owner over adb on a certified Motorola. No allowlist message. |
 | A2 way back | **yes** | `remove-active-admin` and the in-app RELEASE both return the phone to `no owners` with no wipe; provisioning again works each time. |
-| A3 Q1 lock task | **partly** | Launch matrix done for BLOCK off/on with a no-lock-task control. Reboot check incomplete: adb became `unauthorized` after the reboot (see A3). Power menu not shown via adb injection. |
+| A3 Q1 lock task | **partly** | Launch matrix done for BLOCK off/on with a no-lock-task control. Reboot: lock task comes back by itself. A non-always-allowed adb key **cannot be re-authorized while lock task is on**. Not tested: power menu (needs the physical button), lock-screen emergency, calls/SMS. |
 | A4–A7 | not yet run | Need adb back first. |
 | S1–S4, S7 | not yet run | Phase B, needs Beaux's sign-in. |
 
@@ -256,12 +256,47 @@ Deeper paths are left for the Verifier.
 | Calls / SMS | **not tested**: no SIM | – |
 | Reboot | **incomplete**, see below | – |
 
-### Reboot (incomplete)
+### Reboot
 
-`adb -s SPARE_DEVICE_SERIAL reboot` at 20:32:26Z with lock task on (BLOCK off, `com.android.phone` allowlisted).
-After boot adb shows **`unauthorized`**: the Mac's adb key was allowed during setup without "Always allow from this
-computer", so the approval did not survive the reboot. Whether lock task came back, and whether the "Allow USB
-debugging?" prompt can show while lock task is active, needs someone to look at the phone. Asked on PLA-5.
+**Run 1 (20:32:26Z), key not always-allowed.** `adb -s SPARE_DEVICE_SERIAL reboot` with lock task on (BLOCK off,
+`com.android.phone` allowlisted). After boot adb showed `unauthorized`: the Mac's key had been allowed during setup
+without "Always allow from this computer".
+- Board observation from the phone (PLA-5 comment 4fe1cf66, Beaux via Scout): **lock task came back** after the
+  reboot. Beaux couldn't leave the spike screen or reach Developer options. The "Allow USB debugging?" prompt never
+  authorized the Mac, from 13:46 to 13:52 PDT, including after `adb reconnect`. Mac key fingerprint
+  `AC:1D:CA:40:CA:66:86:F5:2F:58:BD:34:78:4A:EF:46`.
+- Device-side record (`evidence/a3/reboot/usb-debugging-activity-events.txt`, from `pm dump com.android.systemui`
+  usage events), all times PDT:
+  - `com.android.systemui.usb.UsbDebuggingActivity` RESUMED, PAUSED and STOPPED all at 13:33:04 (first boot under lock task);
+  - RESUMED 13:51:39, PAUSED 13:51:41; RESUMED 13:51:44, PAUSED and STOPPED 13:51:45, while Beaux was tapping;
+  - the spike's `MainActivity` RESUMED at 13:51:45.
+  
+  So the dialog **does appear** under lock task, in its own SystemUI task, but it's paused within 1–2 s and the key
+  never gets authorized. *Not proven:* whether the system pushes it out of lock task, or the Allow tap is filtered.
+  The logcat from that boot rotated away before adb came back.
+- Recovery: Beaux tapped **RELEASE** twice (A2 path 3). At 21:04Z: `no owners`, `mLockTaskModeState=NONE`,
+  0 accounts, still 1 user (no wipe). `AdbDebuggingManager: Received a request to clear the adb authorizations`
+  at 13:58:05 (revoked from Developer options), then this Mac was allowed with "Always allow". `dumpsys adb` now lists
+  the key in `user_keys` and the keystore with `lastConnection` (`evidence/a3/reboot/dumpsys-adb-after-always-allow.txt`,
+  keys and BSSID masked).
+- Side note: after RELEASE the HOME role holder stayed `com.plainphone.spike.dpc` (`cmd role get-role-holders android.app.role.HOME`),
+  because only the persistent preferred activity is cleared. A production release path should restore the previous launcher.
+
+**Run 2 (21:05:06Z), key always-allowed.** Re-provisioned (`Success: Device owner set …`), same lock task config, `lt-start`,
+then `adb reboot` (`evidence/a3/reboot/repeat.txt`, screenshot `after-reboot-repeat.png`):
+- adb authorized again with no prompt: `device` at 21:05:42Z, `sys.boot_completed=1` at the same poll (36 s after the reboot command).
+- At 21:06:19Z (uptime 1 min, `boot_count` 3): `mLockTaskModeState=LOCKED`, top = `com.plainphone.spike.dpc/.MainActivity`,
+  `isKeyguardShowing=false`, Device Owner intact, policy unchanged. **Lock task comes back by itself after a reboot.**
+- Negative check after reboot: launching Settings from the spike is still blocked
+  (`Attempted Lock Task Mode violation r=… com.android.settings/.homepage.SettingsHomepageActivity`).
+- Also seen at boot: `Attempted Lock Task Mode violation r=… com.android.settings/com.motorola.settings.connecteddevice.usb.UsbBottomChooseActivity`.
+  Motorola's USB-mode chooser, which pops up when a cable is plugged in, is blocked under lock task
+  (`evidence/a3/reboot/locktask-violations.txt`).
+
+**Consequence (measured, narrow):** on this build, with lock task active, a host whose adb key isn't already
+always-allowed can't be authorized. The only way back is RELEASE inside the DPC (or a wipe).
+That supports dropping adb maintenance from the product design. It also means every spike step from here on keeps
+this Mac's key always-allowed before any lock-task reboot.
 
 ### What this means for Plainphone (spike-level, not a spec)
 

@@ -1,0 +1,33 @@
+# A3 reboot follow-up 2026-10-08T21:04:12Z
+uptime:  14:04:13 up 31 min,  0 users,  load average: 16.86, 14.01, 11.77
+dpm list-owners: no owners
+lockTask: mLockTaskModeState=NONE
+top: topResumedActivity=ActivityRecord{1d12359 u0 com.android.settings/.SubSettings t58}
+spike status: deviceOwner=false lockTaskModeState=0 locked=false debugLiftAt=0
+accounts: Accounts: 0
+users: Users:UserInfo{0:Owner:4c13} running
+HOME role: com.plainphone.spike.dpc
+boot_count: 2
+PPSPIKE log since boot:
+ 9771  9771 I PPSPIKE : cmd [status] -> deviceOwner=false lockTaskModeState=0 locked=false debugLiftAt=0
+UsbDebugging / adb auth log since boot:
+10-08 13:57:59.834  1869  3183 W AdbDebuggingManager: Read failed with count -1
+10-08 13:57:59.835  1869  3183 E AdbDebuggingManager: Caught an exception opening the socket: java.io.IOException: Connection refused
+10-08 13:58:00.838  1869  1892 W Looper  : Slow dispatch took 978ms android.fg h=com.android.server.adb.AdbDebuggingManager$AdbDebuggingHandler c=null m=2
+10-08 13:58:02.552  1869 10575 W AdbDebuggingManager: Read failed with count -1
+10-08 13:58:02.553  1869 10575 E AdbDebuggingManager: Caught an exception opening the socket: java.io.IOException: Connection refused
+10-08 13:58:04.557  1869 10575 D AdbDebuggingManager: Received connected key message: <redacted>
+10-08 13:58:04.558  1869  1892 D AdbDebuggingManager: Logging key <redacted>
+10-08 13:58:05.871  1869  1892 D AdbDebuggingManager: Received a request to clear the adb authorizations
+10-08 13:58:05.911  1869 10575 W AdbDebuggingManager: Read failed with count -1
+10-08 13:58:05.912  1869 10575 E AdbDebuggingManager: Caught an exception opening the socket: java.io.IOException: Connection refused
+10-08 13:58:07.914  1869 10575 E AdbDebuggingManager: Caught an exception opening the socket: java.io.IOException: No such file or directory
+10-08 13:58:09.916  1869 10575 E AdbDebuggingManager: Caught an exception opening the socket: java.io.IOException: No such file or directory
+10-08 13:58:11.918  1869 10575 E AdbDebuggingManager: Caught an exception opening the socket: java.io.IOException: No such file or directory
+10-08 13:58:13.922  1869 10575 E AdbDebuggingManager: Caught an exception opening the socket: java.io.IOException: No such file or directory
+10-08 13:58:15.924  1869 10575 E AdbDebuggingManager: Caught an exception opening the socket: java.io.IOException: Connection refused
+10-08 13:58:15.934  1869  1892 W Looper  : Slow dispatch took 10063ms android.fg h=com.android.server.adb.AdbDebuggingManager$AdbDebuggingHandler c=null m=6
+10-08 13:58:15.934  1869  1892 W Looper  : Slow delivery took 10022ms android.fg h=com.android.server.adb.AdbDebuggingManager$AdbDebuggingHandler c=null m=27
+10-08 13:58:16.925  1869  1892 W Looper  : Slow dispatch took 953ms android.fg h=com.android.server.adb.AdbDebuggingManager$AdbDebuggingHandler c=null m=2
+10-08 13:58:16.937  1869 10612 E AdbDebuggingManager: Caught an exception opening the socket: java.io.IOException: No such file or directory
+10-08 13:58:18.938  1869 10612 E AdbDebuggingManager: Caught an exception opening the socket: java.io.IOException: No such file or directory

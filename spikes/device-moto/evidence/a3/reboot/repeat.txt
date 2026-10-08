@@ -1,0 +1,26 @@
+# A3 reboot repeat, 2026-10-08T21:05:00Z
+$ dpm set-device-owner
+Success: Device owner set to package com.plainphone.spike.dpc/.AdminReceiver
+Active admin set to component com.plainphone.spike.dpc/.AdminReceiver
+OK lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc]
+OK lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS (23)
+OK persistent preferred HOME = spike
+OK relayed lt-start to MainActivity (result in logcat PPSPIKE)
+pre-reboot: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS restrictions=[] hidden=[] suspended=[] locked=true debugLiftAt=0
+mLockTaskModeState=LOCKED
+reboot issued at 21:05:06Z
+== after reboot 21:06:19Z ==
+adb: SPARE_DEVICE_SERIAL	device
+uptime:  14:06:19 up 1 min,  0 users,  load average: 29.94, 8.65, 2.97
+boot_count: 3
+mLockTaskModeState=LOCKED
+top: topResumedActivity=ActivityRecord{7890f4d u0 com.plainphone.spike.dpc/.MainActivity t59}
+    isKeyguardShowing=false
+status: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS restrictions=[] hidden=[] suspended=[] locked=true debugLiftAt=0
+dpm: 1 owner: User 0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+stay_on_while_plugged_in: 2
+PPSPIKE since boot:
+10-08 14:06:20.074 cmd [status] -> deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS restrictions=[] hidden=[] suspended=[] locked=true debugLiftAt=0
+LockTask since boot:
+10-08 14:05:43.961 E/ActivityTaskManager( 1853): Attempted Lock Task Mode violation r=ActivityRecord{f59e54f u0 com.android.settings/com.motorola.settings.connecteddevice.usb.UsbBottomChooseActivity t
+top: topResumedActivity=ActivityRecord{7890f4d u0 com.plainphone.spike.dpc/.MainActivity t59}

@@ -1,0 +1,2 @@
+10-08 14:05:43.961 E/ActivityTaskManager( 1853): Attempted Lock Task Mode violation r=ActivityRecord{f59e54f u0 com.android.settings/com.motorola.settings.connecteddevice.usb.UsbBottomChooseActivity t-1}
+10-08 14:06:22.241 E/ActivityTaskManager( 1853): Attempted Lock Task Mode violation r=ActivityRecord{87f30c0 u0 com.android.settings/.homepage.SettingsHomepageActivity t-1}
