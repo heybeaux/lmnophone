@@ -57,6 +57,11 @@ Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 6, af
   - Google Play stays for app updates.
   - The trusted person's Google `userId` is needed for factory-reset protection. It is read from Google's People API "Try it" page; no new credential for us.
   - No servers. No new paid services.
+- **Board decisions (2026-10-08):**
+  - MVP target is the spare XT2415, and the daily-use phone is deferred.
+  - License: Apache-2.0.
+  - Carrier: Rogers.
+  - Beaux is the helper and keeps the signing key.
 - **Policy gates:**
   - Physical phones need Beaux's approval for each phone. The spare moto g power 5G (2024) is approved for spikes only (PLA-5). It is not a target phone: its security updates end in March 2027.
   - Developer verification (Canada: 2027; adb installs exempt) is a later decision.

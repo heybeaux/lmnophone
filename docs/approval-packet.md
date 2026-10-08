@@ -1,6 +1,6 @@
 # Plainphone: what we're asking Beaux to approve
 
-Revision 3, 2026-10-08. Prepared by the Plainphone Lead (Claude). Cross-model review by the Verifier & Escape Artist (OpenAI model) across PLA-3, PLA-4, PLA-7, PLA-8, PLA-9 and PLA-10. Final verdict: **approve with changes**; the changes are applied here, and none needed re-review.
+Revision 4, 2026-10-08. Updated with Beaux's answers to the decisions card. Prepared by the Plainphone Lead (Claude). Cross-model review by the Verifier & Escape Artist (OpenAI model) across PLA-3, PLA-4, PLA-7, PLA-8, PLA-9 and PLA-10. Final verdict: **approve with changes**; the changes are applied here, and none needed re-review.
 
 ## The short version
 
@@ -22,7 +22,7 @@ These are requirements we test against. They are **not yet proven** on the phone
 
 **What approval allows:**
 1. Finish the **spike**: throwaway tests on emulators and the spare Motorola, answering the questions in `docs/feasibility-questions.md`.
-2. If the go/no-go checks pass, **build the MVP** described in `openspec/changes/add-plainphone-spike-and-mvp/`, first for your phone and then the trusted person's.
+2. If the go/no-go checks pass, **build the MVP** described in `openspec/changes/add-plainphone-spike-and-mvp/` **on the spare Motorola**, as you decided. The MVP stays a test build that can be removed from the spare until the off switch is proven there. Choosing a daily-use phone and handing it over are separate, later decisions.
 
 **What approval does not allow.** Each of these needs its own separate OK:
 - touching any phone other than the spare;
@@ -50,26 +50,17 @@ These are requirements we test against. They are **not yet proven** on the phone
   - real calls and texts (there is no SIM in the spare);
   - attaching a photo in Messages.
 
-## Decisions we need from you
+## Your decisions (answered 2026-10-08, Telegram 4446/4448)
 
-1. **Phone model.** The spare Motorola stops getting security updates in March 2027, so it's for testing only.
-   - **Candidates:** a Pixel 9a or newer (7 years of updates, fewest manufacturer extras), or a Samsung A-series (more extras to lock down).
-   - Either one only counts as supported after its exact model and software build pass our checks.
-   - Buy new phones, or reuse existing ones?
-2. **Trusted person and backup person, for each phone.**
-   - If you and the trusted person are each other's trusted person, we recommend a third person as backup.
-   - Each needs a Google account, with a second sign-in factor (like a phone code), that they can use from a device **other than** either Plainphone phone.
-   - Each Plainphone phone also has a recovery code. The trusted person must keep it somewhere other than the Plainphone phones.
-3. **License.** We recommend **Apache-2.0**. It lets us reuse Google's and Headwind's open-source code.
-4. **Must-have apps on each phone.** For example: your bank, maps, ride-share, Signal or WhatsApp. We test these first. If one of them breaks, the plan changes.
-5. **Carrier and plan for each phone.** It needs a data plan, so that group texts with iPhones and picture messages work away from Wi-Fi.
-6. **Who does the helper work.** Someone needs to:
-   - set up the phones;
-   - deliver Plainphone updates from a laptop on your home Wi-Fi;
-   - help if a phone needs recovery.
-7. **Who keeps the signing key** for Plainphone updates, and who keeps its offline backup.
-   - If the key is lost, Plainphone can't be updated without setting each phone up again.
-   - If the key is stolen, Plainphone has to be turned off and set up again on every phone.
+1. **Phone.** The spare Motorola is the phone for the spike and the MVP. The daily-use phone is decided later, and it needs its own OK before handover. LineageOS is noted as a possible future base, but is not planned.
+2. **People.** You and the trusted person are each other's trusted person. The backup is a separate Google account you control.
+   - **One thing to confirm.** On **your** phone, your own backup account could get past reset protection after a wipe. That weakens the trusted person's check on your phone. If that's fine with you, say so. Otherwise, pick a different backup person for your phone.
+   - On the trusted person's phone, the arrangement works as intended.
+3. **License.** Apache-2.0.
+4. **Your must-have apps.** Slack, Spotify, and maybe Telegram. We test these first. Telegram has its own built-in web browser (we'll confirm in testing), so it may be a way to reach the open web. We'll show you what we find before you approve it. the trusted person's list is still to come.
+5. **Carrier.** Rogers. Apple lists it as supporting RCS group texts with iPhones.
+6. **Helper and signing key.** You are the helper and keep the key. The offline backup is on an encrypted USB stick or in your password manager, away from the laptop.
+7. **Still open.** Do either of you rely on Wi-Fi that needs a sign-in page, or on Wi-Fi calling where there's no cell signal?
 
 ## Ongoing work this creates
 
@@ -116,5 +107,5 @@ These are things Plainphone **can't** fully stop or promise. We'd rather say so 
 
 1. The spike continues: lock task over a full day, Play updates in the background, the escape list, and Motorola's extras. All of it stays within the spare-phone rules: no recovery wipes there, and no screen-lock PIN without your direction.
 2. If anything fails a go/no-go check, we come back with a revised plan before writing MVP code.
-3. When you pick a phone model, we ask separately before touching your phone.
-4. Your phone first, after all the handover checks. Then two weeks of use. Then the trusted person's. Each step needs a separate OK from you.
+3. The MVP is built and tested on the spare Motorola.
+4. Later, when you pick a daily-use phone, we ask separately before touching it. Then your phone first, after all the handover checks; two weeks of use; then the trusted person's. Each step needs a separate OK from you.

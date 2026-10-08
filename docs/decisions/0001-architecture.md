@@ -114,7 +114,7 @@ We did not find a published open-source "trusted person controls the allowlist" 
 
 **Plan:** we build one small Kotlin app and borrow patterns from Google's TestDPC and from Headwind (both Apache-2.0). We do not fork either, because Headwind assumes a server and its lockdown features are closed.
 
-**Recommended license: Apache-2.0.** Beaux decides.
+**License: Apache-2.0**. Beaux decided this in Telegram 4446/4448.
 
 **Plainphone's own updates.** No adb maintenance mode. The helper's computer serves a signed APK over local Wi-Fi. Plainphone checks that it is signed with the pinned key and has a higher version, then installs it silently as Device Owner after a fresh PIN entry. Release builds are `testOnly=false` and `debuggable=false`.
 
@@ -133,7 +133,13 @@ We did not find a published open-source "trusted person controls the allowlist" 
 
 ## Hardware
 
-**Requirements for the MVP phone (the model itself is Beaux's call):**
+**Board decision (Beaux, Telegram 4446/4448, 2026-10-08, relayed by Scout).** The spare moto g power 5G (2024), XT2415-1, is the device for **both the spike and the MVP build**. Choosing a daily-use phone is deferred, and it needs its own OK before any handover. LineageOS may be considered later as an alternative base, but is not planned now.
+
+**What that means:**
+- The MVP is built and tested on the spare. It is **not** handed over for daily use on that phone, because its security updates end in March 2027.
+- On the spare, MVP builds stay **test-only** (removable over adb) until the off switch (Q7) is proven on the device. A release build (`testOnly=false`) on the spare needs a separate board OK. This follows Scout's rule against locking the spare out of adb.
+
+**Requirements for the eventual daily-use phone (Beaux decides later):**
 1. Sold unlocked in Canada, Google-certified, stock Android.
 2. At least 5 years of security updates left on the manufacturer's own page.
 3. Bootloader locked, with verified boot confirmed by Plainphone during setup.

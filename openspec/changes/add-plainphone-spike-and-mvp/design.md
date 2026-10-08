@@ -292,14 +292,18 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 
 ## Open Questions
 
-**For Beaux:**
-1. Which target phone model?
-2. Who is the trusted person for each phone, and who is the backup person?
-3. License: Apache-2.0?
-4. What are the must-have apps on each phone?
-5. Do you accept the stated leftover risks, and the **custody limit**? (If Plainphone can't run during a supervised session, the session stays open until a helper fixes the phone.)
-6. Which carrier and plan?
-7. Who holds the release signing key, and who keeps its offline backup?
-8. Do either of you rely on Wi-Fi that needs a sign-in page (hotels, hospitals, ferries, work), or on Wi-Fi calling where there is no mobile signal?
+**Answered by Beaux (Telegram 4446/4448, 2026-10-08, relayed by Scout):**
+1. **Device.** The spare XT2415 is the device for the spike and the MVP. The daily-use model is deferred and needs its own OK.
+2. **People.** Beaux and the trusted person are each other's trusted person. The backup is a separate Google account that Beaux controls. *Lead note:* on Beaux's own phone, that backup lets Beaux pass reset protection after a wipe. This weakens the check the trusted person provides on his phone. It is fine for the trusted person's phone. Beaux to confirm.
+3. **License.** Apache-2.0.
+4. **Must-have apps.** Beaux: Slack, Spotify, and maybe Telegram. the trusted person's list is still to come. *Lead note:* Telegram has its own in-app browser (lead, verify in Q4), which is a likely web-leak route.
+5. **Carrier.** Rogers, which is on Apple's RCS-with-iPhone list.
+6. **Helper and signing key.** Beaux is the helper and keeps the key. The offline backup is on an encrypted USB stick or in his password manager, kept away from the laptop.
+
+**Still open for Beaux:**
+- whether he accepts the leftover risks and the custody limit (the plan-approval card);
+- the Wi-Fi sign-in and Wi-Fi calling question;
+- the trusted person's must-have apps;
+- whether to keep the backup account arrangement for his own phone.
 
 **For the spike:** Q1–Q14 in `docs/feasibility-questions.md`.
