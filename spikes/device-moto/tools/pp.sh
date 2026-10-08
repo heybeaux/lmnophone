@@ -15,7 +15,7 @@ sub="$1"; shift
 case "$sub" in
   cmd) a shell am broadcast -n com.plainphone.spike.dpc/.CommandReceiver -a com.plainphone.spike.CMD \
          --es cmd "'$*'" | sed -n 's/.*data="\(.*\)"/\1/p' ;;
-  top) a shell dumpsys activity activities | grep -m1 topResumedActivity | sed 's/^ *//' ;;
+  top) a shell dumpsys activity activities | grep -m1 -E 'topResumedActivity|ResumedActivity:' | sed 's/^ *//' ;;
   shot) a exec-out screencap -p > "$1"; echo "saved $1" ;;
   # tap the first on-screen node whose text or content-desc starts with $1
   tap) a shell uiautomator dump /sdcard/pp-ui.xml >/dev/null

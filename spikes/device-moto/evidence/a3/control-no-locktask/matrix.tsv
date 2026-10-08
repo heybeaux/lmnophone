@@ -1,0 +1,16 @@
+case	top_after_launch	lockTaskModeState	verdict	screen	log
+settings-newtask	com.android.settings/.SubSettings	NONE	OPENED	Awake	
+settings-sametask	com.android.settings/.homepage.SettingsHomepageActivity	NONE	OPENED	Awake	
+settings-explicit-newtask	com.android.settings/.Settings	NONE	OPENED	Awake	
+settings-explicit-sametask	com.android.settings/.Settings	NONE	OPENED	Awake	
+appinfo-sametask	com.android.settings/.spa.SpaActivity	NONE	OPENED	Awake	
+panel-internet-newtask	com.plainphone.spike.dpc/.MainActivity	NONE	OPENED_WINDOW(SystemUIDialog)	Awake	
+panel-internet-sametask	com.plainphone.spike.dpc/.MainActivity	NONE	OPENED_WINDOW(SystemUIDialog)	Awake	
+panel-volume-sametask	com.android.settings/com.motorola.settings.panel.MotoVolumePanelActivity	NONE	OPENED	Awake	
+play-market-newtask	com.android.vending/com.google.android.finsky.unauthenticated.activity.UnauthenticatedMainActivity	NONE	OPENED	Awake	
+play-market-sametask	com.android.vending/com.google.android.finsky.unauthenticated.activity.UnauthenticatedMainActivity	NONE	OPENED	Awake	
+play-explicit-newtask	com.android.vending/com.google.android.finsky.unauthenticated.activity.UnauthenticatedMainActivity	NONE	OPENED	Awake	
+play-explicit-sametask	com.android.vending/com.google.android.finsky.unauthenticated.activity.UnauthenticatedMainActivity	NONE	OPENED	Awake	
+browser-https-sametask	com.android.chrome/org.chromium.chrome.browser.firstrun.FirstRunActivity	NONE	OPENED	Awake	
+share-chooser-sametask	com.android.intentresolver/.ChooserActivityLauncher	NONE	OPENED	Awake	
+share-to-messages-sametask	com.google.android.apps.messaging/.ui.conversationlist.ShareIntentActivity	NONE	OPENED	Awake	

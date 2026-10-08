@@ -1,0 +1,1 @@
+appinfo-permissions: start=android/com.android.internal.app.BlockedAppActivity | [Permissions]  -> top=android/com.android.internal.app.BlockedAppActivity focus=android/com.android.internal.app.BlockedAppActivity | lockTask=LOCKED

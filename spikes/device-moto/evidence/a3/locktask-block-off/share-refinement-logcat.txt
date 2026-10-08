@@ -1,0 +1,3 @@
+10-08 13:29:52.585 I/ActivityTaskManager( 1869): START u0 {act= cat=[] dat= typ=*/* pkg=com.google.android.apps.photos cmp=com.google.android.apps.photos/.share.handler.system.NativeSharesheetByteSharingRefinementActivity (has extras)} with LAUNCH_MULTIPLE from uid 10328 (realCallingUid=10156) (Pend
+10-08 13:30:10.757 E/ChooserRefinement(25499): Refinement IntentSender failed to send
+10-08 13:30:10.757 E/ChooserRefinement(25499): android.content.IntentSender$SendIntentException

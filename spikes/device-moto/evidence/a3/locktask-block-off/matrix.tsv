@@ -1,0 +1,16 @@
+case	top_after_launch	lockTaskModeState	verdict	screen	log
+settings-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+settings-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+settings-explicit-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+settings-explicit-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+appinfo-sametask	com.android.settings/.spa.SpaActivity	LOCKED	OPENED	Awake	
+panel-internet-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+panel-internet-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+panel-volume-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+play-market-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+play-market-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+play-explicit-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+play-explicit-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+browser-https-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+share-chooser-sametask	com.android.intentresolver/.ChooserActivityLauncher	LOCKED	OPENED	Awake	
+share-to-messages-sametask	com.google.android.apps.messaging/.ui.conversationlist.ShareIntentActivity	LOCKED	OPENED	Awake	

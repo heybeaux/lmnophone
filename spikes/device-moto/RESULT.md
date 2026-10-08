@@ -21,7 +21,8 @@
 | A0 baseline | yes | Pre- and post-reset baselines recorded. Trusted reset done 2026-10-08 19:54Z through Settings. After setup, 8 third-party apps installed themselves with no account (see A0). |
 | A1 Q3 adb Device Owner | **yes** | Unapproved testOnly DPC set as Device Owner over adb on a certified Motorola. No allowlist message. |
 | A2 way back | **yes** | `remove-active-admin` and the in-app RELEASE both return the phone to `no owners` with no wipe; provisioning again works each time. |
-| A3–A7 | not yet run | |
+| A3 Q1 lock task | **partly** | Launch matrix done for BLOCK off/on with a no-lock-task control. Reboot check incomplete: adb became `unauthorized` after the reboot (see A3). Power menu not shown via adb injection. |
+| A4–A7 | not yet run | Need adb back first. |
 | S1–S4, S7 | not yet run | Phase B, needs Beaux's sign-in. |
 
 ## A0. Baseline
@@ -183,3 +184,81 @@ Hiccups (not device findings): the first in-app attempt did nothing because the 
 3. Without adb: open the spike app (it is the home screen while provisioned) and tap **RELEASE** twice within 3 s.
 4. Then `adb -s SPARE_DEVICE_SERIAL uninstall com.plainphone.spike.dpc`.
 5. Last resort only: Settings > System > Reset options > Erase all data. Never recovery mode.
+
+## A3. Q1 on the device: lock task
+
+**Result: partly.** Fingerprint unchanged. Run 2026-10-08 20:15–20:32Z. Raw: `evidence/a3/` (`*/matrix.tsv`,
+`*/checks.txt`, `*/probes.txt`, one screenshot per case). Scripts: `tools/a3-matrix.sh`, `tools/a3-probe.sh`.
+
+Setup (spike commands; see `Commands.kt`):
+```sh
+tools/pp.sh cmd "lt-packages com.google.android.dialer,com.google.android.apps.messaging,com.motorola.camera3"
+tools/pp.sh cmd "lt-features HOME|GLOBAL_ACTIONS|NOTIFICATIONS|SYSTEM_INFO"        # BLOCK off
+tools/pp.sh cmd "lt-features HOME|GLOBAL_ACTIONS|NOTIFICATIONS|SYSTEM_INFO|BLOCK"  # BLOCK on
+tools/pp.sh cmd home-set      # spike is the persistent preferred HOME
+tools/pp.sh cmd lt-start      # MainActivity.startLockTask(); dumpsys shows mLockTaskModeState=LOCKED
+```
+Every launch is made **from the spike's own activity** (an allowed app) via `tools/pp.sh cmd "launch <spec>"`.
+"same task" = no `FLAG_ACTIVITY_NEW_TASK` from an Activity context.
+
+### Launch matrix
+
+| Case | Control (no lock task) | Lock task, BLOCK **off** | Lock task, BLOCK **on** |
+|---|---|---|---|
+| Settings (`android.settings.SETTINGS`), new task | opened | blocked (spike stays) | BlockedAppActivity |
+| Settings, same task | opened | blocked | BlockedAppActivity |
+| Settings explicit component, new task | opened | blocked | BlockedAppActivity |
+| Settings explicit component, same task | opened | blocked | BlockedAppActivity |
+| **App info** (`APPLICATION_DETAILS_SETTINGS` for Phone), same task | opened | **opened** (`settings/.spa.SpaActivity`) | BlockedAppActivity |
+| Internet panel, new / same task | opened (SystemUIDialog) | blocked | BlockedAppActivity |
+| Volume panel, same task | opened | blocked | BlockedAppActivity |
+| Play `market://details`, new / same task | opened | blocked | BlockedAppActivity |
+| Play explicit component, new / same task | opened | blocked | BlockedAppActivity |
+| Browser `https://example.com`, same task | opened (Chrome first run) | blocked | BlockedAppActivity |
+| **Share chooser** (`ACTION_SEND` text, `createChooser`) | opened | **opened** (`intentresolver`) | BlockedAppActivity |
+| Share direct to Messages (`setPackage`) | opened | opened (allowed app) | opened (allowed app) |
+
+"blocked" with BLOCK off means nothing visible happens and the spike stays on top. With BLOCK on, the system shows
+`android/com.android.internal.app.BlockedAppActivity` ("App is not available").
+
+**App info leak (BLOCK off).** From the App info screen opened inside the locked task:
+the "open" icon opens Phone (allowed); **Permissions** opens `permissioncontroller/.ManagePermissionsActivity`;
+**Notifications** opens `settings/.SubSettings`; the up arrow returns to the spike. Lock task stayed `LOCKED`
+throughout. So it is a foothold in Settings/permissions, but no route to a non-allowed app was found in these probes.
+Deeper paths are left for the Verifier.
+
+### In-use checks
+
+| Check | BLOCK off | BLOCK on |
+|---|---|---|
+| Runtime permission prompt (spike asks RECORD_AUDIO) | **works** (`GrantPermissionsActivity`, "Allow Plainphone spike to record audio?") | **blocked**: "Permission controller is not available right now." Camera's first-run prompt is blocked too. |
+| Emergency dialer **screen** from home (`com.android.phone.EmergencyDialer.DIAL`), `com.android.phone` not allowlisted | blocked silently | BlockedAppActivity |
+| Same, with `com.android.phone` added to lock task packages | **opens** (`com.android.phone/.EmergencyDialer`); backed out without dialing | not re-run |
+| Camera opens (allowed) | yes | yes (then its permission prompt is blocked) |
+| Take a photo | **yes**: `DCIM/Camera/IMG_20261008_132841212.jpg` (2.2 MB, MediaStore row) | not run (permission prompt blocked) |
+| Camera thumbnail | **opens Google Photos** (`photos/.pager.HostPhotoPagerActivity`), not allowlisted, inside the locked task | not run |
+| Share Camera → Messages (via Photos > Share > Messages) | **fails**: chooser opens, tapping Messages logs `ChooserRefinement: Refinement IntentSender failed to send` (`share-refinement-logcat.txt`); image never reaches Messages | not run |
+| Notification shade (`cmd statusbar expand-notifications`) | opens, notifications visible | (feature-controlled, same flags) |
+| Quick Settings (`cmd statusbar expand-settings`) | **no tiles**: only the notification list shows | – |
+| Tap a notification that targets a non-allowed app (Play services update; "Finish setting up") | blocked, spike stays | – |
+| Power menu (`input keyevent --longpress` / `--duration 1500 KEYCODE_POWER`) | no menu appeared; injected key may not trigger it. **Not tested**: needs the physical button. | – |
+| Emergency dialer from the **lock screen** | **not tested**: no secure lock screen after the reset, and the board asked not to set a PIN again | – |
+| Calls / SMS | **not tested**: no SIM | – |
+| Reboot | **incomplete**, see below | – |
+
+### Reboot (incomplete)
+
+`adb -s SPARE_DEVICE_SERIAL reboot` at 20:32:26Z with lock task on (BLOCK off, `com.android.phone` allowlisted).
+After boot adb shows **`unauthorized`**: the Mac's adb key was allowed during setup without "Always allow from this
+computer", so the approval did not survive the reboot. Whether lock task came back, and whether the "Allow USB
+debugging?" prompt can show while lock task is active, needs someone to look at the phone. Asked on PLA-5.
+
+### What this means for Plainphone (spike-level, not a spec)
+
+- BLOCK on is the only setting here that closes App info, the share chooser and the Photos leak. But it also blocks
+  runtime permission prompts, so the DPC must **pre-grant** permissions (`setPermissionGrantState` /
+  `setPermissionPolicy`). Not yet tested on the device.
+- BLOCK off leaks App info → Permissions/Notifications settings, the share chooser and Google Photos.
+- The emergency dialer needs `com.android.phone` on the lock task allowlist.
+- Photo sharing to Messages needs our own path (a direct `ACTION_SEND` with `setPackage(Messages)` works);
+  the Camera → Photos → Share route fails in lock task.

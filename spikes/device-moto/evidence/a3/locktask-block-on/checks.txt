@@ -1,0 +1,4 @@
+permission-prompt: top=android/com.android.internal.app.BlockedAppActivity focus=android/com.android.internal.app.BlockedAppActivity
+emergency-dialer-from-home: top=android/com.android.internal.app.BlockedAppActivity
+camera: top=android/com.android.internal.app.BlockedAppActivity
+photo: DCIM/Camera files before=0 after=0
