@@ -1,0 +1,76 @@
+# A7 before release, 2026-10-08T21:41:24Z
+owners: 1 owner: User 0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+users: Users:UserInfo{0:Owner:4c13} running
+accounts: Accounts: 0
+photos (name md5):
+  IMG_20261008_132841212.jpg 916be6794c632213bdf49c4bfcfd8a61
+  IMG_20261008_142806273.jpg 373e3635de2c4ea25de16f9759d05cf7
+visible pkgs: 462; all (-u): 483
+effective restrictions: no_add_private_profile no_add_user no_add_managed_profile no_install_unknown_sources no_factory_reset no_add_clone_profile no_safe_boot
+boot_count=4 uptime:  14:41:25 up 1 min,  0 users,  load average: 22.29, 8.65, 3.14
+top: com.plainphone.spike.dpc/.MainActivity
+## in-app RELEASE (tap twice)
+# A7 after release, 2026-10-08T21:41:38Z
+owners: 1 owner: User 0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+users: Users:UserInfo{0:Owner:4c13} running
+accounts: Accounts: 0
+photos (name md5):
+  IMG_20261008_132841212.jpg 916be6794c632213bdf49c4bfcfd8a61
+  IMG_20261008_142806273.jpg 373e3635de2c4ea25de16f9759d05cf7
+visible pkgs: 462; all (-u): 483
+effective restrictions: no_add_private_profile no_add_user no_add_managed_profile no_install_unknown_sources no_factory_reset no_add_clone_profile no_safe_boot
+boot_count=4 uptime:  14:41:39 up 1 min,  0 users,  load average: 20.24, 8.87, 3.30
+HOME role: com.plainphone.spike.dpc
+PPSPIKE: 
+## retry after dismissing the swipe keyguard (21:42:05Z; first try found no RELEASE button: keyguard was showing after the A6 reboot)
+top: com.android.settings/com.motorola.settings.connecteddevice.usb.UsbBottomChooseActivity
+RELEASE button not on screen
+# A7 after release, 2026-10-08T21:42:15Z
+owners: 1 owner: User 0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+users: Users:UserInfo{0:Owner:4c13} running
+accounts: Accounts: 0
+photos (name md5):
+  IMG_20261008_132841212.jpg 916be6794c632213bdf49c4bfcfd8a61
+  IMG_20261008_142806273.jpg 373e3635de2c4ea25de16f9759d05cf7
+visible pkgs: 462; all (-u): 483
+effective restrictions: no_add_private_profile no_add_user no_add_managed_profile no_install_unknown_sources no_factory_reset no_add_clone_profile no_safe_boot
+boot_count=4 uptime:  14:42:16 up 2 min,  0 users,  load average: 17.53, 9.46, 3.71
+HOME role: com.plainphone.spike.dpc
+PPSPIKE:
+## retry 2 (21:42:26Z): Motorola USB chooser (UsbBottomChooseActivity) was on top; BACK, then HOME
+top: com.plainphone.spike.dpc/.MainActivity
+tapped RELEASE twice at 540,1004
+# A7 after release, 2026-10-08T21:42:38Z
+owners: 1 owner: User 0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+users: Users:UserInfo{0:Owner:4c13} running
+accounts: Accounts: 0
+photos (name md5):
+  IMG_20261008_132841212.jpg 916be6794c632213bdf49c4bfcfd8a61
+  IMG_20261008_142806273.jpg 373e3635de2c4ea25de16f9759d05cf7
+visible pkgs: 462; all (-u): 483
+effective restrictions: no_add_private_profile no_add_user no_add_managed_profile no_install_unknown_sources no_factory_reset no_add_clone_profile no_safe_boot
+boot_count=4 uptime:  14:42:39 up 2 min,  0 users,  load average: 16.52, 9.88, 4.00
+HOME role: com.plainphone.spike.dpc
+PPSPIKE:
+I PPSPIKE : startLockTask() called
+I PPSPIKE : lock task entering: com.plainphone.spike.dpc
+## retry 3 (21:43:07Z): retry 2's second tap landed on 'Start lock task' (layout shift), so lock task was ON for this release
+lockTask before: mLockTaskModeState=LOCKED
+tapped RELEASE twice at 540,302 (after settling)
+text="RELEASED deviceOwner=false; cleared no_add_user; cleared no_install_unknown_sources; cleared no_factory_reset; cleared no_safe_boot; unhid com.motorola.mobiledesktop.core; unhid com.motorola.brapps; unhid com.motorola.spaces; unhid com.motorola.securevault; unhid com.motorola.securityhub; unhid com.facebook.services; unhid com.glance.lockscreenM; unhid com.android.chrome; unhid com.motorola.genie; unhid com.motorola.gamemode; unhid com.motorola.help; unhid com.motorola.moto; unhid com.facebook.katana; unhid com.motorola.freeform; unhid com.facebook.system; unhid com.aura.oobe.motorola; unhid com.motorola.launcher3; unhid com.motorola.actions; unhid com.facebook.appmanager; unhid com.motorola.om; unhid com.dti.motorola"
+# A7 after release, 2026-10-08T21:43:22Z
+owners: no owners
+lockTask: mLockTaskModeState=NONE
+users: Users:UserInfo{0:Owner:4c13} running
+accounts: Accounts: 0
+photos (name md5):
+  IMG_20261008_132841212.jpg 916be6794c632213bdf49c4bfcfd8a61
+  IMG_20261008_142806273.jpg 373e3635de2c4ea25de16f9759d05cf7
+visible pkgs: 483; all (-u): 483
+effective restrictions: none
+boot_count=4 uptime:  14:43:23 up 3 min,  0 users,  load average: 20.74, 11.58, 4.84
+HOME role: com.plainphone.spike.dpc
+PPSPIKE:
+I PPSPIKE : RELEASED deviceOwner=false; cleared no_add_user; cleared no_install_unknown_sources; cleared no_factory_reset; cleared no_safe_boot; unhid com.motorola.mobiledesktop.core; unhid com.motorola.brapps; unhid com.motorola.spaces; unhid com.motorola.securevault; unhid com.motorola.securityhub
+I PPSPIKE : lock task exiting
+I PPSPIKE : admin disabled

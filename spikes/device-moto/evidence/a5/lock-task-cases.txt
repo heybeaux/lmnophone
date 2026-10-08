@@ -1,0 +1,18 @@
+motorola-securityhub-newtask|action=android.intent.action.MAIN comp=com.motorola.securityhub/.ui.view.MainActivity newtask=1
+motorola-securityhub-sametask|action=android.intent.action.MAIN comp=com.motorola.securityhub/.ui.view.MainActivity
+motorola-moto-newtask|action=android.intent.action.MAIN comp=com.motorola.moto/com.motorola.assist.LauncherActivity newtask=1
+motorola-moto-sametask|action=android.intent.action.MAIN comp=com.motorola.moto/com.motorola.assist.LauncherActivity
+motorola-gamemode-newtask|action=android.intent.action.MAIN comp=com.motorola.gamemode/.ui.launcher.main.GameCenterActivity newtask=1
+motorola-gamemode-sametask|action=android.intent.action.MAIN comp=com.motorola.gamemode/.ui.launcher.main.GameCenterActivity
+motorola-spaces-newtask|action=android.intent.action.MAIN comp=com.motorola.spaces/.presentation.LauncherActivity newtask=1
+motorola-spaces-sametask|action=android.intent.action.MAIN comp=com.motorola.spaces/.presentation.LauncherActivity
+motorola-om-newtask|action=android.intent.action.MAIN comp=com.motorola.om/.presentation.LauncherActivity newtask=1
+motorola-om-sametask|action=android.intent.action.MAIN comp=com.motorola.om/.presentation.LauncherActivity
+motorola-genie-newtask|action=android.intent.action.MAIN comp=com.motorola.genie/.main.start.LaunchActivity newtask=1
+motorola-genie-sametask|action=android.intent.action.MAIN comp=com.motorola.genie/.main.start.LaunchActivity
+motorola-help-newtask|action=android.intent.action.MAIN comp=com.motorola.help/com.motorola.feedback.HomeScreenActivityLauncher newtask=1
+motorola-help-sametask|action=android.intent.action.MAIN comp=com.motorola.help/com.motorola.feedback.HomeScreenActivityLauncher
+android-chrome-newtask|action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main newtask=1
+android-chrome-sametask|action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+facebook-katana-newtask|action=android.intent.action.MAIN comp=com.facebook.katana/.LoginActivity newtask=1
+facebook-katana-sametask|action=android.intent.action.MAIN comp=com.facebook.katana/.LoginActivity

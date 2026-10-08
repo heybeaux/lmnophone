@@ -1,0 +1,25 @@
+# A5 crash fallback with com.motorola.launcher3 hidden, 2026-10-08T21:29:12Z
+hide com.motorola.launcher3 -> true
+HOME candidate:     com.plainphone.spike.dpc/.MainActivity
+HOME candidate:     com.android.settings/.FallbackHome
+before: top=com.plainphone.spike.dpc/.MainActivity lockTask=LOCKED features=lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS
+t+2s: top=com.plainphone.spike.dpc/.MainActivity focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity lockTask=LOCKED spikeProc=17818
+t+5s: top=com.plainphone.spike.dpc/.MainActivity focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity lockTask=LOCKED spikeProc=17818
+t+10s: top=com.plainphone.spike.dpc/.MainActivity focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity lockTask=LOCKED spikeProc=17818
+t+20s: top=com.plainphone.spike.dpc/.MainActivity focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity lockTask=LOCKED spikeProc=17818
+t+30s: top=com.plainphone.spike.dpc/.MainActivity focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity lockTask=LOCKED spikeProc=17818
+t+60s: top=com.plainphone.spike.dpc/.MainActivity focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity lockTask=LOCKED spikeProc=17818
+W ActivityTaskManager:   Not force finishing home activity com.plainphone.spike.dpc/.MainActivity
+I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.plainphone.spike.dpc/.MainActivity (has extras)} with LAUN
+I PPSPIKE : lock task exiting
+I PPSPIKE : lock task entering: com.plainphone.spike.dpc
+10-08 14:29:14.773 V/WindowManagerShell( 2211): Transition requested (#204): android.os.BinderProxy@9f21483 TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=84 displayId=0 i
+10-08 14:29:14.779 V/WindowManager( 1853): Sent Transition (#204) createdAt=10-08 14:29:14.760 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=84 displayId=0 is
+10-08 14:29:14.812 E/AndroidRuntime(12170): FATAL EXCEPTION: main
+10-08 14:29:14.824 W/ActivityTaskManager( 1853):   Not force finishing home activity com.plainphone.spike.dpc/.MainActivity
+10-08 14:29:14.902 V/WindowManagerShell( 2211): Transition requested (#205): android.os.BinderProxy@a33dc7e TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=84 displayId=0 
+10-08 14:29:14.935 I/ActivityTaskManager( 1853): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.plainphone.spike.dpc/.MainActivity 
+10-08 14:29:15.164 I/PPSPIKE (17818): startLockTask() called
+10-08 14:29:15.228 I/PPSPIKE (17818): lock task exiting
+10-08 14:29:15.325 I/PPSPIKE (17818): lock task entering: com.plainphone.spike.dpc
+10-08 14:29:15.337 V/WindowManager( 1853): Sent Transition (#205) createdAt=10-08 14:29:14.897 via request=TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=84 displayId=0 i

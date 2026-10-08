@@ -1,0 +1,9 @@
+# A5 Wi-Fi off/on install sweep, 2026-10-08T21:31:44Z
+hidden installers: com.dti.motorola com.aura.oobe.motorola com.motorola.brapps com.facebook.appmanager (Play is NOT hidden)
+t0 wifi on: 16 third-party (incl. hidden)
+wifi_on=0 Active default network: none
+after 2 min wifi OFF: 16 third-party (incl. hidden)
+  no change
+wifi re-enabled at 21:33:48Z; Active default network: 101
+after 5 min wifi ON: 16 third-party (incl. hidden)
+  no change

@@ -1,0 +1,16 @@
+ai.perplexity.app.android
+com.babylon.telushealth
+com.block.juggle
+com.easybrain.crossword.puzzles
+com.facebook.katana
+com.google.android.apps.adm
+com.google.android.apps.chromecast.app
+com.google.android.apps.fitness
+com.google.android.apps.subscriptions.red
+com.google.android.apps.walletnfcrel
+com.hungrystudio.mahjong
+com.inmobi.weather
+com.king.candycrushsodasaga
+com.peoplefun.wordcross
+com.plainphone.spike.dpc
+com.telus.checkup

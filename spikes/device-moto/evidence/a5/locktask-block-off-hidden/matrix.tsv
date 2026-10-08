@@ -1,0 +1,10 @@
+case	top_after_launch	lockTaskModeState	verdict	screen	log
+motorola-securityhub-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-moto-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-gamemode-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-spaces-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-om-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-genie-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-help-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+android-chrome-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+facebook-katana-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	

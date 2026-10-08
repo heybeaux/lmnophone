@@ -1,0 +1,51 @@
+# A5 Cloned Apps (clone profile), 2026-10-08T21:30:47Z
+## control
+Error: android.os.ServiceSpecificException: Cannot add user: no_add_clone_profile is enabled. (code 1)
+Error: couldn't create User.
+users: Users:UserInfo{0:Owner:4c13} running
+## with no_add_clone_profile
+OK added no_add_clone_profile
+Error: android.os.ServiceSpecificException: Cannot add user: no_add_clone_profile is enabled. (code 1)
+Error: couldn't create User.
+users: Users:UserInfo{0:Owner:4c13} running
+## Settings > Apps > Cloned Apps screen (lock task stopped)
+Starting: Intent { cmp=com.android.settings/.Settings }
+top: com.android.settings/.Settings texts: text="Bluetooth, pairing" text="Connected devices" text="Customize what is displayed on home &amp; lock screens" text="Dark theme, font size, brightness" text="Display" text="Home &amp; lock screen" text="Just a few more steps" text="Mobile, Wi‑Fi, hotspot" text="Network &amp; internet" text="Person
+OK cleared no_add_clone_profile
+## who sets no_add_clone_profile (21:31:13Z, after restrict-clear)
+spike getUserRestrictions: restrictions=[]
+15:    Restrictions:
+17:      no_add_managed_profile
+18:      no_add_clone_profile
+23:      no_add_managed_profile
+24:      no_add_clone_profile
+120:        mDefaultRestrictions: 
+156:        mDefaultRestrictions: 
+193:        mDefaultRestrictions: 
+233:        mDefaultRestrictions: 
+269:        config_defaultFirstUserRestrictions: 
+305:        mDefaultRestrictions: 
+342:        config_defaultFirstUserRestrictions: 
+  
+  Global Policies: 
+    UserRestrictionPolicyKey userRestriction_no_add_clone_profile
+      Per-admin Policy:
+        null
+Error: android.os.ServiceSpecificException: Cannot add user: no_add_clone_profile is enabled. (code 1)
+    Last logged in fingerprint: b55fcffdd3581ce4cf9120e34404f9185c8028b4
+    Start time: +25m46s931ms ago
+    Unlock time: +25m41s429ms ago
+    Last entered foreground: +25m46s931ms ago
+    Has profile owner: false
+    Restrictions:
+      no_add_private_profile
+      no_add_managed_profile
+      no_add_clone_profile
+    Device policy restrictions:
+      none
+    Effective restrictions:
+      no_add_private_profile
+      no_add_managed_profile
+      no_add_clone_profile
+    UserProperties:
+        mPropertiesPresent=0

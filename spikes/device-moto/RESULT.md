@@ -23,7 +23,9 @@
 | A2 way back | **yes** | `remove-active-admin` and the in-app RELEASE both return the phone to `no owners` with no wipe; provisioning again works each time. |
 | A3 Q1 lock task | **partly** | Launch matrix done for BLOCK off/on with a no-lock-task control. Reboot: lock task comes back by itself. A non-always-allowed adb key **cannot be re-authorized while lock task is on**. Not tested: power menu (needs the physical button), lock-screen emergency, calls/SMS. |
 | A4 Q5 baseline escapes | **partly** | Factory reset, OEM unlock, add user and Quick Settings are closed by their controls. `no_config_default_apps` does **not** stop a Home-app change (the DPC HOME pin does). **A DPC crash ends lock task and drops to the Moto launcher, unlocked, until Home is pressed.** Safe mode not tested (needs the physical buttons). |
-| A5–A7 | not yet run | |
+| A5 Q13 Motorola extras | **yes** | 20 extras + 3 Facebook installer packages hide cleanly; hiding breaks nothing core; BLOCK off leaks same-task starts of 6 of them until hidden. Hiding the Moto launcher closes the A4 crash escape (≥60 s → ~0.5 s). Clone/private/managed profiles are blocked by DO base restrictions. Gestures not tested (physical). |
+| A6 Q6 reboot survival | **yes** | 21 hidden apps, 4 restrictions and the HOME pin all survive a reboot. `no_config_default_apps` never takes effect on this build. |
+| A7 Q7 release without wipe | **yes** | `clearDeviceOwnerApp()` from inside lock task: no owners, all unhidden, restrictions cleared, no wipe, both test photos byte-identical (MD5). |
 | S1–S4, S7 | not yet run | Phase B, needs Beaux's sign-in. |
 
 ## A0. Baseline
@@ -132,6 +134,31 @@ arrives only after Wi-Fi joins.
 `com.dti.motorola` is Digital Turbine Ignite, Motorola's carrier/OEM app-push service. Play also pushed Google apps
 (Play Auto Installs) with no account. For Plainphone, this means the DPC must hide or block installs **after**
 provisioning and cannot rely on a "clean" phone after setup. Relevant to A5 (Q13) and S7.
+
+### Later snapshot: more pushes after the A0 table (recorded 2026-10-08T21:36Z, `evidence/a5/third-party-all.tsv`)
+
+The A0 table above was taken at about 13:05 PDT. Listing **all** third-party packages later (`pm list packages -3 -u`
+plus `dumpsys package <pkg>` installer and `firstInstallTime`) shows that pushes kept arriving until 13:08:11,
+**before** Device Owner was set at 13:08:20:
+
+| Package | Installer | First install (PDT) |
+|---|---|---|
+| `com.king.candycrushsodasaga` | `com.dti.motorola` | 13:06:49 |
+| `com.google.android.apps.chromecast.app` (Google Home) | `com.android.vending` | 13:06:59 |
+| `com.google.android.apps.adm` (Find My Device) | `com.android.vending` | 13:07:30 |
+| `com.telus.checkup` | `com.android.vending` | 13:07:37 |
+| `com.babylon.telushealth` | `com.android.vending` | 13:07:39 |
+| `ai.perplexity.app.android` | `com.android.vending` | 13:07:52 |
+| `com.inmobi.weather` | `com.android.vending` | 13:08:11 |
+
+**Reconciled total (PLA-7 R8):** **14 pushed + 1 preload** within about 11 minutes of first boot, with no Google account:
+- **5** Digital Turbine games: the four above plus Candy Crush Soda Saga. This also matches the "Candy Crush Soda Saga
+  Installed" notification in `evidence/a3/locktask-block-off/shade-quicksettings.png`.
+- **9** Play pushes: Google One, Fit, Wallet, Google Home, Find My Device, TELUS CheckUp, TELUS Health, Perplexity, InMobi Weather.
+  These are carrier/OEM Play Auto Installs, with TELUS branding on a `retca` build.
+- **1** preload: Facebook (installer `null`), plus the hidden-by-default `com.facebook.appmanager/system/services`.
+
+The earlier "7 pushed + 1 preload" was correct only for the 13:05 snapshot.
 
 ### Pre-check on our own emulator (not the phone)
 
@@ -339,3 +366,108 @@ Hidden apps and user restrictions still apply, because they're Device Owner poli
 Spike-level implications (not a spec): the Plainphone home/lock-task activity must not crash, or something must
 bring it back with no user action. Things to try: hide the stock launcher (A5) so there's no fallback home; a
 separate watchdog process; restarting on `BOOT`/package events. Feeds Q12 (crash-loop custody limit).
+
+## A5. Q13 Motorola extras
+
+**Result: yes** (gestures not tested). Fingerprint unchanged. Run 2026-10-08 21:23–21:39Z. Raw: `evidence/a5/`.
+Scripts: `tools/a5-inventory.sh`, `tools/a3-matrix.sh <out> <cases-file>`.
+
+Inventory (`inventory-before.tsv`): present are `securevault` (Secure folder; no launcher entry, reached via Moto Secure),
+`securityhub` (Moto Secure), `moto`, `actions` (gestures), `gamemode` (Gametime), `freeform` (Sidebar), `spaces`,
+`om`, `brapps` (disabled), `aura.oobe.motorola` (MotoApps), `mobiledesktop.core` (Smart Connect), `glance.lockscreenM` (disabled),
+`genie`, `help`, `dti.motorola`, `chrome`, `facebook.katana`, `launcher3`.
+**Not present:** `com.motorola.mobiledesktop`, `com.motorola.playautoinstallext`, `com.motorola.motodisplay`.
+Facebook also ships `com.facebook.appmanager`, `com.facebook.system` and `com.facebook.services`.
+
+**Reachable in lock task?** Each launcher entry was launched from the spike as an explicit component, new task and same task
+(`lock-task-cases.txt`; allowlist = spike, Phone, Messages, Camera, `com.android.phone`):
+
+| Entry | BLOCK on | BLOCK off, new task | BLOCK off, **same task** | BLOCK off, same task, **after hiding** |
+|---|---|---|---|---|
+| Moto Secure, Chrome, Device Help (`help`) | BlockedAppActivity | blocked | blocked | blocked |
+| Moto (`moto`) | BlockedAppActivity | blocked | **opened** (`OnboardingActivity`) | blocked |
+| Gametime | BlockedAppActivity | blocked | **opened** (`GameCenterActivity`) | blocked |
+| Family Space (`spaces`) | BlockedAppActivity | blocked | **opened** (`OnBoardActivity`) | blocked |
+| Moto Unplugged (`om`) | BlockedAppActivity | blocked | **opened** | blocked |
+| Device Help chatbot (`genie`) | BlockedAppActivity | blocked | **opened** (`IntroScreensActivity`) | blocked |
+| Facebook (`katana`) | BlockedAppActivity | blocked | **opened `com.facebook.appmanager/…StubInstallActivity`** (an installer) | blocked |
+
+The same-task starts were made by our own spike code. A real user needs an allowed app that fires such intents.
+Still, with BLOCK off **hiding is what closes them**.
+
+**Can each be hidden?** `setApplicationHidden(admin, pkg, true)` returned `true` and `isApplicationHidden` → `true`
+for all 20 extras plus the 3 Facebook system packages (`hide-results.txt`). They disappear from `pm list packages`,
+and their launcher entries no longer resolve (`inventory-after-hide.tsv`).
+
+**Does hiding break anything?** With all of them hidden, under lock task (BLOCK off), all of these worked (`breakage.txt`):
+Phone (`GoogleDialtactsActivity`), Messages, Camera, a new photo (MediaStore 1 → 2), the emergency dialer screen
+(`com.android.phone/.EmergencyDialer`; not dialed) and the notification shade. Over 60 s the only process death was a cached
+`com.android.managedprovisioning`, which is normal. WebView is the standalone `com.google.android.webview` (127.0.6533.103),
+so hiding Chrome does not affect WebView. **Not tested:** Moto Actions gestures (chop flashlight, twist camera, back-tap)
+need physical motion. Hiding `com.motorola.actions` presumably removes them; unverified.
+
+**Moto launcher hidden = crash fallback closed** (`crash-fallback.txt`). With `com.motorola.launcher3` hidden, the
+only HOME candidates are the spike and `com.android.settings/.FallbackHome`. A spike crash under lock task gives
+`Not force finishing home activity com.plainphone.spike.dpc/.MainActivity` → HOME restart of the spike at +0.12 s →
+`startLockTask()` at +0.35 s → `lock task entering` at **+0.51 s**. The top stays on the spike, against ≥60 s on the open Moto
+launcher in A4.
+
+**Cloned Apps / Private Space / work profile** (`cloned-apps.txt`): `pm create-user --profileOf 0 --user-type
+android.os.usertype.profile.CLONE` fails **even in the control**: `Cannot add user: no_add_clone_profile is enabled`.
+`dumpsys user` lists `no_add_private_profile no_add_managed_profile no_add_clone_profile` as **base restrictions**
+(`Device policy restrictions: none`). They're present while a Device Owner is set, gone after release (A7) and back on
+re-provisioning, so the platform applies them for a fully managed device. Cloned Apps and Private Space are blocked
+without any DPC policy. Secure folder is hidden; whether it would need one of these profile types wasn't tested.
+
+**Install sweep, Wi-Fi off/on** (Lead request; `wifi-sweep.txt`). With `dti.motorola`, `aura.oobe.motorola`, `brapps`
+and `facebook.appmanager` hidden (Play not hidden): 2 min with `svc wifi disable` (no active network) → no new packages;
+5 min after `svc wifi enable` → no new packages (16 third-party, including hidden ones, before and after).
+Limitation: this is **after** setup. Telling apart what arrives during setup with no network from what arrives after Wi-Fi joins
+needs another trusted reset with Wi-Fi skipped in the wizard.
+
+## A6. Q6 partly: do hidden apps and restrictions survive a reboot?
+
+**Result: yes.** Raw: `evidence/a6/a6.txt`, `pkgs-*-before/after.txt`.
+Before `adb reboot` (21:39:38Z): DO set, 21 hidden (the A5 list plus `launcher3`), restrictions `no_add_user no_factory_reset
+no_install_unknown_sources no_safe_boot`, HOME pinned to the spike. After boot (`boot_count` 4):
+- spike status identical: same 21 `hidden=…:true` and the same 4 restrictions; `dumpsys user` effective restrictions identical;
+- `pm list packages` (visible) **byte-identical** to before; hidden count 21;
+- HOME → spike, role = spike;
+- `pm create-user` → `Cannot add user: no_add_user is enabled`;
+- `am start -a VIEW -d https://example.com` → `unable to resolve Intent` (Chrome hidden, no handler).
+
+**Finding:** `restrict-add no_config_default_apps` returns "OK", but the restriction **never appears** in
+`getUserRestrictions` or the effective restrictions, before or after the reboot. On this build it is silently not applied.
+That explains the A4 result where the Home app could still be changed.
+
+## A7. Q7 partly: does `clearDeviceOwnerApp()` release the phone without a wipe?
+
+**Result: yes.** Raw: `evidence/a7/a7.txt`, `after-release.png`. Released with the in-app RELEASE button
+(`Release.run` → `clearDeviceOwnerApp()`) **while lock task was on** (BLOCK on).
+
+| | Before | After |
+|---|---|---|
+| `dpm list-owners` | `DeviceOwner,Affiliated` | `no owners` |
+| lock task | LOCKED | NONE (`lock task exiting`) |
+| users / accounts | `0:Owner` / 0 | `0:Owner` / 0 |
+| `IMG_20261008_132841212.jpg` (taken in A3) | md5 `916be6794c632213bdf49c4bfcfd8a61` | **same** |
+| `IMG_20261008_142806273.jpg` (taken in A5) | md5 `373e3635de2c4ea25de16f9759d05cf7` | **same** |
+| packages visible / all | 462 / 483 | 483 / 483 (all 21 unhidden) |
+| effective restrictions | 4 DPC + 3 base profile restrictions | **none** |
+| `boot_count`, uptime | 4, 1 min | 4, 3 min (no reboot, no wipe) |
+
+Release message: `RELEASED deviceOwner=false; cleared no_add_user; cleared no_install_unknown_sources; cleared no_factory_reset;
+cleared no_safe_boot; unhid …` (21 packages).
+Not undone by release: the HOME role stays `com.plainphone.spike.dpc`, and OEM unlocking stays off (A4).
+
+Harness notes (not device findings): the first two release attempts missed. First, the keyguard was showing after the A6 reboot.
+Then Motorola's USB-mode chooser popped up, and the long status text moved the RELEASE button after the first tap, so the second
+tap landed on "Start lock task". `tools/release-tap.sh` now arms, re-finds the button and double-taps the settled position.
+
+## Current state (2026-10-08T21:44Z, ready for Phase B)
+
+`evidence/phase-b-prep/state.txt`: spike DPC is Device Owner (`testOnly`, removable with `remove-active-admin`);
+**no DPC restrictions** (only the 3 base profile restrictions that come with DO); nothing hidden; lock task off and no
+lock task packages; HOME role = `com.motorola.launcher3` (set with `cmd role add-role-holder`) so Play and Settings are reachable;
+0 accounts; Wi-Fi on; Play `53.4.34-34`; adb works with this Mac's key always-allowed; `stay_on_while_plugged_in` = USB;
+wireless debugging on (set by whoever was at the phone); OEM unlocking **off** (see A4).

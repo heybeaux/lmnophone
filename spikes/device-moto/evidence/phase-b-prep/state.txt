@@ -1,0 +1,13 @@
+# Phase B starting state, 2026-10-08T21:43:48Z
+Success: Device owner set to package com.plainphone.spike.dpc/.AdminReceiver
+Active admin set to component com.plainphone.spike.dpc/.AdminReceiver
+HOME role: com.motorola.launcher3
+top: com.plainphone.spike.dpc/.MainActivity
+status: deviceOwner=true lockTaskModeState=0 lockTaskPackages=[] lockTaskFeatures=GLOBAL_ACTIONS restrictions=[] hidden=[] suspended=[] locked=false debugLiftAt=0
+owners: 1 owner: User 0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+accounts: Accounts: 0
+effective restrictions: no_add_private_profile no_add_managed_profile no_add_clone_profile
+lockTask: mLockTaskModeState=NONE
+Play: versionName=53.4.34-34 [0] [PR] 991240293
+wifi_on=1
+adb key always-allowed (user_keys entries): 

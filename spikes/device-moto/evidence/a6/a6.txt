@@ -1,0 +1,23 @@
+# A6 pre-reboot, 2026-10-08T21:39:34Z
+OK added no_factory_reset
+OK added no_add_user
+OK added no_safe_boot
+OK added no_config_default_apps
+OK added no_install_unknown_sources
+OK lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK (87)
+status: deviceOwner=true lockTaskModeState=0 lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[no_add_user, no_factory_reset, no_install_unknown_sources, no_safe_boot] hidden=[com.android.chrome:true, com.aura.oobe.motorola:true, com.dti.motorola:true, com.facebook.appmanager:true, com.facebook.katana:true, com.facebook.services:true, com.facebook.system:true, com.glance.lockscreenM:true, com.motorola.actions:true, com.motorola.brapps:true, com.motorola.freeform:true, com.motorola.gamemode:true, com.motorola.genie:true, com.motorola.help:true, com.motorola.launcher3:true, com.motorola.mobiledesktop.core:true, com.motorola.moto:true, com.motorola.om:true, com.motorola.securevault:true, com.motorola.securityhub:true, com.motorola.spaces:true] suspended=[] locked=false debugLiftAt=0
+dumpsys user effective: no_add_private_profile no_add_user no_add_managed_profile no_install_unknown_sources no_factory_reset no_add_clone_profile no_safe_boot
+hidden count (pm list -u minus visible): 21
+lockTask: mLockTaskModeState=NONE
+reboot at 21:39:38Z
+# A6 post-reboot, 2026-10-08T21:40:51Z
+uptime:  14:40:51 up 1 min,  0 users,  load average: 27.81, 7.83, 2.68 boot_count=4
+status: deviceOwner=true lockTaskModeState=0 lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[no_add_user, no_factory_reset, no_install_unknown_sources, no_safe_boot] hidden=[com.android.chrome:true, com.aura.oobe.motorola:true, com.dti.motorola:true, com.facebook.appmanager:true, com.facebook.katana:true, com.facebook.services:true, com.facebook.system:true, com.glance.lockscreenM:true, com.motorola.actions:true, com.motorola.brapps:true, com.motorola.freeform:true, com.motorola.gamemode:true, com.motorola.genie:true, com.motorola.help:true, com.motorola.launcher3:true, com.motorola.mobiledesktop.core:true, com.motorola.moto:true, com.motorola.om:true, com.motorola.securevault:true, com.motorola.securityhub:true, com.motorola.spaces:true] suspended=[] locked=false debugLiftAt=0
+dumpsys user effective: no_add_private_profile no_add_user no_add_managed_profile no_install_unknown_sources no_factory_reset no_add_clone_profile no_safe_boot
+visible list identical to before: yes
+hidden count: 21
+HOME: com.plainphone.spike.dpc/.MainActivity; role=com.plainphone.spike.dpc
+pm create-user after reboot: Error: android.os.ServiceSpecificException: Cannot add user: no_add_user is enabled. (code 1)
+launch hidden Chrome after reboot: Error: Activity not started, unable to resolve Intent { act=android.intent.action.VIEW dat=https://example.com/... flg=0x10000000 }
+  top: com.plainphone.spike.dpc/.MainActivity
+adb key still always-allowed: 

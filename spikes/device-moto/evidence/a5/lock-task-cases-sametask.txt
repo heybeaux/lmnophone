@@ -1,0 +1,9 @@
+motorola-securityhub-sametask|action=android.intent.action.MAIN comp=com.motorola.securityhub/.ui.view.MainActivity
+motorola-moto-sametask|action=android.intent.action.MAIN comp=com.motorola.moto/com.motorola.assist.LauncherActivity
+motorola-gamemode-sametask|action=android.intent.action.MAIN comp=com.motorola.gamemode/.ui.launcher.main.GameCenterActivity
+motorola-spaces-sametask|action=android.intent.action.MAIN comp=com.motorola.spaces/.presentation.LauncherActivity
+motorola-om-sametask|action=android.intent.action.MAIN comp=com.motorola.om/.presentation.LauncherActivity
+motorola-genie-sametask|action=android.intent.action.MAIN comp=com.motorola.genie/.main.start.LaunchActivity
+motorola-help-sametask|action=android.intent.action.MAIN comp=com.motorola.help/com.motorola.feedback.HomeScreenActivityLauncher
+android-chrome-sametask|action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+facebook-katana-sametask|action=android.intent.action.MAIN comp=com.facebook.katana/.LoginActivity

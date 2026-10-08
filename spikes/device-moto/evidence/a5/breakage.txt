@@ -1,0 +1,9 @@
+# A5 breakage checks with extras hidden, lock task BLOCK off, 2026-10-08T21:27:43Z
+Phone -> com.google.android.dialer/.extensions.GoogleDialtactsActivity
+Messages -> com.google.android.apps.messaging/.gaia.expresssignin.BugleExpressSignInActivity
+Camera -> com.motorola.camera3/com.motorola.camera.Camera
+photo: MediaStore images 1 -> 2
+emergency dialer screen -> com.android.phone/.EmergencyDialer
+shade: focus=NotificationShade
+crashes/ANRs in 60 s:
+   1 I ActivityManager: Process com.android.managedprovisioning (pid 9907) has died: cch+95 CEM 

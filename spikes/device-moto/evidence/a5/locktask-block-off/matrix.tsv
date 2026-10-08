@@ -1,0 +1,19 @@
+case	top_after_launch	lockTaskModeState	verdict	screen	log
+motorola-securityhub-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-securityhub-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-moto-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-moto-sametask	com.motorola.moto/.motofive.feature.onboarding.OnboardingActivity	LOCKED	OPENED	Awake	
+motorola-gamemode-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-gamemode-sametask	com.motorola.gamemode/.ui.launcher.main.GameCenterActivity	LOCKED	OPENED	Awake	
+motorola-spaces-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-spaces-sametask	com.motorola.spaces/.presentation.ui.onboarding.OnBoardActivity	LOCKED	OPENED	Awake	
+motorola-om-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-om-sametask	com.motorola.om/.presentation.ui.onboarding.OnBoardActivity	LOCKED	OPENED	Awake	
+motorola-genie-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-genie-sametask	com.motorola.genie/.main.start.IntroScreensActivity	LOCKED	OPENED	Awake	
+motorola-help-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+motorola-help-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+android-chrome-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+android-chrome-sametask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+facebook-katana-newtask	com.plainphone.spike.dpc/.MainActivity	LOCKED	BLOCKED	Awake	
+facebook-katana-sametask	com.facebook.appmanager/com.facebook.oxygen.appmanager.ui.landing.StubInstallActivity	LOCKED	OPENED	Awake	

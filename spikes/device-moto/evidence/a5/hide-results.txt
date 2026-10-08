@@ -1,0 +1,21 @@
+# A5 hide (rerun with stdin closed), 2026-10-08T21:26:12Z
+hide com.motorola.securevault -> true  | isApplicationHidden com.motorola.securevault -> true
+hide com.motorola.securityhub -> true  | isApplicationHidden com.motorola.securityhub -> true
+hide com.motorola.moto -> true  | isApplicationHidden com.motorola.moto -> true
+hide com.motorola.actions -> true  | isApplicationHidden com.motorola.actions -> true
+hide com.motorola.gamemode -> true  | isApplicationHidden com.motorola.gamemode -> true
+hide com.motorola.freeform -> true  | isApplicationHidden com.motorola.freeform -> true
+hide com.motorola.spaces -> true  | isApplicationHidden com.motorola.spaces -> true
+hide com.motorola.om -> true  | isApplicationHidden com.motorola.om -> true
+hide com.motorola.brapps -> true  | isApplicationHidden com.motorola.brapps -> true
+hide com.aura.oobe.motorola -> true  | isApplicationHidden com.aura.oobe.motorola -> true
+hide com.motorola.mobiledesktop.core -> true  | isApplicationHidden com.motorola.mobiledesktop.core -> true
+hide com.glance.lockscreenM -> true  | isApplicationHidden com.glance.lockscreenM -> true
+hide com.motorola.genie -> true  | isApplicationHidden com.motorola.genie -> true
+hide com.motorola.help -> true  | isApplicationHidden com.motorola.help -> true
+hide com.dti.motorola -> true  | isApplicationHidden com.dti.motorola -> true
+hide com.android.chrome -> true  | isApplicationHidden com.android.chrome -> true
+hide com.facebook.katana -> true  | isApplicationHidden com.facebook.katana -> true
+hide com.facebook.appmanager -> true  | isApplicationHidden com.facebook.appmanager -> true
+hide com.facebook.system -> true  | isApplicationHidden com.facebook.system -> true
+hide com.facebook.services -> true  | isApplicationHidden com.facebook.services -> true

@@ -28,6 +28,9 @@ CASES=(
   "share-to-messages-sametask|action=android.intent.action.SEND type=text/plain text=hello_from_spike pkg=com.google.android.apps.messaging"
 )
 
+# Optional second argument: a file of "name|spec" lines that replaces the built-in cases.
+if [ $# -ge 2 ]; then mapfile -t CASES < <(grep -v '^#' "$2" | grep '|'); fi
+
 wake() { a shell input keyevent KEYCODE_WAKEUP; a shell wm dismiss-keyguard >/dev/null 2>&1; sleep 0.5; }
 
 back_to_spike() {
