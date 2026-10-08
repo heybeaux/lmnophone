@@ -1,292 +1,264 @@
 ## Context
 
-- **Users.** The first phones belong to Beaux and the trusted person, in [town], Canada. Neither is technical. Each is likely the other's trusted person.
-- **Goal.** A calm phone that runs only approved apps, with the trusted person deciding which. It should feel calm, not punished.
-- **Architecture.** `docs/decisions/0001-architecture.md` (revision 2) gives the leading candidate:
-  - a Device Owner app that is also the home screen
-  - on a certified stock Android phone with long security support
-  - the phone model is Beaux's decision
-- **Evidence.** In `research/evidence/`.
-  - Every requirement traces to a source or a named test in `docs/verification-matrix.md`.
-  - Revision 1 was reviewed in PLA-3. This revision answers findings F1–F17.
-- **Team policy constraints.**
-  - Emulator only, until Beaux approves a specific phone.
-  - No remote repository.
+- **Users.** Beaux and the trusted person in [town], Canada. Neither is technical. Each is likely the other's trusted person.
+- **Architecture.** `docs/decisions/0001-architecture.md` (revision 3) names the leading candidate:
+  - a Device Owner app that is also the home screen;
+  - running on a certified stock Android phone with long security support.
+- **Evidence.**
+  - Source files: `research/evidence/`.
+  - Device results so far come from the spare Motorola ([PLA-5](/PLA/issues/PLA-5), `spikes/device-moto/RESULT.md`):
+    - **A1 / Q3: yes.** Our unapproved, test-only Device Owner app was set up over adb on a certified Android 15 Motorola. No allowlist message appeared.
+    - **A2: yes.** `dpm remove-active-admin` and `clearDeviceOwnerApp()` both returned the phone to unmanaged with no wipe.
+    - Within 8 minutes of first boot with Wi-Fi and no account, 8 apps were installed: 5 games from Digital Turbine (`com.dti.motorola`) plus Google One, Fit and Wallet via Play. Facebook comes preloaded.
+- **Reviews.** Revision 3 answers PLA-4 (N1–N11) on top of PLA-3 (F1–F17). Every requirement traces to `docs/verification-matrix.md`.
+- **Policy constraints:**
+  - Physical work only on the board-approved spare (serial SPARE_DEVICE_SERIAL), within its rules: Settings resets only, no recovery wipes, test-only DPC.
+  - No remote repo.
   - No paid services.
-  - Every artifact gets a review from the other model family.
+  - Cross-model review.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- **One app (one APK).** The Device Owner, home screen, trusted-person screens and blocked-link screen live in a single package.
-- **No unapproved app can be opened** through any route we tested. Leftover routes are named and accepted in writing by Beaux.
-- **Plainphone never gets in the way of 9-1-1**, ordinary calls, texts, or emergency alerts.
-- **Approved apps stay up to date.** If they stop updating, the trusted person sees it.
-- **Every state can be recovered from**, without a developer: lost PIN, interrupted setup, a Plainphone crash or update, turning it off, and a wipe.
-- **Setup takes about 30 minutes for a helper.** The clock runs from the first adb command to the green handover check, on a phone that is already backed up, reset and on Wi-Fi.
+- **One app.** One APK contains the Device Owner, home screen, trusted-person screens and the blocked-link screen.
+- **No unapproved app can be opened** through any tested route, from the first interactive frame after unlock. Leftover routes are named, and Beaux accepts them in writing.
+- **Emergency first.** Plainphone never gets in the way of 9-1-1, calls, texts or emergency alerts, in any state, including while Plainphone cannot run.
+- **Updates.** Approved apps keep updating, and the trusted person does a supervised update check once a month.
+- **Recovery.** Every state has a written recovery path. The last resort is a recovery wipe plus the trusted person's Google account.
+- **Simple setup.** A helper finishes setup in 30 minutes or less, measured as defined in guided-setup.
+- **Temporary access is custody.** Any temporary relaxation of the lockdown is a supervised session in the trusted person's hands. We do not promise it closes itself if Plainphone cannot run.
 
 **Non-Goals:**
-- **Remote portal and server.** A later change; hosting means spend.
-- **DNS/VPN filter.** Spike Q9 only. It is not counted as protection.
-- **Watching the user.** No time limits, usage reports, or monitoring of messages or location. We restrict; we do not watch.
-- **Not supported:** work profiles, multiple users, tablets, GrapheneOS, and any phone model Beaux hasn't approved.
-- **Never "no unapproved code runs".** The guarantee is "no unapproved app can be opened" (D2).
+- Remote portal or server.
+- DNS or VPN filter (Q9 only).
+- Monitoring.
+- GrapheneOS.
+- Phones Beaux hasn't approved.
+- Wi-Fi networks that need a sign-in page.
+- Any adb-based maintenance mode.
+- Promising that no unapproved code ever runs.
 
 ## Decisions
 
 ### D1. Lock task with in-task blocking, plus hiding
 
-**Hiding.** Unapproved apps are hidden with `setApplicationHidden`.
-
-**Lock task.** Approved apps run in multi-app lock task mode with these features:
+Unapproved apps are hidden with `setApplicationHidden`. Approved apps run in multi-app lock task mode with these features:
 - `HOME`, `KEYGUARD`, `GLOBAL_ACTIONS`, `NOTIFICATIONS`, `SYSTEM_INFO`
-- `BLOCK_ACTIVITY_START_IN_TASK` (API 30)
+- `BLOCK_ACTIVITY_START_IN_TASK`
 - never `OVERVIEW`
 
-Without the block flag, Android lets any resolvable screen start inside an approved app's task, which includes Settings and Play (PLA-3 F1, documented).
+Any system screen a normal day needs goes on a reviewed **UI exceptions list**. Q1 finds these screens. Each exception gets negative tests.
 
-**Exceptions.** Any system screen a normal day needs, such as permission prompts or the in-call screen, is found by Q1. It is added by package name to a reviewed **UI exceptions list**, and each entry gets a test proving nothing else opens.
+The home activity starts lock task before it draws its first interactive frame. Restrictions, hidden apps and lock-task settings are saved by Android and survive a reboot.
 
-*Alternative:* hiding alone. Not assumed safe; it would need its own escape review and a revised ADR.
+### D2. Supervised sessions are custody, with a journal written first
 
-### D2. App updates: Play kept but out of reach; promise "can't be opened"
+**Purpose.** A supervised session is the only way the lockdown is ever relaxed. The MVP has two kinds:
+- **Play:** add an app, or the monthly update check. Deadline 10 minutes.
+- **Settings:** for anything Plainphone's own settings screen doesn't cover. Deadline 5 minutes.
 
-**Play stays.** The Play Store stays installed, enabled and signed in to the **user's** account.
-- It is never in lock task outside a supervised session.
-- `DISALLOW_INSTALL_APPS` is never set permanently; AOSP shows it also blocks updates.
+**Contract** (trusted-person-controls):
+1. A fresh PIN is required to start.
+2. The relaxation and its deadline are written to a journal in device-protected storage **before** anything is relaxed.
+3. Only the session's packages are added to lock task. Debugging, factory reset and safe mode are never relaxed.
+4. The session ends on Done, screen off, the deadline, or leaving the session's packages.
+5. On ending, Plainphone revokes the relaxation, reads the policy back, and then clears the journal.
+6. On every Plainphone start, including a Direct-Boot-aware `LOCKED_BOOT_COMPLETED`, Plainphone revokes anything still in the journal before doing anything else.
 
-**Setup checks** that Play auto-update is on (helper step, shown on screen). It also records a baseline of each approved app's version.
+**What we promise (N1).** We do not promise a session closes itself if Plainphone cannot run at all. The relaxation then stays until a helper fixes the phone. The screen says "Stay with the phone until you tap Done", and the risk is disclosed. Q12 measures this. If Q12 shows a relaxation can stay live long enough to matter, that triggers a no-go and a revised ADR (ADR go/no-go #6).
 
-**Staleness.** Trusted-person mode shows "Last updated" for each app. If no approved app **and** Play services have updated in 30 days, it says "Updates may be stuck" and offers a supervised "Check updates" session.
+**Why not adb maintenance.** It was cut (N2). Its scope can't be narrowed, and it relies on Settings and host authorisation.
+
+### D3. App updates: Play kept but out of reach; per-app record; monthly check
+
+**Play stays.** The Play Store stays installed, enabled and signed in to the user's own account. It is outside lock task except during a Play session. `DISALLOW_INSTALL_APPS` is never set permanently.
 
 **Unapproved installs.**
-- Any app installed by any route stays hidden until approved.
-- Plainphone hides it on the package-added broadcast, and also re-checks at boot and every 15 minutes.
-- If hiding fails, lock task still stops the app from opening.
-- The time from install to hidden is measured in test S7.
-- **Accepted and disclosed:** an unapproved app may run background code for a short time.
+- Any install, including first-boot preinstalls and Digital Turbine pushes, stays hidden until it is approved.
+- Plainphone hides on the package-added broadcast, and also checks at boot and every 15 minutes.
+- If hiding fails, the app may run in the background, with no time limit. This is disclosed.
 
-**Supervised Play session (a small state machine):**
-- `idle → active(token, deadline) → closing → idle`
-- **Start:** a fresh PIN entry.
-- **Deadline:** 10 minutes, stored and checked against elapsed time since boot.
-- **Ends on** any of:
-  - the screen turning off
-  - Plainphone restarting
-  - a reboot
-  - leaving Play
-  - the deadline passing
-- **Closing** removes Play from lock task and checks the policy has been restored (readback), before the user sees the phone.
-- **Approving** the new app ("Allow") needs a fresh PIN entry. The approval is tied to the app's package name and signing-certificate fingerprint.
-- **Late events** from an ended session are ignored. Any app it installed stays hidden until the trusted person approves it.
+**Update record and check (N9).**
+- Plainphone records each approved app's version and the time it last updated.
+- Once a month it texts the trusted person to run the update check, a Play session that opens Play's own update list. That list shows which updates are waiting and which have failed. Plainphone does not claim to know this itself.
+- If Google Play services goes 30 days without an update, Plainphone texts the trusted person.
 
-*Alternative:* a permanent `DISALLOW_INSTALL_APPS` lifted only in update windows. Rejected unless Q2 forces it, because Play and Play services would go stale.
+### D4. Web: classifier with self-exemption, scoped link promise, no Wi-Fi sign-in pages
 
-### D3. Web: hide general browsers, catch other links, disclose
+**Classifier (N3).**
+- Plainphone (exact package name and signing certificate) and never-hide packages are excluded first. A conflict is flagged for review, never hidden automatically.
+- A package is a "general browser" if `queryIntentActivities(MATCH_ALL)` lists it for both http and https on the local probe `plainphone-probe.invalid` (never fetched), or if it is in the reviewed catalog of known browsers.
+- Apps that only open links to their own verified domains are allowed.
 
-**General browser** means an app that:
-- answers a test link to an unknown host (`https://plainphone-probe.invalid/`), **or**
-- can hold the browser role.
+**Link handling.**
+- External http(s) links that Android would send to a browser go to Plainphone's blocked-link screen.
+- Explicit intents to hidden browsers fail.
+- Navigation inside an approved app's own WebView is **not** intercepted. This is disclosed.
+- The blocked-link screen runs as a separate activity with no access to admin functions.
 
-An app that only opens links to its own website (Android App Links) is **not** a browser and can be approved.
+**Wi-Fi sign-in pages are unsupported (N5).**
+- CaptivePortalLogin is hidden, with no exception session.
+- When Android reports a captive portal, Plainphone shows: "This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi." It also offers "Forget this network".
+- Q4 checks that normal Wi-Fi still works.
 
-**Always hidden:** general browsers, the Google app, Gemini, other app stores, and the Wi-Fi sign-in page app. The sign-in page app can be allowed only for one supervised session.
+**Web-leak notes** are kept per app version.
 
-**Plainphone takes the browser role**, and setup checks that it holds it (Q4).
+### D5. Emergency: never-hide list including OEM components; behavioral gate; real-device handover checks
 
-**Link handling:**
-
-| Link | What happens |
-|---|---|
-| An approved app's own verified App Link | Opens that app |
-| Any other http/https link | Plainphone's blocked-link screen |
-| `intent:` links, custom schemes, explicit components | Open only if they lead to an approved app |
-| Custom Tabs | No provider exists, so apps fall back to their own behavior. That is tested in Q4 |
-
-**Blocked-link screen.**
-- Shows the real host, after parsing.
-- Removes user/password parts, query strings and fragments before showing or sending.
-- Offers "Send to [trusted person]" by text, after the user confirms.
-- Runs in a separate activity with **no admin capability**. It ignores incoming extras.
-
-**Web-leak notes.**
-- Each catalog note records the app version it was reviewed against.
-- When the app has updated past that version, trusted-person mode says "reviewed for an older version".
-
-### D4. Emergency: two lists, behavioral gate, no call filtering
-
-**Never-hide list.** These packages are never hidden, suspended, disabled or uninstalled, and none of their components is ever disabled:
+**Never-hide list.** The base list:
 - the system dialer
 - Telecom
-- the cell broadcast receiver
+- the cell broadcast receiver and its alert display
 - Google Play services
 - the default SMS app
 
-The policy engine refuses such changes by construction.
+Q13 adds the manufacturer's emergency components, such as Motorola's SOS and emergency information. The policy engine refuses to hide, suspend, disable or uninstall any of them, or to disable any of their components.
 
-**Lock-task UI list.** The packages whose screens may appear:
-- Plainphone
-- approved apps
-- the system dialer, plus the in-call screen package if it is separate
-- validated UI exceptions from D1
+**Getting to Emergency.**
+- Lock task always includes the dialer, and `KEYGUARD` and `HOME` are always set.
+- Inside an approved app: press Home, then Emergency. The power-menu entry stays where the phone has one.
+- When Plainphone can't run: the lock screen and the system dialer still work.
 
-Play services and Telecom are **not** on it unless Q1 proves they must be. Each entry gets a test proving Settings and the browser can't be reached through it. Same-UID packages are listed and checked.
+**Release gate.** The release gate covers every state that the emulator can reproduce. It must fail on three negative-control builds:
+- the Emergency button goes nowhere;
+- the dialer is missing from lock task;
+- the alert display is disabled.
 
-**Incoming calls.** Plainphone never filters, blocks or hides incoming calls. E-Comm calls back automatically after a 9-1-1 hang-up.
+If an alert can't be injected, the result is recorded as "not verified".
 
-**Emergency button.** The home screen always has one. It sends `ACTION_DIAL tel:911` explicitly to the system dialer, and checks the target can be resolved.
+**Before handover to Beaux or the trusted person (N8), on their actual model and build:**
+- the emergency dialer opens in every state, without placing a call;
+- an incoming call can be answered, and its keypad sends tones (E-Comm's automatic callback needs a keypress);
+- the alert receiver is present;
+- the manufacturer's emergency components are on the never-hide list.
 
-**Release gate.** An instrumented UI test that:
-- taps Emergency from: the lock screen, home, inside an approved app, in the middle of setup, during a PIN lockout, during a Play session, and after Plainphone restarts;
-- checks that the system dialer's emergency screen is in front each time;
-- runs an emulator-simulated call through Telecom.
+A live 9-1-1 call needs a separate procedure agreed with E-Comm or the carrier, approved by Beaux. Until these checks pass, the phone stays in supervised test custody.
 
-A deliberately broken build (the button resolves to nothing) **must fail** this gate. Proof of a real carrier call and location needs a real phone and a safe test procedure agreed with the carrier. The emulator never stands in for it.
+**Calls are never filtered.**
 
-### D5. Trusted person on the device
+### D6. Trusted person on the device
 
-**PIN.**
-- At least 6 digits.
-- Stored as a PBKDF2-HMAC-SHA256 hash with ≥600,000 iterations and a random salt.
+**PIN (N7).**
+- Stored as PBKDF2-HMAC-SHA256 with at least 600,000 iterations and a 16-byte salt.
+- Failures 1–4 cause no delay. The 5th failure starts a 30-second delay, which doubles with each further failure, capped at 1 hour.
+- Entries made during a delay are rejected without being counted.
+- The failure count and the remaining delay are saved together in one write. A reboot keeps the *remaining* delay; it doesn't restart it.
 
-**Wrong-guess counter.**
-- Stored in device-protected storage, so it survives restarts.
-- After 5 wrong guesses, each further wrong guess adds a delay, doubling each time and capped at 1 hour, so the real trusted person is never locked out for days.
-- A reboot restarts the current delay in full.
-- After 10 wrong guesses the trusted person gets a text. This is best effort: a failed text never changes what is enforced.
+**Recovery code.** 128 bits, stored only as a hash. It has its **own** failure counter, so a PIN lockout never blocks it. Using it changes the PIN and code together in one step.
 
-**Recovery code.**
-- 128 bits of randomness, shown once as 6 groups of letters.
-- Stored only as a hash and usable once.
-- Wrong entries are rate-limited like the PIN.
-- Replacing it is atomic: the new PIN, the new code and invalidating the old code happen together, or not at all.
-- The person who keeps it is named during setup: the trusted person, not the helper.
+**Fresh entry for every privileged action.** No external intent or extra can grant authority.
 
-**Screen protection.** Admin screens use `FLAG_SECURE`. Backup is disabled. Nothing secret goes to logs.
+**App requests.** The request text is treated as untrusted. Approval is tied to the installed package and its signing certificate.
 
-**Fresh entry for big actions.** A PIN or the recovery code is needed again for each of: approve, remove, Play session, maintenance mode, turning off. Admin activities are not exported, and nothing from outside can mark a session as authenticated.
+**Plainphone's own updates (N2).**
+- The helper's computer serves the APK on the local Wi-Fi.
+- The trusted person enters the PIN and the URL.
+- Plainphone checks that the APK's signing-certificate digest matches the one built into it and that its version is higher. Then it installs silently as Device Owner.
+- No adb and no Settings are involved.
+- Release builds are `testOnly=false` and `debuggable=false`.
+- The signing key is held by Beaux, or by someone he names, never on a phone.
+- A bad update falls back to the "Plainphone can't run" recovery path, which is tested in Q6 with a build that crashes on purpose.
 
-**App requests.**
-- The user's text is shown as "From [user]: …", plain and unformatted.
-- Limits: 280 characters, 5 requests a day.
-- Sent to the trusted person's fixed number. If sending fails, Plainphone says so and keeps the request on the list.
+**Turning off (N6).**
+- Plainphone restores every change it recorded, each read back.
+- Before removing Device Owner, it checks that another home screen and the dialer resolve.
+- It resumes from a journal after a restart. If it finds it is no longer Device Owner, it treats turning off as done.
+- It never silently falls back to a wipe.
 
-**Maintenance mode.**
-- Needs a PIN.
-- Lifts `DISALLOW_DEBUGGING_FEATURES` for up to 30 minutes, so a helper can `adb install -r` a newer **Plainphone build signed with the same key**.
-- Uses the same session rules as D2, then re-locks and checks the policy.
-- This is Plainphone's only update path in the MVP. Android refuses updates signed with a different key.
+### D7. Our own settings screens
 
-### D6. Our own settings screens
-
-The block flag (D1) stops Android Settings panels from opening inside our task. So Plainphone builds these with its Device Owner powers:
-- Wi-Fi: join and forget networks, using `WifiManager.addNetwork`. Device Owners are exempt from the API 29 deprecation, which Q1 confirms.
+Plainphone's own settings screen uses Device Owner APIs:
+- Wi-Fi, through `WifiManager.addNetwork` (to be confirmed in Q1)
 - Bluetooth pairing
 - volume and ringtone
 - brightness
 - text size
 - battery
 
-**Fallback.** If something can't be built, it becomes a "helper task" in maintenance mode. It does not become a hole in the lock.
+Anything else needs a supervised Settings session. There is no generic "helper task" fallback.
 
-### D7. Setup: helper custody, then lock
+### D8. Setup: helper custody, sweep before Wi-Fi, reset-protection IDs without secrets
 
-**Who does what.** Setup is a helper-custody phase, guided by a script plus screens on the phone:
+**Order of steps:**
 1. Back up the phone.
-2. Factory reset.
-3. Enable adb.
-4. Run the script. It checks the phone model is on the approved list, the bootloader is locked, and verified boot is green. Then it installs Plainphone and runs `dpm set-device-owner`.
-5. Follow the screens on the phone.
+2. Reset it through Settings.
+3. In the first-boot wizard, skip Wi-Fi, accounts and app recommendations. Without Wi-Fi, nothing gets installed before Plainphone is in control.
+4. Turn on USB debugging.
+5. Run the script. It checks that the model and build are approved, the bootloader is locked and verified boot is green, then runs `set-device-owner`.
+6. Plainphone hides every package that isn't on the never-hide, essential or approved lists.
+7. Only then does the phone join Wi-Fi.
+8. Sign in to the user's own Google account and turn on Play auto-update.
 
-**Once the PIN exists, resuming setup needs it.** Setup can't be re-entered after handover.
+**Reset protection (N6).**
+- On their own device, the trusted person opens the People API `people.get` "Try it" page with `personFields=names`, checks that the name shown is theirs, and copies only the digits after `people/`.
+- Plainphone shows the digits back for confirmation. It collects no tokens or passwords.
+- The helper records that the trusted person can sign in from a device other than either Plainphone phone, and that their second factor isn't only on a Plainphone phone.
+- A backup person's ID can be added. This is recommended when Beaux and the trusted person are each other's trusted person.
 
-**Before Ready, Plainphone checks all of these:**
-- Key attestation reports the bootloader locked and verified boot green.
-- Reset protection is set to the trusted person's `userId` and reads back correctly.
-- adb is off (readback) and the restriction is applied.
-- The browser role is held.
-- The emergency self-test passes.
+**Handover check.** Plainphone shows "Ready" only when all of these pass:
+- Device Owner set
+- restrictions applied
+- adb and wireless debugging off
+- key attestation passes
+- reset protection read back
+- browser role held
+- never-hide list intact
+- emergency self-test passes
+- Play auto-update on
+- preinstall sweep done
 
-**Getting the `userId`.** The trusted person gets theirs from Google's People API "Try it" page, using `people.get` on `people/me`. New Google accounts may need 72 hours before they work for reset protection.
+### D9. Policy storage: atomic, validated, built-in safe policy
 
-### D8. Policy is data, stored safely and applied in order
+- **Writing.** The policy is written atomically and checked against its schema. A last-known-good copy is kept.
+- **Direct Boot copy.** A minimal copy is kept in device-protected storage: setup-complete flag, never-hide list, lock-task list, counters and the session journal.
+- **If both copies are invalid,** a **safe policy built into the APK** applies. It allows only Plainphone, Phone and Messages, applies every restriction and keeps the never-hide list. Plainphone then shows "Plainphone needs attention".
+- **Order of application:** journal revoke → restrictions → never-hide guard → hides → lock task → home preference. Each step is read back.
+- **When it runs:** at locked and unlocked boot, on package events, after trusted-person actions, and every 15 minutes.
+- **The policy engine** is a pure function.
 
-**Storage.**
-- The policy is written atomically (temp file → fsync → rename).
-- It is checked against a schema version before use.
-- A last-known-good copy is kept.
-- A minimal Direct-Boot-safe copy sits in device-protected storage: the setup-complete flag, never-hide list, lock-task list and PIN counter.
+### D10. Codebase
 
-**Order of application:**
-1. restrictions
-2. never-hide guard
-3. hides
-4. lock-task packages and features
-5. home screen preference
-
-**Readback.** Each step is read back. On any failure: retry, then fall back to last-known-good, then show the trusted person "Plainphone needs attention".
-
-**When it runs:** `LOCKED_BOOT_COMPLETED`, `BOOT_COMPLETED`, package events, after trusted-person actions, and every 15 minutes.
-
-**Deadline.** The policy is fully in place within 60 seconds of boot completing (Q6).
-
-**Before first unlock.** Restrictions and hidden-app state are stored by Android itself. Only the Direct-Boot copy is read.
-
-**Testability.** The policy engine is a pure function, so it can be unit-tested.
-
-### D9. Codebase
-
-- **Platform:** Kotlin and Jetpack Compose. Minimum SDK 30; target SDK is the latest stable.
-- **Accessibility:** large text, WCAG 2.2 AA contrast, one main action per screen.
-- **Data:** no analytics and no crash upload.
-- **Reference code:** TestDPC and Headwind (both Apache-2.0), cited in file headers. Not forked.
+- Kotlin and Jetpack Compose. minSdk 30.
+- Accessibility: WCAG 2.2 AA, large text.
+- No analytics.
+- TestDPC and Headwind are reference code only (both Apache-2.0); no fork.
+- Spike code stays under `spikes/`. MVP code goes in `app/` and starts only after approval.
 
 ## Risks / Trade-offs
 
-- **[Allowlist blocks adb setup on real phones]** → Q3 on one approved phone. Not an automatic switch to GrapheneOS: B must pass the same go/no-go list on a Pixel.
-- **[The block flag breaks a normal day]** → Q1, run with the flag on and off. The UI exceptions list, each entry with negative tests. Otherwise a revised ADR.
-- **[Play stops updating]** → setup checks, staleness warning, supervised "Check updates" (D2). If Q2 fails outright, a revised ADR.
-- **[Must-have apps break without a browser]** → Q4 with Beaux and the trusted person's real app list. A failure here is a go/no-go failure, even if Q1 and Q2 pass.
-- **[Approved apps leak web; the Wi-Fi sign-in page]**
-  - The sign-in page is hidden by default; the trusted person can allow it per session.
-  - Web-leak notes for each app version.
-  - What's left is accepted in writing by Beaux.
-- **[A recovery-mode wipe]** → reset protection with the trusted person's `userId`, as a gate before handover. If it isn't supported, the promise is changed and Beaux accepts that exact risk.
-- **[Lockout]** → capped delays, a recovery code, and the trusted person's Google account (reset protection) as the independent way back.
-- **[Plainphone bug breaks calling]**
-  - The never-hide guard.
-  - The behavioral gate with a deliberately broken build.
-  - Emulator first, then one phone Beaux approves.
-- **[Short support life (Motorola XT2415: March 2027)]** → the hardware requirements in ADR 0001. Beaux picks the phone.
-- **[Manufacturer extras (Secure folder, Cloned Apps…)]** → an escape review for each brand, on a real phone of that brand, before it is supported.
-- **[Google policy changes]**
-  - Developer verification comes in 2027; adb is exempt.
-  - There is a free option for up to 20 devices, to evaluate.
-  - The Lead watches for changes.
+- **[QR setup blocked by Google's DPC allowlist]** → adb works on a certified Motorola running Android 15 (device test A1). QR is not tested and not needed. Each new model or build is checked by the script and by Q3 on that model.
+- **[The in-task block flag breaks a normal day]** → Q1, run with the flag on and off. The UI exceptions list has negative tests. Otherwise, a revised ADR.
+- **[Play doesn't update unattended]** → Q2: the monthly check plus a Play services warning. If Q2 fails outright, a revised ADR.
+- **[Must-have apps break]** → Q4 against the real app list counts as go/no-go.
+- **[Sessions stay open if Plainphone can't run]** → custody, the journal, revoking at every start, and disclosure. If Q12 measures an unbounded gap, that is a go/no-go failure.
+- **[A Plainphone update crashes]** → signature and version checks, the Q6 crash test, and the recovery path.
+- **[Recovery wipe]** → reset protection with the trusted person's and a backup person's IDs. Their ability to sign in elsewhere is checked. FRP does not reinstall Plainphone.
+- **[Preinstalls and pushed apps]** → sweep before Wi-Fi, then the package watcher.
+- **[Web inside approved apps]** → web-leak notes and disclosure.
+- **[Wi-Fi networks that need sign-in]** → unsupported, with a plain message.
+- **[Short support life]** → the spare Motorola's security updates end in March 2027, and it is not a target phone. Beaux picks the target model.
+- **[Manufacturer extras]** → Q13 on each supported build. Every item ends in a tested outcome or a risk Beaux has accepted.
 
 ## Migration Plan
 
-**No existing installs.**
-
-**Rollout:**
-1. Emulator.
-2. Beaux approves phone 1.
-3. Beaux's phone.
-4. Two weeks of use.
-5. Beaux approves the trusted person's phone.
-
-**Rollback:**
-- the trusted person's "Turn Plainphone off", which resumes after interruptions (Q7);
-- otherwise, a factory reset after a backup.
+- **Rollout order:**
+  1. emulator
+  2. spare Motorola (spike only)
+  3. Beaux approves the target model
+  4. Beaux's phone, after the real-device handover checks
+  5. two weeks of use
+  6. the trusted person's phone
+- **Rollback:** turn Plainphone off (journaled and resumable). As a last resort: a recovery wipe plus the trusted person's account, with Beaux's approval for that phone.
 
 ## Open Questions
 
 **For Beaux:**
-1. Which phone model, and should we buy new or reuse? Your moto g power 5G (2024) loses security updates in March 2027.
-2. Who is the trusted person for each phone? Do they have a Google account at least 3 days old?
+1. Which target phone model?
+2. Who is the trusted person for each phone, and who is the backup person?
 3. License: Apache-2.0?
-4. What are each phone's must-have apps (bank, maps, ride-share…)?
-5. Do you accept the stated leftover risks for the MVP?
-6. Which carrier and plan? It needs data, for RCS and MMS.
+4. What are the must-have apps on each phone?
+5. Do you accept the stated leftover risks?
+6. Which carrier and plan?
+7. Who holds the release signing key?
 
 **For the spike:** Q1–Q14 in `docs/feasibility-questions.md`.

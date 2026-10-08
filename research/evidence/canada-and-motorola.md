@@ -177,3 +177,12 @@ Feature lists are from help.motorola.com pages for this model (`/hc/3509/15/na/e
 - RCS activation for Google Messages on the chosen carrier (Bell's page names only Samsung); group MMS default
 - The OEM-unlock toggle greyed out by `DISALLOW_FACTORY_RESET` on Motorola
 - Exact package names: dialer, cell-broadcast receiver, Safety app (`pm list packages`)
+
+## Superseded passages (2026-10-08, Lead, after cross-model review PLA-4 N11)
+
+- **Emergency wording.** Any passage here saying emergency dialing or alerts pass only with `LOCK_TASK_FEATURE_KEYGUARD`, or that leaving a few packages untouched makes the design safe, is **superseded**. The keyguard flag is a rule about launching screens, not proof that a call goes through. The normative requirement is the behavioral emergency gate plus the real-device checks before handover (`specs/essential-calling-and-texting`, design D5).
+- **Call filtering.** Any mention of an "approved callers only" filter, or of pausing such a filter after a 9-1-1 call, is **superseded**. Plainphone never filters incoming calls.
+- **RCS.** "RCS needs mobile data" is too broad: Google Messages supports RCS over Wi-Fi (https://support.google.com/messages/answer/7189714). A data plan is still recommended, so that RCS and MMS work away from Wi-Fi. MMS needs mobile data on most carriers.
+- **"No Android 16".** This is an inference from Motorola's US plan and list, which carries the caveat "Channels and regions may have different launch dates". Confirm it for the Canadian build.
+- **Device status.** The XT2415 unit is now a board-approved **spare** for spikes only (TEAM-POLICY Gates §2). No recovery-mode wipes may be done on it, so the device part of Q10 can't run on this unit.
+- **Motorola extras.** Secure folder, Cloned Apps, Smart Connect, gestures, Sidebar, lock-screen feeds and installers remain **unverified, device-specific escape hypotheses** until Q13 gives each one a tested outcome.

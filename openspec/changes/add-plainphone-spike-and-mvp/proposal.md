@@ -8,7 +8,7 @@ The research suggests this can probably be built as one Android app on a certifi
 
 So we first test the risky parts on an emulator against go/no-go conditions, then build the MVP.
 
-Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 2, after cross-model review in PLA-3).
+Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 3, after cross-model reviews PLA-3 and PLA-4). First device results on a board-approved spare Motorola: adb setup of our unapproved Device Owner works on certified Android 15, and the phone can be released without a wipe.
 
 ## What Changes
 
@@ -22,7 +22,9 @@ Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 2, af
 - **A trusted person approves apps on the phone** using a PIN, with a fresh check for each important action. The user can ask for an app, and the request goes to the trusted person by text.
 - **Plainphone never gets in the way of 9-1-1**, calls, texts or emergency alerts. It never filters incoming calls. A release-blocking test taps through the emergency flow, and must fail on a deliberately broken build.
 - **Web links are blocked** unless they belong to an approved app. General browsers and the Wi-Fi sign-in page are hidden. Leftover web access is described to the trusted person in plain words and accepted in writing by Beaux.
-- **App updates keep working** in the background. The Play Store stays installed but the user can't open it. The trusted person is told if updates seem stuck. Plainphone updates itself through a PIN-protected maintenance mode.
+- **App updates keep working** in the background. The Play Store stays installed but the user can't open it. The trusted person gets a monthly text to run a supervised update check. Plainphone updates itself from the helper's computer over local Wi-Fi, only if the update is signed with Plainphone's key. No adb maintenance mode.
+- **Supervised sessions** (Play, Settings) are the only way the lockdown is relaxed. They are trusted-person custody, with a journal that is undone on every restart.
+- **Wi-Fi networks that need a sign-in page are not supported** in the MVP.
 - **Setup** is done by a helper with a computer, using a written guide and a script that checks the phone first. The phone isn't marked ready until a handover check passes.
 - **Out of scope:** remote web portal, servers, DNS/VPN filter (spiked only), GrapheneOS, app-store distribution, paid services, and any real-phone work without Beaux's approval for that phone.
 
@@ -32,8 +34,8 @@ Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 2, af
 - `device-lockdown`: Device Owner policies, lock task with in-task blocking, factory-reset protection, safe policy storage and boot recovery.
 - `approved-apps`: the allowlist. "Can't be opened" guarantee, updates and staleness warnings, the supervised Play session.
 - `calm-home-screen`: home screen, always-present Phone/Messages/Emergency, Plainphone's own basic settings.
-- `trusted-person-controls`: PIN and recovery code, fresh authority for actions, app requests, maintenance mode, disclosure, turning off.
-- `web-containment`: browser classifier, link handling rules, the isolated blocked-link screen, web-leak notes per app version.
+- `trusted-person-controls`: PIN and recovery code, fresh authority for actions, app requests, the supervised session contract, Plainphone updates over local Wi-Fi, recovery when Plainphone cannot run, disclosure, turning off.
+- `web-containment`: browser classifier (excludes Plainphone itself), link handling rules, the isolated blocked-link screen, unsupported Wi-Fi sign-in pages, web-leak notes per app version.
 - `essential-calling-and-texting`: protections for 9-1-1, calls, texts and alerts, plus the behavioral release gate.
 - `guided-setup`: setup guide and checking script, helper-custody setup, handover check.
 
@@ -54,6 +56,6 @@ Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 2, af
   - The trusted person's Google `userId` is needed for factory-reset protection. It is read from Google's People API "Try it" page; no new credential for us.
   - No servers. No new paid services.
 - **Policy gates:**
-  - Physical phones need Beaux's approval for each phone. His moto g power 5G (2024) is not approved, and its security updates end in March 2027.
+  - Physical phones need Beaux's approval for each phone. The spare moto g power 5G (2024) is approved for spikes only (PLA-5). It is not a target phone: its security updates end in March 2027.
   - Developer verification (Canada: 2027; adb installs exempt) is a later decision.
   - No public distribution.

@@ -1,6 +1,7 @@
 # Feasibility questions for the emulator spike
 
-- Revision 2, 2026-10-08. Ranked again after the PLA-3 review (F15, F17).
+- Revision 3, 2026-10-08. Ranked after the PLA-3 review (F15, F17) and updated after the PLA-4 review (N1–N11).
+- Device results so far come from the spare Motorola (PLA-5, `spikes/device-moto/RESULT.md`): **Q3 adb: yes** and **way back without a wipe: yes**. Everything else is still open.
 - Owner: Plainphone Lead. Spike author: Android Platform Engineer. Reviewer: Verifier & Escape Artist.
 - The questions are ranked by how much a "no" would change the plan. Each test ID maps to requirements in `docs/verification-matrix.md`.
 
@@ -18,7 +19,7 @@
 
 ## Go / no-go: run first
 
-**Q3. Can our unapproved Device Owner be set up?** *(cheap; run first)*
+**Q3. Can our unapproved Device Owner be set up?** *(device answer for the Motorola XT2415, Android 15: adb **yes**, PLA-5 A1. QR not tested. Re-run for each new model or build.)*
 - adb `dpm set-device-owner` right after the first-boot wizard, with no accounts.
 - QR provisioning on the same image: do we see "App blocked to protect your device"?
 - **[device]** Repeat both on the approved phone.
@@ -32,7 +33,8 @@
 
 **Q2. Do approved apps keep getting updates while the user can't reach Play?**
 - Tests S1–S4 and S7 from `research/evidence/app-updates-under-lockdown.md`.
-- **Repeatable update source:** our own test app, published to the emulator's Play account through internal app sharing if that is available. Otherwise use a public app and pin the versions. Time limit: 24 hours of emulator time, with Play's update job forced.
+- **Update source (N10):** preinstalled Google apps rolled back with `adb shell pm uninstall-system-updates <pkg>`, so Play has a real update waiting. Run the same app and account without restrictions as the comparison. If Play offers no update, the result is **inconclusive**, not a failure. Nothing is published to Play.
+- **Forced vs. unattended:** run the forced update job (`cmd jobscheduler`) as a diagnostic, then separately run 72 hours unattended with no forcing. Only the unattended run counts as automatic updating.
 - **S7:** measure the time from install to hidden. Check whether a deep link or the share sheet can open the new app during that gap.
 - **Newer API:** on API 37, test whether `DISALLOW_INSTALL_UNKNOWN_SOURCES_INCLUDING_REGISTERED_APP_STORES` exists and blocks new Play installs while updates still run.
 - *If no:* revise the ADR. A weekly update window is **not** assumed acceptable.
@@ -41,7 +43,8 @@
 - **Must-have apps:** use Beaux and the trusted person's actual list where it installs on the emulator. Test sign-in, signing in again, password reset, payment or 3-D Secure approval, notifications and updates, all with every general browser hidden and the block flag on.
 - **Browser role and classifier:** does Plainphone get the browser role? Run the classifier against fixtures: a general browser, an app that only opens its own domain, and the never-hide packages.
 - **Link matrix:** verified App Links, ordinary links, `intent:` URIs, custom schemes, Custom Tabs fallback.
-- **Wi-Fi sign-in page:** with CaptivePortalLogin hidden, does normal Wi-Fi still connect? Does a portal network fail gracefully?
+- **Wi-Fi sign-in page (N5, go/no-go):** with CaptivePortalLogin hidden, an ordinary WPA2 network must connect and reach the internet. A network that needs sign-in must show Plainphone's message and allow forgetting it, with calls and Emergency unaffected.
+- **Classifier fixtures (N3):** Plainphone itself, a general browser, an app that only opens its own domain, an http-only viewer, an app with a URL bar but no web intent filter, and the never-hide packages. Also an explicit intent to a hidden browser, and navigation inside an app's WebView, which is expected to be not intercepted.
 - **Other reachable screens:** Google account, help and privacy screens reachable from Messages and Play services menus; keyboard GIF, search and help; accessibility tutorials; photo and file pickers.
 - **Hidden Google app and Gemini:** what breaks? Do Circle to Search or Lens still appear?
 - *A failure on a must-have app is a go/no-go failure, even if Q1 and Q2 pass.*
@@ -52,30 +55,36 @@
 - Escape list items: E01, E04, E05 (including a previously authorised adb host), E06, E12, E13, E15, E21, E25, E29.
 - The Verifier's vectors F1–F14 from the PLA-3 review.
 
-**Q6. Do boot, Plainphone replacement and policy damage recover safely?**
+**Q6. Do boot, Plainphone replacement and policy damage recover safely?** *(N4: the result must be "no unapproved app opened in the foreground at any point during recovery")*
 - Reboot and stay at the lock screen. Install a package before the first unlock. Kill Plainphone between policy steps. Update Plainphone to a build signed with the same key. Feed it a truncated policy and a policy with an unknown version.
-- Measure the time to full policy after `BOOT_COMPLETED` (the limit is 60 seconds).
+- Unlock immediately after a reboot, and try to open an unapproved app with a queued notification, an explicit intent and a deep link before Plainphone's home screen appears.
+- With both policy copies corrupt: the built-in safe policy must apply.
+- A Plainphone update over local Wi-Fi that crashes on purpose: check the "Plainphone can't run" recovery path, and that emergency access still works.
 - Check that hidden apps and restrictions survive a Play update of an allowed app, a Play update of a hidden app, and a system image update.
 
-**Q7. Can turning Plainphone off finish without a wipe, and resume after interruptions?**
+**Q7. Can turning Plainphone off finish without a wipe, and resume after interruptions?** *(device: releasing without a wipe is **yes** for the test-only spike, PLA-5 A2. The full restore list is still open.)*
 - Kill the process after each of the 6 turn-off steps, then reboot. Check that it resumes, that "Off" is reported only when every step is done, and that photos and messages survive.
-- Test `clearDeviceOwnerApp`. *If it fails:* the off switch is a factory reset, and setup says so up front.
+- Test that every item on the restore list is read back. Test that another home screen and the dialer resolve before Device Owner is removed. *If turning off can't avoid a wipe:* revise the promise and get Beaux's approval. Never fall back to a wipe silently.
 
 **Q10. Does reset protection with the trusted person's `userId` block setup after a recovery-mode wipe?**
 - Get the `userId` from People API `people.get(me)` using Google's "Try it" page.
 - Set the policy, read it back, and send the `FRP_CONFIG_CHANGED` broadcast.
-- Wipe from recovery, try the user's own account (must fail), then the trusted person's (must succeed).
-- **[device]** Confirm on the approved phone.
+- Wipe from recovery, try the user's own account (must fail), then the trusted person's (must succeed). Emulator first.
+- **[device]** Needs a separate board-approved procedure on the target phone. **Never on the spare Motorola** (policy forbids recovery wipes there).
 
-**Q12. Can the supervised Play session and maintenance mode be escaped or left open?**
+**Q12. Can a supervised session be escaped or left open? (N1: servicing go/no-go)**
 - Turn the screen off, take an incoming call, kill Plainphone, reboot, let the deadline pass in the middle of an install, and leave nested Play, account and help screens open.
 - After each, try to reach Play, approve an app, or use adb.
+- **Failure model:** use a build that crashes on every start while a session is journaled. Measure how long the relaxation stays live, checked continuously, not only after Plainphone reopens. Repeat before the first unlock.
+- **Results:** *pass* = the journal is revoked at every start, including locked boot. *No-go* = a relaxation outlives the session without a deliberately broken build. That means revising the ADR.
+- **Plainphone update from local Wi-Fi:** wrong signer refused, lower version refused, adb never enabled.
 
 **Q14. Does the emergency gate behave correctly?**
 - Run the D4 UI test in every listed state, including the negative-control build, which must fail.
 - Run with the block flag on, during setup, during a PIN lockout and during a Play session.
-- Check that Alert Ready–style cell broadcasts still show (if the emulator console can inject them).
-- **[device]** A real 9-1-1 test, with a procedure agreed with the carrier and E-Comm.
+- Check that Alert Ready–style cell broadcasts still show where the emulator can inject them; otherwise record **not verified**. Negative controls: Emergency goes nowhere, dialer missing from lock task, alert display disabled. Each must fail the gate.
+- States: before first unlock, lock screen, home, inside an approved app via Home, setup, PIN lockout, supervised session, Plainphone update, turning off, after restart, Plainphone can't start.
+- **[device, before handover]** Emergency dialer in every state without placing a call; an incoming call answered and its keypad sending tones; alert receiver present; manufacturer emergency components on the never-hide list. A live 9-1-1 call only under a separate procedure agreed with E-Comm or the carrier and approved by Beaux.
 
 **Q8. Do texting and calling defaults work?**
 - `setDefaultSmsApplication` → Google Messages persists.

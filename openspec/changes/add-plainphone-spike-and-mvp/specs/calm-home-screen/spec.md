@@ -29,7 +29,7 @@ Plainphone SHALL provide its own settings screen, using Device Owner APIs, and S
 - text size
 - battery level
 
-Every label SHALL be in plain language. Any setting that cannot be built this way SHALL be listed as a helper task done in maintenance mode.
+Every label SHALL be in plain language. Any Android setting outside this list SHALL be reachable only through a supervised Settings session (trusted-person-controls).
 
 #### Scenario: Join home Wi-Fi
 - **WHEN** the user opens Settings → Wi-Fi in Plainphone, picks a network and types the password

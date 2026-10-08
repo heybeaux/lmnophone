@@ -1,11 +1,12 @@
 # ADR 0001: How Plainphone locks a phone down
 
-- Status: **Proposed, revision 2.** Needs Beaux's approval, together with the OpenSpec change `add-plainphone-spike-and-mvp`.
+- Status: **Proposed, revision 3.** Needs Beaux's approval, together with the OpenSpec change `add-plainphone-spike-and-mvp`.
 - Date: 2026-10-08
 - Author: Plainphone Lead (Claude)
 - Reviewer: Verifier & Escape Artist (OpenAI model)
   - Revision 1 was reviewed in [PLA-3](/PLA/issues/PLA-3): request changes, with 3 blockers, 12 major and 2 minor findings.
-  - Revision 2 addresses those findings (see "Review response" at the end) and goes back for re-review.
+  - Revision 2 was reviewed in [PLA-4](/PLA/issues/PLA-4): request changes, with N1–N11 (1 blocker, 8 major, 2 minor).
+  - Revision 3 addresses those findings and adds the first device results from [PLA-5](/PLA/issues/PLA-5). It goes back for re-review.
 - Evidence: `research/evidence/*.md`. The DeerFlow report is leads only.
 - Confidence labels from the evidence files carry over here:
   - **documented**: a primary source says so
@@ -64,7 +65,11 @@ The escape threat list is in `research/evidence/webview-and-escape-threats.md` (
 
 **Risk 1. Google blocks unapproved Device Owner apps during QR/NFC setup.** Google's "Approved Android Enterprise device policy controllers allowlist" page says "The installation of any non-approved DPCs… will be blocked" during enrollment (documented, checked by both reviewers).
 - The page gives no start date, does not mention adb, and lists exclusions. Not being a monitoring app does **not** make us eligible on its own.
-- **Plan:** the MVP is set up through adb by a helper. Q3 runs first on the emulator because it is cheap. Whether adb is also blocked on a real phone needs a phone Beaux approves.
+- **Device result (PLA-5 A1, 2026-10-08):** on the board-approved spare Motorola (XT2415-1, certified stock Android 15, patch 2026-08-01), our unapproved test-only DPC became Device Owner over adb: `Success: Device owner set to package com.plainphone.spike.dpc/.AdminReceiver`. Logcat showed no allowlist or integrity message.
+  - This covers adb on this model and build only. QR was not tested.
+  - The allowlist could still be extended to adb later, or behave differently on other phones. The setup script therefore checks the model and build, and Q3 is re-run for each new model.
+- **Device result (PLA-5 A2):** `dpm remove-active-admin` and the app's own `clearDeviceOwnerApp()` both returned the phone to unmanaged without a wipe.
+- **Plan:** the MVP is set up through adb by a helper.
 
 **Risk 2. "Block installs" also blocks updates.** AOSP `PackageInstallerService.createSessionInternal` rejects every new install session for a restricted user before it checks whether the install is an update. The javadoc says the restriction "also prevents device owners and profile owners installing apps" (code-confirmed by the Lead and the Verifier).
 - That Play's own update path is blocked too is a **strong inference** (S1).
@@ -72,13 +77,17 @@ The escape threat list is in `research/evidence/webview-and-escape-threats.md` (
 - **Plan:**
   1. Keep Play installed, enabled and signed in to the **user's own** account, so it can update apps in the background.
   2. Keep Play out of lock task and off the home screen.
-  3. Hide any app that wasn't approved.
+  3. Hide any app that wasn't approved. This includes first-boot pushes.
+     - On the spare Motorola, 8 apps installed themselves within 8 minutes of first boot with Wi-Fi and no account: 5 Digital Turbine games, plus Google One, Fit and Wallet. Facebook comes preloaded.
+     - So Plainphone sweeps all apps before the phone joins Wi-Fi.
+  4. The trusted person runs a supervised update check once a month, in Play's own update list. Plainphone can't tell on its own whether a newer version exists.
 - **What we promise:** an unapproved app can't be **opened**. We do not promise that one can't be **installed**, or that it never runs any code. If Beaux needs "never runs any code", this architecture can't promise it; see the go/no-go conditions.
 
 **Risk 3. The web can't be fully removed.** WebView can't be removed. An app's in-app browser traffic shares that app's network identity. Browser links can't be redirected with `addPersistentPreferredActivity` (all documented).
 - **Plan:**
-  1. Hide general-purpose browsers, the Google app, Gemini, and **the Wi-Fi sign-in page (CaptivePortalLogin)**. The trusted person can allow the sign-in page for one supervised session.
-  2. Plainphone handles links that no approved app claims, and shows "This link is blocked".
+  1. Hide general-purpose browsers, the Google app, Gemini, and **the Wi-Fi sign-in page (CaptivePortalLogin)**.
+     - **Wi-Fi networks that need a sign-in page are unsupported in the MVP**, with no exception session. Plainphone says so plainly and offers to forget the network.
+  2. Plainphone handles outside links that no approved app claims, and shows "This link is blocked". Navigation inside an approved app's own WebView is not intercepted.
   3. Every app on the list gets a web-leak note, reviewed per app version, that the trusted person reads before approving.
   4. A DNS filter is spiked only. It does **not** count as a protection in this MVP.
 - **Told openly:**
@@ -92,8 +101,9 @@ The escape threat list is in `research/evidence/webview-and-escape-threats.md` (
 - Google lists a free limited-distribution option for up to 20 devices, which could cover our two phones. To be evaluated, not assumed. Any paid registration is Beaux's decision.
 
 **Risk 5. Phone support life.** Beaux's current phone, a moto g power 5G (2024), gets its last security update in **March 2027** and will not get Android 16. Motorola's own page says "Security updates will stop on March, 2027" and "Next OS: Android 15" (documented, checked by the Lead).
+- "No Android 16" is our reading of Motorola's published plan. Motorola notes "Channels and regions may have different launch dates", so it needs confirming for the Canadian build.
 - A locked-down phone people keep for years must not run out of patches within months. So it is **not** recommended as the MVP target.
-- Whether it gets used as a test phone is Beaux's call. It is his daily phone, and setup wipes it.
+- Beaux has made it a **spare** and approved it for device spikes (Telegram 4419). Rules: Settings resets only, no recovery wipes, test-only DPC. The spike is [PLA-5](/PLA/issues/PLA-5).
 
 ## Build vs. reuse
 
@@ -104,6 +114,8 @@ We did not find a published open-source "trusted person controls the allowlist" 
 **Plan:** we build one small Kotlin app and borrow patterns from Google's TestDPC and from Headwind (both Apache-2.0). We do not fork either, because Headwind assumes a server and its lockdown features are closed.
 
 **Recommended license: Apache-2.0.** Beaux decides.
+
+**Plainphone's own updates.** No adb maintenance mode. The helper's computer serves a signed APK over local Wi-Fi. Plainphone checks that it is signed with the pinned key and has a higher version, then installs it silently as Device Owner after a fresh PIN entry. Release builds are `testOnly=false` and `debuggable=false`.
 
 ## Hardware
 
@@ -131,12 +143,13 @@ The candidate becomes the decision only if, on the emulator, and later on one ph
 4. **Recovery works:** turning Plainphone off (Q7) and reset protection (Q10) both behave as the specs say.
 5. **Leftover web access is limited to what the trusted person accepted in writing.**
 6. **Setup and support effort stays within the guide's limits.**
+7. **Supervised sessions don't leave the phone open (Q12).** If Plainphone can't run while a session is open, the relaxation stays until a helper fixes the phone. That is accepted only if Q12 shows it can't happen without a deliberately broken build, and Beaux accepts the disclosed risk. Otherwise, revise the ADR.
 
 **If the adb setup route is blocked on a real phone (Q3):**
 - This alone does not switch us to B.
 - B must first pass the same list of checks (1–6), on a Pixel.
 
-## Review response (revision 2)
+## Review response (revisions 2 and 3)
 
 Each PLA-3 finding, and where it is addressed:
 
@@ -155,7 +168,23 @@ Each PLA-3 finding, and where it is addressed:
 | F11 setup | A helper-custody phase, bootloader check, live adb check (guided-setup) |
 | F12 confused deputy | Untrusted input rules, separate link entry point (trusted-person-controls, web-containment) |
 | F13 captive portal and system surfaces | Graded major; sign-in page hidden by default; system screens tested and disclosed |
-| F14 updates | Setup checks, warnings when apps go stale, maintenance mode for Plainphone's own updates (approved-apps, trusted-person-controls) |
+| F14 updates | Setup checks, warnings when apps go stale, maintenance mode for Plainphone's own updates (approved-apps, trusted-person-controls). *Maintenance mode was replaced in revision 3; see N2.* |
 | F15 triggers | The go/no-go list above |
 | F16 wording | Fixed here; errata added to the evidence files |
 | F17 matrix | `docs/verification-matrix.md`; gates re-ranked in `docs/feasibility-questions.md` |
+
+**Revision 3 (PLA-4 N1–N11):**
+
+| PLA-4 finding | Where addressed |
+|---|---|
+| N1 temporary authority while Plainphone is down | One shared contract for supervised sessions: journal written first, revoked at every start including locked boot, custody wording, Q12 as a go/no-go, no automatic-close promise (trusted-person-controls, D2) |
+| N2 maintenance mode | adb maintenance cut. Updates come from the helper's computer over local Wi-Fi with a pinned signature and version check. Release builds non-debuggable. Signing-key custody named (trusted-person-controls, D6) |
+| N3 classifier forbids Plainphone | Plainphone and never-hide packages excluded first. Probe uses `MATCH_ALL` plus a catalog review. Link promise limited to outside implicit links; in-app WebView not intercepted (web-containment, D4) |
+| N4 boot interval and background code | Invariant from the first interactive frame. Built-in safe policy. No time limit promised for background code (device-lockdown, approved-apps) |
+| N5 Wi-Fi sign-in page | Unsupported, with a plain message and "forget network" (web-containment) |
+| N6 recovery and off switch | People API steps on the trusted person's own device. Their ability to sign in elsewhere is checked. Backup person option. Full restore list. Successor home screen and dialer confirmed before removing Device Owner. No silent wipe (device-lockdown, guided-setup, trusted-person-controls) |
+| N7 PIN schedule | Exact delays. Rejected entries during a delay aren't counted. Remaining delay survives a reboot. Recovery code has its own counter (trusted-person-controls) |
+| N8 emergency coverage | OEM emergency components on the never-hide list. All states, including "Plainphone can't run" and before first unlock. Alert negative control. Real-device handover checks with callback keypad (essential-calling-and-texting) |
+| N9 update health | Per-app record, monthly texted update check in Play's own list, Play services 30-day warning; no claim to know about newer versions (approved-apps) |
+| N10 Play test source | Preinstalled Google apps rolled back with `pm uninstall-system-updates`, compared against an unrestricted run. "Inconclusive" if Play offers no update. Publishing removed (feasibility Q2, tasks 1.2) |
+| N11 evidence and wording | Canada evidence superseded notes. RCS works over Wi-Fi. "No Android 16" kept as an inference. Spare-device facts. No Q10 recovery wipe on the spare (evidence, ADR Risk 5) |

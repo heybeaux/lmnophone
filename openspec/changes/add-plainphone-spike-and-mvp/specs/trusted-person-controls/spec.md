@@ -1,96 +1,156 @@
 ## ADDED Requirements
 
-### Requirement: Trusted-person PIN resists guessing without permanent lockout
-Trusted-person mode SHALL require a PIN of at least 6 digits. The PIN SHALL be stored only as a PBKDF2-HMAC-SHA256 hash, with at least 600,000 iterations and a random 16-byte salt.
+### Requirement: Supervised sessions follow one custody contract
+A **supervised session** SHALL be the only way Plainphone relaxes its lockdown. The MVP has two kinds:
+- **Play**: add an app or check updates.
+- **Settings**: change an Android setting that Plainphone does not provide.
 
-The failed-attempt count SHALL be stored in device-protected storage, so it survives restarts and reboots. After 5 failures, each further failure SHALL add a delay that doubles, capped at 1 hour. A reboot SHALL restart the current delay in full.
+Every session SHALL follow this contract:
+- **Starting it.** Starting a session SHALL require a fresh PIN or recovery-code entry.
+- **Journal first.** Before relaxing anything, Plainphone SHALL write a journal entry to device-protected storage. The entry names the relaxation and a deadline (Play: 10 minutes; Settings: 5 minutes).
+- **Narrow scope.** A session SHALL add only its named packages to the lock-task UI list. It SHALL NOT lift `DISALLOW_DEBUGGING_FEATURES`, `DISALLOW_FACTORY_RESET` or `DISALLOW_SAFE_BOOT`.
+- **Ending it.** A session SHALL end on any of these: Done, the screen turning off, the deadline, or the user leaving the session's packages. Ending SHALL remove the relaxation, read the policy back, and only then clear the journal.
+- **Revoke on every start.** On every Plainphone start, including `LOCKED_BOOT_COMPLETED` through a Direct-Boot-aware receiver, Plainphone SHALL first revoke any relaxation still in the journal, before doing anything else.
+- **Custody.** The phone is in the trusted person's custody for the whole session. Plainphone SHALL say so on screen: "Stay with the phone until you tap Done."
+- **Disclosure.** If Plainphone cannot run at all while a session is open, the relaxation stays until a helper fixes the phone. This SHALL be disclosed, and tested in Q12. Plainphone SHALL NOT claim an automatic close that does not depend on Plainphone running.
 
-After 10 failures Plainphone SHALL try to text the trusted person. Whether that text sends SHALL NOT affect enforcement. Wrong attempts SHALL NOT wipe the device.
+#### Scenario: Screen turns off mid-session
+- **WHEN** the screen turns off during a Play session
+- **THEN** the session ends, Play is unreachable, and the policy readback matches the at-rest policy
+
+#### Scenario: Plainphone is killed mid-session
+- **WHEN** Plainphone's process is killed during a session and restarts, or the phone reboots
+- **THEN** the journaled relaxation is revoked before any other Plainphone work, including before the first unlock where Android allows it
+
+#### Scenario: Plainphone cannot restart
+- **WHEN** a test build crashes on every start while a Play session is journaled
+- **THEN** the Q12 result records how long the relaxation stayed live, and the disclosure screen describes that case
+
+### Requirement: Trusted-person PIN has an exact lockout schedule
+Trusted-person mode SHALL require a PIN of at least 6 digits. The PIN SHALL be stored only as a PBKDF2-HMAC-SHA256 hash with at least 600,000 iterations and a random 16-byte salt.
+
+**Lockout schedule:**
+- Failures 1–4 cause no delay.
+- Failure 5 starts a 30-second delay.
+- Each later failure doubles the delay, up to a cap of 1 hour.
+- Entries made during a delay SHALL be rejected without counting and without extending the delay.
+
+**Stored state.** The failure count and the remaining delay SHALL be stored together, in one atomic write to device-protected storage. After a reboot, Plainphone SHALL resume the *remaining* delay, not restart it. Changing the clock SHALL have no effect.
+
+**Other rules:**
+- After 10 failures, Plainphone SHALL try to text the trusted person. Whether that text sends SHALL NOT change what is enforced.
+- Wrong entries SHALL NOT wipe the device.
+- No lockout SHALL gate calls or emergency access.
 
 #### Scenario: Guessing across reboots
-- **WHEN** someone enters 4 wrong PINs, reboots, and keeps guessing
-- **THEN** the count continues from 4, delays apply after the 5th failure, and no delay exceeds 1 hour
+- **WHEN** someone enters 6 wrong PINs, then reboots partway through the 60-second delay
+- **THEN** after the reboot only the remaining part of that delay applies, and the count continues from 6
 
-#### Scenario: No SIM or no signal
-- **WHEN** the 10th failure happens with no SIM or no signal
-- **THEN** lockout still applies, and the failed alert is recorded for trusted-person mode
+#### Scenario: Entry during a delay
+- **WHEN** a PIN is submitted during a delay
+- **THEN** it is rejected without being checked, and neither the count nor the delay changes
 
-### Requirement: Recovery code is high-entropy, single-use, and held by the trusted person
-Setup SHALL generate a recovery code with at least 128 bits of randomness and show it once. Plainphone SHALL store only its hash. The helper SHALL confirm that the trusted person has the code. Code entry SHALL be rate-limited the same way as the PIN.
+### Requirement: Recovery code has its own counter
+Setup SHALL generate a recovery code with at least 128 bits of randomness and show it once. Plainphone SHALL store only its hash. The helper SHALL confirm that the trusted person, and not the helper, has the code.
 
-Using the code SHALL replace the PIN and the code in one atomic step: the new PIN, a new code, and invalidating the old code happen together or not at all. Setup and trusted-person mode SHALL explain that the code cannot unlock reset protection after a wipe. Only the trusted person's Google account can do that.
+Recovery-code entry SHALL use its own failure counter, separate from the PIN's, with the same schedule. A PIN lockout SHALL NOT block the recovery code.
 
-#### Scenario: Forgotten PIN
-- **WHEN** the trusted person enters the recovery code
-- **THEN** they set a new PIN, the old code stops working, and a new code is shown once
+Using the code SHALL replace the PIN and the code in one atomic step. Plainphone SHALL explain that the code cannot unlock reset protection after a wipe.
+
+#### Scenario: PIN locked out, code still works
+- **WHEN** PIN entry is in a delay and the trusted person enters the correct recovery code
+- **THEN** they can set a new PIN right away, and a new code is shown once
 
 #### Scenario: Interrupted recovery
 - **WHEN** the phone restarts in the middle of a recovery
-- **THEN** either the old PIN and old code still work, or the new ones do. Never neither.
+- **THEN** either the old PIN and code work, or the new ones do. Never neither.
 
 ### Requirement: Privileged actions need fresh authority and no outside input
-These actions SHALL each require a fresh PIN or recovery-code entry:
-- approve an app
-- remove an app
-- start a Play session
-- start maintenance mode
-- turn Plainphone off
+A fresh PIN or recovery-code entry SHALL be required for each of these actions: approving an app, removing an app, starting any supervised session, installing a Plainphone update, and turning Plainphone off.
 
-Admin activities SHALL NOT be exported. Plainphone SHALL NOT accept any outside intent, extra or flag as proof of authentication. Admin screens SHALL use `FLAG_SECURE`. Backup SHALL be disabled. Secrets SHALL NOT be logged.
+Admin activities SHALL NOT be exported. No outside intent, extra or flag SHALL be accepted as proof of authentication. Admin screens SHALL use `FLAG_SECURE`. Backup SHALL be disabled. Secrets SHALL NOT be logged.
 
-#### Scenario: External intent claims authority
-- **WHEN** another app sends Plainphone an intent with extras that claim to approve an app or turn Plainphone off
-- **THEN** nothing changes, and no admin screen opens
+#### Scenario: Outside intent claims authority
+- **WHEN** another app sends Plainphone an intent whose extras claim to approve an app or turn Plainphone off
+- **THEN** nothing changes and no admin screen opens
 
-### Requirement: App requests are untrusted text, sent to a fixed recipient
-The user SHALL be able to request an app with a reason of up to 280 characters, at most 5 requests a day. Plainphone SHALL send the request by SMS to the trusted person's number set at setup, and list it in trusted-person mode. The request text SHALL be shown as "From [user]:", as plain unformatted text.
+### Requirement: App requests are untrusted text sent to a fixed recipient
+The user SHALL be able to request an app, with a reason of up to 280 characters and at most 5 requests a day. Plainphone SHALL send the request by SMS to the trusted person's number from setup, and list it in trusted-person mode, shown as "From [user]:" in plain text.
 
-Approving a request SHALL start a supervised Play session, and SHALL bind the approval to the package that was actually installed and its signing certificate, not to the text the user wrote. If the SMS is not sent, Plainphone SHALL say so and keep the request listed.
-
-#### Scenario: Request an app
-- **WHEN** the user asks for "Venmo – to pay Mom back"
-- **THEN** the trusted person gets a text with that request, and it is listed in trusted-person mode
+Approving a request SHALL start a Play session. The approval SHALL bind to the package that was actually installed and its signing certificate, not to the user's text. If the SMS fails, Plainphone SHALL say so and keep the request listed.
 
 #### Scenario: Misleading request
-- **WHEN** a request names one app, and a different package is installed in the session
-- **THEN** the approval screen shows the installed package's real name and developer, and the trusted person approves that package, not the text
+- **WHEN** a request names one app and a different package is installed during the session
+- **THEN** the approval screen shows the installed package's real name and developer, and the trusted person approves that package
 
-### Requirement: Maintenance mode for Plainphone's own updates
-After a fresh PIN entry, maintenance mode SHALL lift `DISALLOW_DEBUGGING_FEATURES` for at most 30 minutes, so a helper can install a newer Plainphone build signed with the same key. Maintenance mode SHALL follow the same end-of-session rules as the Play session. On ending, it SHALL restore and read back the policy.
+### Requirement: Plainphone updates come from the helper's computer over local Wi-Fi
+Plainphone SHALL update itself only from an APK the helper serves on the local network. The update SHALL be installed with the Device Owner's silent install, after a fresh PIN entry. Before installing, Plainphone SHALL check two things:
+- the APK's signing-certificate digest matches the digest pinned in Plainphone;
+- its version code is higher than the installed one.
 
-#### Scenario: Plainphone update
-- **WHEN** a helper installs a same-key Plainphone update during maintenance mode
-- **THEN** the update keeps all policy and data, and debugging is off again when the session ends
+Release builds SHALL have `testOnly=false` and `debuggable=false`. The signing key SHALL be held by Beaux, or by someone he names, and never be stored on either phone.
+
+If the updated Plainphone fails to start, recovery is the "Plainphone can't run" path.
+
+Debugging SHALL stay off for the whole update.
+
+#### Scenario: Update from the helper's laptop
+- **WHEN** the trusted person enters the PIN and the URL the helper's computer shows, and the APK is signed with the pinned key and has a higher version
+- **THEN** Plainphone installs it silently, and all policy and data survive
+
+#### Scenario: Wrong signer
+- **WHEN** the APK at that URL is signed with a different key
+- **THEN** Plainphone refuses it and installs nothing
+
+### Requirement: Recovery when Plainphone cannot run
+The setup guide and the disclosure screen SHALL describe the last-resort path, step by step:
+1. the helper wipes the phone from recovery mode;
+2. reset protection then requires the trusted person's (or the backup person's) Google account;
+3. the phone comes back with no Plainphone, so setup has to be done again;
+4. anything not backed up is lost.
+
+#### Scenario: Plainphone crash loop
+- **WHEN** Plainphone cannot start at all
+- **THEN** calls and 9-1-1 still work from the lock screen and the system dialer, and the guide's recovery steps return the phone to a usable state
 
 ### Requirement: Plain disclosure of leftover risk
-Trusted-person mode SHALL include a screen called "What Plainphone can't stop". It SHALL list, in plain words:
-- web pages inside approved apps
-- any Google account or help screens found reachable during testing
-- the Wi-Fi sign-in page, when the trusted person allows it
-- background activity of an unapproved app before it is hidden
-- a hardware-button wipe, and what reset protection does about it
+Trusted-person mode SHALL include a "What Plainphone can't stop" screen, written in plain words. It SHALL cover each of these:
+- web pages inside approved apps;
+- Google account or help screens that testing found reachable;
+- that a supervised session gives open access, and so needs custody;
+- that a session stays open if Plainphone cannot run;
+- that an unapproved app may run in the background, with no time limit, if hiding it fails;
+- a hardware-button wipe, and what reset protection does about it.
 
-#### Scenario: Trusted person reads limits
+#### Scenario: Trusted person reads the limits
 - **WHEN** the trusted person opens "What Plainphone can't stop"
-- **THEN** each leftover risk is described in one or two plain sentences, with no technical terms
+- **THEN** each risk is described in one or two plain sentences
 
-### Requirement: Turning Plainphone off is authenticated, resumable, and restores only its own changes
-Turning off SHALL require a fresh PIN or recovery-code entry and two plain confirmations. Plainphone SHALL record which steps are done, and SHALL resume after a restart.
+### Requirement: Turning Plainphone off restores everything it changed
+Turning Plainphone off SHALL require a fresh PIN or recovery-code entry and two plain confirmations. Plainphone SHALL journal its progress and resume after a restart.
 
-The steps SHALL be idempotent, and each SHALL be read back:
-1. clear Plainphone's restrictions
-2. unhide the apps Plainphone hid
-3. end lock task
-4. clear the persistent home preference
-5. clear the reset-protection policy
-6. remove Device Owner
+Plainphone SHALL restore every change it recorded, and read each one back:
+- user restrictions
+- hidden apps
+- lock-task packages and features
+- persistent preferred activities
+- permitted input methods and accessibility services
+- keyguard disabled features
+- the browser role
+- default SMS and dialer, if they were changed
+- the reset-protection policy
+- Play app restrictions
 
-Plainphone SHALL change only what it recorded changing. It SHALL report "Off" only after every step has been confirmed. If Android requires a data wipe, that SHALL be a separate choice, with data-loss wording shown before it.
+Before removing Device Owner, Plainphone SHALL confirm that another home app and the system dialer resolve.
+
+Plainphone SHALL report "Off" only when Device Owner is gone. If Plainphone finds it is no longer Device Owner, it SHALL treat turning off as complete.
+
+If turning off fails, Plainphone SHALL report the failure and SHALL NOT fall back to a wipe on its own.
 
 #### Scenario: Turn off
 - **WHEN** the trusted person confirms turning off with fresh authority
-- **THEN** the phone works like a normal Android phone, and photos and messages are kept (subject to test Q7)
+- **THEN** the phone works as a normal Android phone, with its home app and dialer working, and photos and messages are kept. Device test A2 already confirmed that releasing the phone does not wipe it.
 
 #### Scenario: Interrupted turn-off
-- **WHEN** the phone restarts after step 3 of turning off
-- **THEN** Plainphone resumes at step 4, and does not report "Off" until step 6 is confirmed
+- **WHEN** the phone restarts in the middle of turning off
+- **THEN** Plainphone resumes at the next step that has not been read back, and does not report "Off" until Device Owner is gone

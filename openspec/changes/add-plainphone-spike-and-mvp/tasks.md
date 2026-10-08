@@ -14,12 +14,12 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 ## 1. Spike setup (emulator only, throwaway code in `spikes/`)
 
 - [ ] 1.1 AE: Google Play emulator images: API 35, API 36 or newest, and API 37 if available. Record exact setup commands and build IDs in `spikes/README.md`.
-- [ ] 1.2 AE: A minimal throwaway Device Owner app in `spikes/dpc/`, plus a test app for Q2 that we publish (repeatable update source) and a negative-control harness.
+- [ ] 1.2 AE: A minimal throwaway Device Owner app in `spikes/dpc/`, plus a negative-control harness. The Q2 update source is preinstalled Google apps rolled back with `pm uninstall-system-updates`. Nothing is published to Play.
 - [ ] 1.3 Lead: Get each phone's must-have app list from Beaux (design Open Question 4) for Q4.
 
 ## 2. Spike: go/no-go questions (answer before any MVP code)
 
-- [ ] 2.1 AE: Q3, setup on Google Play images. Run first; it is cheap.
+- [x] 2.1 AE: Q3. adb setup works on the spare Motorola XT2415 / Android 15 (PLA-5 A1), and the way back needs no wipe (A2). Emulator re-check still to do.
 - [ ] 2.2 AE: Q1, a normal day under lock task, with the block flag on and off, plus the UI exceptions list with negative tests.
 - [ ] 2.3 AE: Q2, updates (S1–S4, S7, and the API 37 constant).
 - [ ] 2.4 AE: Q4, must-have apps, browser classifier, link matrix, Wi-Fi sign-in page, reachable system screens.
@@ -32,7 +32,7 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [ ] 3.2 AE: Q6, boot, replacement and policy damage.
 - [ ] 3.3 AE: Q7, turning off: resumable, and without a wipe.
 - [ ] 3.4 AE: Q10, reset protection with the trusted person's `userId`.
-- [ ] 3.5 AE: Q12, Play session and maintenance mode cannot be escaped or left open.
+- [ ] 3.5 AE: Q12, servicing go/no-go. Supervised sessions can't be escaped or left open, including with a build that crashes on every start. The local-Wi-Fi Plainphone update refuses a wrong signer or lower version.
 - [ ] 3.6 AE: Q14, emergency behavioral gate with a negative control. Q8, texting and calling defaults.
 - [ ] 3.7 AE: Optional Q9 and Q11 if cheap. Otherwise record why they were deferred.
 - [ ] 3.8 VE: Escape-artist pass on the emulator against E01–E29 and F1–F14. Every bypass gets reproduction steps.
@@ -47,9 +47,10 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [ ] 4.5 AE: Lock task with the block flag, and the home screen (calm-home-screen).
 - [ ] 4.6 AE: Browser classifier, hiding, link matrix, and the isolated blocked-link screen (web-containment).
 - [ ] 4.7 AE: Play session state machine, catching unapproved installs, staleness tracking (approved-apps).
-- [ ] 4.8 AE: PIN, recovery code, fresh authority, requests, maintenance mode, turning off (trusted-person-controls).
+- [ ] 4.8 AE: PIN and recovery code (separate counters), fresh authority, requests, supervised session contract and journal, Plainphone update over local Wi-Fi, turning off with the full restore list (trusted-person-controls).
 - [ ] 4.9 AE: Plainphone's own settings screens (Wi-Fi, Bluetooth, volume, brightness, text size, battery).
-- [ ] 4.10 AE: Setup flow, reset protection, key attestation check, handover self-check (guided-setup).
+- [ ] 4.10 AE: Setup flow, preinstall sweep before Wi-Fi, reset-protection IDs with a backup person, key attestation check, handover self-check (guided-setup).
+- [ ] 4.11 AE: Built-in safe policy, and the first-frame lock task invariant (device-lockdown).
 
 ## 5. MVP: words and flows
 
@@ -61,5 +62,5 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 
 - [ ] 6.1 VE: Full escape-artist review and code review of the MVP on the emulator. Verdict: approve, request changes, or blocked.
 - [ ] 6.2 AE: Fix every confirmed finding, or Lead records it as a leftover risk accepted by Beaux.
-- [ ] 6.3 Lead: Ask Beaux to approve one specific phone. Include the device checklist: Q3, Q10, Q13 manufacturer extras, the 9-1-1 procedure with carrier and E-Comm, RCS on the carrier, iPhone group texts, must-have apps, recovery-mode wipe.
+- [ ] 6.3 Lead: Ask Beaux to approve the target phone model and one unit. Include the checklist to complete before handover: Q3 on that build; Q10 with a board-approved recovery-wipe procedure; Q13 manufacturer extras; Q14 device emergency checks (no live call unless there is an agreed procedure); RCS on the carrier; iPhone group texts; must-have apps.
 - [ ] 6.4 Lead: After two weeks on Beaux's phone, ask Beaux to approve the trusted person's phone.
