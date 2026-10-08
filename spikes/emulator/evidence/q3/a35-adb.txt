@@ -1,0 +1,21 @@
+# Q3 adb on google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.036/12592187:user/release-keys 2026-10-08T22:19:24Z
+$ dumpsys account | grep -c "Account {"
+0
+$ pm list users
+Users:
+	UserInfo{0:Owner:4c13} running
+$ cmd role get-role-holders android.app.role.DEVICE_POLICY_MANAGEMENT
+
+$ pm list packages com.google.android.setupwizard / clouddpc
+(none)
+$ adb install -t dpc-debug.apk
+Performing Streamed Install
+Success
+$ dpm set-device-owner com.plainphone.spike.emu/.AdminReceiver
+Success: Device owner set to package com.plainphone.spike.emu/.AdminReceiver
+Active admin set to component com.plainphone.spike.emu/.AdminReceiver
+$ dpm list-owners
+1 owner:
+User  0: admin=com.plainphone.spike.emu/.AdminReceiver,DeviceOwner,Affiliated
+$ logcat (DevicePolicy|allowlist|blocked|PPEMU)
+10-08 15:19:25.013   553  1778 I DevicePolicyManager: Device owner set: ComponentInfo{com.plainphone.spike.emu/com.plainphone.spike.emu.AdminReceiver} on user 0

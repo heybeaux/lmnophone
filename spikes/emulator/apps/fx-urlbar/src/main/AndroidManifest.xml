@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- THROWAWAY FIXTURE (PLA-11): in-app URL bar and WebView, no web intent filter. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application android:label="FX URL-bar app">
+        <activity android:name="com.plainphone.fx.common.UrlBarActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

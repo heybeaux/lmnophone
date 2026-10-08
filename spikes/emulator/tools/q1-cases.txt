@@ -1,0 +1,24 @@
+# Settings, Settings panels, Play, other system UI. Must all be BLOCKED with the flag on.
+settings|action=android.settings.SETTINGS
+settings-explicit|action=android.intent.action.MAIN comp=com.android.settings/.Settings
+wifi-settings|action=android.settings.WIFI_SETTINGS
+app-info|action=android.settings.APPLICATION_DETAILS_SETTINGS data=package:com.google.android.apps.messaging
+default-apps|action=android.settings.MANAGE_DEFAULT_APPS_SETTINGS
+a11y-settings|action=android.settings.ACCESSIBILITY_SETTINGS
+panel-internet|action=android.settings.panel.action.INTERNET_CONNECTIVITY
+panel-volume|action=android.settings.panel.action.VOLUME
+panel-wifi|action=android.settings.panel.action.WIFI
+panel-nfc|action=android.settings.panel.action.NFC
+play-market|data=market://details?id=com.whatsapp
+play-web|data=https://play.google.com/store/apps/details?id=com.whatsapp
+play-explicit|action=android.intent.action.MAIN comp=com.android.vending/com.google.android.finsky.activities.MainActivity
+share-text|action=android.intent.action.SEND type=text/plain text=hello
+chrome-explicit|action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+photos|action=android.intent.action.MAIN comp=com.google.android.apps.photos/.home.HomeActivity
+# same-UID siblings of lock-task packages (com.android.phone uid 1001)
+stk|action=android.intent.action.MAIN comp=com.android.stk/.StkMain
+# routes inside an allowed package (com.android.phone)
+phone-radioinfo|action=android.intent.action.MAIN comp=com.android.phone/.settings.RadioInfo
+phone-callsettings|action=android.telecom.action.SHOW_CALL_SETTINGS
+phone-network|action=android.settings.NETWORK_OPERATOR_SETTINGS
+emergency-info|action=android.settings.EDIT_EMERGENCY_INFO
