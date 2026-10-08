@@ -18,7 +18,7 @@ Plainphone SHALL apply, and keep applied, at least these restrictions:
 - `DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY`, `DISALLOW_USB_FILE_TRANSFER`
 - `DISALLOW_CONFIG_VPN`, `DISALLOW_CONFIG_PRIVATE_DNS`, `DISALLOW_NETWORK_RESET`
 - `DISALLOW_CONFIG_DATE_TIME`, `DISALLOW_SYSTEM_ERROR_DIALOGS`, `DISALLOW_CREATE_WINDOWS`
-- `DISALLOW_MODIFY_ACCOUNTS`
+- `DISALLOW_MODIFY_ACCOUNTS`, `DISALLOW_CONFIG_CELL_BROADCASTS`
 
 A supervised session SHALL NOT lift `DISALLOW_SAFE_BOOT`, `DISALLOW_FACTORY_RESET` or `DISALLOW_DEBUGGING_FEATURES`. Accessibility services and input methods SHALL be limited to system-provided ones. Plainphone SHALL NOT set `DISALLOW_INSTALL_APPS` permanently.
 
@@ -44,7 +44,12 @@ The lock task packages SHALL be exactly the **lock-task UI list**:
 - the minimum UI entries in the build inventory
 - the packages of an open supervised session, while that session is open
 
-Lock task features SHALL include `HOME`, `KEYGUARD`, `GLOBAL_ACTIONS`, `NOTIFICATIONS`, `SYSTEM_INFO` and `BLOCK_ACTIVITY_START_IN_TASK`. Device test PLA-5 A3 on the XT2415 found that without `BLOCK_ACTIVITY_START_IN_TASK`, three screens opened inside the locked task: App info (leading on to Permissions and Notifications settings), the share chooser, and Google Photos via the Camera thumbnail. With the flag on, all three were blocked. They SHALL NOT include `OVERVIEW`.
+Lock task features SHALL include `HOME`, `KEYGUARD`, `GLOBAL_ACTIONS`, `NOTIFICATIONS`, `SYSTEM_INFO` and `BLOCK_ACTIVITY_START_IN_TASK`. Device test PLA-5 A3 on the XT2415, with `BLOCK_ACTIVITY_START_IN_TASK` **off**, found three screens opening inside the locked task:
+- App info, leading on to the Permissions and Notifications settings;
+- the generic share chooser;
+- Google Photos, opened from the Camera thumbnail.
+
+With the flag **on**, App info and the share chooser were blocked. The Photos route was **not run** with the flag on (Q1 follow-up). They SHALL NOT include `OVERVIEW`.
 
 Each minimum UI entry, apart from Plainphone and approved apps, SHALL have a negative test showing that Settings, the Play Store and web content cannot be reached through it. Packages that share a UID with a lock-task package SHALL be listed and covered by the same tests.
 
@@ -93,24 +98,49 @@ From unlock until lock task starts, no unapproved app SHALL be openable from:
 - **WHEN** the user unlocks right after a reboot and taps a queued notification from an unapproved app
 - **THEN** the app does not open
 
-### Requirement: A runtime emergency floor that does not depend on any inventory or policy file
-At every policy pass, Plainphone SHALL compute an **emergency floor** from the live system. The floor SHALL include:
-- the system dialer (`TelecomManager.getSystemDialerPackage`) and the default dialer;
-- every package resolving `android.intent.action.CALL_EMERGENCY` or the emergency dialer intent (on the XT2415 this is `com.android.phone`, per PLA-5 A3);
-- the default dialer's in-call service package;
-- the default SMS app (`ROLE_SMS`);
-- packages handling cell broadcast receive and display;
-- the current WebView provider;
-- enabled system input methods;
-- the permission controller.
+### Requirement: A runtime emergency floor, from OS-managed identities only, that does not depend on any inventory or policy file
+At every policy pass, Plainphone SHALL compute an **emergency floor** from the live system.
 
-Floor packages SHALL never be hidden, suspended or disabled. Their screen-bearing members SHALL always be on the lock-task UI list: the dialers, the emergency dialer and the in-call UI.
+**Who can join the floor.** Only these may be floor members:
+- packages named by an OS-managed identity;
+- packages that answer an OS query restricted to system packages.
 
-The floor SHALL be computed with no inventory and no policy file. It SHALL outrank every other list.
+A package that merely declares a matching intent filter SHALL NOT join the floor. A package that is not a system app (`ApplicationInfo.FLAG_SYSTEM` unset) SHALL NOT join the floor by any route.
+
+**Floor members (never hidden, suspended or disabled):**
+
+| Member | How it is identified |
+|---|---|
+| System dialer | `TelecomManager.getSystemDialerPackage()` |
+| Default dialer | `ROLE_DIALER` holder, only if it is a system app |
+| Emergency dialer package | Resolves `android.intent.action.CALL_EMERGENCY` or the emergency-dialer intent, queried with `MATCH_SYSTEM_ONLY`. On the XT2415 this is `com.android.phone` (PLA-5 A3, with the flag off) |
+| In-call UI | The `InCallService` package of the system dialer |
+| SMS app | The `ROLE_SMS` holder, only if it is a system app |
+| Cell broadcast receive and display | Resolved with `MATCH_SYSTEM_ONLY` |
+| WebView provider | `WebView.getCurrentWebViewPackage()` |
+| Keyboards | Enabled system input methods (`InputMethodInfo` for system apps) |
+| Permission controller | Resolves `android.content.pm.action.REQUEST_PERMISSIONS` with `MATCH_SYSTEM_ONLY` |
+
+**Emergency UI subset.** Only these floor members SHALL be added to the lock-task UI list:
+- the system dialer;
+- the system emergency-dialer package;
+- the system dialer's in-call UI package.
+
+The permission controller, keyboards and the WebView provider are never-hide only. They are not lock-task UI entries, unless Q1 shows one must be, and it then gets its own negative tests.
+
+The floor SHALL be computed without any inventory or policy file, and SHALL outrank every other list.
 
 #### Scenario: Emergency dialer package not in the inventory
-- **WHEN** a build's emergency dialer lives in a package the inventory doesn't name
+- **WHEN** a build's system emergency dialer lives in a package the inventory doesn't name
 - **THEN** the floor adds that package to the lock-task UI list, and the emergency dialer opens from home
+
+#### Scenario: Untrusted app advertises an emergency filter
+- **WHEN** an unapproved user-installed app declares an activity with the exact emergency-dialer action and category
+- **THEN** it does not join the floor, it is still hidden, and it cannot be opened in-task or as a new task. This holds on supported builds, unknown builds, and unknown builds with corrupt policy.
+
+#### Scenario: Previously hidden system emergency component
+- **WHEN** after an OTA a hidden **system** package becomes the `MATCH_SYSTEM_ONLY` resolver for the emergency dialer
+- **THEN** Plainphone unhides it and adds it to the lock-task UI list, including on the locked-boot path
 
 ### Requirement: One reviewed inventory per supported build drives sweeping and minimum UI
 Plainphone SHALL ship, compiled into the APK, a versioned **build inventory** for each supported model and build fingerprint. The inventory SHALL add to the emergency floor.
@@ -145,20 +175,20 @@ Plainphone SHALL ship, compiled into the APK, a versioned **build inventory** fo
 
 **What still holds on an unknown build.**
 - Nothing outside the lock-task list can be opened in the foreground.
-- New system packages are neither hidden nor approved. They stay unopenable, because lock task does not list them.
+- New system packages are neither hidden nor approved. They cannot be opened in the foreground unless Android treats them as lock-task-eligible because they share a UID with an allowed package. That exception is the residual risk below.
 - Residual risk: a new route inside an already-allowed package, or a new package that shares a UID with one. This SHALL be disclosed, and Beaux SHALL accept it as part of the custody and leftover-risk acceptance.
 
 **Back to normal.** The phone returns to normal support only when all three are done:
 - a reviewed inventory for the new build is installed;
 - the handover self-check passes;
-- on that build, the emergency dialer and incoming-call keypad checks from essential-calling-and-texting are re-run, and alert display is re-observed. Alternatively, the alert check is covered by Beaux's recorded build-scoped exception if the alert stack's version is unchanged.
+- on that build, the emergency dialer and incoming-call keypad checks from essential-calling-and-texting are re-run, and alert display is re-observed on **that** build. The alternative is a new build-scoped exception recorded by Beaux for that build. An earlier build's exception SHALL NOT carry over, even if the alert stack's version is unchanged.
 
 #### Scenario: OTA to an unknown build
 - **WHEN** the phone updates to a fingerprint that has no inventory
 - **THEN** lock task stays on, emergency floor packages are unhidden and allowed, no system package is newly hidden, the trusted person and helper are texted, and trusted-person mode lists the changed packages
 
 #### Scenario: A previously hidden package becomes an emergency dependency
-- **WHEN** after an OTA, a package Plainphone had hidden now resolves the emergency dialer intent
+- **WHEN** after an OTA, a **system** package Plainphone had hidden now resolves the emergency dialer intent under `MATCH_SYSTEM_ONLY`
 - **THEN** Plainphone unhides it and adds it to the lock-task UI list on the next policy pass
 
 ### Requirement: Policy storage is atomic, validated, and falls back to an emergency-safe baseline

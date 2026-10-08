@@ -15,7 +15,7 @@ A session SHALL NOT relax anything other than what this table names. Every sessi
 3. **End triggers.** The session ends on Done, screen off, an incoming call, the deadline, or the user leaving the session's packages.
 4. **Closing.** On ending, Plainphone:
    - removes the relaxation;
-   - runs the **protected-state check** (below);
+   - runs the **protected-state check** (below). Calls, Emergency and alerts are never gated on it;
    - restores or rejects any change that breaks a mandatory protection, while keeping ordinary setting changes such as ringtone, display or Wi-Fi;
    - reads the policy back;
    - only then clears the journal.
@@ -37,6 +37,7 @@ A session SHALL NOT relax anything other than what this table names. Every sessi
 | Permitted input methods | system-only, plus listed | `getPermittedInputMethods` | re-set (system IMEs stay available by Android's rule) | non-handback state |
 | Permitted accessibility services | system-only | `getPermittedAccessibilityServices` | re-set | non-handback state |
 | Approved apps' pre-granted permissions | as approved | `getPermissionGrantState` | re-set | trusted person told |
+| Emergency alert configuration | `DISALLOW_CONFIG_CELL_BROADCASTS` set; cell broadcast floor packages unhidden and enabled | restriction and package state | re-add or unhide | non-handback state. If the build has no readback, the phone is held by the helper. It is never reported as passing. |
 
 A **non-handback state** means: the trusted person sees "Not ready to hand back – call the helper". Calls, Emergency and alerts stay available throughout. No check SHALL gate them.
 
@@ -44,7 +45,7 @@ A **non-handback state** means: the trusted person sees "Not ready to hand back 
 
 #### Scenario: Screen turns off mid-session
 - **WHEN** the screen turns off during a Play or Settings session
-- **THEN** the session ends, the session packages cannot be reached, and the protected-state check passes before the phone is usable
+- **THEN** the session ends, the session packages cannot be reached, and the protected-state check passes before the phone is handed back. Calls and Emergency stay available throughout.
 
 #### Scenario: Settings session changes a protection
 - **WHEN** someone uses a Settings session to change the default SMS app or the permitted keyboards

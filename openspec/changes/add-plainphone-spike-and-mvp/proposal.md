@@ -8,9 +8,9 @@ The research suggests this can probably be built as one Android app on a certifi
 
 So we first test the risky parts on an emulator against go/no-go conditions, then build the MVP.
 
-Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 5, after cross-model reviews PLA-3, PLA-4, PLA-7 and PLA-8). First device results on a board-approved spare Motorola:
+Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 6, after cross-model reviews PLA-3, PLA-4, PLA-7, PLA-8 and PLA-9). First device results on a board-approved spare Motorola:
 - adb setup of our unapproved Device Owner works on certified Android 15, and the phone can be released without a wipe;
-- lock task with in-task launches blocked closes the App info, share-sheet and Photos leaks that appear without it. Runtime permission prompts are blocked too, so Plainphone pre-grants permissions at approval.
+- lock task with in-task launches blocked closes the App info and share-sheet leaks that appear without it (the Photos route has not been tested with it on yet). Runtime permission prompts are blocked too, so Plainphone plans to pre-grant permissions at approval; that is not tested yet.
 
 ## What Changes
 

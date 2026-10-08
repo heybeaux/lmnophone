@@ -1,6 +1,6 @@
 # Verification matrix: requirement → evidence → test → gate
 
-- Revision 5, 2026-10-08 (PLA-3 F17, PLA-4 N8–N10, PLA-7, PLA-8 S1–S5). Device results from PLA-5 are marked **[device ✓]** where they are already in.
+- Revision 6, 2026-10-08 (PLA-3 F17, PLA-4 N8–N10, PLA-7, PLA-8 S1–S5). Device results from PLA-5 are marked **[device ✓]** where they are already in.
 - Owners: **AE** = Android Platform Engineer; **VE** = Verifier & Escape Artist; **Lead**.
 - Gates:
   - **G0**: go/no-go for the architecture
@@ -55,8 +55,8 @@
 | approved-apps → monthly check can't silently lapse | PLA-7 R6; SmsManager / SEND_SMS references (documented) | unit + Q2 + handover | Stored due date; retries; home-screen line after 7 days overdue; completion only after a PIN in a Play session; end-to-end test text at handover | G1 | AE |
 | essential → alert display observed before handover | PLA-7 R5 | Q14 [device] | Alert seen on the target build, or else custody / Beaux's recorded acceptance of a narrower promise; emulator with no injection = inconclusive (blocks release) | G1 | AE, VE |
 | device-lockdown → build inventory and emergency-safe baseline | PLA-7 R3 | Q6, Q13, unit | Inventory present for the build; baseline keeps calls, in-call UI, Emergency, alerts and SMS working; missing inventory → no sweep, no Ready | G1 | AE, VE |
-| device-lockdown → runtime emergency floor | PLA-8 S1; **[device ✓] emergency dialer needs `com.android.phone` in lock task (PLA-5 A3)** | Q1, Q6, unit | Floor computed with no inventory or policy file; emergency dialer opens from home on every build | G0 | AE, VE |
+| device-lockdown → runtime emergency floor | PLA-8 S1, PLA-9 T1; **[device, partial] emergency dialer needs `com.android.phone` in lock task; opened with the flag off, not re-run with it on (PLA-5 A3)** | Q1, Q6, unit | Floor built only from OS identities and `MATCH_SYSTEM_ONLY`; a self-declared user-app fixture never joins; only the emergency UI subset is on the lock-task list; emergency dialer opens from home with the flag on | G0 | AE, VE |
 | device-lockdown → OTA lifecycle and unknown build | PLA-8 S1 | Q6 | Unknown build: lock task kept, floor packages unhidden, no system package newly hidden, trusted person and helper texted, changes listed; unknown build + corrupt policy → floor baseline; a reviewed inventory restores normal support | G1 | AE, VE |
-| device-lockdown → BLOCK flag closes in-task leaks | **[device ✓] PLA-5 A3: App info, share chooser and Photos open with the flag off and are blocked with it on** | Q1 | All in-task launches blocked with the flag on | G0 | AE |
-| approved-apps → permissions decided at approval | **[device ✓] PLA-5 A3: runtime prompts blocked with the flag on** | Q1 | `setPermissionGrantState` applies approved choices; sensor permissions checked on the build; no prompts in use | G0 | AE |
+| device-lockdown → BLOCK flag closes in-task leaks | **[device, partial] PLA-5 A3: App info and share chooser open with the flag off and are blocked with it on; Photos thumbnail open with it off, not run with it on** | Q1 | All in-task launches blocked with the flag on, including Photos | G0 | AE |
+| approved-apps → permissions decided at approval | **[device ✓] PLA-5 A3: runtime prompts blocked with the flag on** (pre-granting not yet tested) | Q1 | `setPermissionGrantState` applies approved choices; sensor permissions checked on the build; no prompts in use | G0 | AE |
 | trusted-person-controls → protected-state invariant table | PLA-8 S3 | Q12 | Ordinary changes (ringtone, font, Wi-Fi, system keyboard or language) persist; protected changes are repaired, or the phone is held in a non-handback state with Emergency available | G1 | AE, VE |

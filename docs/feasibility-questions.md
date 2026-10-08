@@ -1,6 +1,6 @@
 # Feasibility questions for the emulator spike
 
-- Revision 5, 2026-10-08. Ranked after the PLA-3 review (F15, F17), then updated after PLA-4 (N1–N11), PLA-7 (R1–R8) and PLA-8 (S1–S5).
+- Revision 6, 2026-10-08. Ranked after the PLA-3 review (F15, F17), then updated after PLA-4 (N1–N11), PLA-7 (R1–R8), PLA-8 (S1–S5) and PLA-9 (T1–T3).
 - Device results so far come from the spare Motorola (PLA-5, `spikes/device-moto/RESULT.md`): **Q3 adb: yes** and **way back without a wipe: yes**. Everything else is still open.
 - Owner: Plainphone Lead. Spike author: Android Platform Engineer. Reviewer: Verifier & Escape Artist.
 - The questions are ranked by how much a "no" would change the plan. Each test ID maps to requirements in `docs/verification-matrix.md`.
@@ -27,17 +27,26 @@
 **Q1. Can lock task, with in-task launches blocked, carry a normal day?**
 - **Device results so far** (PLA-5 A3, partial, on the XT2415):
   - **Flag off:** App info opened inside the task (leading to Permissions and Notifications), and so did the share chooser and Google Photos.
-  - **Flag on:** all three were blocked, but so were runtime permission prompts.
-  - **Emergency dialer:** it needs `com.android.phone` on the lock-task list.
-  - **Photo sharing:** Camera → Photos → Share fails.
+  - **Flag on:** App info and the share chooser were blocked, and so were runtime permission prompts. The Photos route was not run.
+  - **Emergency dialer:** it needs `com.android.phone` on the lock-task list. It opened with the flag off; with the flag on it has not been re-run.
+  - **Photo sharing:** Camera → Photos → Share failed with the flag off. A direct share to Messages was tested with **text only**.
 - **Follow-ups for this question:**
+  - with the flag on: the Camera thumbnail → Photos route; the allowlisted emergency dialer screen (no call placed);
   - pre-granting permissions with `setPermissionGrantState`, including whether the Device Owner may grant sensor permissions on this build;
   - attaching a photo from inside Messages' own picker with the flag on;
   - whether lock task comes back after a reboot;
   - the power menu, tested with the physical button;
   - emergency calling from the lock screen, which needs a secure lock screen that the board approves.
 - Run everything below twice: with `LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK` on, and with it off.
-- **A normal day must work:** incoming call, outgoing call, notifications, a runtime permission prompt, a photo, sharing from Camera to Messages, the power menu, reboot, and our own Wi-Fi screen (`WifiManager.addNetwork` as Device Owner).
+- **A normal day must work, with the flag on:**
+  - incoming and outgoing calls;
+  - notifications;
+  - each required app working with the permissions chosen at approval, with **no runtime prompts**;
+  - a photo taken, and **attached as an image** in Messages by a route that works;
+  - the power menu and reboot;
+  - our own Wi-Fi screen (`WifiManager.addNetwork` as Device Owner).
+
+  Prompts with the flag off are a diagnostic, not a pass criterion. If a sensor permission can't be granted, an optional app gets a feature warning; a must-have app fails Q4.
 - **Nothing outside may open:** Settings, a Settings panel, or Play, launched from an approved app with an implicit intent, an explicit component, the share chooser, or no new-task flag.
 - **Build the UI exceptions list:** list every package whose screen we must allow, every package sharing a UID with one, and run a negative launch test on each.
 - *If no:* revise the ADR. Hiding apps without lock task is **not** assumed safe.
@@ -71,6 +80,7 @@
 - Reboot and stay at the lock screen. Install a package before the first unlock. Kill Plainphone between policy steps. Update Plainphone to a build signed with the same key. Feed it a truncated policy and a policy with an unknown version.
 - Unlock immediately after a reboot, and try to open an unapproved app with a queued notification, an explicit intent and a deep link before Plainphone's home screen appears.
 - With both policy copies corrupt: the emergency-safe baseline must apply.
+- **Floor trust (T1).** An unapproved user-installed fixture declares the emergency-dialer filter. It must never join the floor or become openable, on a supported build, on an unknown build, and on an unknown build with corrupt policy.
 - **OTA and unknown build (S1).** These need fixtures on our own emulator. Move from build A (with an inventory) to build B (without one). Set up B so that:
   - a new essential dependency matches the browser heuristic;
   - a package that was hidden on A becomes the emergency dialer.

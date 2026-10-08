@@ -1,7 +1,7 @@
 ## Context
 
 - **Users.** Beaux and the trusted person in [town], Canada. Neither is technical. Each is likely the other's trusted person.
-- **Architecture.** `docs/decisions/0001-architecture.md` (revision 5) names the leading candidate:
+- **Architecture.** `docs/decisions/0001-architecture.md` (revision 6) names the leading candidate:
   - a Device Owner app that is also the home screen;
   - running on a certified stock Android phone with long security support.
 - **Evidence.**
@@ -13,10 +13,11 @@
 - **Reviews.** Revision 5 answers PLA-8 (S1–S5), on top of PLA-7 (R1–R8), PLA-4 (N1–N11) and PLA-3 (F1–F17). Every requirement traces to `docs/verification-matrix.md`.
 - **Device A3 (lock task on the XT2415, partial).** Test results with the block-in-task flag:
   - **Flag off:** App info opened inside the task, leading on to Permissions and Notifications settings. The share chooser opened, and the Camera thumbnail opened Google Photos.
-  - **Flag on:** all three were blocked. So were runtime permission prompts ("Permission controller is not available right now").
-  - **Emergency dialer:** it opened only once `com.android.phone` was on the lock-task list.
+  - **Flag on:** App info and the share chooser were blocked, and so were runtime permission prompts ("Permission controller is not available right now"). The Photos thumbnail route was **not run** with the flag on.
+  - **Emergency dialer:** it was blocked in both modes until `com.android.phone` was on the lock-task list. With it listed, the dialer screen opened with the flag **off**. This was **not re-run** with the flag on. No call was placed.
   - **Notifications:** Quick Settings showed no tiles, and notifications aimed at apps outside the list were blocked.
-  - **Photo sharing:** the Camera → Photos → Share → Messages route failed. A direct share to Messages worked.
+  - **Photo sharing:** the Camera → Photos → Share → Messages route failed with the flag off, and was not run with it on. A direct **text** share to Messages opened Messages in both modes. No image attachment was tested.
+  - **Permissions:** pre-granting them is proposed, **not tested**.
   - **Not yet tested:** reboot, power menu, lock-screen emergency, calls and SMS.
 - **Policy constraints:**
   - Physical work only on the board-approved spare (serial SPARE_DEVICE_SERIAL), within its rules: Settings resets only, no recovery wipes, test-only DPC.
@@ -238,7 +239,7 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 
 - **Writing.** The policy is written atomically and checked against its schema. A last-known-good copy is kept.
 - **Direct Boot copy.** A minimal copy is kept in device-protected storage, with a checksum: setup-complete flag, PIN and recovery counters, session journal, and the last supported build fingerprint.
-- **Runtime emergency floor (S1).** Computed live at every pass, independent of any file or inventory: the system and default dialers, the emergency-dialer package, the in-call service, the SMS role, cell broadcast, the WebView provider, the system keyboards and the permission controller. Floor packages are never hidden. Their screens are always on the lock-task list. The floor outranks everything else.
+- **Runtime emergency floor (S1, T1).** Computed live at every pass, from OS-managed identities and `MATCH_SYSTEM_ONLY` queries only. Self-declared intent filters never count, and non-system apps never qualify. Members: the system dialer, the default dialer if it is a system app, the system emergency-dialer package, the in-call UI, the SMS role holder if it is a system app, cell broadcast, the WebView provider, the system keyboards and the permission controller. They are never hidden. **Only the emergency UI subset** (system dialer, emergency-dialer package, in-call UI) goes on the lock-task list. The floor outranks everything else.
 - **Unknown build after an OTA (S1).**
   - Updates are postponed with `createPostponeInstallPolicy`. On `onSystemUpdatePending`, the trusted person and the helper get a text.
   - On an unknown build, lock task stays on, with the previous list plus the floor. Floor packages are unhidden. Only user-installed packages get newly hidden. Changed packages are listed under "Phone software changed – review pending".

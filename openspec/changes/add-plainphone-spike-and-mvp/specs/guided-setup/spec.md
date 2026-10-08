@@ -8,7 +8,7 @@ The guide SHALL list, in order:
 2. remove its accounts and reset it **through Settings**;
 3. take the phone offline:
    - **physical SIM:** remove it;
-   - **eSIM:** turn the eSIM off before the reset, under Settings > Network > SIMs. Choose the reset option that **keeps** eSIMs. Turn the eSIM back on during setup step 3, before lock task starts.
+   - **eSIM:** turn the eSIM off before the reset, under Settings > Network > SIMs. Choose the reset option that **keeps** eSIMs. Turn the eSIM back on in **on-phone setup step 3, after the sweep**, before lock task starts.
    - go through the first-boot wizard, skipping Wi-Fi, every account and every app recommendation;
    - if the wizard will not finish offline, stop: this model is unsupported, and the guide SHALL say so plainly;
 4. enable USB debugging;
@@ -42,7 +42,7 @@ The inventory's Play Store, keyboard, setup and account components SHALL stay us
 
 Before the sweep, Plainphone SHALL check the emergency-safe baseline **locally**: the dialer, emergency dialer and Messages resolve; the floor is computed; the lock-task UI list is correct. This check SHALL NOT be reported as an end-to-end call or SMS test. Real outgoing and incoming call and SMS checks SHALL be done after connectivity returns, and before handover.
 
-Only after the sweep SHALL the guide have the helper insert the SIM and join Wi-Fi. After that, the package-added watcher SHALL catch anything pushed later.
+Only after the sweep SHALL the guide have the helper insert the physical SIM or turn the eSIM back on, then join Wi-Fi. After that, the package-added watcher SHALL catch anything pushed later.
 
 #### Scenario: Preinstall service pushes games
 - **WHEN** the phone joins Wi-Fi after the sweep, and a preinstall service installs games

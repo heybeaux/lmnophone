@@ -11,7 +11,7 @@ A package counts as a **general browser** if either of these is true:
 
 An app that only handles links for its own verified domains (App Links) is not a general browser.
 
-On a build with no inventory, Plainphone SHALL hide only user-installed (non-system) general browsers. Newly classified system packages stay unhidden, but cannot be opened, because they are not on the lock-task list (device-lockdown).
+On a build with no inventory, Plainphone SHALL hide only user-installed (non-system) general browsers. Newly classified system packages stay unhidden. They cannot be opened in the foreground unless Android treats them as lock-task-eligible because they share a UID with an allowed package. That is a disclosed residual risk (device-lockdown).
 
 Plainphone SHALL hide:
 - general browsers

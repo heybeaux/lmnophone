@@ -1,13 +1,13 @@
 # ADR 0001: How Plainphone locks a phone down
 
-- Status: **Proposed, revision 5.** Needs Beaux's approval, together with the OpenSpec change `add-plainphone-spike-and-mvp`.
+- Status: **Proposed, revision 6.** Needs Beaux's approval, together with the OpenSpec change `add-plainphone-spike-and-mvp`.
 - Date: 2026-10-08
 - Author: Plainphone Lead (Claude)
 - Reviewer: Verifier & Escape Artist (OpenAI model)
   - Revision 1 was reviewed in [PLA-3](/PLA/issues/PLA-3): request changes, with 3 blockers, 12 major and 2 minor findings.
   - Revision 2 was reviewed in [PLA-4](/PLA/issues/PLA-4): request changes, with N1–N11 (1 blocker, 8 major, 2 minor).
   - Revision 3 was reviewed in [PLA-7](/PLA/issues/PLA-7) (R1–R8). Revision 4 was reviewed in [PLA-8](/PLA/issues/PLA-8) (S1–S5).
-  - Revision 5 addresses S1–S5, adds the partial lock-task results from device test A3, and goes back for a narrow re-review.
+  - Revision 5 addresses S1–S5 and was reviewed in [PLA-9](/PLA/issues/PLA-9) (T1–T4). Revision 6 addresses T1–T4.
 - Evidence: `research/evidence/*.md`. The DeerFlow report is leads only.
 - Confidence labels from the evidence files carry over here:
   - **documented**: a primary source says so
@@ -125,8 +125,9 @@ We did not find a published open-source "trusted person controls the allowlist" 
 - **A0.** At first boot, with Wi-Fi on, 7 apps were pushed and 1 was preloaded.
 - **A3, lock task (partial):**
   - **With `BLOCK_ACTIVITY_START_IN_TASK` off,** three leaks opened inside the locked task: App info (leading to Permissions and Notifications), the share chooser, and Google Photos from the Camera thumbnail.
-  - **With it on,** all three were blocked, but runtime permission prompts were blocked too. So Plainphone pre-grants permissions at approval.
-  - **Emergency dialer:** opens only when `com.android.phone` is on the lock-task list. The runtime emergency floor adds it automatically.
+  - **With it on,** App info and the share chooser were blocked, and so were runtime permission prompts. The Photos route was **not run** with it on. So Plainphone plans to pre-grant permissions at approval; that is **not tested yet**.
+  - **Emergency dialer:** blocked in both modes until `com.android.phone` was on the lock-task list. Then it opened with the flag off; it was **not re-run** with the flag on. The runtime emergency floor adds the system emergency-dialer package automatically.
+  - **Direct share to Messages:** a **text** share worked. An image attachment was not tested.
   - **Quick Settings** showed no tiles.
   - **Still open:** reboot, power menu, lock-screen emergency, calls and SMS.
 
@@ -157,7 +158,7 @@ Nothing touches a real phone without Beaux's approval for that specific phone.
 
 The candidate becomes the decision only if, on the emulator, and later on one phone Beaux approves:
 
-1. **A normal day works under lock task with in-task launches blocked (Q1):** calls, notifications, permission prompts, camera, sharing, and our own Wi-Fi screen.
+1. **A normal day works under lock task with in-task launches blocked (Q1).** That means: calls; notifications; each required app working with the permissions chosen at approval and **no runtime prompts**; a demonstrated way to attach a photo in Messages; the camera; and our own Wi-Fi screen. Runtime prompts with the flag off are a diagnostic only.
    - *If not:* a revised ADR. Hiding apps alone is **not** assumed safe; it needs its own escape review.
 2. **Approved apps update without the user reaching Play (Q2).**
    - *If not:* a revised ADR. A weekly supervised update window is **not** assumed acceptable.
@@ -237,3 +238,13 @@ Each PLA-3 finding, and where it is addressed:
 | S4 offline setup | Physical-SIM and eSIM steps. Every network type is checked. A plain stop when a model can't finish setup offline. The pre-sweep check is local only, with real call and SMS checks after reconnecting. Total helper time reported. (guided-setup) |
 | S5 synchronisation | Home-screen notice-line exception and test. A single rule for when the overdue line appears, and its removal. Matrix rows 25/28. Design D8 account picker and SMS check. Design D9 Direct Boot list. Headers updated to revision 5. |
 | Device A3 | The block flag is confirmed necessary. Permissions are decided at approval and pre-granted with `setPermissionGrantState`. `com.android.phone` is in the floor. Photo-sharing and reboot follow-ups are in Q1. |
+
+**Revision 6 (PLA-9 T1–T4):**
+
+| PLA-9 finding | Where addressed |
+|---|---|
+| T1 floor trust (major) | Floor members come only from OS-managed identities and `MATCH_SYSTEM_ONLY` queries, and must be system apps; a self-declared filter never counts. A separate emergency UI subset (system dialer, emergency dialer, in-call UI) is the only part on the lock-task list. "Unopenable" is qualified for the same-UID case. An untrusted-fixture scenario is added, plus a Q6 test. (device-lockdown, web-containment, design D9) |
+| T2 A3 claims | Every copy now states only the recorded test cells: Photos not run with the flag on; the emergency dialer not re-run with it on; direct share was text only; pre-granting not tested. Q1 follow-ups added. |
+| T3 Q1 gate | Daily-use pass is judged with the flag on: required functions with the permissions chosen at approval, no runtime prompts, and a demonstrated image attachment. Prompts with the flag off are diagnostic only. |
+| T4 approval packet | Rewritten: requirements instead of absolute claims; custody without "rare"; background activity "without a guaranteed time limit"; the update obligation and the unknown-build residual risk; the monthly check and other recurring human work; no rollback, the compromised-key procedure, and recovery-code custody; exceptions are build-scoped; spare-device policy preserved. |
+| S3/S4 leftovers | An alert-configuration row in the protected-state table (`DISALLOW_CONFIG_CELL_BROADCASTS`); "usable" changed to "handed back", with Emergency never gated; the eSIM step order fixed. |
