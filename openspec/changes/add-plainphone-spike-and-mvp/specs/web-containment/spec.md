@@ -1,22 +1,60 @@
 ## ADDED Requirements
 
-### Requirement: No browsers or search apps
-Plainphone SHALL hide every installed web browser, the Google app, Gemini, and any app store other than the Play Store. A package counts as a browser if it handles `ACTION_VIEW` for `http`/`https` with `CATEGORY_BROWSABLE` and is not Plainphone. The trusted person SHALL NOT be able to approve these packages in the MVP.
+### Requirement: General browsers, search and the Wi-Fi sign-in page are hidden
+Plainphone SHALL classify a package as a **general browser** when either is true:
+- it resolves `ACTION_VIEW` + `CATEGORY_BROWSABLE` for `https://plainphone-probe.invalid/`
+- it qualifies for the browser role
 
-#### Scenario: Browser installed by an update
-- **WHEN** a system update adds or re-enables a browser
-- **THEN** Plainphone hides it within one policy pass
+Packages that only handle links to their own verified domains (App Links) are not general browsers.
 
-### Requirement: Links open a blocked-link screen
-Plainphone SHALL handle `http`/`https` VIEW intents. It SHALL show a calm screen: the link's site name, "This link is blocked", and an option to send the link to the trusted person by text. It SHALL NOT render the page or provide Custom Tabs.
+Plainphone SHALL hide:
+- general browsers
+- the Google app
+- Gemini
+- app stores other than the Play Store
+- the Wi-Fi sign-in page package (CaptivePortalLogin)
 
-#### Scenario: Tap a link in Messages
-- **WHEN** the user taps a web link in a text message
-- **THEN** the blocked-link screen shows the site name and offers "Send to [trusted person]"
+The trusted person SHALL NOT be able to approve general browsers, search apps or other app stores. They MAY allow the Wi-Fi sign-in page for one supervised session.
 
-### Requirement: Web-leak notes on approved apps
-Each app in Plainphone's built-in catalog SHALL carry a plain-language web-leak note. The trusted person SHALL see that note before approving the app. An app with no catalog entry SHALL show "Not reviewed yet".
+#### Scenario: Browser arrives with an update
+- **WHEN** a system update adds or re-enables a general browser
+- **THEN** Plainphone hides it within 15 minutes, and lock task stops it from opening in the meantime
+
+#### Scenario: Banking app with its own links
+- **WHEN** the trusted person approves a bank app whose only web intent filter is its own verified domain
+- **THEN** the classifier does not treat it as a browser, and it can be approved
+
+#### Scenario: Hotel Wi-Fi
+- **WHEN** the phone joins a network that needs a sign-in page
+- **THEN** no sign-in page opens unless the trusted person starts a supervised Wi-Fi sign-in session
+
+### Requirement: Link handling follows a fixed matrix
+Plainphone SHALL hold the browser role and verify it at handover.
+- Verified App Links of approved apps SHALL open those apps.
+- Every other `http`/`https` link SHALL open Plainphone's blocked-link screen.
+- `intent:` URIs, custom schemes and explicit components SHALL open only when they resolve to an approved app or a lock-task UI exception.
+- Plainphone SHALL NOT provide Custom Tabs.
+
+#### Scenario: Tap a web link in Messages
+- **WHEN** the user taps a link to a site with no approved app
+- **THEN** the blocked-link screen shows the site's real host and offers "Send to [trusted person]"
+
+#### Scenario: Tap an approved app's link
+- **WHEN** the user taps a verified link for an approved app's domain
+- **THEN** the approved app opens, not a browser
+
+### Requirement: Blocked-link screen is isolated and safe
+The blocked-link screen SHALL be a separate exported activity, with no access to admin functions. It SHALL ignore all extras. It SHALL parse the URL, and show only its registrable host, rendering confusable and bidirectional characters visibly. Before display or forwarding, it SHALL remove userinfo, query and fragment.
+
+Forwarding SHALL need the user's confirmation, and SHALL go only to the trusted person's fixed number. Input longer than 2,000 characters SHALL be refused.
+
+#### Scenario: Deceptive link
+- **WHEN** the user taps `https://trusted.example@attacker.invalid/login?token=abc`
+- **THEN** the screen shows "attacker.invalid", and any forwarded text omits the userinfo and the token
+
+### Requirement: Web-leak notes are per app version
+Each catalog entry SHALL carry a plain-language web-leak note and the app version it was reviewed against. The trusted person SHALL see the note before approving. An app updated past its reviewed version SHALL show "Reviewed for an older version". An app with no entry SHALL show "Not reviewed yet – this app may open web pages inside it", and approving it SHALL need an extra confirmation.
 
 #### Scenario: Approving an unreviewed app
 - **WHEN** the trusted person approves an app with no catalog entry
-- **THEN** they first see "Not reviewed yet – this app may open web pages inside it" and must confirm
+- **THEN** they see the "Not reviewed yet" warning, and must confirm it before approving

@@ -1,81 +1,161 @@
 # ADR 0001: How Plainphone locks a phone down
 
-- Status: **Proposed** (needs Beaux's approval, together with the OpenSpec change `add-plainphone-spike-and-mvp`)
+- Status: **Proposed, revision 2.** Needs Beaux's approval, together with the OpenSpec change `add-plainphone-spike-and-mvp`.
 - Date: 2026-10-08
-- Author: Plainphone Lead (Claude). Reviewer: Verifier & Escape Artist (OpenAI model).
-- Evidence: `research/evidence/*.md`. The DeerFlow report (`research/2026-10-08-deerflow-feasibility.md`) was used only for leads.
+- Author: Plainphone Lead (Claude)
+- Reviewer: Verifier & Escape Artist (OpenAI model)
+  - Revision 1 was reviewed in [PLA-3](/PLA/issues/PLA-3): request changes, with 3 blockers, 12 major and 2 minor findings.
+  - Revision 2 addresses those findings (see "Review response" at the end) and goes back for re-review.
+- Evidence: `research/evidence/*.md`. The DeerFlow report is leads only.
+- Confidence labels from the evidence files carry over here:
+  - **documented**: a primary source says so
+  - **code-confirmed**: AOSP source shows it
+  - **inferred**: follows from sources, but not tested
+  - **unknown**: needs a test
+
+## Who this is for
+
+Beaux and the trusted person, in **[town], Canada**. Neither tinkers with phones. "Works for strangers" means three things:
+- calls, texts, 9-1-1 and their essential apps keep working;
+- recovery from mistakes doesn't need a developer;
+- the leftover risks are written down in plain words before they agree to anything.
 
 ## Decision in one paragraph
 
-Build Plainphone as **one Android app that is set as the phone's Device Owner and is also its home screen**. Run it on an **unlocked Google Pixel running stock Android** for the MVP. It hides every app the trusted person has not approved, runs the approved apps in **multi-app lock task mode**, and applies the anti-escape restrictions listed below. We do **not** build a custom ROM. We do **not** ship a launcher-only version. GrapheneOS stays a candidate for a later version, decided by evidence rather than preference. Two findings could still sink this plan, and the spike must answer them first (Q1 and Q2 in `docs/feasibility-questions.md`).
+**Leading candidate, not yet proven:**
+- One Android app that is the phone's **Device Owner** and its **home screen**.
+- Runs on a **certified stock Android phone with long security support** (model to be chosen by Beaux).
+- It hides every app the trusted person has not approved, and runs approved apps in **multi-app lock task mode** with **in-task launches blocked**.
+- It applies the anti-escape restrictions below.
+
+We do not build a custom ROM. We do not ship a launcher-only version. The emulator spike decides whether this candidate becomes the decision. The go/no-go conditions are listed at the end, and any fallback that weakens containment or changes daily use needs a revised ADR and Beaux's approval.
 
 ## Options compared
 
-| | A. Device Owner + launcher, stock Pixel | B. Device Owner + launcher, GrapheneOS | C. Custom ROM | D. Launcher only |
+| | A. Device Owner + home screen, certified stock phone | B. Same on GrapheneOS (Pixel only) | C. Custom ROM | D. Launcher only |
 |---|---|---|---|---|
-| Can the user escape? | Hard. Safe mode, factory reset from Settings, OEM unlock, adb, extra users and launcher changes can all be blocked by documented APIs (see "Controls"). A recovery-mode wipe is still possible; FRP limits what it gets them. | Same, plus a relocked bootloader with GrapheneOS keys. | Hardest. Limits are built into the OS. | Easy. Settings, safe mode, changing the default launcher and adb all work. |
-| Banking and payment apps | Work. Certified device. | Some fail. GrapheneOS is not Google-certified and does not spoof the checks (grapheneos.org/usage). | Many fail (same certification problem). | Work. |
-| RCS / iPhone group texts | Work through Google Messages. | Work only in the Owner profile, with extra permissions for Play services (grapheneos.org/usage). | Depends on the build. | Work. |
-| 911 location | Carrier plus Google's Emergency Location Service. | Carrier only. Google ELS runs inside Play services and is very likely missing (inferred). | Depends on the build. | Carrier plus ELS. |
-| Setup for a non-technical person | Factory reset, then a helper with a computer runs one adb step (see Risk 1). | Unlock, flash, relock, then adb. More steps; needs a computer. | Flash a ROM per device model. | Install an app. |
-| Our ongoing work | One app. Google ships OS updates for 7 years on Pixel 8 and later. | One app, plus GrapheneOS compatibility questions. | Rebuild and re-sign per device for every Android security release. | One app. |
-| Google policy risk | DPC allowlist (Risk 1); developer verification in 2027 (Risk 4). | Neither applies. | Neither applies. | Developer verification. |
+| Can the user escape? | Hard on paper. Safe mode, factory reset from Settings, OEM unlock, adb, extra users and launcher change all have documented controls (table below). A recovery-mode wipe is still possible; FRP is what limits it (Q10). | Hard on paper, plus a relocked bootloader with GrapheneOS keys. FRP behavior on GrapheneOS is **unknown** (it relies on Google Play services). | Hardest. Limits are built into the OS. | Easy. Settings, safe mode, launcher change and adb all work. |
+| Banking and payment apps | Expected to pass Google certification. **Not proven** with every browser hidden and Settings blocked; that is test Q4. | Some fail. GrapheneOS isn't Google-certified and doesn't spoof the checks (grapheneos.org/usage, documented). | Many fail. | Work. |
+| Texting with iPhones (RCS) | Through Google Messages, on carriers that support it. In Canada: Rogers/Fido, Bell/Virgin, Telus/Koodo, Freedom and Public do; Fizz does not (Apple's carrier list, documented). | Conditional: works in the Owner profile with extra Play services permissions (grapheneos.org/usage#rcs). | Depends on the build. | Works. |
+| 9-1-1 location | Carrier location (CRTC rules), plus Google's Emergency Location Service, which has been live in Canada since May 2024 (Google Canada blog, documented). | Carrier location. ELS probably missing (inferred). | Depends on the build. | Carrier plus ELS. |
+| Setup | Factory reset, then a helper runs one adb step (Risk 1). | Unlock, flash, relock, then adb. | Flash a ROM for each phone model. | Install an app. |
+| Our ongoing work | One app, plus an escape review for each phone brand (OEM extras). | One app, plus GrapheneOS compatibility work. | A rebuild for every security release, per phone model. | One app. |
+| Google policy risk | DPC allowlist (Risk 1); developer verification (Risk 4). | Neither applies. | Neither applies. | Developer verification. |
 
-**Why not C (custom ROM).** It costs the most, breaks banking apps, and gives us a per-device build treadmill. The closest commercial product does not do it either: Techless's own help center says Wisephone is "Samsung hardware with our WiseOS software and configurations", secured by "Samsung Knox" and "MDM security". Unenrolling it returns the phone "to a standard Android operating environment". The DeerFlow report's claim that Wisephone is a "de-Googled AOSP fork" is wrong. (Source: techless.zendesk.com, quoted in `prior-art-and-competitors.md`.) Light Phone, Punkt and Mudita do ship their own OS, but they are hardware companies.
+- **Why not C.** It costs the most, breaks banking apps, and puts us on a per-phone build treadmill. The closest commercial product does not do it either. Techless's own help center says Wisephone is "Samsung hardware with our WiseOS software and configurations" with "Samsung Knox" and "MDM security", and that unenrolling returns the phone "to a standard Android operating environment" (documented). That does not prove we can match Knox using only public APIs. C only gets better if essential controls turn out to need OS changes **and** Beaux accepts the cost of maintaining a ROM.
+- **Why not D.** It is friction, not a lock. It only wins if Beaux and the trusted person decide they want voluntary friction instead.
+- **Why A before B.** For these two users, what matters most day to day is: the apps they need, texting with iPhone users, 9-1-1, and recovery that doesn't need a developer. A is expected to do better on all four, but none of that is proven until the spike and their real app list are tested (Q4). B gets better if privacy or independence from Google matters more to them **and** the same test list passes on B. B also needs a Pixel.
 
-**Why not D (launcher only).** It is a suggestion, not a lock. The user can change the default launcher, open Settings, boot into safe mode, or use adb. That is not what Beaux and the trusted person asked for.
+## Controls the design relies on
 
-**Why A before B.** For two non-technical US users, the things that hurt most day to day are banking apps, group texts with iPhones, and 911. Option A wins on all three. Option B wins on privacy and on Google policy risk. If Risk 1 turns out to block us on stock Android, B is the fallback, and we would then have to accept its costs.
-
-## Controls the design relies on (all documented or code-confirmed)
-
-| Goal | Control | Source |
+| Goal | Control | Source / confidence |
 |---|---|---|
-| The Device Owner can't be removed by the user | A Device Owner "cannot be deactivated by the user… It also cannot be uninstalled" | DevicePolicyManager reference |
-| Only approved apps can open | `setApplicationHidden` on everything not approved; `setLockTaskPackages` + lock task mode ("Other apps can't launch new activities") | DPM reference; developer.android.com lock task guide |
-| No factory reset or OEM unlock from Settings | `DISALLOW_FACTORY_RESET`. AOSP `OemLockService` also forces "OEM unlocking" off while it is set | UserManager; AOSP OemLockService.java (code-confirmed) |
-| No safe mode, adb, extra users, sideloading | `DISALLOW_SAFE_BOOT`, `DISALLOW_DEBUGGING_FEATURES`, `DISALLOW_ADD_USER`, `DISALLOW_USER_SWITCH`, `DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY` | UserManager reference |
-| No reset-and-walk-away | `setFactoryResetProtectionPolicy` tied to the trusted person's Google account (API 30, needs Play services) | DPM / FactoryResetProtectionPolicy reference |
-| 911 always works | Never hide or suspend the system dialer; always include it in lock task; always set `LOCK_TASK_FEATURE_KEYGUARD` (AOSP `LockTaskController` lets emergency calls through only with it) | AOSP LockTaskController.java (code-confirmed) |
-| Texting works | `setDefaultSmsApplication` (API 29) to Google Messages; never hide Google Play services | DPM reference; support.google.com/messages/answer/9363493 |
+| Plainphone can't be removed by the user | A Device Owner "cannot be deactivated by the user… It also cannot be uninstalled" | DPM reference (documented) |
+| Only approved apps open | `setApplicationHidden` on everything not approved. Lock task mode limited to approved packages. **`LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK` (API 30)** so that no other app's screen can start inside an approved app's task. | DPM reference; lock task guide ("can start new activities as long as the activity doesn't start a new task", so the block flag is needed) (documented). Whether a normal day still works with it on is **unknown** (Q1). |
+| No factory reset or OEM unlock from Settings | `DISALLOW_FACTORY_RESET`. AOSP `OemLockService` clears the "allow OEM unlock" permission while it is set. It does **not** relock a bootloader that is already unlocked, so setup must check the bootloader. | UserManager (documented); AOSP 15 OemLockService L97–109 (code-confirmed, also checked by the Verifier) |
+| No safe mode, adb, extra users or sideloading | `DISALLOW_SAFE_BOOT`, `DISALLOW_DEBUGGING_FEATURES`, `DISALLOW_ADD_USER`, `DISALLOW_USER_SWITCH`, `DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY` | UserManager (documented) |
+| A wipe doesn't hand the user a free phone | `setFactoryResetProtectionPolicy` with the **trusted person's Google `userId`**, then the `FRP_CONFIG_CHANGED` broadcast to Play services. The `userId` comes from People API `people.get(me)`. New accounts may take 72 hours. An empty list falls back to whichever accounts were on the phone, which would include the user's own. | developer.android.com/work/dpc/security (documented). Whether it really stops setup after a wipe is **unknown** (Q10, a gate before handover). |
+| Plainphone never gets in the way of 9-1-1 | Never hide, suspend or disable the system dialer, Telecom, the cell broadcast receiver, Play services or the default SMS app. The dialer is always in lock task. `LOCK_TASK_FEATURE_KEYGUARD` is always set. Plainphone never filters incoming calls. A test that **actually taps through** the emergency flow blocks every release. | AOSP 15 LockTaskController L387–401 has a keyguard emergency exemption (code-confirmed). That is a rule for launching screens, **not** proof that a call goes through: real calls and location need a real phone. |
+| Texting works | `setDefaultSmsApplication` (API 29) → Google Messages. Never hide Play services. The phone plan needs data for RCS and MMS. | DPM reference; support.google.com/messages/answer/9363493 (documented) |
 
-The full list of 29 escape routes, with the control and leftover risk for each, is in `research/evidence/webview-and-escape-threats.md`, Part 2.
+The escape threat list is in `research/evidence/webview-and-escape-threats.md` (E01–E29), `research/evidence/canada-and-motorola.md` (Motorola extras), and the Verifier's review (F1–F17 in PLA-3).
 
-## Risks that change the plan
+## Risks that shape the plan
 
-**Risk 1. Google now blocks unapproved Device Owner apps during QR/NFC setup.** Google's help page "Approved Android Enterprise device policy controllers allowlist" says: "Only DPCs verified and approved by Android Enterprise are permitted to install apps during enterprise device enrollment… The installation of any non-approved DPCs… will be blocked", and the phone shows "App blocked to protect your device". The page gives no start date and does not say whether it covers adb. It also excludes "Solutions developed exclusively for the purpose of device monitoring". Plainphone restricts rather than monitors, but approval is not guaranteed. (support.google.com/work/android/answer/16694822, fetched and checked by the Lead on 2026-10-08.)
-- **Effect:** the friendly "scan a QR code at setup" path may be closed to us on stock Android. The adb path (`dpm set-device-owner` right after a factory reset, before any account is added) is documented in AOSP and is very likely not covered, but that is unproven.
-- **Plan:** the MVP sets up through adb, done by a setup helper. That is Beaux plus the team for the first two phones. Later we can wrap adb in a web page that talks to the phone over USB, the way GrapheneOS's web installer works, so a helper only clicks buttons. We can also apply to Google for allowlisting. Whether the allowlist blocks adb on a real Pixel needs a real device, which Beaux must approve.
+**Risk 1. Google blocks unapproved Device Owner apps during QR/NFC setup.** Google's "Approved Android Enterprise device policy controllers allowlist" page says "The installation of any non-approved DPCs… will be blocked" during enrollment (documented, checked by both reviewers).
+- The page gives no start date, does not mention adb, and lists exclusions. Not being a monitoring app does **not** make us eligible on its own.
+- **Plan:** the MVP is set up through adb by a helper. Q3 runs first on the emulator because it is cheap. Whether adb is also blocked on a real phone needs a phone Beaux approves.
 
-**Risk 2. `DISALLOW_INSTALL_APPS` also stops app updates.** AOSP `PackageInstallerService.createSessionInternal` throws "User restriction prevents installing" for every install session, before it checks whether the install is an update. The javadoc adds that it "also prevents device owners and profile owners installing apps". The Lead read this directly from AOSP `main` on 2026-10-08. Hiding the Play Store also stops its updates, and Google Play services would go stale with it. No Android API means "updates yes, new installs no". This answers the brief's make-or-break question. The DeerFlow report's plan to "block the Play Store with DISALLOW_INSTALL_APPS" would have left banking and messaging apps unpatched.
-- **Plan:** never set `DISALLOW_INSTALL_APPS` permanently. Keep the Play Store installed, enabled and signed in so it can update apps in the background, but leave it out of lock task and off the home screen so the user can't open it. Allowed apps that try to open Play links are blocked. If a new app appears anyway (for example, pushed from play.google.com on a computer), Plainphone hides it right away; lock task already stops it opening. The trusted person adds apps by unlocking Play for one supervised session. Whether Play keeps updating in the background under lock task is unproven; it is spike question Q2.
+**Risk 2. "Block installs" also blocks updates.** AOSP `PackageInstallerService.createSessionInternal` rejects every new install session for a restricted user before it checks whether the install is an update. The javadoc says the restriction "also prevents device owners and profile owners installing apps" (code-confirmed by the Lead and the Verifier).
+- That Play's own update path is blocked too is a **strong inference** (S1).
+- No API means "updates yes, new installs no" on API 35/36. A new constant, `DISALLOW_INSTALL_UNKNOWN_SOURCES_INCLUDING_REGISTERED_APP_STORES`, appears in the current UserManager reference marked "version 37.2". It is not in AOSP `main` as fetched, and is not assumed (Q2).
+- **Plan:**
+  1. Keep Play installed, enabled and signed in to the **user's own** account, so it can update apps in the background.
+  2. Keep Play out of lock task and off the home screen.
+  3. Hide any app that wasn't approved.
+- **What we promise:** an unapproved app can't be **opened**. We do not promise that one can't be **installed**, or that it never runs any code. If Beaux needs "never runs any code", this architecture can't promise it; see the go/no-go conditions.
 
-**Risk 3. The web can't be fully removed.** Android WebView can't be removed: with no WebView provider, apps that use it crash. Traffic from an app's in-app browser uses the same app identity (UID) as its normal traffic. Browser intents can't be redirected with `addPersistentPreferredActivity` (DPM docs: "invoking the browser… cannot be configured").
-- **Plan, in three layers:**
-  1. Hide every browser, the Google app and Gemini. Plainphone itself handles `http/https` links and shows "This link is blocked. Ask [trusted person]."
-  2. Vet apps for web leaks before they go on the list. Each catalog entry gets a plain "web leak" note that the trusted person reads before approving.
-  3. Optional DNS filtering through an always-on lockdown VPN. This is spiked now and shipped only if the spike says it is reliable.
-- **Leftover risk we will state openly:** some web access inside approved apps, the Wi-Fi sign-in page used by hotels and airports, and a recovery-mode wipe.
+**Risk 3. The web can't be fully removed.** WebView can't be removed. An app's in-app browser traffic shares that app's network identity. Browser links can't be redirected with `addPersistentPreferredActivity` (all documented).
+- **Plan:**
+  1. Hide general-purpose browsers, the Google app, Gemini, and **the Wi-Fi sign-in page (CaptivePortalLogin)**. The trusted person can allow the sign-in page for one supervised session.
+  2. Plainphone handles links that no approved app claims, and shows "This link is blocked".
+  3. Every app on the list gets a web-leak note, reviewed per app version, that the trusted person reads before approving.
+  4. A DNS filter is spiked only. It does **not** count as a protection in this MVP.
+- **Told openly:**
+  - web pages inside approved apps;
+  - Google account or help screens inside required system components, if testing finds any;
+  - a recovery-mode wipe.
 
-**Risk 4. Google developer verification.** Google says verification for sideloaded apps on certified devices starts 2026-09-30 in four countries (not the US) and expands "globally… in 2027" (developer.android.com/developer-verification). Before any US release we will need to register, which may cost money. That is a spend decision for Beaux, and it does not block the MVP for Beaux and the trusted person.
+**Risk 4. Google developer verification.**
+- Canada is in Google's "2027 global" wave; no month is given (documented).
+- Installs over adb need no verification (Google FAQ, documented).
+- Google lists a free limited-distribution option for up to 20 devices, which could cover our two phones. To be evaluated, not assumed. Any paid registration is Beaux's decision.
+
+**Risk 5. Phone support life.** Beaux's current phone, a moto g power 5G (2024), gets its last security update in **March 2027** and will not get Android 16. Motorola's own page says "Security updates will stop on March, 2027" and "Next OS: Android 15" (documented, checked by the Lead).
+- A locked-down phone people keep for years must not run out of patches within months. So it is **not** recommended as the MVP target.
+- Whether it gets used as a test phone is Beaux's call. It is his daily phone, and setup wipes it.
 
 ## Build vs. reuse
 
-No one has published an open-source "trusted person controls the allowlist" dumbphone. The enforcement layer does exist, though: Headwind MDM (Apache-2.0, Device Owner launcher plus a self-hosted panel, with lockdown and kiosk features in its paid Enterprise edition) and TimeLimit (GPL/AGPL, parental allowlist with Device Owner). We will **build one small Kotlin app** and borrow patterns from Google's TestDPC and Headwind (both Apache-2.0). We will not fork either, for three reasons:
-- Headwind is built around a server and an enterprise feature set.
-- Its lockdown features are closed.
-- TimeLimit's license would force our licensing choice.
+We did not find a published open-source "trusted person controls the allowlist" phone. The enforcement layer does exist:
+- **Headwind MDM** (Apache-2.0): a Device Owner launcher plus a server. Its lockdown and kiosk features are in the paid Enterprise edition.
+- **TimeLimit** (GPL/AGPL): a parental allowlist that can use Device Owner.
 
-**Recommended license: Apache-2.0.** This keeps TestDPC, Headwind, RethinkDNS and Unlauncher code available to us. It is a lasting choice, so Beaux decides.
+**Plan:** we build one small Kotlin app and borrow patterns from Google's TestDPC and from Headwind (both Apache-2.0). We do not fork either, because Headwind assumes a server and its lockdown features are closed.
+
+**Recommended license: Apache-2.0.** Beaux decides.
 
 ## Hardware
 
-- **MVP:** an **unlocked** (not carrier-locked) Pixel, 9a or newer, on stock Android. These have 7 years of updates from launch (support.google.com/pixelphone/answer/4457705).
-- **Not chosen yet:** the exact model, whether to buy new phones or reuse Beaux's and the trusted person's, and when to touch any real phone. All three are board decisions.
-- **Samsung is not ruled out for later.** Wisephone runs on Samsung with Knox. We have not evaluated Knox (free vs. paid tiers), and it is not needed for the MVP.
+**Requirements for the MVP phone (the model itself is Beaux's call):**
+1. Sold unlocked in Canada, Google-certified, stock Android.
+2. At least 5 years of security updates left on the manufacturer's own page.
+3. Bootloader locked, with verified boot confirmed by Plainphone during setup.
+4. As few manufacturer extras as possible. Each brand adds escape routes; Motorola alone adds Secure folder, Cloned Apps, Smart Connect, Sidebar/Gametime and background installers (`canada-and-motorola.md`).
 
-## What would change this decision
+**Candidates:**
+- **Pixel 9a or newer.** Fewest extras and 7 years of updates. Also keeps GrapheneOS (B) open.
+- **Samsung A-series.** Wisephone's choice. Many extras; Knox is not evaluated.
 
-1. **Q1 fails:** multi-app lock task can't support a normal phone day (calls, notifications, permission prompts, camera). Then we fall back to hiding apps without lock task, and re-check every escape route that lock task was covering.
-2. **Q2 fails:** Play can't update approved apps unless the user can reach it. Then updates move to Plainphone's own updater, which works only for apps outside Play, or to a supervised weekly "update window".
-3. **Real-device test shows the allowlist blocks adb provisioning on stock Pixel.** Then option B (GrapheneOS) becomes the MVP base, and Beaux must accept its costs.
+Nothing touches a real phone without Beaux's approval for that specific phone.
+
+## Go / no-go: what would change this decision
+
+The candidate becomes the decision only if, on the emulator, and later on one phone Beaux approves:
+
+1. **A normal day works under lock task with in-task launches blocked (Q1):** calls, notifications, permission prompts, camera, sharing, and our own Wi-Fi screen.
+   - *If not:* a revised ADR. Hiding apps alone is **not** assumed safe; it needs its own escape review.
+2. **Approved apps update without the user reaching Play (Q2).**
+   - *If not:* a revised ADR. A weekly supervised update window is **not** assumed acceptable.
+3. **Beaux and the trusted person's actual must-have apps work end to end (Q4):** sign-in, signing in again, password reset, payment approval, updates and notifications. All under the full policy, with no regular helper visits.
+4. **Recovery works:** turning Plainphone off (Q7) and reset protection (Q10) both behave as the specs say.
+5. **Leftover web access is limited to what the trusted person accepted in writing.**
+6. **Setup and support effort stays within the guide's limits.**
+
+**If the adb setup route is blocked on a real phone (Q3):**
+- This alone does not switch us to B.
+- B must first pass the same list of checks (1–6), on a Pixel.
+
+## Review response (revision 2)
+
+Each PLA-3 finding, and where it is addressed:
+
+| PLA-3 finding | Where addressed |
+|---|---|
+| F1 in-task launch | `BLOCK_ACTIVITY_START_IN_TASK` required (device-lockdown); design D1 and D6 |
+| F2 911 gate | A behavioral gate with a deliberately broken test build that must fail it (essential-calling-and-texting) |
+| F3 FRP | The trusted person's `userId`, read back, and a handover gate (device-lockdown, guided-setup); Q10 promoted |
+| F4 browser classifier | General browsers vs. apps that only open their own website; link matrix (web-containment) |
+| F5 never-hide vs. may-show-UI | Split into two lists; inventory plus negative launch tests (D4, device-lockdown) |
+| F6 Play session | A step-by-step session design (approved-apps, D2) |
+| F7 reactive hiding | Guarantee narrowed to "no launch"; measured; fail-safe (approved-apps) |
+| F8 boot and policy | Direct Boot, atomic policy, last-known-good, readback (device-lockdown, D8) |
+| F9 PIN | Persistent attempt count, a ceiling on delays, KDF parameters, recovery code entropy (trusted-person-controls) |
+| F10 off switch | Resumable and authenticated; restores only what Plainphone changed (trusted-person-controls) |
+| F11 setup | A helper-custody phase, bootloader check, live adb check (guided-setup) |
+| F12 confused deputy | Untrusted input rules, separate link entry point (trusted-person-controls, web-containment) |
+| F13 captive portal and system surfaces | Graded major; sign-in page hidden by default; system screens tested and disclosed |
+| F14 updates | Setup checks, warnings when apps go stale, maintenance mode for Plainphone's own updates (approved-apps, trusted-person-controls) |
+| F15 triggers | The go/no-go list above |
+| F16 wording | Fixed here; errata added to the evidence files |
+| F17 matrix | `docs/verification-matrix.md`; gates re-ranked in `docs/feasibility-questions.md` |

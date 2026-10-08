@@ -158,3 +158,8 @@ Before each test, install an older version of a small Play app and turn on Play'
 - **S5. Play managed configuration.** Have the DPC call `getApplicationRestrictions` and `setApplicationRestrictions("com.android.vending", ...)`, then check whether Play reacts (logcat Finsky). This is low priority.
 - **S6. Mainline / Play system updates.** With `DISALLOW_INSTALL_APPS` set, trigger Settings > Security > Google Play system update, then check `adb shell pm get-stagedsessions` and logcat for the restriction exception.
 - **S7. Remove-after-install race.** With Play reachable, install a new app via `adb shell am start -a android.intent.action.VIEW -d market://details?id=...`. Measure the delay before the DPC removes it, and whether the app can run anything first.
+
+## Errata (2026-10-08, after cross-model review PLA-3)
+
+- **§3c is too broad.** The Android DPC security guide documents one Play Store managed-config key for DPCs: `allowed_accounts`. It limits which accounts can be used in Play; Play version 80970100 or later is required. Source: https://developer.android.com/work/dpc/security#restrict_accounts_in_google_play. It is not an "updates only" switch and does not answer Q2. The correct claim is narrower: no documented key gives "updates yes, new installs no".
+- **AOSP line numbers here point at `main` and will drift.** The Verifier confirmed the same check in pinned `android-15.0.0_r1` PackageInstallerService.java L666–671.

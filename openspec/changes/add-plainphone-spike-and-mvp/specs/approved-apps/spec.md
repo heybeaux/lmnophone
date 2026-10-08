@@ -1,36 +1,65 @@
 ## ADDED Requirements
 
-### Requirement: Only approved apps are usable
-Every installed app that is not on the allowlist SHALL be hidden with `setApplicationHidden`. Exceptions: protected packages, the Play Store, and Android packages that hiding would break, recorded as a reviewed list in policy.
+### Requirement: Unapproved apps cannot be opened
+Every installed app that is not on the allowlist SHALL be hidden with `setApplicationHidden`. This does not apply to:
+- the never-hide list;
+- the Play Store;
+- a reviewed list of Android packages that cannot be hidden without breaking the phone.
+
+The guarantee is that an unapproved app cannot be **opened**. It is not that one cannot be installed, or never runs code. Plainphone SHALL hide new packages on the package-added broadcast, and reconcile all packages at boot and every 15 minutes. Lock task SHALL stop an unapproved app from opening even if hiding fails. The time from install to hidden SHALL be measured and recorded (test S7).
 
 #### Scenario: Unapproved app is installed by any path
-- **WHEN** a package that is not on the allowlist is added, for example pushed from the Play website
-- **THEN** Plainphone hides it on the package-added event, and it never appears on the home screen
+- **WHEN** a package not on the allowlist is installed, for example pushed from the Play website
+- **THEN** it never appears on the home screen, and no tested entry point (deep link, share target, notification, explicit intent) can open it
 
-### Requirement: Approved apps keep receiving updates
-Plainphone SHALL keep the Play Store installed, enabled and signed in, so it can update approved apps and Google Play services in the background. Plainphone SHALL NOT keep `DISALLOW_INSTALL_APPS` set outside a bounded operation of its own. The Play Store SHALL NOT be reachable by the user outside a supervised session.
+#### Scenario: Hide call fails
+- **WHEN** hiding a new package fails
+- **THEN** Plainphone retries, lock task still prevents launch, and trusted-person mode shows "Plainphone needs attention"
+
+### Requirement: Approved apps keep receiving updates, and staleness is visible
+Plainphone SHALL keep the Play Store installed, enabled and signed in to the user's own account. The Play Store SHALL NOT be on the lock-task UI list outside a supervised session.
+
+Setup SHALL include a step where the helper confirms Play auto-update is on. Trusted-person mode SHALL show when each approved app was last updated. If neither an approved app nor Google Play services has updated for 30 days, it SHALL show "Updates may be stuck" and offer a supervised update session.
 
 #### Scenario: Background update of an approved app
-- **WHEN** a newer version of an approved app is published on Play
-- **THEN** the app updates without anyone opening the Play Store, and stays approved and visible afterwards
+- **WHEN** Play has a newer version of an approved app and auto-update is on
+- **THEN** the app updates without the user opening the Play Store, and stays approved and visible (test Q2 defines the test conditions and time limit)
+
+#### Scenario: Updates stop
+- **WHEN** no approved app or Play services update for 30 days
+- **THEN** trusted-person mode shows "Updates may be stuck" with a "Check updates" action
 
 #### Scenario: Approved app opens a Play Store link
-- **WHEN** an approved app opens a `market://` or Play web link
+- **WHEN** an approved app opens a `market://` or Play web link, in a new task or the same task
 - **THEN** the Play Store does not open
 
-### Requirement: Trusted person adds apps in a supervised session
-Adding an app SHALL require the trusted-person PIN. Plainphone SHALL then open the Play Store as a temporary lock task package. The session SHALL end when the trusted person leaves the Play Store, presses Done, or after 10 minutes, whichever comes first. A newly installed app SHALL stay hidden until the trusted person confirms "Allow" in Plainphone.
+### Requirement: Supervised Play session is a bounded, authenticated state machine
+Starting a Play session SHALL require a fresh PIN or recovery-code entry. Starting it SHALL record a session token and a 10-minute deadline, measured on elapsed time since boot.
+
+The session SHALL end on whichever comes first:
+- the deadline
+- the screen turning off
+- Plainphone restarting
+- a reboot
+- leaving the Play Store
+- tapping Done
+
+Ending SHALL remove the Play Store from lock task, restore any lifted restriction, and read the policy back before the home screen is shown. Approving a newly installed app SHALL require a fresh PIN entry. The approval SHALL bind the package name and signing-certificate digest. Events that arrive for an ended session SHALL be ignored.
 
 #### Scenario: Add an app
-- **WHEN** the trusted person enters the PIN, picks "Add an app", installs an app, and taps Allow
-- **THEN** the app appears on the home screen and the Play Store becomes unreachable again
+- **WHEN** the trusted person starts a session, installs an app, and approves it with a fresh PIN
+- **THEN** the app appears on the home screen, and the Play Store is unreachable again
 
-#### Scenario: Session times out
-- **WHEN** 10 minutes pass in a supervised session
-- **THEN** Plainphone returns to the home screen, removes the Play Store from lock task, and keeps any unconfirmed new app hidden
+#### Scenario: Trusted person walks away
+- **WHEN** the screen turns off, or 10 minutes pass, during a session
+- **THEN** the session ends, the Play Store is unreachable, and any app installed in the session stays hidden until approved with a fresh PIN
+
+#### Scenario: Plainphone restarts mid-session
+- **WHEN** Plainphone's process is killed during a session
+- **THEN** on restart the session is closed, the policy is restored, and no stale session can be resumed
 
 ### Requirement: Removing an app is immediate and reversible
-The trusted person SHALL be able to remove an app from the allowlist. Plainphone SHALL hide it, not uninstall it, so its data survives if it is approved again.
+The trusted person SHALL be able to remove an app from the allowlist after a fresh PIN entry. Plainphone SHALL hide the app, not uninstall it.
 
 #### Scenario: Remove then re-approve
 - **WHEN** the trusted person removes an app and later approves it again

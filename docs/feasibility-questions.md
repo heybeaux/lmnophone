@@ -1,94 +1,102 @@
 # Feasibility questions for the emulator spike
 
-- Date: 2026-10-08
-- Owner: Plainphone Lead
-- Spike author: Android Platform Engineer
-- Spike reviewer: Verifier & Escape Artist
+- Revision 2, 2026-10-08. Ranked again after the PLA-3 review (F15, F17).
+- Owner: Plainphone Lead. Spike author: Android Platform Engineer. Reviewer: Verifier & Escape Artist.
+- The questions are ranked by how much a "no" would change the plan. Each test ID maps to requirements in `docs/verification-matrix.md`.
 
-The questions are ranked by how much a "no" would change the plan. Q1 and Q2 decide whether ADR 0001 holds.
+## Spike rules
 
-Spike rules:
-- Emulator only. Use a Google Play system image at API 35 and one at API 36 or the newest available.
-- All code goes under `spikes/` and is labelled throwaway.
-- Each question gets a short write-up in `spikes/<id>/RESULT.md`: yes / no / partly, the exact steps, logcat excerpts, and screenshots.
-- A question that needs real hardware is marked **[device]**. The emulator part is answered now; the device part waits for Beaux to approve a specific phone.
+- **Emulator only.** Use Google Play system images at API 35 and API 36 (or the newest). If the API 37 image exists, test that too.
+- **Throwaway code.** Everything lives under `spikes/` and is labelled throwaway.
+- **Reporting.** Each question gets a `spikes/<id>/RESULT.md` with:
+  - the result: yes / no / partly
+  - the image build ID, and app versions
+  - exact steps
+  - logcat excerpts and screenshots
+  - for every positive result, a **negative control** (a configuration that should fail, and does)
+- **[device]** marks parts that need a real phone. They wait for Beaux to approve a specific phone. The emulator never stands in for them. In particular, the emulator never proves real 9-1-1 delivery, carrier RCS, or a manufacturer's extra features.
 
-## Make-or-break
+## Go / no-go: run first
 
-**Q1. Can multi-app lock task mode be a normal phone all day?**
-- Set Plainphone as Device Owner and home. Put Phone, Messages, Camera and a sample third-party app in lock task.
-- Check that each of these works and that Settings never appears:
-  - an incoming call
-  - an outgoing call
-  - notifications for allowed apps
-  - a runtime permission prompt
-  - taking a photo
-  - sharing a photo from Camera to Messages
-  - Wi-Fi changes from our own settings screen
-  - the power menu
-  - reboot (does lock task come back by itself?)
-- Also check that 911 can be dialed (to the emulator's fake network) from the lock screen, from our home screen, and from within lock task. Test with and without `LOCK_TASK_FEATURE_KEYGUARD`.
-- *If no:* fall back to hiding apps without lock task, and redo the escape review.
+**Q3. Can our unapproved Device Owner be set up?** *(cheap; run first)*
+- adb `dpm set-device-owner` right after the first-boot wizard, with no accounts.
+- QR provisioning on the same image: do we see "App blocked to protect your device"?
+- **[device]** Repeat both on the approved phone.
 
-**Q2. Do approved apps keep getting updates while the user can't reach the Play Store?** (Updates research tests S1–S4 and S7.)
-- Confirm that `DISALLOW_INSTALL_APPS` blocks Play updates (S1).
-- Confirm that the Device Owner can clear the restriction, install, and set it again (S2).
-- Check whether Play can be suspended (S3).
-- Check whether hidden Play stops updates, and whether Play shut out by lock task still updates in the background (S4).
-- Measure how fast Plainphone hides an app that was installed without approval (S7).
-- *If no:* use a supervised update window, or Plainphone's own updater for apps outside Play.
+**Q1. Can lock task, with in-task launches blocked, carry a normal day?**
+- Run everything below twice: with `LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK` on, and with it off.
+- **A normal day must work:** incoming call, outgoing call, notifications, a runtime permission prompt, a photo, sharing from Camera to Messages, the power menu, reboot, and our own Wi-Fi screen (`WifiManager.addNetwork` as Device Owner).
+- **Nothing outside may open:** Settings, a Settings panel, or Play, launched from an approved app with an implicit intent, an explicit component, the share chooser, or no new-task flag.
+- **Build the UI exceptions list:** list every package whose screen we must allow, every package sharing a UID with one, and run a negative launch test on each.
+- *If no:* revise the ADR. Hiding apps without lock task is **not** assumed safe.
 
-**Q3. Can our unapproved Device Owner app be set up on a Google Play image?**
-- Check adb `dpm set-device-owner` right after the first-boot wizard.
-- Check QR provisioning on the same image. Do we see "App blocked to protect your device"?
-- **[device]:** repeat both on a real unlocked Pixel.
-- *If adb is blocked on a real Pixel:* GrapheneOS becomes the MVP base (ADR 0001).
+**Q2. Do approved apps keep getting updates while the user can't reach Play?**
+- Tests S1–S4 and S7 from `research/evidence/app-updates-under-lockdown.md`.
+- **Repeatable update source:** our own test app, published to the emulator's Play account through internal app sharing if that is available. Otherwise use a public app and pin the versions. Time limit: 24 hours of emulator time, with Play's update job forced.
+- **S7:** measure the time from install to hidden. Check whether a deep link or the share sheet can open the new app during that gap.
+- **Newer API:** on API 37, test whether `DISALLOW_INSTALL_UNKNOWN_SOURCES_INCLUDING_REGISTERED_APP_STORES` exists and blocks new Play installs while updates still run.
+- *If no:* revise the ADR. A weekly update window is **not** assumed acceptable.
 
-## Shapes the MVP design
+**Q4. Do the real must-have apps work, and is the web contained?**
+- **Must-have apps:** use Beaux and the trusted person's actual list where it installs on the emulator. Test sign-in, signing in again, password reset, payment or 3-D Secure approval, notifications and updates, all with every general browser hidden and the block flag on.
+- **Browser role and classifier:** does Plainphone get the browser role? Run the classifier against fixtures: a general browser, an app that only opens its own domain, and the never-hide packages.
+- **Link matrix:** verified App Links, ordinary links, `intent:` URIs, custom schemes, Custom Tabs fallback.
+- **Wi-Fi sign-in page:** with CaptivePortalLogin hidden, does normal Wi-Fi still connect? Does a portal network fail gracefully?
+- **Other reachable screens:** Google account, help and privacy screens reachable from Messages and Play services menus; keyboard GIF, search and help; accessibility tutorials; photo and file pickers.
+- **Hidden Google app and Gemini:** what breaks? Do Circle to Search or Lens still appear?
+- *A failure on a must-have app is a go/no-go failure, even if Q1 and Q2 pass.*
 
-**Q4. Is web containment good enough?**
-- With all browsers hidden, does Plainphone's link screen become the browser automatically (`ROLE_BROWSER`)?
-- What happens to Custom Tabs and sign-in or "forgot password" flows in two sample apps, one with OAuth and one with a WebView?
-- Do in-task Settings deep links get through lock task? Test with and without `LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK`.
-- What breaks when the Google app and Gemini are hidden? Do Circle to Search or Lens still appear?
+## Required before handover (Beaux's phone)
 
-**Q5. Does the baseline escape list hold?** Run these entries from the escape threat list on the emulator:
-- E01 safe mode
-- E04 OEM unlock toggle greyed out
-- E05 adb off
-- E06 add user
-- E12/E15 Settings and Overview
-- E13 Quick Settings
-- E21 default launcher
-- E25 network reset and user VPN
-- E29 crash dialog
+**Q5. Does the baseline escape list hold?**
+- Escape list items: E01, E04, E05 (including a previously authorised adb host), E06, E12, E13, E15, E21, E25, E29.
+- The Verifier's vectors F1–F14 from the PLA-3 review.
 
-**Q6. Does the hidden and locked state survive?** Check that hidden apps, restrictions and lock task survive a reboot, a Play update of an allowed app, a Play update of a hidden app, and an emulator system-image update where possible.
+**Q6. Do boot, Plainphone replacement and policy damage recover safely?**
+- Reboot and stay at the lock screen. Install a package before the first unlock. Kill Plainphone between policy steps. Update Plainphone to a build signed with the same key. Feed it a truncated policy and a policy with an unknown version.
+- Measure the time to full policy after `BOOT_COMPLETED` (the limit is 60 seconds).
+- Check that hidden apps and restrictions survive a Play update of an allowed app, a Play update of a hidden app, and a system image update.
 
-**Q7. Can the trusted person turn Plainphone off without wiping the phone?**
-- Test `clearDeviceOwnerApp` (deprecated but present) after clearing restrictions and unhiding apps.
-- Confirm that photos and messages survive.
-- *If no:* the only off switch is a factory reset, and setup must say so up front.
+**Q7. Can turning Plainphone off finish without a wipe, and resume after interruptions?**
+- Kill the process after each of the 6 turn-off steps, then reboot. Check that it resumes, that "Off" is reported only when every step is done, and that photos and messages survive.
+- Test `clearDeviceOwnerApp`. *If it fails:* the off switch is a factory reset, and setup says so up front.
 
-**Q8. Texting and calling defaults.**
-- Does `setDefaultSmsApplication` to Google Messages work and persist?
-- Do SMS and MMS arrive through the emulator console while in lock task?
-- **[device]:** RCS activation on the user's carrier, and group texts with iPhones.
+**Q10. Does reset protection with the trusted person's `userId` block setup after a recovery-mode wipe?**
+- Get the `userId` from People API `people.get(me)` using Google's "Try it" page.
+- Set the policy, read it back, and send the `FRP_CONFIG_CHANGED` broadcast.
+- Wipe from recovery, try the user's own account (must fail), then the trusted person's (must succeed).
+- **[device]** Confirm on the approved phone.
 
-## Answers we need, but not before the MVP
+**Q12. Can the supervised Play session and maintenance mode be escaped or left open?**
+- Turn the screen off, take an incoming call, kill Plainphone, reboot, let the deadline pass in the middle of an install, and leave nested Play, account and help screens open.
+- After each, try to reach Play, approve an app, or use adb.
+
+**Q14. Does the emergency gate behave correctly?**
+- Run the D4 UI test in every listed state, including the negative-control build, which must fail.
+- Run with the block flag on, during setup, during a PIN lockout and during a Play session.
+- Check that Alert Ready–style cell broadcasts still show (if the emulator console can inject them).
+- **[device]** A real 9-1-1 test, with a procedure agreed with the carrier and E-Comm.
+
+**Q8. Do texting and calling defaults work?**
+- `setDefaultSmsApplication` → Google Messages persists.
+- SMS and MMS arrive under lock task (emulator console).
+- **[device]** RCS on the chosen carrier, group texts with iPhones, and E-Comm callback-style incoming calls.
+
+**Q13. What does the phone's manufacturer add?** **[device]**, brand-specific.
+- On the approved phone's brand, go through each extra feature: on Motorola, Secure folder, Cloned Apps, Smart Connect, Sidebar/Gametime, back-tap launcher, MotoApps/App Box installers (`research/evidence/canada-and-motorola.md`).
+- Decide hide, keep or test for each.
+
+## Optional (do not block the MVP)
 
 **Q9. Is a DNS filter reliable?**
-- Always-on lockdown VPN with per-app DNS policy.
-- Confirm with `getConnectionOwnerUid` that an app's WebView traffic carries the app's UID.
-- Check whether the Wi-Fi sign-in page (CaptivePortalLogin) bypasses the VPN.
-- Measure the effect of dropping QUIC and stripping HTTPS DNS records.
-- *If yes:* it becomes a follow-up change after the MVP.
+- An always-on lockdown VPN, with per-app DNS policy.
+- `getConnectionOwnerUid` attribution of an app's WebView traffic.
+- Does the Wi-Fi sign-in page bypass the VPN?
+- QUIC drop and HTTPS-record stripping.
 
-**Q10. Factory reset protection.** Does `setFactoryResetProtectionPolicy` stop setup after a recovery-mode wipe on a Google Play image? **[device]** to confirm on a Pixel.
+**Q11. Does a GrapheneOS emulator build answer Q1, Q3 and Q6?** Only if it costs under a day. Only relevant if Beaux picks a Pixel.
 
-**Q11. GrapheneOS.** Can we answer Q1, Q3 and Q6 on a GrapheneOS emulator build? Only if building one costs less than a day; otherwise defer to the v2 decision.
+## Decided by policy, not by testing
 
-## Not spike questions (decided by policy, not testing)
-
-- **911 must never be blockable.** This is a requirement (spec `essential-calling-and-texting`), with a release-blocking test.
-- **No market-size claims** appear in any Plainphone document until a primary source exists.
+- **Plainphone never obstructs emergency access.** This is a requirement, enforced by the behavioral gate (Q14).
+- **No market-size claims** until there is a primary source.
