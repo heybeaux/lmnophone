@@ -1,0 +1,15 @@
+10-08 12:54:56.727 I/BufferQueueProducer( 1548): [com.android.settings/com.android.settings.Settings$FactoryResetConfirmActivity#390](this:0xb40000722c8ed330,id:-1,api:0,p:-1,c:1548) queueBuffer: fps=0.80 dur=21166.75 max=20901.70 min=16.05
+10-08 12:54:56.744 E/system_server( 2142): Wipe via secure discard failed, used non-secure discard instead
+10-08 12:54:56.744 I/PersistentDataBlockService( 2142): persistent partition now wiped and unwritable
+10-08 12:54:56.775 D/MotoWipeBpUtils(26423): isVzwChannelId: channelId: retca
+10-08 12:54:56.779 W/MasterClear( 2142): !!! FACTORY RESET !!!
+10-08 12:54:56.780 I/MasterClear( 2142): NOT wiping external storage; starting thread Reboot
+10-08 12:54:56.781 I/MasterClear( 2142): Calling RecoverySystem.rebootWipeUserData(context, shutdown=false, reason=MainClearConfirm, forceWipe=false, wipeEsims=false, keepMemtagMode=false)
+10-08 12:54:56.801 D/SurfaceComposerClient( 2142): Transaction::apply InputWindowCommands.focusRequests timestamp=52166957257185, windowName=e89674a com.android.settings/com.android.settings.Settings$FactoryResetConfirmActivity
+10-08 12:54:56.811 D/SurfaceFlinger( 1548): Focus addInputWindowCommands timestamp=52166957257185, windowName=e89674a com.android.settings/com.android.settings.Settings$FactoryResetConfirmActivity
+10-08 12:54:56.817 D/SurfaceFlinger( 1548): updateWinowInfo=1, setFocusedWindow timestamp=52166957257185, windowName=e89674a com.android.settings/com.android.settings.Settings$FactoryResetConfirmActivity
+10-08 12:54:56.894 I/libPowerHal( 1491): [perfNotifyAppState] pack:com.android.settings, act:com.android.settings.Settings$FactoryResetConfirmActivity, state:5, pid:26423, uid:1000, fps:60
+10-08 12:54:57.741 I/Pay     (19627): 	at com.google.android.gms.pay.factoryreset.PayFactoryResetChimeraReceiver.onReceive(:com.google.android.gms@263737035@26.37.37 (260400-994713346):170)
+10-08 12:54:57.815 I/RecoverySystem( 2142): There are no eUICC invisible profiles needed to be removed.
+10-08 12:54:57.817 W/RecoverySystem( 2142): Can't delete: /cache/backup_stage
+10-08 12:54:57.895 I/libPowerHal( 1491): [perfNotifyAppState] pack:com.android.settings, act:com.android.settings.Settings$FactoryResetConfirmActivity, state:5, pid:26423, uid:1000, fps:90

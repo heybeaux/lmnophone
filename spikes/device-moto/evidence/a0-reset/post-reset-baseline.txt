@@ -1,0 +1,20 @@
+# A0 post-reset baseline, 2026-10-08T20:05:24Z
+ro.build.fingerprint=motorola/cancunn_g_sys/cancunn:15/V1UDS35H.26-14-6-2-11/27ec35b-72bc9:user/release-keys
+ro.build.version.security_patch=2026-08-01
+ro.boot.verifiedbootstate=green
+ro.boot.flash.locked=1
+sys.oem_unlock_allowed=1
+sys.boot_completed=1
+uptime:  13:05:24 up 9 min,  0 users,  load average: 19.47, 19.99, 11.56
+settings global boot_count=1
+settings secure user_setup_complete=1
+settings global device_provisioned=1
+settings global adb_enabled=1
+settings global adb_wifi_enabled=1
+settings global development_settings_enabled=1
+users: Users:UserInfo{0:Owner:4c13} running
+accounts: Accounts: 0
+dpm list-owners: no owners
+lock: CredentialType: NONE
+HOME role: com.motorola.launcher3
+system packages: 467; disabled system: 118; third-party: 8

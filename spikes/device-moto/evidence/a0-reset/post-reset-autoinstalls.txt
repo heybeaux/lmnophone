@@ -1,0 +1,8 @@
+com.easybrain.crossword.puzzles | installerPackageName=com.dti.motorola | firstInstallTime=2026-10-08 13:04:00
+com.facebook.katana | installerPackageName=null | firstInstallTime=2026-10-08 12:57:13
+com.google.android.apps.fitness | installerPackageName=com.android.vending | firstInstallTime=2026-10-08 13:04:08
+com.google.android.apps.walletnfcrel | installerPackageName=com.android.vending | firstInstallTime=2026-10-08 13:04:17
+com.peoplefun.wordcross | installerPackageName=com.dti.motorola | firstInstallTime=2026-10-08 13:04:31
+com.block.juggle | installerPackageName=com.dti.motorola | firstInstallTime=2026-10-08 13:02:17
+com.hungrystudio.mahjong | installerPackageName=com.dti.motorola | firstInstallTime=2026-10-08 13:03:37
+com.google.android.apps.subscriptions.red | installerPackageName=com.android.vending | firstInstallTime=2026-10-08 13:03:46

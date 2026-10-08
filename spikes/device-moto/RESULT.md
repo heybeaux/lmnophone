@@ -18,13 +18,13 @@
 
 | Item | Result | Notes |
 |---|---|---|
-| A0 baseline | partly | Pre-reset baseline recorded. Reset not yet done: the phone has a PIN and 5 old accounts, so the trusted reset needs a person (see A0). |
-| A1–A7 | not yet run | Wait for the reset and USB debugging. |
+| A0 baseline | yes | Pre- and post-reset baselines recorded. Trusted reset done 2026-10-08 19:54Z through Settings. After setup, 8 third-party apps installed themselves with no account (see A0). |
+| A1–A7 | not yet run | Waiting for the board to confirm they're done at the phone (setup wizard, USB debugging). |
 | S1–S4, S7 | not yet run | Phase B, needs Beaux's sign-in. |
 
 ## A0. Baseline
 
-**Result: partly** (pre-reset baseline done; reset pending a person).
+**Result: yes** (pre-reset baseline, trusted reset, post-reset baseline).
 
 Recorded 2026-10-08T19:27Z, before any change. Raw files: `evidence/a0/`.
 
@@ -65,9 +65,59 @@ Motorola packages from the evidence file that are present on this build (pre-res
 `com.motorola.genie`, `com.motorola.help`, `com.android.chrome`.
 Not found: `com.motorola.motodisplay`, `com.motorola.playautoinstallext`.
 
-**Why the reset is not done yet.** The issue asks for a reset through Settings > System > Reset options > Erase all data.
-That screen asks for the lock-screen PIN, which agents don't have. After the reset, USB debugging is off and the
-setup wizard must be completed on the phone itself. Neither step can be done over adb. A person has to do it.
+### Trusted reset (2026-10-08, PLA-5 run after board comment db927708)
+
+The board supplied the screen-lock PIN in an owner-only local file. The agent typed it with
+`adb shell input text "$(cat <file>)"`, so the PIN was never printed or logged, and it is not recorded here.
+Path: **Settings > System > Reset options > Erase all data (factory reset) > Erase all data > PIN > Erase all data**.
+No recovery mode. Screenshots: `evidence/a0-reset/` (the PIN pad is `FLAG_SECURE`, so `01-pin-pad.png` is black).
+
+- First attempt did nothing: the phone was in `mWakefulness=Dozing` and the digits never reached the bouncer
+  (no `LockSettingsService` entry). Fix: `adb shell svc power stayon usb`, wake, swipe up, check with
+  `uiautomator dump` that `keyguard_pin_view` is showing, then type. Result: `Successfully verified lockscreen credential for user 0`.
+- The "Erase all data" confirmation screen lists the signed-in Google accounts. They appeared in one `uiautomator dump`.
+  The screenshot of that screen was deleted, and the names are not recorded anywhere.
+- Logcat at confirm (`evidence/a0-reset/reset-logcat.txt`):
+  `PersistentDataBlockService: persistent partition now wiped and unwritable`,
+  `MasterClear: !!! FACTORY RESET !!!`,
+  `RecoverySystem.rebootWipeUserData(..., reason=MainClearConfirm, forceWipe=false, wipeEsims=false, ...)`.
+  No eSIM checkbox was shown and eSIMs were not wiped.
+- adb dropped at 12:55 PDT and came back at 13:03 PDT as `unauthorized`, then `device` once someone tapped Allow on
+  the phone. A person at the phone completed the setup wizard and turned on USB debugging. They also turned on
+  **Wireless debugging** (`adb_wifi_enabled=1`).
+
+### Post-reset baseline (2026-10-08T20:05Z)
+
+Raw: `evidence/a0-reset/post-reset-baseline.txt`, `post-reset-system-packages.txt`.
+
+| Property | Value |
+|---|---|
+| Fingerprint, patch, verified boot, flash.locked | unchanged (same as above) |
+| `sys.oem_unlock_allowed` | **1** (was 0 before the reset; probably because the FRP data was cleared. Checked in A4.) |
+| `settings global boot_count` | 1 (fresh `/data`); uptime 9 min |
+| Users / accounts / owners | 1 user (`0:Owner`), `Accounts: 0`, `no owners` |
+| Lock screen | `CredentialType: NONE` (the reset removed the PIN; not set again) |
+| System packages | 467, 118 disabled, identical list to before the reset |
+| HOME role | `com.motorola.launcher3` |
+
+**Finding: apps install themselves after setup, with no Google account.** Within 8 minutes of first boot:
+
+| Package | Installer | First install (PDT) |
+|---|---|---|
+| `com.facebook.katana` | `null` (preload) | 12:57:13 |
+| `com.block.juggle` | `com.dti.motorola` | 13:02:17 |
+| `com.hungrystudio.mahjong` | `com.dti.motorola` | 13:03:37 |
+| `com.google.android.apps.subscriptions.red` (Google One) | `com.android.vending` | 13:03:46 |
+| `com.easybrain.crossword.puzzles` | `com.dti.motorola` | 13:04:00 |
+| `com.google.android.apps.fitness` | `com.android.vending` | 13:04:08 |
+| `com.google.android.apps.walletnfcrel` | `com.android.vending` | 13:04:17 |
+| `com.peoplefun.wordcross` | `com.dti.motorola` | 13:04:31 |
+
+(`evidence/a0-reset/post-reset-autoinstalls.txt`; command:
+`adb -s SPARE_DEVICE_SERIAL shell dumpsys package <pkg> | grep -E 'installerPackageName|firstInstallTime'`.)
+`com.dti.motorola` is Digital Turbine Ignite, Motorola's carrier/OEM app-push service. Play also pushed Google apps
+(Play Auto Installs) with no account. For Plainphone, this means the DPC must hide or block installs **after**
+provisioning and cannot rely on a "clean" phone after setup. Relevant to A5 (Q13) and S7.
 
 ### Pre-check on our own emulator (not the phone)
 
