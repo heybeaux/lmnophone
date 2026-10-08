@@ -1,0 +1,24 @@
+# Google app (com.google.android.googlequicksearchbox) hidden by the classifier; Gemini (com.google.android.apps.bard) is not on this image. API 35, flag ON.
+$ cmd is-hidden com.google.android.googlequicksearchbox
+isApplicationHidden com.google.android.googlequicksearchbox -> true
+$ pm list packages | grep -i bard
+(not installed)
+$ cmd role get-role-holders android.app.role.ASSISTANT
+com.google.android.googlequicksearchbox
+$ settings get secure assistant
+null
+$ resolve ASSIST / WEB_SEARCH / VOICE_COMMAND
+resolve[action=android.intent.action.ASSIST] default=null/null all=[]
+resolve[action=android.intent.action.WEB_SEARCH] default=null/null all=[]
+resolve[action=android.intent.action.VOICE_COMMAND] default=null/null all=[]
+resolve[action=android.speech.action.RECOGNIZE_SPEECH] default=com.google.android.tts/com.google.android.apps.speech.tts.googletts.service.GoogleTTSActivity all=[com.google.android.tts/com.google.android.apps.speech.tts.googletts.service.GoogleTTSActivity]
+## KEYCODE_ASSIST and long-press HOME
+top after ASSIST: com.plainphone.spike.emu/.MainActivity
+top after long-press HOME: com.plainphone.spike.emu/.MainActivity
+10-08 16:43:59.490   553   573 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.plainphone.spike.emu/.MainActivity (has extras)} with LAUNCH_SINGLE_TASK from uid 0 (BA
+## approved apps still open
+Messages: com.google.android.apps.messaging/.ui.ConversationListActivity
+Dialer: com.google.android.dialer/.extensions.GoogleDialtactsActivity
+## Gboard voice typing (needs Google app speech services)
+$ dumpsys package com.google.android.googlequicksearchbox | grep hidden
+    User 0: ceDataInode=344090 deDataInode=41069 installed=true hidden=true suspended=false distractionFlags=0 stopped=false notLaunched=false enabled=0 instant=false virtual=false quarantined=false

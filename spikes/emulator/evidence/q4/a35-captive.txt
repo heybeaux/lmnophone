@@ -1,0 +1,48 @@
+# Captive portal, API 35, flag ON. Probe URLs pointed at a host-side fake portal (tools/portal.py) via 10.0.2.2
+before captive_portal_http_url=null
+before captive_portal_https_url=null
+before captive_portal_fallback_url=null
+before captive_portal_other_fallback_urls=null
+before captive_portal_mode=null
+$ cmd hide com.google.android.captiveportallogin
+hide com.google.android.captiveportallogin -> true
+## case 1: ordinary network (portal answers 204)
+$ cmd net
+wifi=true captive=false validated=true msg=null
+Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&VALIDATED&NOT_ROAMING&FOREGROUND&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED LinkUpBandwidth>=12000Kbps LinkDnBandwidth>=30000Kbps Specifier: <WifiNetworkAgentSpecifier
+home texts: "Plainphone emu spike (throwaway)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop lock task" "deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.g
+## case 2: sign-in network (portal answers 302), CaptivePortalLogin hidden
+$ cmd net
+wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+Capabilities: NOT_METERED&INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VPN&CAPTIVE_PORTAL&NOT_ROAMING&FOREGROUND&NOT_CONGESTED&NOT_SUSPENDED&NOT_VCN_MANAGED&NOT_BANDWIDTH_CONSTRAINED LinkUpBandwidth>=12000Kbps
+home texts: "Plainphone emu spike (throwaway)" "This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi." "Forget this network" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop lock task" "deviceOwner=true l
+## notifications mentioning sign-in
+            tickerText=Sign in to Wi-Fi network
+                android.title=String (Sign in to Wi-Fi network)
+                android.title=String (qwerty2 configured)
+        NotificationChannel{mId='connected_note_loud', mName=Captive portal authentication, mDescription=hasDescription , mImportance=4, mBypassDnd=false, mLockscreenVisibility=-1000, mSound=content://settings/system/notification_sound, mLights=false, mLightColor=0, mVibrationPattern=null, mVibrationEffect=null, mUserLockedFields=0, mUserVisibleTaskShown=false, mVibrationEnabled=false, mShowBadge=true, mDeleted=false, mDeletedTimeMs=-1, mGroup='null', mAudioAttributes=AudioAttributes: usage=USAGE_NOTIFICATION content=CONTENT_TYPE_SONIFICATION flags=0x800 tags= bundle=null, mBlockableSystem=false, mAllowBubbles=-1, mImportanceLockedDefaultApp=true, mOriginalImp=4, mParent=null, mConversationId=null, mDemoted=false, mImportantConvo=false, mLastNotificationUpdateTimeMs=0}
+    2026-10-08T16:39:07.504554 - config: com.google.android.captiveportallogin|removeAutomaticZenRules no changes
+    2026-10-08T16:39:07.504621 - set_zen_mode: off,com.google.android.captiveportallogin|removeAutomaticZenRules
+## logcat captive/portal
+10-08 16:40:02.980  6628  6645 I PPEMU   : net wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+10-08 16:40:02.981   553   844 I WifiClientModeImpl[6625524:wlan0]: Captive Portal detected, status=2, redirectUri=http://10.0.2.2:8099/login
+10-08 16:40:04.073  1025 19130 D NetworkMonitor/103: isCaptivePortal: isSuccessful()=false isPortal()=true RedirectUrl=http://10.0.2.2:8099/login isPartialConnectivity()=false Time=510ms
+10-08 16:40:04.073   553   851 D ConnectivityService: [103 WIFI] validation detected a portal with redirect to http://10.0.2.2:8099/login
+10-08 16:40:04.620  1025 19135 D NetworkMonitor/103: isCaptivePortal: isSuccessful()=false isPortal()=true RedirectUrl=http://10.0.2.2:8099/login isPartialConnectivity()=false Time=545ms
+10-08 16:40:04.620   553   851 D ConnectivityService: [103 WIFI] validation detected a portal with redirect to http://10.0.2.2:8099/login
+10-08 16:40:05.884  6628  6645 I PPEMU   : net wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+10-08 16:40:16.956   553   572 I ActivityManager: Broadcast completed: result=0, data="wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi."
+## case 2b: tap the system 'Sign in to Wi-Fi network' notification
+tapt: bad math expression: operator expected at `425 574 47...'
+tapt: bad math expression: operator expected at `425 574 47...'
+top: com.plainphone.spike.emu/.MainActivity
+texts: "Silent" "Clear all silent notifications" "Android System" "Expand" "2" "Sign in to Wi-Fi network" "AndroidWifi" "qwerty2 configured" "Keyboard layout set to English (US). Tap to change." "Manage" "Manage" "Clear all" "Clear all notifications." 
+after tap 1 texts: "Silent" "Clear all silent notifications" "Android System" "Expand" "2" "Sign in to Wi-Fi network" "AndroidWifi" "qwerty2 configured" "Keyboard layout set to English (US). Tap to change." "Manage" "Ma
+top: com.plainphone.spike.emu/.MainActivity
+texts: "Silent" "Clear all silent notifications" "Android System" "Expand" "2" "Sign in to Wi-Fi network" "AndroidWifi" "qwerty2 configured" "Keyboard layout set to English (US). Tap to change." "Manage" "Manage" "Clear all" "Clear all notifications." 
+## case 2c (negative control): CaptivePortalLogin NOT hidden, same sign-in network, tap the notification
+unhide com.google.android.captiveportallogin -> true
+top: com.plainphone.spike.emu/.MainActivity
+texts: "Silent" "Clear all silent notifications" "Android System" "Expand" "2" "Sign in to Wi-Fi network" "AndroidWifi" "qwerty2 configured" "Keyboard layout set to English (US). Tap to change." "Manage" "Manage" "Clear all" "Clear all notifications." 
+## restore: hide CaptivePortalLogin again, portal back to open
+hide com.google.android.captiveportallogin -> true
