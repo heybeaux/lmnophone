@@ -1,7 +1,7 @@
 ## Context
 
 - **Users.** Beaux and the trusted person in [town], Canada. Neither is technical. Each is likely the other's trusted person.
-- **Architecture.** `docs/decisions/0001-architecture.md` (revision 3) names the leading candidate:
+- **Architecture.** `docs/decisions/0001-architecture.md` (revision 5) names the leading candidate:
   - a Device Owner app that is also the home screen;
   - running on a certified stock Android phone with long security support.
 - **Evidence.**
@@ -10,7 +10,14 @@
     - **A1 / Q3: yes.** Our unapproved, test-only Device Owner app was set up over adb on a certified Android 15 Motorola. No allowlist message appeared.
     - **A2: yes.** `dpm remove-active-admin` and `clearDeviceOwnerApp()` both returned the phone to unmanaged with no wipe.
     - Within 8 minutes of first boot, with Wi-Fi and no account, the committed A0 table shows 7 pushed installs: 4 Digital Turbine games (`com.dti.motorola`), plus Google One, Fit and Wallet via Play. Facebook comes preloaded. The count still needs reconciling with PLA-5's comment, which said 5 games.
-- **Reviews.** Revision 3 answers PLA-4 (N1–N11) on top of PLA-3 (F1–F17). Every requirement traces to `docs/verification-matrix.md`.
+- **Reviews.** Revision 5 answers PLA-8 (S1–S5), on top of PLA-7 (R1–R8), PLA-4 (N1–N11) and PLA-3 (F1–F17). Every requirement traces to `docs/verification-matrix.md`.
+- **Device A3 (lock task on the XT2415, partial).** Test results with the block-in-task flag:
+  - **Flag off:** App info opened inside the task, leading on to Permissions and Notifications settings. The share chooser opened, and the Camera thumbnail opened Google Photos.
+  - **Flag on:** all three were blocked. So were runtime permission prompts ("Permission controller is not available right now").
+  - **Emergency dialer:** it opened only once `com.android.phone` was on the lock-task list.
+  - **Notifications:** Quick Settings showed no tiles, and notifications aimed at apps outside the list were blocked.
+  - **Photo sharing:** the Camera → Photos → Share → Messages route failed. A direct share to Messages worked.
+  - **Not yet tested:** reboot, power menu, lock-screen emergency, calls and SMS.
 - **Policy constraints:**
   - Physical work only on the board-approved spare (serial SPARE_DEVICE_SERIAL), within its rules: Settings resets only, no recovery wipes, test-only DPC.
   - No remote repo.
@@ -135,12 +142,12 @@ Q13 adds the manufacturer's emergency components, such as Motorola's SOS and eme
 - the dialer is missing from lock task;
 - the alert display is disabled.
 
-If an alert can't be injected, the result is recorded as "not verified".
+If an alert can't be injected, the result is **inconclusive**, which blocks release. The only way past it is a build-scoped exception that Beaux records; that exception must also say whether the disabled-alert negative control was verified.
 
 **Before handover to Beaux or the trusted person (N8), on their actual model and build:**
 - the emergency dialer opens in every state, without placing a call;
 - an incoming call can be answered, and its keypad sends tones (E-Comm's automatic callback needs a keypress);
-- the alert receiver is present;
+- an alert is **observed** on screen, either from a scheduled Alert Ready test or a test method Beaux approves. Otherwise the phone stays in custody, or Beaux records a build-scoped exception and the promise becomes "Plainphone does not block alerts";
 - the manufacturer's emergency components are on the never-hide list.
 
 A live 9-1-1 call needs a separate procedure agreed with E-Comm or the carrier, approved by Beaux. Until these checks pass, the phone stays in supervised test custody.
@@ -204,12 +211,12 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 3. With the SIM removed and eSIM disabled, go through the first-boot wizard and skip Wi-Fi, accounts and app recommendations. The script refuses to continue if any network is active, or if there is no build inventory for this phone.
 4. Turn on USB debugging.
 5. Run the script. It checks that the model and build are approved, the bootloader is locked and verified boot is green, then runs `set-device-owner`.
-6. Plainphone hides every package that isn't on the never-hide, essential or approved lists.
-7. Only then does the phone join Wi-Fi.
+6. The script checks every network connection type is down, and that a build inventory exists. Plainphone then runs a local baseline check (it does not place real calls or texts) and hides every package outside the floor, the inventory and the allowlist.
+7. Only then does the helper reinsert the SIM or turn the eSIM back on, and join Wi-Fi. Real calls and texts are checked after this, before handover.
 8. Sign in to the user's own Google account and turn on Play auto-update.
 
 **Reset protection (N6).**
-- On their own device, the trusted person opens the People API `people.get` "Try it" page with `personFields=names`, checks that the name shown is theirs, and copies only the digits after `people/`.
+- On their own device, the trusted person opens the People API `people.get` "Try it" page. They pick the exact account (by address) in Google's account picker and authenticate with `personFields=names`. Then they copy the digits after `people/` as text. Accounts less than 72 hours old are re-tested later; Q10 on the target phone gates handover.
 - Plainphone shows the digits back for confirmation. It collects no tokens or passwords.
 - The helper records that the trusted person can sign in from a device other than either Plainphone phone, and that their second factor isn't only on a Plainphone phone.
 - A backup person's ID can be added. This is recommended when Beaux and the trusted person are each other's trusted person.
@@ -225,11 +232,19 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 - emergency self-test passes
 - Play auto-update on
 - preinstall sweep done
+- an end-to-end test text received and confirmed by the trusted person
 
 ### D9. Policy storage: atomic, validated, built-in safe policy
 
 - **Writing.** The policy is written atomically and checked against its schema. A last-known-good copy is kept.
-- **Direct Boot copy.** A minimal copy is kept in device-protected storage: setup-complete flag, never-hide list, lock-task list, counters and the session journal.
+- **Direct Boot copy.** A minimal copy is kept in device-protected storage, with a checksum: setup-complete flag, PIN and recovery counters, session journal, and the last supported build fingerprint.
+- **Runtime emergency floor (S1).** Computed live at every pass, independent of any file or inventory: the system and default dialers, the emergency-dialer package, the in-call service, the SMS role, cell broadcast, the WebView provider, the system keyboards and the permission controller. Floor packages are never hidden. Their screens are always on the lock-task list. The floor outranks everything else.
+- **Unknown build after an OTA (S1).**
+  - Updates are postponed with `createPostponeInstallPolicy`. On `onSystemUpdatePending`, the trusted person and the helper get a text.
+  - On an unknown build, lock task stays on, with the previous list plus the floor. Floor packages are unhidden. Only user-installed packages get newly hidden. Changed packages are listed under "Phone software changed – review pending".
+  - The team builds and reviews the new inventory, the Android Platform Engineer prepares it and the Verifier reviews it, and it ships as a signed local update.
+  - The phone is back to normal only after the handover self-check and the emergency re-checks pass on the new build.
+  - If the build is unknown **and** the policy is corrupt, the baseline is the floor plus Messages, Plainphone and every restriction, with no sweep.
 - **Build inventory (R3).** One versioned inventory per supported model and build fingerprint, compiled into the APK. It lists:
   - never-hide dependencies: dialer, Telecom, in-call UI, cell broadcast service, receiver and alert display, Play services, Play Store, default SMS app, selected keyboard, permission controller, WebView provider, setup and account components, and manufacturer emergency components;
   - minimum UI entries.

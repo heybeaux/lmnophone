@@ -24,15 +24,21 @@ A session SHALL NOT relax anything other than what this table names. Every sessi
 7. **Custody.** The phone is in the trusted person's custody for the whole session. The screen says: "Stay with the phone until you tap Done."
 8. **Handback.** The phone SHALL NOT be handed back while a readback fails.
 
-**Protected-state check.** It confirms all of the following, and reports or restores anything else it finds broken:
-- every restriction applied;
-- lock-task packages and features;
-- the never-hide inventory is unhidden and enabled;
-- Plainphone holds the browser role;
-- Google Messages is the default SMS app;
-- Plainphone's SMS permission is still granted;
-- permitted input methods and accessibility services;
-- emergency alert settings are present.
+**Protected-state check.** It covers exactly the invariants in this table and nothing else. Any setting not in the table, such as ringtone, font size, Wi-Fi networks, the chosen system keyboard or its language, is the user's choice and SHALL be kept.
+
+| Invariant | Expected | Readback | Repair | If repair fails |
+|---|---|---|---|---|
+| User restrictions | the policy set | `getUserRestrictions` | re-add | non-handback state |
+| Lock-task packages and features | policy list + floor; features incl. BLOCK | `getLockTaskPackages`/`Features` | re-set | non-handback state |
+| Floor and never-hide packages | unhidden and enabled | `isApplicationHidden`, enabled state | unhide | non-handback state |
+| Browser role | Plainphone | `RoleManager` | re-request role | non-handback state |
+| Default SMS | Google Messages | `ROLE_SMS` holder | `setDefaultSmsApplication` | non-handback state |
+| Plainphone `SEND_SMS` | granted and allowlisted | permission state | `setPermissionGrantState` | trusted person told; requests still listed |
+| Permitted input methods | system-only, plus listed | `getPermittedInputMethods` | re-set (system IMEs stay available by Android's rule) | non-handback state |
+| Permitted accessibility services | system-only | `getPermittedAccessibilityServices` | re-set | non-handback state |
+| Approved apps' pre-granted permissions | as approved | `getPermissionGrantState` | re-set | trusted person told |
+
+A **non-handback state** means: the trusted person sees "Not ready to hand back – call the helper". Calls, Emergency and alerts stay available throughout. No check SHALL gate them.
 
 **Accepted limit.** If Plainphone cannot run while a relaxation is in place, nothing revokes it automatically. That applies whatever the cause: a bad update, a storage or startup fault, or a crash loop. The relaxation stays until a helper fixes the phone. This SHALL be disclosed, and Beaux SHALL explicitly accept it before the MVP is approved. Q12 measures this behaviour; it does not prove that the failure cannot happen. The disclosure SHALL also say that during a session, Settings or Play pages may show web content, such as help or account pages.
 

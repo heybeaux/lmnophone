@@ -1,6 +1,6 @@
 # Feasibility questions for the emulator spike
 
-- Revision 3, 2026-10-08. Ranked after the PLA-3 review (F15, F17) and updated after the PLA-4 review (N1–N11).
+- Revision 5, 2026-10-08. Ranked after the PLA-3 review (F15, F17), then updated after PLA-4 (N1–N11), PLA-7 (R1–R8) and PLA-8 (S1–S5).
 - Device results so far come from the spare Motorola (PLA-5, `spikes/device-moto/RESULT.md`): **Q3 adb: yes** and **way back without a wipe: yes**. Everything else is still open.
 - Owner: Plainphone Lead. Spike author: Android Platform Engineer. Reviewer: Verifier & Escape Artist.
 - The questions are ranked by how much a "no" would change the plan. Each test ID maps to requirements in `docs/verification-matrix.md`.
@@ -25,6 +25,17 @@
 - **[device]** Repeat both on the approved phone.
 
 **Q1. Can lock task, with in-task launches blocked, carry a normal day?**
+- **Device results so far** (PLA-5 A3, partial, on the XT2415):
+  - **Flag off:** App info opened inside the task (leading to Permissions and Notifications), and so did the share chooser and Google Photos.
+  - **Flag on:** all three were blocked, but so were runtime permission prompts.
+  - **Emergency dialer:** it needs `com.android.phone` on the lock-task list.
+  - **Photo sharing:** Camera → Photos → Share fails.
+- **Follow-ups for this question:**
+  - pre-granting permissions with `setPermissionGrantState`, including whether the Device Owner may grant sensor permissions on this build;
+  - attaching a photo from inside Messages' own picker with the flag on;
+  - whether lock task comes back after a reboot;
+  - the power menu, tested with the physical button;
+  - emergency calling from the lock screen, which needs a secure lock screen that the board approves.
 - Run everything below twice: with `LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK` on, and with it off.
 - **A normal day must work:** incoming call, outgoing call, notifications, a runtime permission prompt, a photo, sharing from Camera to Messages, the power menu, reboot, and our own Wi-Fi screen (`WifiManager.addNetwork` as Device Owner).
 - **Nothing outside may open:** Settings, a Settings panel, or Play, launched from an approved app with an implicit intent, an explicit component, the share chooser, or no new-task flag.
@@ -59,7 +70,18 @@
 **Q6. Do boot, Plainphone replacement and policy damage recover safely?** *(N4: the result must be "no unapproved app opened in the foreground at any point during recovery")*
 - Reboot and stay at the lock screen. Install a package before the first unlock. Kill Plainphone between policy steps. Update Plainphone to a build signed with the same key. Feed it a truncated policy and a policy with an unknown version.
 - Unlock immediately after a reboot, and try to open an unapproved app with a queued notification, an explicit intent and a deep link before Plainphone's home screen appears.
-- With both policy copies corrupt: the built-in safe policy must apply.
+- With both policy copies corrupt: the emergency-safe baseline must apply.
+- **OTA and unknown build (S1).** These need fixtures on our own emulator. Move from build A (with an inventory) to build B (without one). Set up B so that:
+  - a new essential dependency matches the browser heuristic;
+  - a package that was hidden on A becomes the emergency dialer.
+
+  Then check, on B:
+  - lock task is kept;
+  - floor packages are unhidden;
+  - no system package is newly hidden;
+  - the notices and texts go out.
+
+  Next, corrupt both policy copies and damage the journal, and reboot before first unlock. Check that the floor-only baseline applies, and that calls, the in-call screen, simulated SMS and alerts, and Emergency all still work. Finally, install a reviewed B inventory through the signed local updater and repeat the checks.
 - A Plainphone update over local Wi-Fi that crashes on purpose: check the "Plainphone can't run" recovery path, and that emergency access still works.
 - Check that hidden apps and restrictions survive a Play update of an allowed app, a Play update of a hidden app, and a system image update.
 
@@ -71,7 +93,7 @@
 - Get the `userId` from People API `people.get(me)` using Google's "Try it" page.
 - Set the policy, read it back, and send the `FRP_CONFIG_CHANGED` broadcast.
 - Wipe from recovery, try the user's own account (must fail), then the trusted person's (must succeed). Emulator first.
-- **[device]** Needs a separate board-approved procedure on the target phone. **Never on the spare Motorola** (policy forbids recovery wipes there).
+- **[device]** Needs a separate board-approved procedure on the target phone. Policy readback, or waiting 72 hours on a new account, does not replace this test. **Never on the spare Motorola** (policy forbids recovery wipes there).
 
 **Q12. Can a supervised session be escaped or left open? (N1: servicing go/no-go)**
 - Turn the screen off, take an incoming call, kill Plainphone, reboot, let the deadline pass in the middle of an install, and leave nested Play, account and help screens open.

@@ -11,6 +11,8 @@ A package counts as a **general browser** if either of these is true:
 
 An app that only handles links for its own verified domains (App Links) is not a general browser.
 
+On a build with no inventory, Plainphone SHALL hide only user-installed (non-system) general browsers. Newly classified system packages stay unhidden, but cannot be opened, because they are not on the lock-task list (device-lockdown).
+
 Plainphone SHALL hide:
 - general browsers
 - the Google app and Gemini

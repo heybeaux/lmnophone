@@ -57,6 +57,12 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [ ] 4.10 AE: Setup flow, preinstall sweep before Wi-Fi, reset-protection IDs with a backup person, key attestation check, handover self-check (guided-setup).
 - [ ] 4.11 AE: Build inventory for each supported build, the emergency-safe baseline, the locked-boot path, and the first-frame lock task invariant (device-lockdown).
 - [ ] 4.12 AE: Monthly check state machine (stored due date, retries, home-screen line) and the SMS permission setup (approved-apps).
+- [ ] 4.13 AE: Runtime emergency floor; unknown-build mode; `createPostponeInstallPolicy` and `onSystemUpdatePending` texts; the "Phone software changed" list (device-lockdown).
+- [ ] 4.14 AE: Permission choices at approval, applied with `setPermissionGrantState` (approved-apps).
+
+## 7. Ongoing support (after handover)
+
+- [ ] 7.1 AE + VE: For each new system build on a supported phone, prepare and review its inventory, then ship it as a signed local update. Re-run the emergency and handover checks on that build. The Lead tracks it.
 
 ## 5. MVP: words and flows
 

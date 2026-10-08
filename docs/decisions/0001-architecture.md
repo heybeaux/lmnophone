@@ -1,12 +1,13 @@
 # ADR 0001: How Plainphone locks a phone down
 
-- Status: **Proposed, revision 3.** Needs Beaux's approval, together with the OpenSpec change `add-plainphone-spike-and-mvp`.
+- Status: **Proposed, revision 5.** Needs Beaux's approval, together with the OpenSpec change `add-plainphone-spike-and-mvp`.
 - Date: 2026-10-08
 - Author: Plainphone Lead (Claude)
 - Reviewer: Verifier & Escape Artist (OpenAI model)
   - Revision 1 was reviewed in [PLA-3](/PLA/issues/PLA-3): request changes, with 3 blockers, 12 major and 2 minor findings.
   - Revision 2 was reviewed in [PLA-4](/PLA/issues/PLA-4): request changes, with N1–N11 (1 blocker, 8 major, 2 minor).
-  - Revision 3 addresses those findings and adds the first device results from [PLA-5](/PLA/issues/PLA-5). It goes back for re-review.
+  - Revision 3 was reviewed in [PLA-7](/PLA/issues/PLA-7) (R1–R8). Revision 4 was reviewed in [PLA-8](/PLA/issues/PLA-8) (S1–S5).
+  - Revision 5 addresses S1–S5, adds the partial lock-task results from device test A3, and goes back for a narrow re-review.
 - Evidence: `research/evidence/*.md`. The DeerFlow report is leads only.
 - Confidence labels from the evidence files carry over here:
   - **documented**: a primary source says so
@@ -117,6 +118,18 @@ We did not find a published open-source "trusted person controls the allowlist" 
 
 **Plainphone's own updates.** No adb maintenance mode. The helper's computer serves a signed APK over local Wi-Fi. Plainphone checks that it is signed with the pinned key and has a higher version, then installs it silently as Device Owner after a fresh PIN entry. Release builds are `testOnly=false` and `debuggable=false`.
 
+## Device results so far (spare Motorola XT2415, Android 15, [PLA-5](/PLA/issues/PLA-5))
+
+- **A1 / Q3.** Our unapproved, test-only Device Owner was set up over adb.
+- **A2.** It was released without a wipe.
+- **A0.** At first boot, with Wi-Fi on, 7 apps were pushed and 1 was preloaded.
+- **A3, lock task (partial):**
+  - **With `BLOCK_ACTIVITY_START_IN_TASK` off,** three leaks opened inside the locked task: App info (leading to Permissions and Notifications), the share chooser, and Google Photos from the Camera thumbnail.
+  - **With it on,** all three were blocked, but runtime permission prompts were blocked too. So Plainphone pre-grants permissions at approval.
+  - **Emergency dialer:** opens only when `com.android.phone` is on the lock-task list. The runtime emergency floor adds it automatically.
+  - **Quick Settings** showed no tiles.
+  - **Still open:** reboot, power menu, lock-screen emergency, calls and SMS.
+
 ## Hardware
 
 **Requirements for the MVP phone (the model itself is Beaux's call):**
@@ -128,6 +141,15 @@ We did not find a published open-source "trusted person controls the allowlist" 
 **Candidates:**
 - **Pixel 9a or newer.** Fewest extras and 7 years of updates. Also keeps GrapheneOS (B) open.
 - **Samsung A-series.** Wisephone's choice. Many extras; Knox is not evaluated.
+
+**Support obligation (S1).** Each system update produces a new build, and each new build needs a reviewed inventory delivered as a signed Plainphone update.
+- Until that inventory arrives, the phone runs in a safe mode for unknown builds:
+  - lock task stays on;
+  - the emergency floor is protected;
+  - no system app is newly hidden;
+  - the trusted person and the helper are told.
+- Updates are postponed where Android allows; some security updates may still install.
+- Beaux needs to accept this ongoing team obligation as part of choosing the phone model.
 
 Nothing touches a real phone without Beaux's approval for that specific phone.
 
@@ -204,3 +226,14 @@ Each PLA-3 finding, and where it is addressed:
 | R6 monthly check | Due date and last completion are stored. Daily retries for 7 days. If the check is overdue, a single line appears on the home screen. Completion needs a PIN after reviewing Play's list. SMS setup is tested end to end at handover. (approved-apps, trusted-person-controls, guided-setup) |
 | R7 People API account selection | The trusted person picks the exact account in Google's picker, not by display name. New accounts wait 72 hours and are re-tested. The guide is dry-run with accounts that share a display name. (guided-setup) |
 | R8 counts and references | A0 count corrected to 7 + 1, with a reconcile request to PLA-5. Q7 step count, Q14 and matrix design references fixed. The stale 60-second deadline removed. Task 2.1 split. |
+
+**Revision 5 (PLA-8 S1–S5, plus device A3):**
+
+| PLA-8 finding | Where addressed |
+|---|---|
+| S1 OTA and inventory lifecycle (approval blocker) | A runtime emergency floor that doesn't depend on any inventory or file. A system-update lifecycle: postpone, text on pending update, team-owned inventory delivered by signed update. A fail-safe mode for unknown builds that hides no new system apps. A baseline for unknown build plus corrupt policy. A return-to-normal condition. Q6 fixtures. Matrix rows. (device-lockdown, web-containment, design D9) |
+| S2 emergency matrix (approval blocker) | Matrix rows, design D5 and the spec now say the same thing: alert observed, otherwise inconclusive, otherwise a recorded build-scoped exception that states the negative-control status. "Alerts always shown" qualified. (essential-calling-and-texting) |
+| S3 protected-state check | A fixed table of invariants with readback, repair and failure action. Ordinary preferences are kept. A failed repair never blocks calls or Emergency. (trusted-person-controls) |
+| S4 offline setup | Physical-SIM and eSIM steps. Every network type is checked. A plain stop when a model can't finish setup offline. The pre-sweep check is local only, with real call and SMS checks after reconnecting. Total helper time reported. (guided-setup) |
+| S5 synchronisation | Home-screen notice-line exception and test. A single rule for when the overdue line appears, and its removal. Matrix rows 25/28. Design D8 account picker and SMS check. Design D9 Direct Boot list. Headers updated to revision 5. |
+| Device A3 | The block flag is confirmed necessary. Permissions are decided at approval and pre-granted with `setPermissionGrantState`. `com.android.phone` is in the floor. Photo-sharing and reboot follow-ups are in Q1. |

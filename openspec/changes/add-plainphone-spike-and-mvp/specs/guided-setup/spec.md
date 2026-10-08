@@ -6,7 +6,11 @@ The repo SHALL include `docs/setup-guide.md` and one setup script.
 The guide SHALL list, in order:
 1. back up the phone;
 2. remove its accounts and reset it **through Settings**;
-3. with the SIM removed and eSIM profiles disabled, go through the first-boot wizard, skipping Wi-Fi, every account and every app recommendation;
+3. take the phone offline:
+   - **physical SIM:** remove it;
+   - **eSIM:** turn the eSIM off before the reset, under Settings > Network > SIMs. Choose the reset option that **keeps** eSIMs. Turn the eSIM back on during setup step 3, before lock task starts.
+   - go through the first-boot wizard, skipping Wi-Fi, every account and every app recommendation;
+   - if the wizard will not finish offline, stop: this model is unsupported, and the guide SHALL say so plainly;
 4. enable USB debugging;
 5. run the script;
 6. finish setup on the phone.
@@ -16,12 +20,12 @@ The script SHALL refuse to continue unless all of these hold:
 - `ro.boot.verifiedbootstate` is green;
 - the bootloader reports locked;
 - no accounts are present;
-- no network is active (no Wi-Fi, no mobile data);
+- no network is active on any transport (every network that `dumpsys connectivity` reports is checked, not only Wi-Fi and mobile data);
 - a build inventory exists for this model and build fingerprint.
 
 It SHALL then install Plainphone and run `dpm set-device-owner`.
 
-Timing SHALL be measured from the first script command to the green handover check, on a phone that is already backed up and reset, with Wi-Fi available. Setup SHALL take 30 minutes or less on that measure.
+Timing SHALL be measured from the first script command to the green handover check, on a phone that is already backed up and reset, with Wi-Fi available. Setup SHALL take 30 minutes or less on that measure. The dry run SHALL also report the total helper time separately, including backup, reset and the wizard.
 
 #### Scenario: Helper follows the guide
 - **WHEN** a helper who did not write the guide follows it on a freshly reset phone of an approved model
@@ -36,7 +40,7 @@ While the phone has no active network, Plainphone SHALL hide every package that 
 
 The inventory's Play Store, keyboard, setup and account components SHALL stay usable.
 
-Before the sweep, Plainphone SHALL first test the emergency-safe baseline (calls, Emergency, SMS).
+Before the sweep, Plainphone SHALL check the emergency-safe baseline **locally**: the dialer, emergency dialer and Messages resolve; the floor is computed; the lock-task UI list is correct. This check SHALL NOT be reported as an end-to-end call or SMS test. Real outgoing and incoming call and SMS checks SHALL be done after connectivity returns, and before handover.
 
 Only after the sweep SHALL the guide have the helper insert the SIM and join Wi-Fi. After that, the package-added watcher SHALL catch anything pushed later.
 

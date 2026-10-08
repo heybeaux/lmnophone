@@ -9,9 +9,19 @@ The home screen SHALL show:
 
 It SHALL NOT show a search bar, feed, widgets, badges or suggestions.
 
+There are two exceptions. When they apply, the home screen SHALL show one of these lines:
+- the monthly-check line, "Ask [trusted person] to do the monthly phone check" (approved-apps);
+- "Plainphone needs attention" (device-lockdown).
+
+Neither line SHALL push Emergency, Phone or Messages off-screen at the largest font size.
+
 #### Scenario: First look
 - **WHEN** the user unlocks the phone
-- **THEN** they see the time, the date, Emergency, Phone, Messages and their other approved apps, and nothing else
+- **THEN** they see the time, the date, Emergency, Phone, Messages and their other approved apps, and nothing else unless one of the two notice lines applies
+
+#### Scenario: Overdue monthly check at largest font
+- **WHEN** the monthly check is more than 7 days overdue and text size is at its largest
+- **THEN** the notice line shows, and Emergency, Phone and Messages are still visible without scrolling
 
 ### Requirement: Phone, Messages and Emergency are always present
 Phone, Messages and Emergency SHALL always be on the home screen. They SHALL NOT be removable through trusted-person controls.

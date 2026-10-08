@@ -46,7 +46,7 @@ The gate SHALL **fail** for each of these negative-control builds:
 - the dialer is removed from the lock-task UI list;
 - the alert-display component is disabled.
 
-A failing gate SHALL block release. Emulator results SHALL NOT be presented as proof that a real 9-1-1 call gets through.
+A failing gate SHALL block release. If Beaux records a build-scoped exception for unverified alert display, that exception SHALL name whether the disabled-alert negative control was also unverified. The exception releases only that build, and only for alerts. Emulator results SHALL NOT be presented as proof that a real 9-1-1 call gets through.
 
 #### Scenario: Broken click handler
 - **WHEN** the negative-control build in which Emergency resolves to nothing runs the gate
@@ -94,7 +94,7 @@ While in lock task, all of these SHALL work:
 - MMS
 - group texts
 
-Emergency alerts (Alert Ready) SHALL always be shown.
+Plainphone SHALL NOT block emergency alerts (Alert Ready). On each supported build, alert display is verified as described in the real-device check above. Where Beaux has accepted a build-scoped exception, the promise is limited to "Plainphone does not block alerts".
 
 The setup guide SHALL say:
 - RCS works over Wi-Fi or mobile data.

@@ -27,7 +27,7 @@ Plainphone SHALL keep the Play Store installed, enabled and signed in to the use
 **Monthly check:**
 - **Stored state.** Plainphone SHALL store the monthly check's due date and the date it was last completed.
 - **Reminders.** On the due date it SHALL text the trusted person. If the text fails, it SHALL retry once a day, for up to 7 days, without sending duplicates.
-- **Overdue note.** If the check is more than 7 days overdue, or every send failed, the user's home screen SHALL show one calm line: "Ask [trusted person] to do the monthly phone check."
+- **Overdue note.** When the check is more than 7 days past its due date, whether or not any text was delivered, the user's home screen SHALL show one calm line: "Ask [trusted person] to do the monthly phone check." Tapping it SHALL only explain what the check is; it SHALL NOT open Play. The line SHALL be removed when completion is recorded, and the next due date set.
 - **Completion.** The check counts as completed only when the trusted person, in the Play session opened from the check, confirms with their PIN that they reviewed Play's update list. They SHALL record any app whose update failed. Unresolved failures SHALL stay listed in trusted-person mode.
 - **Play services.** If Google Play services has not changed in 30 days, the reminder SHALL say so neutrally. It SHALL NOT call the phone insecure.
 
@@ -49,12 +49,20 @@ Plainphone SHALL NOT claim to know whether a newer version of any app exists.
 - **WHEN** an approved app opens a `market://` or Play web link, in a new task or the same task
 - **THEN** the Play Store does not open
 
-### Requirement: Play sessions add and approve apps
-Adding an app SHALL happen in a Play session, which follows the supervised-session contract in trusted-person-controls. Approving a newly installed app SHALL need a fresh PIN entry, and SHALL bind to the app's package name and signing-certificate digest. Events that arrive after a session has ended SHALL be ignored. An app installed during a session SHALL stay hidden until it is approved.
+### Requirement: Play sessions add and approve apps, with permissions decided at approval
+Adding an app SHALL happen in a Play session, which follows the supervised-session contract in trusted-person-controls.
+
+**Approving.** Approving a newly installed app SHALL need a fresh PIN entry. The approval SHALL be bound to the app's package name and its signing-certificate digest.
+
+**Permissions.** `BLOCK_ACTIVITY_START_IN_TASK` blocks runtime permission prompts. Device test PLA-5 A3 showed "Permission controller is not available right now." So the approval screen SHALL list the app's runtime permissions in plain words. For each permission, the trusted person chooses Allow or Deny. Plainphone SHALL apply those choices with `setPermissionGrantState`.
+
+**Q1 checks** whether Android lets the Device Owner grant sensor permissions (camera, microphone, location) on the build. If it does not, the app's listing SHALL say which features will not work.
+
+**Session end.** Events that arrive after a session has ended SHALL be ignored. An app installed in a session SHALL stay hidden until it is approved.
 
 #### Scenario: Add an app
-- **WHEN** the trusted person starts a Play session, installs an app, and approves it with a fresh PIN
-- **THEN** the app appears on the home screen, and Play cannot be reached again
+- **WHEN** the trusted person starts a Play session, installs an app, chooses its permissions, and approves it with a fresh PIN
+- **THEN** the app appears on the home screen with those permissions set, no permission prompt appears in use, and Play cannot be reached again
 
 #### Scenario: Trusted person walks away
 - **WHEN** the screen turns off, or the deadline passes, during a Play session
