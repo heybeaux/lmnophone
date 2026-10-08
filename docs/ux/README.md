@@ -133,3 +133,11 @@ recommendation; none changes a promise.
    that the `NOTIFICATIONS` lock-task feature shows Plainphone's own notification during a session.
 6. **Turning off when the helper is the trusted person.** No change needed; noted only because "two plain
    confirmations" plus a PIN is the same for both.
+7. **Mail apps that need to add an account (Outlook).** the trusted person's must-have Outlook probably signs in by adding
+   an account to Android's account list, and may need a web sign-in page. Plainphone blocks account changes after
+   setup (`DISALLOW_MODIFY_ACCOUNTS`), no supervised session lifts it, and every browser is hidden
+   ([starter-catalog.md](starter-catalog.md#outlook-microsoft)). If B-Q4 shows Outlook can't sign in, the spec has
+   no path for it. **Recommendation:** don't widen any session yet. Wait for B-Q4, and ask Beaux which account
+   the trusted person uses in Outlook. If it is her Gmail address, Gmail alone may cover her need, which is the calmest
+   answer. If it is an Outlook.com or work address, the Lead decides between a new, narrow "add an account"
+   session kind (a spec change, with its own tests) and leaving Outlook off.

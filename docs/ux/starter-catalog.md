@@ -21,7 +21,9 @@
 - **Versions.** "Reviewed against" is the newest version the sources showed on 2026-10-08. The AE records the
   version actually installed on the test phone in B-Q4 (`dumpsys package <pkg> | grep versionName`); if it
   differs, this file is updated and the note re-read.
-- the trusted person's must-have apps are still to come (approval packet, decision 4). Add them here in the same format.
+- the trusted person's must-have apps are **Gmail and Outlook** (Beaux, Telegram 4448/4451, recorded in the approval packet,
+  decision 4; passed on by the Lead on PLA-12). Their entries were added on 2026-10-08, after the first batch. How
+  each one opens links is marked *to confirm in PLA-5 B-Q4* until PLA-5 reports it.
 
 ## Summary
 
@@ -33,6 +35,8 @@
 | Slack | `com.Slack` | 26.10.10 (7 Oct 2026) | **Yes**, unless "Open web pages in app" is off | Add, with the setting off |
 | Spotify | `com.spotify.music` | 9.1.90.2270 (8 Oct 2026) | A few account pages | Add |
 | Telegram | `org.telegram.messenger` | 13.0.0, build 7158 (8 Oct 2026) | **Yes: a full web browser.** *To confirm in PLA-5 B-Q4* | Don't add until Beaux has seen the B-Q4 result |
+| Gmail | `com.google.android.gm` | 2026.09.28.992490113.Release (8 Oct 2026) | **Maybe.** How links open is *to confirm in PLA-5 B-Q4*; interactive emails; Google account pages | Add after B-Q4, with Chat and Meet tabs off. Preinstalled. |
+| Outlook | `com.microsoft.office.outlook` | 5.2637.3 (30 Sep 2026) | **Maybe.** How links open is *to confirm in PLA-5 B-Q4*; ads; Copilot | Don't add until B-Q4 shows sign-in works (see the account warning) |
 
 ---
 
@@ -193,6 +197,102 @@
   ("We'll show you what we find before you approve it"). If added, the T4b-style extra confirmation should be
   shown even though a catalog entry exists.
 
+## Gmail
+
+the trusted person's must-have. **Preinstalled on the Motorola**, so "adding" it means Plainphone stops hiding it; there is
+nothing to download.
+
+- **Package:** `com.google.android.gm` · **Reviewed against:** 2026.09.28.992490113.Release, 8 Oct 2026
+  ([Uptodown version list](https://gmail.en.uptodown.com/android/versions)). The preinstalled copy on the XT2415
+  is probably older until Play updates it; B-Q4 records the real version.
+- **Status: how links open is to confirm in PLA-5 B-Q4.**
+- **Note on screen (provisional):**
+  > Gmail shows emails, and emails can contain links and pictures. Where a tapped link goes is still being
+  > tested *(to confirm in PLA-5 B-Q4)*. Some emails let you fill in a form or reply to an invitation inside the
+  > email. Gmail may also include Gemini, Google's AI chat, which can answer questions.
+- **Routes:**
+  - **Links in emails.** Gmail has a setting, "Open web links in Gmail" (Settings → General settings), which opens
+    links inside Gmail rather than in a separate browser. Sources disagree on what that "inside" view is: a Custom
+    Tab from the phone's browser ([SamMobile, 2024](https://www.sammobile.com/?p=15057589);
+    [tt-rss report](https://community.tt-rss.org/t/dont-hardcode-chrome-when-opening-custom-tabs/319)) or Gmail's
+    own web view ([droidwin](https://droidwin.com/?p=46137)). With every browser hidden, a Custom Tab has nothing
+    to open in, so the link should fall through to Plainphone's "can't open" screen. If Gmail uses its own web
+    view, the page opens inside Gmail and the web is reachable from there. *(To confirm in PLA-5 B-Q4, with the
+    setting on and off.)*
+  - **Interactive emails (AMP "dynamic email").** On by default in the Android app since 2019. A sender's email
+    can show live content, forms and replies inside the message
+    ([Google Workspace blog](https://workspaceupdates.googleblog.com/2019/11/dynamic-mail-android-ios.html)). It
+    stays inside that one email: no address bar, and links behave as above. *(Desk finding; to confirm.)*
+  - **Pictures in emails** load from the sender through Google's servers. They are pictures, not pages.
+  - **Chat and Meet tabs.** Gmail can show Google Chat and Meet tabs. Each can be hidden per account in Gmail's
+    settings: "Show the Meet tab for video calling", and "Show the chat and spaces tab"
+    ([Android Central](https://www.androidcentral.com/how-disable-google-meet-tab-gmail-android)). Hiding them
+    doesn't remove the services; Chat links behave like email links. *(To confirm in B-Q4: where Meet and Chat
+    links go with the tabs off.)*
+  - **Gemini in Gmail** (summaries, drafting replies) has been reported reaching personal accounts on Android
+    in 2026 ([CO/AI, citing Mishaal Rahman](https://getcoai.com/news/gemini-ai-may-come-to-personal-gmail-accounts-on-android)).
+    Whether it is on the trusted person's account in Canada, and whether it can be turned off, is unknown. *(To confirm.)*
+  - **"Manage your Google Account"** (tap the profile picture) opens Google's account pages from Google Play
+    services. Those pages contain links to Google help and policies. Play services isn't on the lock-task list,
+    so the in-task block flag should stop it. *(Inference; to confirm in B-Q4.)* **Help & feedback** is the
+    same.
+  - **Adding another mail account inside Gmail** (for example the trusted person's Outlook address) goes through Android's
+    accounts, which Plainphone blocks after setup. This is expected to fail. *(Inference from the device-lockdown
+    spec; to confirm.)*
+- **Sign-in:** none needed. Gmail uses the Google account signed in at setup (step 3).
+- **Settings inside the app (setup step 5):** hide the Meet tab and the Chat tab unless {user} uses them; turn
+  "Open web links in Gmail" to whichever setting B-Q4 shows ends at the "can't open" screen.
+- **Permissions to suggest at T4c:** Notifications (Allow, "Tell you about new email"), Contacts (Allow,
+  "Suggest addresses as you type"), Camera and Photos and videos (Allow only if wanted, "Attach photos").
+
+## Outlook (Microsoft)
+
+the trusted person's must-have.
+
+- **Package:** `com.microsoft.office.outlook` · **Reviewed against:** 5.2637.3, 30 Sep 2026
+  ([Uptodown version list](https://microsoft-outlook.en.uptodown.com/android/versions)).
+- **Status: how links open is to confirm in PLA-5 B-Q4.** Sign-in may not work at all (see the warning below).
+- **Note on screen (provisional):**
+  > Outlook shows emails, and emails can contain links and pictures. Where a tapped link goes is still being
+  > tested *(to confirm in PLA-5 B-Q4)*. Free Outlook accounts show adverts in the inbox. Outlook may suggest
+  > installing Microsoft Edge; Edge is a web browser, so Plainphone keeps it hidden.
+- **Routes:**
+  - **Links in emails.** Outlook's "Open links" setting chooses between Microsoft Edge and the phone's default
+    browser. Without Edge installed, links go to the default browser, and Outlook from time to time offers to
+    install Edge ([Microsoft notice MC859848](https://mc.merill.net/message/MC859848);
+    [Ablebits](https://www.ablebits.com/office-addins-blog/change-outlook-default-browser/)). On Plainphone, the
+    "default browser" should be Plainphone itself, so links should reach the "can't open" screen. Whether Outlook
+    also has its own web view for some links is unknown. *(To confirm in PLA-5 B-Q4.)*
+  - **Edge prompts.** If someone installs Edge through the prompt (only possible in a Play session), the browser
+    classifier should hide it. *(By design; to confirm.)*
+  - **Adverts.** Free Outlook.com accounts show ads in the inbox, marked "Ad". Turning on Focused Inbox keeps them
+    in the "Other" tab; a Microsoft 365 subscription removes them
+    ([Microsoft support](https://support.microsoft.com/office/ads-in-outlook-mobile-b172e506-ef2c-458d-9c2d-265445ba82e5)).
+    Tapping an ad should go to the "can't open" screen. *(To confirm.)*
+  - **Copilot** is in Outlook for Android for Microsoft 365 Personal or Family subscribers, as long as "Connected
+    experiences" is on ([Microsoft support](https://support.microsoft.com/en-us/office/sharing-copilot-in-outlook-cf2656c0-57f9-4962-97d7-ba0c7b74858a)).
+    We found no proof that it searches the web from Outlook. *(To confirm, only if the trusted person has a subscription.)*
+  - **Help, privacy and Microsoft account pages** inside Outlook settings probably open as web pages.
+    *(Inference; to confirm in B-Q4.)*
+- **⚠ Sign-in may not work on Plainphone. To confirm in PLA-5 B-Q4 before anyone adds Outlook.**
+  1. **No browser.** Signing in to a Microsoft account, or adding a Google account to Outlook, may open a web
+     sign-in page. Google blocks its sign-in inside apps' own web views, so Outlook likely needs a browser for a
+     Google account ([Microsoft support](https://support.microsoft.com/office/how-do-i-add-a-google-apps-account-490b1025-e74f-440c-853d-8cdec5fa7bc8)
+     describes the steps but not the window). With every browser hidden, that page may fail.
+  2. **Accounts are locked.** Outlook normally adds its accounts to Android's account list so contacts and
+     calendars can sync. Plainphone blocks changes to that list after setup (`DISALLOW_MODIFY_ACCOUNTS`,
+     device-lockdown spec), and no supervised session lifts it. Outlook may then refuse to sign in, or sign in
+     without contact and calendar sync. *(Inference; to confirm.)*
+
+  If either one fails, Outlook can't be offered as written. That needs a decision from the Lead (open question 7
+  in [README.md](README.md#open-questions-for-the-lead)). **Which account the trusted person uses in Outlook** (an
+  Outlook.com address, a work address, or her Gmail) is also unknown, and it changes which sign-in is tested.
+- **Settings inside the app (setup step 5):** turn on Focused Inbox, to keep ads out of the main view;
+  "Open links": default browser, not Edge.
+- **Permissions to suggest at T4c:** Notifications (Allow, "Tell you about new email"), Contacts and Calendar
+  (Don't allow unless wanted: "Copy Outlook contacts and events to the phone"), Microphone (Don't allow:
+  "Dictate emails"), Camera and Photos and videos (Allow only if wanted, "Attach photos").
+
 ---
 
 ## The keyboard (Gboard): not an app choice, but worth knowing
@@ -212,3 +312,9 @@ For each app above, record on the XT2415 with the in-task block flag on:
 4. For Slack: with "Open web pages in app" off, does a posted link reach the blocked-link screen?
 5. For Messages: can Gemini be turned off and stay off; does a business-chat web view open?
 6. For Camera: does the Lens button do anything; where does a QR web link go; what does the thumbnail do?
+7. For Gmail: with "Open web links in Gmail" on and off, where does a link in an email go (Custom Tab, a view
+   inside Gmail, or the "can't open" screen)? Does an interactive (AMP) email open anything beyond itself? Where do
+   "Manage your Google Account" and Help & feedback go? With the Chat and Meet tabs hidden, where does a Meet link go?
+8. For Outlook: can the trusted person's account sign in with every browser hidden and adding accounts blocked? If it signs in,
+   do contacts and calendar sync? Where does a link in an email go, and where does an ad go? Which account type
+   does the trusted person use (ask Beaux)?
