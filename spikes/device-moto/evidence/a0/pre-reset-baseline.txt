@@ -1,0 +1,23 @@
+2026-10-08T19:27:02Z
+ro.build.fingerprint=motorola/cancunn_g_sys/cancunn:15/V1UDS35H.26-14-6-2-11/27ec35b-72bc9:user/release-keys
+ro.build.version.security_patch=2026-08-01
+ro.build.version.release=15
+ro.build.version.sdk=35
+ro.build.display.id=V1UDS35H.26-14-6-2-11
+ro.boot.verifiedbootstate=green
+ro.boot.flash.locked=1
+ro.boot.vbmeta.device_state=locked
+ro.product.model=moto g power 5G - 2024
+ro.boot.hardware.sku=XT2415-1
+ro.carrier=retca
+ro.product.first_api_level=34
+ro.oem_unlock_supported=
+sys.oem_unlock_allowed=0
+gsm.sim.state=ABSENT,LOADED
+user_setup_complete=1
+device_provisioned=1
+Users:
+	UserInfo{0:Owner:4c13} running
+  Accounts: 5
+dpm list-owners: no owners
+    CredentialType: PIN
