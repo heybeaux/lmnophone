@@ -1,0 +1,14 @@
+## End state 2026-10-08T23:26:44Z
+deviceOwner=true lockTaskModeState=0 lockTaskPackages=[com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[] suspended=[] locked=false debugLiftAt=0
+lock: mLockTaskModeState=NONE
+HOME role: com.motorola.launcher3
+topResumedActivity=ActivityRecord{c4d94f9 u0 com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher t130}
+accounts (Account {} entries, names withheld): type=com.google type=com.google.android.apps.tachyon 
+    admin=ComponentInfo{com.plainphone.spike.dpc/com.plainphone.spike.dpc.AdminReceiver}
+    isOrganizationOwnedDevice=true
+      testOnlyAdmin=true
+testOnly flag: TEST_ONLY
+stay_on: 2 adb_wifi: 0 boot_count: 5
+Play: versionName=53.4.34-34 hidden=hidden=false
+Telegram: versionName=12.10.6 hidden=false (data cleared)
+target: versionCode=2

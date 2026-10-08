@@ -1,0 +1,60 @@
+## B-Q1 lock task BLOCK on 2026-10-08T23:18:22Z
+OK lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc]
+OK lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK (87)
+OK persistent preferred HOME = spike
+OK relayed lt-start to MainActivity (result in logcat PPSPIKE)
+mLockTaskModeState=LOCKED
+$ Camera (explicit main launch)
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+topResumedActivity=ActivityRecord{2e844a7 u0 com.motorola.camera3/com.motorola.camera.Camera t122}
+(no permission prompt or block text visible)
+$ shutter
+usage: adb shell content [subcommand] [options]
+$ thumbnail
+topResumedActivity=ActivityRecord{a32897a u0 android/com.android.internal.app.BlockedAppActivity t122}
+text="App is not available"
+text="Photos is not available right now."
+10-08 16:18:50.120 I/BufferQueueDebug( 1233): [Transition Root: ActivityRecord{a32897a u0 android/com.android.internal.app.BlockedAppActivity t122}#657](this:0xb4000077d1629b10,id:-1,api:0,p:-1,c:1233) onDestructor()
+10-08 16:18:50.971 I/libPowerHal( 1197): [perfNotifyAppState] pack:android, act:com.android.internal.app.BlockedAppActivity, state:5, pid:698, uid:1000, fps:90
+10-08 16:18:51.610 I/BufferQueueProducer( 1233): [android/com.android.internal.app.BlockedAppActivity#655](this:0xb4000077d161bcd0,id:-1,api:0,p:-1,c:1233) queueBuffer: fps=18.25 dur=1534.10 max=1205.81 min=10.23
+10-08 16:18:51.972 I/libPowerHal( 1197): [perfNotifyAppState] pack:android, act:com.android.internal.app.BlockedAppActivity, state:5, pid:698, uid:1000, fps:60
+10-08 16:18:52.972 I/libPowerHal( 1197): [perfNotifyAppState] pack:android, act:com.android.internal.app.BlockedAppActivity, state:5, pid:698, uid:1000, fps:-1
+--- newest DCIM/Camera file: -rwxrwx--- 1 u0_a419 media_rw 1832328 2026-10-08 16:18 IMG_20261008_161844868.jpg
+$ emergency dialer screen, BLOCK on, com.android.phone allowlisted (no call placed)
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+topResumedActivity=ActivityRecord{25a5ddc u0 com.android.phone/.EmergencyDialer t125}
+text="Emergency information"
+topResumedActivity=ActivityRecord{a82d195 u0 com.plainphone.spike.dpc/.MainActivity t124}
+$ Messages compose (smsto: test number 5550100, nothing sent)
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+topResumedActivity=ActivityRecord{37f3c25 u0 com.google.android.apps.messaging/.main.MainActivity t126}
+$ tap "Show attach media screen" (Messages own picker)
+tapped 840,2190
+topResumedActivity=ActivityRecord{37f3c25 u0 com.google.android.apps.messaging/.main.MainActivity t126}
+content-desc="Flip Camera"
+content-desc="Hide attach media screen"
+content-desc="Open Full Screen Camera"
+content-desc="Select this image taken at Thu, Oct 8, 2026, 4:18 p.m. with double tap"
+content-desc="Show attach content screen"
+content-desc="Show attach emoji and stickers screen"
+content-desc="Show record a voice message screen"
+content-desc="Take Photo"
+text="4:19 p.m."
+text="555-0100"
+text="Folders"
+text="Text message"
+text="Texting with 555-0100 (SMS/MMS)"
+$ tap the 4:18 photo (select), do not send
+tapped 805,2146
+content-desc="Draft image taken at Thu, Oct 8, 2026, 4:18 p.m."
+content-desc="Remove Draft image taken at Thu, Oct 8, 2026, 4:18 p.m."
+content-desc="Send MMS"
+content-desc="Unselect this image attached at position 1 with double tap"
+text="Texting with 555-0100 (SMS/MMS)"
+$ tap "Folders" in Messages picker
+tapped 805,1793
+topResumedActivity=ActivityRecord{b012617 u0 android/com.android.internal.app.BlockedAppActivity t126}
+text="App is not available"
+text="Media picker is not available right now."
+START u0 {act=android.intent.action.GET_CONTENT cat=[android.intent.category.OPENABLE] typ=*/* cmp=com.google.android.providers.media.module/com.android.providers.media.photopicker.PhotoPickerGetConte
+draft image nodes left: 0

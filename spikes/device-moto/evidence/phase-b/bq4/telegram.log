@@ -1,0 +1,91 @@
+## B-Q4 Telegram 2026-10-08T23:22:44Z
+version: versionName=12.10.6 versionCode=71122 installer=installerPackageName=com.android.vending
+unhide org.telegram.messenger -> true
+OK lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, org.telegram.messenger, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc]
+--- pre-grant on a third-party app (no GRANTED_BY_DEFAULT)
+grant org.telegram.messenger android.permission.CAMERA -> true state=1 granted=true
+grant org.telegram.messenger android.permission.RECORD_AUDIO -> true state=1 granted=true
+grant org.telegram.messenger android.permission.ACCESS_FINE_LOCATION -> true state=2 granted=true
+grant org.telegram.messenger android.permission.POST_NOTIFICATIONS -> true state=1 granted=true
+grant org.telegram.messenger android.permission.READ_CONTACTS -> true state=1 granted=true
+android.permission.ACCESS_FINE_LOCATION: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.CAMERA: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.POST_NOTIFICATIONS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.READ_CONTACTS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.RECORD_AUDIO: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+$ launch Telegram (comp, new task) under lock task BLOCK on
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+topResumedActivity=ActivityRecord{3cbb1d2 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t129}
+lock: mLockTaskModeState=LOCKED
+content-desc="Switch to night theme"
+content-desc="Web tabs "
+text="Start Messaging"
+text="Telegram"
+text="The world's fastest messaging app.&#10;It is free and secure."
+$ tap "Web tabs" on welcome screen (pre-login)
+tapped 540,2185
+topResumedActivity=ActivityRecord{3cbb1d2 u0 org.telegram.messenger/org.telegram.ui.LaunchActivity t129}
+content-desc="Switch to night theme"
+content-desc="Web tabs "
+text="Start Messaging"
+text="Telegram"
+text="The world's fastest messaging app.&#10;It is free and secure."
+$ tap Start Messaging
+tapped 540,1995
+topResumedActivity=ActivityRecord{c88e6c8 u0 android/com.android.internal.app.BlockedAppActivity t129}
+text="App is not available"
+text="OK"
+text="Permission controller is not available right now."
+10-08 16:23:44.171 I/BufferQueueDebug( 1243): [ActivityRecord{7406544 u0 android/com.android.internal.app.BlockedAppActivity#173](this:0xb4000078c34902a0,id:-1,api:0,p:-1,c:-1) BufferQueue core=(1243:
+START u0 {act=84420b33-471c-4055-a6dc-b94313c20b73 cmp=com.android.credentialmanager/.CredentialSelectorActivity (has extras)}
+10-08 16:23:44.182 V/WindowManagerShell( 2218): Transition requested (#16): android.os.BinderProxy@69d88ef TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=129 displayId=0 i
+10-08 16:23:44.218 I/PowerHalWrapper( 1853): amsBoostNotify pid:4050,activity:com.android.internal.app.BlockedAppActivity, package:android, mProcessCreatePackorg.telegram.messenger 
+10-08 16:23:44.221 I/mtkpower_client( 1853): [PowerHal_Wrap_notifyAppState] android/com.android.internal.app.BlockedAppActivity pid=4050 activityId:121660740 state:1
+$ tap OK on block screen
+tapped 540,1339
+topResumedActivity=ActivityRecord{7406544 u0 android/com.android.internal.app.BlockedAppActivity t129}
+text="App is not available"
+text="Credential Manager is not available right now."
+text="OK"
+--- which permissions did Telegram request?
+10-08 16:23:44.244 I/ActivityTaskManager( 1853): START u0 {act=android.content.pm.action.REQUEST_PERMISSIONS pkg=com.google.android.permissioncontroller cmp=com.google.android.permissioncontroller/com
+android.permission.CALL_PHONE: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.READ_CALL_LOG: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+android.permission.READ_PHONE_NUMBERS: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.READ_PHONE_STATE: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+$ tap OK again
+tapped 540,1339
+topResumedActivity=ActivityRecord{d2297c7 u0 android/com.android.internal.app.BlockedAppActivity t129}
+text="App is not available"
+text="OK"
+text="Permission controller is not available right now."
+round 1: u0 android/com.android.internal.app.BlockedAppActivity text="App is not available"
+text="Permission controller is not available right now."
+round 2: u0 android/com.android.internal.app.BlockedAppActivity text="App is not available"
+text="Permission controller is not available right now."
+round 3: u0 android/com.android.internal.app.BlockedAppActivity text="App is not available"
+text="Permission controller is not available right now."
+round 4: u0 android/com.android.internal.app.BlockedAppActivity text="App is not available"
+text="Permission controller is not available right now."
+--- permission-prompt loop under BLOCK (6 REQUEST_PERMISSIONS in 30 s). Pre-granting phone perms:
+grant org.telegram.messenger android.permission.READ_PHONE_STATE -> true state=1 granted=true
+grant org.telegram.messenger android.permission.READ_PHONE_NUMBERS -> true state=1 granted=true
+grant org.telegram.messenger android.permission.CALL_PHONE -> true state=1 granted=true
+grant org.telegram.messenger android.permission.READ_CALL_LOG -> true state=1 granted=true
+after OK: u0 org.telegram.messenger/org.telegram.ui.LaunchActivity
+content-desc="Country code"
+content-desc="Country"
+content-desc="Done"
+content-desc="Phone number"
+content-desc="Web tabs "
+text="&#127482;&#127480; USA"
+text="+"
+text="1"
+text="<pre-filled number redacted>"
+text="Please confirm your country code&#10;and enter your phone number."
+text="Your phone number"
+REQUEST_PERMISSIONS since: 0
+--- stopped at the phone-number screen (sign-in is Beauxs). Number field was pre-filled (white text, not a hint) after READ_PHONE_NUMBERS pre-grant; value redacted.
+$ pm clear org.telegram.messenger -> Success
+topResumedActivity=ActivityRecord{6ce0bca u0 com.plainphone.spike.dpc/.MainActivity t127}
+deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, org.telegram.messenger, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[] suspended=[] locked=true debugLiftAt=0

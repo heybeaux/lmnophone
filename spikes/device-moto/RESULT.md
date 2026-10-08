@@ -31,6 +31,8 @@
 | S2 clear → install → re-add | **yes** | DO install while restricted fails at `createSession`; clear → silent install (588 ms, no prompt) → re-add: about 0.83 s window on the phone. |
 | S3 suspend Play | **no** | `setPackagesSuspended([com.android.vending])` is refused: Play is the required package verifier. |
 | S4 hidden Play vs lock task | **lock task: yes; hidden: no** | Hidden Play: its jobs can't start, so nothing updates. Lock task with Play unhidden: `market://` is blocked, and **23 apps updated in the background within 6 min**. |
+| B-Q1 lock task follow-ups (BLOCK on) | **yes** | Pre-grant works for camera, mic and location; Camera → Photos is closed; the emergency dialer screen opens; the image attaches through Messages' own picker; lock task comes back after a reboot. |
+| B-Q4 must-have apps | **partly** | Telegram before sign-in: **a permission-prompt loop under BLOCK until its phone permissions are pre-granted**. Slack, Spotify, Outlook and Gmail wait on a board decision. |
 | S7 install race | **partly** | DPC hid a newly installed app 4.6 s after `firstInstallTime`. Deep links failed for ~4 s (package frozen), but the app's **process started ~0.35 s before the hide**; no window was displayed. |
 
 ## A0. Baseline
@@ -604,6 +606,72 @@ every ~250 ms (`deeplink-loop.out`). Telegram (`org.telegram.messenger` 12.10.6)
   0.35 s, so `Application.onCreate` and whatever the app starts there did run.
 - Implication: a hide-on-`PACKAGE_ADDED` DPC leaves a gap of about 4–5 s. Most of it is platform latency before the
   broadcast, not DPC work. To close it, the DPC would have to stop new installs (S1/S2), not race them.
+
+## B-Q1. Lock task follow-ups, all with BLOCK on
+
+**Result: yes for all five.** Run 2026-10-08 23:17–23:22Z. Evidence: `evidence/phase-b/bq1/`.
+Lock task packages: Phone (`com.google.android.dialer`), Messages, Camera (`com.motorola.camera3`), `com.android.phone`
+and the spike. Features `SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK` (87). The spike is the persistent HOME.
+
+| Follow-up | Result |
+|---|---|
+| **Pre-grant with `setPermissionGrantState`** (`permission-pregrant.log`) | **Works for camera, microphone and location** on this build. Camera, Messages and Telegram (third-party, no default grants): `CAMERA`, `RECORD_AUDIO`, `ACCESS_FINE/COARSE_LOCATION`, `POST_NOTIFICATIONS`, `READ_MEDIA_IMAGES`, `READ_CONTACTS` all end `granted=true, flags=[POLICY_FIXED…]`. Quirk: right after granting, `getPermissionGrantState` returns 2 (DENIED) for location, while `checkPermission`, `dumpsys` and appops (`FINE_LOCATION: allow`) all show it granted. |
+| Camera with BLOCK on, after the pre-grant | Opens with **no permission prompt** (in A3 the prompt was blocked). Photo taken: `DCIM/Camera/IMG_20261008_161844868.jpg` (1.8 MB). |
+| **Camera thumbnail → Photos** | **Closed**: `BlockedAppActivity` "Photos is not available right now." (`camera-thumbnail-block-on.png`). In A3, with BLOCK off, this opened Google Photos. |
+| **Emergency dialer screen**, `com.android.phone` allowlisted | **Opens** (`com.android.phone/.EmergencyDialer`, `emergency-dialer-block-on.png`). Backed out. **No call placed.** Its "Emergency information" button wasn't probed; that's a lead for the Verifier. |
+| **Attach an image in Messages through its own picker** | **Works.** Compose to the test number 555-0100 → "Show attach media screen" opens Messages' in-app gallery inside the task. The 16:18 photo attached as a draft MMS. **Nothing sent**; the draft was removed. Messages' **"Folders"** button opens the system Photo Picker (`com.google.android.providers.media.module/…PhotoPickerGetContentActivity`), which BLOCK stops: "Media picker is not available right now." |
+| **Reboot back into lock task** (key always-allowed) | **Yes** (`reboot.log`). adb was back in 38 s with no prompt. At +45 s, `mLockTaskModeState=LOCKED`, and DO, lock-task packages and features were unchanged. Settings is blocked. At boot, Motorola's `UsbBottomChooseActivity` is blocked again (as in A3). |
+
+Also seen after the reboot: a second account, `type=com.google.android.apps.tachyon`. Google Meet/Duo creates this
+local account after Play updated it (S4); it isn't a Google sign-in.
+
+## B-Q4. Must-have apps (Slack, Spotify, Telegram, Gmail, Outlook)
+
+**Result: partly. Telegram's screens before sign-in are done; the rest is waiting on the board** (see the end of this section).
+Evidence: `evidence/phase-b/bq4/`.
+
+### Telegram `org.telegram.messenger` 12.10.6 (versionCode 71122), from Play (the S7 install)
+
+- Under lock task with BLOCK on, Telegram opens on its welcome screen. A "Web tabs" node on the welcome screen is an
+  empty placeholder: tapping it does nothing, and no tabs exist before sign-in.
+- **"Start Messaging" → loop of blocked screens.** Telegram asks for runtime permissions (`REQUEST_PERMISSIONS`) and
+  opens Credential Manager (`com.android.credentialmanager/.CredentialSelectorActivity`). Under BLOCK both give
+  `BlockedAppActivity` ("Permission controller / Credential Manager is not available right now"). Every OK resumes
+  Telegram, and Telegram asks again: **6 requests in 30 s, with no way through.**
+  The requested permissions were not granted: `READ_PHONE_STATE`, `READ_PHONE_NUMBERS`, `CALL_PHONE`, `READ_CALL_LOG`.
+- **Pre-granting those four with `setPermissionGrantState` breaks the loop** (0 new requests). Telegram reaches
+  "Your phone number". So **Plainphone must pre-grant each allowed app's first-run permissions** (or allow the
+  permission controller) before BLOCK can be on.
+- **Privacy finding:** with `READ_PHONE_NUMBERS` pre-granted, Telegram **pre-filled a phone number** in the field
+  (white text, not a placeholder), even though there's no SIM. The source wasn't traced. I didn't record the value: it's
+  redacted in `telegram.log` and `telegram-06-after-pregrant.png`, and Telegram's data was cleared afterwards
+  (`pm clear`). Pre-granting phone permissions gives an app the phone's number; Plainphone should only grant what each app needs.
+- **Stopped there.** Signing in needs a phone number and code; that's Beaux's. Not tested yet: sign-in, signing in again,
+  notifications, links, and **whether Telegram's in-app browser can reach arbitrary sites**. All of these need a
+  signed-in Telegram.
+
+### Not started: needs a board decision (card on PLA-5)
+
+- **Slack, Spotify, Outlook:** not installed. The board's rule for the test account covers "Play sign-in and S1–S4, S7".
+  Telegram was installed as part of S7. Installing three more apps would use the account outside that scope, so I'm asking first.
+- **Gmail** (preinstalled, `com.google.android.gm`; Play updated it during S4): opening it would open the test account's
+  mailbox, and the board said not to open mail. Not opened.
+- **App sign-ins** for every app are Beaux's to do at the phone.
+
+## Current state (2026-10-08T23:26Z, after Phase B)
+
+`evidence/phase-b/end-state.txt`:
+- Spike DPC is Device Owner (`testOnlyAdmin=true`, removable with `dpm remove-active-admin`). **No DPC restrictions**,
+  nothing hidden, nothing suspended. **Lock task off** (`NONE`); only the spike is in the lock-task packages list.
+- HOME role = `com.motorola.launcher3`, and the spike's persistent HOME is cleared. Play `53.4.34-34` is visible.
+- **Accounts: the Google test account** (sync off for all 7 items) plus Meet's local `tachyon` account.
+  Reset protection is now tied to the test account: **remove it from the phone (Settings > Passwords, passkeys & accounts >
+  account > Remove account) before any recovery wipe.** The Settings reset path is still the only allowed one.
+- Installed by Phase B: Telegram 12.10.6 (visible, data cleared, phone/camera/mic/location pre-granted with `POLICY_FIXED`),
+  our target app v2, and Play's updates to at least 23 preinstalled apps (S4).
+- adb works over USB, and this Mac's key is always-allowed (persistent keystore). After the B-Q1 reboot,
+  `adb_wifi_enabled` = 0 (it was 1), so wireless debugging is now off. `stay_on_while_plugged_in` = 2 (USB). `boot_count` = 5.
+- Return to unmanaged: as in § A2. If the board also wants the account gone, remove it through Settings first.
 
 ## State before Phase B (2026-10-08T21:44Z)
 

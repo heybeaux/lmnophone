@@ -1,0 +1,33 @@
+## B-Q1 setPermissionGrantState 2026-10-08T23:17:56Z
+grant com.motorola.camera3 android.permission.CAMERA -> true state=1 granted=true
+grant com.motorola.camera3 android.permission.RECORD_AUDIO -> true state=1 granted=true
+grant com.motorola.camera3 android.permission.ACCESS_FINE_LOCATION -> true state=2 granted=true
+grant com.motorola.camera3 android.permission.ACCESS_COARSE_LOCATION -> true state=2 granted=true
+grant com.motorola.camera3 android.permission.POST_NOTIFICATIONS -> true state=1 granted=true
+grant com.motorola.camera3 android.permission.READ_MEDIA_IMAGES -> true state=1 granted=true
+grant com.google.android.apps.messaging android.permission.CAMERA -> true state=1 granted=true
+grant com.google.android.apps.messaging android.permission.RECORD_AUDIO -> true state=1 granted=true
+grant com.google.android.apps.messaging android.permission.ACCESS_FINE_LOCATION -> true state=2 granted=true
+grant com.google.android.apps.messaging android.permission.ACCESS_COARSE_LOCATION -> true state=2 granted=true
+grant com.google.android.apps.messaging android.permission.POST_NOTIFICATIONS -> true state=1 granted=true
+grant com.google.android.apps.messaging android.permission.READ_MEDIA_IMAGES -> true state=1 granted=true
+grant com.plainphone.spike.dpc android.permission.CAMERA -> true state=0 granted=false
+grant com.plainphone.spike.dpc android.permission.RECORD_AUDIO -> true state=1 granted=true
+grant com.plainphone.spike.dpc android.permission.ACCESS_FINE_LOCATION -> true state=0 granted=false
+grant com.plainphone.spike.dpc android.permission.ACCESS_COARSE_LOCATION -> true state=0 granted=false
+grant com.plainphone.spike.dpc android.permission.POST_NOTIFICATIONS -> true state=1 granted=true
+grant com.plainphone.spike.dpc android.permission.READ_MEDIA_IMAGES -> true state=0 granted=false
+--- dumpsys runtime permission flags
+[com.motorola.camera3]
+android.permission.ACCESS_COARSE_LOCATION: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.ACCESS_FINE_LOCATION: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.CAMERA: granted=true, flags=[ POLICY_FIXED|GRANTED_BY_DEFAULT|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.RECORD_AUDIO: granted=true, flags=[ POLICY_FIXED|GRANTED_BY_DEFAULT|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+[com.google.android.apps.messaging]
+android.permission.ACCESS_COARSE_LOCATION: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.ACCESS_FINE_LOCATION: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.CAMERA: granted=true, flags=[ POLICY_FIXED|GRANTED_BY_DEFAULT|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+android.permission.RECORD_AUDIO: granted=true, flags=[ POLICY_FIXED|GRANTED_BY_DEFAULT|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+--- appops location (camera3): Uid mode: COARSE_LOCATION: foreground
+COARSE_LOCATION: allow / Uid mode: FINE_LOCATION: foreground
+FINE_LOCATION: allow

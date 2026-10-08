@@ -75,6 +75,13 @@ object Commands {
                 admin, c.packageName, android.Manifest.permission.POST_NOTIFICATIONS,
                 DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED,
             ).let { "grant POST_NOTIFICATIONS -> $it" }
+            // grant <pkg> <permission>  (B-Q1: pre-grant so prompts never show under BLOCK)
+            "grant" -> {
+                val perm = parts.getOrNull(2)!!
+                val ok = dpm.setPermissionGrantState(admin, arg!!, perm, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED)
+                val granted = c.packageManager.checkPermission(perm, arg) == PackageManager.PERMISSION_GRANTED
+                "grant $arg $perm -> $ok state=${dpm.getPermissionGrantState(admin, arg, perm)} granted=$granted"
+            }
             "statusbar-disable" -> "setStatusBarDisabled(${arg == "1"}) -> ${dpm.setStatusBarDisabled(admin, arg == "1")}"
             "crash" -> relay(c, Intent().putExtra("op", "crash"))
             "release" -> Release.run(c, null)

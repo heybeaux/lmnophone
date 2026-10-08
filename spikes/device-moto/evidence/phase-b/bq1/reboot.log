@@ -1,0 +1,11 @@
+## B-Q1 reboot, BLOCK on 2026-10-08T23:20:56Z
+deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[org.telegram.messenger:true] suspended=[] locked=true debugLiftAt=0
+adb back after 38 s, state device
+boot_completed after 38 s
++45 s: mLockTaskModeState=LOCKED
+topResumedActivity=ActivityRecord{bc077ca u0 android/com.android.internal.app.BlockedAppActivity t128}
+deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[org.telegram.messenger:true] suspended=[] locked=true debugLiftAt=0
+accounts: 2
+$ Settings attempt
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+topResumedActivity=ActivityRecord{8b015b5 u0 android/com.android.internal.app.BlockedAppActivity t127}
