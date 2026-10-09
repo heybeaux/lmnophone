@@ -174,6 +174,22 @@ class TurnOffControllerTest {
         assertTrue(effects.applied.isEmpty())
     }
 
+    @Test fun `boot and package reapply between restore steps cannot relock restored categories`() {
+        val dialer = PackageName("test.systemdialer")
+        val facts = PolicyInput("model", "build", PackageName("test.home"), PackageName("test.sms"),
+            listOf(InstalledPackage(dialer, true, 1)),
+            listOf(FloorIdentity(dialer, FloorRole.SYSTEM_DIALER, IdentitySource.OS_MANAGED)))
+        for (step in TurnOffStep.entries) {
+            assertEquals(TurnOffOutcome.PROGRESS, tick().outcome)
+            val plan = PolicyEngine.decide(facts.copy(waitingOperation = store.state!!.operation,
+                lockedBoot = step.ordinal % 2 == 0))
+            // A normal applier would put restrictions back and cause the sequencer's final check to rewind.
+            if (plan.steps.any { it.stage == ApplyStage.RESTRICTIONS }) effects.mismatch = TurnOffStep.USER_RESTRICTIONS
+            assertTrue(plan.steps.none { it.stage in setOf(ApplyStage.HIDES, ApplyStage.LOCK_TASK, ApplyStage.HOME) })
+        }
+        assertEquals(TurnOffOutcome.OFF, tick().outcome)
+    }
+
     private class Store(var state: WaitingState?) : WaitingChangeStore {
         var fail = false
         var crash = false

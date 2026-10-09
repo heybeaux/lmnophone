@@ -232,4 +232,62 @@ class PolicyEngineTest {
         assertFalse(dialer in plan.hidden)
     }
 
+    private fun turnOff(phase: WaitingPhase) = WaitingOperation(
+        WaitingIdentity("turn-off", "synthetic-code"), TrustedPersonId("holder"), 0, 0,
+        Mode.TRUSTED, RunningTime("epoch", 0), phase, mapOf(TrustedPersonId("holder") to 0L),
+    )
+
+    @Test fun `committing turn off applies only live floor unhide across all policy and boot states`() {
+        for (locked in listOf(false, true)) for (health in PolicyHealth.entries) for (known in listOf(false, true)) {
+            val facts = input().copy(waitingOperation = turnOff(WaitingPhase.COMMITTING), lockedBoot = locked,
+                health = health, inventory = if (known) input().inventory else null,
+                previousHidden = setOf(browser, dialer), previousLockTask = setOf(home, sms),
+                requestedDestruction = listOf(DestructiveRequest(browser, DestructiveKind.UNINSTALL)))
+            val plan = PolicyEngine.decide(facts)
+            assertEquals(listOf(ApplyStage.EMERGENCY_FLOOR), plan.steps.map { it.stage })
+            assertTrue(plan.steps.all { it.readbackRequired })
+            assertEquals(EmergencyFloor.compute(facts.installed, facts.identities).neverHide, plan.unhide)
+            assertEquals(SweepMode.NONE, plan.sweepMode)
+            assertTrue(plan.hidden.isEmpty())
+            assertTrue(plan.restrictions.isEmpty())
+            assertTrue(plan.features.isEmpty())
+            assertTrue(plan.lockTaskPackages.isEmpty())
+            assertTrue(plan.allowedDestruction.isEmpty())
+            assertEquals(facts.requestedDestruction, plan.refusedDestruction)
+            assertNull(plan.expected.hidden)
+            assertNull(plan.expected.lockTaskPackages)
+            assertNull(plan.expected.features)
+            assertNull(plan.expected.restrictions)
+            assertNull(plan.expected.home)
+            assertNull(plan.expected.systemInputMethodsOnly)
+            assertNull(plan.expected.systemAccessibilityServicesOnly)
+            assertEquals(plan.unhide, plan.expected.unhiddenAndEnabled)
+            assertEquals(plan.unhide, plan.expected.unsuspended)
+        }
+    }
+
+    @Test fun `pending terminal missing and rollback operations do not bypass normal reapply`() {
+        val normal = PolicyEngine.decide(input())
+        for (phase in WaitingPhase.entries.filter { it != WaitingPhase.COMMITTING }) {
+            assertEquals(normal, PolicyEngine.decide(input().copy(waitingOperation = turnOff(phase))))
+        }
+        assertEquals(normal, PolicyEngine.decide(input().copy(waitingOperation = null)))
+    }
+
+    @Test fun `turn off floor ignores ordinary approvals session grants and spoofed emergency identity`() {
+        val facts = input().copy(waitingOperation = turnOff(WaitingPhase.COMMITTING),
+            approved = setOf(browser, play),
+            sessionAccess = SessionAccess("session", WindowKind.PLAY, setOf(play), BootTime("boot", 600_000)),
+            currentBoot = BootTime("boot", 0),
+            identities = input().identities.filter { it.role != FloorRole.SYSTEM_DIALER } +
+                FloorIdentity(pushed, FloorRole.SYSTEM_DIALER, IdentitySource.OS_MANAGED))
+        val plan = PolicyEngine.decide(facts)
+        assertFalse(pushed in plan.unhide)
+        assertFalse(play in plan.unhide)
+        assertFalse(browser in plan.unhide)
+        assertFalse(home in plan.unhide)
+        assertTrue(plan.needsAttention)
+        assertTrue(emergency in plan.unhide)
+    }
+
 }
