@@ -65,7 +65,13 @@ class PinVault(
 
     /** Resets only the selected holder. Never grants action authority and never skips a waiting change. */
     @Synchronized
-    fun recover(person: TrustedPersonId, code: CharArray, newPin: CharArray): RecoveryResult {
+    fun recover(person: TrustedPersonId, code: CharArray, newPin: CharArray): RecoveryResult =
+        recoverWithCommit(person, code, newPin) { before, replacement -> store.compareAndSet(before, replacement) }
+
+    /** Shared verification/counters; only policy-owned workflows may replace the final atomic commit. */
+    @Synchronized
+    internal fun recoverWithCommit(person: TrustedPersonId, code: CharArray, newPin: CharArray,
+        commit: (CredentialState, CredentialState) -> Boolean): RecoveryResult {
         validatePin(newPin)
         val now = clock.checkpoint() ?: return RecoveryResult.Unavailable
         val state = store.read() ?: return RecoveryResult.Unavailable
@@ -80,9 +86,11 @@ class PinVault(
             if (!store.compareAndSet(state, state.replacing(person, credential.copy(recoveryCounter = next), if (next.failures == 10) CredentialChannel.RECOVERY else null))) return RecoveryResult.Unavailable
             return RecoveryResult.Wrong(next.remainingMillis, next.failures == 10)
         }
+        val nextGeneration = try { Math.addExact(credential.generation, 1) } catch (_: ArithmeticException) { return RecoveryResult.Unavailable }
+        if (state.revision == Long.MAX_VALUE) return RecoveryResult.Unavailable
         val prepared = prepareCredential(newPin)
-        val replacement = prepared.credential.copy(generation = Math.addExact(credential.generation, 1))
-        if (!store.compareAndSet(state, state.replacing(person, replacement))) return RecoveryResult.Unavailable
+        val replacement = prepared.credential.copy(generation = nextGeneration)
+        if (!commit(state, state.replacing(person, replacement))) return RecoveryResult.Unavailable
         grants.entries.removeAll { it.value.person == person }
         return RecoveryResult.Replaced(prepared.recoveryCode)
     }

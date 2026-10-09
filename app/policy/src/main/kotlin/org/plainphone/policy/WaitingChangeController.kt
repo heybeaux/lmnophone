@@ -14,7 +14,7 @@ class WaitingIdentity(val requestId: String, val cancelCode: String) {
 /** Reserve IDs and cancel codes durably; neither may ever be reused, including after abandoned preparation. */
 fun interface WaitingIdentitySource { fun reserve(): WaitingIdentity }
 
-enum class WaitingEvent { STARTED, CANCELLED_ON_PHONE, DEPENDENCY_CHANGED, COMMITTING, COMPLETED }
+enum class WaitingEvent { STARTED, CANCELLED_ON_PHONE, DEPENDENCY_CHANGED, COMMITTING, COMPLETED, SKIPPED }
 class WaitingText(val key: String, val event: WaitingEvent, val operation: WaitingOperation,
     recipientGenerations: Map<TrustedPersonId, Long>) {
     val recipientGenerations: Map<TrustedPersonId, Long> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientGenerations))
@@ -26,9 +26,14 @@ class WaitingOperation(
     val structureGeneration: Long, val mode: Mode, val startedAt: RunningTime, val phase: WaitingPhase,
     recipientGenerations: Map<TrustedPersonId, Long>,
     val restoredSteps: Int = 0,
+    val skipper: TrustedPersonId? = null,
+    val skipperGeneration: Long? = null,
 ) {
     init {
         require(generation >= 0 && structureGeneration >= 0)
+        require((skipper == null) == (skipperGeneration == null))
+        require(skipperGeneration == null || (skipperGeneration >= 1 && mode == Mode.TRUSTED &&
+            phase in setOf(WaitingPhase.COMMITTING, WaitingPhase.COMPLETED)))
         require(restoredSteps in 0..TurnOffStep.entries.size)
         require(restoredSteps == 0 || phase == WaitingPhase.COMMITTING || phase == WaitingPhase.COMPLETED)
         require(recipientGenerations.isNotEmpty() && recipientGenerations.values.all { it >= 0 })
@@ -36,8 +41,12 @@ class WaitingOperation(
     /** Start-time fallback retained independently of acknowledged outbox texts. */
     val recipientGenerations: Map<TrustedPersonId, Long> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientGenerations))
     val kind = WaitingChangeKind.TURN_OFF
-    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, restoredSteps)
-    internal fun withRestoredSteps(count: Int) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, count)
+    val authorityPerson: TrustedPersonId get() = skipper ?: starter
+    val authorityGeneration: Long get() = skipperGeneration ?: generation
+    internal fun withSkipper(person: TrustedPersonId, generation: Long) = WaitingOperation(identity, starter, this.generation,
+        structureGeneration, mode, startedAt, WaitingPhase.COMMITTING, recipientGenerations, 0, person, generation)
+    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, restoredSteps, skipper, skipperGeneration)
+    internal fun withRestoredSteps(count: Int) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, count, skipper, skipperGeneration)
 }
 class WaitingState(val revision: Long = 0, val operation: WaitingOperation? = null, texts: List<WaitingText> = emptyList(),
     val storageGeneration: String = "initial", recoveryReceipts: List<RecoveryReceipt> = emptyList()) {
@@ -80,8 +89,9 @@ enum class WaitingOutcome { PENDING, COMMITTING, CANCELLED, REFUSED, BUSY, NOT_R
 
 /**
  * The common serialized dispatcher owns this controller, PinVault and all credential/operation writes.
- * This slice starts only turn-off waits. It never restores settings, clears Device Owner, skips a wait,
- * applies a credential patch, or reports Off. Damaged state remains held until WaitingReconciler completes.
+ * This controller starts turn-off waits and can skip them through the explicitly wired recovery transaction.
+ * It never restores settings, clears Device Owner, applies people/mode patches or reports Off.
+ * Damaged state remains held until WaitingReconciler completes.
  */
 class WaitingChangeController(
     private val store: WaitingChangeStore,
@@ -90,6 +100,7 @@ class WaitingChangeController(
     private val authority: PersonAuthorityConsumer,
     private val identities: WaitingIdentitySource,
     private val cancelIntents: CancelIntentStore,
+    private val skipSupport: WaitingSkipSupport? = null,
 ) {
     private val cancellationRequests = mutableSetOf<String>()
 
@@ -156,6 +167,64 @@ class WaitingChangeController(
         if (!battery.allowsDiscretionaryUnhide) return WaitingOutcome.LOW_BATTERY
         return if (write(before, operation.withPhase(WaitingPhase.COMMITTING), WaitingEvent.COMMITTING, current.people.mapValues { it.value.generation }))
             WaitingOutcome.COMMITTING else WaitingOutcome.NOT_READY
+    }
+
+    /** Exact request shown and confirmed on the skip screen, never ordinary forgotten-PIN recovery. */
+    @Synchronized
+    fun skip(requestId: String, skipper: TrustedPersonId, code: CharArray, newPin: CharArray,
+        confirmed: Boolean, battery: BatteryState): WaitingSkipResult {
+        val support = skipSupport ?: return WaitingSkipResult.NotSkipped(WaitingOutcome.REFUSED)
+        if (!confirmed || newPin.size < 6 || newPin.any { it !in '0'..'9' }) return WaitingSkipResult.NotSkipped(WaitingOutcome.REFUSED)
+        val before = store.read() ?: return WaitingSkipResult.NotSkipped(WaitingOutcome.NOT_READY)
+        skipBlocker(before, requestId, skipper, battery)?.let { return WaitingSkipResult.NotSkipped(it) }
+        var rejected = WaitingOutcome.NOT_READY
+        val result = support.vault.recoverWithCommit(skipper, code, newPin) { oldCredentials, newCredentials ->
+            // The success callback runs before any credential replacement is saved. Re-read all guards.
+            val current = store.read()
+            if (current == null) false else {
+                val blocked = skipBlocker(current, requestId, skipper, battery)
+                if (blocked != null) { rejected = blocked; false }
+                else if (credentials()?.revision != oldCredentials.revision) false
+                else {
+                    val revision = nextRevision(current)
+                    if (revision == null) false else {
+                        val operation = current.operation!!.withSkipper(skipper, newCredentials.people.getValue(skipper).generation)
+                        val text = WaitingText("${requestId.length}:$requestId:$revision", WaitingEvent.SKIPPED,
+                            operation, newCredentials.people.mapValues { it.value.generation })
+                        support.committer.commit(oldCredentials, newCredentials, current,
+                            current.replacing(revision, operation, current.texts + text))
+                    }
+                }
+            }
+        }
+        return when (result) {
+            is RecoveryResult.Replaced -> WaitingSkipResult.Committing(result.recoveryCode)
+            is RecoveryResult.Wrong -> WaitingSkipResult.Wrong(result.remainingMillis, result.notifyLockout)
+            is RecoveryResult.Delayed -> WaitingSkipResult.Delayed(result.remainingMillis)
+            RecoveryResult.Unavailable -> WaitingSkipResult.NotSkipped(rejected)
+        }
+    }
+
+    private fun skipBlocker(before: WaitingState, requestId: String, skipper: TrustedPersonId, battery: BatteryState): WaitingOutcome? {
+        reconcileCancellations(before)
+        val operation = before.operation ?: return WaitingOutcome.IGNORED
+        if (operation.identity.requestId != requestId) return WaitingOutcome.IGNORED
+        if (operation.phase != WaitingPhase.PENDING) return phaseResult(operation.phase)
+        val intent = cancelIntents.read(requestId)
+        if (requestId in cancellationRequests || intent == CancelIntent.REQUESTED) {
+            cancelIntents.request(requestId)
+            return cancelPending(before, operation, WaitingEvent.CANCELLED_ON_PHONE)
+        }
+        val current = credentials() ?: return WaitingOutcome.NOT_READY
+        // A pre-existing dependency change cancels before a skipper can replace starter authority.
+        if (current.mode != operation.mode || current.structureGeneration != operation.structureGeneration ||
+            current.people[operation.starter]?.generation != operation.generation) {
+            return cancelPending(before, operation, WaitingEvent.DEPENDENCY_CHANGED)
+        }
+        if (current.mode != Mode.TRUSTED || skipper !in current.people) return WaitingOutcome.REFUSED
+        if (intent == CancelIntent.UNKNOWN) return WaitingOutcome.NOT_READY
+        if (!battery.allowsDiscretionaryUnhide) return WaitingOutcome.LOW_BATTERY
+        return null
     }
 
     /** Only after the durable outbox acknowledges this exact receipt key. Delivery never gates progress. */
