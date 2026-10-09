@@ -1,0 +1,117 @@
+## outside: tap [2 Outside]
+before top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+after top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "Example Domain" "This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes." "هذا النطاق مُخصص للاستخدام في أمثلة التوثيق دون الحاجة إلى إذن. هذه ليست خدمة، يُرجى تجنب الاعتماد عليها لأغراض الاختبار وا
+portal requests:
+  127.0.0.1 - - [08/Oct/2026 17:40:46] "GET /generate_204 HTTP/1.1" 302 -
+  127.0.0.1 - - [08/Oct/2026 17:40:46] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:40:46] "GET /generate_204 HTTP/1.1" 302 -
+  127.0.0.1 - - [08/Oct/2026 17:40:46] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity screen: "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and connect" "1 Accept and c
+## jsredirect: tap [3 JS redirect]
+before top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+after top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "Ferry - Wikipedia" "Wikipedia" "Wikipedia" "Search" "User navigation" "User menu" "Ferry" "Article" "Article" "Talk" "Talk" "Language" "Save" "Edit" "Download PDF" "Download PDF" "Ferry (disambiguation)" "Ferry (disambiguation)" " and " "Ferryman (disambiguation)" "Ferryman (disambiguation)" "." "A
+portal requests:
+  127.0.0.1 - - [08/Oct/2026 17:41:06] "GET /generate_204 HTTP/1.1" 302 -
+  127.0.0.1 - - [08/Oct/2026 17:41:06] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:41:07] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:41:07] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity screen: "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and connect" "1 Accept and c
+## blank: tap [4 target]
+before top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+after top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "BBC Home - Breaking News, World News, US News, Sports, Business, Innovation, Climate, Culture, Travel, Video &amp; Audio" "Skip to content" "Skip to content" "Open menu" "British Broadcasting Corporation" "British Broadcasting Corporation" "US Secretary of Defense Pete Hegseth speaks ahead of US Pr
+portal requests:
+  127.0.0.1 - - [08/Oct/2026 17:41:20] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:41:20] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:41:20] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:41:20] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:41:22] "GET /generate_204 HTTP/1.1" 302 -
+  127.0.0.1 - - [08/Oct/2026 17:41:22] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity screen: "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and connect" "1 Accept and c
+## intent-chrome: tap [6 intent: link]
+before top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+after top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "quantum_ic_warning_amber_96" "&#10;" "The network you are trying to join is requesting to open another application." "For example, the login page may require a specific application for authentication" "CONTINUE ANYWAY VIA BROWSER" "CONTINUE ANYWAY VIA BROWSER" "&#10;" "Sign in to AndroidWifi" "10.0
+portal requests:
+  127.0.0.1 - - [08/Oct/2026 17:41:42] "GET /generate_204 HTTP/1.1" 302 -
+  127.0.0.1 - - [08/Oct/2026 17:41:42] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:41:43] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:41:43] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity screen: "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and connect" "1 Accept and c
+## googlechrome: tap [7 googlechrome]
+before top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+after top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and connect" "1 Accept and connect" "2 Outside site (example.com)" "2 Outside site (example.com)" "3 JS redirect to Wikipedia" "5 File picker: " "Choose File: No file chosen" "6 intent: link to Chrome" "6 intent: link to Chrome" "7 googlechrome: sc
+portal requests:
+    mLockTaskModeState=LOCKED
+## market: tap [8 market]
+before top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+after top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "quantum_ic_warning_amber_96" "&#10;" "The network you are trying to join is requesting to open another application." "For example, the login page may require a specific application for authentication" "For example, the login page may require a specific application for authentication" "CONTINUE ANYW
+portal requests:
+  127.0.0.1 - - [08/Oct/2026 17:42:09] "GET /favicon.ico HTTP/1.1" 302 -
+  captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+  127.0.0.1 - - [08/Oct/2026 17:42:09] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:42:09] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:42:09] "GET /generate_204 HTTP/1.1" 302 -
+  127.0.0.1 - - [08/Oct/2026 17:42:09] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity screen: "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and connect" "1 Accept and c
+## intent-settings: tap [14 intent: Settings]
+before top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+after top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "quantum_ic_warning_amber_96" "&#10;" "The network you are trying to join is requesting to open another application." "For example, the login page may require a specific application for authentication" "For example, the login page may require a specific application for authentication" "CONTINUE ANYW
+portal requests:
+  127.0.0.1 - - [08/Oct/2026 17:42:24] "GET /favicon.ico HTTP/1.1" 302 -
+  captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+  127.0.0.1 - - [08/Oct/2026 17:42:24] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:42:24] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:42:24] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+  127.0.0.1 - - [08/Oct/2026 17:42:24] "GET /generate_204 HTTP/1.1" 302 -
+  captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity screen: "Ferry Wi-Fi" "Sign in to AndroidWifi" "10.0.2.2" "More options" 
+10-08 17:39:49.161   555  3555 I ActivityTaskManager: START u0 {act=android.net.conn.CAPTIVE_PORTAL flg=0x10400000 cmp=com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity (has extras)} with LAUNCH_MULTIPLE from uid 1000 (BAL_ALLOW_ALLOWLISTED_UID) result code=0
+## intent-chrome: tap CONTINUE ANYWAY VIA BROWSER
+NO NODE ~CONTINUE ANYWAY
+top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "Ferry Wi-Fi" "Sign in to AndroidWifi" "10.0.2.2" "More options" 
+## intent-chrome (coordinate tap 264,1039) then CONTINUE ANYWAY VIA BROWSER
+screen: "The network you are trying to join is requesting to open another application." "For example, the login page may require a specific application for authentication" "CONTINUE ANYWAY VIA BROWSER" "CONTINUE ANYWAY VIA BROWSER" "&#10;" "Sign in to Androi
+bounds="[107,1126][866,1186]"
+tapp: bad math expression: operator expected at `1126 866 1...'
+top after CONTINUE ANYWAY VIA BROWSER: com.plainphone.spike.emu/.MainActivity
+screen: "Plainphone emu spike (throwaway)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop lock task" "deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.g
+10-08 17:43:28.515  4297  4297 I PPEMU   : signin close-on-validated -> OK session ended (validated) hide=true; active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=105 wifiCaptive=false wifiValidated=true
+10-08 17:43:28.519   555   572 I ActivityTaskManager: START u0 {flg=0x30000000 cmp=com.plainphone.spike.emu/.MainActivity} with LAUNCH_SINGLE_TASK from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result code=3
