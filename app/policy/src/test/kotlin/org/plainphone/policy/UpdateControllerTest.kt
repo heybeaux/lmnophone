@@ -188,7 +188,7 @@ class UpdateControllerTest {
         assertEquals(UpdatePhase.INSTALLED, f.update.submission!!.phase); assertEquals(1, f.checks)
     }
     @Test fun `startup version equality alone means installed with separate self check outcome`() {
-        for (version in listOf(null, 1L, 2L, 3L)) for (passes in listOf(false, true)) {
+        for (version in listOf(1L, 2L, 3L)) for (passes in listOf(false, true)) {
             val f = F(); f.grant(); f.controller.submitUpdate(); f.installed = version; f.checkPasses = passes
             val debit = f.record.state.ledger.debits; f.restart()
             assertEquals(if (version == 2L) UpdatePhase.INSTALLED else UpdatePhase.FAILED, f.update.submission!!.phase)
@@ -197,12 +197,15 @@ class UpdateControllerTest {
             assertEquals(1, f.commits); assertEquals(debit, f.record.state.ledger.debits)
         }
     }
-    @Test fun `failure statuses and duplicate results cannot refund or reclassify`() {
+    @Test fun `success after failure reconciles without refund and duplicates cannot recheck`() {
         val f = F(); f.grant(); f.controller.submitUpdate(); val debit = f.record.state.ledger.debits
         assertEquals(UpdateOutcome.REFUSED, f.protocol.onResult(8, false))
         assertEquals(UpdateOutcome.FAILED, f.protocol.onResult(7, false)); f.installed = 2
+        assertEquals(UpdateOutcome.INSTALLED, f.protocol.onResult(7, true))
+        assertEquals(1, f.checks); assertEquals(UpdateSelfCheck.PASSED, f.update.submission!!.selfCheck)
+        assertNull(f.record.state.grant)
         assertEquals(UpdateOutcome.REFUSED, f.protocol.onResult(7, true))
-        assertEquals(UpdatePhase.FAILED, f.update.submission!!.phase); assertEquals(debit, f.record.state.ledger.debits); assertEquals(1, f.commits)
+        assertEquals(UpdatePhase.INSTALLED, f.update.submission!!.phase); assertEquals(debit, f.record.state.ledger.debits); assertEquals(1, f.commits)
     }
     @Test fun `restored foreign grant never supplies controller ownership`() {
         val f = F(); val r = f.grant(); val saved = f.record; f.restart(); f.record = saved
@@ -314,6 +317,112 @@ class UpdateControllerTest {
             val commits = f.commits; f.hook = {}; f.restart()
             assertEquals(UpdateOutcome.REFUSED, f.controller.submitSupervisedUpdate(r, fresh)); assertEquals(commits, f.commits)
             assertTrue(f.record.state.ledger.debits.isEmpty())
+        }
+    }
+
+    @Test fun `restart before pending install lands recovers failed submission on next start once`() {
+        val f = F(); f.grant(); f.controller.submitUpdate(); val debit = f.record.state.ledger.debits
+        assertEquals(ElevationOutcome.IDLE, f.restart())
+        assertEquals(UpdatePhase.FAILED, f.update.submission!!.phase); assertEquals(0, f.checks)
+        f.installed = 2
+        repeat(2) { assertEquals(ElevationOutcome.IDLE, f.restart()) }
+        assertEquals(UpdatePhase.INSTALLED, f.update.submission!!.phase)
+        assertEquals(UpdateSelfCheck.PASSED, f.update.submission!!.selfCheck)
+        assertEquals(1, f.checks); assertEquals(1, f.commits)
+        assertEquals(debit, f.record.state.ledger.debits); assertNull(f.record.state.grant)
+        assertEquals(UpdateOutcome.REFUSED, f.controller.submitUpdate())
+    }
+    @Test fun `unreadable installed version leaves submission unchanged and retries next start`() {
+        for (failed in listOf(false, true)) for (startup in listOf(false, true)) {
+            val f = F(); f.grant(); f.controller.submitUpdate(); val debit = f.record.state.ledger.debits
+            if (failed) assertEquals(UpdateOutcome.FAILED, f.protocol.onResult(7, false))
+            val saved = f.update; f.installed = null
+            if (startup) assertEquals(ElevationOutcome.NOT_READY, f.restart())
+            else assertEquals(UpdateOutcome.NOT_READY, f.protocol.onResult(7, true))
+            assertSame(saved, f.update); assertEquals(0, f.checks)
+            f.installed = 2; assertEquals(ElevationOutcome.IDLE, f.restart())
+            assertEquals(UpdatePhase.INSTALLED, f.update.submission!!.phase)
+            assertEquals(1, f.checks); assertEquals(1, f.commits)
+            assertEquals(debit, f.record.state.ledger.debits); assertNull(f.record.state.grant)
+        }
+    }
+    @Test fun `supervised preparation refuses every active session phase without effects or writes`() {
+        for (phase in SessionPhase.entries) {
+            val f = F(mode = Mode.TRUSTED); f.startUp()
+            val journal = SessionJournal.Active(SessionAccess("session", WindowKind.SETTINGS,
+                setOf(f.settings), BootTime("boot", 600_000)), phase)
+            f.record = f.record.replacing(f.record.state, journal); val saved = f.record; f.events.clear()
+            assertNull(f.controller.prepareSupervisedUpdate(f.person, f.binding), phase.name)
+            assertSame(saved, f.record); assertTrue(f.events.isEmpty()); assertNull(f.update.submission)
+        }
+    }
+
+    @Test fun `both paths journal actor and all recipient generations before installer can kill process`() {
+        for (mode in listOf(Mode.SELF_MANAGED, Mode.TRUSTED)) {
+            val f = F(mode = mode)
+            val holder = f.credentials.people.getValue(f.person).copy(generation = 4)
+            val recipients = if (mode == Mode.TRUSTED)
+                mapOf(f.person to holder, TrustedPersonId("second") to holder.copy(generation = 9))
+            else mapOf(f.person to holder)
+            f.credentials = CredentialState(mode, recipients)
+            val id: String
+            val submit: () -> UpdateOutcome
+            if (mode == Mode.SELF_MANAGED) {
+                id = f.grant().id; submit = { f.controller.submitUpdate() }
+            } else {
+                f.startUp(); val r = assertNotNull(f.controller.prepareSupervisedUpdate(f.person, f.binding))
+                id = r.id; val fresh = f.auth(r.action); submit = { f.controller.submitSupervisedUpdate(r, fresh) }
+            }
+            f.hook = { if (it == "before-commit") throw Crash() }
+            assertFailsWith<Crash> { submit() }
+            val receipt = assertNotNull(f.update.submission).receipt
+            assertEquals(id, receipt.id); assertEquals(f.person, receipt.actor)
+            assertEquals(4L, receipt.actorGeneration)
+            assertEquals(recipients.mapValues { it.value.generation }, receipt.recipientGenerations)
+            assertEquals(0, f.commits)
+            f.credentials = f.credentials.replacing(f.person, holder.copy(generation = 10))
+            f.hook = {}; f.restart()
+            assertSame(receipt, f.update.submission!!.receipt)
+            assertEquals(4L, receipt.recipientGenerations[f.person])
+        }
+    }
+    @Test fun `refusal false CAS and failed final callback persist no receipt in either mode`() {
+        for (mode in listOf(Mode.SELF_MANAGED, Mode.TRUSTED))
+            for (failure in listOf("refused", "cas", "callback-false", "callback-throws")) {
+                val f = F(mode = mode)
+                val submit: () -> UpdateOutcome
+                if (mode == Mode.SELF_MANAGED) { f.grant(); submit = { f.controller.submitUpdate() } }
+                else {
+                    f.startUp(); val r = assertNotNull(f.controller.prepareSupervisedUpdate(f.person, f.binding))
+                    val fresh = f.auth(r.action); submit = { f.controller.submitSupervisedUpdate(r, fresh) }
+                }
+                val debit = f.record.state.ledger.debits
+                if (failure == "refused") f.facts = null
+                var finalCheck = false
+                f.hook = {
+                    if (it == "blocking-work") {
+                        finalCheck = true
+                        if (failure == "callback-false") f.facts = null
+                    }
+                    if (it == "facts" && finalCheck && failure == "callback-throws") error("read failed")
+                    if (it == "before-write" && failure == "cas") f.update = UpdateRecord(f.update.revision + 1)
+                }
+                assertEquals(if (failure == "callback-throws") UpdateOutcome.NOT_READY else UpdateOutcome.REFUSED,
+                    submit(), "$mode $failure")
+                assertNull(f.update.submission); assertEquals(0, f.commits)
+                assertEquals(debit, f.record.state.ledger.debits)
+            }
+    }
+    @Test fun `failed journaled self check exposes persistent read only attention status`() {
+        for (passes in listOf(false, true)) {
+            val f = F(); f.grant(); assertFalse(f.controller.updateNeedsAttention())
+            f.controller.submitUpdate(); assertFalse(f.controller.updateNeedsAttention())
+            f.installed = 2; f.checkPasses = passes; f.restart()
+            val saved = f.update; f.events.clear()
+            repeat(2) { assertEquals(!passes, f.controller.updateNeedsAttention()) }
+            assertSame(saved, f.update); assertTrue(f.events.isEmpty())
+            f.restart(); assertEquals(!passes, f.controller.updateNeedsAttention())
+            assertEquals(1, f.checks); assertEquals(1, f.commits)
         }
     }
 
