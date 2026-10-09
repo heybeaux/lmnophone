@@ -335,7 +335,7 @@ During on-phone setup, straight after the user signs in to Google, the guide and
 
 ## Open Questions (for Beaux, with the Lead's default)
 
-These are the Lead's additions, beyond the literal answers on card `c60170d6`. Beaux approves or changes them with this change.
+These are the Lead's additions, beyond the literal answers on card `c60170d6`. Beaux approves or changes them with this change. **He accepted all eight defaults** when he approved the change (2026-10-08 21:57 PDT, card `a9a11371`).
 1. **Waits on changing trusted people and on switching mode (both directions).** Default: yes, 24 hours, same as turning off.
 2. **Recovery code in self-managed mode.** Default: resets the PIN only, skips nothing.
 3. **Friction numbers.** Default: 10-minute countdown, 5-minute Start window, 2 elevations a day (settable 0–3), stricter at once.

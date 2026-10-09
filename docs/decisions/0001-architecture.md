@@ -46,7 +46,7 @@ We do not build a custom ROM. We do not ship a launcher-only version. The emulat
 
 - **Why not C.** It costs the most, breaks banking apps, and puts us on a per-phone build treadmill. The closest commercial product does not do it either. Techless's own help center says Wisephone is "Samsung hardware with our WiseOS software and configurations" with "Samsung Knox" and "MDM security", and that unenrolling returns the phone "to a standard Android operating environment" (documented). That does not prove we can match Knox using only public APIs. C only gets better if essential controls turn out to need OS changes **and** Beaux accepts the cost of maintaining a ROM.
 - **Why not D.** It is friction, not a lock. It only wins if Beaux and the trusted person decide they want voluntary friction instead.
-  - *Note (2026-10-09, PLA-30, pending Beaux's approval):* Beaux asked for voluntary friction as a **choice per phone**, not instead of A. It is built as "self-managed mode" on the same Device Owner app. See "Notes: option D as a mode, and who can relax the lockdown" below.
+  - *Note (2026-10-09, PLA-30, approved by Beaux 2026-10-08 21:57 PDT, card `a9a11371`):* Beaux asked for voluntary friction as a **choice per phone**, not instead of A. It is built as "self-managed mode" on the same Device Owner app. See "Notes: option D as a mode, and who can relax the lockdown" below.
 - **Why A before B.** For these two users, what matters most day to day is: the apps they need, texting with iPhone users, 9-1-1, and recovery that doesn't need a developer. A is expected to do better on all four, but none of that is proven until the spike and their real app list are tested (Q4). B gets better if privacy or independence from Google matters more to them **and** the same test list passes on B. B also needs a Pixel.
 
 ## Controls the design relies on
@@ -199,7 +199,7 @@ The candidate becomes the decision only if, on the emulator, and later on one ph
 
 ## Notes: option D as a mode, and who can relax the lockdown (PLA-30)
 
-*Added 2026-10-09 by the Lead; revised after cross-model review PLA-31. Pending Beaux's approval of the OpenSpec change `add-copy-test-product-decisions`. The architecture (option A) does not change.*
+*Added 2026-10-09 by the Lead; revised after cross-model review PLA-31. Beaux approved the OpenSpec change `add-copy-test-product-decisions` (revision 4 plus the PLA-39 and no-home-screen-Emergency edits) on 2026-10-08 21:57 PDT, card `a9a11371`, including the Lead's eight defaults. The architecture (option A) does not change.*
 
 Beaux's copy-test answers (card `c60170d6`, Telegram 4481) touch two promises in this ADR.
 
