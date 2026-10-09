@@ -26,7 +26,7 @@ import org.plainphone.ui.theme.*
 @Composable
 internal fun TaskScreen(
     title: String,
-    primary: String,
+    primary: String?,
     onPrimary: () -> Unit,
     primaryEnabled: Boolean = true,
     secondary: String? = null,
@@ -52,15 +52,17 @@ internal fun TaskScreen(
             .padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S2),
             verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
             if (secondary != null) ScreenLink(secondary, onSecondary, enabled = secondaryEnabled)
-            val shape = RoundedCornerShape(percent = 50)
-            Box(Modifier.fillMaxWidth().background(
-                if (primaryEnabled) PlainphoneColors.Ink else PlainphoneColors.Fill2, shape)
-                .plainphoneAction(shape, enabled = primaryEnabled, filled = true, onClick = onPrimary)
-                .heightIn(min = 56.dp).padding(horizontal = PlainphoneSpace.S6, vertical = if (largeText) PlainphoneSpace.S2 else PlainphoneSpace.S4),
-                contentAlignment = Alignment.Center) {
-                Text(primary, style = PlainphoneType.Button.copy(
-                    color = if (primaryEnabled) PlainphoneColors.Paper else PlainphoneColors.Line),
-                    textAlign = TextAlign.Center)
+            if (primary != null) {
+                val shape = RoundedCornerShape(percent = 50)
+                Box(Modifier.fillMaxWidth().background(
+                    if (primaryEnabled) PlainphoneColors.Ink else PlainphoneColors.Fill2, shape)
+                    .plainphoneAction(shape, enabled = primaryEnabled, filled = true, onClick = onPrimary)
+                    .heightIn(min = 56.dp).padding(horizontal = PlainphoneSpace.S6, vertical = if (largeText) PlainphoneSpace.S2 else PlainphoneSpace.S4),
+                    contentAlignment = Alignment.Center) {
+                    Text(primary, style = PlainphoneType.Button.copy(
+                        color = if (primaryEnabled) PlainphoneColors.Paper else PlainphoneColors.Line),
+                        textAlign = TextAlign.Center)
+                }
             }
         }
     }
