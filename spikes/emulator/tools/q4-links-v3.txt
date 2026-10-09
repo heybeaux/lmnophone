@@ -1,0 +1,8 @@
+# PLA-23 V3 additions: Intent.parseUri(..., URI_INTENT_SCHEME). parse=1 raw (naive app), parse=2 Chrome-style sanitised.
+parse-raw-chrome|data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end parse=1
+parse-san-chrome|data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end parse=2
+parse-raw-nopkg|data=intent://example.com/#Intent;scheme=https;end parse=1
+parse-raw-settings-comp|data=intent:#Intent;component=com.android.settings/.Settings;end parse=1
+parse-san-settings-comp|data=intent:#Intent;action=android.settings.SETTINGS;component=com.android.settings/.Settings;end parse=2
+parse-raw-unapproved-scheme|data=intent://open#Intent;scheme=ppfx;package=com.plainphone.fx.applinks;end parse=1
+parse-raw-fallback-url|data=intent://nothing#Intent;scheme=nosuchscheme;S.browser_fallback_url=https%3A%2F%2Fexample.com;end parse=1

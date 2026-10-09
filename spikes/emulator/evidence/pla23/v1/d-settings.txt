@@ -1,0 +1,19 @@
+Back
+Settings
+Call Assist
+Caller ID &amp; spam
+General
+Accessibility
+Assisted dialing
+Blocked numbers
+Calls
+Display options
+Quick responses
+Sounds and vibration
+Voicemail
+Contact ringtones
+Advanced
+Caller ID announcement
+Flip To Silence
+resumed: com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity 
+top: com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity

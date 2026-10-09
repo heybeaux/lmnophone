@@ -1,0 +1,43 @@
+settings|action=android.settings.SETTINGS
+settings-explicit|action=android.intent.action.MAIN comp=com.android.settings/.Settings
+wifi-settings|action=android.settings.WIFI_SETTINGS
+app-info|action=android.settings.APPLICATION_DETAILS_SETTINGS data=package:com.google.android.apps.messaging
+default-apps|action=android.settings.MANAGE_DEFAULT_APPS_SETTINGS
+a11y-settings|action=android.settings.ACCESSIBILITY_SETTINGS
+panel-internet|action=android.settings.panel.action.INTERNET_CONNECTIVITY
+panel-volume|action=android.settings.panel.action.VOLUME
+panel-wifi|action=android.settings.panel.action.WIFI
+panel-nfc|action=android.settings.panel.action.NFC
+play-market|data=market://details?id=com.whatsapp
+play-web|data=https://play.google.com/store/apps/details?id=com.whatsapp
+play-explicit|action=android.intent.action.MAIN comp=com.android.vending/com.google.android.finsky.activities.MainActivity
+share-text|action=android.intent.action.SEND type=text/plain text=hello
+chrome-explicit|action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+photos|action=android.intent.action.MAIN comp=com.google.android.apps.photos/.home.HomeActivity
+stk|action=android.intent.action.MAIN comp=com.android.stk/.StkMain
+phone-radioinfo|action=android.intent.action.MAIN comp=com.android.phone/.settings.RadioInfo
+phone-callsettings|action=android.telecom.action.SHOW_CALL_SETTINGS
+phone-network|action=android.settings.NETWORK_OPERATOR_SETTINGS
+emergency-info|action=android.settings.EDIT_EMERGENCY_INFO
+https-general|data=https://example.com/page cat=android.intent.category.BROWSABLE
+http-general|data=http://example.com/page cat=android.intent.category.BROWSABLE
+applink-unverified|data=https://bank.plainphone-fx.example/login cat=android.intent.category.BROWSABLE
+applink-explicit-pkg|data=https://bank.plainphone-fx.example/login pkg=com.plainphone.fx.applinks
+custom-scheme|data=ppfx://open cat=android.intent.category.BROWSABLE
+intent-uri|data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end
+customtabs-https|data=https://example.com/ct ct=1 cat=android.intent.category.BROWSABLE
+customtabs-to-chrome|data=https://example.com/ct ct=1 pkg=com.android.chrome
+explicit-hidden-chrome|action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+explicit-hidden-fxbrowser|action=android.intent.action.MAIN comp=com.plainphone.fx.browser/com.plainphone.fx.common.FxActivity
+view-hidden-fxbrowser|data=https://example.com/ pkg=com.plainphone.fx.browser
+app-browser-category|action=android.intent.action.MAIN cat=android.intent.category.APP_BROWSER
+web-search|action=android.intent.action.WEB_SEARCH
+google-app|action=android.intent.action.MAIN comp=com.google.android.googlequicksearchbox/com.google.android.googlequicksearchbox.SearchActivity
+assist|action=android.intent.action.ASSIST
+parse-raw-chrome|data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end parse=1
+parse-san-chrome|data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end parse=2
+parse-raw-nopkg|data=intent://example.com/#Intent;scheme=https;end parse=1
+parse-raw-settings-comp|data=intent:#Intent;component=com.android.settings/.Settings;end parse=1
+parse-san-settings-comp|data=intent:#Intent;action=android.settings.SETTINGS;component=com.android.settings/.Settings;end parse=2
+parse-raw-unapproved-scheme|data=intent://open#Intent;scheme=ppfx;package=com.plainphone.fx.applinks;end parse=1
+parse-raw-fallback-url|data=intent://nothing#Intent;scheme=nosuchscheme;S.browser_fallback_url=https%3A%2F%2Fexample.com;end parse=1

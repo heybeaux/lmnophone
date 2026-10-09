@@ -1,0 +1,132 @@
+# 2026-10-09T01:54:19Z mode=on policy: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[no_add_managed_profile, no_add_user, no_config_cell_broadcasts, no_config_date_time, no_config_vpn, no_create_windows, no_factory_reset, no_install_apps, no_install_unknown_sources_globally, no_modify_accounts, no_network_reset, no_safe_boot, no_system_error_dialogs, no_usb_file_transfer, no_user_switch]
+id	mode	outcome	detail	resumed	launch	spec
+settings	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.SETTINGS
+settings	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.SETTINGS
+settings	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.SETTINGS
+settings-explicit	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.settings/.Settings
+settings-explicit	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.settings/.Settings
+settings-explicit	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.settings/.Settings
+wifi-settings	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.WIFI_SETTINGS
+wifi-settings	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.WIFI_SETTINGS
+wifi-settings	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.WIFI_SETTINGS
+app-info	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.APPLICATION_DETAILS_SETTINGS data=package:com.google.android.apps.messaging
+app-info	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.APPLICATION_DETAILS_SETTINGS data=package:com.google.android.apps.messaging
+app-info	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.APPLICATION_DETAILS_SETTINGS data=package:com.google.android.apps.messaging
+default-apps	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.MANAGE_DEFAULT_APPS_SETTINGS
+default-apps	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.MANAGE_DEFAULT_APPS_SETTINGS
+default-apps	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.MANAGE_DEFAULT_APPS_SETTINGS
+a11y-settings	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.ACCESSIBILITY_SETTINGS
+a11y-settings	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.ACCESSIBILITY_SETTINGS
+a11y-settings	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.ACCESSIBILITY_SETTINGS
+panel-internet	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.INTERNET_CONNECTIVITY
+panel-internet	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.INTERNET_CONNECTIVITY
+panel-internet	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.INTERNET_CONNECTIVITY
+panel-volume	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.VOLUME
+panel-volume	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.VOLUME
+panel-volume	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.VOLUME
+panel-wifi	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.WIFI
+panel-wifi	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.WIFI
+panel-wifi	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.WIFI
+panel-nfc	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.NFC
+panel-nfc	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.NFC
+panel-nfc	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.panel.action.NFC
+play-market	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=market://details?id=com.whatsapp
+play-market	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=market://details?id=com.whatsapp
+play-market	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=market://details?id=com.whatsapp
+play-web	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=https://play.google.com/store/apps/details?id=com.whatsapp
+play-web	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=https://play.google.com/store/apps/details?id=com.whatsapp
+play-web	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=https://play.google.com/store/apps/details?id=com.whatsapp
+play-explicit	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.vending/com.google.android.finsky.activities.MainActivity
+play-explicit	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.vending/com.google.android.finsky.activities.MainActivity
+play-explicit	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.vending/com.google.android.finsky.activities.MainActivity
+share-text	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.SEND type=text/plain text=hello
+share-text	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.SEND type=text/plain text=hello
+share-text	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.SEND type=text/plain text=hello
+chrome-explicit	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+chrome-explicit	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+chrome-explicit	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+photos	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.google.android.apps.photos/.home.HomeActivity
+photos	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.google.android.apps.photos/.home.HomeActivity
+photos	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.google.android.apps.photos/.home.HomeActivity
+stk	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.stk/.StkMain
+stk	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.stk/.StkMain
+stk	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.stk/.StkMain
+phone-radioinfo	same	TARGET_OPENED	com.android.phone/.settings.RadioInfo	com.android.phone/.settings.RadioInfo 	returned normally	action=android.intent.action.MAIN comp=com.android.phone/.settings.RadioInfo
+phone-radioinfo	newtask	TARGET_OPENED	com.android.phone/.settings.RadioInfo	com.android.phone/.settings.RadioInfo 	returned normally	action=android.intent.action.MAIN comp=com.android.phone/.settings.RadioInfo
+phone-radioinfo	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.phone/.settings.RadioInfo
+phone-callsettings	same	TARGET_OPENED	com.android.phone/.CallFeaturesSetting	com.android.phone/.CallFeaturesSetting 	returned normally	action=android.telecom.action.SHOW_CALL_SETTINGS
+phone-callsettings	newtask	TARGET_OPENED	com.android.phone/.CallFeaturesSetting	com.android.phone/.CallFeaturesSetting 	returned normally	action=android.telecom.action.SHOW_CALL_SETTINGS
+phone-callsettings	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.telecom.action.SHOW_CALL_SETTINGS
+phone-network	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.NETWORK_OPERATOR_SETTINGS
+phone-network	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.NETWORK_OPERATOR_SETTINGS
+phone-network	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.NETWORK_OPERATOR_SETTINGS
+emergency-info	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.settings.EDIT_EMERGENCY_INFO
+emergency-info	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.settings.EDIT_EMERGENCY_INFO
+emergency-info	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.settings.EDIT_EMERGENCY_INFO
+https-general	same	LINK_CAUGHT	LinkActivity	com.plainphone.spike.emu/.LinkActivity 	returned normally	data=https://example.com/page cat=android.intent.category.BROWSABLE
+https-general	newtask	LINK_CAUGHT	LinkActivity	com.plainphone.spike.emu/.LinkActivity 	returned normally	data=https://example.com/page cat=android.intent.category.BROWSABLE
+https-general	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=https://example.com/page cat=android.intent.category.BROWSABLE
+http-general	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=http://example.com/page cat=android.intent.category.BROWSABLE
+http-general	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=http://example.com/page cat=android.intent.category.BROWSABLE
+http-general	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=http://example.com/page cat=android.intent.category.BROWSABLE
+applink-unverified	same	LINK_CAUGHT	LinkActivity	com.plainphone.spike.emu/.LinkActivity 	returned normally	data=https://bank.plainphone-fx.example/login cat=android.intent.category.BROWSABLE
+applink-unverified	newtask	LINK_CAUGHT	LinkActivity	com.plainphone.spike.emu/.LinkActivity 	returned normally	data=https://bank.plainphone-fx.example/login cat=android.intent.category.BROWSABLE
+applink-unverified	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=https://bank.plainphone-fx.example/login cat=android.intent.category.BROWSABLE
+applink-explicit-pkg	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=https://bank.plainphone-fx.example/login pkg=com.plainphone.fx.applinks
+applink-explicit-pkg	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=https://bank.plainphone-fx.example/login pkg=com.plainphone.fx.applinks
+applink-explicit-pkg	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=https://bank.plainphone-fx.example/login pkg=com.plainphone.fx.applinks
+custom-scheme	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=ppfx://open cat=android.intent.category.BROWSABLE
+custom-scheme	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=ppfx://open cat=android.intent.category.BROWSABLE
+custom-scheme	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=ppfx://open cat=android.intent.category.BROWSABLE
+intent-uri	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end
+intent-uri	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end
+intent-uri	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end
+customtabs-https	same	LINK_CAUGHT	LinkActivity	com.plainphone.spike.emu/.LinkActivity 	returned normally	data=https://example.com/ct ct=1 cat=android.intent.category.BROWSABLE
+customtabs-https	newtask	LINK_CAUGHT	LinkActivity	com.plainphone.spike.emu/.LinkActivity 	returned normally	data=https://example.com/ct ct=1 cat=android.intent.category.BROWSABLE
+customtabs-https	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=https://example.com/ct ct=1 cat=android.intent.category.BROWSABLE
+customtabs-to-chrome	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=https://example.com/ct ct=1 pkg=com.android.chrome
+customtabs-to-chrome	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=https://example.com/ct ct=1 pkg=com.android.chrome
+customtabs-to-chrome	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=https://example.com/ct ct=1 pkg=com.android.chrome
+explicit-hidden-chrome	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+explicit-hidden-chrome	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+explicit-hidden-chrome	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+explicit-hidden-fxbrowser	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.MAIN comp=com.plainphone.fx.browser/com.plainphone.fx.common.FxActivity
+explicit-hidden-fxbrowser	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.MAIN comp=com.plainphone.fx.browser/com.plainphone.fx.common.FxActivity
+explicit-hidden-fxbrowser	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.plainphone.fx.browser/com.plainphone.fx.common.FxActivity
+view-hidden-fxbrowser	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=https://example.com/ pkg=com.plainphone.fx.browser
+view-hidden-fxbrowser	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=https://example.com/ pkg=com.plainphone.fx.browser
+view-hidden-fxbrowser	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=https://example.com/ pkg=com.plainphone.fx.browser
+app-browser-category	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.MAIN cat=android.intent.category.APP_BROWSER
+app-browser-category	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.MAIN cat=android.intent.category.APP_BROWSER
+app-browser-category	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN cat=android.intent.category.APP_BROWSER
+web-search	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.WEB_SEARCH
+web-search	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.WEB_SEARCH
+web-search	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.WEB_SEARCH
+google-app	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.MAIN comp=com.google.android.googlequicksearchbox/com.google.android.googlequicksearchbox.SearchActivity
+google-app	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.MAIN comp=com.google.android.googlequicksearchbox/com.google.android.googlequicksearchbox.SearchActivity
+google-app	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.MAIN comp=com.google.android.googlequicksearchbox/com.google.android.googlequicksearchbox.SearchActivity
+assist	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.ASSIST
+assist	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	action=android.intent.action.ASSIST
+assist	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	action=android.intent.action.ASSIST
+parse-raw-chrome	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end parse=1
+parse-raw-chrome	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end parse=1
+parse-raw-chrome	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end parse=1
+parse-san-chrome	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end parse=2
+parse-san-chrome	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end parse=2
+parse-san-chrome	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end parse=2
+parse-raw-nopkg	same	LINK_CAUGHT	LinkActivity	com.plainphone.spike.emu/.LinkActivity 	returned normally	data=intent://example.com/#Intent;scheme=https;end parse=1
+parse-raw-nopkg	newtask	LINK_CAUGHT	LinkActivity	com.plainphone.spike.emu/.LinkActivity 	returned normally	data=intent://example.com/#Intent;scheme=https;end parse=1
+parse-raw-nopkg	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent://example.com/#Intent;scheme=https;end parse=1
+parse-raw-settings-comp	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent:#Intent;component=com.android.settings/.Settings;end parse=1
+parse-raw-settings-comp	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent:#Intent;component=com.android.settings/.Settings;end parse=1
+parse-raw-settings-comp	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent:#Intent;component=com.android.settings/.Settings;end parse=1
+parse-san-settings-comp	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent:#Intent;action=android.settings.SETTINGS;component=com.android.settings/.Settings;end parse=2
+parse-san-settings-comp	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent:#Intent;action=android.settings.SETTINGS;component=com.android.settings/.Settings;end parse=2
+parse-san-settings-comp	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent:#Intent;action=android.settings.SETTINGS;component=com.android.settings/.Settings;end parse=2
+parse-raw-unapproved-scheme	same	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent://open#Intent;scheme=ppfx;package=com.plainphone.fx.applinks;end parse=1
+parse-raw-unapproved-scheme	newtask	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent://open#Intent;scheme=ppfx;package=com.plainphone.fx.applinks;end parse=1
+parse-raw-unapproved-scheme	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent://open#Intent;scheme=ppfx;package=com.plainphone.fx.applinks;end parse=1
+parse-raw-fallback-url	same	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=intent://nothing#Intent;scheme=nosuchscheme;S.browser_fallback_url=https%3A%2F%2Fexample.com;end parse=1
+parse-raw-fallback-url	newtask	NO_HANDLER	ActivityNotFoundException		threw ActivityNotFoundException	data=intent://nothing#Intent;scheme=nosuchscheme;S.browser_fallback_url=https%3A%2F%2Fexample.com;end parse=1
+parse-raw-fallback-url	chooser	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally	data=intent://nothing#Intent;scheme=nosuchscheme;S.browser_fallback_url=https%3A%2F%2Fexample.com;end parse=1
+# end policy: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[no_add_managed_profile, no_add_user, no_config_cell_broadcasts, no_config_date_time, no_config_vpn, no_create_windows, no_factory_reset, no_install_apps, no_install_unknown_sources_globally, no_modify_accounts, no_network_reset, no_safe_boot, no_system_error_dialogs, no_usb_file_transfer, no_user_switch]

@@ -39,12 +39,13 @@ object Classifier {
     }
 
     /** Returns one line per interesting package; hides when [apply]. */
-    fun run(c: Context, apply: Boolean, skipIdentity: Boolean): String {
+    fun run(c: Context, apply: Boolean, skipIdentity: Boolean, extraEssential: Set<String> = emptySet()): String {
         val pm = c.packageManager
         val selfDigest = certDigest(c, c.packageName)
         val http = probe(c, "http")
         val https = probe(c, "https")
-        val neverHide = NEVER_HIDE_STATIC + Floor.all(Floor.compute(c))
+        // PLA-23 V3: extraEssential lets a test mark a package essential, to exercise the never-hide/browser conflict.
+        val neverHide = NEVER_HIDE_STATIC + Floor.all(Floor.compute(c)) + extraEssential
         val pkgs = pm.getInstalledPackages(0).map { it.packageName }
         val interesting = pkgs.filter {
             it in http || it in https || it in CATALOG || it in NAMED_HIDE || it.startsWith("com.plainphone.") ||

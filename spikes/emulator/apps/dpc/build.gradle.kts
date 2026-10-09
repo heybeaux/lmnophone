@@ -14,8 +14,8 @@ android {
         applicationId = "com.plainphone.spike.emu"
         minSdk = 33
         targetSdk = 35
-        versionCode = 2
-        versionName = "emu-2-pla23"
+        versionCode = 4
+        versionName = "emu-4-pla23"
         manifestPlaceholders["testOnly"] = testOnly
     }
     compileOptions {

@@ -1,0 +1,6 @@
+TTY mode
+TTY Off
+Navigate up
+Accessibility
+resumed: com.android.phone/.settings.AccessibilitySettingsActivity 
+top: com.android.phone/.settings.AccessibilitySettingsActivity

@@ -1,0 +1,117 @@
+# provenance a36  2026-10-09T01:54:55Z  git=c82eec9-dirty
+image: google/sdk_gphone64_arm64/emu64a:16/BE2A.250530.026.D1/13818094:user/release-keys
+accounts: 0
+## step 1 install (APK sha256)
+cd4a6d06311f2f2240123634ddbeb71ac7085e3a530358d9618a4846cdd98f45  apps/dpc/build/outputs/apk/debug/dpc-debug.apk  -> Success
+b7c70cf46051008272606c1fd4f6f788884aa62f4d3d56352612ca53e325f652  apps/fx-browser/build/outputs/apk/debug/fx-browser-debug.apk  -> Success
+a6d2ac96c5cebbc47c30b1abebcbaf5f432684debef61defb002cbb2c6607e67  apps/fx-applinks/build/outputs/apk/debug/fx-applinks-debug.apk  -> Success
+4b6b77322c9f94f3db4ff63ee870823d16833c7c18c5438b8d6347cda9defc1f  apps/fx-httponly/build/outputs/apk/debug/fx-httponly-debug.apk  -> Success
+37a80b2801c28625a686f4a1e29541bdc7dad53df2ecc54f69adff0dc0f295b4  apps/fx-urlbar/build/outputs/apk/debug/fx-urlbar-debug.apk  -> Success
+959efe10a327274e725b2b2d831a937d4ed0a2acf16d2e21eb80c76fecc06e54  apps/fx-emergency/build/outputs/apk/debug/fx-emergency-debug.apk  -> Success
+## step 2 device owner
+Success: Device owner set to package com.plainphone.spike.emu/.AdminReceiver
+Active admin set to component com.plainphone.spike.emu/.AdminReceiver
+## step 3 home, approved list, features, floor-apply (replace)
+OK persistent preferred HOME = emu spike
+OK approved=[com.google.android.dialer, com.google.android.apps.messaging, com.android.camera2, com.android.phone]
+OK lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK (119)
+OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.android.server.telecom, com.google.android.apps.safetyhub, com.google.android.apps.messaging, com.android.phone]
+## step 4 permission pre-grants (read back)
+com.android.camera2 CAMERA getPermissionGrantState=1 checkPermission=GRANTED
+com.android.camera2 RECORD_AUDIO getPermissionGrantState=1 checkPermission=GRANTED
+com.android.camera2 ACCESS_FINE_LOCATION getPermissionGrantState=1 checkPermission=GRANTED
+com.android.camera2 ACCESS_COARSE_LOCATION getPermissionGrantState=1 checkPermission=GRANTED
+com.android.camera2 READ_MEDIA_IMAGES getPermissionGrantState=0 checkPermission=DENIED
+com.android.camera2 READ_MEDIA_VIDEO getPermissionGrantState=0 checkPermission=DENIED
+com.android.camera2 READ_CONTACTS getPermissionGrantState=0 checkPermission=DENIED
+com.android.camera2 CALL_PHONE getPermissionGrantState=0 checkPermission=DENIED
+com.android.camera2 SEND_SMS getPermissionGrantState=0 checkPermission=DENIED
+com.android.camera2 POST_NOTIFICATIONS getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.apps.messaging CAMERA getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.apps.messaging RECORD_AUDIO getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.apps.messaging ACCESS_FINE_LOCATION getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.apps.messaging ACCESS_COARSE_LOCATION getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.apps.messaging READ_MEDIA_IMAGES getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.apps.messaging READ_MEDIA_VIDEO getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.apps.messaging READ_CONTACTS getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.apps.messaging CALL_PHONE getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.apps.messaging SEND_SMS getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.apps.messaging POST_NOTIFICATIONS getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.dialer CAMERA getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.dialer RECORD_AUDIO getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.dialer ACCESS_FINE_LOCATION getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.dialer ACCESS_COARSE_LOCATION getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.dialer READ_MEDIA_IMAGES getPermissionGrantState=0 checkPermission=DENIED
+com.google.android.dialer READ_MEDIA_VIDEO getPermissionGrantState=0 checkPermission=DENIED
+com.google.android.dialer READ_CONTACTS getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.dialer CALL_PHONE getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.dialer SEND_SMS getPermissionGrantState=1 checkPermission=GRANTED
+com.google.android.dialer POST_NOTIFICATIONS getPermissionGrantState=1 checkPermission=GRANTED
+setPermissionGrantState(com.plainphone.spike.emu,android.permission.ACCESS_FINE_LOCATION,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+## step 5 hiding: classifier (browsers, Google app), CaptivePortalLogin
+probe http=[com.android.chrome, com.plainphone.fx.browser, com.plainphone.fx.httponly, com.plainphone.spike.emu] https=[com.android.chrome, com.plainphone.fx.browser, com.plainphone.spike.emu]
+com.android.chrome: GENERAL_BROWSER(heuristic) hide->true
+com.android.vending: NEVER_HIDE
+com.google.android.dialer: NEVER_HIDE
+com.google.android.gms: NEVER_HIDE
+com.google.android.googlequicksearchbox: NAMED_HIDE hide->true
+com.plainphone.fx.applinks: NOT_BROWSER
+com.plainphone.fx.browser: GENERAL_BROWSER(heuristic) hide->true
+com.plainphone.fx.emergency: NOT_BROWSER
+com.plainphone.fx.httponly: NOT_BROWSER(one scheme only)
+com.plainphone.fx.urlbar: FLAG_CATALOG_REVIEW
+com.plainphone.spike.emu: SELF_SKIPPED
+
+hide com.google.android.captiveportallogin -> true
+## step 6 restrictions (all intended except no_debugging_features)
+OK added no_factory_reset
+OK added no_safe_boot
+OK added no_install_apps
+OK added no_install_unknown_sources_globally
+OK added no_add_user
+OK added no_add_managed_profile
+OK added no_user_switch
+OK added no_modify_accounts
+OK added no_config_vpn
+OK added no_config_private_dns
+OK added no_config_default_apps
+OK added no_config_date_time
+OK added no_network_reset
+OK added no_usb_file_transfer
+OK added no_config_cell_broadcasts
+OK added no_system_error_dialogs
+OK added no_create_windows
+## step 7 start lock task
+OK relayed lt-start (result in logcat PPEMU)
+## read-back
+deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.android.server.telecom, com.google.android.apps.safetyhub, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[no_add_managed_profile, no_add_user, no_config_cell_broadcasts, no_config_date_time, no_config_vpn, no_create_windows, no_factory_reset, no_install_apps, no_install_unknown_sources_globally, no_modify_accounts, no_network_reset, no_safe_boot, no_system_error_dialogs, no_usb_file_transfer, no_user_switch] locked=true
+approved=[com.google.android.dialer, com.google.android.apps.messaging, com.android.camera2, com.android.phone]
+emergencyPackage=com.android.phone
+1 owner:
+User  0: admin=com.plainphone.spike.emu/.AdminReceiver,DeviceOwner,Affiliated
+isApplicationHidden com.android.chrome -> true
+isApplicationHidden com.plainphone.fx.browser -> true
+isApplicationHidden com.google.android.googlequicksearchbox -> true
+isApplicationHidden com.google.android.captiveportallogin -> true
+## app versions
+com.plainphone.spike.emu versionName=emu-3-pla23 package:/data/app/~~szRYdYoI5U28m8R21S8Q_Q==/com.plainphone.spike.emu-hg08M0aurjib4VvuRzsZ_Q==/base.apk
+com.plainphone.fx.browser versionName=fx-1 
+com.plainphone.fx.applinks versionName=fx-1 package:/data/app/~~CmJTm72DiHsDE7x5d68ZTw==/com.plainphone.fx.applinks-UoLjHH_chgL91Rxj31YhFQ==/base.apk
+com.plainphone.fx.httponly versionName=fx-1 package:/data/app/~~vHmJcy6ReuWVb73mBnf32w==/com.plainphone.fx.httponly-w6vGY37o83dFQ9iRahu0OA==/base.apk
+com.plainphone.fx.urlbar versionName=fx-2-pla23 package:/data/app/~~CvXYa1EkGvNbcpym6Y3JcA==/com.plainphone.fx.urlbar-cTahLih6oOVKp5bVXVCKoA==/base.apk
+com.plainphone.fx.emergency versionName=fx-1 package:/data/app/~~RaX5634T7udoz1Ns3eeF9g==/com.plainphone.fx.emergency-bxCg1L364Cr0SfvOU14YIg==/base.apk
+com.google.android.dialer versionName=166.0.738953385 package:/product/priv-app/GoogleDialer/GoogleDialer.apk
+com.google.android.apps.messaging versionName=messages.android_20250311_04_RC01.phone_dynamic package:/product/priv-app/PrebuiltBugle/PrebuiltBugle.apk
+com.android.camera2 versionName=2.0.002 package:/product/app/Camera2/Camera2.apk
+com.android.phone versionName=16 package:/system/priv-app/TeleService/TeleService.apk
+com.android.server.telecom versionName=16 package:/system/priv-app/Telecom/Telecom.apk
+com.google.android.apps.safetyhub versionName=2025.01.09.713605778.0-release package:/product/priv-app/SafetyHubPrebuilt/SafetyHubPrebuilt.apk
+com.android.chrome versionName=133.0.6943.137 
+com.google.android.googlequicksearchbox versionName=16.9.50.sa.arm64 
+com.google.android.captiveportallogin versionName=16 
+com.google.android.webview versionName=133.0.6943.137 package:/data/app/~~GG56fpaNXhbiWUT0xzXN1A==/com.google.android.webview-XQKr0clsi_2JPg8xpf9FoA==/WebViewGoogle.apk
+com.google.android.inputmethod.latin versionName=15.1.08.726012951-preload-arm64-v8a package:/product/app/LatinIMEGooglePrebuilt/LatinIMEGooglePrebuilt.apk
+com.google.android.permissioncontroller versionName=frc_360527520 package:/apex/com.android.permission/priv-app/GooglePermissionController@360527520/GooglePermissionController.apk
+com.google.android.documentsui versionName=16 package:/system/priv-app/DocumentsUIGoogle/DocumentsUIGoogle.apk
+com.google.android.providers.media.module versionName=16 package:/apex/com.android.mediaprovider/priv-app/MediaProviderGoogle@360527520/MediaProviderGoogle.apk
+com.android.settings versionName=16 package:/system_ext/priv-app/SettingsGoogle/SettingsGoogle.apk

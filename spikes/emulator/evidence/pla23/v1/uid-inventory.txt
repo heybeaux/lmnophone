@@ -1,0 +1,7 @@
+uid(com.google.android.dialer)=10142 sharedUid=[com.google.android.dialer]
+uid(com.google.android.apps.messaging)=10145 sharedUid=[com.google.android.apps.messaging]
+uid(com.android.camera2)=10151 sharedUid=[com.android.camera2]
+uid(com.android.phone)=1001 sharedUid=[com.android.phone, com.android.ons, com.android.mms.service, com.android.providers.telephony, com.android.stk]
+uid(com.android.server.telecom)=1000 sharedUid=[android, com.android.inputdevices, com.android.emulator.multidisplay, com.android.providers.settings, com.android.keychain, com.android.location.fused, com.android.dynsystem, com.android.DeviceAsWebcam, com.android.localtransport, com.android.settings, com.android.server.telecom]
+uid(com.google.android.apps.safetyhub)=10143 sharedUid=[com.google.android.apps.safetyhub]
+uid(com.plainphone.spike.emu)=10214 sharedUid=[com.plainphone.spike.emu]

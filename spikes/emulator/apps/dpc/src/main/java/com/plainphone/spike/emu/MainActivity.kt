@@ -131,6 +131,7 @@ class MainActivity : Activity() {
             kv["comp"]?.let { i.component = ComponentName.unflattenFromString(it) }
             kv["pkg"]?.let { i.setPackage(it) }
             kv["cat"]?.let { i.addCategory(it) }
+            kv.filterKeys { it.startsWith("es.") }.forEach { (k, v) -> i.putExtra(k.removePrefix("es."), v) }
             kv["text"]?.let { i.putExtra(Intent.EXTRA_TEXT, it.replace('_', ' ')) }
             if (kv["ct"] == "1") i.putExtras(Bundle().apply { putBinder("android.support.customtabs.extra.SESSION", null) })
             if (kv["chooser"] == "1") i = Intent.createChooser(i, "Spike chooser test")

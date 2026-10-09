@@ -68,6 +68,7 @@ object Commands {
             "grant-state" -> grantState(c, a1!!, a2!!)
             "classify" -> Classifier.run(c, apply = true, skipIdentity = false)
             "classify-dry" -> Classifier.run(c, apply = false, skipIdentity = false)
+            "classify-essential" -> Classifier.run(c, apply = true, skipIdentity = false, extraEssential = setOfNotNull(a1))
             "classify-noidentity" -> Classifier.run(c, apply = false, skipIdentity = true)
             "floor" -> Floor.compute(c, naive = false).toString()
             "emergency-target" -> "emergencyPackage=${Floor.emergencyPackage(c)}"

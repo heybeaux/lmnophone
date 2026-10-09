@@ -1,0 +1,8 @@
+Back
+Assisted dialing
+Assisted dialing
+Default home country
+Automatically detected • United States (+1)
+Assisted dialing predicts and adds a country code when you call while traveling abroad. Learn more
+resumed: 
+top: com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity
