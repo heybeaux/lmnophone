@@ -719,11 +719,76 @@ must broadcast a notice to the holders current when it queues the receipt and fr
 it must neither retarget nor discard an already-queued receipt. Delivery failure never gates policy.
 
 `TurnOffController` rejects people operations before any effects, including when Device Owner is
-absent. The normal policy plan and emergency floor remain intact in every people phase. Forward
-reset-protection effects, patch application, completion receipts and fresh-PIN rollback are still the
-next slice. Do not expose people-change product actions until that executor and its adapter are wired.
+absent. The normal policy plan and emergency floor remain intact in every people phase. The executor
+below supplies forward/rollback policy. Do not expose people-change product actions until all adapters
+and the shared coordinator are implemented and independently verified.
 
 `PeopleWaitingTest` covers the start/wait/cancel/skip boundary, recovery-code handover, counter
 separation, exact deadlines and repaired epochs, shared-slot contention, crash boundaries for ordinary
 and joint writes, fixed/legacy/removed contacts, kind isolation and unchanged locked/unlocked policy.
 These JVM fakes establish policy behavior, not Android durable storage, account validity or FRP.
+
+## People forward commit and fresh-PIN rollback (executor and adapter contract)
+
+`PeopleChangeController.tick(requestId, direction)` accepts only a durable people operation whose ID
+and COMMITTING/ROLLING_BACK direction match the scheduled work. It cannot start, skip or mature a
+wait. Keep the normal lockdown and emergency floor throughout; call the common startup revocation
+before dispatching any controller, and run `WaitingReconciler` when the journal is lost.
+
+Forward tick calculates the patch against the latest credential record and checkpoints the clock. It
+then sets the exact future reset-protection list, including backup, broadcasts the change and reads the
+list back. Each synchronous effect is surrounded by current-journal and credential-revision checks.
+Any failure leaves COMMITTING and old holders active; report "Reset protection not updated – call
+the helper" for reset-effect/readback failures. Do not claim which account a wipe would accept.
+
+Only successful readback permits `PeopleChangeCommitter.applyPatch`. The adapter atomically compares
+the credential revision and journal generation/revision/direction, then saves the complete patched
+credential record with raised structure generation and `AppliedPeopleChange(requestId,
+waitingGeneration, structureGeneration)`. No partial holder set or separately written marker is valid.
+The executor reads the credential record back before reporting APPLIED; this result is not COMPLETED.
+On the next tick, a matching marker permits only completion, never another patch or reset-list write.
+Every credential-only writer must preserve the marker, including PIN/code recovery, counters and
+notices. Thus recovery of the incoming PIN after a crash cannot reinstall its original setup PIN.
+
+Completion uses `PeopleChangeCommitter.move` to compare both current records and atomically queue
+COMPLETED plus fixed recipient generations/contacts from one current credential snapshot. If this
+write fails, retry completion with the existing marker. An already-queued receipt is never rebuilt or
+retargeted. The marker may remain after completion; the next successful people patch replaces it.
+
+`prepareStop` is available only to a current holder while COMMITTING and before patch application.
+`stop` consumes a fresh, exact-action PIN capability from the preparation's process owner. Its joint
+`move` persists ROLLING_BACK, stopper identity/generation and a fixed-contact receipt before any
+restoring effect. A failed write does not authorize restoration. Once this intent is durable, schedule
+only ROLLING_BACK ticks, including after restart. Each retries set/broadcast/readback of the *current
+credential store's* reset-protection list, then atomically saves CANCELLED with its receipt. Readback
+failure stays ROLLING_BACK. A failed clock cannot prevent restrictive rollback. After patch application,
+neither a new nor an already-prepared stop can undo the new holders.
+
+Lane D must implement and verify these concrete boundaries before product wiring:
+
+- `PeopleChangeCommitter` and `WaitingHandOverCommitter` use the same credential/journal storage
+  and non-reentrant serialized coordinator as every vault, waiting, cancellation and reconciliation
+  writer. Compare both records inside one atomic transaction; do not separately acknowledge a compare,
+  direction, holder swap, marker or receipt. No asynchronous effect may outlive the serialized action.
+- Persist schema/checksums and current storage generation. Fence every acknowledged journal state
+  and joint transaction against an older surviving replica. Highest-valid-checksum alone is insufficient:
+  if rollback r8 was acknowledged and only committing r7 survives, return lost/unreadable and reconcile,
+  never r7. Credential replicas need the corresponding protection against resurrecting outgoing holders.
+- Serialize the complete immutable patch/enrollment, fixed contact maps (including explicit nulls),
+  skipper/stopper metadata and applied marker. Incoming slot IDs and cancel/request IDs are durably
+  reserved and never reused. Enrollment attestations originate in the trusted local flow.
+- Implement exact reset-list set, required broadcast and readback without guessing account correctness.
+  Run fault injection before/after every write/readback, both sides of each transaction, startup, partial
+  replica loss and joint-store recovery. An old forward callback must not run after rollback or reconciliation.
+- Preserve already-queued receipts and separate removed-slot audit notices from current recipients.
+  Migrate legacy missing contacts as explicit unavailable delivery data, never a new lookup target.
+
+When both operation copies are lost before or after the patch, the existing reconciler treats the
+credential store as truth. It restores the corresponding active list plus backup and reports who is now
+in charge; it never claims the lost change was cancelled. The applied marker does not revive a lost
+operation or confer authority to a new one in a different journal generation.
+
+`PeopleChangeControllerTest` exercises these contracts with fake effects/stores, directed callbacks,
+transaction races and crashes at forward/rollback boundaries. It proves pure-policy behavior only.
+Android persistence, broadcast/readback and device fault evidence belong to the assigned lane D
+integration under its own gate; Update and its separate installer boundary remain unavailable.
