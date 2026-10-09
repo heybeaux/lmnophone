@@ -26,6 +26,7 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [ ] 2.4 AE: Q4, must-have apps, browser classifier, link matrix, Wi-Fi sign-in page, reachable system screens.
 - [ ] 2.5 VE: Review 2.1–2.4. Falsify each conclusion and check the negative controls. Add new escape routes to the threat list.
 - [ ] 2.6 Lead: Apply the go/no-go list in ADR 0001. If the architecture or the promises change, write a revised ADR and get Beaux's approval before section 4.
+  - First pass, 2026-10-09 (PLA-14): **not passed yet**. No item failed. #1, #2, #3 and #5 are inconclusive pending report corrections and missing evidence (reviews in `docs/reviews/`). #7 passed (custody limit accepted with the plan). #4 and #6 are checked before handover. New risk: the unhide/power-loss boot loop (PLA-22).
 
 ## 3. Spike: required before handover
 
@@ -74,5 +75,5 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 
 - [ ] 6.1 VE: Full escape-artist review and code review of the MVP on the emulator. Verdict: approve, request changes, or blocked.
 - [ ] 6.2 AE: Fix every confirmed finding, or Lead records it as a leftover risk accepted by Beaux.
-- [ ] 6.3 Lead: Ask Beaux to approve the target phone model and one unit, and to record acceptance of the custody limit and the leftover risks. Include the checklist to complete before handover: Q3 on that build; Q10 with a board-approved recovery-wipe procedure; Q13 manufacturer extras; Q14 device emergency checks (no live call unless there is an agreed procedure); RCS on the carrier; iPhone group texts; must-have apps.
+- [ ] 6.3 Lead: Ask Beaux to approve the target phone model and one unit, and to record acceptance of the custody limit and the leftover risks. Include the checklist to complete before handover: Q3 on that build; Q10 with a board-approved recovery-wipe procedure; Q13 manufacturer extras; Q14 device emergency checks (no live call unless there is an agreed procedure); the PLA-22 unhide/power-loss mitigation on that build (Q6, with a board-approved recovery-wipe fallback); RCS on the carrier; iPhone group texts; must-have apps.
 - [ ] 6.4 Lead: After two weeks on Beaux's phone, ask Beaux to approve the trusted person's phone.

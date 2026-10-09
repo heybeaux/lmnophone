@@ -81,6 +81,11 @@
 - Reboot and stay at the lock screen. Install a package before the first unlock. Kill Plainphone between policy steps. Update Plainphone to a build signed with the same key. Feed it a truncated policy and a policy with an unknown version.
 - Unlock immediately after a reboot, and try to open an unapproved app with a queued notification, an explicit intent and a deep link before Plainphone's home screen appears.
 - With both policy copies corrupt: the emergency-safe baseline must apply.
+- **Unhide then sudden power loss (PLA-22).** On API 35 and 36 emulators, unhiding any app and then losing power within about 10 s, before Android writes its package settings, leaves system_server crashing on every boot. A phone in that state can't call 9-1-1, and only a recovery wipe brings it back. Hiding is safe, so the dangerous step is the start of a session. Mitigation B (a synchronous PackageManager flush right after every unhide) booted 3 of 3 times on the emulator. Before handover:
+  - the Verifier reviews the result;
+  - mitigation B is re-tested on the target build with a hard power-off;
+  - a stress run (repeated session starts with a forced power-off) passes.
+  A device test can brick the phone, so it needs Beaux's OK for that phone plus a recovery-wipe procedure, with Google accounts removed first so reset protection doesn't lock the phone.
 - **Floor trust (T1).** An unapproved user-installed fixture declares the emergency-dialer filter. It must never join the floor or become openable, on a supported build, on an unknown build, and on an unknown build with corrupt policy.
 - **OTA and unknown build (S1).** These need fixtures on our own emulator. Move from build A (with an inventory) to build B (without one). Set up B so that:
   - a new essential dependency matches the browser heuristic;
