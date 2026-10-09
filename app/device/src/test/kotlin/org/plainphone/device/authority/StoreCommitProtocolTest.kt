@@ -144,4 +144,69 @@ class StoreCommitProtocolTest {
         assertTrue(store.initialize(trusted(listOf(self, other)), WaitingState(storageGeneration = "live"), ElevationRecord()))
         assertTrue(store.credentials.compareAndSet(trusted(listOf(other, self)), trusted(listOf(other, self), 1)))
     }
+
+    // PLA-131 F1.a (Verifier's regression, kept verbatim in substance): a degraded acknowledgement never rolls back.
+    @Test fun acknowledgedLockoutMustNotRollBackWhenFirstFenceIsLost() {
+        val dir = tmp.newFolder(); val store = initialized(dir)
+        File(dir, "fence-b.rec.tmp").mkdir(); File(dir, "authority-b.rec.tmp").mkdir()
+        assertTrue(bump(store, 12))
+        assertEquals(12, open(dir).credentials.read()!!.people.getValue(self).pinCounter.failures)
+        File(dir, "fence-b.rec.tmp").delete(); File(dir, "authority-b.rec.tmp").delete()
+        assertTrue(File(dir, "fence-a.rec").delete())
+        val reopened = open(dir).credentials.read()
+        assertTrue("revision 1 or fail closed, never revision 0", reopened == null || reopened.revision == 1L)
+    }
+
+    // PLA-131 F1.b: false on the next commit keeps the previously acknowledged record readable.
+    @Test fun falseOnNextCommitMustKeepPreviouslyAcknowledgedRecord() {
+        val dir = tmp.newFolder(); val store = initialized(dir)
+        File(dir, "fence-b.rec.tmp").mkdir()
+        assertTrue(bump(store, 12))
+        File(dir, "fence-b.rec.tmp").delete()
+        faults = StorageFaults { at, d -> if (at == WritePoint.AFTER_FENCE_A) File(d, "fence-a.rec").writeBytes(ByteArray(5)) }
+        assertFalse(bump(store, 13))
+        faults = StorageFaults { _, _ -> }
+        assertEquals(1L, open(dir).credentials.read()?.revision)
+    }
+
+    // Every combination of failed tail writes, then immediately (no healing commit) either the loss of
+    // any one file or a failed next write: never an older record, and false keeps the acknowledged one.
+    @Test fun degradedAcknowledgementsFailClosedAndFailedWritesKeepTheAcknowledgedRecord() {
+        val tails = listOf(emptyList(), listOf("fence-b"), listOf("authority-b"), listOf("fence-b", "authority-b"))
+        val files = listOf("authority-a", "authority-b", "fence-a", "fence-b")
+        for (blocked in tails) {
+            for (lost in files) {
+                val dir = tmp.newFolder(); val store = initialized(dir)
+                blocked.forEach { File(dir, "$it.rec.tmp").mkdir() }
+                assertTrue("$blocked", bump(store, 12))
+                blocked.forEach { File(dir, "$it.rec.tmp").delete() }
+                File(dir, "$lost.rec").delete()
+                val read = open(dir).credentials.read()
+                assertTrue("$blocked then lost $lost: ${read?.revision}", read == null || read.revision == 1L)
+            }
+            for (failing in files) {
+                val dir = tmp.newFolder(); val store = initialized(dir)
+                blocked.forEach { File(dir, "$it.rec.tmp").mkdir() }
+                assertTrue("$blocked", bump(store, 12))
+                blocked.forEach { File(dir, "$it.rec.tmp").delete() }
+                File(dir, "$failing.rec.tmp").mkdir()
+                val result = bump(open(dir), 13)
+                File(dir, "$failing.rec.tmp").delete()
+                val read = open(dir).credentials.read()
+                assertEquals("$blocked then failing $failing", if (result) 2L else 1L, read?.revision)
+            }
+        }
+    }
+
+    // An uncommitted copy left by a crash before the commit point is ignored, then replaced by the next write.
+    @Test fun crashOrphanBeforeTheCommitPointIsIgnoredAndCleanedUp() {
+        val dir = tmp.newFolder(); val store = initialized(dir)
+        faults = StorageFaults { at, _ -> if (at == WritePoint.AFTER_COPY_A) throw SimulatedCrash() }
+        try { bump(store, 4) } catch (_: SimulatedCrash) { }
+        faults = StorageFaults { _, _ -> }
+        assertEquals(0L, open(dir).credentials.read()!!.revision)
+        assertTrue(bump(open(dir), 5))
+        File(dir, "authority-b.rec").delete()
+        assertEquals(1L, open(dir).credentials.read()!!.revision)
+    }
 }
