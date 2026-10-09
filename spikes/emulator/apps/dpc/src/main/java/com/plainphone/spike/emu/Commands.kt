@@ -70,10 +70,18 @@ object Commands {
             "classify-dry" -> Classifier.run(c, apply = false, skipIdentity = false)
             "classify-noidentity" -> Classifier.run(c, apply = false, skipIdentity = true)
             "floor" -> Floor.compute(c, naive = false).toString()
+            "emergency-target" -> "emergencyPackage=${Floor.emergencyPackage(c)}"
             "floor-naive" -> Floor.compute(c, naive = true).toString()
+            // PLA-23 V4: the approved list is stored separately; floor-apply REPLACES the lock-task list with
+            // approved + system-only floor + self, so a stale entry (seeded with lt-packages) is dropped.
+            "approved-set" -> {
+                Emu.prefs(c).edit().putString("approved", a1.orEmpty()).commit()
+                "OK approved=${approved(c)}"
+            }
+            "approved" -> "approved=${approved(c)}"
             "floor-apply" -> {
                 val f = Floor.compute(c)
-                val keep = dpm.getLockTaskPackages(admin).toSet() + f.uiSubset + c.packageName
+                val keep = approved(c) + f.uiSubset + c.packageName
                 dpm.setLockTaskPackages(admin, keep.toTypedArray())
                 for (p in Floor.all(f)) if (dpm.isApplicationHidden(admin, p)) dpm.setApplicationHidden(admin, p, false)
                 "OK floor uiSubset=${f.uiSubset} lockTaskPackages=${dpm.getLockTaskPackages(admin).toList()}"
@@ -96,6 +104,12 @@ object Commands {
             else -> "UNKNOWN $cmd"
         }
     }
+
+    fun approved(c: Context): Set<String> =
+        Emu.prefs(c).getString("approved", "").orEmpty().split(",").filter { it.isNotBlank() }.toSet()
+
+    /** PLA-23 V5: ops relayed to MainActivity carry this per-process token, so only this adb-only receiver can trigger them. */
+    val token: String = java.util.UUID.randomUUID().toString()
 
     private fun grantState(c: Context, pkg: String, perm: String): String {
         val dpmState = Emu.dpm(c).getPermissionGrantState(Emu.admin(c), pkg, perm)
@@ -120,7 +134,7 @@ object Commands {
     }
 
     private fun relay(c: Context, extras: Intent): String {
-        c.startActivity(Intent(c, MainActivity::class.java).putExtras(extras)
+        c.startActivity(Intent(c, MainActivity::class.java).putExtras(extras).putExtra("token", token)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP))
         return "OK relayed ${extras.getStringExtra("op")} (result in logcat PPEMU)"
     }

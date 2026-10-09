@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- THROWAWAY FIXTURE (PLA-11): in-app URL bar and WebView, no web intent filter. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- PLA-23: a real Custom Tabs client declares this query so it can see providers on API 30+. -->
+    <queries>
+        <intent><action android:name="android.support.customtabs.action.CustomTabsService" /></intent>
+    </queries>
     <application android:label="FX URL-bar app">
         <activity android:name="com.plainphone.fx.common.UrlBarActivity" android:exported="true">
             <intent-filter>
@@ -9,5 +13,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="com.plainphone.fx.urlbar.CtClientActivity" android:exported="true" />
     </application>
 </manifest>

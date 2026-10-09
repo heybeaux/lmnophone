@@ -59,5 +59,11 @@ object Floor {
         return Result(members, systemDialer + emergency + inCall, rejected)
     }
 
+    /** System-only package that handles EmergencyDialer.DIAL (com.android.phone on these images). */
+    fun emergencyPackage(c: Context): String? = c.packageManager
+        .queryIntentActivities(Intent(EMERGENCY_DIAL), PackageManager.MATCH_SYSTEM_ONLY)
+        .map { it.activityInfo.applicationInfo }
+        .firstOrNull { it.flags and ApplicationInfo.FLAG_SYSTEM != 0 }?.packageName
+
     fun all(r: Result) = r.members.values.flatten().toSet()
 }

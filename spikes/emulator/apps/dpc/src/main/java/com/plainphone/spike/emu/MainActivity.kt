@@ -33,11 +33,15 @@ class MainActivity : Activity() {
         col.addView(button("Messages") { launchPkg("com.google.android.apps.messaging") })
         col.addView(button("Camera") { tryStart("camera", Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)) })
         col.addView(button("Emergency") {
-            tryStart("emergency", Intent(Floor.EMERGENCY_DIAL).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            // PLA-23 V4: pinned to the system-only emergency dialer package, so a user-installed app with the same
+            // filter cannot turn the button into a (blocked) chooser.
+            val pkg = Floor.emergencyPackage(this)
+            if (pkg == null) Emu.log("launch [emergency] no system emergency dialer")
+            else tryStart("emergency pkg=$pkg", Intent(Floor.EMERGENCY_DIAL).setPackage(pkg).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         })
         col.addView(button("Wi-Fi") { tryStart("wifi", Intent(this, WifiActivity::class.java)) })
         col.addView(button("Start lock task") { Emu.prefs(this).edit().putBoolean("locked", true).commit(); lock() })
-        col.addView(button("Stop lock task") { Emu.prefs(this).edit().putBoolean("locked", false).commit(); runCatching { stopLockTask() }; refresh() })
+        // PLA-23 V5: no "Stop lock task" button. Stopping is only possible through the adb-only command hook (cmd lt-stop).
         statusView = TextView(this).apply { textSize = 11f }
         col.addView(statusView)
         setContentView(ScrollView(this).apply { addView(col) })
@@ -92,7 +96,11 @@ class MainActivity : Activity() {
     }
 
     private fun handle(intent: Intent?) {
-        when (intent?.getStringExtra("op")) {
+        val op = intent?.getStringExtra("op")
+        if (op != null && intent.getStringExtra("token") != Commands.token) {
+            Emu.log("REJECTED op=$op without the command-hook token"); intent.removeExtra("op"); return
+        }
+        when (op) {
             "lt-start" -> lock()
             "lt-stop" -> { runCatching { stopLockTask() }; refresh() }
             "launch" -> { val s = intent.getStringExtra("spec").orEmpty(); tryStart(s, buildIntent(s)) }
@@ -113,6 +121,12 @@ class MainActivity : Activity() {
             val kv = spec.split(Regex("\\s+")).filter { "=" in it }.associate { it.substringBefore("=") to it.substringAfter("=") }
             var i = Intent(kv["action"] ?: Intent.ACTION_VIEW)
             kv["data"]?.let { i.data = Uri.parse(it) }
+            // PLA-23 V3: parse=1 is Intent.parseUri(data, URI_INTENT_SCHEME) as a naive WebView app would do;
+            // parse=2 adds Chrome-style sanitising (BROWSABLE, no component, no selector).
+            if (kv["parse"] == "1" || kv["parse"] == "2") {
+                i = Intent.parseUri(kv["data"]!!, Intent.URI_INTENT_SCHEME)
+                if (kv["parse"] == "2") { i.addCategory(Intent.CATEGORY_BROWSABLE); i.component = null; i.selector = null }
+            }
             kv["type"]?.let { if (i.data != null) i.setDataAndType(i.data, it) else i.type = it }
             kv["comp"]?.let { i.component = ComponentName.unflattenFromString(it) }
             kv["pkg"]?.let { i.setPackage(it) }

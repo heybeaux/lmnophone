@@ -11,8 +11,8 @@ android {
         applicationId = "com.plainphone.fx.urlbar"
         minSdk = 33
         targetSdk = 35
-        versionCode = 1
-        versionName = "fx-1"
+        versionCode = 2
+        versionName = "fx-2-pla23"
     }
     sourceSets["main"].java.srcDir("../fx-common/java")
     compileOptions {
@@ -21,3 +21,5 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
 }
+
+dependencies { implementation("androidx.browser:browser:1.8.0") }
