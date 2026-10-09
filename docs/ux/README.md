@@ -95,6 +95,18 @@ them, once, with an explanation, where the helper must type or tap them on a rea
 Placeholders in copy: `{user}` is the phone user's first name, `{tp}` the trusted person's first name, `{helper}`
 the helper's first name, `{app}` the app's name as Android reports it.
 
+**Counts, names and days are filled in by the screens, not built elsewhere** (PLA-47, 2026-10-09). The words around
+a value belong in the app's string resources, so they can be checked against these files and translated later.
+- **Counts:** any `{n}` takes the singular when it is 1: "Opening up in 1 minute", "1 app", "overdue by 1 day".
+  Use Android `plurals`. Only the singular changes; the rest of the copy stays exact.
+- **Two names:** the screens receive the names (one or two, in the order they were added) and join them: `{tps}` with
+  "or" ("Sam or Jo"), `{everyone}` with "and" ("Sam and Jo"). One name stands alone. With no names, show nothing that
+  needs a name and never crash; that is a bug upstream.
+- **`{time}` for when a wait ends:** the screens receive the clock time (already in the phone's 12- or 24-hour style,
+  like the home clock) and the day, and add the day word: "21:15 tomorrow" for the next day; "21:15 Saturday" for 2 to
+  6 days ahead; "21:15 Thu 15 Oct" for 7 days or more (the wait only counts time while the phone is on). A 24-hour wait
+  can't end the same day; if a time is ever for today, show the clock time alone.
+
 ## Texts Plainphone sends
 
 These are the only messages Plainphone sends. All go from the user's phone, by SMS, to fixed numbers entered at
