@@ -35,10 +35,28 @@ class ElevationRecord(val revision: Long = 0, val state: ElevationState = Elevat
     internal fun replacing(state: ElevationState, journal: SessionJournal = this.journal,
         person: ElevationPersonBinding? = this.person) = ElevationRecord(Math.addExact(revision, 1), state, journal, person)
 }
-abstract class ElevationStore {
+abstract class ElevationStore(internal val waitingChanges: WaitingChangeStore? = null) {
     // One instance per combined record, shared by both controllers on the serialized coordinator.
-    // A failed restrictive write suppresses both readers until successful cleanup, without altering debits.
-    internal var revocationPending: Boolean = false
+    // Ordinary cleanup owns only its local latch. It cannot release the durable mode-operation gate.
+    private var cleanupPending: Boolean = false
+    internal var revocationPending: Boolean
+        get() = cleanupPending || modeExecutionPending()
+        set(value) { cleanupPending = value }
+
+    /**
+     * Read the durable source on every authority check, including before the first executor pass
+     * after process start. COMMITTING/ROLLING_BACK mode operations hold the gate until a terminal
+     * write. Missing/unreadable waiting data holds it until reconciliation; never assume vacancy.
+     * Pending waits preserve normal session/elevation rules. Legacy stores without this binding
+     * remain supported for other operations, but cannot be used by the mode executor.
+     */
+    private fun modeExecutionPending(): Boolean {
+        val source = waitingChanges ?: return false
+        val state = source.read() ?: return true
+        val op = state.operation ?: return false
+        return op.kind == WaitingChangeKind.SWITCH_MODE &&
+            op.phase in setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
+    }
     /** Null means damaged/missing, including an invalid session scope. Only enrollment creates an empty ledger. */
     abstract fun read(): ElevationRecord?
     /**

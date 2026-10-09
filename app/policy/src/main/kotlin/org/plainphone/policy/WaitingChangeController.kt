@@ -52,7 +52,7 @@ class WaitingOperation(
         require(recipientGenerations.isNotEmpty() && recipientGenerations.values.all { it >= 0 })
         require(recipientContacts.keys == recipientGenerations.keys)
         require((stopper == null) == (stopperGeneration == null))
-        require(stopperGeneration == null || (stopperGeneration >= 0 && peoplePatch != null &&
+        require(stopperGeneration == null || (stopperGeneration >= 0 && (peoplePatch != null || modePatch != null) &&
             phase in setOf(WaitingPhase.ROLLING_BACK, WaitingPhase.CANCELLED)))
         require(peoplePatch == null || (mode == Mode.TRUSTED && restoredSteps == 0 &&
             peoplePatch.starter == starter && peoplePatch.structureGeneration == structureGeneration &&
