@@ -792,3 +792,44 @@ operation or confer authority to a new one in a different journal generation.
 transaction races and crashes at forward/rollback boundaries. It proves pure-policy behavior only.
 Android persistence, broadcast/readback and device fault evidence belong to the assigned lane D
 integration under its own gate; Update and its separate installer boundary remain unavailable.
+
+### Mode switches: enrollment and waiting contract (first slice)
+
+`WaitingChangeController.prepareSelfManaged` and `prepareSupervised` produce
+process-owned `WaitingStart` preparations. Authenticate the **current** starter
+against that preparation's exact action, then call `startModeSwitch` with the
+local confirmation. Never deserialize a preparation or accept one from an
+intent. `IncomingSelfManagedEnrollment` records the user's PIN/recovery and
+account checks without requiring a trusted-person name/number or test text.
+The opposite direction reuses the full `IncomingPersonEnrollment` contract.
+The adapter must reserve new, never-reused holder IDs in either direction.
+
+`ModeSwitchPatch` is immutable pending data. Persist the enrollment attestations,
+source/target mode, all outgoing slot generations and structure generation in
+the same operation record as the wait and its fixed-contact receipts. The source
+mode stays authoritative throughout the pending wait. Every outgoing slot is
+removed, so replacing either outgoing trusted person's credential cancels the
+pending switch. An exact supervised recovery skip retains those removed-slot
+dependencies and updates the skipper's generation in the existing joint
+credential/operation transaction. Self-managed switches cannot skip.
+
+Both directions use the single waiting slot, the existing durable cancel intent,
+and 24 hours of proven running time. Pending preparation/start/cancel never write
+the elevation store: the ledger and active countdown retain their existing age,
+limits and deadline. Process restart still revokes temporary authority through
+the existing elevation startup path without refunding debits. Wall-clock values
+are absent from these APIs. Queued receipts keep their original recipient and
+contact snapshots, including an explicit unavailable contact for a self-managed
+holder without an SMS contact; do not send a pending incoming person a receipt
+by looking up their enrollment as if it were active.
+
+**Product mode-switch actions remain unavailable.** This slice stops at durable
+COMMITTING. Neither `TurnOffController` nor `PeopleChangeController` executes a
+mode patch, and `PolicyEngine` retains normal lockdown for it. The internal
+`replacementForCommit` calculation is not authorization or a persistence API.
+The next reviewed slice must extend the forward/rollback contract with target
+reset-protection list plus backup, broadcast and readback, old-session/grant
+revocation, atomic mode/holder/structure/applied-marker swap, preserved elevation
+debits, stop eligibility, crash replay and lost-record reconciliation. Android
+integration must implement those contracts before exposing the action; JVM fake
+stores and effects do not prove Android persistence or reset-protection behavior.
