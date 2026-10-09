@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+# Plainphone reviewed browser catalog (web-containment spec, design D4). Owner: lane C (:links).
+# Columns (tab-separated): package, kind, status, source, notes.
+#   kind:   BROWSER | ASSISTANT | APP_STORE are hidden and cannot be approved.
+#           REVIEW is not hidden: the app can browse inside its own WebView or URL bar without a web intent filter.
+#   status: EMULATOR or DEVICE = measured in the cited spike file; UNVERIFIED = package identity only, not run yet.
+# Disclosure: navigation inside an approved app's own WebView is not intercepted (web-containment spec). REVIEW notes
+# record what is known per app; the probe heuristic finds browsers that are not listed here.
+# Play Store (com.android.vending) and Play services (com.google.android.gms) are never-hide and must not be listed.
+version=1
+com.android.chrome	BROWSER	EMULATOR	spikes/emulator/RESULT.md Q4 classifier fixtures	Chrome; also matches the probe heuristic. Hidden Chrome keeps the browser role (Q4 browser role).
+com.google.android.googlequicksearchbox	ASSISTANT	EMULATOR	spikes/emulator/RESULT.md Q4 classifier fixtures; Hiding the Google app and Gemini	Google app (NAMED_HIDE in the spike). Hidden: ASSIST, WEB_SEARCH and VOICE_COMMAND have no handler.
+com.google.android.apps.bard	ASSISTANT	UNVERIFIED	spikes/emulator/RESULT.md Hiding the Google app and Gemini (Gemini not on the image)	Gemini. Hidden by spec; not installed on the emulator images.
+com.android.browser	BROWSER	UNVERIFIED	AOSP Browser package name	AOSP browser on older or OEM builds.
+org.mozilla.firefox	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=org.mozilla.firefox	Firefox.
+org.mozilla.focus	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=org.mozilla.focus	Firefox Focus.
+com.microsoft.emmx	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=com.microsoft.emmx	Microsoft Edge.
+com.opera.browser	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=com.opera.browser	Opera.
+com.opera.mini.native	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=com.opera.mini.native	Opera Mini.
+com.brave.browser	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=com.brave.browser	Brave.
+com.duckduckgo.mobile.android	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=com.duckduckgo.mobile.android	DuckDuckGo.
+com.sec.android.app.sbrowser	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=com.sec.android.app.sbrowser	Samsung Internet.
+com.vivaldi.browser	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=com.vivaldi.browser	Vivaldi.
+com.kiwibrowser.browser	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=com.kiwibrowser.browser	Kiwi.
+com.ecosia.android	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=com.ecosia.android	Ecosia.
+org.torproject.torbrowser	BROWSER	UNVERIFIED	https://play.google.com/store/apps/details?id=org.torproject.torbrowser	Tor Browser.
+com.amazon.venezia	APP_STORE	UNVERIFIED	Amazon Appstore package name	Amazon Appstore.
+org.fdroid.fdroid	APP_STORE	UNVERIFIED	https://f-droid.org/packages/org.fdroid.fdroid/	F-Droid client.
+com.aurora.store	APP_STORE	UNVERIFIED	https://f-droid.org/packages/com.aurora.store/	Aurora Store.
+com.sec.android.app.samsungapps	APP_STORE	UNVERIFIED	Samsung Galaxy Store package name	Galaxy Store.
+com.microsoft.office.outlook	REVIEW	DEVICE	spikes/device-moto/RESULT.md B-Q4 Outlook (before sign-in)	In-app WebView: the Privacy & Cookies link opens a WebView that follows off-site links under lock task. Accepted by Beaux on PLA-14. Signed-in routes unknown (PLA-20).
+com.google.android.gm	REVIEW	DEVICE	spikes/device-moto/RESULT.md B-Q4 Gmail	Add-account loads Microsoft's sign-in page in a WebView; its off-page links go to Chrome (blocked). In-page links and links in mail are untested.
+org.telegram.messenger	REVIEW	UNVERIFIED	spikes/device-moto/RESULT.md B-Q4 Telegram; B-Q4 signed in (deferred)	Has its own in-app browser (WebView) and mini apps. No web pages before sign-in; after sign-in unknown, check first on the real build.
