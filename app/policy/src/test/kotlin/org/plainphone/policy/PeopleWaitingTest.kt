@@ -530,4 +530,64 @@ class PeopleWaitingTest {
             assertEquals(WaitingPhase.COMMITTING, f.waiting!!.operation!!.phase)
         }
     }
+
+    @Test fun `people journal cannot use turn off restore progress or a mismatched patch starter`() {
+        val f = F()
+        f.start()
+        val op = f.waiting!!.operation!!
+        assertFailsWith<IllegalArgumentException> { op.withRestoredSteps(1) }
+        assertFailsWith<IllegalArgumentException> {
+            WaitingOperation(op.identity, f.b, 0, op.structureGeneration, Mode.TRUSTED, op.startedAt,
+                WaitingPhase.PENDING, op.recipientGenerations, peoplePatch = op.peoplePatch)
+        }
+    }
+
+    @Test fun `people journal preserves full lockdown and emergency floor in every phase`() {
+        val f = F()
+        f.start()
+        val dialer = PackageName("test.systemdialer")
+        val hidden = PackageName("test.unapproved")
+        val input = PolicyInput("model", "build", PackageName("test.home"), PackageName("test.sms"),
+            listOf(InstalledPackage(dialer, true, 1), InstalledPackage(hidden, false, 1)),
+            listOf(FloorIdentity(dialer, FloorRole.SYSTEM_DIALER, IdentitySource.OS_MANAGED)))
+        for (phase in WaitingPhase.entries) {
+            val op = f.waiting!!.operation!!.withPhase(phase)
+            for (boot in listOf(false, true)) {
+                val plan = PolicyEngine.decide(input.copy(waitingOperation = op, lockedBoot = boot))
+                assertEquals(Restriction.entries.toSet(), plan.restrictions)
+                assertTrue(dialer in plan.neverHide)
+                assertTrue(dialer in plan.lockTaskPackages)
+                assertTrue(hidden in plan.hidden)
+                assertTrue(plan.steps.any { it.stage == ApplyStage.LOCK_TASK })
+            }
+        }
+    }
+
+    @Test fun `unwired recovery handover and skip remain unavailable without consuming code`() {
+        val f = F()
+        val controller = WaitingChangeController(f.store, { f.credentials }, RunningClock { f.now }, f.vault,
+            WaitingIdentitySource { WaitingIdentity("unwired", "synthetic-cancel") }, f.cancelStore)
+        val request = controller.prepareHandOver(f.a, f.enrolled)!!
+        val before = f.credentials
+        outcome(WaitingOutcome.REFUSED, controller.startHandOverWithRecovery(request,
+            f.firstPrepared.recoveryCode.toCharArray(), f.newPin, true, true))
+        assertSame(before, f.credentials)
+        assertEquals(WaitingOutcome.PENDING, controller.startPeopleChange(request, f.auth(request), true))
+        outcome(WaitingOutcome.REFUSED, controller.skip(request.requestId, f.a,
+            f.firstPrepared.recoveryCode.toCharArray(), f.newPin, true, f.battery))
+        assertEquals(WaitingPhase.PENDING, f.waiting!!.operation!!.phase)
+    }
+
+    @Test fun `old timer and cancellation never target the next people wait`() {
+        val f = F()
+        val old = f.start()
+        assertEquals(WaitingOutcome.CANCELLED, f.controller.cancel(old))
+        val current = f.start()
+        f.at(day)
+        assertEquals(WaitingOutcome.IGNORED, f.controller.tick(old, f.battery))
+        assertEquals(WaitingOutcome.IGNORED, f.controller.cancel(old))
+        assertEquals(WaitingOutcome.COMMITTING, f.controller.tick(current, f.battery))
+        assertEquals(current, f.waiting!!.operation!!.identity.requestId)
+    }
+
 }
