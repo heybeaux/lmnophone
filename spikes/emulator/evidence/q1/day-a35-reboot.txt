@@ -1,0 +1,14 @@
+# Q1 reboot back into lock task, API 35, flag ON
+before: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.a
+$ adb reboot
+boot_completed after 15s
+top: com.google.android.dialer/com.android.dialer.incall.activity.ui.InCallActivity
+status: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.android.server.telecom, com.google.android.apps.safetyhub, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[] locked=true
+10-08 16:58:42.962  1408  1408 I PPEMU   : startLockTask() called
+10-08 16:58:42.996  1408  1408 I PPEMU   : lock task entering com.plainphone.spike.emu
+10-08 16:58:43.266  1408  1408 I PPEMU   : lock(): state=1 permitted=true
+10-08 16:58:43.353  1408  1408 I PPEMU   : boot android.intent.action.LOCKED_BOOT_COMPLETED deviceOwner=true locked=true
+10-08 16:58:44.334  1408  1408 I PPEMU   : boot android.intent.action.BOOT_COMPLETED deviceOwner=true locked=true
+10-08 16:58:46.481  1408  1461 I PPEMU   : net wifi=true captive=false validated=false msg=This Wi-Fi isn't reaching the internet.
+10-08 16:58:46.524  1408  1461 I PPEMU   : net wifi=true captive=false validated=true msg=null
+10-08 16:58:49.456  1408  1461 I PPEMU   : net wifi=true captive=false validated=true msg=null

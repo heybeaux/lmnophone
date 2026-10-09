@@ -1,0 +1,26 @@
+# Q1 calls, API 35, flag ON (emulator console only; no real call)
+$ adb emu gsm call 5551234
+OK
+top: com.plainphone.spike.emu/.MainActivity
+texts: "Plainphone emu spike (throwaway)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop lock task" "deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, co
+$ adb emu gsm accept 5551234
+OK
+top: com.plainphone.spike.emu/.MainActivity
+texts: "Plainphone emu spike (throwaway)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop lock task" "deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, co
+$ adb emu gsm list
+OK
+$ adb emu gsm cancel 5551234
+OK
+top after hangup: com.plainphone.spike.emu/.MainActivity
+## outgoing: DIAL tel:5551234 from Plainphone home, then tap the dial button
+top: com.google.android.dialer/com.android.dialer.main.impl.MainActivity
+top: com.google.android.dialer/com.android.dialer.incall.activity.ui.InCallActivity
+texts: "More options" "555-1234" "backspace" "1," "1" "2,ABC" "2" "ABC" "3,DEF" "3" "DEF" "4,GHI" "4" "GHI" "5,JKL" "5" "JKL" "6,MNO" "6" "MNO" "7,PQRS" "7" "PQRS" "8,TUV" "8" "TUV" "9,WXYZ" "9" "WXYZ" "*" "*" "0" "0" "+" "#" "#" "Call" "dial" 
+$ adb emu gsm list
+OK
+$ adb emu gsm cancel 5551234
+OK
+top after hangup: com.google.android.dialer/com.android.dialer.incall.activity.ui.InCallActivity
+10-08 16:53:36.652   553  1882 I ActivityTaskManager: START u0 {flg=0x30000000 cmp=com.plainphone.spike.emu/.MainActivity (has extras)} with LAUNCH_SINGLE_TASK from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result code=3
+10-08 16:53:36.658   553  1882 I ActivityTaskManager: START u0 {act=android.intent.action.DIAL dat=tel:xxxxxxx flg=0x10000000 cmp=com.google.android.dialer/com.android.dialer.main.impl.MainActivity} with LAUNCH_SINGLE_TA
+10-08 16:53:41.700   553  1265 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN flg=0x10040000 cmp=com.google.android.dialer/com.android.dialer.incall.activity.ui.InCallActivity (has extras)} with LAUNCH_S
