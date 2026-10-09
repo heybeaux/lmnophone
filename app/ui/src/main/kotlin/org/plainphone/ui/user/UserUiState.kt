@@ -46,8 +46,8 @@ sealed interface AskForAppEvent {
     data object Send : AskForAppEvent
     data class Retry(val requestId: String) : AskForAppEvent
 }
-/** Host sets sending before starting work and also rejects duplicate commands. */
 enum class AppRequestResult { Sent, Failed, DailyLimit }
+/** Host sets sending before starting work and also rejects duplicate commands. */
 data class AppRequestResultUiState(val recipientName: String, val result: AppRequestResult,
     val requests: List<AppRequestRow> = emptyList(), val sending: Boolean = false)
 sealed interface AppRequestResultEvent {

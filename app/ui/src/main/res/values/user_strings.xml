@@ -8,6 +8,7 @@
     <string name="user_try_again">Try again</string>
     <string name="more_emergency">Emergency 9‑1‑1</string>
     <string name="more_emergency_note">Opens the dialer with 9‑1‑1 typed in</string>
+    <string name="more_emergency_spoken">Emergency 9-1-1. Opens the dialer with 9-1-1 typed in.</string>
     <string name="more_phone_settings">Phone settings</string>
     <string name="more_phone_settings_note">Wi-Fi, sound, text size</string>
     <string name="more_ask">Ask for an app</string>

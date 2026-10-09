@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -30,7 +31,8 @@ fun MoreScreen(state: MoreUiState, onEvent: (MoreEvent) -> Unit) {
         ScreenLink(stringResource(R.string.back_home), { onEvent(MoreEvent.Back) }, centered = false)
         Text(stringResource(R.string.home_more), style = PlainphoneType.Title,
             modifier = Modifier.padding(vertical = PlainphoneSpace.S4).semantics { heading() })
-        MenuRow(stringResource(R.string.more_emergency), stringResource(R.string.more_emergency_note)) {
+        MenuRow(stringResource(R.string.more_emergency), stringResource(R.string.more_emergency_note),
+            spokenText = stringResource(R.string.more_emergency_spoken)) {
             onEvent(MoreEvent.OpenEmergencyDialer)
         }
         Spacer(Modifier.height(PlainphoneSpace.S4))
@@ -66,12 +68,14 @@ fun MoreScreen(state: MoreUiState, onEvent: (MoreEvent) -> Unit) {
 }
 
 @Composable
-private fun MenuRow(title: String, description: String, onClick: () -> Unit) {
+private fun MenuRow(title: String, description: String, spokenText: String? = null, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().plainphoneAction(onClick = onClick).heightIn(min = 64.dp)
         .padding(vertical = PlainphoneSpace.S4),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S1)) {
+        Column(Modifier.weight(1f).then(if (spokenText == null) Modifier else Modifier.clearAndSetSemantics {
+            contentDescription = spokenText
+        }), verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S1)) {
             Text(title, style = PlainphoneType.Row)
             Text(description, style = PlainphoneType.Small)
         }

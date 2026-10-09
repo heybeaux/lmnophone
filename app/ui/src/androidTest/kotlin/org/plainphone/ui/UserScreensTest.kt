@@ -28,7 +28,7 @@ class UserScreensTest {
     @Test fun moreRoutesAndNameJoins() {
         val events = mutableListOf<MoreEvent>()
         show { MoreScreen(MoreUiState(MoreMode.Trusted(listOf("Sam", "Jo"), "Sam")), events::add) }
-        compose.onNodeWithText("Emergency 9‑1‑1").assertIsDisplayed().performClick()
+        compose.onNodeWithContentDescription("Emergency 9-1-1", substring = true).assertIsDisplayed().performClick()
         compose.onNodeWithText("For Sam and Jo").performScrollTo().performClick()
         compose.onNodeWithText("Where Sam or Jo add apps, with a PIN").assertIsDisplayed()
         compose.onNodeWithText("About this phone").performScrollTo().performClick()
@@ -156,7 +156,6 @@ class UserScreensTest {
     @Test fun emergencySpeechUsesPlainHyphens() {
         show { MoreScreen(MoreUiState(MoreMode.SelfManaged(10)), {}) }
         compose.onNodeWithContentDescription("Emergency 9-1-1", substring = true).assertIsDisplayed()
-        compose.onNodeWithText("Emergency 9‑1‑1").assertIsDisplayed()
     }
     @Test fun requestBackEvent() {
         val events = mutableListOf<AskForAppEvent>()
