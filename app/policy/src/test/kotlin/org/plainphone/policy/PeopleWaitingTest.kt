@@ -13,6 +13,7 @@ class PeopleWaitingTest {
         val newPin get() = CharArray(6) { '2' }
         var now: ClockReading? = ClockReading(RunningTime("epoch", 0), BootTime("boot", 0))
         var credentials: CredentialState? = null
+        var credentialReads: MutableList<CredentialState?>? = null
         var waiting: WaitingState? = WaitingState(storageGeneration = "live")
         var failWaiting = false
         var failJoint = false
@@ -84,7 +85,10 @@ class PeopleWaitingTest {
             if (crashJoint == true) error("after joint write")
             return true
         }
-        fun controller() = WaitingChangeController(store, { credentials }, RunningClock { now }, vault,
+        fun controller() = WaitingChangeController(store, {
+            credentialReads?.takeIf { it.isNotEmpty() }?.removeAt(0)
+                ?: if (credentialReads == null) credentials else null
+        }, RunningClock { now }, vault,
             WaitingIdentitySource { identity++; WaitingIdentity("request-$identity", "synthetic-cancel-$identity") }, cancelStore,
             WaitingSkipSupport(vault, WaitingSkipCommitter(::joint)),
             WaitingHandOverSupport(vault, WaitingHandOverCommitter(::joint)))
@@ -507,6 +511,39 @@ class PeopleWaitingTest {
         f.credentials = null
         assertEquals(WaitingOutcome.CANCELLED, f.controller.cancel(id))
         assertEquals(snapshot, f.waiting!!.texts.single().recipientContacts)
+    }
+
+    @Test fun `cancel uses entire start snapshot when credential read fails then becomes available`() {
+        for (legacy in listOf(false, true)) {
+            val f = F(contacts = !legacy)
+            val id = f.start()
+            val started = f.waiting!!.texts.single()
+            val c = f.credentials!!
+            val latest = c.replacing(f.a, c.people.getValue(f.a).copy(generation = 1,
+                contact = PersonContact("synthetic-later", "synthetic-later-number")))
+            f.credentials = latest
+            f.credentialReads = mutableListOf(null, latest)
+            assertEquals(WaitingOutcome.CANCELLED, f.controller.cancel(id))
+            val cancelled = f.waiting!!.texts.last()
+            assertEquals(started.recipientGenerations, cancelled.recipientGenerations)
+            assertEquals(started.recipientContacts, cancelled.recipientContacts)
+        }
+    }
+
+    @Test fun `cancel keeps entire current snapshot when a later credential read fails`() {
+        for (legacy in listOf(false, true)) {
+            val f = F(contacts = !legacy)
+            val id = f.start()
+            val c = f.credentials!!
+            val latest = c.replacing(f.a, c.people.getValue(f.a).copy(generation = 1,
+                contact = PersonContact("synthetic-later", "synthetic-later-number")))
+            f.credentials = latest
+            f.credentialReads = mutableListOf(latest, null)
+            assertEquals(WaitingOutcome.CANCELLED, f.controller.cancel(id))
+            val cancelled = f.waiting!!.texts.last()
+            assertEquals(latest.people.mapValues { it.value.generation }, cancelled.recipientGenerations)
+            assertEquals(latest.people.mapValues { it.value.contact }, cancelled.recipientContacts)
+        }
     }
 
     @Test fun `turn off runner never restores or completes people operation even if device owner absent`() {
