@@ -1,0 +1,39 @@
+## Lock task with grey on
+$ cmd lt-packages com.google.android.dialer
+OK lockTaskPackages=[com.plainphone.spike.grey, com.google.android.dialer]
+$ cmd lt-features 0
+OK lockTaskFeatures=0
+$ cmd lt-start
+OK sent lt-start
+$ cmd status
+version=grey-1(1) deviceOwner=true WRITE_SECURE_SETTINGS=true lockTask=1 accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0
+$ cmd grey-off (inside lock task)
+putInt mode=true enabled=true -> accessibility_display_daltonizer_enabled=0 accessibility_display_daltonizer=0
+colorTransformMatrix=[[1.000,0.000,0.000,0.000][0.000,1.000,0.000,0.000][0.000,0.000,1.000,0.000][0.000,0.000,0.000,1.000]] 
+$ cmd grey-on (inside lock task)
+putInt mode=true enabled=true -> accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0
+colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]] 
+## Reboot
+$ adb reboot
+$ adb shell dumpsys package (after reboot)
+versionCode=1 minSdk=33 targetSdk=35
+android.permission.WRITE_SECURE_SETTINGS
+android.permission.WRITE_SECURE_SETTINGS: granted=true
+$ keys
+enabled=1 mode=0
+$ SurfaceFlinger
+colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]] 
+$ cmd status
+version=grey-1(1) deviceOwner=true WRITE_SECURE_SETTINGS=true lockTask=1 accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0
+$ logcat PPGREY
+10-08 21:28:18.399  1415  1415 I PPGREY  : startLockTask ok
+10-08 21:28:19.140  1415  1415 I PPGREY  : startLockTask ok
+10-08 21:28:20.132  1415  1415 I PPGREY  : android.intent.action.BOOT_COMPLETED: version=grey-1(1) deviceOwner=true WRITE_SECURE_SETTINGS=true lockTask=1 accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0
+10-08 21:28:21.305  1415  1415 I PPGREY  : startLockTask ok
+10-08 21:28:26.368  1415  1415 I PPGREY  : cmd [status] -> version=grey-1(1) deviceOwner=true WRITE_SECURE_SETTINGS=true lockTask=1 accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0
+$ cmd grey-off (after reboot, grant still works?)
+putInt mode=true enabled=true -> accessibility_display_daltonizer_enabled=0 accessibility_display_daltonizer=0
+colorTransformMatrix=[[1.000,0.000,0.000,0.000][0.000,1.000,0.000,0.000][0.000,0.000,1.000,0.000][0.000,0.000,0.000,1.000]] 
+$ cmd grey-on
+putInt mode=true enabled=true -> accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0
+colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]] 

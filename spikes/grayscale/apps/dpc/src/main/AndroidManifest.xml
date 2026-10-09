@@ -9,7 +9,7 @@
 
     <application
         android:label="Plainphone grey spike"
-        android:testOnly="true">
+        android:testOnly="${testOnly}">
 
         <activity
             android:name=".MainActivity"
