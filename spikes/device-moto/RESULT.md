@@ -40,6 +40,7 @@
 | B-Q4 must-have apps | **partly**: before sign-in done; signed-in checks in PLA-20 | All 5 apps probed under BLOCK before sign-in. **Outlook's in-app WebView browses off-site from its Privacy link.** Google sign-in in Spotify and Outlook goes to GMS → blocked; Slack's Google sign-in fails even with lock task off (not traced). Telegram loops until pre-granted. Signed-in checks wait for Beaux. |
 | 9-1-1 routes (PLA-40) | **SOS: no, unless Personal Safety is allowlisted** | Power ×5 under lock task + BLOCK: "Personal Safety is not available right now". With `com.google.android.apps.safetyhub` on the lock-task list, the SOS screen opens. Phone route works from home and from inside Messages. Lock-screen Emergency (emulator) goes to Personal Safety too and is blocked without it. No call placed. |
 | Q2 unattended | **partial: yes for apps; GMS not shown** | Intended policy (lock task LOCKED, BLOCK on, Play outside). With no forcing, Play's daily run updated all 5 rolled-back apps, the pending Phone app and Telegram/Spotify about 8 h in. Cut short at 10 h 40 min, with no comparison (Lead, Telegram 4509); the full 72 h run moves to the MVP build (PLA-118). 1055 not reproduced. |
+| Look-only preview (PLA-118) | **installed** | `Plainphone (preview)` (`org.plainphone`, `mvp/shell-preview` @ `131a155`) installed with `adb install -t`. It is an ordinary app: it hides, blocks and locks nothing. It launches; Home goes back to the Moto launcher; `adb uninstall` removes it with no leftover data. The spike DPC stays Device Owner and is idle. See [Look-only preview](#look-only-preview-pla-118). |
 | S7 install race | **partly** | DPC hid a newly installed app 4.6 s after `firstInstallTime`. Deep links failed for ~4 s (package frozen), but the app's **process started ~0.35 s before the hide**. App code execution not instrumented; no `Displayed` log line. One measured race, lock task off (R3). |
 
 ## R1–R5 corrections (PLA-24)
@@ -168,6 +169,41 @@ Spike DPC is Device Owner (`testOnlyAdmin`). Lock task `NONE`, lock-task package
 `stay_on_while_plugged_in=2`, `adb_wifi_enabled=0`, `boot_count` 5. Accounts: the Phase B test account and Meet's local account.
 The rolled-back apps are all back at current Play versions; mainline telemetry is staged for the next reboot. The R5 DPC build is installed.
 The host logcat capture is stopped; the raw capture wasn't committed (4.6 MB, one account address).
+
+## Look-only preview (PLA-118)
+
+Beaux asked for a look-only preview on the spare (PLA-14 card d3be49b8). This is not a spike result. It is the PLA-104
+preview shell with sample data, so Beaux can see the screens on real hardware. Evidence: `evidence/pla118/preview-install.txt`.
+
+- **Build:** branch `mvp/shell-preview` @ `131a155`, `plainphone-debug.apk`, sha256 `ac5950ee…c43376784bebe393f22bf5c4800b277`.
+  `aapt2 dump badging` shows `application-label:'Plainphone (preview)'`, package `org.plainphone`, `versionName` `0.1.0-dev`.
+  The APK has no `HOME` intent filter, so it can't become the Home app. It makes no DevicePolicyManager calls. The D0 admin
+  receiver is declared but never activated.
+- **Install:** `adb -s SPARE_DEVICE_SERIAL install -t plainphone-debug.apk` → `Success` (2026-10-09T17:24Z, Android 15 / API 35).
+- **Device Owner choice: keep the spike DPC as Device Owner, idle; don't add the preview to the lock-task list.**
+  - The preview never starts lock task, and lock task is `NONE`. So the lock-task list doesn't matter for it.
+  - The spike's policy is empty: no restrictions, nothing hidden or suspended, and HOME role = Moto launcher.
+    The spike only enters lock task when someone taps its own Lock button, and its boot receiver only re-applies the
+    debug-lift timer (`debugLiftAt=0`, inactive).
+  - Releasing it would be safe too (A2). But the Google account is on the phone, so provisioning a Device Owner over adb
+    again would need a reset. Keeping the testOnly spike as owner leaves both ways open for the MVP build: transfer
+    ownership, or `dpm remove-active-admin` followed by a Settings reset.
+- **Checks on the phone:**
+  - **Launch:** the launcher intent opens the preview's home screen, which shows the clock, the sample app list and More.
+  - **Navigation:** tapping More opens the More screen (Emergency 9-1-1, Phone settings, Ask for an app, For Sam and Jo).
+  - **Way back:** the Home key goes to `com.motorola.launcher3`, and lock task stays `NONE`.
+  - **Emergency 9-1-1** in the preview fires `ACTION_DIAL tel:911`. The stock dialer opens with the number typed, but
+    nothing is called unless someone presses Call. This was not tapped here.
+- **Removal:** `adb uninstall org.plainphone` → `Success`. `pm list packages` is then empty, and `/data/data/org.plainphone`
+  is gone. Reinstalled with `adb install -t` → `Success`.
+- **Boot-loop precaution (PLA-22):** nothing was hidden or unhidden, and there was no reboot.
+- **End state (2026-10-09T17:26Z):** the preview is in front at its home screen. Lock task `NONE`, HOME role = Moto launcher.
+  The spike DPC is Device Owner (`testOnlyAdmin=true`) with `restrictions=[] hidden=[] suspended=[]`. USB powered,
+  battery 100%, `stay_on_while_plugged_in` = 2. The swipe-only lock screen is unchanged (no PIN).
+- **For Beaux:** open **Plainphone (preview)** from the app drawer. Press the phone's Home button (the circle) to get back
+  to the normal Moto home screen. To remove it: `adb uninstall org.plainphone`, or long-press its icon and uninstall.
+- **Not shown:** nothing about hiding, escape (Q5), the emergency gate (Q14), boot safety (Q6), turning off (Q7) or custody.
+  This is the look and the copy only.
 
 ## A0. Baseline
 
