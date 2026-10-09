@@ -169,7 +169,7 @@ class UserScreensTest {
         } }
         compose.onNodeWithText("Don't send").assertIsEnabled().performClick()
         compose.onNodeWithText("Send").performClick()
-        compose.onNodeWithText("Send").assertIsNotEnabled().performTouchInput { click() }
+        compose.onNodeWithText("Sending…").assertIsNotEnabled().performTouchInput { click() }
         compose.onNodeWithText("Don't send").assertIsNotEnabled().performTouchInput { click() }
         assertEquals(listOf(BlockedLinkEvent.DontSend, BlockedLinkEvent.Send), events)
     }
@@ -181,12 +181,18 @@ class UserScreensTest {
             if (it == AppRequestResultEvent.Retry) state.value = state.value.copy(sending = true)
         } }
         compose.onNodeWithText("Try again").performClick()
-        compose.onNodeWithText("Try again").assertIsNotEnabled().performTouchInput { click() }
+        compose.onNodeWithText("Sending…").assertIsNotEnabled().performTouchInput { click() }
         assertEquals(listOf(AppRequestResultEvent.Retry), events)
         compose.runOnIdle { state.value = state.value.copy(sending = false) }
         compose.onNodeWithText("Try again").assertIsEnabled().performClick()
         compose.onNodeWithText("OK, leave it saved").performClick()
         assertEquals(listOf(AppRequestResultEvent.Retry, AppRequestResultEvent.Retry, AppRequestResultEvent.Ok), events)
+    }
+    @Test fun sendingRequestShowsProgressEvenIfHostEligibilityIsStillTrue() {
+        val events = mutableListOf<AskForAppEvent>()
+        show { AskForAppScreen(AskForAppUiState("Sam", "Bus times", canSend = true, sending = true), events::add) }
+        compose.onNodeWithText("Sending…").assertIsDisplayed().assertIsNotEnabled().performTouchInput { click() }
+        assertEquals(emptyList<AskForAppEvent>(), events)
     }
     @Test fun retryHistoryRowStopsOfferingRetryWhileSending() {
         val events = mutableListOf<AppRequestResultEvent>()

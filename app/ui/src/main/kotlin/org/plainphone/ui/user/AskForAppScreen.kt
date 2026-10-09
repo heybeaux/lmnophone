@@ -28,8 +28,8 @@ import org.plainphone.ui.theme.*
 
 @Composable
 fun AskForAppScreen(state: AskForAppUiState, onEvent: (AskForAppEvent) -> Unit) {
-    TaskScreen(stringResource(R.string.more_ask), stringResource(R.string.ask_send, state.recipientName.withoutBidiControls()),
-        { onEvent(AskForAppEvent.Send) }, primaryEnabled = state.canSend,
+    TaskScreen(stringResource(R.string.more_ask), if (state.sending) stringResource(R.string.ask_sending) else stringResource(R.string.ask_send, state.recipientName.withoutBidiControls()),
+        { onEvent(AskForAppEvent.Send) }, primaryEnabled = state.canSend && !state.sending,
         back = stringResource(R.string.back_more), onBack = { onEvent(AskForAppEvent.Back) }) {
         Text(stringResource(R.string.ask_body, state.recipientName.withoutBidiControls()), style = PlainphoneType.Body)
         val label = stringResource(R.string.ask_label)
@@ -96,7 +96,7 @@ fun AppRequestResultScreen(state: AppRequestResultUiState, onEvent: (AppRequestR
         AppRequestResult.DailyLimit -> stringResource(R.string.ask_limit_title)
     }
     val failed = state.result == AppRequestResult.Failed
-    TaskScreen(title, stringResource(if (failed) R.string.user_try_again else R.string.user_ok),
+    TaskScreen(title, stringResource(if (failed && state.sending) R.string.ask_sending else if (failed) R.string.user_try_again else R.string.user_ok),
         { onEvent(if (failed) AppRequestResultEvent.Retry else AppRequestResultEvent.Ok) },
         primaryEnabled = !failed || !state.sending,
         secondary = if (failed) stringResource(R.string.ask_leave_saved) else null,
