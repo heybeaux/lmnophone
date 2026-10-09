@@ -160,13 +160,44 @@ class WaitingChangeControllerTest {
         assertFailsWith<UnsupportedOperationException> { (store.state!!.texts as MutableList).clear() }
     }
 
+    @Test fun `receipts retain original request and credential identities after a later request starts`() {
+        val id = start()
+        val receipt = store.state!!.texts.single()
+        controller.cancel(id)
+        credentials = credentials!!.replacing(second, credential.copy(generation = 1))
+        start()
+        assertEquals(id, receipt.operation.identity.requestId)
+        assertEquals("synthetic-code-1", receipt.operation.identity.cancelCode)
+        assertEquals(0L, receipt.recipientGenerations.getValue(second))
+        assertEquals(1L, store.state!!.texts.last().recipientGenerations.getValue(second))
+    }
+
+    @Test fun `interruption around the start write preserves both operation and owed receipt or neither`() {
+        for (afterWrite in listOf(false, true)) {
+            store.state = WaitingState()
+            val request = controller.prepareTurnOff(first)!!
+            store.crashAfterWrite = afterWrite
+            store.crash = true
+            assertFailsWith<IllegalStateException> { controller.startTurnOff(request, FreshAuthority(), true, true) }
+            store.crash = false
+            assertEquals(if (afterWrite) 1 else 0, store.state!!.texts.size)
+            assertEquals(afterWrite, store.state!!.operation != null)
+            assertEquals(if (afterWrite) WaitingOutcome.PENDING else WaitingOutcome.IGNORED,
+                controller().tick(request.requestId, battery))
+        }
+    }
+
     private class Store : WaitingChangeStore {
         var state: WaitingState? = WaitingState()
         var fail = false
+        var crash = false
+        var crashAfterWrite = false
         override fun read() = state
         override fun compareAndSet(expected: WaitingState, replacement: WaitingState): Boolean {
             if (fail || state?.revision != expected.revision) return false
+            if (crash && !crashAfterWrite) error("interrupted before write")
             state = replacement
+            if (crash) error("interrupted after write")
             return true
         }
     }
