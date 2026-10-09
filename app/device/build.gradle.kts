@@ -25,6 +25,8 @@ android {
     compileSdk = libs.versions.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
+        // A plain Instrumentation, so it can run before the first unlock with no test libraries.
+        testInstrumentationRunner = "org.plainphone.device.storage.DirectBootJournalCheck"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())

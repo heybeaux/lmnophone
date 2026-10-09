@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Plainphone contributors. SPDX-License-Identifier: Apache-2.0 -->
+<!--
+  The check runs before the first unlock. Android 15 refused to start instrumentation for this
+  package ("not encryption aware") with only the application-level flag, so a Direct Boot aware
+  component is declared as well.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:directBootAware="true">
+        <receiver
+            android:name="org.plainphone.device.storage.DirectBootMarker"
+            android:directBootAware="true"
+            android:exported="false" />
+    </application>
+</manifest>
