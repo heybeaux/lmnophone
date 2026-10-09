@@ -4,6 +4,7 @@
 Package: `org.plainphone.core`. Pure JVM value types; no Android imports.
 
 - `PackageName.value`: exact package identity; no normalization.
+- `CertDigest.value`: SHA-256 certificate digest, exactly 64 lowercase hex digits. `CertDigest.parse` accepts colon-separated and uppercase tool output. This is the shared type agreed with lane C; `PlainphoneIdentity` remains classifier-specific in `:links`.
 - `TrustedPersonId.value`, `Mode`, `WindowKind`: stable identities, no authority.
 - `NeverHideList.packages`: immutable snapshot of protected dependencies.
 - `BuildInventory(model, fingerprint, revision, neverHide, minimumUi, settingsSessionPackages)`: compiled, reviewed inventory for one exact build. Minimum UI must be in never-hide. Settings packages include reviewed same-UID siblings.
