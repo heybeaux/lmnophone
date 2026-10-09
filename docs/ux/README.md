@@ -15,6 +15,7 @@ spec is silent, the gap is listed under [Open questions](#open-questions-for-the
 | [flows-limits-and-off.md](flows-limits-and-off.md) | "What Plainphone can't stop", "Phone software changed – review pending", "Plainphone needs attention", turning Plainphone off |
 | [flows-setup.md](flows-setup.md) | On-phone setup (steps 1–7) and the handover check |
 | [starter-catalog.md](starter-catalog.md) | Web-leak notes for Slack, Spotify, Telegram, Phone, Messages and Camera, each with the version reviewed |
+| [design-tokens.md](design-tokens.md) | The look: Lexend, black and white only, sizes, spacing, components; mockups in [mockups/](mockups/plainphone-screens.html) ([PLA-36](/PLA/issues/PLA-36)) |
 | [copy-test.md](copy-test.md) | How the copy was tested on people who had never seen it, and what they said |
 | [../setup-guide.md](../setup-guide.md) | The written guide for the helper (task 5.3) |
 
@@ -45,7 +46,7 @@ anywhere except the few texts listed below, and the user can read exactly what t
 2. **Plain words.** Short sentences. Name people by first name. No Android words (see the word list).
 3. **Say what still works.** Any message about a problem says that calls, texts and Emergency still work, when
    that's true.
-4. **Calm.** No red except the Emergency button and the one "turn off" confirmation. No exclamation marks.
+4. **Calm.** Black, white and grey only: no colour anywhere, including Emergency and the turn-off confirmation ([design-tokens.md](design-tokens.md)). No exclamation marks.
    No countdown timers on the user's screens. No badges.
 5. **No pronouns for named people.** Copy repeats the name ("Ask Beaux") instead of guessing "he" or "she".
 6. **Honest.** Never say "safe", "secure", "protected" or "blocked forever". Say what Plainphone does.
@@ -59,7 +60,7 @@ Android 14 and later scale text up to 200%. Every screen in these files was writ
 | Screen title | 6 words | Wraps to at most 2 lines |
 | Body text | 3 short sentences per block, 2 blocks | Scrolls vertically; never horizontally |
 | Button label | 3 words | Wraps inside the button; the button grows taller, never wider than the screen |
-| List row (app, setting) | Icon + 1–3 words | Icon stays 48dp; label wraps under it if needed |
+| List row (app, setting) | 1–3 words, no icon | Label wraps; the row grows taller, at least 56dp |
 | Primary button | Pinned to the bottom, full width, at least 56dp tall | Stays pinned; content above scrolls |
 
 Touch targets are at least 48dp, and contrast meets WCAG 2.2 AA (calm-home-screen, "Readable by default").

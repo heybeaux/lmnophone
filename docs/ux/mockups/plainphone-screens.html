@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Plainphone screens: black and white (PLA-36)</title>
+<!-- Mockup only, not product code. Tokens: docs/ux/design-tokens.md. 1 CSS px = 1 dp. Frame = moto g power 5G (2024), 412 x 915 dp. -->
+<style>
+@font-face { font-family: "Lexend"; src: url("fonts/Lexend[wght].ttf") format("truetype"); font-weight: 100 900; }
+:root {
+  --ink: #000000; --paper: #FFFFFF; --ink-2: #545454; --ink-3: #757575; --line: #AFAFAF;
+  --fill-2: #E8E8E8; --fill-1: #F6F6F6;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s6: 24px; --s8: 32px; --s12: 48px;
+  --radius-box: 16px; --border: 1.5px solid var(--ink-3); --hairline: 1px solid var(--fill-2);
+  /* type scale at 100% (sp = px here) */
+  --clock: 64px; --date: 18px; --app: 32px; --title: 28px; --row: 22px; --body: 18px; --button: 18px; --small: 16px; --host: 24px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #FFFFFF; font-family: "Lexend", sans-serif; font-weight: 400; color: var(--ink); }
+header.page { padding: 32px 40px 8px; max-width: 1400px; }
+header.page h1 { font-weight: 500; font-size: 28px; margin: 0 0 8px; }
+header.page p { font-size: 16px; color: var(--ink-2); margin: 4px 0; max-width: 900px; line-height: 1.45; }
+.grid { display: flex; flex-wrap: wrap; gap: 48px 40px; padding: 24px 40px 64px; }
+figure { margin: 0; width: 436px; }
+figcaption { font-size: 15px; color: var(--ink-2); line-height: 1.45; margin-top: 14px; }
+figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: block; margin-bottom: 4px; }
+
+.phone { width: 436px; height: 939px; border-radius: 44px; border: 12px solid #111; background: #111; position: relative; overflow: hidden; }
+.screen { position: absolute; inset: 0; background: var(--paper); border-radius: 32px; overflow: hidden; display: flex; flex-direction: column; }
+.status { height: 32px; flex: none; display: flex; justify-content: space-between; align-items: center; padding: 0 24px; font-size: 13px; font-weight: 500; }
+.navbar { height: 24px; flex: none; display: flex; justify-content: center; align-items: center; }
+.navbar::after { content: ""; width: 108px; height: 4px; border-radius: 2px; background: var(--ink); opacity: .85; }
+.content { flex: 1; display: flex; flex-direction: column; padding: 0 var(--s6); min-height: 0; }
+
+/* Home */
+.clock { font-size: var(--clock); line-height: 72px; font-feature-settings: "tnum"; margin-top: var(--s6); letter-spacing: -1px; }
+.date { font-size: var(--date); line-height: 24px; color: var(--ink-2); }
+.emergency { margin-top: var(--s12); margin-bottom: var(--s12); background: var(--ink); color: var(--paper); border-radius: 999px; min-height: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 24px; text-align: center; }
+.emergency .l1 { font-weight: 500; font-size: 22px; line-height: 28px; }
+.emergency .l2 { font-size: var(--small); line-height: 22px; }
+.notice { background: var(--fill-1); border-radius: var(--radius-box); padding: var(--s4); font-size: var(--body); font-weight: 500; line-height: 26px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.notice .chev, .row .chev { color: var(--ink-3); font-size: 26px; font-weight: 400; }
+.spacer { flex: 1; }
+.apps { display: flex; flex-direction: column; }
+.apps .scroll { overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+.app { font-size: var(--app); line-height: 40px; font-weight: 500; min-height: 56px; display: flex; align-items: center; letter-spacing: -0.3px; }
+.more { margin: var(--s4) 0 var(--s4); border: var(--border); border-radius: 999px; min-height: 64px; padding: 10px 24px; display: flex; flex-direction: column; justify-content: center; }
+.more .l1 { font-size: var(--row); font-weight: 500; line-height: 28px; }
+.more .l1 .caret { color: var(--ink-3); font-weight: 400; margin-left: 6px; }
+.more .l2 { font-size: var(--small); color: var(--ink-2); line-height: 22px; }
+
+/* Task screens */
+.back { font-size: var(--small); font-weight: 500; height: 48px; display: flex; align-items: center; }
+.title { font-size: var(--title); line-height: 36px; font-weight: 500; margin: var(--s2) 0 var(--s6); }
+.body { font-size: var(--body); line-height: 26px; margin: 0 0 var(--s4); }
+.body.note { color: var(--ink-2); font-size: var(--small); line-height: 22px; }
+.box { background: var(--fill-1); border-radius: var(--radius-box); padding: var(--s4); margin-bottom: var(--s4); }
+.host { font-size: var(--host); line-height: 32px; font-weight: 500; word-break: break-all; }
+.label { font-size: var(--small); font-weight: 500; margin-bottom: var(--s2); }
+.field { border: var(--border); border-radius: var(--radius-box); padding: 14px 16px; min-height: 104px; font-size: var(--body); line-height: 26px; color: var(--ink-3); margin-bottom: var(--s6); }
+.bottom { margin-top: auto; padding-bottom: var(--s4); }
+.link { display: block; text-align: center; font-size: var(--body); font-weight: 500; text-decoration: underline; text-underline-offset: 4px; height: 48px; line-height: 48px; margin-bottom: var(--s2); }
+.primary { background: var(--ink); color: var(--paper); border-radius: 999px; min-height: 56px; display: flex; align-items: center; justify-content: center; font-size: var(--button); font-weight: 500; text-align: center; padding: 0 24px; }
+.primary.disabled { background: var(--fill-2); color: var(--line); }
+.rows { border-top: var(--hairline); }
+.row { display: flex; justify-content: space-between; align-items: center; min-height: 72px; padding: var(--s3) 0; border-bottom: var(--hairline); gap: 12px; }
+.row .t { font-size: var(--row); line-height: 28px; font-weight: 500; }
+.row .s { font-size: var(--small); line-height: 22px; color: var(--ink-2); margin-top: var(--s1); }
+.req { display: flex; justify-content: space-between; font-size: var(--small); line-height: 22px; padding: var(--s3) 0; border-bottom: var(--hairline); gap: 12px; }
+.req .when { color: var(--ink-3); white-space: nowrap; }
+.req .st { font-weight: 500; white-space: nowrap; }
+.section { font-size: var(--small); font-weight: 500; margin: var(--s2) 0 var(--s1); }
+
+/* Trusted-person band */
+.band { background: var(--ink); color: var(--paper); height: 40px; flex: none; display: flex; align-items: center; padding: 0 var(--s6); font-size: var(--small); font-weight: 500; }
+.needs { background: var(--fill-1); border-radius: var(--radius-box); padding: var(--s2) var(--s4); margin-bottom: var(--s4); }
+.needs .h { font-size: var(--small); font-weight: 500; color: var(--ink-2); padding-top: var(--s2); }
+.needs .i { font-size: var(--body); font-weight: 500; line-height: 26px; min-height: 48px; display: flex; justify-content: space-between; align-items: center; border-bottom: var(--hairline); }
+.needs .i:last-child { border-bottom: 0; }
+.needs .i .chev { color: var(--ink-2); font-weight: 400; font-size: 24px; }
+.tp .row { min-height: 64px; padding: 10px 0; }
+.tp .row .t { font-size: 20px; line-height: 26px; }
+.tp .row .s { font-size: 16px; }
+
+/* 200% text size (Android 14+ non-linear scaling, approximate) */
+.x2 { --date: 32px; --app: 52px; --row: 38px; --body: 32px; --small: 30px; }
+.x2 .clock { font-size: 48px; line-height: 56px; margin-top: var(--s4); }
+.x2 .date { line-height: 40px; }
+.x2 .emergency .l1 { font-size: 38px; line-height: 44px; }
+.x2 .emergency .l2 { line-height: 36px; }
+.x2 .notice { line-height: 40px; }
+.x2 .app { line-height: 60px; min-height: 64px; }
+.x2 .more .l1 { line-height: 44px; }
+.x2 .more .l2 { line-height: 36px; }
+.x2 .more { border-radius: 40px; }
+.fade { position: relative; }
+.scrollhint { font-size: 14px; color: var(--ink-3); text-align: right; }
+
+/* Emergency close-up annotations (not on the real screen) */
+.anno { position: absolute; left: 6px; right: 6px; border: 1.5px dashed var(--ink-3); display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--ink-2); background: rgba(255,255,255,.7); }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Plainphone screens: black and white</h1>
+  <p>Mockups for <b>PLA-36</b>. Font Lexend (400 body, 500 names and titles). Black, white and greys only, from Generosity Catalyst's palette. Tokens and rules: <code>docs/ux/design-tokens.md</code>. Words are the current flow copy (copy-test fixes from PLA-12; product decisions from PLA-14). Names as in the copy-test packet: Margaret uses the phone, Sam looks after it, Alex is the helper.</p>
+  <p>Each frame is 412 × 915 dp, the size of the spare moto g power 5G. Dashed boxes on the Emergency close-up are measurements, not part of the screen.</p>
+</header>
+
+<div class="grid">
+
+<!-- 1. Home -->
+<figure>
+<div class="phone"><div class="screen">
+  <div class="status"><span>10:42</span><span>▴ ▮ 100%</span></div>
+  <div class="content">
+    <div class="clock">10:42</div>
+    <div class="date">Thursday 8 October</div>
+    <div class="emergency"><div class="l1">Emergency 9-1-1</div><div class="l2">Opens the dialer</div></div>
+    <div class="spacer"></div>
+    <div class="apps">
+      <div class="app">Spotify</div>
+      <div class="app">Slack</div>
+      <div class="app">Camera</div>
+      <div class="app">Messages</div>
+      <div class="app">Phone</div>
+    </div>
+    <div class="more"><div class="l1">More<span class="caret">^</span></div><div class="l2">Ask for an app, settings, help</div></div>
+  </div>
+  <div class="navbar"></div>
+</div></div>
+<figcaption><b>1. Home screen (U1)</b>App names only, no icons, low on the screen where a thumb reaches. Sam sets the order of the other apps; Messages and Phone always come last, nearest the thumb. Emergency is the only filled shape, at the top, far from the list. "More" sits where the reference image has its search field; there is no search (the spec rules it out).</figcaption>
+</figure>
+
+<!-- 2. Home with a notice line -->
+<figure>
+<div class="phone"><div class="screen">
+  <div class="status"><span>21:15</span><span>▴ ▮ 64%</span></div>
+  <div class="content">
+    <div class="clock">21:15</div>
+    <div class="date">Thursday 8 October</div>
+    <div class="emergency"><div class="l1">Emergency 9-1-1</div><div class="l2">Opens the dialer</div></div>
+    <div class="notice"><span>Plainphone will turn off after 21:15 tomorrow. Tap to cancel.</span><span class="chev">›</span></div>
+    <div class="spacer"></div>
+    <div class="apps">
+      <div class="app">Spotify</div>
+      <div class="app">Slack</div>
+      <div class="app">Camera</div>
+      <div class="app">Messages</div>
+      <div class="app">Phone</div>
+    </div>
+    <div class="more"><div class="l1">More<span class="caret">^</span></div><div class="l2">Ask for an app, settings, help</div></div>
+  </div>
+  <div class="navbar"></div>
+</div></div>
+<figcaption><b>2. Home with a notice line</b>At most one line, in a light grey box under Emergency. Here: the 24-hour wait to turn off (PLA-14 decision), which anyone holding the phone can cancel. The same box shows "Ask Sam to do the monthly phone check" or "Plainphone needs attention". No red, no badge.</figcaption>
+</figure>
+
+<!-- 3. Home at 200% -->
+<figure>
+<div class="phone"><div class="screen x2">
+  <div class="status"><span>10:42</span><span>▴ ▮ 100%</span></div>
+  <div class="content">
+    <div class="clock">10:42</div>
+    <div class="date">Thu 8 Oct</div>
+    <div class="emergency" style="margin-top:24px;margin-bottom:48px"><div class="l1">Emergency 9-1-1</div><div class="l2">Opens the dialer</div></div>
+    <div class="notice"><span>Ask Sam to do the monthly phone check</span><span class="chev">›</span></div>
+    <div class="apps" style="flex:1;min-height:0;justify-content:flex-end">
+      <div class="scroll" style="flex:1;min-height:0"><div class="app">Camera</div></div>
+      <div class="app">Messages</div>
+      <div class="app">Phone</div>
+    </div>
+    <div class="more" style="margin:8px 0 8px"><div class="l1">More<span class="caret">^</span></div></div>
+  </div>
+  <div class="navbar"></div>
+</div></div>
+<figcaption><b>3. Home at the largest text size (200%)</b>The worst case: notice line showing. The clock doesn't grow (it gives its space to the buttons) and the date shortens. Emergency, the notice, Messages, Phone and More never scroll; only the other apps scroll (Spotify and Slack are above Camera here). More drops its second line at 200%.</figcaption>
+</figure>
+
+<!-- 4. Emergency close-up -->
+<figure>
+<div class="phone"><div class="screen">
+  <div class="status"><span>10:42</span><span>▴ ▮ 100%</span></div>
+  <div class="content" style="position:relative">
+    <div class="clock">10:42</div>
+    <div class="date">Thursday 8 October</div>
+    <div class="emergency"><div class="l1">Emergency 9-1-1</div><div class="l2">Opens the dialer</div></div>
+    <div class="anno" style="top:120px;height:48px">≥ 48 dp: nothing tappable</div>
+    <div class="anno" style="top:168px;height:72px;border-style:solid;background:transparent;color:transparent"></div>
+    <div class="anno" style="top:240px;height:48px">≥ 48 dp: nothing tappable</div>
+    <div class="anno" style="top:288px;height:300px;border-style:dotted">usually 300 dp or more of white space<br>before the first app name</div>
+    <div class="spacer"></div>
+    <div class="apps">
+      <div class="app">Messages</div>
+      <div class="app">Phone</div>
+    </div>
+    <div class="more"><div class="l1">More<span class="caret">^</span></div><div class="l2">Ask for an app, settings, help</div></div>
+  </div>
+  <div class="navbar"></div>
+</div></div>
+<figcaption><b>4. Emergency</b>Black pill, white words, at least 72 dp tall: the only filled shape on the home screen, so it stands out without red. At least 48 dp of empty space above and below it. One tap opens the phone's own dialer with 9-1-1 typed, so a bump never calls: the user still presses the dialer's call button (Android's, so it keeps its own colour). No long-press, no swipe, no extra confirm screen.</figcaption>
+</figure>
+
+<!-- 5. More -->
+<figure>
+<div class="phone"><div class="screen">
+  <div class="status"><span>10:43</span><span>▴ ▮ 100%</span></div>
+  <div class="content">
+    <div class="back">‹ Home</div>
+    <div class="title">More</div>
+    <div class="rows">
+      <div class="row"><div><div class="t">Phone settings</div><div class="s">Wi-Fi, sound, text size</div></div><span class="chev">›</span></div>
+      <div class="row"><div><div class="t">Ask for an app</div><div class="s">Sam adds apps with you</div></div><span class="chev">›</span></div>
+      <div class="row"><div><div class="t">For Sam</div><div class="s">Where Sam adds apps, with a PIN</div></div><span class="chev">›</span></div>
+    </div>
+    <div class="bottom"><div class="link">About this phone</div></div>
+  </div>
+  <div class="navbar"></div>
+</div></div>
+<figcaption><b>5. More (U4)</b>A menu page: three large rows, then a plain text link. No primary button. Rows are text only, with a grey second line and a grey "›".</figcaption>
+</figure>
+
+<!-- 6. Ask for an app -->
+<figure>
+<div class="phone"><div class="screen">
+  <div class="status"><span>10:44</span><span>▴ ▮ 100%</span></div>
+  <div class="content">
+    <div class="back">‹ More</div>
+    <div class="title">Ask for an app</div>
+    <p class="body">Sam adds apps to this phone, together with you. Tell Sam which app you'd like and what it's for. Sam gets a text.</p>
+    <div class="label">Your message</div>
+    <div class="field">For example: the bus times app, to check the ferry bus</div>
+    <div class="section">Your requests</div>
+    <div class="req"><span>the bus times app, to check…</span><span class="when">Thu</span><span class="st">Sam's phone got it ✓</span></div>
+    <div class="req"><span>a recipe app</span><span class="when">2 Oct</span><span class="st">Added ✓</span></div>
+    <div class="bottom"><div class="primary disabled">Send to Sam</div></div>
+  </div>
+  <div class="navbar"></div>
+</div></div>
+<figcaption><b>6. Ask for an app (U5a, U5e)</b>The button stays grey until there's a letter in the box. Each saved request shows its status in words and ticks, never colour. "Sam's phone got it" means the network delivered the text, nothing more.</figcaption>
+</figure>
+
+<!-- 7. Link can't open -->
+<figure>
+<div class="phone"><div class="screen">
+  <div class="status"><span>10:45</span><span>▴ ▮ 100%</span></div>
+  <div class="content">
+    <div style="height:48px"></div>
+    <div class="title">This link can't open here</div>
+    <p class="body" style="margin-bottom:8px">It goes to:</p>
+    <div class="box"><div class="host">cheap-flights.example</div></div>
+    <p class="body">This phone is set up without web pages, to keep it simple. That doesn't mean the link is bad.</p>
+    <p class="body note">Links to your own apps, like Spotify, still open in the app.</p>
+    <div class="bottom"><div class="link">Look at it with Sam</div><div class="primary">Go back</div></div>
+  </div>
+  <div class="navbar"></div>
+</div></div>
+<figcaption><b>7. Link can't open (U6a)</b>The host only, large, in a grey box. "Go back" is the black button, because carrying on is the calm choice; sending the link to Sam is the text link above it. No route into More or settings from here.</figcaption>
+</figure>
+
+<!-- 8. Wi-Fi sign-in -->
+<figure>
+<div class="phone"><div class="screen">
+  <div class="status"><span>10:46</span><span>▴ ▮ 100%</span></div>
+  <div class="content">
+    <div class="back">‹ Wi-Fi</div>
+    <div class="title" style="margin-bottom:8px">Calls and texts still work</div>
+    <p class="body">when the phone has signal (the bars at the top of the screen).</p>
+    <p class="body">This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.</p>
+    <p class="body note">Forget this network stops the phone trying to join this Wi-Fi.</p>
+    <div class="bottom"><div class="link">OK</div><div class="primary">Forget this network</div></div>
+  </div>
+  <div class="navbar"></div>
+</div></div>
+<figcaption><b>8. Wi-Fi with a sign-in page (U7)</b>The MVP wording: calls first (Beaux's copy-test fix), then the spec sentence unchanged. The 5-minute sign-in window Beaux approved (PLA-17) comes after the MVP core; it will use this same layout with a second choice.</figcaption>
+</figure>
+
+<!-- 9. For Sam -->
+<figure>
+<div class="phone"><div class="screen tp">
+  <div class="status"><span>10:50</span><span>▴ ▮ 100%</span></div>
+  <div class="band">For Sam</div>
+  <div class="content">
+    <div class="title" style="margin:16px 0 8px">Looking after Margaret's phone</div>
+    <p class="body note" style="margin-bottom:12px">This is for adding apps and keeping the phone working. You can't see Margaret's messages, photos, or what Margaret does in apps.</p>
+    <div class="needs">
+      <div class="h">Needs you</div>
+      <div class="i"><span>1 request from Margaret</span><span class="chev">›</span></div>
+      <div class="i"><span>Check for updates – due</span><span class="chev">›</span></div>
+    </div>
+    <div class="rows">
+      <div class="row"><div><div class="t">Add an app</div><div class="s">Opens the Play Store for 10 minutes</div></div><span class="chev">›</span></div>
+      <div class="row"><div><div class="t">Apps on this phone</div><div class="s">Change the order, remove, what each can use</div></div><span class="chev">›</span></div>
+      <div class="row"><div><div class="t">Requests from Margaret</div><div class="s">1 new</div></div><span class="chev">›</span></div>
+      <div class="row"><div><div class="t">Check for updates</div><div class="s">Last done: 3 Sep</div></div><span class="chev">›</span></div>
+      <div class="row" style="border-bottom:0"><div><div class="t">Open full phone settings</div><div class="s">For 5 minutes, for things Phone settings…</div></div><span class="chev">›</span></div>
+    </div>
+    <div class="scrollhint">more below ↓</div>
+    <div class="bottom" style="padding-top:8px"><div class="primary">Done – back to Margaret's home screen</div></div>
+  </div>
+  <div class="navbar"></div>
+</div></div>
+<figcaption><b>9. "For Sam" (T2)</b>The black band at the top says whose hands the phone is in, on every trusted-person screen, so nothing about this mode is hidden from Margaret. "Needs you" is a grey box; the menu scrolls under it (What Plainphone can't stop, Install a Plainphone update, Change PIN, Turn Plainphone off are below). In self-managed mode the band reads "Your settings".</figcaption>
+</figure>
+
+</div>
+</body>
+</html>

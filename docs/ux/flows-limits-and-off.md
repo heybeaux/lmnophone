@@ -126,7 +126,7 @@ confirmations, journal and resume, report "Off" only when Device Owner is gone, 
 
 - **Title:** Are you sure?
 - **Body:** Plainphone will be turned off on {user}'s phone.
-- **Primary:** Yes, turn it off (the only red button outside Emergency)
+- **Primary:** Yes, turn it off (black like every primary button; it stands out by its words and the extra confirmations, not by colour)
 - **Secondary:** No, keep it on
 - **Then:** PIN or recovery code (fresh).
 

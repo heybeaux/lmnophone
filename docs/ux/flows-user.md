@@ -16,22 +16,32 @@ Each screen is written as:
 
 ### Layout, top to bottom
 
+The look (font, black and white, sizes) is in [design-tokens.md](design-tokens.md); the mockups are in
+[mockups/plainphone-screens.html](mockups/plainphone-screens.html). The screen has a fixed top block and an app list
+that sits low, where a thumb reaches, with white space between them. The words on this screen are unchanged.
+
 1. **Time and date**, one line each. At 200% the date may shorten to "Thu 8 Oct".
-2. **Emergency 9-1-1**: full-width, red, the only red on the screen. Taps open the system dialer with 911
-   already typed (`ACTION_DIAL`, not a call). The user still presses the green call button.
-   - **A bump never calls.** Small grey line inside the button, under "9-1-1": **"Opens the dialer"**. Beaux, in his
+2. **Emergency 9-1-1**: a black pill with white words, the only filled shape on the screen. No colour. Taps open
+   the system dialer with 911 already typed (`ACTION_DIAL`, not a call). The user still presses the dialer's call
+   button.
+   - **A bump never calls.** Second line inside the button, under "9-1-1": **"Opens the dialer"**. Beaux, in his
      copy test, worried about bumping it by accident; the dialer is already the confirm step, so no extra
      confirm screen is added (it would slow a real emergency).
-   - **Spacing:** at least 16 dp of empty space between Emergency and Phone, more than between any other two
-     tiles, so a thumb reaching for Phone doesn't land on Emergency. No long-press or swipe actions on it.
-3. **Phone** and **Messages**: full-width tiles, always there.
-4. **Notice line** (only when one applies, see below). Never above items 2 and 3.
-5. **The other added apps**, one per row, in the order {tp} chose. Large icon, name beside it.
-6. **More**: last row, same style as an app, with a small line under the name: **"Ask for an app, settings,
-   help"**. In his copy test, Beaux looked for a way to ask for an app and found it only after a while. See
+   - **Spacing:** no other control within 48 dp above or below it. Because the app list sits low, the real gap to
+     the first app name is usually far larger, so a thumb reaching for Phone can't land on Emergency. No
+     long-press or swipe actions on it.
+3. **Notice line** (only when one applies, see below), in a light grey box under Emergency.
+4. **The other added apps**, names only, no icons, in the order {tp} chose (or the user, in self-managed mode).
+   Large type, one per row, left-aligned.
+5. **Messages**, then **Phone**: always there, always the last two names, nearest the thumb (as in Beaux's
+   reference image).
+6. **More**: an outlined bar across the bottom, "More ^", with a small line under it: **"Ask for an app,
+   settings, help"**. It sits where Beaux's reference image has a search field; there is no search field. In his
+   copy test, Beaux looked for a way to ask for an app and found it only after a while. See
    [Open question 1](README.md#open-questions-for-the-lead).
 
-Nothing else: no search bar, no widgets, no badges, no dots, no suggestions, no feeds, no swipe-up drawer.
+Nothing else: no icons, no search bar, no widgets, no badges, no dots, no suggestions, no feeds, no swipe-up
+drawer.
 
 ### Normal text size
 
@@ -39,26 +49,27 @@ Nothing else: no search bar, no widgets, no badges, no dots, no suggestions, no 
 ┌──────────────────────────────┐
 │ 10:42                        │
 │ Thursday 8 October           │
+│                              │
+│ ╭──────────────────────────╮ │
+│ │     Emergency 9-1-1      │ │  ← black, white words
+│ │     Opens the dialer     │ │
+│ ╰──────────────────────────╯ │
+│                              │  ← at least 48 dp
 │ ┌──────────────────────────┐ │
-│ │      Emergency 9-1-1     │ │  ← red
-│ │      Opens the dialer    │ │
+│ │ Ask Beaux to do the      │ │  ← notice line (grey box), only when due
+│ │ monthly phone check    › │ │
 │ └──────────────────────────┘ │
-│                              │  ← extra gap
-│ ┌──────────────────────────┐ │
-│ │ ☎  Phone                 │ │
-│ └──────────────────────────┘ │
-│ ┌──────────────────────────┐ │
-│ │ ✉  Messages              │ │
-│ └──────────────────────────┘ │
-│  Ask Beaux to do the monthly │  ← notice line (grey, not red)
-│  phone check            ›    │
-│ ─────────────────────────────│
-│  ◉ Spotify                   │
-│  ◉ Slack                     │
-│  ◉ Camera                    │
-│  ◉ More                      │
-│    Ask for an app, settings, │
-│    help                      │
+│                              │  ← white space
+│ Spotify                      │
+│ Slack                        │
+│ Camera                       │
+│ Messages                     │
+│ Phone                        │
+│ ╭──────────────────────────╮ │
+│ │ More ^                   │ │
+│ │ Ask for an app, settings,│ │
+│ │ help                     │ │
+│ ╰──────────────────────────╯ │
 └──────────────────────────────┘
 ```
 
@@ -68,28 +79,30 @@ Nothing else: no search bar, no widgets, no badges, no dots, no suggestions, no 
 ┌──────────────────────────────┐
 │ 10:42                        │
 │ Thu 8 Oct                    │
-│ ┌──────────────────────────┐ │
-│ │       Emergency          │ │
-│ │       9-1-1              │ │
-│ │    Opens the dialer      │ │
-│ └──────────────────────────┘ │
+│ ╭──────────────────────────╮ │
+│ │     Emergency 9-1-1      │ │
+│ │     Opens the dialer     │ │
+│ ╰──────────────────────────╯ │
 │                              │
 │ ┌──────────────────────────┐ │
-│ │ ☎  Phone                 │ │
+│ │ Ask Beaux to do the      │ │
+│ │ monthly phone check    › │ │
 │ └──────────────────────────┘ │
-│ ┌──────────────────────────┐ │
-│ │ ✉  Messages              │ │
-│ └──────────────────────────┘ │
-│  Ask Beaux to do the         │
-│  monthly phone check   ›     │
-│ ─────────────────── (scroll) │
+│ Camera            (scrolls ↑)│
+│ Messages                     │
+│ Phone                        │
+│ ╭──────────────────────────╮ │
+│ │ More ^                   │ │
+│ ╰──────────────────────────╯ │
 └──────────────────────────────┘
 ```
 
-**Rule (calm-home-screen, "Overdue monthly check at largest font"):** items 1–4 are a fixed block that never
-scrolls. The notice line is at most 3 lines at 200%; if longer it ends with "…" (the full text is on the screen
-it opens). Only the app list below scrolls. Engineer: check the fixed block fits in the smallest supported screen
-height at 200% before the app list; if it doesn't, shrink the time first, never the three buttons.
+**Rule (calm-home-screen, "Overdue monthly check at largest font"):** the time, date, Emergency and the notice line
+are a fixed block at the top; Messages, Phone and More are a fixed block at the bottom. Neither scrolls. Only the
+other apps scroll, in the space between. The notice line is at most 3 lines at 200%; if longer it ends with "…"
+(the full text is on the screen it opens). At 200% More drops its second line. Engineer: check both fixed blocks fit
+in the smallest supported screen height at 200%; if they don't, shrink the time first (it is sized in dp and doesn't
+grow with text size), never Emergency, Messages or Phone.
 
 ### The two notice lines
 
