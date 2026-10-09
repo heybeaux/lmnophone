@@ -1,0 +1,46 @@
+device: 15 API 35 sdk_gphone64_arm64
+
+== E0 baseline: install v2 (keyA)
+Success
+ versionCode=2 minSdk=33 targetSdk=35
+
+== E1 a written session outlives the process that created it
+session 1040569825 written by a pm process that has now exited
+1040569825.tmp 
+(listed above if present)
+later, unrelated process commits it:
+Success
+ versionCode=3 minSdk=33 targetSdk=35
+
+== E2 write after commit
+java.lang.SecurityException: Caller has no access to session 1040569825
+
+== E3 second commit of the same session
+java.lang.SecurityException: Caller has no access to session 1040569825
+
+== E4 appPackageName binding: --pkg org.plainphone.spike.upd with another package's APK
+Failure [INSTALL_FAILED_INVALID_APK: android.content.pm.parsing.ApkLite@ff56111 specified package org.plainphone.spike.upd inconsistent with org.plainphone.spike.other]
+
+== E5 downgrade: v2 over installed v3
+Failure [INSTALL_FAILED_VERSION_DOWNGRADE: Downgrade detected: Update version code 2 is older than current 3]
+ versionCode=3 minSdk=33 targetSdk=35
+
+== E6 same version: v3 over installed v3
+Success
+ versionCode=3 minSdk=33 targetSdk=35
+
+== E7 other signer: v3 keyB over installed v3 keyA
+Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package org.plainphone.spike.upd signatures do not match newer version; ignoring!]
+
+== E8 bytes replaced in an open session before commit (write v2, then v3 under the same name)
+ versionCode=1 minSdk=33 targetSdk=35
+Success
+ versionCode=3 minSdk=33 targetSdk=35
+
+== E9 commit after abandon
+Success
+java.lang.SecurityException: Caller has no access to session 52006265
+
+== cleanup
+Success
+Failure [DELETE_FAILED_INTERNAL_ERROR]
