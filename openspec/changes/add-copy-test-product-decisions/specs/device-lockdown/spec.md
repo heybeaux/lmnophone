@@ -12,15 +12,27 @@ Every time Plainphone unhides a package, it SHALL apply PLA-22 mitigation B stra
 
 **Battery guard.** Discretionary unhides (session and elevation starts, approvals, turning off) SHALL NOT start while the battery is below 5% and not charging. Emergency repairs (the floor, the never-hide guard, the protected-state check) SHALL NEVER be delayed.
 
-**What it promises.** After the flip completes and reads back, a power loss is expected not to cause the PLA-22 boot loop. This rests on 3 trials on API 35 so far, and task 1.3 tests it on API 35 and 36 at every call site. A power loss in the gap between the unhide and the flip can still cause the boot loop. That gap SHALL be measured (task 1.3) and disclosed, and it stays on the target-phone checklist (approved plan task 6.3).
+**What it promises.** Mitigation B is **best effort, not a guarantee**. It makes a power loss after the flip much less likely to cause the PLA-22 boot loop, and it SHALL be described that way everywhere, including the target-phone checklist. Evidence from the PLA-25 review: 25 of 25 corrected power-loss trials booted on API 35 and 36 across four packages, while plain unhides looped. But Android's flush queues its disk write instead of finishing it before the call returns, and one early API 36 trial looped after the flip. So:
+- a power loss shortly after the flip can still, rarely, cause the boot loop;
+- a power loss in the gap between the unhide and the flip can too;
+- a flip SHALL change the component's state for real, because a same-state call skips the flush and looped in the review;
+- each unhide needs its own flip, in the same user; an earlier flip covers nothing later.
+
+The remaining risk SHALL be measured (task 1.3) and disclosed, and it stays on the target-phone checklist (approved plan task 6.3).
+
+**Other policy can be lost too.** PLA-25 also saw a user restriction and the lock-task list lost after a power cut, even though the calls had returned and read back. The flip does not protect them. Plainphone SHALL NOT treat a returned call or an in-memory readback as proof that policy will survive a power cut. It SHALL rely on its own journal and the re-apply-and-read-back at locked and unlocked boot that device-lockdown already requires.
 
 #### Scenario: Power lost after the flip
 - **WHEN** Plainphone approves an app, unhides it, and the flip completes and reads back, then the phone loses power
-- **THEN** the phone is expected to boot normally, with the app's unhidden state kept
+- **THEN** the phone is expected, but not guaranteed, to boot normally, with the app's unhidden state kept
 
 #### Scenario: Emergency repair at low battery
 - **WHEN** at 2% battery, not charging, the floor finds a hidden system emergency-dialer package
 - **THEN** Plainphone unhides it at once and applies the flip; the battery guard does not apply
+
+#### Scenario: Restriction lost in a power cut
+- **WHEN** Plainphone adds a user restriction, the call returns and reads back, and the phone then loses power before Android saves it
+- **THEN** at the next boot Plainphone re-applies the restriction from its journal and reads it back before showing Home
 
 #### Scenario: Flip fails
 - **WHEN** the component flip after an unhide does not read back
