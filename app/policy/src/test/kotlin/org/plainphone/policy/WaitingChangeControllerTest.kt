@@ -318,6 +318,16 @@ class WaitingChangeControllerTest {
         assertEquals(WaitingOutcome.ALREADY_IN_PROGRESS, controller().tick(next, battery))
     }
 
+    @Test fun `unknown intent does not delay dependency cancellation and its receipt`() {
+        val id = start()
+        intents.unreadable = true
+        credentials = credentials!!.replacing(first, credential.copy(generation = 1))
+        time = null
+        assertEquals(WaitingOutcome.CANCELLED, controller.tick(id, battery))
+        assertEquals(WaitingEvent.DEPENDENCY_CHANGED, store.state!!.texts.last().event)
+        assertEquals(setOf(first, second), store.state!!.texts.last().recipients)
+    }
+
     private class Intents : CancelIntentStore {
         val records = mutableMapOf<String, CancelIntent>()
         var fail = false
