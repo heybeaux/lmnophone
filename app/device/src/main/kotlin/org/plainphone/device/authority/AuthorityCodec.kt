@@ -135,11 +135,12 @@ internal object AuthorityCodec {
         }
     }
 
-    fun decodeWaiting(bytes: ByteArray): WaitingState? = read(bytes) {
+    /** [peoplePatches] false reads the schema 1-2 operation layout, which ends before the people patch. */
+    fun decodeWaiting(bytes: ByteArray, peoplePatches: Boolean = true): WaitingState? = read(bytes) {
         val revision = readLong(); val generation = readUTF()
-        val operation = optional { operation() }
+        val operation = optional { operation(peoplePatches) }
         val texts = list {
-            val key = readUTF(); val event = WaitingEvent.valueOf(readUTF()); val op = operation()
+            val key = readUTF(); val event = WaitingEvent.valueOf(readUTF()); val op = operation(peoplePatches)
             val (generations, contacts) = recipients()
             WaitingText(key, event, op, generations, contacts)
         }
@@ -171,6 +172,11 @@ internal object AuthorityCodec {
             SessionJournal.Damaged -> unsupported()
         }
         optional(r.person) { writeUTF(it.person.value); writeLong(it.generation); writeLong(it.structureGeneration) }
+    }
+
+    /** Schema 1 stored only the revision and the debit ledger. */
+    fun decodeLedgerOnlyElevation(bytes: ByteArray): ElevationRecord? = read(bytes) {
+        ElevationRecord(readLong(), ElevationState(ElevationLedger(list { ElevationDebit(readUTF(), time()) })))
     }
 
     /** An active journal decodes only against the inventory of this exact build; otherwise null. */
@@ -270,7 +276,7 @@ internal object AuthorityCodec {
         optional(op.peoplePatch) { peoplePatch(it) }
     }
 
-    private fun DataInputStream.operation(): WaitingOperation {
+    private fun DataInputStream.operation(peoplePatches: Boolean): WaitingOperation {
         val identity = WaitingIdentity(readUTF(), readUTF()); val starter = TrustedPersonId(readUTF())
         val generation = readLong(); val structure = readLong(); val mode = Mode.valueOf(readUTF()); val startedAt = time()
         val phase = WaitingPhase.valueOf(readUTF()); val (generations, contacts) = recipients(); val restored = readInt()
@@ -279,7 +285,7 @@ internal object AuthorityCodec {
         val patch = optional {
             requireNotNull(FrictionSettingsPatch.restore(TrustedPersonId(readUTF()), readLong(), readLong(), friction(), friction()))
         }
-        val people = optional { peoplePatch() }
+        val people = if (peoplePatches) optional { peoplePatch() } else null
         return WaitingOperation(identity, starter, generation, structure, mode, startedAt, phase, generations, restored,
             skipper, skipperGeneration, people, contacts, stopper, stopperGeneration, null, patch)
     }

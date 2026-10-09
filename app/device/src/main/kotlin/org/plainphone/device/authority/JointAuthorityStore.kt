@@ -417,6 +417,32 @@ class JointAuthorityStore internal constructor(
         save(null, genesis)
     }
 
+    /**
+     * Explicit startup step, run before any controller reads this store. A record written by a
+     * schema 1-3 store reads as missing until it is migrated. Migration reads it with the old
+     * rules, converts every section (unchanged formats come out byte for byte), checks the result
+     * decodes, and commits it with the normal fence protocol. The first new copy goes over a file
+     * that does not hold the old record, and the first current fence is the commit point. Until
+     * then the old record stays readable to a retry; after it, the old files are never read again.
+     * True when the store holds a readable current record. An old record that does not decode is
+     * left untouched and refused.
+     */
+    fun migrate(): Boolean = coordinator.run(false) {
+        if (fenceA.read() != null || fenceB.read() != null) {
+            val current = load() ?: return@run false
+            if (listOf(copyA, copyB, fenceA, fenceB).all { it.read() != null }) return@run true
+            // Finish an interrupted migration, so no old fence or copy is left beside one current fence.
+            if (current.sequence == Long.MAX_VALUE) return@run false
+            return@run save(current, Snapshot(current.sequence + 1, current.sections))
+        }
+        val legacy = LegacyAuthority.load(dir) ?: return@run false
+        if (legacy.sequence == Long.MAX_VALUE) return@run false
+        val next = Snapshot(legacy.sequence + 1, LegacyAuthority.convert(legacy, matchingInventory) ?: return@run false)
+        if (!readable(next)) return@run false
+        val keepB = "authority-b" in legacy.holders
+        save(null, next, spare = if (keepB) copyA else copyB)
+    }
+
     /** Routine friction receipts awaiting delivery, in commit order. Null when the record is unreadable. */
     fun frictionReceipts(): List<StoredFrictionReceipt>? = section(Section.RECEIPTS)?.let(AuthorityCodec::decodeReceipts)
 
@@ -559,16 +585,21 @@ class JointAuthorityStore internal constructor(
      * copy. Nothing before the first fence is visible to a read; nothing after it can undo the
      * commit. The result is read from disk, so it is true exactly when [next] is what reads back.
      */
-    private fun save(previous: Snapshot?, next: Snapshot): Boolean {
+    private fun save(previous: Snapshot?, next: Snapshot, spare: AtomicRecord? = null): Boolean {
         val bytes = next.encode()
         val fence = ByteBuffer.allocate(8).putLong(next.sequence).array()
         val old = previous?.encode()
         // The spare is a copy that does not hold the committed record; with both current, use A.
         val aCurrent = old != null && copyA.read()?.contentEquals(old) == true
         val bCurrent = old != null && copyB.read()?.contentEquals(old) == true
-        val (spare, other) = if (aCurrent && !bCurrent) copyB to copyA else copyA to copyB
+        val (first, other) = when {
+            spare === copyA -> copyA to copyB
+            spare === copyB -> copyB to copyA
+            aCurrent && !bCurrent -> copyB to copyA
+            else -> copyA to copyB
+        }
         faults.at(WritePoint.BEFORE_COPY_A, dir)
-        if (spare.write(bytes) { faults.at(WritePoint.AFTER_COPY_A, dir) } &&
+        if (first.write(bytes) { faults.at(WritePoint.AFTER_COPY_A, dir) } &&
             fenceA.write(fence) { faults.at(WritePoint.AFTER_FENCE_A, dir) }) {
             fenceB.write(fence) { faults.at(WritePoint.AFTER_FENCE, dir) }
             other.write(bytes) { faults.at(WritePoint.AFTER_COPY_B, dir) }
