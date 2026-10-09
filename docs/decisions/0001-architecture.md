@@ -193,6 +193,12 @@ The candidate becomes the decision only if, on the emulator, and later on one ph
    - **Handback.** The phone is never handed back until the policy reads back correctly.
    - **If Beaux does not accept this:** an independent revocation mechanism becomes a G0 feasibility question, and the ADR is revised.
 
+**Gate 2.6 outcome (2026-10-09, PLA-14): GO for the MVP build.**
+- Nothing on the list failed. The architecture and the promises stand.
+- The reviews left #1–#3 and #5 partly unshown. Beaux directed building first, on the emulator and as test-only builds on the spare. He accepted the leftover boot-loop risk on the spare (card d3be49b8).
+- Every item not yet shown is a **handover condition** in task 6.3. No phone goes into daily use until they pass.
+- PLA-22/PLA-25 change one design rule: every unhide gets a best-effort synchronous flush, and protections are re-applied and read back at boot.
+
 **If the adb setup route is blocked on a real phone (Q3):**
 - This alone does not switch us to B.
 - B must first pass the same list of checks (1–6), on a Pixel.
