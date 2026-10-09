@@ -47,18 +47,21 @@ data class PolicyInput(
     val lockedBoot: Boolean = false,
     val sessionAccess: SessionAccess? = null,
     val currentBoot: BootTime? = null,
+    /** Fresh highest-valid-revision operation read on the serialized dispatcher, never a cached UI flag. */
+    val waitingOperation: WaitingOperation? = null,
 )
 
+/** Null fields are outside this plan: neither write nor assert their values during readback. */
 data class ExpectedPolicyState(
-    val hidden: Set<PackageName>,
+    val hidden: Set<PackageName>?,
     val unhiddenAndEnabled: Set<PackageName>,
     val unsuspended: Set<PackageName>,
-    val lockTaskPackages: Set<PackageName>,
-    val features: Set<LockTaskFeature>,
-    val restrictions: Set<Restriction>,
-    val home: PackageName,
-    val systemInputMethodsOnly: Boolean = true,
-    val systemAccessibilityServicesOnly: Boolean = true,
+    val lockTaskPackages: Set<PackageName>?,
+    val features: Set<LockTaskFeature>?,
+    val restrictions: Set<Restriction>?,
+    val home: PackageName?,
+    val systemInputMethodsOnly: Boolean? = true,
+    val systemAccessibilityServicesOnly: Boolean? = true,
 )
 
 data class PolicyPlan(

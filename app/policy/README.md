@@ -138,3 +138,76 @@ Cancellation read failures retain the request IDs in the running controller unti
 record can reconcile them. A matching pending cancellation is retried before maturity; stale IDs
 cannot replace that intent or reverse a committing/rolling-back operation. This memory guard is
 not durable acknowledgement: success still requires the atomic cancelled-state and receipt write.
+
+
+## Turn-off restore sequencer
+
+`TurnOffController.tick(requestId)` drives an already-COMMITTING waiting operation. It does not
+start or skip a wait. Its first call after construction revokes temporary access, then checks live
+Device Owner state and reads the operation. Stale IDs, pending/cancelled operations and rollback
+records do not run forward effects. Unknown ownership or damaged operation storage yields a typed
+NEEDS_ATTENTION failure. The separate lost-record reconciler is still unfinished: do not continue
+forward from a damaged record or treat this diagnostic as a completed lockdown repair.
+
+`WaitingOperation.restoredSteps` counts read-back categories in the same durable operation record.
+Each tick restores one category, reads it back, then increments the count with a revisioned CAS.
+A crash before that CAS repeats the same idempotent step; a crash after it resumes the next step.
+Every required category is represented: restrictions, hidden apps, lock-task packages/features,
+persistent preferred activities, input methods/accessibility, keyguard features, browser role,
+changed SMS/dialer defaults, reset protection, and Play restrictions. The adapter must use the
+complete durable original-settings inventory. Missing data fails; an unchanged category is a
+verified no-op. Hidden-app restoration includes the required synchronous unhide flush/readback.
+
+After all steps, the controller reads every category back again, then verifies another home app and
+the system dialer resolve before requesting Device Owner removal. If final verification finds a
+mismatch, it journals a rewind to that restore step; it does not remove ownership. Every removal
+retry repeats these checks. There is no wipe port or fallback.
+
+OFF means live ownership is absent, even if the removal call returned an uncertain result. Completion
+and its receipt are written together; OFF with `journalPending=true` means that receipt still needs
+retry. A lost record with absent ownership also reports OFF but cannot synthesize a completion text.
+Current credential recipients are used when readable, otherwise the operation's immutable fallback.
+A COMPLETED record with ownership still present is an attention failure, not proof of Off.
+
+Lane D owns synchronous idempotent effects, original-settings inventory coverage and physical
+readbacks. Use the common serialized dispatcher for all operations, policy application and effect
+calls. Startup session revocation must precede this controller and may not unconditionally re-apply
+full lockdown while a valid operation is COMMITTING. The final full readback also catches changes
+introduced by restart revocation. Calls, emergency and alerts must not wait on this sequence.
+Recovery-code skip, lost-record reconciliation and Android execution remain separate work.
+
+The waiting gate now checks credential dependencies before the UNKNOWN intent maturity guard.
+An unreadable intent store therefore cannot postpone restrictive dependency cancellation and its
+texts, while UNKNOWN still prevents forward commit.
+
+## Policy re-apply during turn-off
+
+Every periodic (15-minute), package-event, locked/unlocked boot and post-action policy pass must
+read the current highest-valid-revision waiting operation on the shared serialized dispatcher and
+pass it as `PolicyInput.waitingOperation`. Do not derive this input from UI state, an old timer payload
+or a cached committing flag. Re-read immediately before applying; do not apply an old full-lockdown
+plan after a turn-off transitions to COMMITTING.
+
+For a valid COMMITTING turn-off, `PolicyEngine.decide` emits only `EMERGENCY_FLOOR`: repair the live
+trusted OS floor by unhiding/enabling/unsuspending it and reading that back. It emits no restrictions,
+hides, lock-task changes, Home assignment or other lockdown stages. Ordinary approvals, inventory-only
+exceptions and session grants add no actions. Caller-requested destructive operations are refused.
+The empty plan collections do NOT mean to set an empty lock-task list or clear restrictions: execute
+only emitted stages. `ExpectedPolicyState` now uses nullable fields: null means outside this plan,
+so neither write nor assert that value. Only the floor readback sets are populated in this mode.
+
+Pending, cancelled, completed, rolling-back and missing/invalid operation records do not select this
+exception. They follow normal policy computation; a missing record still requires the separate
+lost-record reconciliation workflow. After observed Device Owner removal, stop scheduling Device Owner
+policy writes and process any pending completion receipt instead.
+
+`SessionController.onStart` must still revoke temporary authority first. Its adapter's
+`revokeAllRelaxations`, `protectedStateCheck` and `readBackPolicy` must use the same fresh operation-aware
+rule: a committing turn-off must not be re-locked by session revocation or protected-state repair.
+All other protected-state checks follow this rule too. These are mandatory Lane D wiring requirements;
+the pure JVM tests cover plan selection and simulated re-apply between sequencer steps, not Android
+integration. Lane D should immediately re-tick the sequencer on PROGRESS instead of waiting 15 minutes.
+
+Completion SMS remains a queued effect. Lane D must verify SEND_SMS remains usable after Device Owner
+removal before claiming delivery. If it does not, the receipt protocol needs an explicitly reviewed
+pre-removal notification state; do not silently label a pre-removal message as completed turn-off.
