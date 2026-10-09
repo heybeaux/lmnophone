@@ -30,6 +30,9 @@ class UpdateControllerTest {
         var checks = 0
         var checkPasses = true
         var closurePasses = true
+        var abandonPasses = true
+        var checkCalls = 1
+        var resultWritesPass = true
         val elevationStore = object : ElevationStore() {
             override fun read() = record
             override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean {
@@ -41,7 +44,7 @@ class UpdateControllerTest {
             override val elevationStore = this@F.elevationStore
             override fun readUpdate() = update
             override fun compareAndSetUpdate(expected: UpdateRecord, replacement: UpdateRecord): Boolean {
-                event("result-write"); if (update !== expected) return false
+                event("result-write"); if (!resultWritesPass || update !== expected) return false
                 update = replacement; return true
             }
             override fun commitUpdateUse(expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
@@ -51,14 +54,15 @@ class UpdateControllerTest {
                 fun matches() = record === expectedElevation && credentials === expectedCredentials && update === expectedUpdate
                 if (!matches()) return false
                 event("blocking-work")
-                if (!finalCheck() || !matches()) return false
+                repeat(checkCalls) { if (!finalCheck()) return false }
+                if (!matches()) return false
                 event("before-write"); if (!matches()) return false
                 record = replacementElevation; update = UpdateRecord(expectedUpdate.revision + 1, submission)
                 event("after-write"); return true
             }
         }
         val installer = object : UpdateInstaller {
-            override fun abandonOwnSessions(): Boolean { event("abandon"); return true }
+            override fun abandonOwnSessions(): Boolean { event("abandon"); return abandonPasses }
             override fun finalFacts(): UpdateFinalFacts? { event("facts"); return facts }
             override fun commit(sessionId: Int) {
                 event("before-commit"); assertEquals(7, sessionId)
@@ -110,7 +114,7 @@ class UpdateControllerTest {
     @Test fun `owned grant submits once in fresh facts joint write commit order`() {
         val f = F(); f.grant(); val debit = f.record.state.ledger.debits; f.events.clear()
         assertEquals(UpdateOutcome.SUBMITTED, f.controller.submitUpdate())
-        assertEquals(listOf("facts", "before-joint", "blocking-work", "facts", "before-write", "after-write", "before-commit", "after-commit"), f.events)
+        assertEquals(listOf("revoke", "facts", "before-joint", "blocking-work", "facts", "before-write", "after-write", "before-commit", "after-commit"), f.events)
         assertEquals(debit, f.record.state.ledger.debits)
         assertEquals(BootTime("boot", 1_200_000), f.update.submission!!.elevationDeadline)
         assertEquals(UpdateOutcome.REFUSED, f.controller.submitUpdate()); assertEquals(1, f.commits)
@@ -238,4 +242,79 @@ class UpdateControllerTest {
             assertNull(f.update.submission); assertEquals(0, f.commits)
         }
     }
+    @Test fun `joint transaction compares both records again after final check and never adds writes on refusal`() {
+        for (change in listOf("credentials", "elevation", "update")) {
+            val f = F(); f.grant(); val old = f.record
+            f.hook = { if (it == "before-write") when (change) {
+                "credentials" -> f.credentials = f.credentials.replacing(f.person, f.credentials.people.getValue(f.person))
+                "elevation" -> f.record = f.record.replacing(f.record.state)
+                "update" -> f.update = UpdateRecord(f.update.revision + 1)
+            } }
+            assertEquals(UpdateOutcome.REFUSED, f.controller.submitUpdate(), change)
+            assertEquals(old.state.ledger.debits, f.record.state.ledger.debits)
+            assertNotNull(f.record.state.grant); assertNull(f.update.submission); assertEquals(0, f.commits)
+        }
+    }
+    @Test fun `store omission or duplicate final callback never reaches installer`() {
+        for (calls in listOf(0, 2)) {
+            val f = F(); f.grant(); f.checkCalls = calls
+            assertEquals(UpdateOutcome.REFUSED, f.controller.submitUpdate()); assertEquals(0, f.commits)
+        }
+    }
+    @Test fun `failed abandonment prevents startup and direct elevation startup cannot enable Update`() {
+        val f = F(); f.abandonPasses = false
+        assertEquals(ElevationOutcome.NOT_READY, f.startUp()); assertEquals(listOf("abandon"), f.events)
+        assertNull(f.controller.prepare(f.person, ElevationTarget.Update(f.binding)))
+        f.abandonPasses = true; f.startUp(); f.controller.onStart()
+        assertNull(f.controller.prepare(f.person, ElevationTarget.Update(f.binding)))
+    }
+    @Test fun `outstanding submission prevents another turn and failed package closure latches revocation`() {
+        val f = F(); f.grant(); f.controller.submitUpdate()
+        assertNull(f.controller.prepare(f.person, ElevationTarget.Update(f.binding)))
+        val g = F(); g.grant(); val debit = g.record.state.ledger.debits; g.closurePasses = false
+        assertEquals(UpdateOutcome.REFUSED, g.controller.submitUpdate())
+        assertTrue(g.elevationStore.revocationPending); assertEquals(debit, g.record.state.ledger.debits)
+    }
+    @Test fun `ambiguous store exception cannot retry even when it happened before the write`() {
+        for (point in listOf("before-write", "after-write")) {
+            val f = F(); f.grant(); f.hook = { if (it == point) throw IllegalStateException("storage failure") }
+            assertEquals(UpdateOutcome.NOT_READY, f.controller.submitUpdate()); f.hook = {}
+            assertEquals(UpdateOutcome.REFUSED, f.controller.submitUpdate()); assertEquals(0, f.commits)
+            f.restart(); assertNull(f.record.state.grant); assertEquals(1, f.record.state.ledger.debits.size)
+        }
+    }
+    @Test fun `installer exception after submission may still install and never retries`() {
+        val f = F(); f.grant(); f.hook = { if (it == "after-commit") { f.installed = 2; throw IllegalStateException("lost reply") } }
+        assertEquals(UpdateOutcome.COMMIT_UNCERTAIN, f.controller.submitUpdate()); f.hook = {}; f.restart()
+        assertEquals(UpdatePhase.INSTALLED, f.update.submission!!.phase); assertEquals(1, f.commits)
+    }
+    @Test fun `success status requires equal installed version and self check can resume after a crash`() {
+        for (version in listOf(1L, 2L, 3L)) {
+            val f = F(); f.grant(); f.controller.submitUpdate(); f.installed = version
+            assertEquals(if (version == 2L) UpdateOutcome.INSTALLED else UpdateOutcome.FAILED, f.protocol.onResult(7, true))
+        }
+        val f = F(); f.grant(); f.controller.submitUpdate(); f.installed = 2
+        f.hook = { if (it == "self-check") throw Crash() }; assertFailsWith<Crash> { f.restart() }
+        assertEquals(UpdatePhase.INSTALLED, f.update.submission!!.phase)
+        assertEquals(UpdateSelfCheck.PENDING, f.update.submission!!.selfCheck)
+        f.hook = {}; f.restart(); assertEquals(UpdateSelfCheck.PASSED, f.update.submission!!.selfCheck); assertEquals(1, f.commits)
+    }
+    @Test fun `failed result persistence keeps startup unavailable until reconciliation succeeds`() {
+        val f = F(); f.grant(); f.controller.submitUpdate(); f.installed = 2; f.resultWritesPass = false
+        assertEquals(ElevationOutcome.NOT_READY, f.restart())
+        assertEquals(UpdatePhase.SUBMITTED, f.update.submission!!.phase)
+        assertEquals(UpdateOutcome.REFUSED, f.controller.submitUpdate())
+        f.resultWritesPass = true; assertEquals(ElevationOutcome.IDLE, f.restart()); assertEquals(1, f.commits)
+    }
+    @Test fun `supervised crashes around joint write and commit never reuse the old request or PIN`() {
+        for (point in listOf("before-write", "after-write", "before-commit", "after-commit")) {
+            val f = F(mode = Mode.TRUSTED); f.startUp()
+            val r = assertNotNull(f.controller.prepareSupervisedUpdate(f.person, f.binding)); val fresh = f.auth(r.action)
+            f.hook = { if (it == point) throw Crash() }; assertFailsWith<Crash> { f.controller.submitSupervisedUpdate(r, fresh) }
+            val commits = f.commits; f.hook = {}; f.restart()
+            assertEquals(UpdateOutcome.REFUSED, f.controller.submitSupervisedUpdate(r, fresh)); assertEquals(commits, f.commits)
+            assertTrue(f.record.state.ledger.debits.isEmpty())
+        }
+    }
+
 }
