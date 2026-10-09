@@ -71,7 +71,7 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 | D0 skeleton | Android Platform Engineer | `../plainphone-device` | `mvp/skeleton` |
 | A Policy | Policy Engineer (GPT) | `../plainphone-policy` | `mvp/policy` |
 | B UI | UI Engineer (GPT) | `../plainphone-ui` | `mvp/ui` |
-| C Link & Browser | Link & Browser Engineer (GPT-6 fallback; Fugu when the subscription is active) | `../plainphone-links` | `mvp/links` |
+| C Link & Browser | Link & Browser Engineer (Sakana Fugu `fugu-ultra`; GPT-6 fallback) | `../plainphone-links` | `mvp/links` |
 | D Device | Android Platform Engineer | `../plainphone-device` | `mvp/device` |
 
 **Getting started:**
@@ -89,7 +89,7 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 
 **Review before every merge:**
 - The Verifier & Escape Artist reviews the lane slice.
-- Lanes A, B and C are written by OpenAI models. C is on the GPT-6 fallback while the Fugu subscription is inactive. So the Lead (Claude) also does a code review of each of their slices, which keeps the cross-model rule. Lane D (Claude) is reviewed by the Verifier.
+- Lanes A and B are written by OpenAI models, the same family as the Verifier. So the Lead (Claude) also does a code review of each of their slices, which keeps the cross-model rule. Lane C runs on Sakana Fugu (`fugu-ultra`, subscription until 2026-10-28), and lane D runs on Claude; the Verifier's review is cross-model for both. If lane C falls back to GPT-6, the Lead's code review applies to it too.
 
 **A slice is ready when:**
 - it's rebased on `main`;
