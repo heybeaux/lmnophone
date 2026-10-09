@@ -49,6 +49,7 @@ class AppApprovalControllerTest {
                 replacement.pending?.phase == AppApprovalPhase.PREPARING -> "save-preparing"
                 replacement.pending?.phase == AppApprovalPhase.COMMITTED -> "save-committed"
                 replacement.pending?.phase == AppApprovalPhase.WITHDRAWING -> "save-withdrawing"
+                replacement.pending?.phase == AppApprovalPhase.REMOVING -> "save-removing"
                 else -> "save-finished"
             }
             if (!event(stage) || state !== expected || (expectedCredentials != null && credentials !== expectedCredentials)) return false
@@ -469,6 +470,149 @@ class AppApprovalControllerTest {
             AppApprovalState(apps = state!!.apps, pending = AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.WITHDRAWING, valid),
                 receipts = state!!.receipts + valid)
         }
+    }
+
+    private fun activeApproval(acknowledge: Boolean = false) {
+        stuckApproval()
+        assertEquals(AppApprovalOutcome.APPROVED, controller.resume())
+        if (acknowledge) state = state!!.replacing(receipts = emptyList())
+        events.clear()
+    }
+    private fun removalAuth(r: AppRemovalRequest, who: TrustedPersonId = person) =
+        assertIs<PinResult.Authorized>(vault.authenticate(who, pin, r.action)).authority
+
+    @Test fun `other holder removes active app and reapproves after restart without reinstall`() {
+        for (ack in listOf(false, true)) {
+            now = ClockReading(RunningTime("epoch", 0), BootTime("boot", 0))
+            activeApproval(ack)
+            val installed = policy.installed
+            val r = assertNotNull(controller.prepareRemoval(app, other))
+            battery = BatteryState(1, false)
+            assertEquals(AppApprovalOutcome.REMOVED, controller.removeApproved(r, r.approvalId, removalAuth(r, other)))
+            assertNull(state!!.pending); assertFalse(app in state!!.apps)
+            assertEquals(binding, state!!.removedApps[app])
+            val removal = state!!.receipts.last()
+            assertEquals(AppApprovalReceiptKind.REMOVED, removal.kind); assertEquals(r.approvalId, removal.approvalId)
+            assertEquals(other, removal.actor); assertEquals(setOf(person, other), removal.recipientGenerations.keys)
+            assertEquals(if (ack) 1 else 2, state!!.receipts.size)
+            assertEquals(installed, policy.installed)
+            assertEquals("revoke", events.first()); assertFalse("permission" in events); assertFalse("unhide" in events)
+            assertTrue(app in PolicyEngine.decide(policy.copy(approvalState = state)).hidden)
+            now = ClockReading(RunningTime("next-epoch", 0), BootTime("next-boot", 0))
+            controller = controller(); assertEquals(AppApprovalOutcome.READY, controller.onStart())
+            battery = BatteryState(50, false)
+            val next = assertNotNull(controller.prepareReapproval(app, person,
+                PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.DENY))))
+            permissionReadback = mapOf(camera to PermissionReadback.DENIED)
+            assertEquals(AppApprovalOutcome.APPROVED, controller.approve(next, auth(next)))
+            assertFalse(app in state!!.removedApps)
+            assertTrue(app in PolicyEngine.decide(policy.copy(approvalState = state)).lockTaskPackages)
+            assertEquals(installed, policy.installed)
+            permissionReadback = mapOf(camera to PermissionReadback.GRANTED)
+        }
+    }
+
+    @Test fun `active removal requires fresh exact person action generation structure and boot`() {
+        val initialClock = now
+        for (bad in listOf("confirmation", "person", "action", "expiry", "generation", "structure", "reboot", "mode")) {
+            now = initialClock; activeApproval()
+            val r = assertNotNull(controller.prepareRemoval(app, person))
+            val a = when (bad) {
+                "person" -> removalAuth(r, other)
+                "action" -> assertIs<PinResult.Authorized>(vault.authenticate(person, pin, PrivilegedAction("other", "x"))).authority
+                else -> removalAuth(r)
+            }
+            when (bad) {
+                "expiry" -> now = ClockReading(RunningTime("epoch", 120_000), BootTime("boot", 120_000))
+                "generation" -> credentials = credentials!!.replacing(person, credentials!!.people.getValue(person).copy(generation = 1))
+                "structure" -> credentials = CredentialState(Mode.TRUSTED, credentials!!.people, structureGeneration = 1)
+                "reboot" -> now = ClockReading(RunningTime("epoch", 1), BootTime("next-boot", 0))
+                "mode" -> credentials = CredentialState(Mode.SELF_MANAGED, mapOf(person to credentials!!.people.getValue(person)))
+            }
+            assertEquals(AppApprovalOutcome.REFUSED, controller.removeApproved(r,
+                if (bad == "confirmation") "another-approval" else r.approvalId, a), bad)
+            assertNull(state!!.pending); assertTrue(app in state!!.apps); assertTrue(state!!.removedApps.isEmpty())
+            assertTrue(events.isEmpty())
+        }
+    }
+
+    @Test fun `removal request cannot target a replacement approval or occupy another live slot`() {
+        activeApproval()
+        val stale = assertNotNull(controller.prepareRemoval(app, person)); val staleAuth = removalAuth(stale)
+        val current = assertNotNull(controller.prepareRemoval(app, other)); failure = "restore-policy"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.removeApproved(current, current.approvalId, removalAuth(current, other)))
+        assertNull(controller.prepareRemoval(app, person)); assertNull(controller.prepareWithdrawal(person))
+        assertNull(controller.prepareReapproval(app, person, PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.ALLOW))))
+        failure = null; assertEquals(AppApprovalOutcome.REMOVED, controller.resume())
+        val reapprove = assertNotNull(controller.prepareReapproval(app, person, PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.ALLOW))))
+        assertEquals(AppApprovalOutcome.APPROVED, controller.approve(reapprove, auth(reapprove)))
+        assertEquals(AppApprovalOutcome.REFUSED, controller.removeApproved(stale, stale.approvalId, staleAuth))
+        assertTrue(app in state!!.apps)
+    }
+
+    @Test fun `active removal crash replay preserves acknowledged history and finishes only saved intent`() {
+        for (point in listOf("revoke", "protected", "session-readback", "save-removing", "after-save-removing",
+            "restore-policy", "policy-readback", "save-finished", "after-save-finished")) {
+            activeApproval(true)
+            val r = assertNotNull(controller.prepareRemoval(app, person)); val a = removalAuth(r)
+            crash = point
+            assertFailsWith<IllegalStateException>(point) { controller.removeApproved(r, r.approvalId, a) }
+            val saved = state!!.pending?.phase == AppApprovalPhase.REMOVING || app !in state!!.apps
+            crash = null; events.clear(); controller = controller()
+            val result = controller.onStart()
+            assertEquals("revoke", events.first()); assertFalse("unhide" in events)
+            assertTrue(result in setOf(AppApprovalOutcome.READY, AppApprovalOutcome.REMOVED))
+            assertNull(state!!.pending); assertEquals(!saved, app in state!!.apps)
+            assertEquals(saved, app in state!!.removedApps)
+            assertEquals(if (saved) 1 else 0, state!!.receipts.size)
+            assertEquals(AppApprovalOutcome.REFUSED, controller.removeApproved(r, r.approvalId, a))
+        }
+    }
+
+    @Test fun `failed active removal effects and writes do not publish removal or duplicate receipts`() {
+        for (point in listOf("save-removing", "restore-policy", "policy-readback", "save-finished")) {
+            activeApproval(true); val r = assertNotNull(controller.prepareRemoval(app, person)); failure = point
+            assertEquals(AppApprovalOutcome.NOT_READY, controller.removeApproved(r, r.approvalId, removalAuth(r)))
+            assertTrue(app in state!!.apps); assertTrue(state!!.removedApps.isEmpty()); assertTrue(state!!.receipts.isEmpty())
+            if (point != "save-removing") {
+                assertFalse(app in PolicyEngine.decide(policy.copy(approvalState = state)).lockTaskPackages)
+                failure = null; assertEquals(AppApprovalOutcome.REMOVED, controller.resume())
+                assertEquals(AppApprovalOutcome.READY, controller.resume()); assertEquals(1, state!!.receipts.size)
+            } else assertNull(state!!.pending)
+        }
+    }
+
+    @Test fun `active removal credential CAS cannot save authority across credential changes`() {
+        activeApproval(true); val r = assertNotNull(controller.prepareRemoval(app, person)); val a = removalAuth(r)
+        beforeSave = { credentials = credentials!!.replacing(person, credentials!!.people.getValue(person).copy(generation = 1)) }
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.removeApproved(r, r.approvalId, a))
+        assertNull(state!!.pending); assertTrue(app in state!!.apps)
+        assertFalse("restore-policy" in events)
+    }
+
+    @Test fun `removed marker is not approval and never authorizes a different signer or incomplete choices`() {
+        activeApproval(); val r = assertNotNull(controller.prepareRemoval(app, person))
+        assertEquals(AppApprovalOutcome.REMOVED, controller.removeApproved(r, r.approvalId, removalAuth(r)))
+        assertNull(controller.prepareReapproval(app, person, PermissionSelection(manifest!!, emptyMap())))
+        assertNull(controller.prepareReapproval(PackageName("test.other"), person, PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.ALLOW))))
+        val changed = ApprovalBinding(app, setOf(CertDigest("cd".repeat(32))))
+        manifest = PermissionManifest(changed, 1, "build", manifest!!.permissions)
+        policy = policy.copy(installedIdentities = listOf(changed))
+        assertNull(controller.prepareReapproval(app, person, PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.ALLOW))))
+        assertFalse(app in PolicyEngine.decide(policy.copy(approvalState = state)).lockTaskPackages)
+    }
+
+    @Test fun `removing journal allows absent approval receipt but never fabricates or accepts wrong type`() {
+        activeApproval(true); val record = state!!.apps.getValue(app)
+        val receipt = AppApprovalReceipt("remove", other, mapOf(person to 0L, other to 0L), AppApprovalReceiptKind.REMOVED, record.id)
+        val op = AppApprovalOperation(record, null, AppApprovalPhase.REMOVING, receipt)
+        assertNotNull(AppApprovalState(apps = state!!.apps, pending = op))
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(record, null, AppApprovalPhase.COMMITTED) }
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(record, null, AppApprovalPhase.REMOVING) }
+        val wrong = AppApprovalReceipt("remove", other, mapOf(other to 0L), AppApprovalReceiptKind.WITHDRAWN, record.id)
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(record, null, AppApprovalPhase.REMOVING, wrong) }
+        assertFailsWith<IllegalArgumentException> { AppApprovalState(apps = state!!.apps, removedApps = mapOf(app to binding)) }
+        assertFailsWith<UnsupportedOperationException> { (AppApprovalState(removedApps = mapOf(app to binding)).removedApps as MutableMap).clear() }
     }
 
 }
