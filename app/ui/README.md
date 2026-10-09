@@ -31,8 +31,9 @@ self-managed and U9/U10 waiting/opening screens. The source of truth is `docs/ux
   event must route to U9c, Still cancelling. The host owns saving and retrying.
 - Only the other-apps list scrolls on supported viewports. Measurement probes are
   excluded from the semantics tree, and the chosen layout supplies the controls.
-  The list starts at its bottom, with the last supplied app above Messages and
-  a 12 dp gap separating the two groups. Positional list keys tolerate duplicate
+  Short lists sit at the bottom. Overflow starts at the first supplied app,
+  with later apps revealed by scrolling upward. A 12 dp gap separates the list
+  from the top zone and another separates it from Messages. Positional list keys tolerate duplicate
   IDs. The fallback order preserves the three-line notice by moving the clock
   inline before reducing the notice to two lines.
 
@@ -128,8 +129,9 @@ issue apply to later screens; this slice does not wire those controllers.
 - Added zero/one-app goldens and exercised the “and”/“or” joins through More at
   both text sizes and in emulator assertions. Weekdays use FULL_STANDALONE.
 - The positional-key comment now states the accepted focus/press-state tradeoff.
-- A partly visible preceding name is still not guaranteed at exact row-height
-  multiples; the 560/540 dp stress cases remain below the supported minimum.
+- The 560/540 dp stress cases remain below the supported minimum. At 360×640,
+  overflow opens with a complete first row; a partial following row can indicate
+  more content. Every app can be fully revealed and tapped by scrolling.
 - Date/relative-day consistency remains the host's responsibility: both values
   must come from the same date snapshot. UI deliberately does not read the clock.
   Locale-specific short month names (including British “Sept”) are retained;
@@ -139,7 +141,11 @@ issue apply to later screens; this slice does not wire those controllers.
   the tokens' two-line title target. UX approved whole-page scrolling when the
   full title and one body line cannot fit above pinned actions (PLA-130).
 
-## TalkBack emulator inspection (2026-10-09)
+## Historical TalkBack emulator inspection (2026-10-09)
+
+This predates the Home overflow correction in PLA-156. The current list starts
+at the first app and uses forward accessibility scrolling for later apps;
+`HomeScreenTest` verifies that action on an emulator.
 
 On the lane-owned API 35 emulator at 360×640, 200% Compose text, TalkBack
 15.0.0.639625893: previous-item gestures moved from App 8 to the partially

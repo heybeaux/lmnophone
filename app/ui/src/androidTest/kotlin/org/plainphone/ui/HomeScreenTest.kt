@@ -67,6 +67,7 @@ class HomeScreenTest {
             val notice = compose.onNodeWithTag("home-notice").getUnclippedBoundsInRoot()
             val list = compose.onNodeWithTag("home-apps").getUnclippedBoundsInRoot()
             val first = compose.onNodeWithText("App 1").getUnclippedBoundsInRoot()
+            assertTrue("$case: list must clear the notice", list.top >= notice.bottom + 12.dp)
             assertTrue("$case: first app must be completely below the notice", first.top >= notice.bottom)
             assertTrue("$case: first app must fit inside the list", first.top >= list.top && first.bottom <= list.bottom)
             for (index in 1..4) {
@@ -97,8 +98,8 @@ class HomeScreenTest {
                 }
             }
         }
-        // The last supplied app must be present immediately, above the pinned block.
-        compose.onNodeWithText("App 20").assertIsDisplayed()
+        // Overflow starts with the first app in the supplied order.
+        compose.onNodeWithText("App 1").assertIsDisplayed()
         compose.onNodeWithText("Emergency", substring = true).assertDoesNotExist()
         compose.onNodeWithText("9-1-1", substring = true).assertDoesNotExist()
         compose.onNodeWithText("Messages").assertIsDisplayed().performClick()
@@ -113,7 +114,7 @@ class HomeScreenTest {
         assertEquals(listOf(HomeEvent.OpenMessages, HomeEvent.OpenPhone, HomeEvent.OpenMore,
             HomeEvent.OpenApp("app-1"), HomeEvent.OpenNotice), events)
     }
-    @Test fun platformAccessibilityCanRevealEarlierApps() {
+    @Test fun platformAccessibilityCanRevealLaterApps() {
         compose.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(2f)) {
                 PlainphoneTheme {
@@ -133,12 +134,14 @@ class HomeScreenTest {
             }
             return null
         }
-        val root = InstrumentationRegistry.getInstrumentation().uiAutomation.rootInActiveWindow
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        compose.waitUntil(timeoutMillis = 5_000) { automation.rootInActiveWindow != null }
+        val root = requireNotNull(automation.rootInActiveWindow)
         val list = requireNotNull(scrollNode(root)) { "Platform accessibility has no scrollable list" }
-        assertTrue("Earlier apps must be reachable through Android accessibility", list.performAction(
-            AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD))
+        assertTrue("Later apps must be reachable through Android accessibility", list.performAction(
+            AccessibilityNodeInfo.ACTION_SCROLL_FORWARD))
         compose.waitForIdle()
-        compose.onNodeWithText("App 6").assertIsDisplayed()
+        compose.onNodeWithText("App 3").assertIsDisplayed()
         compose.onNodeWithText("Phone").assertIsDisplayed()
     }
 
