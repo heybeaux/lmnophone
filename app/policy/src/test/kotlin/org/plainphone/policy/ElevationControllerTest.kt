@@ -509,7 +509,7 @@ class ElevationControllerTest {
             override val waitingStore get() = this@ElevationControllerTest.waitingStore
             override val elevationStore get() = store
             override fun applyStricter(expectedCredentials: CredentialState, replacementCredentials: CredentialState,
-                expectedWaiting: WaitingState, expectedElevation: ElevationRecord, replacementElevation: ElevationRecord): Boolean {
+                expectedWaiting: WaitingState, expectedElevation: ElevationRecord, replacementElevation: ElevationRecord, receipt: FrictionSettingsReceipt): Boolean {
                 if (credentials !== expectedCredentials || record !== expectedElevation || waitingStore.read() !== expectedWaiting) return false
                 credentials = replacementCredentials; record = replacementElevation; return true
             }

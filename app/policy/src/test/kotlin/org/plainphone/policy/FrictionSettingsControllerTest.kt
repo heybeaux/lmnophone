@@ -16,6 +16,7 @@ class FrictionSettingsControllerTest {
         var unreadableAfterWrite = false
         var crash: String? = null
         var beforeWrite: (() -> Unit)? = null
+        val receipts = mutableListOf<FrictionSettingsReceipt>()
         var writes = 0
         var serial = 0
         val credentialStore = object : CredentialStore {
@@ -43,11 +44,11 @@ class FrictionSettingsControllerTest {
             override val waitingStore get() = this@F.waitingStore
             override val elevationStore get() = this@F.elevationStore
             override fun applyStricter(expectedCredentials: CredentialState, replacementCredentials: CredentialState,
-                expectedWaiting: WaitingState, expectedElevation: ElevationRecord, replacementElevation: ElevationRecord): Boolean {
+                expectedWaiting: WaitingState, expectedElevation: ElevationRecord, replacementElevation: ElevationRecord, receipt: FrictionSettingsReceipt): Boolean {
                 beforeWrite?.invoke()
                 if (crash == "before") error("simulated crash before atomic write")
                 if (fail || credentials !== expectedCredentials || waiting !== expectedWaiting || elevation !== expectedElevation) return false
-                credentials = replacementCredentials; elevation = replacementElevation; writes++
+                credentials = replacementCredentials; elevation = replacementElevation; receipts.add(receipt); writes++
                 if (crash == "after") error("simulated crash after atomic write")
                 return true
             }
@@ -215,7 +216,7 @@ class FrictionSettingsControllerTest {
             } }
             assertEquals(FrictionSettingsOutcome.NOT_READY, f.controller.applyStricter(r, fresh))
             assertEquals(settings, f.credentials!!.recoveryProfile!!.friction)
-            assertSame(before.state, f.elevation!!.state); assertEquals(0, f.writes)
+            assertSame(before.state, f.elevation!!.state); assertEquals(0, f.writes); assertTrue(f.receipts.isEmpty())
             f.fail = false; f.beforeWrite = null
             assertEquals(FrictionSettingsOutcome.REFUSED, f.controller.applyStricter(r, fresh))
         }
@@ -227,6 +228,7 @@ class FrictionSettingsControllerTest {
             val ledger = f.elevation!!.state.ledger; f.crash = edge
             assertFailsWith<IllegalStateException> { f.controller.applyStricter(r, fresh) }
             val expected = if (edge == "before") 600_000L else 1_200_000L
+            assertEquals(if (edge == "before") 0 else 1, f.receipts.size)
             assertEquals(expected, f.credentials!!.recoveryProfile!!.friction.countdownMillis)
             assertEquals(expected, f.elevation!!.state.countdown!!.durationMillis)
             assertSame(ledger, f.elevation!!.state.ledger)
@@ -247,4 +249,18 @@ class FrictionSettingsControllerTest {
             assertNull(f.controller.prepareStricter(f.self, FrictionSettings(1_200_000, 1)))
         }
     }
+    @Test fun `restrictive receipt fixes recipients and target at the atomic write`() {
+        val f = F(); val contact = PersonContact("synthetic-label", "synthetic-address")
+        f.credentials = f.credentials!!.replacing(f.self, f.credentials!!.people.getValue(f.self).copy(contact = contact))
+        val r = f.prepare(); val fresh = f.auth(r)
+        assertEquals(FrictionSettingsOutcome.APPLIED, f.controller.applyStricter(r, fresh))
+        val receipt = f.receipts.single()
+        assertEquals(r.patch.source, receipt.source); assertEquals(r.patch.target, receipt.target)
+        assertEquals(f.self, receipt.actor); assertEquals(mapOf(f.self to 0L), receipt.recipientGenerations)
+        assertEquals(mapOf(f.self to contact), receipt.recipientContacts)
+        f.credentials = f.credentials!!.replacing(f.self, f.credentials!!.people.getValue(f.self).copy(contact = null, generation = 1))
+        assertEquals(mapOf(f.self to contact), receipt.recipientContacts)
+        assertEquals(mapOf(f.self to 0L), receipt.recipientGenerations)
+    }
+
 }
