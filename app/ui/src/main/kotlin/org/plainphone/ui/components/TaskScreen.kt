@@ -12,6 +12,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -32,14 +34,18 @@ internal fun TaskScreen(
     onSecondary: () -> Unit = {},
     back: String? = null,
     onBack: () -> Unit = {},
+    contentSpacing: Dp? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val largeText = LocalDensity.current.fontScale >= 2f
+    // Tighten whitespace, never type, so the next body line peeks above the pinned action.
+    val spacing = contentSpacing ?: if (largeText) PlainphoneSpace.S2 else PlainphoneSpace.S4
     Column(Modifier.fillMaxSize().background(PlainphoneColors.Paper).imePadding()) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
             .padding(horizontal = PlainphoneSpace.S6).padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S6),
-            verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4)) {
+            verticalArrangement = Arrangement.spacedBy(spacing)) {
             if (back != null) ScreenLink(back, onBack, centered = false)
-            else Spacer(Modifier.height(PlainphoneSpace.S6))
+            else if (!largeText) Spacer(Modifier.height(PlainphoneSpace.S6))
             Text(title, style = PlainphoneType.Title, modifier = Modifier.semantics { heading() })
             content()
         }
@@ -51,7 +57,7 @@ internal fun TaskScreen(
             Box(Modifier.fillMaxWidth().background(
                 if (primaryEnabled) PlainphoneColors.Ink else PlainphoneColors.Fill2, shape)
                 .plainphoneAction(shape, enabled = primaryEnabled, filled = true, onClick = onPrimary)
-                .heightIn(min = 56.dp).padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S4),
+                .heightIn(min = 56.dp).padding(horizontal = PlainphoneSpace.S6, vertical = if (largeText) PlainphoneSpace.S2 else PlainphoneSpace.S4),
                 contentAlignment = Alignment.Center) {
                 Text(primary, style = PlainphoneType.Button.copy(
                     color = if (primaryEnabled) PlainphoneColors.Paper else PlainphoneColors.Line),

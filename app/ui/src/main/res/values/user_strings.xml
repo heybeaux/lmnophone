@@ -40,12 +40,12 @@
     <string name="link_title">This link can\'t open here</string>
     <string name="link_goes_to">It goes to:</string>
     <string name="link_body">This phone is set up without web pages, to keep it simple. That doesn\'t mean the link is bad.</string>
-    <string name="link_apps_note">Links to your own apps, like Spotify, still open in the app.</string>
+    <string name="link_apps_note">(Links to your own apps, like Spotify, still open in the app.)</string>
     <string name="link_unusual">This address uses unusual letters. It may not be what it looks like.</string>
     <string name="link_too_long">This link is too long to show.</string>
     <string name="link_back">Go back</string>
     <string name="link_share">Look at it with %1$s</string>
-    <string name="link_confirm_title">Send this link to %1$s, to look at together?</string>
+    <string name="link_confirm_title">Look at this link with %1$s?</string>
     <string name="link_confirm_body">%1$s will get this text:</string>
     <string name="link_dont_send">Don\'t send</string>
     <string name="link_sent">Sent to %1$s.</string>

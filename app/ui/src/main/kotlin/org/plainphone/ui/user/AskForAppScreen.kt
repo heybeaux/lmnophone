@@ -98,6 +98,7 @@ fun AppRequestResultScreen(state: AppRequestResultUiState, onEvent: (AppRequestR
     val failed = state.result == AppRequestResult.Failed
     TaskScreen(title, stringResource(if (failed) R.string.user_try_again else R.string.user_ok),
         { onEvent(if (failed) AppRequestResultEvent.Retry else AppRequestResultEvent.Ok) },
+        primaryEnabled = !failed || !state.sending,
         secondary = if (failed) stringResource(R.string.ask_leave_saved) else null,
         onSecondary = { onEvent(AppRequestResultEvent.Ok) }) {
         Text(stringResource(when (state.result) {

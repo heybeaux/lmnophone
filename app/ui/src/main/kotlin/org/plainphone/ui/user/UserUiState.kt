@@ -46,9 +46,10 @@ sealed interface AskForAppEvent {
     data object Send : AskForAppEvent
     data class Retry(val requestId: String) : AskForAppEvent
 }
+/** Host sets sending before starting work and also rejects duplicate commands. */
 enum class AppRequestResult { Sent, Failed, DailyLimit }
 data class AppRequestResultUiState(val recipientName: String, val result: AppRequestResult,
-    val requests: List<AppRequestRow> = emptyList())
+    val requests: List<AppRequestRow> = emptyList(), val sending: Boolean = false)
 sealed interface AppRequestResultEvent {
     data object Ok : AppRequestResultEvent
     data object Retry : AppRequestResultEvent
@@ -61,7 +62,7 @@ sealed interface AppRequestResultEvent {
 sealed interface BlockedLinkUiState {
     data class Blocked(val host: String, val unusualLetters: Boolean = false, val shareWith: String? = null) : BlockedLinkUiState
     data object TooLong : BlockedLinkUiState
-    data class Confirm(val recipientName: String, val sanitizedSmsPreview: String) : BlockedLinkUiState
+    data class Confirm(val recipientName: String, val sanitizedSmsPreview: String, val sending: Boolean = false) : BlockedLinkUiState
     data class Sent(val recipientName: String) : BlockedLinkUiState
     data object Failed : BlockedLinkUiState
 }
