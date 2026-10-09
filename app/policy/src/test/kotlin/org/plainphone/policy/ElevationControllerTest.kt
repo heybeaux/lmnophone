@@ -294,4 +294,72 @@ class ElevationControllerTest {
         assertEquals(ElevationOutcome.STARTED, start(r))
     }
 
+    private fun sharedSessions() = SessionController(store, effects, clock, inventory, vault) { credentials?.mode }
+
+    @Test fun `both startup orders preserve one debit through the shared session journal`() {
+        for (supervisedFirst in listOf(false, true)) {
+            val f = ElevationControllerTest(); f.setup(); val r = f.request(); f.advance(600_000); f.start(r)
+            val debit = f.record!!.state.ledger.debits.single()
+            f.credentials = null // Direct Boot must not need credentials for either startup path.
+            val sessions = f.sharedSessions(); f.controller = f.controller()
+            if (supervisedFirst) {
+                assertTrue(sessions.onStart()); assertFalse(f.record!!.state.grant!!.packageAccessOpen)
+                assertEquals(listOf(debit), f.record!!.state.ledger.debits)
+                assertEquals(ElevationOutcome.IDLE, f.controller.onStart())
+            } else {
+                assertEquals(ElevationOutcome.IDLE, f.controller.onStart()); assertTrue(sessions.onStart())
+            }
+            assertNotNull(f.record); assertNull(f.record!!.state.grant); assertNull(f.record!!.state.countdown)
+            assertEquals(SessionJournal.Empty, f.record!!.journal); assertEquals(listOf(debit), f.record!!.state.ledger.debits)
+            assertFalse(f.physicallyOpen)
+        }
+    }
+    @Test fun `legacy session closing saves access flag with shared journal and keeps Play grant data`() {
+        setup(); val r = request(); advance(600_000); start(r); assertTrue(controller.installed(r.id, app))
+        val deadline = record!!.state.grant!!.deadline
+        val sessions = sharedSessions()
+        assertEquals(SessionOutcome.CLOSED, sessions.end(r.id, SessionEnd.LEFT_PACKAGES))
+        assertFalse(record!!.state.grant!!.packageAccessOpen); assertEquals(deadline, record!!.state.grant!!.deadline)
+        assertEquals(SessionJournal.Empty, record!!.journal); assertEquals(1, record!!.state.ledger.debits.size)
+        assertNull(controller.access()); assertEquals(identity, controller.candidate(app)); assertFalse(physicallyOpen)
+    }
+    @Test fun `shared closing CAS failures do not damage elevation or replace its debit`() {
+        setup(); val r = request(); advance(600_000); start(r); val sessions = sharedSessions()
+        failure = "save-CLOSING"
+        assertEquals(SessionOutcome.NOT_READY, sessions.end(r.id, SessionEnd.INCOMING_CALL))
+        assertTrue(record!!.state.grant!!.packageAccessOpen); assertEquals(1, record!!.state.ledger.debits.size)
+        failure = null; assertEquals(SessionOutcome.CLOSED, sessions.tick())
+        assertFalse(record!!.state.grant!!.packageAccessOpen); assertEquals(1, record!!.state.ledger.debits.size)
+        assertEquals(ElevationOutcome.IDLE, controller.onStart()); assertEquals(1, record!!.state.ledger.debits.size)
+    }
+    @Test fun `supervised startup failure leaves valid open record and second controller preserves ledger`() {
+        setup(); val r = request(); advance(600_000); start(r); val sessions = sharedSessions()
+        failure = "save-clear"; assertFalse(sessions.onStart())
+        assertTrue(record!!.state.grant!!.packageAccessOpen); assertEquals(1, record!!.state.ledger.debits.size)
+        failure = null; assertEquals(ElevationOutcome.IDLE, controller.onStart()); assertTrue(sessions.onStart())
+        assertEquals(1, record!!.state.ledger.debits.size); assertFalse(physicallyOpen)
+    }
+    @Test fun `shared supervised entry refuses self-managed mode and unknown mode without spending authority`() {
+        setup(); val sessions = sharedSessions(); assertTrue(sessions.onStart())
+        val action = PrivilegedAction("session:PLAY", "supervised")
+        val auth = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, action)).authority
+        assertEquals(SessionOutcome.REFUSED, sessions.start("supervised", WindowKind.PLAY, battery, auth))
+        credentials = null
+        assertEquals(SessionOutcome.REFUSED, sessions.start("supervised", WindowKind.PLAY, battery, auth))
+        assertEquals(SessionJournal.Empty, record!!.journal); assertTrue(record!!.state.ledger.debits.isEmpty())
+    }
+    @Test fun `supervised entry cannot replace an elevation countdown or a closed grant`() {
+        for (grant in listOf(false, true)) {
+            val f = ElevationControllerTest(); f.setup(); val r = f.request()
+            if (grant) { f.advance(600_000); f.start(r) }
+            val sessions = f.sharedSessions(); assertTrue(sessions.onStart())
+            val before = f.record!!
+            f.credentials = CredentialState(Mode.TRUSTED, f.credentials!!.people)
+            val action = PrivilegedAction("session:PLAY", "supervised")
+            val auth = assertIs<PinResult.Authorized>(f.vault.authenticate(f.person, f.pin, action)).authority
+            assertEquals(SessionOutcome.NOT_READY, sessions.start("supervised", WindowKind.PLAY, f.battery, auth))
+            assertSame(before, f.record); assertFalse(f.physicallyOpen)
+        }
+    }
+
 }
