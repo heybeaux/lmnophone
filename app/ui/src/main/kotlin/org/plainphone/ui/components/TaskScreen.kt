@@ -49,12 +49,14 @@ internal fun TaskScreen(
     val spacing = if (largeText) PlainphoneSpace.S2 else PlainphoneSpace.S4
     val measurer = rememberTextMeasurer()
     val bandStyle = PlainphoneType.Small.copy(color = PlainphoneColors.Paper, fontWeight = FontWeight.Medium)
-    BoxWithConstraints(Modifier.fillMaxSize().background(PlainphoneColors.Paper).imePadding()) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(PlainphoneColors.Paper)) {
         val width = constraints.maxWidth
         val height = constraints.maxHeight
-        // A new title/band/back identifies a new task. In-flight action labels and body updates
-        // do not change the selected layout. Insets/display/rotation changes may remeasure.
-        val wholePage = remember(title, band, back, width, height, density.density, density.fontScale, orientation) {
+        // Measure before IME padding: opening the keyboard must not replace the focused body.
+        // New task identity, action presence, and display/font/rotation changes may remeasure.
+        // In-flight action labels, body updates, and keyboard/scroll changes do not.
+        val wholePage = remember(title, band, back, primary != null, secondary != null,
+            width, height, density.density, density.fontScale, orientation) {
             with(density) {
                 val side = PlainphoneSpace.S6.roundToPx()
                 val inner = (width - 2 * side).coerceAtLeast(1)
@@ -113,8 +115,8 @@ internal fun TaskScreen(
         }
         key(title, band, back) {
         if (wholePage) {
-            TaskScroll(Modifier.fillMaxSize().testTag("task-whole-page")) { Band(); Body(); Actions() }
-        } else Column(Modifier.fillMaxSize().testTag("task-pinned")) {
+            TaskScroll(Modifier.fillMaxSize().imePadding().testTag("task-whole-page")) { Band(); Body(); Actions() }
+        } else Column(Modifier.fillMaxSize().imePadding().testTag("task-pinned")) {
             Band()
             TaskScroll(Modifier.weight(1f).fillMaxWidth()) { Body() }
             Actions()
