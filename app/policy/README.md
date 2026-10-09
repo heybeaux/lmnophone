@@ -146,8 +146,8 @@ not durable acknowledgement: success still requires the atomic cancelled-state a
 start or skip a wait. Its first call after construction revokes temporary access, then checks live
 Device Owner state and reads the operation. Stale IDs, pending/cancelled operations and rollback
 records do not run forward effects. Unknown ownership or damaged operation storage yields a typed
-NEEDS_ATTENTION failure. The separate lost-record reconciler is still unfinished: do not continue
-forward from a damaged record or treat this diagnostic as a completed lockdown repair.
+NEEDS_ATTENTION failure. Route damaged records to WaitingReconciler (below); do not continue forward from a damaged
+record or treat this diagnostic alone as a completed lockdown repair.
 
 `WaitingOperation.restoredSteps` counts read-back categories in the same durable operation record.
 Each tick restores one category, reads it back, then increments the count with a revisioned CAS.
@@ -174,7 +174,7 @@ readbacks. Use the common serialized dispatcher for all operations, policy appli
 calls. Startup session revocation must precede this controller and may not unconditionally re-apply
 full lockdown while a valid operation is COMMITTING. The final full readback also catches changes
 introduced by restart revocation. Calls, emergency and alerts must not wait on this sequence.
-Recovery-code skip, lost-record reconciliation and Android execution remain separate work.
+Recovery-code skip and Android execution remain separate work. Lost-record reconciliation is below.
 
 The waiting gate now checks credential dependencies before the UNKNOWN intent maturity guard.
 An unreadable intent store therefore cannot postpone restrictive dependency cancellation and its
@@ -211,3 +211,61 @@ integration. Lane D should immediately re-tick the sequencer on PROGRESS instead
 Completion SMS remains a queued effect. Lane D must verify SEND_SMS remains usable after Device Owner
 removal before claiming delivery. If it does not, the receipt protocol needs an explicitly reviewed
 pre-removal notification state; do not silently label a pre-removal message as completed turn-off.
+
+
+## Lost operation records and PIN Repair
+
+`WaitingReconciler` handles the lost-record path in change 2.3, regardless of the lost change's kind.
+It ignores any valid operation, including pending and committing operations. On lost state it revokes
+temporary authority first and checks live ownership. Observed Device Owner absence means OFF without
+guessing the lost change or manufacturing a completion receipt. Unknown ownership holds the slot.
+
+While still Device Owner, reconciliation uses the current atomic `CredentialState.recoveryProfile`:
+every PIN holder's reset-protection userId, the optional backup userId, and active `FrictionSettings`.
+The holder map must exactly match the current credential slots. PIN authentication and PIN/code
+replacement preserve this profile. A missing profile is not filled with defaults: it produces
+NEEDS_ATTENTION and keeps the slot held. Schema migration/enrollment must persist verified profile
+data with the credential record; do not construct it from a pending patch. Identifiers are sensitive;
+keep them out of logs and screenshots. Their diagnostic representation is redacted.
+
+The input port must supply live OS facts and the complete active policy store on the common serialized
+dispatcher. The reconciler discards any supplied waiting operation and session access before computing
+the normal policy plan. It applies that plan, the full reset-protection list (including the platform's
+required broadcast), and active friction settings, then reads all three back. Friction restoration
+must not reset consumed daily debits or adopt a pending countdown/limit. A failed effect/readback
+returns a typed reason for the needs-attention/Repair screen and leaves the slot held. Invalid policy,
+missing emergency dialer, and locked-boot partial inputs cannot claim complete recovery; retry with
+full policy inputs after unlock. Calls, Emergency and alerts remain available through every failure.
+
+`WaitingReconciliationStore.lostRecord()` distinguishes confirmed loss of both copies from a temporary
+read failure. Temporary/unclassifiable I/O failure returns no loss token and keeps the gate held. For
+confirmed loss, durably reserve a stable, never-reused episode ID, distinct from the initial storage
+generation, and return that same ID across restarts until recovery completes. All adapters must use
+this one store/dispatcher for ordinary waiting writes, credentials, reconciliation and policy effects.
+
+After all readbacks and a fresh credential-revision/owner check, `completeReconciliation` must compare
+the still-lost episode and current credential revision, then atomically install a vacant waiting state,
+its `RecoveryReceipt`, retained delivery identities/addresses, and the durable audit entry. No pending
+credential patch is applied. The receipt names the recovered people, mode, friction and ACTIVE state;
+lane B supplies the words/names. It never says the lost change was cancelled or failed to finish. Send
+it to every current holder, including the self-managed user, with immediate outbox scheduling. A failed
+write reports no recovery. Restart after success observes the valid state and does not enqueue again.
+
+Recovery starts a new `WaitingState.storageGeneration` equal to the loss ID, with revision zero. The
+adapter must durably fence all old-generation copies even if they have higher numeric revisions.
+Ordinary CAS compares **generation and revision**; a revision-only comparison is now invalid. Ordinary
+writes preserve the generation and recovery outbox. `acknowledgeRecovery(key)` removes only the delivered
+outbox entry; the adapter retains the audit entry. This storage transaction and generation fence need
+Lane D crash/fsync validation; the JVM fake demonstrates the required before/after outcomes only.
+
+`prepareRepair(person)` binds a PIN action to the current loss episode and current holder. Authenticate
+that exact `RepairRequest.action` with PinVault, then pass the fresh grant to `repair`. It consumes the
+person-bound, single-use authority and invokes exactly the same reconciliation. Failed attempts need
+another fresh PIN for another manual Repair. Stale episodes, wrong/expired/replayed grants and valid
+waiting operations cannot be repaired into a vacant slot. Repair never starts or skips a waiting change,
+never removes Device Owner and never adopts pending values. Automatic startup reconciliation needs no
+PIN; the PIN requirement applies to the explicit Repair action.
+
+This slice implements the pure recovery/Repair protocol and its storage/effect contracts. Android
+recovery execution, delivery durability, recovery-code skip and the other waiting-change kinds remain
+unfinished. Total storage unavailability remains held with needs-attention; it is not guessed vacant.

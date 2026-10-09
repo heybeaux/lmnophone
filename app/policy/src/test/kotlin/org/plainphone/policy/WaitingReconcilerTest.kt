@@ -199,6 +199,65 @@ class WaitingReconcilerTest {
         assertFalse(profile.toString().contains("synthetic-user"))
     }
 
+    @Test fun `recovery generation and outbox survive new waits cancellation and acknowledgement`() {
+        val stale = WaitingState()
+        assertEquals(ReconcileOutcome.RECOVERED, controller().reconcile().outcome)
+        val receipt = store.state!!.recoveryReceipts.single()
+        assertFalse(store.compareAndSet(stale, WaitingState(1)))
+        val waiting = WaitingChangeController(store, { credentials },
+            RunningClock { ClockReading(RunningTime("epoch", 0), BootTime("boot", 0)) }, authority,
+            WaitingIdentitySource { WaitingIdentity("fresh-request", "synthetic-cancel") }, object : CancelIntentStore {
+                override fun initialize(requestId: String) = true
+                override fun request(requestId: String) = true
+                override fun read(requestId: String) = CancelIntent.CLEAR
+            })
+        val start = waiting.prepareTurnOff(holder)!!
+        assertEquals(WaitingOutcome.PENDING, waiting.startTurnOff(start, FreshAuthority(), true, true))
+        assertEquals(WaitingOutcome.CANCELLED, waiting.cancel(start.requestId))
+        assertEquals(listOf(receipt), store.state!!.recoveryReceipts)
+        assertEquals("loss-1", store.state!!.storageGeneration)
+        assertTrue(waiting.acknowledge(store.state!!.texts.first().key))
+        assertEquals(listOf(receipt), store.state!!.recoveryReceipts)
+        store.fail = true
+        assertFalse(waiting.acknowledgeRecovery(receipt.key))
+        assertEquals(listOf(receipt), store.state!!.recoveryReceipts)
+        store.fail = false
+        assertTrue(waiting.acknowledgeRecovery(receipt.key))
+        assertTrue(store.state!!.recoveryReceipts.isEmpty())
+        assertEquals("loss-1", store.state!!.storageGeneration)
+        assertEquals(WaitingPhase.CANCELLED, store.state!!.operation!!.phase)
+    }
+
+    @Test fun `forward restore checkpoints preserve recovered outbox and generation`() {
+        controller().reconcile()
+        val receipt = store.state!!.recoveryReceipts.single()
+        val op = WaitingOperation(WaitingIdentity("new-off", "synthetic-code"), holder, 0, 0,
+            Mode.TRUSTED, RunningTime("epoch", 0), WaitingPhase.COMMITTING, mapOf(holder to 0L))
+        store.state = store.state!!.replacing(1, op)
+        val restore = object : TurnOffEffects {
+            var owner = true
+            override fun revokeTemporaryAccess() = true
+            override fun isDeviceOwner() = owner
+            override fun restoreRecorded(step: TurnOffStep) = true
+            override fun readBackRecorded(step: TurnOffStep) = true
+            override fun anotherHomeResolves() = true
+            override fun systemDialerResolves() = true
+            override fun removeDeviceOwner(): Boolean { owner = false; return true }
+        }
+        val c = TurnOffController(store, restore) { credentials }
+        repeat(TurnOffStep.entries.size) { assertEquals(TurnOffOutcome.PROGRESS, c.tick("new-off").outcome) }
+        assertEquals(TurnOffOutcome.OFF, c.tick("new-off").outcome)
+        assertEquals(listOf(receipt), store.state!!.recoveryReceipts)
+        assertEquals("loss-1", store.state!!.storageGeneration)
+    }
+
+    @Test fun `partial locked boot plan never releases lost slot`() {
+        input = input.copy(lockedBoot = true)
+        assertEquals(ReconcileFailure.POLICY_INPUT, controller().reconcile().failure)
+        assertNull(store.state)
+        assertNull(effects.plan)
+    }
+
     private inner class Store : WaitingReconciliationStore {
         var state: WaitingState? = null
         var loss: LostWaitingRecord? = LostWaitingRecord("loss-1")
