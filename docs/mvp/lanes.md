@@ -1,0 +1,100 @@
+# MVP lanes, modules and interfaces
+
+Owner: Plainphone Lead. Board direction: Beaux, Telegram 4496/4498 (2026-10-09). Parent issue: PLA-15.
+
+The MVP is built in four parallel lanes. Each lane owns one or more Gradle modules and the API those modules export. Lanes build against the seams below. To change another lane's API, ask its owner on their lane issue; the Lead settles disagreements.
+
+**Specs to build to** (both approved by Beaux):
+- `openspec/changes/add-plainphone-spike-and-mvp/` (specs, design, tasks 4.x and 5.x)
+- `openspec/changes/add-copy-test-product-decisions/` (PLA-30: two trusted people, self-managed mode, 24-hour waits, privacy steps)
+
+**Look and words:** `docs/ux/design-tokens.md`, `docs/ux/mockups/`, and `docs/ux/flows-*.md`. There is no Emergency button on the home screen (Telegram 4487).
+
+## Module map (Gradle root: `app/`)
+
+| Module | Kind | Lane / owner | Contents |
+|---|---|---|---|
+| `:core` | Kotlin/JVM, no Android | A (Policy) | Shared value types only: `PackageName`, `Mode` (`TRUSTED`, `SELF_MANAGED`), `TrustedPersonId`, `WindowKind` (`PLAY`, `SETTINGS`, `APPROVE`, `UPDATE`, `WEB`, `WIFI_SIGNIN`), `RunningClock` (the proven running-time clock interface), `BuildInventory` model, `NeverHideList`. |
+| `:policy` | Kotlin/JVM, no Android | A (Policy) | The policy engine and every state machine, as pure logic with JVM unit tests. |
+| `:links` | Kotlin/JVM, no Android | C (Link & Browser) | Browser classifier, link matrix, blocked-link decision. |
+| `:ui` | Android library, Compose | B (UI) | Screens, theme (tokens, Lexend), UI state and event types. No policy logic. |
+| `:device` | Android library | D (Android Platform) | DevicePolicyManager, lock task, PackageManager facts, storage (atomic, Direct Boot), SMS, receivers, the unhide flush (PLA-22 mitigation B). |
+| `:plainphone` | Android application | D (Android Platform) | Device admin receiver, activities, view-models that map `:policy` + `:device` → `:ui` state, wiring. |
+
+**Dependency rule:**
+- `:policy` and `:links` depend only on `:core`.
+- `:ui` depends on nothing of ours.
+- `:device` depends on `:core`, `:policy` and `:links`.
+- `:plainphone` depends on everything.
+
+`:core`, `:policy` and `:links` never import `android.*`.
+
+**Toolchain** (matches the spikes): AGP 8.11.0, Kotlin 2.1.20, JDK 17, compileSdk 36, minSdk 30. Apache-2.0 headers on every source file. Lexend ships with its OFL licence file.
+
+## Seams (names are binding; signatures are a starting point the owner may refine)
+
+**`:policy` (lane A) exports:**
+- `PolicyEngine.decide(input: PolicyInput): PolicyPlan`. Pure. The plan holds:
+  - the hidden set and the lock-task package list;
+  - lock-task features and user restrictions;
+  - the apply order.
+  The never-hide guard refuses any plan that touches the never-hide list (essential-calling).
+- `SessionController`: the supervised-session and elevation contract (start, end, revoke-on-start from the journal). Journal and policy persistence go through interfaces that lane D implements: `JournalStore`, `PolicyStore`.
+- `PinVault`: PIN and recovery-code logic.
+  - Separate counters and the exact lockout schedule.
+  - Hashing goes through a `KeyDerivation` interface (PBKDF2 is implemented by D).
+  - Supports one or two trusted people.
+- `WaitingChangeController`: the 24-hour waits (turning off, trusted-people changes, mode switches) and cancel.
+- `ElevationController` (self-managed mode), `PlaySessionMachine`, `MonthlyCheck`, `EmergencyFloor` and baseline rules, `NoticeLine` priority.
+- `TimeWindowQuota`: the generic "open for a few minutes" quota. The **web window** (5×/day × 5 min, extendable) and **Wi-Fi sign-in** (3 per 24 h) are built behind a flag that stays off. Their OpenSpec change isn't approved yet; Wi-Fi sign-in comes after the MVP core.
+
+**`:links` (lane C) exports:**
+- `BrowserClassifier.classify(facts: List<PackageFacts>, catalog: BrowserCatalog, neverHide: NeverHideList): Classification`
+- `LinkDecider.decide(intent: IntentFacts, approved: Set<PackageName>): LinkDecision`. Possible results: `OpenIn(pkg)`, `BlockedScreen`, `NoHandler`.
+- `PackageFacts` and `IntentFacts` are plain data that lane D fills from PackageManager. Lane C never calls Android.
+
+**`:ui` (lane B) exports:** one `@Composable` per screen, with this shape:
+- `XScreen(state: XUiState, onEvent: (XEvent) -> Unit)`.
+- `XUiState` and `XEvent` are plain Kotlin types owned by lane B.
+- Covers: home (with the single notice line), More, ask for an app, blocked link, Wi-Fi messages, the trusted-person screens ("Who are you?", PIN, approvals, permissions, people, waits and cancel), Plainphone settings, setup, turning off, About, and "What Plainphone can't stop".
+
+**`:device` / `:plainphone` (lane D):** implements `JournalStore`, `PolicyStore` and `KeyDerivation`. It also provides:
+- `PolicyApplier`, which applies a `PolicyPlan` through DPM and reads it back;
+- `PackageFactsSource`;
+- the SMS sender;
+- view-models mapping engine output to `XUiState`.
+
+## Branches, worktrees, merges
+
+| Lane | Engineer | Worktree | Branch |
+|---|---|---|---|
+| D0 skeleton | Android Platform Engineer | `../plainphone-device` | `mvp/skeleton` |
+| A Policy | Policy Engineer (GPT) | `../plainphone-policy` | `mvp/policy` |
+| B UI | UI Engineer (GPT) | `../plainphone-ui` | `mvp/ui` |
+| C Link & Browser | Link & Browser Engineer (Fugu) | `../plainphone-links` | `mvp/links` |
+| D Device | Android Platform Engineer | `../plainphone-device` | `mvp/device` |
+
+**Getting started:**
+- Create your worktree from the main checkout: `git -C ~/projects/plainphone worktree add ../plainphone-<lane> -b mvp/<lane> main`.
+- Worktrees share refs, so you never need `git fetch`. Don't run it while others work: concurrent fetches race on lock files.
+- Push your branch to `origin` (private) as `heybeaux`. Never force-push `main`. Never commit credentials, account addresses, phone numbers or unredacted screenshots.
+- **Before the skeleton lands:** lanes A and C may start in `app/core`, `app/policy` and `app/links` with a temporary standalone `settings.gradle.kts` in their module directory. Delete it when rebasing onto the skeleton.
+- Don't touch other lanes' modules or the root build files. Ask lane D instead.
+
+**Merge order** (the Lead merges into `main` with `--no-ff`):
+1. D0 skeleton;
+2. A and C, in small, tested slices whenever they're ready;
+3. B;
+4. D device integration.
+
+**Review before every merge:**
+- The Verifier & Escape Artist reviews the lane slice.
+- Lanes A and B are written by an OpenAI model, so the Lead (Claude) also does a code review of each slice. That keeps the cross-model rule.
+
+**A slice is ready when:**
+- it's rebased on `main`;
+- `./gradlew :<module>:test` passes, plus `:<module>:check` where it exists;
+- new behaviour has tests written first;
+- the slice comment on the lane issue lists the spec requirements covered.
+
+**Gate:** lanes A, B and C, and lane D's emulator work, don't wait for the go/no-go gate (PLA-14). Installing on the spare Motorola follows the gate decision on PLA-14. The Android Platform Engineer is the only one who drives that phone.
