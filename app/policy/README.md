@@ -1163,3 +1163,17 @@ the original dependency generations. Neither re-derives a patch from current cre
 A handover's other-holder witness need not be in its dependency map. Live eligibility,
 PIN authority, the wait and commit checks still belong to the controllers; restoration
 neither enrolls an active credential nor authorizes an operation.
+
+## Self-managed app removal
+
+The current holder may remove an active approval or withdraw a stuck committed
+approval with a fresh action-bound PIN in either mode. The request captures its
+mode, holder, credential/structure generations and boot; switching modes never
+reuses that authority. Both operations follow the existing restrictive journal
+and readback sequence, require no elevation or turn, and never uninstall the app
+or refund debits. A self-managed hidden app can be reapproved only through the
+existing live Play/Approve grant rules. Direct PIN-only reapproval and direct
+self-managed permission editing remain unavailable. The audit asks the Lead to
+resolve the latter against the approved action table before any new authority
+path is implemented. Android persistence, effect readbacks and delivery remain
+lane D obligations.
