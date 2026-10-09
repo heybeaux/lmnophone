@@ -271,4 +271,63 @@ class WaitingSkipTest {
         assertEquals(WaitingPhase.COMMITTING, waiting!!.operation!!.phase)
         assertEquals(0L, time!!.proven.totalMillis)
     }
+
+    @Test fun `self recovery cancels exact turn off with one receipt and no skip across restart and clock repair`() {
+        for (restart in listOf(false, true)) for (repair in listOf(false, true)) {
+            val f = WaitingSkipTest()
+            f.start(Mode.SELF_MANAGED)
+            val original = f.waiting!!.texts.single()
+            val checked = f.checks
+            f.assertNotSkipped(WaitingOutcome.REFUSED, f.skip(f.first, f.codeFirst.toCharArray()))
+            assertEquals(checked, f.checks)
+            assertIs<RecoveryResult.Replaced>(f.vault.recover(f.first, f.codeFirst.toCharArray(), f.newPin))
+            assertEquals(1L, f.credentials!!.people.getValue(f.first).generation)
+            // The host must invoke dependency reconciliation immediately after successful recovery.
+            val c = if (restart) f.controller() else f.controller
+            if (repair) f.time = ClockReading(RunningTime("repaired", 0), BootTime("reboot", 0))
+            assertEquals(WaitingOutcome.CANCELLED, c.tick("request", BatteryState(1, false)))
+            assertEquals(WaitingPhase.CANCELLED, f.waiting!!.operation!!.phase)
+            assertNull(f.waiting!!.operation!!.skipper)
+            assertEquals(0, f.waiting!!.operation!!.restoredSteps)
+            assertEquals(listOf(WaitingEvent.STARTED, WaitingEvent.DEPENDENCY_CHANGED), f.waiting!!.texts.map { it.event })
+            assertEquals(mapOf(f.first to 0L), original.recipientGenerations)
+            assertEquals(mapOf(f.first to 1L), f.waiting!!.texts.last().recipientGenerations)
+            assertIs<PinResult.Wrong>(f.vault.authenticate(f.first, f.pin, PrivilegedAction("test", "old-pin")))
+            assertIs<PinResult.Authorized>(f.vault.authenticate(f.first, f.newPin, PrivilegedAction("test", "new-pin")))
+            assertIs<RecoveryResult.Wrong>(f.vault.recover(f.first, f.codeFirst.toCharArray(), f.pin))
+            f.time = ClockReading(RunningTime(if (repair) "repaired" else "epoch", 86_400_000), BootTime("later", 0))
+            repeat(3) { assertEquals(WaitingOutcome.IGNORED, f.controller().tick("request", BatteryState(100, true))) }
+            assertEquals(2, f.waiting!!.texts.size)
+            assertEquals(0, f.commits)
+        }
+    }
+
+    @Test fun `failed cancellation after self recovery never matures across restart`() {
+        start(Mode.SELF_MANAGED)
+        assertIs<RecoveryResult.Replaced>(vault.recover(first, codeFirst.toCharArray(), newPin))
+        failWaiting = true
+        assertEquals(WaitingOutcome.NOT_READY, controller.tick("request", BatteryState(50, false)))
+        time = ClockReading(RunningTime("epoch", 86_400_000), BootTime("reboot", 0))
+        assertEquals(WaitingOutcome.NOT_READY, controller().tick("request", BatteryState(50, false)))
+        assertEquals(WaitingPhase.PENDING, waiting!!.operation!!.phase)
+        assertFalse(waiting!!.texts.any { it.event == WaitingEvent.COMMITTING || it.event == WaitingEvent.SKIPPED })
+        failWaiting = false
+        assertEquals(WaitingOutcome.CANCELLED, controller().tick("request", BatteryState(50, false)))
+        assertEquals(1, waiting!!.texts.count { it.event == WaitingEvent.DEPENDENCY_CHANGED })
+        assertEquals(0, commits)
+    }
+
+    @Test fun `failed self recovery preserves old credentials and wait then successful retry cancels`() {
+        start(Mode.SELF_MANAGED)
+        val before = credentials
+        failCredentials = true
+        assertIs<RecoveryResult.Unavailable>(vault.recover(first, codeFirst.toCharArray(), newPin))
+        assertSame(before, credentials)
+        assertEquals(WaitingOutcome.PENDING, controller().tick("request", BatteryState(50, false)))
+        failCredentials = false
+        assertIs<RecoveryResult.Replaced>(vault.recover(first, codeFirst.toCharArray(), newPin))
+        assertEquals(WaitingOutcome.CANCELLED, controller.tick("request", BatteryState(50, false)))
+        assertEquals(1, waiting!!.texts.count { it.event == WaitingEvent.DEPENDENCY_CHANGED })
+        assertEquals(0, commits)
+    }
 }
