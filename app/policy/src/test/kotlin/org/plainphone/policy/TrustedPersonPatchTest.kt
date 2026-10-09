@@ -95,7 +95,12 @@ class TrustedPersonPatchTest {
     @Test fun `pending credentials and code grant nothing even with same PIN as active holder`() {
         val current = state(false)
         val prepared = vault.prepareCredential(pin)
-        assertNotNull(TrustedPersonPatch.add(current, first, enroll(prepared = prepared)!!))
+        val enrollment = enroll(prepared = prepared)!!
+        val decoded = assertNotNull(IncomingPersonEnrollment.restore(enrollment.person, enrollment.credential,
+            enrollment.resetProtectionUserId, enrollment.confirmations, enrollment.witness))
+        val patch = assertNotNull(TrustedPersonPatch.add(current, first, decoded))
+        assertNotNull(TrustedPersonPatch.restore(patch.kind, patch.starter, patch.structureGeneration,
+            patch.dependencyGenerations, patch.removedSlots, decoded))
         val action = PrivilegedAction("test", "pending-is-not-authority")
         assertIs<PinResult.Unavailable>(vault.authenticate(incoming, pin, action))
         assertIs<RecoveryResult.Unavailable>(vault.recover(incoming, prepared.recoveryCode.toCharArray(), pin))
