@@ -49,7 +49,7 @@ Prerequisites: JDK 17 and an Android SDK with platform 36, found through `ANDROI
 | `:ui` screenshot tests | `./gradlew :ui:verifyPaparazziDebug` |
 | `:ui` record new screenshots | `./gradlew :ui:recordPaparazziDebug` (see the rule below) |
 | `:device`, `:plainphone` unit tests | `./gradlew :device:test :plainphone:test` |
-| Instrumented tests (emulator only) | `ANDROID_SERIAL=emulator-5554 ./gradlew :device:connectedDebugAndroidTest` |
+| Device-integration tests (emulator only) | `ANDROID_SERIAL=emulator-5554 ./gradlew :device:connectedDebugAndroidTest`. The instrumented tests live on the device branches (`mvp/device`, `release/*`) and aren't on `main` yet. |
 | Lint | `./gradlew :ui:lint :device:lint :plainphone:lint` |
 | Validate specs | `openspec validate --all` (from the repo root) |
 
@@ -80,7 +80,7 @@ Prefer the narrowest command that proves your change. A `:policy` change needs `
   // SPDX-License-Identifier: Apache-2.0
   ```
   (The root build files and `LICENSE` say "The Plainphone Authors". Both mean the same people; don't churn existing headers.)
-- Versions only in `app/gradle/libs.versions.toml`. Module build files use `libs.versions.*` and `libs.plugins.*`. Never write a version number into a `build.gradle.kts`.
+- New versions go in `app/gradle/libs.versions.toml`, and module build files read them through `libs.versions.*` and `libs.plugins.*`. A few `:ui` dependencies (the Compose BOM, Paparazzi) are still pinned in `app/ui/build.gradle.kts`. Leave them unless your change is about them.
 - Toolchain: JDK 17, AGP 8.11.0, Kotlin 2.1.20, compileSdk 36, minSdk 30.
 
 **Tests first**
@@ -117,20 +117,22 @@ Bug fixes, tests, refactors and docs don't need a spec. If a "fix" changes what 
 ## Never do these
 
 1. **No `DevicePolicyManager` calls outside `:device`.** The same goes for lock task calls, `setApplicationHidden`, user restrictions and role changes. Everything that changes the phone goes through `:device` and is read back.
-2. **No colour outside the palette.** No new `Color(...)`, no Material colour schemes, no accent, no red for danger.
+2. **No colour outside the palette.** No new `Color(...)` values, no accent, no red for danger. The `lightColorScheme` in `PlainphoneTheme.kt` maps the palette tokens and is the only colour scheme: no default Material schemes, no dynamic (Material You) colour, nothing off the palette.
 3. **Never place an emergency call.** No test, script or tool may start `ACTION_CALL` or `ACTION_CALL_EMERGENCY` to 911, 112, 999, 000 or any other emergency number, press a dialer's call button with one typed in, or trigger the power-button emergency SOS gesture. Emergency checks open the dialer with the number typed in (`ACTION_DIAL`) and stop there. Anything that does place a call uses a fake number (for example `555-0100`), never a real emergency or personal number.
 4. **No commands against real phones.** Use emulators only. Always name the target with `adb -s emulator-NNNN` or `ANDROID_SERIAL`; never run a bare `adb` command while a physical device might be connected. Never run `dpm set-device-owner`, a factory reset, a flash, or an install on a physical phone. A human who owns a specific phone may authorise that phone, in writing, for a specific task. Nothing else counts as permission.
-5. **Never weaken the floor.** The Phone app, Messages, emergency dialing, emergency alerts and the never-hide list must never be hidden, disabled or left out of lock task. Code that could hide them must go through the never-hide guard in `:policy`.
+5. **Never weaken the floor.** Every floor and never-hide package (the Phone app, Messages, emergency dialing, emergency alerts, and the system parts they depend on, such as WebView, keyboards and the permission controller) stays unhidden and enabled. Code that could hide or disable one goes through the never-hide guard in `:policy`. Lock task is different: while the lockdown is on, it holds the approved apps plus only the emergency UI subset that `EmergencyFloor` returns, **not the whole floor**. Don't add floor packages to lock task, and don't "fix" the turn-off path, which clears lock task on purpose.
 6. **Don't lock yourself out.** Test builds stay `testOnly` so `dpm remove-active-admin` works. Applying `DISALLOW_DEBUGGING_FEATURES` ends your adb connection, so don't apply a full policy plan on an emulator you still need to drive.
 7. **No secrets or personal data in the repo.** No credentials, account addresses, phone numbers, real names, or screenshots that show any of them. Check every image before you commit it.
-8. **No new network calls, analytics, crash reporters or dependencies that phone home.** Plainphone sends only the SMS texts listed in [docs/ux/README.md](docs/ux/README.md#texts-plainphone-sends).
+8. **No analytics, crash reporters, ads or dependencies that phone home.** Plainphone's notifications are only the SMS texts listed in [docs/ux/README.md](docs/ux/README.md#texts-plainphone-sends). Its one approved network use is the updater: after a fresh PIN, it downloads a signed Plainphone APK from the helper's computer on the local network (trusted-person-controls spec). Any other network use needs an approved spec first.
 9. **Don't approve your own work**, and don't force-push `main`.
 
 ## Android facts that have caught us out
 
 - Claims about what Android allows need a source (developer.android.com or AOSP code) or a test someone can repeat on an emulator. The early research in `research/` has been wrong before.
+The next points come from our own emulator runs on API 35. Re-check them before you rely on them for another version.
+
 - Removing the Device Owner on API 35 brings hidden apps back.
 - Hidden apps still match intent queries made with `MATCH_UNINSTALLED_PACKAGES`.
 - Android only accepts `dpm set-device-owner` on a phone with no accounts, and only one Device Owner at a time.
 - Instrumented tests that run before the first unlock (Direct Boot) need a Direct-Boot-aware component in the test APK, not just the app flag.
-- Factory reset protection calls behave differently on emulators. Treat emulator results for reset protection as unproven.
+- In our emulator runs, the reset-protection (FRP) calls failed, so emulator results say nothing about whether reset protection works. That is tested on real hardware (Q10 in [docs/verification-matrix.md](docs/verification-matrix.md)).

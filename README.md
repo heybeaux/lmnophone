@@ -2,24 +2,24 @@
 
 **A calm Android phone that only runs the apps you chose, with someone you trust holding the key.**
 
-Plainphone is an open-source "focused phone" layer for ordinary Android phones, in the spirit of Wisephone. You don't flash a new operating system. You install one app on a freshly reset, stock Android phone. That app becomes the phone's manager and its home screen. From then on:
+Plainphone is an open-source "focused phone" layer for ordinary Android phones, in the spirit of Wisephone. It is still being built, so this describes what it is designed to do. You won't flash a new operating system. You install one app on a freshly reset, stock Android phone, and that app becomes the phone's manager and its home screen. Once it is finished:
 
 - the home screen is a short list of app names in large black text, with no icons, badges or colour;
-- every app that hasn't been added is hidden;
-- calls, texts and 9-1-1 always work;
-- adding an app needs a **trusted person** (a spouse, a friend, a family member) to type their PIN on the phone, with the phone in their hands.
+- every app that hasn't been added is hidden, apart from the parts of Android that calls, texts and emergency calls depend on;
+- calls, texts and 9-1-1 are designed to stay available: no lock, check or wait in Plainphone stands in their way;
+- adding an app needs a **trusted person** (a spouse, a friend, a family member) to type their PIN on the phone, with the phone in their hands. On a self-managed phone, the user types their own PIN and waits.
 
 <p align="center">
   <img src="docs/images/home-emulator.png" width="220" alt="Plainphone home screen on an Android emulator: the time, the date, and four app names (Camera, Maps, Messages, Phone) in large black text, with a More button at the bottom.">
   &nbsp;
-  <img src="docs/images/more.png" width="160" alt="The More page: Emergency 9-1-1, Phone settings, Ask for an app, For Sam, and About this phone.">
+  <img src="docs/images/more.png" width="220" alt="The More page: Emergency 9-1-1, Phone settings, Ask for an app, For Sam, and About this phone.">
   &nbsp;
   <img src="docs/images/blocked-link.png" width="220" alt="A screen that says 'This link can't open here', shows where the link goes, and offers 'Look at it with Sam' and 'Go back'.">
 </p>
 
 <sub>Left: the preview-2 test build running as the phone's manager on an Android 15 emulator. Middle and right: the More page and the blocked-link screen, rendered by the screenshot tests in `app/ui`. "Sam" is a sample trusted person.</sub>
 
-> **Status: early and not ready for anyone's daily phone.** The MVP is being built in the open. Test builds run on emulators and on one spare test phone. See [Where things stand](#where-things-stand).
+> **Status: early and not ready for anyone's daily phone.** The MVP (the first small version that works end to end) is being built in the open. Test builds run on emulators and on one spare test phone. See [Where things stand](#where-things-stand).
 
 ## Contents
 
@@ -52,16 +52,18 @@ There are two kinds of user, and Plainphone designs for both:
 | What they want | A calm phone that does the basics without thinking, a clear way to ask for things, and never to feel watched | To say yes or no to apps, with the phone in their hands, and to know honestly what they can't control |
 | What they see | Home, More, "Ask for an app", "About this phone" | A PIN-protected area under More, used only on the user's phone |
 
-**Support, not surveillance.** The trusted person adds apps. They don't watch. Plainphone has no server, no account and no tracking. The only things it sends are a fixed set of text messages, by SMS from the user's own phone to the trusted person or the helper (for example `Plainphone: Alex asked for an app: "WhatsApp"…`). The user can read the full list on the phone under "About this phone", and it is in [docs/ux/README.md](docs/ux/README.md#texts-plainphone-sends).
+There is also a **helper**: the person who sets the phone up and fixes it if something goes wrong. Often the trusted person is the helper too.
+
+**Support, not surveillance.** The trusted person adds apps. They don't watch. Plainphone has no server, no account, no analytics and no tracking. Its notifications are a fixed set of SMS texts, sent from the user's own phone to the trusted person or the helper (for example `Plainphone: Alex asked for an app: "WhatsApp"…`). The user can read the full list on the phone under "About this phone", and it is in [docs/ux/README.md](docs/ux/README.md#texts-plainphone-sends). The only other connection it makes is to fetch a Plainphone update from the helper's own computer over local Wi-Fi, after a fresh PIN.
 
 ## How it works
 
 Plainphone is one Android app with two jobs:
 
-1. **The phone's manager.** It uses Android's built-in management for work phones (the [Device Owner](https://developer.android.com/work/dpc/dedicated-devices) API that companies use for kiosks and work phones) to hide apps that haven't been added, keep approved apps in [lock task mode](https://developer.android.com/work/dpc/dedicated-devices/lock-task-mode), and turn off the usual ways out: safe mode, factory reset from Settings, adding users, installing apps from files, and USB debugging.
+1. **The phone's manager.** It is designed to use Android's built-in management for work phones (the [Device Owner](https://developer.android.com/work/dpc/dedicated-devices) API that companies use for kiosks and work phones) to hide apps that haven't been added, keep approved apps in [lock task mode](https://developer.android.com/work/dpc/dedicated-devices/lock-task-mode), and turn off the usual ways out: safe mode, factory reset from Settings, adding users, installing apps from files, and USB debugging.
 2. **The home screen.** A text-only launcher drawn in [Lexend](https://www.lexend.com/), black and white only.
 
-Why this approach and not a custom ROM or a plain launcher? Short version: a custom ROM breaks banking apps and needs a rebuild for every phone model, and a launcher alone is easy to escape. The full comparison, with sources, is in [ADR 0001](docs/decisions/0001-architecture.md).
+Why this approach and not a custom ROM or a plain launcher? Short version: a custom ROM can break some banking apps and needs a rebuild for every phone model, and a launcher alone is easy to escape. The full comparison, with sources, is in [ADR 0001](docs/decisions/0001-architecture.md).
 
 When the trusted person needs to add an app, Plainphone opens the Play Store for 10 minutes. To change an Android setting that Plainphone doesn't offer, it opens full phone settings for 5 minutes. Then it closes them and checks that every protection is back in place.
 
@@ -69,13 +71,15 @@ When the trusted person needs to add an app, Plainphone opens the Play Store for
 
 The lock only ever opens one way. To open the Play Store or full settings, the trusted person types a fresh PIN. Before anything opens, Plainphone writes down what it is about to open and when it must close, in storage it can read even before the phone is unlocked. The session ends when the trusted person taps Done, the screen goes off, a call comes in, time runs out, or someone leaves the allowed apps. Then Plainphone closes everything, checks each protection one by one, repairs anything that changed, and only then hands the phone back. If the phone restarts in the middle, the first thing Plainphone does on boot is close whatever was open. Throughout, the screen says: "Stay with the phone until you tap Done."
 
+**Two limits we accept, and say out loud.** If Plainphone itself can't run while the Play Store or settings is open (because of a bad update, a storage fault or a crash loop), nothing closes it automatically. It stays open until a helper fixes the phone. And during a session, the Play Store and Settings can show web pages, such as help or account pages.
+
 The exact rules are in the [trusted-person-controls spec](openspec/changes/add-plainphone-spike-and-mvp/specs/trusted-person-controls/spec.md).
 
 ## What Plainphone can't do
 
 Plainphone is honest about its limits, and it shows them on the phone too ("What Plainphone can't stop"):
 
-- Someone with physical access can still erase the phone from its recovery menu. Google's reset protection, tied to the trusted person's Google account, is what stops that erased phone being set up again without them.
+- Someone with physical access can still erase the phone from its recovery menu. The plan is for Google's reset protection, tied to the trusted person's Google account, to stop the erased phone being set up again without them. **That isn't proven yet.** It is one of the checks that must pass before a phone is handed over (Q10 in the [verification matrix](docs/verification-matrix.md)). Even when it works, it doesn't reinstall Plainphone. The helper has to set it up again.
 - Some apps contain web pages (help pages, sign-in pages, in-app browsers). Plainphone can't see inside other apps. The [starter catalogue](docs/ux/starter-catalog.md) notes what each common app lets through.
 - It is not parental-control or monitoring software. It doesn't record what anyone does.
 - It is not a security product, and it has not had an outside security audit.
@@ -84,7 +88,7 @@ More: [docs/ux/flows-limits-and-off.md](docs/ux/flows-limits-and-off.md).
 
 ## Where things stand
 
-The design is written and approved. The MVP is being built in small, reviewed slices. Test builds stay `testOnly` (so they can always be removed with one command) until removal is proven on real hardware.
+The design is written and approved. The MVP is being built in small, reviewed slices. Preview builds are marked `testOnly`, so on an emulator or test phone they can be removed with one command. They stay that way until removal is proven on real hardware. The skeleton build on `main` isn't a test build.
 
 | Build | Target date | What it adds |
 |---|---|---|
@@ -96,7 +100,7 @@ The design is written and approved. The MVP is being built in small, reviewed sl
 
 Dates are targets and may move. Features that aren't ready yet say "Not in this test build yet" on the phone. Nothing pretends to work.
 
-**Branches.** `main` holds the reviewed work: the policy engine (`:policy`), the link rules (`:links`), the user screens (`:ui`), and the Gradle skeleton. The Android wiring (`:device`, `:plainphone`) is being built on `mvp/device`, and the preview builds are cut from `release/*` branches. On `main` today, the app installs but shows a blank screen.
+**Branches.** `main` holds the reviewed work: the policy engine (`:policy`), the link rules (`:links`), the user screens (`:ui`), and the Gradle skeleton. The Android wiring (`:device`, `:plainphone`) is being built on `mvp/device`, and the preview builds are cut from `release/*` branches. On `main` today, the app installs but shows a blank screen. It isn't a home screen yet, and it has no way to be removed except wiping the phone.
 
 ## What's in this repo
 
@@ -138,7 +142,7 @@ The app lives in `app/`. Three modules are plain Kotlin with no Android classes 
 - Only `:device` talks to `DevicePolicyManager`.
 - `:ui` takes plain state and sends plain events. It never makes a policy decision.
 
-Interfaces between modules: [docs/mvp/lanes.md](docs/mvp/lanes.md). Toolchain: JDK 17, Android Gradle Plugin 8.11, Kotlin 2.1.20, compileSdk 36, minSdk 30 (Android 11). Versions live only in [`app/gradle/libs.versions.toml`](app/gradle/libs.versions.toml).
+Interfaces between modules: [docs/mvp/lanes.md](docs/mvp/lanes.md). Toolchain: JDK 17, Android Gradle Plugin 8.11, Kotlin 2.1.20, compileSdk 36, minSdk 30 (Android 11). Shared versions live in [`app/gradle/libs.versions.toml`](app/gradle/libs.versions.toml). A few `:ui` dependencies (the Compose BOM, Paparazzi) are still pinned in `app/ui/build.gradle.kts`.
 
 ## Build it and run it on an emulator
 
@@ -146,7 +150,14 @@ Interfaces between modules: [docs/mvp/lanes.md](docs/mvp/lanes.md). Toolchain: J
 
 ### 1. Build and test
 
-You need JDK 17 and the Android SDK (Android Studio installs both). Tell Gradle where the SDK is with `ANDROID_HOME` or an `app/local.properties` file containing `sdk.dir=/path/to/sdk`.
+You need:
+
+- JDK 17;
+- the Android SDK with platform 36 (`platforms;android-36`), the platform tools and the emulator. [Android Studio](https://developer.android.com/studio) installs these;
+- the **SDK Command-line Tools** for `sdkmanager` and `avdmanager` (in Android Studio: Settings → Languages & Frameworks → Android SDK → SDK Tools);
+- these folders on your `PATH`: `$ANDROID_HOME/cmdline-tools/latest/bin`, `$ANDROID_HOME/platform-tools` and `$ANDROID_HOME/emulator`.
+
+Tell Gradle where the SDK is with `ANDROID_HOME` or an `app/local.properties` file containing `sdk.dir=/path/to/sdk`.
 
 ```sh
 cd app
@@ -155,37 +166,43 @@ cd app
 ./gradlew :ui:verifyPaparazziDebug    # screenshot tests against the saved images
 ```
 
-The APK lands in `app/plainphone/build/outputs/apk/debug/plainphone-debug.apk`.
+The APK lands in `app/plainphone/build/outputs/apk/debug/plainphone-debug.apk`. Go back to the repo root (`cd ..`) before the steps below.
 
 ### 2. Make an emulator
 
 An Android 15 image with the Play Store works best. Use `x86_64` instead of `arm64-v8a` on an Intel or AMD computer.
 
 ```sh
-sdkmanager "platform-tools" "emulator" "system-images;android-35;google_apis_playstore;arm64-v8a"
+sdkmanager "platform-tools" "emulator" "platforms;android-36" "system-images;android-35;google_apis_playstore;arm64-v8a"
 avdmanager create avd -n plainphone -k "system-images;android-35;google_apis_playstore;arm64-v8a" -d pixel_7
 emulator -avd plainphone
 ```
 
 Don't sign in to a Google account on it. Android only accepts a new Device Owner on a phone with no accounts.
 
-### 3. Install and make Plainphone the phone's manager
+### 3. Install it
+
+Run these from the repo root. Always name the emulator with `-s` (see `adb devices`), so a command never reaches a real phone by mistake.
+
+**To see the working home screen, use a preview build.** Check out a preview branch (for example `git checkout release/preview-2`), build it as in step 1, then run its setup script. The script installs the APK, makes Plainphone the phone's manager, applies a fixed starter list of apps, and prints what Android reports back:
 
 ```sh
-adb -s emulator-5554 install -r -t app/plainphone/build/outputs/apk/debug/plainphone-debug.apk
+app/tools/preview-2/setup.sh emulator-5554 app/plainphone/build/outputs/apk/debug/plainphone-debug.apk
+```
+
+**The build from `main`** is only the skeleton: a blank screen with no home screen yet. Installing it and making it the manager is only useful for trying the plumbing, and it isn't a test build, so only a wipe removes it:
+
+```sh
+adb -s emulator-5554 install -r app/plainphone/build/outputs/apk/debug/plainphone-debug.apk
 adb -s emulator-5554 shell dpm set-device-owner org.plainphone/.PlainphoneAdminReceiver
 ```
 
-Always name the emulator with `-s` (see `adb devices`), so a command never reaches a real phone by mistake.
-
 ### 4. Undo it
 
-- **Test builds** (marked `testOnly`, as the preview builds are) can be removed with one command:
+- **Preview builds** are marked `testOnly`, so one command removes them:
   `adb -s emulator-5554 shell dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver`
-  Removing Plainphone brings every hidden app back.
-- **Anything else:** wipe the emulator (Android Studio → Device Manager → Wipe Data, or `emulator -avd plainphone -wipe-data`).
-
-The preview builds come with their own setup and check scripts in `app/tools/` on their release branch.
+  On Android 15, removing Plainphone brings every hidden app back.
+- **The `main` build, or anything else:** wipe the emulator (Android Studio → Device Manager → Wipe Data, or `emulator -avd plainphone -wipe-data`).
 
 ## Contributing
 
@@ -207,7 +224,7 @@ The preview builds come with their own setup and check scripts in `app/tools/` o
 
 Plainphone changes what a phone will and won't let someone do, so behaviour is agreed in writing before it is built.
 
-1. **Spec.** A new feature or a change in behaviour starts as an [OpenSpec](https://github.com/Fission-AI/OpenSpec) change in `openspec/changes/<name>/`: a `proposal.md` (why and what), spec deltas under `specs/`, and a `tasks.md`. Run `openspec validate --all` from the repo root. A maintainer approves the proposal before implementation starts. Bug fixes, tests, refactors and docs don't need a spec.
+1. **Spec.** A new feature or a change in behaviour starts as an [OpenSpec](https://github.com/Fission-AI/OpenSpec) change in `openspec/changes/<name>/`: a `proposal.md` (why and what), spec deltas under `specs/`, and a `tasks.md`. Run `openspec validate --all` from the repo root (install the CLI with `npm install -g @fission-ai/openspec`). A maintainer approves the proposal before implementation starts. Bug fixes, tests, refactors and docs don't need a spec.
 2. **Words and screens.** If users will see it, the words come from [docs/ux/](docs/ux/) first. The screens use plain language only (see the word list in [docs/ux/README.md](docs/ux/README.md)) and black, white and grey only ([design tokens](docs/ux/design-tokens.md)).
 3. **Tests first.** Write the failing test, then the code. Policy and link logic are tested as plain JVM tests. Screens have Paparazzi screenshot tests at normal and 200% text size.
 4. **Pull request.** Keep it small. Say which spec requirement it covers, what you tested and how. Add the licence header to new source files (see [AGENTS.md](AGENTS.md)).
