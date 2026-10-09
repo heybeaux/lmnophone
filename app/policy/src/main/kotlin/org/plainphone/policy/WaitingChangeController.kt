@@ -180,7 +180,7 @@ class WaitingChangeController(
         val operation = WaitingOperation(request.identity, request.starter, request.generation,
             request.structureGeneration, request.mode, now.proven, WaitingPhase.PENDING, current.people.mapValues { it.value.generation },
             peoplePatch = request.peoplePatch, recipientContacts = current.contacts())
-        return if (write(before, operation, WaitingEvent.STARTED, current.people.mapValues { it.value.generation })) WaitingOutcome.PENDING else WaitingOutcome.NOT_READY
+        return if (write(before, operation, WaitingEvent.STARTED, current.people.mapValues { it.value.generation }, current.contacts())) WaitingOutcome.PENDING else WaitingOutcome.NOT_READY
     }
 
     private fun startDependenciesMatch(request: WaitingStart, current: CredentialState): Boolean =
@@ -270,7 +270,8 @@ class WaitingChangeController(
         val now = clock.checkpoint() ?: return WaitingOutcome.NOT_READY
         if (now.proven.since(operation.startedAt) < 86_400_000L) return WaitingOutcome.PENDING
         if (operation.kind == WaitingChangeKind.TURN_OFF && !battery.allowsDiscretionaryUnhide) return WaitingOutcome.LOW_BATTERY
-        return if (write(before, operation.withPhase(WaitingPhase.COMMITTING), WaitingEvent.COMMITTING, current.people.mapValues { it.value.generation }))
+        return if (write(before, operation.withPhase(WaitingPhase.COMMITTING), WaitingEvent.COMMITTING,
+                current.people.mapValues { it.value.generation }, current.contacts()))
             WaitingOutcome.COMMITTING else WaitingOutcome.NOT_READY
     }
 
@@ -353,9 +354,13 @@ class WaitingChangeController(
     }
 
     private fun cancelPending(before: WaitingState, operation: WaitingOperation, event: WaitingEvent): WaitingOutcome {
-        val recipients = credentials()?.people?.mapValues { it.value.generation } ?: operation.recipientGenerations
+        // Choose generations and contacts from the same read, or the same frozen start fallback.
+        // Even under serialized mutation, two reads may disagree because storage is transiently unreadable.
+        val current = credentials()
+        val recipients = current?.people?.mapValues { it.value.generation } ?: operation.recipientGenerations
+        val contacts = current?.contacts() ?: operation.recipientContacts
         clock.checkpoint() // A failed clock cannot prevent a restrictive cancellation.
-        if (!write(before, operation.withPhase(WaitingPhase.CANCELLED), event, recipients)) return WaitingOutcome.NOT_READY
+        if (!write(before, operation.withPhase(WaitingPhase.CANCELLED), event, recipients, contacts)) return WaitingOutcome.NOT_READY
         cancellationRequests.remove(operation.identity.requestId)
         return WaitingOutcome.CANCELLED
     }
@@ -371,13 +376,10 @@ class WaitingChangeController(
         else -> WaitingOutcome.IGNORED
     }
     private fun nextRevision(before: WaitingState): Long? = try { Math.addExact(before.revision, 1) } catch (_: ArithmeticException) { null }
-    private fun write(before: WaitingState, operation: WaitingOperation, event: WaitingEvent, recipients: Map<TrustedPersonId, Long>): Boolean {
+    private fun write(before: WaitingState, operation: WaitingOperation, event: WaitingEvent,
+        recipients: Map<TrustedPersonId, Long>, contacts: Map<TrustedPersonId, PersonContact?>): Boolean {
         val revision = nextRevision(before) ?: return false
         val id = operation.identity.requestId
-        val current = credentials()
-        val contacts = recipients.keys.associateWith { person ->
-            if (current == null) operation.recipientContacts[person] else current.people[person]?.contact
-        }
         val text = WaitingText("${id.length}:$id:$revision", event, operation, recipients, contacts)
         return store.compareAndSet(before, before.replacing(revision, operation, before.texts + text))
     }
