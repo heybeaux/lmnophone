@@ -510,15 +510,11 @@ class PeopleTransactionsTest {
             rig.faults = StorageFaults { _, _ -> }
             rig.wire()
             val after = rig.credentials(); val phase = rig.journal().operation!!.phase
-            assertEquals(fence, point == WritePoint.AFTER_FENCE_A, result is WaitingSkipResult.Committing)
-            if (result is WaitingSkipResult.Committing) {
-                assertEquals(fence, before.revision + 1, after.revision)
-                assertEquals(fence, WaitingPhase.COMMITTING, phase)
-            } else {
-                assertEquals(fence, before.revision, after.revision)
-                assertEquals(fence, before.people.getValue(ben).generation, after.people.getValue(ben).generation)
-                assertEquals(fence, WaitingPhase.PENDING, phase)
-            }
+            // Either fence failing means the write is not on both sides: refused, and the old record kept.
+            assertFalse(fence, result is WaitingSkipResult.Committing)
+            assertEquals(fence, before.revision, after.revision)
+            assertEquals(fence, before.people.getValue(ben).generation, after.people.getValue(ben).generation)
+            assertEquals(fence, WaitingPhase.PENDING, phase)
         }
     }
 

@@ -145,56 +145,81 @@ class StoreCommitProtocolTest {
         assertTrue(store.credentials.compareAndSet(trusted(listOf(other, self)), trusted(listOf(other, self), 1)))
     }
 
-    // PLA-131 F1.a (Verifier's regression, kept verbatim in substance): a degraded acknowledgement never rolls back.
-    @Test fun acknowledgedLockoutMustNotRollBackWhenFirstFenceIsLost() {
-        val dir = tmp.newFolder(); val store = initialized(dir)
-        File(dir, "fence-b.rec.tmp").mkdir(); File(dir, "authority-b.rec.tmp").mkdir()
-        assertTrue(bump(store, 12))
-        assertEquals(12, open(dir).credentials.read()!!.people.getValue(self).pinCounter.failures)
-        File(dir, "fence-b.rec.tmp").delete(); File(dir, "authority-b.rec.tmp").delete()
-        assertTrue(File(dir, "fence-a.rec").delete())
-        val reopened = open(dir).credentials.read()
-        assertTrue("revision 1 or fail closed, never revision 0", reopened == null || reopened.revision == 1L)
+    private val files = listOf("authority-a", "authority-b", "fence-a", "fence-b")
+    /** Revision read now, or null; never older than [acknowledged]. */
+    private fun assertNotOlder(dir: File, acknowledged: Long, label: String) {
+        val read = open(dir).credentials.read()
+        assertTrue("$label: read ${read?.revision}, acknowledged $acknowledged", read == null || read.revision >= acknowledged)
+    }
+
+    // PLA-131 F1.a and PLA-146: a write is acknowledged only when both sides hold it, so losing any
+    // files afterwards gives the acknowledged record or nothing, never the older one.
+    @Test fun blockedTailWritesAreNotAcknowledgedAndLaterLossNeverRollsBack() {
+        for (corrupt in listOf(false, true)) {
+            val dir = tmp.newFolder(); val store = initialized(dir)
+            File(dir, "fence-b.rec.tmp").mkdir(); File(dir, "authority-b.rec.tmp").mkdir()
+            val result = bump(store, 12)
+            File(dir, "fence-b.rec.tmp").delete(); File(dir, "authority-b.rec.tmp").delete()
+            val acknowledged = if (result) 1L else 0L
+            assertEquals(acknowledged, open(dir).credentials.read()!!.revision)
+            for (name in listOf("fence-a", "authority-a")) {
+                if (corrupt) File(dir, "$name.rec").writeBytes(ByteArray(5)) else File(dir, "$name.rec").delete()
+                assertNotOlder(dir, acknowledged, "corrupt=$corrupt after losing $name")
+            }
+        }
     }
 
     // PLA-131 F1.b: false on the next commit keeps the previously acknowledged record readable.
     @Test fun falseOnNextCommitMustKeepPreviouslyAcknowledgedRecord() {
         val dir = tmp.newFolder(); val store = initialized(dir)
         File(dir, "fence-b.rec.tmp").mkdir()
-        assertTrue(bump(store, 12))
+        val acknowledged = if (bump(store, 12)) 1L else 0L
         File(dir, "fence-b.rec.tmp").delete()
+        assertEquals(acknowledged, open(dir).credentials.read()?.revision)
         faults = StorageFaults { at, d -> if (at == WritePoint.AFTER_FENCE_A) File(d, "fence-a.rec").writeBytes(ByteArray(5)) }
         assertFalse(bump(store, 13))
         faults = StorageFaults { _, _ -> }
-        assertEquals(1L, open(dir).credentials.read()?.revision)
+        assertEquals(acknowledged, open(dir).credentials.read()?.revision)
     }
 
-    // Every combination of failed tail writes, then immediately (no healing commit) either the loss of
-    // any one file or a failed next write: never an older record, and false keeps the acknowledged one.
-    @Test fun degradedAcknowledgementsFailClosedAndFailedWritesKeepTheAcknowledgedRecord() {
-        val tails = listOf(emptyList(), listOf("fence-b"), listOf("authority-b"), listOf("fence-b", "authority-b"))
-        val files = listOf("authority-a", "authority-b", "fence-a", "fence-b")
-        for (blocked in tails) {
-            for (lost in files) {
+    // Every combination of failed writes, then immediately the loss of any one or two files, or a
+    // failed next write: never older than acknowledged, and false always keeps the acknowledged record.
+    @Test fun anyFailedWriteThenAnyLossNeverRollsBackAndFalseKeepsTheAcknowledgedRecord() {
+        val blocks = listOf(emptyList<String>()) + files.map { listOf(it) } + listOf(listOf("fence-b", "authority-b"))
+        val losses = files.map { listOf(it) } + files.flatMapIndexed { i, a -> files.drop(i + 1).map { listOf(a, it) } }
+        for (blocked in blocks) {
+            for (lost in losses) {
                 val dir = tmp.newFolder(); val store = initialized(dir)
                 blocked.forEach { File(dir, "$it.rec.tmp").mkdir() }
-                assertTrue("$blocked", bump(store, 12))
+                val result = bump(store, 12)
                 blocked.forEach { File(dir, "$it.rec.tmp").delete() }
-                File(dir, "$lost.rec").delete()
-                val read = open(dir).credentials.read()
-                assertTrue("$blocked then lost $lost: ${read?.revision}", read == null || read.revision == 1L)
+                val acknowledged = if (result) 1L else 0L
+                assertEquals("$blocked", acknowledged, open(dir).credentials.read()?.revision)
+                lost.forEach { File(dir, "$it.rec").delete() }
+                assertNotOlder(dir, acknowledged, "$blocked then lost $lost")
             }
             for (failing in files) {
                 val dir = tmp.newFolder(); val store = initialized(dir)
                 blocked.forEach { File(dir, "$it.rec.tmp").mkdir() }
-                assertTrue("$blocked", bump(store, 12))
+                val acknowledged = if (bump(store, 12)) 1L else 0L
                 blocked.forEach { File(dir, "$it.rec.tmp").delete() }
                 File(dir, "$failing.rec.tmp").mkdir()
                 val result = bump(open(dir), 13)
                 File(dir, "$failing.rec.tmp").delete()
-                val read = open(dir).credentials.read()
-                assertEquals("$blocked then failing $failing", if (result) 2L else 1L, read?.revision)
+                assertEquals("$blocked then failing $failing", if (result) acknowledged + 1 else acknowledged, open(dir).credentials.read()?.revision)
             }
+        }
+    }
+
+    // After an acknowledged write no older data is left anywhere: every subset of surviving files
+    // reads the acknowledged record or nothing.
+    @Test fun afterAnAcknowledgementEverySurvivingSubsetIsCurrentOrUnreadable() {
+        for (mask in 0 until 16) {
+            val dir = tmp.newFolder(); val store = initialized(dir)
+            assertTrue(bump(store, 3)); assertTrue(bump(store, 4))
+            files.forEachIndexed { i, name -> if (mask and (1 shl i) != 0) File(dir, "$name.rec").delete() }
+            val read = open(dir).credentials.read()
+            assertTrue("mask $mask: ${read?.revision}", read == null || read.revision == 2L)
         }
     }
 
