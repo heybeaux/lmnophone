@@ -67,7 +67,7 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 
 ## 5. MVP: words and flows
 
-- [ ] 5.1 UX: Plain-language flows and copy for: home, request an app, blocked link, trusted-person mode, "What Plainphone can't stop", turning off, setup. Test them on someone who has never seen them.
+- [ ] 5.1 UX: Plain-language flows and copy for: home, request an app, blocked link, trusted-person mode, "What Plainphone can't stop", turning off, setup. Human copy test: Beaux's pass on PLA-12 (Telegram 4473/4474) counts for this stage (Telegram 4477), and his wording fixes are applied. The next human check is Beaux using the real build on the spare Motorola. No outside testers until Beaux decides he's comfortable asking others.
 - [ ] 5.2 UX: Starter catalog with web-leak notes for each version, covering Beaux and the trusted person's apps.
 - [ ] 5.3 UX + AE: `docs/setup-guide.md` and the checking script, including how to find the trusted person's `userId`. Dry-run them on the emulator, done by someone who did not write them.
 

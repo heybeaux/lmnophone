@@ -239,7 +239,7 @@ only.
        is shown honestly.
 2. **Cross-model review** of the spike.
 3. **Follow-up OpenSpec change** with the spec deltas above. Beaux approves it before build.
-4. **Copy test** of W0 and WB1 on cold readers.
+4. **Human check** of W0 and WB1 by Beaux on the real build on the spare Motorola. No outside testers for now (Telegram 4477).
 5. **Device check** on the spare Motorola with a real sign-in network, only with Beaux's go-ahead for that test.
    Venue compatibility is not claimed from the emulator's Accept button.
 
@@ -250,7 +250,7 @@ are **not** equally ready:
 - **A1 (PIN each time)** needs all of these:
   - PLA-25 accepts mitigation B as a design rule;
   - B is re-tested on the device;
-  - the launch path works without the pull-down gesture (UX L1), or the copy test passes with L2;
+  - the launch path works without the pull-down gesture (UX L1), or Beaux confirms L2 works for him on the real build;
   - Beaux accepts the D2 custody limit again for this kind. Android's sign-in app, which is an open browser, stays
     reachable if Plainphone dies mid-session.
 - **B1 (user-started)** needs all of A1's conditions **plus** Beaux's explicit waiver of D2's fresh-PIN rule for an
