@@ -106,11 +106,13 @@ class ElevationFrictionOnDiskTest {
             assertEquals(ElevationOutcome.COUNTING, elevations.request(r, fresh))
             return r.id
         }
-        fun stricter(target: FrictionSettings): FrictionSettingsOutcome {
+        fun stricter(target: FrictionSettings): FrictionSettingsOutcome = authenticatedStricter(target)()
+        /** Prepares and authenticates now; the returned call runs only the edit's own transaction. */
+        fun authenticatedStricter(target: FrictionSettings): () -> FrictionSettingsOutcome {
             val editor = FrictionSettingsController(store, store.credentials, vault, clock, AppApprovalIdSource { "edit-${++sequence}" })
             val r = checkNotNull(editor.prepareStricter(self, target))
             val fresh = (vault.authenticate(self, pin, r.action) as PinResult.Authorized).authority
-            return editor.applyStricter(r, fresh)
+            return { editor.applyStricter(r, fresh) }
         }
     }
 
@@ -179,16 +181,36 @@ class ElevationFrictionOnDiskTest {
     }
 
     @Test fun crashAroundAStricterEditWithALiveCountdownIsAllOldOrAllNew() {
+        // PLA-147: authenticate first with no faults armed, so the crash lands inside the edit's own write.
+        val target = FrictionSettings(30 * minute, 0)
+        val visibleAfterCrash = mapOf(WritePoint.BEFORE_COPY_A to false, WritePoint.AFTER_COPY_A to false,
+            WritePoint.AFTER_FENCE_A to false, WritePoint.AFTER_COPY_B to true, WritePoint.AFTER_FENCE to true)
         for (point in WritePoint.entries) {
             val rig = Rig(); rig.request(); rig.at(10 * minute)
-            rig.faults = StorageFaults { at, _ -> if (at == point) throw SimulatedCrash() }
-            try { rig.stricter(FrictionSettings(30 * minute, 0)) } catch (_: SimulatedCrash) { }
+            val before = rig.disk().elevationStore.read()!!
+            val edit = rig.authenticatedStricter(target)
+            var fired = false
+            rig.faults = StorageFaults { at, _ -> if (at == point) { fired = true; throw SimulatedCrash() } }
+            try { edit() } catch (_: SimulatedCrash) { }
             rig.faults = StorageFaults { _, _ -> }
+            assertTrue("$point hook fired", fired)
             val disk = rig.disk()
             val friction = disk.credentials.read()!!.recoveryProfile!!.friction
-            val duration = disk.elevationStore.read()!!.state.countdown!!.durationMillis
-            assertTrue("$point: $friction / $duration", (friction == base && duration == base.countdownMillis) ||
-                (friction == FrictionSettings(30 * minute, 0) && duration == 30 * minute))
+            val elevation = disk.elevationStore.read()!!
+            val receipts = disk.frictionReceipts()!!.size
+            if (visibleAfterCrash.getValue(point)) {
+                assertEquals("$point", target, friction)
+                assertEquals("$point", 30 * minute, elevation.state.countdown!!.durationMillis)
+                assertEquals("$point", before.revision + 1, elevation.revision)
+                assertEquals("$point", 1, receipts)
+            } else {
+                assertEquals("$point", base, friction)
+                assertEquals("$point", base.countdownMillis, elevation.state.countdown!!.durationMillis)
+                assertEquals("$point", before.revision, elevation.revision)
+                assertEquals("$point", 0, receipts)
+            }
+            assertEquals("$point", before.state.ledger.debits, elevation.state.ledger.debits)
+            assertEquals("$point", before.journal, elevation.journal)
             assertEquals("$point", ElevationLimits(friction.countdownMillis, friction.dailyLimit), disk.activeLimits())
         }
     }
