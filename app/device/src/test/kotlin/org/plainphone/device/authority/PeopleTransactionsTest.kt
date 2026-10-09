@@ -44,8 +44,6 @@ import org.plainphone.policy.WaitingChangeController
 import org.plainphone.policy.WaitingChangeKind
 import org.plainphone.policy.WaitingEvent
 import org.plainphone.policy.WaitingHandOverSupport
-import org.plainphone.policy.WaitingIdentity
-import org.plainphone.policy.WaitingIdentitySource
 import org.plainphone.policy.WaitingOutcome
 import org.plainphone.policy.WaitingPhase
 import org.plainphone.policy.WaitingSkipResult
@@ -117,7 +115,7 @@ class PeopleTransactionsTest {
                 MessageDigest.getInstance("SHA-256").digest(chars.concatToString().toByteArray() + salt)
             }, SecretEntropy { n -> ByteArray(n) { (++sequence).toByte() } }, clock)
             waiting = WaitingChangeController(store.waitingStore, { store.credentials.read() }, clock, vault,
-                WaitingIdentitySource { WaitingIdentity("wait-${++sequence}", "synthetic-cancel-$sequence") }, store.cancelIntents,
+                store.identities, store.cancelIntents,
                 WaitingSkipSupport(vault, store.skipCommitter), WaitingHandOverSupport(vault, store.handOverCommitter))
             people = PeopleChangeController(store.waitingStore, store.credentials, store.peopleCommitter, effects, clock, vault)
         }
