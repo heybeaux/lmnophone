@@ -557,8 +557,7 @@ class PeopleWaitingTest {
                 assertEquals(Restriction.entries.toSet(), plan.restrictions)
                 assertTrue(dialer in plan.neverHide)
                 assertTrue(dialer in plan.lockTaskPackages)
-                assertEquals(PolicyEngine.decide(input.copy(lockedBoot = boot)).hidden, plan.hidden)
-                assertTrue(plan.steps.any { it.stage == ApplyStage.LOCK_TASK })
+                assertEquals(PolicyEngine.decide(input.copy(lockedBoot = boot)), plan)
             }
         }
     }
