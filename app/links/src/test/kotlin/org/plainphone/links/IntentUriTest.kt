@@ -45,8 +45,24 @@ class IntentUriTest {
             "intent://example.com",
             "intent://example.com#Intent;scheme=https",
             "intent://example.com#Intent;scheme=https;package=bad..pkg;end",
-            "intent:#Intent;component=nocomponentslash;end",
-            "intent:#Intent;S.k=%zz;end",
         ).forEach { assertNull(IntentUri.parse(it), it) }
+    }
+}
+
+class IntentUriLenientTest {
+    @Test fun `like Uri decode and ComponentName unflatten, bad escapes and slashless components are not errors`() {
+        val parsed = assertNotNull(IntentUri.parse("intent:#Intent;component=noslash;S.browser_fallback_url=%zz;end"))
+        assertNull(parsed.componentPackage)
+        assertEquals("%zz", parsed.browserFallbackUrl)
+    }
+}
+
+class IntentUriDecodeTest {
+    @Test fun `percent decoding handles UTF-8, signs and trailing percent`() {
+        fun fallback(raw: String) = IntentUri.parse("intent:#Intent;S.browser_fallback_url=$raw;end")?.browserFallbackUrl
+        assertEquals("caf\u00e9", fallback("caf%C3%A9"))
+        assertEquals("%+1", fallback("%+1"))
+        assertEquals("a%", fallback("a%"))
+        assertEquals("a%2", fallback("a%2"))
     }
 }
