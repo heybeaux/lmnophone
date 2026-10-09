@@ -5,6 +5,9 @@ package org.plainphone.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
@@ -36,6 +39,49 @@ import org.plainphone.ui.theme.PlainphoneTheme
 @OptIn(ExperimentalTestApi::class)
 class HomeScreenTest {
     @get:Rule val compose = createComposeRule()
+
+    @Test fun noticeLeavesACompleteFirstRowAndEveryAppCanBeRevealed() {
+        data class Case(val scale: Float, val notice: HomeNotice)
+        val cases = listOf(1.3f, 1.5f, 1.8f, 2f).flatMap { scale ->
+            listOf(HomeNotice.Cancelling, HomeNotice.NeedsAttention,
+                HomeNotice.MonthlyCheck(listOf("Sam")), HomeNotice.ModeChangeWaiting)
+                .map { Case(scale, it) }
+        }
+        val current = mutableStateOf(cases.first())
+        val events = mutableListOf<HomeEvent>()
+        compose.setContent {
+            val case = current.value
+            DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(case.scale)) {
+                PlainphoneTheme {
+                    Box(Modifier.size(360.dp, 560.dp)) {
+                        key(case) {
+                            HomeScreen(HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct",
+                                (1..4).map { HomeApp("app-$it", "App $it") }, case.notice), events::add)
+                        }
+                    }
+                }
+            }
+        }
+        cases.forEach { case ->
+            compose.runOnIdle { current.value = case; events.clear() }
+            val notice = compose.onNodeWithTag("home-notice").getUnclippedBoundsInRoot()
+            val list = compose.onNodeWithTag("home-apps").getUnclippedBoundsInRoot()
+            val first = compose.onNodeWithText("App 1").getUnclippedBoundsInRoot()
+            assertTrue("$case: first app must be completely below the notice", first.top >= notice.bottom)
+            assertTrue("$case: first app must fit inside the list", first.top >= list.top && first.bottom <= list.bottom)
+            for (index in 1..4) {
+                compose.onNodeWithTag("home-apps").performScrollToNode(hasText("App $index"))
+                val row = compose.onNodeWithText("App $index")
+                val bounds = row.getUnclippedBoundsInRoot()
+                assertTrue("$case: App $index must be fully revealed", bounds.top >= list.top && bounds.bottom <= list.bottom)
+                row.assertIsDisplayed().performClick()
+                compose.onNodeWithText("Messages").assertIsDisplayed()
+                compose.onNodeWithText("Phone").assertIsDisplayed()
+                compose.onNodeWithText("More").assertIsDisplayed()
+            }
+            assertEquals((1..4).map { HomeEvent.OpenApp("app-$it") }, events)
+        }
+    }
 
     @Test fun pinnedActionsStayVisibleAndEmitOnlyTheirEvents() {
         val events = mutableListOf<HomeEvent>()
