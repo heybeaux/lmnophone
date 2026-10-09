@@ -6,6 +6,8 @@ package org.plainphone.ui
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.resources.Density
+import java.time.LocalDate
+import org.plainphone.ui.home.HomeNoticeDay
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,20 +32,36 @@ class HomeScreenshotTest(private val scale: Float) {
     )
 
     @Test fun firstLook() = snapshot(null)
-    @Test fun overdueMonthlyCheck() = snapshot(HomeNotice.MonthlyCheck("Sam or Jo"))
+    @Test fun overdueMonthlyCheck() = snapshot(HomeNotice.MonthlyCheck(listOf("Sam", "Jo")))
     @Test fun attention() = snapshot(HomeNotice.NeedsAttention)
-    @Test fun pendingTurnOff() = snapshot(HomeNotice.TurnOffWaiting("21:15 tomorrow"))
+    @Test fun pendingTurnOff() = snapshot(HomeNotice.TurnOffWaiting("21:15", HomeNoticeDay(LocalDate.of(2026, 10, 9), 1)))
     @Test fun longestWaitingNotice() = snapshot(HomeNotice.ModeChangeWaiting)
     @Test fun selfManagedReady() = snapshot(HomeNotice.ReadyToStart)
 
-    private fun snapshot(notice: HomeNotice?) {
+    @Test fun cancelling() = snapshot(HomeNotice.Cancelling)
+    @Test fun eightApps() = snapshot(HomeNotice.ModeChangeWaiting,
+        (1..8).map { HomeApp("app-$it", "App $it") })
+    @Test fun duplicateIds() = snapshot(HomeNotice.ModeChangeWaiting,
+        listOf(HomeApp("same", "Camera"), HomeApp("same", "Work camera")))
+    @Test fun oneMinute() = snapshot(HomeNotice.OpeningUp(1))
+    @Test fun twoMinutes() = snapshot(HomeNotice.OpeningUp(2))
+    @Test fun oneTrustedPerson() = snapshot(HomeNotice.MonthlyCheck(listOf("Sam")))
+    @Test fun noTrustedPeople() = snapshot(HomeNotice.MonthlyCheck(emptyList()))
+    @Test fun sameDay() = snapshot(HomeNotice.TurnOffWaiting("21:15",
+        HomeNoticeDay(LocalDate.of(2026, 10, 8), 0)))
+    @Test fun weekday() = snapshot(HomeNotice.TurnOffWaiting("21:15",
+        HomeNoticeDay(LocalDate.of(2026, 10, 10), 2)))
+    @Test fun laterDate() = snapshot(HomeNotice.TurnOffWaiting("21:15",
+        HomeNoticeDay(LocalDate.of(2026, 10, 15), 7)))
+
+    private fun snapshot(notice: HomeNotice?, apps: List<HomeApp> = listOf(
+        HomeApp("music", "Spotify"), HomeApp("chat", "Slack"), HomeApp("camera", "Camera"))) {
         paparazzi.snapshot {
             PlainphoneTheme {
                 HomeTestFrame {
                     HomeScreen(
                         HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct",
-                            listOf(HomeApp("music", "Spotify"), HomeApp("chat", "Slack"),
-                                HomeApp("camera", "Camera")), notice),
+                            apps, notice),
                         onEvent = {},
                     )
                 }
