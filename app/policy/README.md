@@ -45,7 +45,7 @@ These tests use synthetic secrets and a deliberately cheap fake derivation. They
 
 `SessionController` requires `JournalStore`, `SessionEffects`, `RunningClock`, a matching inventory (or null), and `AuthorityConsumer` (implemented by `PinVault`). Start authority is bound to `PrivilegedAction("session:${kind.name}", sessionId)`. Use a new non-reused session ID for each request; callbacks carry that ID. The same serialized dispatcher owns all controllers and storage writes.
 
-`onStart()` must run before any other work. It revokes all potential relaxation first, runs the protected-state check/readback, then clears the journal. No credential data or clock is needed for recovery. `start` writes an opening journal before access, checks battery (5% minimum unless charging), opens only Play or the inventoried Settings/same-UID set, and reads back. All end triggers write closing direction, revoke, check, read back, then clear. Any failed step leaves handback unavailable. The adapter implements only the spec's protected checks and preserves ordinary setting changes; emergency access never waits for those checks. Mandatory restrictions are never lifted.
+`onStart()` must run before supervised session work. With the combined elevation store, run both controllers' startup before publishing authority; either order is safe (see the shared-journal section below). It revokes all potential relaxation first, runs the protected-state check/readback, then clears the journal. No credential data or clock is needed for recovery. `start` writes an opening journal before access, checks battery (5% minimum unless charging), opens only Play or the inventoried Settings/same-UID set, and reads back. All end triggers write closing direction, revoke, check, read back, then clear. Any failed step leaves handback unavailable. The adapter implements only the spec's protected checks and preserves ordinary setting changes; emergency access never waits for those checks. Mandatory restrictions are never lifted.
 
 The crash test injects failure before and after every journal write/revoke/open boundary and at protected-check/readback boundaries, reconstructs the controller, and proves revocation is first. This is a JVM journal-order proof, not evidence of Android durability or the power-loss mitigation. If Plainphone cannot run, the disclosed custody limit still applies.
 
@@ -438,7 +438,7 @@ clock, current limits, matching build inventory, unlocked valid policy, system d
 absence of a committing/rolling-back waiting operation or pending app operation. Ordinary pending
 waits do not block the countdown. IDs must never be reused, including after cancellation or restart.
 
-`ElevationStore` is a combined device-protected record containing the ledger, temporary state,
+`ElevationStore` is an abstract persistence port for a combined device-protected record containing the ledger, temporary state,
 person binding and **the same session journal** used by the other policy controllers. Start writes
 the debit, fixed grant and OPENING session journal in **one durable credential-checked CAS** before
 calling `SessionEffects.open`. That effect retains its existing unhide/flush/readback contract.
@@ -461,9 +461,11 @@ silently create an empty ledger for a missing new field.
 
 All involved controllers, vaults, sources, store writers, callbacks and effect completions must run
 on **one non-reentrant serialized coordinator**. Method synchronization is not cross-controller
-serialization. Use this controller for self-managed session starts; the old supervised
-`SessionController.start` is not an alternative entry point for self-managed users. Its `JournalStore`
-and this store must not maintain independent journal copies. Route session end events here while an
+serialization. Use this controller for self-managed session starts. Construct `SessionController` with the
+**same ElevationStore instance** and its required current-mode callback. That overload refuses
+supervised `start` and `access` in self-managed or unknown mode, and owns the journal projection
+described below. Do not wire a raw journal-only `JournalStore` over the combined record, or maintain
+independent journal copies. The legacy constructor is for installations without elevation storage. Route session end events here while an
 elevation owns the session, and route every application/process/Direct-Boot start through
 `ElevationController.onStart` before publishing authority. Startup revokes first, then checks/readbacks
 and clears temporary state while retaining debits; it does not read credential storage. Do not call
@@ -501,3 +503,35 @@ limits, damaged repair, scope/battery/mode/clock changes, owned candidate intake
 reboot and startup without credentials, and crashes on both sides of every Start/close write and
 effect boundary. Android storage atomicity, startup intervals, background containment, hidden-package
 permission operations and delivery still require lane D validation. Web/Wi-Fi features remain off.
+
+
+### Shared session journal writes
+
+The combined-store `SessionController` constructor installs `ElevationSessionJournal`, a policy-owned
+projection. Its CAS reads the full combined record, compares the expected journal, and writes the
+replacement journal **and** `grant.packageAccessOpen = false` together for restrictive writes. It
+preserves the exact debit ledger and grant deadline. It refuses to open/reopen or replace an elevation's
+session, and refuses a supervised opening while an elevation countdown or closed grant remains.
+An active journal without an elevation belongs to a supervised session; the record validator now
+allows that combination, but never an active journal alongside a countdown.
+
+Both controllers share the persistence port's process-local revocation latch. Revocation sets it
+before effects or writes; failed CLOSING/clear CAS or readback suppresses access through either
+controller until cleanup succeeds. No failed write needs to corrupt persisted fields to invalidate
+runtime authority. The store must be a single instance on the non-reentrant coordinator, not two
+wrapper instances over the same file. No adapter-defined journal update algorithm is needed.
+
+`SessionController.onStart()` can safely run before or after `ElevationController.onStart()` at
+application/Direct-Boot startup. The former can restrict an existing elevation without invalidating
+its combined record; the latter ends temporary authority and preserves its existing debits. Neither
+startup order causes a valid ledger to be repaired or adds debits. If combined storage is genuinely
+invalid, the journal projection returns Damaged and refuses to fabricate a ledger; elevation startup
+owns the conservative repair. Both startup paths can revoke without reading credential storage.
+
+The supervised approval path uses this same projection for `sessions.onStart()`: its journal clear
+preserves debit history. Self-managed approvals are still refused by AppApprovalController. Future
+self-managed approval integration must close package access while retaining the live grant and must
+atomically consume that grant with the approval write; this fix does not add that authority path.
+Shared-store tests exercise both startup orders with credentials unavailable, legacy close, failed
+close/clear CAS with cross-controller suppression, supervised mode admission, conflicting opening,
+and the existing supervised approval suite over the combined store.

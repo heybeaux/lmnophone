@@ -18,29 +18,36 @@ class ElevationRecord(val revision: Long = 0, val state: ElevationState = Elevat
         require((state.countdown != null || state.grant != null) == (person != null))
         val grant = state.grant
         val active = journal as? SessionJournal.Active
-        if (active != null) {
-            require(grant != null && active.access.id == grant.id && active.access.deadline == grant.deadline)
+        if (active != null && grant != null) {
+            require(active.access.id == grant.id && active.access.deadline == grant.deadline)
             require(active.access.kind == when (grant.target) {
                 ElevationTarget.Play -> WindowKind.PLAY
                 ElevationTarget.Settings -> WindowKind.SETTINGS
                 else -> null
             })
             require(grant.packageAccessOpen == (active.phase != SessionPhase.CLOSING))
-        } else require(grant?.packageAccessOpen != true)
+        } else {
+            require(grant?.packageAccessOpen != true)
+            // An active journal without an elevation belongs to a supervised session.
+            require(active == null || state.countdown == null)
+        }
     }
     internal fun replacing(state: ElevationState, journal: SessionJournal = this.journal,
         person: ElevationPersonBinding? = this.person) = ElevationRecord(Math.addExact(revision, 1), state, journal, person)
 }
-interface ElevationStore {
+abstract class ElevationStore {
+    // One instance per combined record, shared by both controllers on the serialized coordinator.
+    // A failed restrictive write suppresses both readers until successful cleanup, without altering debits.
+    internal var revocationPending: Boolean = false
     /** Null means damaged/missing, including an invalid session scope. Only enrollment creates an empty ledger. */
-    fun read(): ElevationRecord?
+    abstract fun read(): ElevationRecord?
     /**
      * Single atomic durable write of ledger, grant/countdown, person and the SHARED session journal.
      * Compare the whole record revision and, when supplied, credential revision in the same transaction.
      * Null expected is a repair CAS against the exact missing/damaged observation, never unconditional overwrite.
      * All JournalStore/credential/operation writers share this coordinator and preserve each other's fields.
      */
-    fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean
+    abstract fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean
 }
 class ElevationRequest internal constructor(val id: String, val target: ElevationTarget,
     internal val person: ElevationPersonBinding, internal val boot: BootTime) {
@@ -73,6 +80,7 @@ class ElevationController(
     /** Before any access or other controller work, including Direct Boot. No credential read is needed. */
     @Synchronized fun onStart(): ElevationOutcome {
         initialized = false; ownedId = null; requests.clear(); play = null; closing = null
+        store.revocationPending = true
         val before = store.read()
         if (!effects.revokeAllRelaxations() || !effects.protectedStateCheck() || !effects.readBackPolicy()) return ElevationOutcome.NOT_READY
         val state = if (before == null) {
@@ -82,12 +90,12 @@ class ElevationController(
         if (before?.revision == Long.MAX_VALUE) return ElevationOutcome.NOT_READY
         val next = ElevationRecord((before?.revision ?: -1) + 1, state)
         if (!store.compareAndSet(before, next, null)) return ElevationOutcome.NOT_READY
-        initialized = true
+        initialized = true; store.revocationPending = false
         return ElevationOutcome.IDLE
     }
 
     @Synchronized fun prepare(person: TrustedPersonId, target: ElevationTarget): ElevationRequest? {
-        if (!initialized || closing != null || !supported(target)) return null
+        if (!initialized || closing != null || store.revocationPending || !supported(target)) return null
         val current = credentials() ?: return null
         if (current.mode != Mode.SELF_MANAGED) return null
         val credential = current.people[person] ?: return null
@@ -102,7 +110,7 @@ class ElevationController(
     }
 
     @Synchronized fun request(request: ElevationRequest, fresh: FreshAuthority): ElevationOutcome {
-        if (!initialized || closing != null) return ElevationOutcome.NOT_READY
+        if (!initialized || closing != null || store.revocationPending) return ElevationOutcome.NOT_READY
         if (!requests.remove(request)) return ElevationOutcome.REFUSED
         val before = store.read() ?: return ElevationOutcome.NOT_READY
         val current = credentials() ?: return ElevationOutcome.NOT_READY
@@ -123,7 +131,7 @@ class ElevationController(
     }
 
     @Synchronized fun start(id: String, confirmedTarget: ElevationTarget): ElevationOutcome {
-        if (!initialized || closing != null) return ElevationOutcome.NOT_READY
+        if (!initialized || closing != null || store.revocationPending) return ElevationOutcome.NOT_READY
         val before = store.read() ?: return ElevationOutcome.NOT_READY
         if (before.state.countdown?.id != id || ownedId != id) return ElevationOutcome.REFUSED
         val current = credentials() ?: return ElevationOutcome.NOT_READY
@@ -155,7 +163,7 @@ class ElevationController(
 
     /** Never resurrect access merely because storage contains an OPEN grant. */
     @Synchronized fun access(): SessionAccess? {
-        if (!initialized || closing != null) return null
+        if (!initialized || closing != null || store.revocationPending) return null
         val before = store.read() ?: return null
         val journal = before.journal as? SessionJournal.Active ?: return null
         if (journal.phase != SessionPhase.OPEN || !live(before)) return null
@@ -166,6 +174,10 @@ class ElevationController(
         if (!initialized) return ElevationOutcome.NOT_READY
         closing?.let { return close(it) }
         val before = store.read() ?: return onStart().let { ElevationOutcome.NOT_READY }
+        if (store.revocationPending) {
+            val id = before.state.grant?.id ?: before.state.countdown?.id
+            return if (id == null) onStart() else close(Close(id, true, ElevationOutcome.ACCESS_CLOSED))
+        }
         if (before.state.grant != null) {
             if (!live(before)) return close(Close(before.state.grant.id, false, ElevationOutcome.LAPSED))
             return ElevationOutcome.ACTIVE
@@ -212,7 +224,7 @@ class ElevationController(
     }
     /** Display/review data only. Future approval integration must recheck this inside its final transaction. */
     @Synchronized fun candidate(packageName: PackageName): ApprovalBinding? {
-        if (!initialized || closing != null) return null
+        if (!initialized || closing != null || store.revocationPending) return null
         val before = store.read() ?: return null
         if (!live(before) || before.state.grant?.target != ElevationTarget.Play) return null
         val history = play?.takeIf { it.access.id == before.state.grant.id } ?: return null
@@ -247,6 +259,7 @@ class ElevationController(
         return ElevationOutcome.NOT_READY
     }
     private fun close(request: Close): ElevationOutcome {
+        store.revocationPending = true
         closing = request // Latch before reading/writing; a failed closing CAS cannot expose old OPEN access.
         val before = store.read() ?: return onStart().let { ElevationOutcome.NOT_READY }
         if (before.state.grant?.id != request.id && before.state.countdown?.id != request.id) {
@@ -265,7 +278,7 @@ class ElevationController(
         val saved = store.read() ?: return ElevationOutcome.NOT_READY
         if (!save(saved, state, SessionJournal.Empty, before.person.takeIf { state.grant != null }, null)) return ElevationOutcome.NOT_READY
         if (!retain) { ownedId = null; play = null }
-        closing = null
+        closing = null; store.revocationPending = false
         return request.outcome
     }
     private fun save(before: ElevationRecord, state: ElevationState, journal: SessionJournal,
