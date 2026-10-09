@@ -20,6 +20,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.plainphone.ui.theme.PlainphoneTheme
 import org.plainphone.ui.user.*
+import org.plainphone.ui.home.*
 
 @OptIn(ExperimentalTestApi::class)
 class UserScreensTest {
@@ -81,7 +82,8 @@ class UserScreensTest {
         data class Case(val scale: Float, val recipient: String, val host: String)
         val cases = listOf(1.3f, 1.5f, 1.8f, 2f).flatMap { scale ->
             listOf("Sam", "Sam and Jo").flatMap { recipient ->
-                listOf("xn--e1afmkfd.invalid", "a".repeat(63) + ".invalid").map { host ->
+                listOf("xn--e1afmkfd.invalid", "a".repeat(63) + ".invalid",
+                    "xn--bcherbcherbcherbcherbcherbcherbcherbcher-kfefffffff.invalid").map { host ->
                     Case(scale, recipient, host)
                 }
             }
@@ -120,6 +122,43 @@ class UserScreensTest {
         compose.onNodeWithText("Look at this link with Sam and Jo?").assertIsDisplayed()
         compose.onNodeWithText("Plainphone: Margaret would like to look at this link with you: safe.invalid/bus")
             .assertExists()
+    }
+    @Test fun confirmStripsBidiControlsFromRecipient() {
+        show { BlockedLinkScreen(BlockedLinkUiState.Confirm("Sam\u202E and Jo", "example.invalid"), {}) }
+        compose.onNodeWithText("Look at this link with Sam and Jo?").assertIsDisplayed()
+        compose.onNodeWithText("Sam and Jo will get this text:").assertIsDisplayed()
+    }
+    @Test fun moreStripsBidiControlsFromNamesAndRequestRecipient() {
+        show { MoreScreen(MoreUiState(MoreMode.Trusted(listOf("Sam\u202E and Jo"), "Sam\u202E and Jo")), {}) }
+        compose.onNodeWithText("Sam and Jo adds apps with you").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("For Sam and Jo").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Where Sam and Jo adds apps, with a PIN").assertIsDisplayed()
+    }
+    @Test fun requestAndDeliveryStripBidiControlsFromNames() {
+        val result = mutableStateOf(false)
+        show {
+            if (!result.value) AskForAppScreen(AskForAppUiState("Sam\u202E"), {})
+            else AppRequestResultScreen(AppRequestResultUiState("Sam\u202E", AppRequestResult.Sent,
+                listOf(AppRequestRow("one", "Bus times", "Thu", AppRequestStatus.Delivered("Sam\u202E")))), {})
+        }
+        compose.onNodeWithText("Send to Sam").assertIsDisplayed()
+        compose.onNodeWithText("Sam adds apps to this phone", substring = true).assertIsDisplayed()
+        compose.runOnIdle { result.value = true }
+        compose.onNodeWithText("Sent to Sam").assertIsDisplayed()
+        compose.onNodeWithText("Next time you're together, Sam can add it", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Sam's phone got it ✓").performScrollTo().assertIsDisplayed()
+    }
+    @Test fun blockedAndSentStripBidiControlsFromNames() {
+        val state = mutableStateOf<BlockedLinkUiState>(BlockedLinkUiState.Blocked("example.invalid", shareWith = "Sam\u202E and Jo"))
+        show { BlockedLinkScreen(state.value, {}) }
+        compose.onNodeWithText("Look at it with Sam and Jo").assertIsDisplayed()
+        compose.runOnIdle { state.value = BlockedLinkUiState.Sent("Sam\u202E and Jo") }
+        compose.onNodeWithText("Sent to Sam and Jo.").assertIsDisplayed()
+    }
+    @Test fun monthlyCheckStripsBidiControlsFromAllNames() {
+        show { HomeScreen(HomeUiState("10:42", "Thu 8 Oct", "Thu 8 Oct",
+            notice = HomeNotice.MonthlyCheck(listOf("Sam\u202E", "Jo\u2066"))), {}) }
+        compose.onNodeWithText("Ask Sam or Jo to do the monthly phone check").assertIsDisplayed()
     }
     @Test fun confirmActionsAreDisabledWhileHostSends() {
         val events = mutableListOf<BlockedLinkEvent>()
