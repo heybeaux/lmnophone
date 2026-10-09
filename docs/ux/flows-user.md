@@ -12,7 +12,8 @@ Each screen is written as:
 
 ## U1. Home screen
 
-**Spec:** calm-home-screen (Plain home screen; Phone, Messages and Emergency always present; Readable by default).
+**Spec:** calm-home-screen (Plain home screen; Phone and Messages always present; No emergency control on the home
+screen; Readable by default); essential-calling-and-texting (9-1-1 always reachable).
 
 ### Layout, top to bottom
 
@@ -21,16 +22,11 @@ The look (font, black and white, sizes) is in [design-tokens.md](design-tokens.m
 that sits low, where a thumb reaches, with white space between them. The words on this screen are unchanged.
 
 1. **Time and date**, one line each. At 200% the date may shorten to "Thu 8 Oct".
-2. **Emergency 9-1-1**: a black pill with white words, the only filled shape on the screen. No colour. Taps open
-   the system dialer with 911 already typed (`ACTION_DIAL`, not a call). The user still presses the dialer's call
-   button.
-   - **A bump never calls.** Second line inside the button, under "9-1-1": **"Opens the dialer"**. Beaux, in his
-     copy test, worried about bumping it by accident; the dialer is already the confirm step, so no extra
-     confirm screen is added (it would slow a real emergency).
-   - **Spacing:** no other control within 48 dp above or below it. Because the app list sits low, the real gap to
-     the first app name is usually far larger, so a thumb reaching for Phone can't land on Emergency. No
-     long-press or swipe actions on it.
-3. **Notice line** (only when one applies, see below), in a light grey box under Emergency.
+2. **Notice line** (only when one applies, see below), in a light grey box under the date.
+3. **No Emergency button.** Beaux, Telegram 4487: *"I don't want users bumping it by accident."* No tap anywhere on
+   the home screen starts the emergency dialer. 9-1-1 is dialled from **Phone** (the last name on the screen), from
+   **More → Emergency 9-1-1** (U4), from the lock screen's "Emergency call", and, if Q14 confirms it works on this
+   phone, by pressing the power button 5 times. About this phone (U8) says how.
 4. **The other added apps**, names only, no icons, in the order {tp} chose (or the user, in self-managed mode).
    Large type, one per row, left-aligned.
 5. **Messages**, then **Phone**: always there, always the last two names, nearest the thumb (as in Beaux's
@@ -50,13 +46,8 @@ drawer.
 │ 10:42                        │
 │ Thursday 8 October           │
 │                              │
-│ ╭──────────────────────────╮ │
-│ │     Emergency 9-1-1      │ │  ← black, white words
-│ │     Opens the dialer     │ │
-│ ╰──────────────────────────╯ │
-│                              │  ← at least 48 dp
 │ ┌──────────────────────────┐ │
-│ │ Ask Beaux to do the      │ │  ← notice line (grey box), only when due
+│ │ Ask Sam to do the        │ │  ← notice line (grey box), only when one applies
 │ │ monthly phone check    › │ │
 │ └──────────────────────────┘ │
 │                              │  ← white space
@@ -64,7 +55,7 @@ drawer.
 │ Slack                        │
 │ Camera                       │
 │ Messages                     │
-│ Phone                        │
+│ Phone                        │  ← 9-1-1 is dialled here
 │ ╭──────────────────────────╮ │
 │ │ More ^                   │ │
 │ │ Ask for an app, settings,│ │
@@ -79,16 +70,13 @@ drawer.
 ┌──────────────────────────────┐
 │ 10:42                        │
 │ Thu 8 Oct                    │
-│ ╭──────────────────────────╮ │
-│ │     Emergency 9-1-1      │ │
-│ │     Opens the dialer     │ │
-│ ╰──────────────────────────╯ │
 │                              │
 │ ┌──────────────────────────┐ │
-│ │ Ask Beaux to do the      │ │
+│ │ Ask Sam to do the        │ │
 │ │ monthly phone check    › │ │
 │ └──────────────────────────┘ │
-│ Camera            (scrolls ↑)│
+│ Slack             (scrolls ↑)│
+│ Camera                       │
 │ Messages                     │
 │ Phone                        │
 │ ╭──────────────────────────╮ │
@@ -97,12 +85,12 @@ drawer.
 └──────────────────────────────┘
 ```
 
-**Rule (calm-home-screen, "Overdue monthly check at largest font"):** the time, date, Emergency and the notice line
-are a fixed block at the top; Messages, Phone and More are a fixed block at the bottom. Neither scrolls. Only the
+**Rule (calm-home-screen, "Overdue monthly check at largest font"):** the time, date and the notice line are a
+fixed block at the top; Messages, Phone and More are a fixed block at the bottom. Neither scrolls. Only the
 other apps scroll, in the space between. The notice line is at most 3 lines; if longer it ends with "…" (the
 full text is on the screen it opens). At 200% More drops its second line. All text, the time included, grows with
 the text size and never shrinks. If the screen is short, the layout gives way in a fixed order (time and date on
-one line, notice cut to 2 lines, and so on), never shrinking Emergency, Messages, Phone or More. The order and the
+one line, notice cut to 2 lines, and so on), never shrinking Messages, Phone or More. The order and the
 smallest supported screen (360 × 640 dp) are in
 [design-tokens.md, "When the screen is short"](design-tokens.md#when-the-screen-is-short).
 
@@ -186,16 +174,23 @@ The packet now says when it appears.
 
 ## U4. More
 
-**Spec:** calm-home-screen (built-in settings); trusted-person-controls (requests; trusted-person mode).
+**Spec:** calm-home-screen (built-in settings; "No emergency control on the home screen" allows an entry in More);
+trusted-person-controls (requests; trusted-person mode); essential-calling-and-texting (emergency intent).
 
-A menu page: three large rows, then a plain text link. No primary button.
+A menu page: the Emergency row, a 16 dp gap, three large rows, then a plain text link. No primary button.
 
 | Row | Small line under it | Opens |
 |---|---|---|
+| **Emergency 9-1-1** (first, set apart by a gap) | Opens the dialer with 9-1-1 typed in | Android's dialer with 9-1-1 typed in (`ACTION_DIAL`, `tel:911`, sent to the system dialer). Never a call by itself: the user presses the dialer's call button. No PIN, no confirm screen. |
 | **Phone settings** | Wi-Fi, sound, text size | U7 |
 | **Ask for an app** | {tp} adds apps with you | U5 |
 | **For {tp}** | Where {tp} adds apps, with a PIN | Trusted-person PIN ([T1](flows-trusted-person.md#t1-pin-entry)) |
 | About this phone (text link at the bottom) | (none) | U8 |
+
+**Why here, and first:** Beaux took the button off the home screen so it can't be bumped (Telegram 4487). Here it
+takes a deliberate tap on More, then on the row, then on call, so a stray tap never reaches a call. It's first
+because someone looking for help in a hurry reads from the top. There's no long-press shortcut on the home screen:
+nobody would find it in an emergency.
 
 ## U5. Ask for an app
 
@@ -361,6 +356,13 @@ mandates it. It restates facts already in the design (no monitoring, no servers,
   starts, is cancelled or finishes, or if {tp}'s PIN is typed wrongly many times (so {tp} knows if someone is
   guessing it).
 - **Primary:** OK
+- **Then, a section with its own heading: "To call 9-1-1"**
+  - Tap **Phone**, type 9-1-1, and press call.
+  - Or tap **More**, then **Emergency 9-1-1**.
+  - From the lock screen, tap **Emergency call**.
+  - {sos_line}
+  `{sos_line}` is "Or press the power button 5 times quickly." **only if** feasibility question Q14 confirms the
+  Emergency SOS gesture works on this phone while Plainphone is running. Otherwise the line is left out.
 - **Secondary:** Who to call for help → "{helper}: {helper phone}. {tp}: {tp phone}."
 - **Notes:** if any approved app is itself a tracking app (for example a family-location app), this screen does
   not cover it; that app's own notice applies. Plainphone makes no claim about what other apps send.

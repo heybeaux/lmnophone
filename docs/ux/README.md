@@ -46,7 +46,7 @@ anywhere except the few texts listed below, and the user can read exactly what t
 2. **Plain words.** Short sentences. Name people by first name. No Android words (see the word list).
 3. **Say what still works.** Any message about a problem says that calls, texts and Emergency still work, when
    that's true.
-4. **Calm.** Black, white and grey only: no colour anywhere, including Emergency and the turn-off confirmation ([design-tokens.md](design-tokens.md)). No exclamation marks.
+4. **Calm.** Black, white and grey only: no colour anywhere, including the Emergency 9-1-1 row in More and the turn-off confirmation ([design-tokens.md](design-tokens.md)). No exclamation marks.
    No countdown timers on the user's screens. No badges.
 5. **No pronouns for named people.** Copy repeats the name ("Ask Beaux") instead of guessing "he" or "she".
 6. **Honest.** Never say "safe", "secure", "protected" or "blocked forever". Say what Plainphone does.

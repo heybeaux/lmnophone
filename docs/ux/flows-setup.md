@@ -176,7 +176,7 @@ The guide makes sure the SIM is out (or the eSIM is off) until here.
 ## S5. Choose apps (step 5 of 7)
 
 - **Title:** Choose {user}'s apps
-- **Body:** Phone, Messages and Emergency are always there. Add the other apps {user} needs. Each one shows a note
+- **Body:** Phone and Messages are always there, and 9-1-1 always works. Add the other apps {user} needs. Each one shows a note
   about web pages inside it. You can add more later.
 - **Primary:** Open the Play Store (installs happen here; each installed app then goes through
   [T4](flows-trusted-person.md#t4-adding-an-app-after-it-is-installed-in-a-play-session) with permissions)
@@ -219,7 +219,7 @@ only exception is reset protection with Beaux's recorded acceptance.
 | Reset protection is set for {tp} (and {backup}) | "Reset protection doesn't match the number entered." | "Re-enter the number in step 4." |
 | Web links come to Plainphone | "Another app is handling web links." | "Run the check again. If it fails, see the guide." |
 | Emergency and phone parts are all there | "Part of the phone's emergency system is missing." | "Stop. Don't hand the phone over. See the guide." |
-| Emergency button self-test passed | "The Emergency button self-test failed." | "Stop. Don't hand the phone over. See the guide." |
+| Emergency self-test passed | "The emergency self-test failed." | "Stop. Don't hand the phone over. See the guide." |
 | App updates are on | "Automatic app updates weren't confirmed." | "Go back to step 3." |
 | Tidy-up is complete | "Some apps that came with the phone aren't hidden." | "Tap Check again. If it fails, see the guide." |
 | {tp} got the test text | "{tp} hasn't confirmed the test text." | "Go back to step 3." |
@@ -233,6 +233,13 @@ only exception is reset protection with Beaux's recorded acceptance.
   Plainphone is set up on {user}'s phone.
   Before {user} uses it every day, do the emergency and calling checks in the setup guide, Part I. They need a
   second phone and about 15 minutes.
+- **Box** (grey), heading **"Show {user} how to call 9-1-1"**. There's no Emergency button on the home screen,
+  so {user} needs to know these:
+  - Tap **Phone**, type 9-1-1, and press call.
+  - Or tap **More**, then **Emergency 9-1-1**.
+  - From the lock screen, tap **Emergency call**.
+  - {sos_line} (as in [U8](flows-user.md#u8-about-this-phone): only if Q14 confirms it works on this phone)
+  The same list is always in About this phone.
 - **Primary:** Go to the home screen
 - **Notes:** "Ready" means setup only (guided-setup). Handing the phone over for daily use also needs the
   real-device checks and Beaux's OK for that phone.

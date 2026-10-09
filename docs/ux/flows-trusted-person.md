@@ -25,7 +25,7 @@ also needs the PIN. The first time a second PIN is asked for, one line explains 
 - **Primary:** Continue
 - **Secondary:** Forgot PIN? Use recovery code
 - **Wrong PIN (1–4):** "That PIN isn't right. Try again." No count shown.
-- **Notes:** `FLAG_SECURE`. Emergency is still reachable: Home always returns to the home screen.
+- **Notes:** `FLAG_SECURE`. 9-1-1 is still reachable: Home always returns to the home screen, where Phone is.
 
 ### T1b. Waiting after too many tries
 
@@ -246,7 +246,7 @@ Plain names for permission groups:
 
 **Spec:** calm-home-screen ("always on"); approved-apps (remove is immediate and reversible).
 
-A list in home-screen order. Phone, Messages and Emergency are at the top, each marked **"Always on"**, with no
+A list in home-screen order. Messages and Phone are at the bottom, as on the home screen, each marked **"Always on"**, with no
 remove action and no order buttons. Every other app has **Move up** and **Move down** buttons (not dragging, which
 is hard at large text sizes) and opens its own page when tapped:
 

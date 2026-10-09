@@ -43,14 +43,12 @@ You are reading the screens of a new, simplified phone. Margaret uses the phone.
 SCREEN 1 (the main screen)
   10:42
   Thursday 8 October
-  [ Emergency 9-1-1 ]   (black button, white words; small line inside it: "Opens the dialer")
-  (a gap)
-  [ Phone ]
-  [ Messages ]
   Ask Sam to do the monthly phone check  ›   (only shown when the monthly check is due)
   Spotify
   Slack
   Camera
+  Messages
+  Phone
   More — Ask for an app, settings, help
 
 SCREEN 2 (after tapping "Ask Sam to do the monthly phone check")
@@ -67,6 +65,8 @@ SCREEN 3 (sometimes the main screen shows "Plainphone needs attention" instead; 
   [ OK ]
 
 SCREEN 4 (after tapping More)
+  Emergency 9-1-1 — Opens the dialer with 9-1-1 typed in
+  (a gap)
   Phone settings — Wi-Fi, sound, text size
   Ask for an app — Sam adds apps with you
   For Sam — Where Sam adds apps, with a PIN

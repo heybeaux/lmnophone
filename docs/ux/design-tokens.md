@@ -21,8 +21,9 @@ copy, except where a flow said "red" (see [What changed in the flow files](#what
    (black or white), a word, or a tick (✓).
 4. **No app icons on the home screen.** Names only, as text. Plainphone's own screens use no icons either; the only
    glyphs are `›` (opens a page), `‹` (back), `✓` and `^`.
-5. **Emergency is black-filled, white text, and alone** at the top of the home screen. See
-   [Emergency](#emergency).
+5. **No Emergency button on the home screen** (Beaux, Telegram 4487: "I don't want users bumping it by
+   accident"). 9-1-1 is always reachable, never from one accidental tap on the home screen. See
+   [Calling 9-1-1](#calling-9-1-1).
 6. **Readable first.** Every pair of text and background meets WCAG 2.2 AA at the sizes below. Everything scales
    with Android's text size up to 200% (sizes are in `sp`).
 
@@ -45,7 +46,7 @@ after seeing the build, that is a one-line theme change.
 
 | Token | Hex | GC name | Use |
 |---|---|---|---|
-| `ink` | `#000000` | Black | Text, app names, filled buttons, Emergency, focus ring, selected choice |
+| `ink` | `#000000` | Black | Text, app names, filled buttons, focus ring, selected choice |
 | `paper` | `#FFFFFF` | White | Screen background, text on black |
 | `ink-2` | `#545454` | Gray 600 | Second lines ("Opens the dialer", "Ask for an app, settings, help"), body notes |
 | `ink-3` | `#757575` | Gray 500 | Borders of fields and outline buttons, the `›` and `^` glyphs, the time on the request list. **On white only.** |
@@ -69,8 +70,8 @@ GC's blue focus outline becomes a black one.
 So:
 - `ink-3` text sits on white only. On `fill-1` boxes, second lines use `ink-2`.
 - `line` is for disabled text, which WCAG exempts, and nothing else.
-- On black (Emergency, primary buttons, the trusted-person band), text is `paper`. A second line on black, such as
-  "Opens the dialer", is also `paper` at a smaller size, not grey.
+- On black (primary buttons, the trusted-person band), text is `paper`. A second line on black is also `paper` at a
+  smaller size, not grey.
 
 ### Dark theme
 
@@ -98,7 +99,6 @@ Use these numbers for layout checks; the build confirms them on the phone.
 | `app` | 32 / 40 | 40 / 47 | 500 | `ink` | App names on the home screen |
 | `title` | 28 / 36 | 37 / 43 | 500 | `ink` | Screen titles. At most 2 lines at 200% |
 | `row` | 22 / 28 | 35 / 37 | 500 | `ink` | Menu rows (More, Plainphone settings, the trusted-person menu) |
-| `emergency` | 22 / 28 | 35 / 37 | 500 | `paper` on `ink` | "Emergency 9-1-1" (line 1 of the Emergency button) |
 | `body` | 18 / 26 | 30 / 37 | 400 | `ink` | Body text on every screen |
 | `button` | 18 / 24 | 30 / 36 | 500 | `paper` on `ink` | Primary button labels |
 | `small` | 16 / 22 | 28 / 35 | 400 | `ink-2` | Second lines under rows and buttons ("Opens the dialer" in `paper`), hints, counters |
@@ -118,9 +118,9 @@ Nothing is smaller than 16 sp. No italics. No all-caps (harder to read). Underli
 | `s4` | 16 dp | Box padding; between paragraphs |
 | `s6` | 24 dp | Screen side padding; between a title and body |
 | `s8` | 32 dp | Between sections |
-| `s12` | 48 dp | **No tappable control within this distance of Emergency** (see [Emergency](#emergency)) |
+| `s12` | 48 dp | Large gaps, e.g. above the app list when there's room |
 | `radius-box` | 16 dp | Boxes and cards (GC's card radius) |
-| `radius-pill` | 999 (full) | Buttons, Emergency, the More bar, text fields |
+| `radius-pill` | 999 (full) | Buttons, the More bar, text fields |
 | `hairline` | 1 dp `fill-2` | Dividers between menu rows |
 | `border` | 1.5 dp `ink-3` | Outline buttons, text fields, the More bar (3:1 or better on white) |
 | `focus` | 2 dp `ink` outline, 2 dp gap | Keyboard and switch-access focus (GC's blue ring, made black) |
@@ -133,19 +133,15 @@ animations" is on. No bounce, no parallax, no animated clock.
 
 ### Home screen (U1)
 
-Two zones. The top zone holds what never moves; the app list sits low, where a thumb reaches.
+Two zones. The top zone holds the time, the date and, when one applies, the notice line; the app list sits low,
+where a thumb reaches. There is no Emergency button and nothing filled: the screen is black text on white.
 
 ```
 ┌──────────────────────────────┐
 │ ▔▔ status bar (Android) ▔▔   │
 │ 10:42                        │  clock
 │ Thursday 8 October           │  date
-│                              │  ≥ 48 dp
-│ ╭──────────────────────────╮ │
-│ │     Emergency 9-1-1      │ │  black, white text
-│ │     Opens the dialer     │ │
-│ ╰──────────────────────────╯ │
-│                              │  ≥ 48 dp (usually much more)
+│                              │  32 dp
 │ ┌──────────────────────────┐ │
 │ │ Ask Sam to do the monthly│ │  notice line, only when one applies (fill-1 box)
 │ │ phone check            › │ │
@@ -155,7 +151,7 @@ Two zones. The top zone holds what never moves; the app list sits low, where a t
 │ Slack                        │
 │ Camera                       │
 │ Messages                     │  always here, pinned
-│ Phone                        │  always here, pinned, nearest the thumb
+│ Phone                        │  always here, pinned, nearest the thumb; 9-1-1 is dialled here
 │ ╭──────────────────────────╮ │
 │ │ More ^                   │ │  outline bar, where the reference has "Search tools"
 │ │ Ask for an app, settings,│ │
@@ -169,7 +165,7 @@ Two zones. The top zone holds what never moves; the app list sits low, where a t
 - **Order:** the other apps in the order the trusted person set (or the user, in self-managed mode). Then
   **Messages**, then **Phone**, always last and always visible. This follows the reference image, which ends the list
   with Messages and Phone, and it puts the two everyday apps nearest the thumb.
-- **Scrolling:** only the other apps scroll, inside their own area, upward. The clock, Emergency, the notice line,
+- **Scrolling:** only the other apps scroll, inside their own area, upward. The clock, the date, the notice line,
   Messages, Phone and More never scroll off. If space runs short, see
   [When the screen is short](#when-the-screen-is-short).
 - **More bar:** full width, `radius-pill`, `border`, white fill, 64 dp tall. "More" in `row` style with a `^` after it
@@ -196,48 +192,55 @@ order, each only if still needed:
 2. The notice line is cut to 2 lines (it still ends with "…" and `›`).
 3. The time and date go on one line: the time in `title` style, the date beside it in `date` style ("Thu 8 Oct").
    Both keep growing with text size; they just stop stacking.
-4. The gap above Emergency goes from 24 to 16 dp. Nothing above it is tappable.
-5. The notice line is cut to 1 line.
-6. The other-apps area may shrink to half a row (28 dp). It still scrolls; the cut-off name shows there's more.
-7. Below the smallest supported screen only: the whole home screen scrolls as one page, Emergency first. This is
-   the one case where Phone and Messages can need a scroll, and it is outside what Plainphone supports.
+4. The other-apps area may shrink to half a row (28 dp). It still scrolls; the cut-off name shows there's more.
+5. Below the smallest supported screen only: the whole home screen scrolls as one page. This is the one case where
+   Phone and Messages can need a scroll, and it is outside what Plainphone supports.
 
-**Never:** shrink any text below its scaled size, shrink Emergency, Messages, Phone or More, or cut the 48 dp below
-Emergency.
+**Never:** shrink any text below its scaled size, or shrink Messages, Phone or More.
 
 **Check at 360 × 640 dp and 200%, with the longest notice showing.** Measured in mockup frame 10 (a browser
-render using the 200% sizes above, so illustrative). On a 360 dp-wide screen, "Emergency 9-1-1" at 35 dp doesn't
-fit on one line and wraps, so the button is about 129 dp tall, not 92:
+render using the 200% sizes above, so illustrative):
 
 | Part | dp |
 |---|---|
-| Top 8 + time and date on one line 43 + gap 16 | 67 |
-| Emergency (label wrapped) | 129 |
-| Gap below Emergency | 48 |
-| Notice, 2 lines (after steps 1–4) | 106 |
-| Gap 8 + Messages 56 + Phone 56 + gap 8 + More 64 + bottom 8 | 200 |
-| **Total without the other apps** | **550** |
+| Top 24 + time 75 + date 36 + gap 24 | 159 |
+| Notice, 3 lines | 143 |
+| Messages 56 + Phone 56 + gap 8 + More 64 (one line, step 1) + bottom 8 | 192 |
+| **Total without the other apps** | **494** |
 
-With a 32 dp status bar and a 24 dp gesture bar the content is 584 dp. After steps 1–4 that leaves 34 dp for the
-other apps, less than a row, so step 5 cuts the notice to 1 line (about 37 dp less): **about 71 dp**, one row, the
-rest scrolling. That's frame 10. With a 48 dp three-button bar it's about 47 dp, so step 6 also applies. Either way
-Emergency, Messages, Phone and More stay in view. On the target phone (412 × 915 dp) at 200%, only step 1 is needed:
-frame 3 shows 225 dp for the other apps with the longest notice at 3 lines.
+With a 32 dp status bar and a 24 dp gesture bar the content is 584 dp, which leaves **90 dp** for the other apps:
+one full row and part of the next, the rest scrolling. With a 48 dp three-button bar it's 66 dp, still a full row.
+So without the Emergency button, step 1 is the only step needed on any supported screen; steps 2–5 stay as the
+safety net for larger Display sizes. On the target phone (412 × 915 dp) at 200%, frame 3 leaves 365 dp
+for the other apps.
 
-### Emergency
+### Calling 9-1-1
 
-- Black pill (`ink`), full width minus 24 dp each side, at least 72 dp tall; it grows with its text (about 92 dp at
-  200% on the target phone; on a 360 dp-wide screen the first line wraps and it's about 129 dp, which is fine). Line 1 "Emergency 9-1-1" in `emergency`. If it has to wrap, it breaks only between "Emergency" and "9-1-1": the number is never split (use non-breaking hyphens, U+2011, or keep "9-1-1" as one unbreakable span). Line 2 "Opens the dialer" in `small`, `paper`. Padding 10 dp top
-  and bottom, 24 dp sides.
-- It is the **only filled shape on the home screen**. That is what makes it stand out, instead of red.
-- **No tappable control within 48 dp above or below it.** Above it are only the time and date, which aren't
-  tappable: the gap is 48 dp at normal sizes, 24 dp at 200%, and 16 dp on short screens. Below it there are always at least 48 dp of empty space
-  before the notice line or the first app. In the normal layout the gap below is much larger, because the app list
-  sits low. A thumb reaching for Phone can't reach Emergency.
-- One tap. No long-press, no swipe, no confirm screen. It opens the phone's own dialer with 9-1-1 typed
-  (`ACTION_DIAL`), so a bump never calls: the user still has to press the dialer's call button.
-- The dialer is Android's, not Plainphone's, so its call button keeps the dialer's own colour. That is fine and is
-  listed under [what Plainphone doesn't draw](#what-plainphone-doesnt-draw).
+**No Emergency button on the home screen** (Beaux, Telegram 4487; calm-home-screen "No emergency control on the home
+screen"). No single tap anywhere on the home screen starts the emergency dialer or a call. 9-1-1 is always reachable
+(essential-calling-and-texting) by these routes, and the words in About this phone (U8) and the setup handover (S9)
+list them:
+
+1. **Phone**, the last name on the home screen: Android's own dialer. Type 9-1-1 and press call. From inside an app,
+   press Home, then Phone.
+2. **More → Emergency 9-1-1**, the first row of More (U4). See below.
+3. **The lock screen's "Emergency call"** (stock Android).
+4. **Press the power button 5 times** (Android's Emergency SOS), **only if** feasibility question Q14 confirms it
+   works on this phone while Plainphone is running. Until then no screen mentions it.
+
+**The "Emergency 9-1-1" row in More**
+- The **first row** of More, in the normal menu-row look: "Emergency 9-1-1" in `row`, second line "Opens the dialer
+  with 9-1-1 typed in" in `small`, `›` in `ink-3`. A 16 dp gap below it sets it apart from the other rows. No fill,
+  no colour: it's found by its words and by being first.
+- "9-1-1" never breaks across lines (non-breaking hyphens, U+2011, or one unbreakable span).
+- One tap opens Android's dialer with 9-1-1 typed in (`ACTION_DIAL` for `tel:911`, sent to the system dialer
+  package). It never calls by itself: the person still presses the dialer's call button. So reaching a call takes
+  three deliberate steps from the home screen (More, the row, call), and a stray tap costs nothing.
+- **No long-press** shortcut on the home screen. Nobody would find it in an emergency, and it's easy to trigger by
+  accident.
+
+The dialer, the lock-screen emergency dialer and the SOS screen are Android's, not Plainphone's, so they keep their
+own colours. That is listed under [what Plainphone doesn't draw](#what-plainphone-doesnt-draw).
 
 ### Buttons
 
@@ -278,7 +281,7 @@ outline. So the state shows by fill and by the tick, never by colour.
 Every screen in trusted-person mode has a black band across the top, under the status bar: **"For Sam"** in `paper`,
 `small` 500, 40 dp tall. It tells anyone looking at the phone that it's in Sam's hands right now. That is part of
 "support, not surveillance": nothing about this mode is hidden from the user. The band is the only large black area
-apart from Emergency and buttons. In self-managed mode the band reads **"Your settings"** instead.
+apart from buttons. In self-managed mode the band reads **"Your settings"** instead.
 
 ### Status and lists
 
@@ -295,7 +298,8 @@ navigation bar with dark buttons, so the whole screen is white from top to botto
 These keep their own look. They are outside Plainphone's control unless the optional grayscale switch below is on.
 
 - Every added app (Spotify, Slack, Messages, Phone, Camera…).
-- Android's dialer after Emergency, including its call button.
+- Android's dialer (from Phone or the Emergency 9-1-1 row), its emergency dialer on the lock screen, and the
+  Emergency SOS screen, including their call buttons.
 - The status bar icons (battery, signal), which Android may colour, for example a low battery.
 - The Play Store and full phone settings during a session; Android's emergency alerts.
 
@@ -345,17 +349,12 @@ trick. Not a board question; nice to have.
 
 ## Spec wording for the Lead
 
-Handed to the Lead in [PLA-39](/PLA/issues/PLA-39), with the two proposed notice lines from U1 (a waiting mode or
-friction change, and the self-managed monthly line). Neither item changes a promise; they are wording.
-
-1. **"with large labels and icons"** ("Plain home screen", in both the approved spec and the
-   `add-copy-test-product-decisions` delta). Beaux asked for no icons. Suggested wording: "with large text labels
-   and no icons". Until the spec says so, text-only meets "large labels"; the icons are the only gap.
-2. **Order of Phone and Messages.** The spec says the home screen shows Emergency, Phone and Messages and that they
-   are never pushed off-screen; it doesn't fix their place. This design puts them last in the list, nearest the
-   thumb, and keeps them fixed. No spec change is needed; noted so reviewers don't read it as a change.
-
-The "SHALL NOT show a search bar" rule stands: the reference image's "Search tools" field is replaced by More.
+Settled. The Lead changed calm-home-screen to "large text labels and no icons" and gave exact text for the two
+proposed notice lines ([PLA-39](/PLA/issues/PLA-39), commit `bf3a7b8`). The Lead also removed Emergency from the home
+screen in the spec, with the invariant "9-1-1 is always reachable, and never from an accidental tap on the home
+screen" (commit `59b61b9`). The spec doesn't fix where Phone and Messages sit; this design puts them last, nearest
+the thumb. The "SHALL NOT show a search bar" rule stands: the reference image's "Search tools" field is replaced by
+More.
 
 ## What changed in the flow files
 
@@ -372,14 +371,21 @@ The "SHALL NOT show a search bar" rule stands: the reference image's "Search too
     countdown and Start). U8's list of texts now includes waiting changes and "needs attention".
   - [flows-setup.md](flows-setup.md) S8: ✓ and ✗ with words, no green.
   - [copy-test-packet.md](copy-test-packet.md): no red; a note that the sketches are rough and the look is here.
+- After Beaux's decision to take the 9-1-1 button off the home screen (Telegram 4487):
+  - [flows-user.md](flows-user.md) U1: no Emergency button; the notice line sits under the date. U4: "Emergency
+    9-1-1" is More's first row. U8 (About this phone): a "To call 9-1-1" section.
+  - [flows-setup.md](flows-setup.md) S5, S8 and S9: Phone and Messages are always there; the self-test is "Emergency
+    self-test"; the Ready screen tells the helper how 9-1-1 is reached, to show {user}.
+  - [flows-trusted-person.md](flows-trusted-person.md): T1 and T5 no longer mention an Emergency tile.
+  - [copy-test-packet.md](copy-test-packet.md): screen 1 without the button.
 
 ## Mockups
 
 [mockups/plainphone-screens.html](mockups/plainphone-screens.html) (open in any browser; the font is bundled), and a
 PNG of the same page attached to [PLA-36](/PLA/issues/PLA-36). Screens: home (normal, with a notice line, and at
-200%), Emergency close-up, More, Ask for an app, Link can't open, Wi-Fi sign-in page, "For Sam", home on the
-smallest supported screen at 200% (frame 10), and "A change is waiting" (frame 11). Names follow the copy-test
-packet (Margaret uses the phone, Sam looks after it, Alex is the helper).
+200%), calling 9-1-1 (About this phone), More with the Emergency 9-1-1 row, Ask for an app, Link can't open, Wi-Fi
+sign-in page, "For Sam", home on the smallest supported screen at 200% (frame 10), and "A change is waiting"
+(frame 11). Names follow the copy-test packet (Margaret uses the phone, Sam looks after it, Alex is the helper).
 
 The mockups are drawn in a browser. The 200% frames use Android 15's real 200% sizes, but they are illustrative: they
 show the layout rules, not proof that Android lays it out the same way. The proof is on the phone, in the MVP build
