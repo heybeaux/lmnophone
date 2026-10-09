@@ -1132,3 +1132,15 @@ browser/portal effects, product entry points or conversions to policy authority.
 Tests retain browser/portal hiding and exclusion from unhide/lock-task plans on a
 supported inventory, normal/baseline health and locked boot. Existing unknown-build
 and emergency-floor exceptions continue unchanged.
+
+## Stored elevation data
+
+`ElevationCountdown.restore(id, target, startedAt, durationMillis)` and
+`ElevationGrant.restore(id, target, startedAt, deadline, packageAccessOpen, approved)`
+are public nullable decoders for validated scalar/value fields. Invalid combinations,
+countdown overflow, and grants whose deadline differs from the target's fixed duration
+return null. Approval sets are copied and immutable. Decode schema/checksum and nested
+value types first; a null decoder result means damaged data, never an empty ledger.
+These objects restore data only, never elevation authority or process-local ownership.
+Continue to run controller startup revocation and binding checks; preserve the debit
+ledger even when startup discards a restored countdown or grant.
