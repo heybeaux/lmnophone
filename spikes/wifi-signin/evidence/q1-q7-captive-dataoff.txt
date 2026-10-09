@@ -1,0 +1,16 @@
+# Q1/Q7 fixture: captive mode, mobile data off
+wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=102 wifiCaptive=true wifiValidated=false
+  NetworkAgentInfo{network{102}  handle{441492361229}  ni{WIFI CONNECTED extra: } created=2026-10-09T00:36:51.617Z Score(Policies : TRANSPORT_PRIMARY&EVER_EVALUATED&IS_UNMETERED ; KeepConnected : 0)  created 2296184 firstCaptivePortalDetected 2296287 currentCaptivePortalDetected 2296781  lp{{InterfaceName: wlan0 LinkAddresses: [ fe80::31fe:1915:6661:456a/64,10.0.2.16/24,fec0::8959:af00:5315:b375/6
+10-08 17:36:51.751  3595  3612 I PPEMU   : wifi-cb net=102 captive=true validated=false uptime=2296289ms
+10-08 17:36:51.751  3595  3612 I PPEMU   : net wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+10-08 17:36:52.231   865  3859 D NetworkMonitor/102: isCaptivePortal: isSuccessful()=false isPortal()=true RedirectUrl=http://10.0.2.2:8099/login isPartialConnectivity()=false Time=10ms
+10-08 17:36:52.232   555   730 D ConnectivityService: [102 WIFI] validation detected a portal with redirect to http://10.0.2.2:8099/login
+10-08 17:36:52.243   865  3864 D NetworkMonitor/102: isCaptivePortal: isSuccessful()=false isPortal()=true RedirectUrl=http://10.0.2.2:8099/login isPartialConnectivity()=false Time=10ms
+10-08 17:36:52.243   555   730 D ConnectivityService: [102 WIFI] validation detected a portal with redirect to http://10.0.2.2:8099/login
+10-08 17:36:54.633  3595  3612 I PPEMU   : wifi-cb net=102 captive=true validated=false uptime=2299171ms
+10-08 17:36:54.633  3595  3612 I PPEMU   : net wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+10-08 17:36:57.639  3595  3612 I PPEMU   : wifi-cb net=102 captive=true validated=false uptime=2302176ms
+10-08 17:36:57.639  3595  3612 I PPEMU   : net wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+10-08 17:36:59.822  3595  3595 I PPEMU   : cmd [net] -> wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+10-08 17:36:59.847  3595  3595 I PPEMU   : cmd [signin-state] -> active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=102 wifiCaptive=true wifiValidated=false

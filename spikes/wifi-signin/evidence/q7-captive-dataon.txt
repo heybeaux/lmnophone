@@ -1,0 +1,4 @@
+# Q7: captive Wi-Fi with mobile data ON
+wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=102 wifiCaptive=true wifiValidated=false
+Active default network: 102
