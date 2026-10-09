@@ -306,6 +306,9 @@ class ElevationController(
         } && checked
     }
 
+    /** Last journaled Update self-check failed. Read-only; the adapter owns UI and notice delivery. */
+    @Synchronized fun updateNeedsAttention(): Boolean = updateProtocol?.needsAttention() == true
+
     /** The caller supplies no grant, grant ID, session ID or staged facts. */
     @Synchronized fun submitUpdate(): UpdateOutcome {
         val protocol = updateProtocol ?: return UpdateOutcome.REFUSED
@@ -324,7 +327,9 @@ class ElevationController(
                 facts.installedVersionCode, facts.staged, clock.checkpoint())
             if (proposal.outcome != ElevationOutcome.CONSUMED) return UpdateOutcome.REFUSED
             val next = before.replacing(proposal.state, person = null)
-            val submission = UpdateSubmission(facts.sessionId, target.staged.sha256, target.staged.versionCode, grant.deadline)
+            val actor = before.person!!
+            val receipt = UpdateReceipt(grant.id, actor.person, actor.generation, current.people.mapValues { it.value.generation })
+            val submission = UpdateSubmission(facts.sessionId, target.staged.sha256, target.staged.versionCode, receipt, grant.deadline)
             var checks = 0
             var passed = false
             val committed = protocol.store.commitUpdateUse(before, next, current, update, submission) {
@@ -357,14 +362,9 @@ class ElevationController(
         val credential = current.people[person] ?: return null
         val before = store.read() ?: return null
         if (before.state.countdown != null || before.state.grant != null || before.revision == Long.MAX_VALUE ||
-            packages(ElevationTarget.Update(staged)) == null || protocol.available() == null) return null
-        // Updater closes a supervised session before staging; this preserves every elevation debit.
-        if (!closeUpdatePackages()) return null
-        if (before.journal != SessionJournal.Empty &&
-            !store.compareAndSet(before, before.replacing(before.state, SessionJournal.Empty), current)) {
-            store.revocationPending = true
-            return null
-        }
+            before.journal != SessionJournal.Empty || packages(ElevationTarget.Update(staged)) == null ||
+            protocol.available() == null) return null
+        // An open supervised session must finish through SessionController's normal CLOSING path.
         val now = clock.checkpoint() ?: return null
         val id = ids.next().takeIf { it.isNotBlank() } ?: return null
         return SupervisedUpdateRequest(id, staged, person, credential.generation, current.structureGeneration, now.boot)
@@ -382,7 +382,8 @@ class ElevationController(
             val update = protocol.available() ?: return UpdateOutcome.REFUSED
             val facts = protocol.installer.finalFacts() ?: return UpdateOutcome.REFUSED
             if (!protocol.valid(facts, request.staged)) return UpdateOutcome.REFUSED
-            val submission = UpdateSubmission(facts.sessionId, request.staged.sha256, request.staged.versionCode)
+            val receipt = UpdateReceipt(request.id, request.person, request.generation, current.people.mapValues { it.value.generation })
+            val submission = UpdateSubmission(facts.sessionId, request.staged.sha256, request.staged.versionCode, receipt)
             var checks = 0
             var passed = false
             val committed = protocol.store.commitUpdateUse(before, before, current, update, submission) {

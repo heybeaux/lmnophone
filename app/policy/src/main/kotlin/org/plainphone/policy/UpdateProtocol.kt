@@ -2,13 +2,24 @@
 package org.plainphone.policy
 
 import org.plainphone.core.*
+import java.util.Collections
 
 enum class UpdatePhase { SUBMITTED, INSTALLED, FAILED }
 enum class UpdateSelfCheck { PENDING, PASSED, FAILED }
 enum class UpdateOutcome { REFUSED, SUBMITTED, COMMIT_UNCERTAIN, INSTALLED, FAILED, NOT_READY }
 
+/** Durable notice intent, captured with use-up before an installer call can kill this process. */
+class UpdateReceipt(val id: String, val actor: TrustedPersonId, val actorGeneration: Long,
+    recipientGenerations: Map<TrustedPersonId, Long>) {
+    val recipientGenerations: Map<TrustedPersonId, Long> = Collections.unmodifiableMap(recipientGenerations.toMap())
+    init {
+        require(id.isNotBlank() && actorGeneration >= 0)
+        require(this.recipientGenerations[actor] == actorGeneration && this.recipientGenerations.values.all { it >= 0 })
+    }
+}
+
 /** Durable evidence only: never authorizes an installer call, including after a process restart. */
-data class UpdateSubmission(val sessionId: Int, val sha256: String, val versionCode: Long,
+data class UpdateSubmission(val sessionId: Int, val sha256: String, val versionCode: Long, val receipt: UpdateReceipt,
     val elevationDeadline: BootTime? = null, val phase: UpdatePhase = UpdatePhase.SUBMITTED,
     val selfCheck: UpdateSelfCheck = UpdateSelfCheck.PENDING) {
     init {
@@ -37,12 +48,15 @@ interface UpdateUseStore {
      * ONE durable transaction, never consume-then-act exposed as two public controller operations.
      * Compare exact elevation, credential and update records/revisions. After all blocking work call
      * finalCheck synchronously exactly once. Compare again, then write replacementElevation and a
-     * SUBMITTED record at expectedUpdate.revision + 1, without yielding or writing anything else.
+     * SUBMITTED record (including its actor/receipt) at expectedUpdate.revision + 1, without yielding.
+     * Capture immutable recipient delivery destinations in this transaction too; preserve undelivered
+     * receipts in the durable outbox before replacing any prior submission. Never enqueue after commit.
      * A false check/CAS changes nothing; a crash exposes either the original pair or complete pair.
      * Reject an outstanding SUBMITTED record or pending installed self-check. For supervised use,
      * replacementElevation is the exact unchanged expectedElevation and finalCheck uses fresh PIN
      * authority; do not invent an elevation/debit. Preserve original deadlines and every debit.
-     * Every session/journal/credential/mode writer uses this same non-reentrant coordinator.
+     * Every session/journal/credential/mode writer uses this same coordinator. Reject reentrant
+     * controller mutations, but allow finalCheck's reads and PinVault.consumeFor on this thread.
      * The caller invokes installer commit immediately on success, with no intervening adapter work.
      */
     fun commitUpdateUse(expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
@@ -120,20 +134,30 @@ internal class UpdateProtocol(val store: UpdateUseStore, val installer: UpdateIn
         if (!ready) return UpdateOutcome.NOT_READY
         val before = store.readUpdate() ?: return UpdateOutcome.NOT_READY
         val submission = before.submission ?: return UpdateOutcome.REFUSED
-        if (submission.sessionId != sessionId || submission.phase != UpdatePhase.SUBMITTED) return UpdateOutcome.REFUSED
-        return classify(before, success && installer.installedVersionCode() == submission.versionCode)
+        if (submission.sessionId != sessionId || submission.phase == UpdatePhase.INSTALLED ||
+            (submission.phase == UpdatePhase.FAILED && !success)) return UpdateOutcome.REFUSED
+        return if (success) readBack(before) else classify(before, false)
     }
 
     private fun reconcile(): UpdateOutcome {
         val before = store.readUpdate() ?: return UpdateOutcome.NOT_READY
         return when (before.submission?.phase) {
             null -> UpdateOutcome.REFUSED
-            UpdatePhase.SUBMITTED -> classify(before, installer.installedVersionCode() == before.submission.versionCode)
+            UpdatePhase.SUBMITTED, UpdatePhase.FAILED -> readBack(before)
             UpdatePhase.INSTALLED -> selfCheck(before)
-            UpdatePhase.FAILED -> UpdateOutcome.FAILED
         }
     }
+    /** Read-only journal status; querying never runs a check, grants authority or sends a notice. */
+    fun needsAttention(): Boolean = store.readUpdate()?.submission?.let {
+        it.phase == UpdatePhase.INSTALLED && it.selfCheck == UpdateSelfCheck.FAILED
+    } == true
+
+    private fun readBack(before: UpdateRecord): UpdateOutcome {
+        val installed = installer.installedVersionCode() ?: return UpdateOutcome.NOT_READY
+        return classify(before, installed == before.submission!!.versionCode)
+    }
     private fun classify(before: UpdateRecord, installed: Boolean): UpdateOutcome {
+        if (!installed && before.submission!!.phase == UpdatePhase.FAILED) return UpdateOutcome.FAILED
         if (before.revision == Long.MAX_VALUE) return UpdateOutcome.NOT_READY
         val next = before.replacing(before.submission!!.copy(phase = if (installed) UpdatePhase.INSTALLED else UpdatePhase.FAILED))
         if (!store.compareAndSetUpdate(before, next)) return UpdateOutcome.NOT_READY

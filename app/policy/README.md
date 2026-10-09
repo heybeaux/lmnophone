@@ -618,19 +618,35 @@ Inside that transaction the final callback reads the session facts again and che
 credentials, policy, boot and the strict deadline after blocking work. Only a successful joint write
 is followed immediately by one installer commit. No public consume-then-act operation exists.
 
-`UpdateUseStore` is the device adapter's combined store port. On the same non-reentrant coordinator
-as credentials, elevation, sessions and mode changes it must:
+`UpdateUseStore` is the device adapter's combined store port. On the same coordinator as credentials,
+elevation, sessions and mode changes it must reject reentrant controller mutations, while allowing
+`finalCheck` to read credential/elevation stores, policy input and the clock, and to call
+`PinVault.consumeFor`, re-entrantly on that coordinator thread. It must:
 
 1. Compare the exact elevation, credential and update records/revisions.
 2. Finish blocking work, invoke `finalCheck` synchronously exactly once, then compare again.
-3. Write only the consumed elevation and `SUBMITTED{sessionId, sha256, versionCode}` record in one
+3. Write the consumed elevation and `SUBMITTED{sessionId, sha256, versionCode, receipt}` record in one
    durable transaction, without yielding. Preserve the ledger and original deadline (also retained
    in the submission for evidence). Reject outstanding submissions and pending self-checks.
+
+`UpdateSubmission.receipt` is required durable evidence: `UpdateReceipt` carries a stable ID (the
+originating grant/request ID), actor person and generation, and a copied, immutable map of every
+recipient's generation. The actor is the self-managed elevation holder or the supervised PIN holder.
+The same joint transaction must freeze delivery destinations for those generations, following the
+approval PREPARING receipt pattern. Queueing only in memory after installer commit is insufficient:
+the process can die immediately. On startup reconcile and deliver the submission notice to every
+captured trusted person, using its stable ID for deduplication and durable delivery acknowledgments.
+Never resolve an old receipt to a replacement person's current address. Preserve outstanding receipts
+in a durable outbox when a later submission replaces the record; result/self-check CAS writes retain
+the original receipt. A receipt describes submission/use-up, not confirmed installation. Delivery
+does not authorize installation or gate policy progress.
 
 A false check/CAS changes neither record. A crash exposes the original pair or the complete pair.
 The supervised path uses the same transaction, preserving the elevation record unchanged and using
 the exact request's fresh person-bound PIN authority inside `finalCheck`, after the final hash read.
-Requests are process-local and cannot be restored. Missing/damaged stores fail closed.
+Requests are process-local and cannot be restored. Supervised preparation refuses any OPENING, OPEN
+or CLOSING session without effects or journal writes; finish it through `SessionController` before
+preparing Update. Missing/damaged stores fail closed.
 
 `UpdateInstaller.finalFacts()` reads the SHA-256 through `Session.openRead` **after the last write**.
 Package, exact signer set and version must come from the verified immutable private staged file whose
@@ -640,11 +656,25 @@ must agree across the two reads. A same-version reinstall is refused by policy.
 
 Startup uses the internal `UpdateProtocol.onStart` wrapper: abandon every own installer session,
 then call `ElevationController.onStart` to revoke all temporary authority, then reconcile the saved
-submission. Installed version equal to the staged version means INSTALLED; anything else (including
-unreadable, higher or lower) means FAILED. INSTALLED is written before the idempotent post-update
-self-check; its separate PENDING/PASSED/FAILED result survives/retries a crash. A result callback is
-matched to the current submitted session, and success also requires equal version readback.
-Never commit on startup, replay a saved submission, refund a turn or extend a deadline.
+submission. For SUBMITTED **or FAILED**, installed version equal to the staged version means
+INSTALLED; a readable higher or lower version means FAILED. FAILED remains recoverable because an
+already-committed platform install may finish after our restart. Unreadable version (`null`) means
+NOT_READY with no update-record write; retry on the next startup. INSTALLED is written before the
+idempotent post-update self-check; its separate PENDING/PASSED/FAILED result survives/retries a crash.
+A result callback must match the saved session; success for SUBMITTED or FAILED requires equal
+version readback and runs the journaled self-check. Completed INSTALLED results cannot run it again.
+Route **only terminal** installer statuses to `onResult`; never translate `STATUS_PENDING_USER_ACTION`
+into failure. Never commit on startup, replay a saved submission, refund a turn or extend a deadline.
+
+An internal `ElevationController.onStart()` triggered by tick/close recovery invalidates Update.
+The adapter must rerun the full `UpdateProtocol.onStart` wrapper before Update becomes available.
+
+`ElevationController.updateNeedsAttention()` exposes whether the last saved submission is INSTALLED
+with a FAILED self-check, including after restart. It only reads the journal. When true, the adapter
+must display **Plainphone needs attention** and durably queue the failure notice to every trusted
+person, with stable deduplication and delivery retry. Do not present installation success as a passed
+health check or promise rollback. Missing state/NOT_READY remains an unavailable state, not evidence
+of health. This slice adds neither a UI action nor production wiring.
 
 A thrown installer call returns COMMIT_UNCERTAIN: authority stays spent and SUBMITTED stays durable,
 since the platform may already have accepted the install. Startup/readback resolves it. An ambiguous
