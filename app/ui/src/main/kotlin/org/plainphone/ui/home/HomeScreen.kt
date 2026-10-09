@@ -58,11 +58,14 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
         var briefMore = largeText
         var noticeLines = 3
         var inlineClock = false
-        fun bottom(brief: Boolean) = subcompose("bottom-$brief") {
-            HomeBottom(brief, onEvent)
+        fun bottom(brief: Boolean) = subcompose("measure-bottom-$brief") {
+            // Probes must never contribute duplicate controls to the semantics tree.
+            Box(Modifier.clearAndSetSemantics {}) { HomeBottom(brief, onEvent = {}) }
         }.single().measure(natural)
-        fun top(lines: Int, inline: Boolean) = subcompose("top-$lines-$inline") {
-            HomeTop(state, lines, inline, largeText, onEvent)
+        fun top(lines: Int, inline: Boolean) = subcompose("measure-top-$lines-$inline") {
+            Box(Modifier.clearAndSetSemantics {}) {
+                HomeTop(state, lines, inline, largeText, onEvent = {})
+            }
         }.single().measure(natural)
 
         var bottom = bottom(briefMore)
@@ -93,6 +96,12 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
             }.single().measure(constraints)
             layout(width, height) { page.placeRelative(0, 0) }
         } else {
+            val visibleTop = subcompose("visible-top") {
+                HomeTop(state, noticeLines, inlineClock, largeText, onEvent)
+            }.single().measure(natural)
+            val visibleBottom = subcompose("visible-bottom") {
+                HomeBottom(briefMore, onEvent)
+            }.single().measure(natural)
             val apps = subcompose("apps") {
                 LazyColumn(Modifier.fillMaxSize().testTag("home-apps"),
                     verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S3, Alignment.Bottom)) {
@@ -102,9 +111,9 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
                 }
             }.single().measure(Constraints.fixed(width, available))
             layout(width, height) {
-                top.placeRelative(0, 0)
+                visibleTop.placeRelative(0, 0)
                 apps.placeRelative(0, top.height)
-                bottom.placeRelative(0, height - bottom.height)
+                visibleBottom.placeRelative(0, height - visibleBottom.height)
             }
         }
     }
