@@ -1,0 +1,25 @@
+host_utc=2026-10-09T17:13:25Z device_time=2026-10-09T10:13:25-0700
+deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.Slack, com.google.android.dialer, com.google.android.gm, com.spotify.music, com.google.android.apps.safetyhub, org.telegram.messenger, com.microsoft.office.outlook, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[] suspended=[] locked=true debugLiftAt=0
+mLockTaskModeState=LOCKED
+ResumedActivity: ActivityRecord{5992f6c u0 com.plainphone.spike.dpc/.MainActivity t197}
+boot_count=5 stay_on=0 screen_off_timeout=60000
+uptime:  10:13:26 up 17:52,  0 users,  load average: 11.03, 11.04, 11.07
+mWakefulness=Dozing
+mHoldingDisplaySuspendBlocker=false
+AC powered: false USB powered: true status: 5 level: 100 
+Wi-Fi is enabled
+Active default network: 100
+--- versions (pkg versionName versionCode lastUpdateTime updated-system-app?)
+com.google.android.apps.messaging | messages.android_20261002_00_RC00.phone_dynamic | 324451063 | 2026-10-09 07:31:37 | updated=2
+com.google.android.dialer | 241.0.991235506 | 20129558 | 2026-10-09 07:33:07 | updated=2
+com.google.android.gm | 2026.09.28.992490113.Release | 66071966 | 2026-10-09 07:33:32 | updated=2
+com.google.android.deskclock | 9.1 (965977594) | 76112330 | 2026-10-09 07:29:03 | updated=2
+com.google.android.apps.photos | 7.96.0.996044120 | 52514897 | 2026-10-09 07:30:17 | updated=2
+com.google.android.calculator | 9.3 (967717812) | 85022643 | 2026-10-09 07:33:23 | updated=2
+com.google.android.gms | 26.37.37 (260400-994713346) | 263737035 | 2026-10-08 13:04:39 | updated=2
+com.android.vending | 53.4.34-34 [0] [PR] 991240293 | 85343440 | 2026-10-08 13:03:06 | updated=2
+org.telegram.messenger | 13.0.0 | 71581 | 2026-10-09 07:32:10 | updated=0
+com.Slack | 26.09.50.0 | 90016232 | 2026-10-08 17:11:12 | updated=0
+com.spotify.music | 9.1.90.2270 | 147078674 | 2026-10-09 07:30:50 | updated=0
+com.microsoft.office.outlook | 5.2639.2 | 72639116 | 2026-10-08 17:12:11 | updated=0
+com.google.android.webview | 154.0.8037.106 | 803710603 | 2026-10-08 16:02:24 | updated=2

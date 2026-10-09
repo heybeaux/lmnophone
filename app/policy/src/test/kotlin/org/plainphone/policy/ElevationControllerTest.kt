@@ -100,6 +100,36 @@ class ElevationControllerTest {
     }
     private fun start(r: ElevationRequest): ElevationOutcome = controller.start(r.id, r.target)
 
+    @Test fun `decoded grant and countdown do not restore controller ownership`() {
+        setup(); val r = request(); advance(600_000)
+        val pending = record!!
+        val c = pending.state.countdown!!
+        val decodedCountdown = assertNotNull(ElevationCountdown.restore(c.id, c.target, c.startedAt, c.durationMillis))
+        val savedCountdown = ElevationRecord(pending.revision, ElevationState(pending.state.ledger, decodedCountdown),
+            pending.journal, pending.person)
+        assertEquals(ElevationOutcome.STARTED, start(r))
+        val active = record!!
+        val g = active.state.grant!!
+        val decodedGrant = assertNotNull(ElevationGrant.restore(g.id, g.target, g.startedAt, g.deadline, g.packageAccessOpen, g.approved))
+        val savedGrant = ElevationRecord(active.revision, ElevationState(active.state.ledger, grant = decodedGrant),
+            active.journal, active.person)
+        controller = controller()
+        record = savedGrant
+        assertNull(controller.access())
+        events.clear()
+        assertEquals(ElevationOutcome.IDLE, controller.onStart())
+        assertEquals("revoke", events.first())
+        assertEquals(active.state.ledger.debits, record!!.state.ledger.debits)
+        assertFalse(physicallyOpen)
+        // Even an initialized controller cannot acquire an injected decoded record's ownership.
+        record = savedGrant
+        assertNull(controller.access())
+        record = savedCountdown
+        assertEquals(ElevationOutcome.REFUSED, start(r))
+        assertEquals(ElevationOutcome.LAPSED, controller.tick())
+        assertNull(record!!.state.countdown)
+    }
+
     @Test fun `PIN is consumed for the exact countdown at request and no PIN is needed at Start`() {
         setup(); val r = prepare(); val a = auth(r)
         assertEquals(ElevationOutcome.COUNTING, controller.request(r, a))
@@ -524,6 +554,10 @@ class ElevationControllerTest {
 
     @Test fun `stricter edit lengthens owned live countdown without a tick before old expiry`() {
         setup(); activeFriction(); val r = request(); advance(300_000)
+        val saved = record!!; val countdown = saved.state.countdown!!
+        record = ElevationRecord(saved.revision, ElevationState(saved.state.ledger,
+            assertNotNull(ElevationCountdown.restore(countdown.id, countdown.target, countdown.startedAt, countdown.durationMillis))),
+            saved.journal, saved.person)
         val editor = settingsEditor(); val edit = assertNotNull(editor.prepareStricter(person, FrictionSettings(1_200_000, 2)))
         val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, edit.action)).authority
         assertEquals(FrictionSettingsOutcome.APPLIED, editor.applyStricter(edit, fresh))

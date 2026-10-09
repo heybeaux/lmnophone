@@ -25,8 +25,17 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [ ] 2.3 AE: Q2, updates (S1–S4, S7, and the API 37 constant).
 - [ ] 2.4 AE: Q4, must-have apps, browser classifier, link matrix, Wi-Fi sign-in page, reachable system screens.
 - [ ] 2.5 VE: Review 2.1–2.4. Falsify each conclusion and check the negative controls. Add new escape routes to the threat list.
-- [ ] 2.6 Lead: Apply the go/no-go list in ADR 0001. If the architecture or the promises change, write a revised ADR and get Beaux's approval before section 4.
+- [x] 2.6 Lead: Apply the go/no-go list in ADR 0001. If the architecture or the promises change, write a revised ADR and get Beaux's approval before section 4.
   - First pass, 2026-10-09 (PLA-14): **not passed yet**. No item failed. #1, #2, #3 and #5 are inconclusive pending report corrections and missing evidence (reviews in `docs/reviews/`). #7 passed (custody limit accepted with the plan). #4 and #6 are checked before handover. New risk: the unhide/power-loss boot loop (PLA-22).
+  - **Outcome, 2026-10-09 (PLA-14): GO for the MVP build, on the emulator and as test-only builds on the spare Motorola.**
+    - No go/no-go item failed, and the architecture and promises are unchanged, so there is no revised ADR.
+    - Beaux directed the build first (Telegram 4496/4498, 4509). He accepted the leftover boot-loop risk on the spare, with a recovery erase allowed there only (card d3be49b8).
+    - Items not yet shown are now **handover conditions** (task 6.3):
+      - #2: 72 hours of unattended updates on the MVP test build (PLA-24/PLA-27);
+      - #3/#5: signed-in app checks and per-app web-leak acceptance;
+      - #4: Q7/Q10;
+      - #6: setup time;
+      - the boot-loop risk on the target phone.
 
 ## 3. Spike: required before handover
 
@@ -76,5 +85,5 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 
 - [ ] 6.1 VE: Full escape-artist review and code review of the MVP on the emulator. Verdict: approve, request changes, or blocked.
 - [ ] 6.2 AE: Fix every confirmed finding, or Lead records it as a leftover risk accepted by Beaux.
-- [ ] 6.3 Lead: Ask Beaux to approve the target phone model and one unit, and to record acceptance of the custody limit and the leftover risks. Include the checklist to complete before handover: Q3 on that build; Q10 with a board-approved recovery-wipe procedure; Q13 manufacturer extras; Q14 device emergency checks (no live call unless there is an agreed procedure); the PLA-22 unhide/power-loss mitigation on that build (Q6, with a board-approved recovery-wipe fallback); RCS on the carrier; iPhone group texts; Wi-Fi calling on ordinary Wi-Fi with the policy on, including that the carrier's IMS / Carrier Services packages are never hidden (Telegram 4481: used sometimes); must-have apps, signed in by Beaux himself on the first real Plainphone build (PLA-20 deferral, card `2d9260a3`), using the **carry-over checklist** in `spikes/device-moto/RESULT.md` § B-Q4 signed in: Telegram's in-app browser, Web tabs and mini apps first; Outlook's Privacy & Cookies web view after sign-in and after sign-out; links in one Gmail HTML test message; outside links, notifications, sign-out and sign-in again for Slack, Spotify, Telegram and Outlook. Each app's web-leak note stays "before sign-in only" until then.
+- [ ] 6.3 Lead: (Includes the gate 2.6 carry-overs: #2 unattended updates on the MVP build, #3/#5 signed-in app checks and web-leak acceptance, #4, #6, and the boot-loop risk on that phone.) Ask Beaux to approve the target phone model and one unit, and to record acceptance of the custody limit and the leftover risks. Include the checklist to complete before handover: Q3 on that build; Q10 with a board-approved recovery-wipe procedure; Q13 manufacturer extras; Q14 device emergency checks (no live call unless there is an agreed procedure); the PLA-22 unhide/power-loss mitigation on that build (Q6, with a board-approved recovery-wipe fallback); RCS on the carrier; iPhone group texts; Wi-Fi calling on ordinary Wi-Fi with the policy on, including that the carrier's IMS / Carrier Services packages are never hidden (Telegram 4481: used sometimes); must-have apps, signed in by Beaux himself on the first real Plainphone build (PLA-20 deferral, card `2d9260a3`), using the **carry-over checklist** in `spikes/device-moto/RESULT.md` § B-Q4 signed in: Telegram's in-app browser, Web tabs and mini apps first; Outlook's Privacy & Cookies web view after sign-in and after sign-out; links in one Gmail HTML test message; outside links, notifications, sign-out and sign-in again for Slack, Spotify, Telegram and Outlook. Each app's web-leak note stays "before sign-in only" until then.
 - [ ] 6.4 Lead: After two weeks on Beaux's phone, ask Beaux to approve the trusted person's phone.

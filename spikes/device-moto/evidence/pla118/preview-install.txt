@@ -1,0 +1,41 @@
+# PLA-118 preview install on spare 2026-10-09T17:24:08Z
+apk=mvp/shell-preview@131a155 sha256=ac5950ee2f4e5efb36af1d49bd518e33dc43376784bebe393f22bf5c4800b277 label='Plainphone (preview)' pkg=org.plainphone
+## adb install -t
+Performing Streamed Install
+Success
+## package
+    versionName=0.1.0-dev
+    privateFlags=[ PRIVATE_FLAG_ACTIVITIES_RESIZE_MODE_RESIZEABLE_VIA_SDK_VERSION ALLOW_AUDIO_PLAYBACK_CAPTURE PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING ]
+    pkgFlags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA ]
+      firstInstallTime=2026-10-09 10:24:15
+## launch via launcher intent
+## Network stats: elapsed time=59ms (0ms mobile, 0ms wifi, 59ms not connected)
+    mLockTaskModeState=NONE
+com.motorola.launcher3
+20829
+## keyguard (swipe, no PIN) dismissed; focus
+  mCurrentFocus=Window{282c916 u0 org.plainphone/org.plainphone.MainActivity}
+## tap More (540,2178)
+  mCurrentFocus=Window{282c916 u0 org.plainphone/org.plainphone.MainActivity}
+## press HOME key
+  mCurrentFocus=Window{77f4416 u0 com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher}
+    mLockTaskModeState=NONE
+## More screen reached by tap; HOME key -> Moto launcher; lock task NONE (above)
+## adb uninstall 2026-10-09T17:26:00Z
+Success
+pm list after uninstall: []
+leftover data dir: [ls: /data/data/org.plainphone: No such file or directory]
+## reinstall adb install -t 2026-10-09T17:26:00Z
+Performing Streamed Install
+Success
+## end state 2026-10-09T17:26:11Z
+  mCurrentFocus=Window{93a711 u0 org.plainphone/org.plainphone.MainActivity}
+    mLockTaskModeState=NONE
+HOME_role=com.motorola.launcher3
+    admin=ComponentInfo{com.plainphone.spike.dpc/com.plainphone.spike.dpc.AdminReceiver}
+      testOnlyAdmin=true
+  USB powered: true
+  level: 100
+2
+ 10:26:12 up 18:05,  0 users,  load average: 14.78, 13.97, 12.62
+data="deviceOwner=true lockTaskModeState=0 lockTaskPackages=[com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[] suspended=[] locked=false debugLiftAt=0"
