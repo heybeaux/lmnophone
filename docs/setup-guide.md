@@ -200,6 +200,21 @@ The screens are described in [docs/ux/flows-setup.md](ux/flows-setup.md). In sho
 | G6. Limits | The trusted person reads "What Plainphone can't stop". | Trusted person |
 | G7. Unplug | Unplug the cable. Plainphone turns off USB debugging and runs the handover check. | Helper |
 
+**Outlook (G5).** Outlook has a known way onto the web, and Beaux has accepted it (ADR 0001 Risk 3; tested on
+Outlook 5.2639.2 in PLA-5 B-Q4). On Outlook's sign-in screen, **Privacy and terms → Privacy & Cookies** opens
+Microsoft's privacy page inside Outlook, and links on it lead to other websites. It works before sign-in and after
+sign-out. When adding Outlook:
+- read its note in the [starter catalog](ux/starter-catalog.md#outlook-microsoft) with the trusted person, so they
+  know where the route is and what it reaches;
+- write Outlook's version in the setup record;
+- if Outlook asks to send diagnostic logs to Microsoft (Help → Contact support), choose **Cancel**;
+- a Google account can't be added to Outlook once Plainphone is locked down. If the user reads Gmail in Outlook,
+  use the Gmail app for that account instead; Outlook can't be set up for it yet.
+
+When a later Outlook update shows "Reviewed for an older version", check the Privacy & Cookies route again on the
+new version. If it has become easier (for example a browse button, an address bar or a search box), tell Beaux
+before anything else changes.
+
 **If the phone restarts during setup** after G2, it asks for the trusted person's PIN before carrying on. That's
 expected.
 
@@ -350,6 +365,8 @@ Backup person's account number (digits):
 Trusted person can sign in elsewhere:  Y/N   2-step not only on a Plainphone phone: Y/N
 Recovery code held by trusted person (not helper / away from user): Y/N
 Test text received:  Y/N
+Apps added (name, version, note read with trusted person Y/N):
+  Outlook (if added): version ______   Privacy & Cookies route same as 5.2639.2?  Y/N
 I1 emergency states:  all ticked? Y/N    I2 calls/texts: Y/N    I3 alert seen (date / method) or exception:
 Beaux's OK to hand over (date, reference):
 Problems and notes:
