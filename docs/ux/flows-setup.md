@@ -205,10 +205,12 @@ The guide makes sure the SIM is out (or the eSIM is off) until here.
 
 **Spec:** guided-setup ("Handover check gates 'Ready'").
 
-A list, one row per check, each green ✓ or a plain failure with its fix. Plainphone says **Ready** only when all
-are green; the only exception is reset protection with Beaux's recorded acceptance.
+A list, one row per check. A passed check shows **✓** and its text in `ink`. A failed check shows **✗** and the
+failure text in `ink`, with the fix on a second line in `ink-2`, inside a grey box so failures stand out by shape,
+not colour ([design-tokens.md](design-tokens.md)). Plainphone says **Ready** only when every check has passed; the
+only exception is reset protection with Beaux's recorded acceptance.
 
-| Check (green text) | Failure text | Fix shown |
+| Check (text when passed) | Failure text | Fix shown |
 |---|---|---|
 | Plainphone is in charge of this phone | "Plainphone isn't in charge of this phone." | "Run the setup script again (setup guide, Part F)." |
 | Protections are on | "{n} protections didn't turn on." | "Restart the phone and run the check again. If it still fails, see the guide." |
@@ -222,7 +224,7 @@ are green; the only exception is reset protection with Beaux's recorded acceptan
 | Tidy-up is complete | "Some apps that came with the phone aren't hidden." | "Tap Check again. If it fails, see the guide." |
 | {tp} got the test text | "{tp} hasn't confirmed the test text." | "Go back to step 3." |
 
-**Primary:** Check again (while anything fails) · **Done** (when all are green, after S9)
+**Primary:** Check again (while anything fails) · **Done** (when every check has passed, after S9)
 
 ## S9. Ready
 

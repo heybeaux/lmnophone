@@ -32,13 +32,16 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
 .content { flex: 1; display: flex; flex-direction: column; padding: 0 var(--s6); min-height: 0; }
 
 /* Home */
-.clock { font-size: var(--clock); line-height: 72px; font-feature-settings: "tnum"; margin-top: var(--s6); letter-spacing: -1px; }
+.clock { font-size: var(--clock); line-height: var(--clock-lh, 72px); font-feature-settings: "tnum"; margin-top: var(--s6); letter-spacing: -1px; }
 .date { font-size: var(--date); line-height: 24px; color: var(--ink-2); }
 .emergency { margin-top: var(--s12); margin-bottom: var(--s12); background: var(--ink); color: var(--paper); border-radius: 999px; min-height: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 24px; text-align: center; }
 .emergency .l1 { font-weight: 500; font-size: 22px; line-height: 28px; }
 .emergency .l2 { font-size: var(--small); line-height: 22px; }
+.nb { white-space: nowrap; } /* never split 9-1-1 across lines */
 .notice { background: var(--fill-1); border-radius: var(--radius-box); padding: var(--s4); font-size: var(--body); font-weight: 500; line-height: 26px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
-.notice .chev, .row .chev { color: var(--ink-3); font-size: 26px; font-weight: 400; }
+.row .chev { color: var(--ink-3); font-size: 26px; font-weight: 400; }
+.notice .chev, .box .chev { color: var(--ink-2); font-size: 26px; font-weight: 400; } /* inside a fill-1 box: ink-2, never ink-3 */
+.notice span:first-child { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .spacer { flex: 1; }
 .apps { display: flex; flex-direction: column; }
 .apps .scroll { overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
@@ -81,17 +84,26 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
 .tp .row .t { font-size: 20px; line-height: 26px; }
 .tp .row .s { font-size: 16px; }
 
-/* 200% text size (Android 14+ non-linear scaling, approximate) */
-.x2 { --date: 32px; --app: 52px; --row: 38px; --body: 32px; --small: 30px; }
-.x2 .clock { font-size: 48px; line-height: 56px; margin-top: var(--s4); }
-.x2 .date { line-height: 40px; }
-.x2 .emergency .l1 { font-size: 38px; line-height: 44px; }
-.x2 .emergency .l2 { line-height: 36px; }
-.x2 .notice { line-height: 40px; }
-.x2 .app { line-height: 60px; min-height: 64px; }
-.x2 .more .l1 { line-height: 44px; }
-.x2 .more .l2 { line-height: 36px; }
-.x2 .more { border-radius: 40px; }
+/* 200% text size. Sizes from Android 15's non-linear font scale table (AOSP FontScaleConverterFactory, key 2f),
+   see design-tokens.md "Type scale". Illustrative: a browser is not Android, so the build checks this on the phone. */
+.x2 { --clock: 68px; --clock-lh: 75px; --date: 30px; --app: 40px; --title: 37px; --row: 35px; --body: 30px; --button: 30px; --small: 28px; }
+.x2 .date { line-height: 36px; }
+.x2 .emergency { margin-top: 24px; }
+.x2 .emergency .l1 { font-size: 35px; line-height: 37px; }
+.x2 .emergency .l2 { line-height: 35px; }
+.x2 .notice { line-height: 37px; }
+.x2 .app { line-height: 47px; min-height: 56px; }
+.x2 .more .l1 { line-height: 37px; }
+.x2 .more { border-radius: 40px; margin: 8px 0; }
+.x2 .apps { flex: 1; min-height: 0; justify-content: flex-end; }
+.x2 .apps .scroll { flex: 1; min-height: 0; }
+/* Short screen (360 x 640 dp) at 200%: steps 1-5 of "When the screen is short" */
+.short .content { padding-top: 8px; }
+.short .when { display: flex; align-items: baseline; gap: 12px; }
+.short .when .clock { font-size: var(--title); line-height: 43px; font-weight: 500; margin-top: 0; letter-spacing: 0; }
+.short .emergency { margin-top: 16px; }
+.short .notice span:first-child { -webkit-line-clamp: 1; }
+.short .more { margin: 8px 0; }
 .fade { position: relative; }
 .scrollhint { font-size: 14px; color: var(--ink-3); text-align: right; }
 
@@ -103,7 +115,8 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
 <header class="page">
   <h1>Plainphone screens: black and white</h1>
   <p>Mockups for <b>PLA-36</b>. Font Lexend (400 body, 500 names and titles). Black, white and greys only, from Generosity Catalyst's palette. Tokens and rules: <code>docs/ux/design-tokens.md</code>. Words are the current flow copy (copy-test fixes from PLA-12; product decisions from PLA-14). Names as in the copy-test packet: Margaret uses the phone, Sam looks after it, Alex is the helper.</p>
-  <p>Each frame is 412 × 915 dp, the size of the spare moto g power 5G. Dashed boxes on the Emergency close-up are measurements, not part of the screen.</p>
+  <p>Frames are 412 × 915 dp, the size of the spare moto g power 5G, except frame 10 (360 × 640 dp, the smallest supported screen). Dashed boxes on the Emergency close-up are measurements, not part of the screen.</p>
+  <p>The 200% frames (3 and 10) use the sizes Android 15 gives text at 200% (its non-linear font scale table), but they are drawn in a browser, so they are illustrative. The real check is on the phone, in the MVP build and its final review.</p>
 </header>
 
 <div class="grid">
@@ -115,7 +128,7 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
   <div class="content">
     <div class="clock">10:42</div>
     <div class="date">Thursday 8 October</div>
-    <div class="emergency"><div class="l1">Emergency 9-1-1</div><div class="l2">Opens the dialer</div></div>
+    <div class="emergency"><div class="l1">Emergency <span class="nb">9-1-1</span></div><div class="l2">Opens the dialer</div></div>
     <div class="spacer"></div>
     <div class="apps">
       <div class="app">Spotify</div>
@@ -138,7 +151,7 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
   <div class="content">
     <div class="clock">21:15</div>
     <div class="date">Thursday 8 October</div>
-    <div class="emergency"><div class="l1">Emergency 9-1-1</div><div class="l2">Opens the dialer</div></div>
+    <div class="emergency"><div class="l1">Emergency <span class="nb">9-1-1</span></div><div class="l2">Opens the dialer</div></div>
     <div class="notice"><span>Plainphone will turn off after 21:15 tomorrow. Tap to cancel.</span><span class="chev">›</span></div>
     <div class="spacer"></div>
     <div class="apps">
@@ -158,22 +171,22 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
 <!-- 3. Home at 200% -->
 <figure>
 <div class="phone"><div class="screen x2">
-  <div class="status"><span>10:42</span><span>▴ ▮ 100%</span></div>
+  <div class="status"><span>21:15</span><span>▴ ▮ 64%</span></div>
   <div class="content">
-    <div class="clock">10:42</div>
+    <div class="clock">21:15</div>
     <div class="date">Thu 8 Oct</div>
-    <div class="emergency" style="margin-top:24px;margin-bottom:48px"><div class="l1">Emergency 9-1-1</div><div class="l2">Opens the dialer</div></div>
-    <div class="notice"><span>Ask Sam to do the monthly phone check</span><span class="chev">›</span></div>
-    <div class="apps" style="flex:1;min-height:0;justify-content:flex-end">
-      <div class="scroll" style="flex:1;min-height:0"><div class="app">Camera</div></div>
+    <div class="emergency" style="margin-bottom:48px"><div class="l1">Emergency <span class="nb">9-1-1</span></div><div class="l2">Opens the dialer</div></div>
+    <div class="notice"><span>Plainphone will turn off after 21:15 tomorrow. Tap to cancel.</span><span class="chev">›</span></div>
+    <div class="apps">
+      <div class="scroll"><div class="app">Spotify</div><div class="app">Slack</div><div class="app">Camera</div></div>
       <div class="app">Messages</div>
       <div class="app">Phone</div>
     </div>
-    <div class="more" style="margin:8px 0 8px"><div class="l1">More<span class="caret">^</span></div></div>
+    <div class="more"><div class="l1">More<span class="caret">^</span></div></div>
   </div>
   <div class="navbar"></div>
 </div></div>
-<figcaption><b>3. Home at the largest text size (200%)</b>The worst case: notice line showing. The clock doesn't grow (it gives its space to the buttons) and the date shortens. Emergency, the notice, Messages, Phone and More never scroll; only the other apps scroll (Spotify and Slack are above Camera here). More drops its second line at 200%.</figcaption>
+<figcaption><b>3. Home at the largest text size (200%)</b>Everything grows with the text size, the time included. The worst case here: the longest notice line, the 24-hour turn-off wait, cut to 3 lines with "…" (tapping anywhere on the box opens the screen with Cancel). Emergency, the notice, Messages, Phone and More stay put; only the other apps scroll. More drops its second line at 200%.</figcaption>
 </figure>
 
 <!-- 4. Emergency close-up -->
@@ -183,7 +196,7 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
   <div class="content" style="position:relative">
     <div class="clock">10:42</div>
     <div class="date">Thursday 8 October</div>
-    <div class="emergency"><div class="l1">Emergency 9-1-1</div><div class="l2">Opens the dialer</div></div>
+    <div class="emergency"><div class="l1">Emergency <span class="nb">9-1-1</span></div><div class="l2">Opens the dialer</div></div>
     <div class="anno" style="top:120px;height:48px">≥ 48 dp: nothing tappable</div>
     <div class="anno" style="top:168px;height:72px;border-style:solid;background:transparent;color:transparent"></div>
     <div class="anno" style="top:240px;height:48px">≥ 48 dp: nothing tappable</div>
@@ -300,6 +313,44 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
   <div class="navbar"></div>
 </div></div>
 <figcaption><b>9. "For Sam" (T2)</b>The black band at the top says whose hands the phone is in, on every trusted-person screen, so nothing about this mode is hidden from Margaret. "Needs you" is a grey box; the menu scrolls under it (What Plainphone can't stop, Install a Plainphone update, Change PIN, Turn Plainphone off are below). In self-managed mode the band reads "Your settings".</figcaption>
+</figure>
+
+<!-- 10. Short screen at 200% -->
+<figure>
+<div class="phone" style="width:384px;height:664px"><div class="screen x2 short">
+  <div class="status"><span>21:15</span><span>▴ ▮ 64%</span></div>
+  <div class="content">
+    <div class="when"><div class="clock">21:15</div><div class="date">Thu 8 Oct</div></div>
+    <div class="emergency" style="margin-bottom:48px"><div class="l1">Emergency <span class="nb">9-1-1</span></div><div class="l2">Opens the dialer</div></div>
+    <div class="notice"><span>Plainphone will turn off after 21:15 tomorrow. Tap to cancel.</span><span class="chev">›</span></div>
+    <div class="apps" style="margin-top:8px">
+      <div class="scroll"><div class="app">Spotify</div><div class="app">Slack</div><div class="app">Camera</div></div>
+      <div class="app">Messages</div>
+      <div class="app">Phone</div>
+    </div>
+    <div class="more"><div class="l1">More<span class="caret">^</span></div></div>
+  </div>
+  <div class="navbar"></div>
+</div></div>
+<figcaption><b>10. Smallest supported screen (360 × 640 dp) at 200%</b>The steps in "When the screen is short": the time and date share one line (still growing with text size), the gap above Emergency is 16 dp, and the notice is cut to 1 line (tapping it still opens the screen with Cancel). "Emergency 9-1-1" wraps to two lines on a screen this narrow, and the button grows. The 48 dp below Emergency stays. One other-app row shows (Camera); Spotify and Slack scroll above it.</figcaption>
+</figure>
+
+<!-- 11. A change is waiting -->
+<figure>
+<div class="phone"><div class="screen">
+  <div class="status"><span>21:16</span><span>▴ ▮ 64%</span></div>
+  <div class="content">
+    <div class="back">‹ Home</div>
+    <div class="title">Plainphone will turn off</div>
+    <div class="box"><div class="body" style="font-weight:500;margin:0">Sam asked to turn Plainphone off.</div><div class="body note" style="margin:4px 0 0">Asked Thursday at 21:15.</div></div>
+    <p class="body">It will happen after 21:15 tomorrow, once the phone has been on for 24 hours. Time while the phone is off doesn't count, so this can move later.</p>
+    <p class="body">Until then, Plainphone works as usual.</p>
+    <p class="body">Anyone holding this phone can cancel it. No PIN is needed. Sam will get a text either way.</p>
+    <div class="bottom"><div class="link">Keep it waiting</div><div class="primary">Cancel this change</div></div>
+  </div>
+  <div class="navbar"></div>
+</div></div>
+<figcaption><b>11. A change is waiting (U9a)</b>Opened from the notice line, from "Plainphone needs attention", or from Phone settings. No PIN: anyone holding the phone can cancel. The next screen asks "Cancel this change?" and only says "Cancelled" once it's saved.</figcaption>
 </figure>
 
 </div>

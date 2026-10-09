@@ -9,7 +9,7 @@ spec is silent, the gap is listed under [Open questions](#open-questions-for-the
 
 | File | What it covers |
 |---|---|
-| [flows-user.md](flows-user.md) | The person using the phone: home screen and its two notice lines, More, ask for an app, blocked link, Wi-Fi messages, Plainphone's own settings, "About this phone" |
+| [flows-user.md](flows-user.md) | The person using the phone: home screen and its notice line, More, ask for an app, blocked link, Wi-Fi messages, Plainphone's own settings, "About this phone", cancelling a waiting change (U9), the self-managed countdown (U10) |
 | [flows-trusted-person.md](flows-trusted-person.md) | Trusted-person mode: PIN and recovery code, the mode's front page, requests, adding an app and choosing its permissions, removing an app |
 | [flows-sessions.md](flows-sessions.md) | Supervised sessions ("Stay with the phone until you tap Done"), the monthly check, Plainphone updates from the helper's computer |
 | [flows-limits-and-off.md](flows-limits-and-off.md) | "What Plainphone can't stop", "Phone software changed – review pending", "Plainphone needs attention", turning Plainphone off |
@@ -64,7 +64,7 @@ Android 14 and later scale text up to 200%. Every screen in these files was writ
 | Primary button | Pinned to the bottom, full width, at least 56dp tall | Stays pinned; content above scrolls |
 
 Touch targets are at least 48dp, and contrast meets WCAG 2.2 AA (calm-home-screen, "Readable by default").
-The home-screen layout at 200% is mocked up in [flows-user.md](flows-user.md#u1-home-screen).
+The home-screen layout at 200% is mocked up in [flows-user.md](flows-user.md#u1-home-screen) and in [design-tokens.md](design-tokens.md#when-the-screen-is-short).
 
 ## Words we use, and words we never show
 

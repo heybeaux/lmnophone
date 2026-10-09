@@ -4,6 +4,9 @@ The words Beaux read for his copy test (round 3 in [copy-test.md](copy-test.md))
 Kept as a record and for later testers, only if Beaux asks for them. It holds the current words only, with the names
 changed (Margaret uses the phone, Sam looks after it, Alex is the helper) so the tester doesn't know the real users.
 
+It tests words, not looks. The screen sketches are rough; the real layout and the black-and-white look are in
+[design-tokens.md](design-tokens.md). There is no colour on any Plainphone screen.
+
 ## How to run it (about 30 minutes)
 
 1. Find someone who has **never** seen Plainphone or these documents, and who is **not** technical. Ideally one
@@ -40,7 +43,7 @@ You are reading the screens of a new, simplified phone. Margaret uses the phone.
 SCREEN 1 (the main screen)
   10:42
   Thursday 8 October
-  [ Emergency 9-1-1 ]   (red button; small line inside it: "Opens the dialer")
+  [ Emergency 9-1-1 ]   (black button, white words; small line inside it: "Opens the dialer")
   (a gap)
   [ Phone ]
   [ Messages ]
@@ -214,7 +217,7 @@ SCREEN J (Turn Plainphone off). Title: Turn Plainphone off?
   To use Plainphone again later, Alex has to set it up again with a computer.
   Plainphone only turns off this way, with your PIN. A flat battery doesn't turn it off: when the phone starts again, Plainphone is back.
   [ Continue ]  Keep Plainphone on (link)
-  Then: "Are you sure? Plainphone will be turned off on Margaret's phone." [ Yes, turn it off ] (red)  then PIN
+  Then: "Are you sure? Plainphone will be turned off on Margaret's phone." [ Yes, turn it off ]  then PIN
   Then: "Last check. Once it's off, only Alex can turn it back on, using a computer. Keep the phone on and plugged in if you can. It takes a minute or two." [ Turn off now ]
 
 SCREEN K (wrong PIN). Title: Too many tries

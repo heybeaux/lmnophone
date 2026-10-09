@@ -99,22 +99,43 @@ drawer.
 
 **Rule (calm-home-screen, "Overdue monthly check at largest font"):** the time, date, Emergency and the notice line
 are a fixed block at the top; Messages, Phone and More are a fixed block at the bottom. Neither scrolls. Only the
-other apps scroll, in the space between. The notice line is at most 3 lines at 200%; if longer it ends with "…"
-(the full text is on the screen it opens). At 200% More drops its second line. Engineer: check both fixed blocks fit
-in the smallest supported screen height at 200%; if they don't, shrink the time first (it is sized in dp and doesn't
-grow with text size), never Emergency, Messages or Phone.
+other apps scroll, in the space between. The notice line is at most 3 lines; if longer it ends with "…" (the
+full text is on the screen it opens). At 200% More drops its second line. All text, the time included, grows with
+the text size and never shrinks. If the screen is short, the layout gives way in a fixed order (time and date on
+one line, notice cut to 2 lines, and so on), never shrinking Emergency, Messages, Phone or More. The order and the
+smallest supported screen (360 × 640 dp) are in
+[design-tokens.md, "When the screen is short"](design-tokens.md#when-the-screen-is-short).
 
-### The two notice lines
+### The notice line
 
-Only one shows at a time. If both apply, "Plainphone needs attention" wins.
+**Spec:** calm-home-screen (notice line, in the `add-copy-test-product-decisions` change); trusted-person-controls
+("Waiting changes").
 
-| Line (exact text) | When | Tapping it opens |
-|---|---|---|
-| **Ask {tp} to do the monthly phone check** | Only when the check is due (see the note below) | U2 |
-| **Plainphone needs attention** | Anything device-lockdown or approved-apps says shows it: a hide that failed, the safe fallback in use, a failed post-update check, and (recommended) unknown phone software | U3 |
+At most one line shows. When several apply, the **first** in this table wins:
 
-The spec text for the monthly line is "Ask [trusted person] to do the monthly phone check"; `{tp}` is that name.
-No full stop on either line: they are labels, not sentences.
+| # | Line (exact text) | When | Tapping it opens |
+|---|---|---|---|
+| 1 | **Plainphone needs attention** | Anything device-lockdown or approved-apps says shows it: a hide that failed, the safe fallback in use, a failed post-update check, a damaged running-time record, and (recommended) unknown phone software | U3 (which also shows a waiting change, if there is one) |
+| 2 | **Plainphone will turn off after {time}. Tap to cancel.** | Turning off is a waiting change (24 hours of the phone being on) | U9 |
+| 2 | **A change to trusted people is waiting. Tap to cancel.** | Adding, handing over or removing a trusted person is waiting | U9 |
+| 2 | **A change to how this phone is set up is waiting. Tap to cancel.** | Switching mode, or (self-managed) shortening the countdown or raising the daily limit, is waiting. *Wording proposed; the spec gives exact text only for the two above.* | U9 |
+| 3 | **Opening up in {n} minutes** · **Ready – tap to start** | Self-managed mode only: an elevation countdown is running, or has ended and is waiting for Start | U10 |
+| 4 | **Ask {tp} to do the monthly phone check** | Only when the check is due (see the note below). In self-managed mode: **Time for your monthly phone check** (*wording proposed; the spec says only that it asks the user*) | U2 |
+
+Only one waiting change can exist at a time (trusted-person-controls), so row 2 is never more than one line.
+
+`{tp}` is the trusted person's name. `{time}` is when the wait is expected to end, as "21:15 tomorrow" or "21:15
+Saturday". The wait counts only time while the phone is on, so U9 says the time can move later. Lines 1, 3 and 4
+are labels with no full stop. The waiting-change lines keep the spec's sentence punctuation.
+
+**Examples of the order:**
+- A turn-off is waiting and the monthly check is due: only the turn-off line shows (spec scenario "Turn-off pending
+  and monthly check overdue").
+- A turn-off is waiting and Plainphone needs attention: "Plainphone needs attention" shows. U3 shows the waiting
+  turn-off with its Cancel (spec scenario "Turn-off pending under 'needs attention'"). The waiting change and its
+  Cancel are also always in Phone settings (U7).
+- From the moment the wait ends and the change is actually being made, the line reads **Already in progress** and
+  has no Cancel (trusted-person-controls, "Commit"). Tapping it opens U9 in its "Already in progress" state.
 
 **The monthly line is rare.** It shows only when the check is due. Today's spec (approved-apps) says "more
 than 7 days past its due date"; the Lead is making the check event-driven if [PLA-24](/PLA/issues/PLA-24) shows
@@ -149,6 +170,12 @@ The packet now says when it appears.
   | A hide failed | "An app on this phone couldn't be tidied away." |
   | Failed post-update check | "A check after an update didn't finish." |
   | Safe fallback in use | "Plainphone is running in a simpler, safer way until it's looked at." |
+  | Running-time record couldn't be saved (trusted-person-controls, "Damaged, missing or inconsistent P") | "Plainphone couldn't save its timer, so any waiting change is paused." |
+- **If a change is waiting** (it's hidden from the home screen while this screen's line shows): a grey box under
+  the body, the same box as on U9:
+  **"Waiting: {what}"** (`{what}` as on U9: "Plainphone will turn off after {time}", "A change to trusted people",
+  "A change to how this phone is set up"), with the text link **Cancel this change** → U9b. No PIN. Once the change
+  is being made, the box reads "Already in progress" and has no link.
 - **Primary:** OK
 - **Secondary:** What should I do?
   → "Show this screen to {tp} or {helper} next time you see them. You don't need to do anything else."
@@ -286,6 +313,10 @@ Opens when the user taps a web link that doesn't belong to an added app, from Me
 Menu page: **Wi-Fi**, **Bluetooth**, **Sound**, **Brightness**, **Text size**, **Battery**.
 Each opens one simple screen. Android Settings never appears.
 
+**When a change is waiting**, the page starts with a grey box, above the rows: **"A change is waiting"**, second
+line `{what}` (as on U9), and `›`. It opens U9. This is the place the waiting change and its PIN-free Cancel can
+always be found (trusted-person-controls, "Where Cancel is reachable"), whatever the home screen's line shows.
+
 | Screen | Content | Primary |
 |---|---|---|
 | Wi-Fi | "Connected to {network}" or "Not connected". Below, nearby networks by name. Tapping one asks for "Wi-Fi password". A connected network shows **Forget this network**. | Connect (on the password screen) |
@@ -326,8 +357,110 @@ mandates it. It restates facts already in the design (no monitoring, no servers,
   {tp} can't read your messages, see where you are, or see what you do in your apps. Plainphone doesn't send
   information anywhere.
   Plainphone sends {tp} a text only when you choose to ask for an app or share a link, when the monthly check is
-  due, or if {tp}'s PIN is typed wrongly many times (so {tp} knows if someone is guessing it).
+  due, when Plainphone needs a check or a phone update is coming, when a big change (like turning Plainphone off)
+  starts, is cancelled or finishes, or if {tp}'s PIN is typed wrongly many times (so {tp} knows if someone is
+  guessing it).
 - **Primary:** OK
 - **Secondary:** Who to call for help → "{helper}: {helper phone}. {tp}: {tp phone}."
 - **Notes:** if any approved app is itself a tracking app (for example a family-location app), this screen does
   not cover it; that app's own notice applies. Plainphone makes no claim about what other apps send.
+
+## U9. A change is waiting
+
+**Spec:** trusted-person-controls ("Waiting changes take 24 hours, one at a time, and are recoverable": Cancel,
+while pending; Where Cancel is reachable; Commit); calm-home-screen (notice line, scenario "User cancels a pending
+turn-off").
+
+Opened from the home-screen notice line (row 2 in [U1](#the-notice-line)), from the box on U3, and from the box at
+the top of Phone settings (U7). **No PIN anywhere on these screens**: anyone holding the phone can cancel.
+
+`{who}` is the person who asked (in self-managed mode, "You"). `{everyone}` is every trusted person's name ("Sam",
+or "Sam and Jo"). `{change}` is one of:
+
+| Kind | `{change}` |
+|---|---|
+| Turning off | turn Plainphone off |
+| Adding a trusted person | add {name} as a trusted person |
+| Handing a role over | hand {name}'s place over to {new name} |
+| Removing a trusted person | remove {name} as a trusted person |
+| Switching mode | switch to you looking after your own phone · switch to {tp} looking after this phone |
+| Self-managed: shorter countdown | shorten the wait before opening up to {n} minutes |
+| Self-managed: higher daily limit | allow {n} openings a day |
+
+### U9a. The waiting change
+
+- **Title:** Plainphone will turn off (for turning off) · A change is waiting (for everything else)
+- **Box** (grey): **{who} asked to {change}.** Second line: "Asked {day} at {time}."
+- **Body:**
+  It will happen after {time}, once the phone has been on for 24 hours. Time while the phone is off doesn't
+  count, so this can move later.
+  Anyone holding this phone can cancel it. No PIN is needed. {everyone} will get a text either way.
+- **Primary:** Cancel this change → U9b
+- **Secondary:** Keep it waiting → back
+- **Notes:** for turning off, add one line before "Anyone…": "Until then, Plainphone works as usual." Only one
+  waiting change can exist, so this screen never lists two.
+
+### U9b. Confirm
+
+- **Title:** Cancel this change?
+- **Body:** {Who} won't {change}. {everyone} will get a text saying it was cancelled. To do it later, someone has to
+  ask again, and the 24 hours start again.
+- **Primary:** Yes, cancel it → U9d (or U9c if saving is slow)
+- **Secondary:** No, keep it waiting → U9a
+
+(In self-managed mode the body starts "This won't happen." instead of "{Who} won't {change}.")
+
+### U9c. Still cancelling (only if saving fails)
+
+The spec forbids showing "Cancelled" before it is saved. While saving, the primary button reads "Cancelling…"
+and can't be pressed. If saving fails:
+
+- **Title:** Still cancelling
+- **Body:** Plainphone couldn't save this yet and is trying again. The change won't happen while this is
+  unfinished.
+- **Primary:** OK → home. The notice line now reads "Cancelling…" and opens this screen until it's saved.
+
+### U9d. Cancelled
+
+- **Title:** Cancelled
+- **Body:** {Who} won't {change}. {everyone} will get a text about it.
+- **Primary:** OK → home. The notice line has gone.
+- **Notes:** "will get" and not "got": the texts are queued, and delivery doesn't change anything (trusted-person
+  controls).
+
+### U9e. Already in progress
+
+From the moment the wait ends and Plainphone starts making the change, Cancel is no longer offered.
+
+- **Title:** Already in progress
+- **Body:** This change is being made now. It can't be cancelled at this point.
+  For turning off: "Plainphone is turning off now. It can't be cancelled at this point. Calls, texts and Emergency
+  keep working."
+- **Primary:** OK
+
+**If Plainphone cancels it itself** (for example, a PIN it depended on was changed), the notice line simply goes
+away and everyone is texted, as the spec says. The user sees nothing else.
+
+## U10. Opening up (self-managed mode only)
+
+**Spec:** trusted-person-controls ("Elevation in self-managed mode is a single-use grant"); calm-home-screen
+(notice line, row 3).
+
+These are the two screens behind the home-screen line while a countdown runs. How the user starts an opening (PIN,
+choosing the Play Store or full phone settings) belongs with the self-managed flows, which aren't drawn yet. `{kind}`
+is "the Play Store" or "full phone settings". `{left}` is how many openings are left today.
+
+### U10a. Counting down (line: "Opening up in {n} minutes")
+
+- **Title:** Opening up in {n} minutes
+- **Body:** {Kind} opens when the countdown ends. Then you'll have 5 minutes to tap Start. If you don't, it closes
+  again and doesn't count. Your phone works as usual meanwhile. Restarting the phone stops the countdown.
+- **Primary:** OK → home
+- **Secondary:** Stop the countdown → home. Nothing is used up.
+
+### U10b. Ready (line: "Ready – tap to start")
+
+- **Title:** Ready to open {kind}
+- **Body:** Tap Start within {m} minutes. This uses 1 of your {left} openings left today.
+- **Primary:** Start → opens {kind}
+- **Secondary:** Not now → home. If Start isn't tapped in time, it closes and doesn't count.
