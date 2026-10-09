@@ -608,3 +608,37 @@ replayed requests, stale state, exact PREPARING scope, final-boundary clock/cred
 epoch repair, permission/readback failures and crashes before/after the joint write. JVM fakes establish
 the pure-policy contract, not Android storage atomicity, package-event completeness or hidden-package
 permission support. Those require lane D integration and independent verification.
+
+## Updater final-check seam (runtime path remains unavailable)
+
+`UpdateCommitPolicy.propose(record, ownedGrantId, credentials, pinnedSelf, installedVersionCode,
+stagedFacts, clockReading)` is the pure-policy seam for lane D's updater. It checks self-managed
+person/generation/structure, exact Update kind/ID, closed package access/journal, valid staged APK
+signature, exact pinned package and signer set, strictly increasing version, the grant's SHA-256/version
+binding, boot and strict deadline. `StagedApkFacts` must describe the exact bytes in the immutable
+installer session, freshly verified at the final commit boundary. Neither field values nor the result
+are authority. `CONSUMED` is only a proposed replacement state; the function writes and installs nothing.
+
+The Android Platform Engineer owns the remaining integration under the D1 gate. Required actions:
+
+- Define the actual installer boundary and failure/recovery protocol before enabling Update. It must
+  revalidate controller-owned process-local grant authority (not a restored record or caller ID), fresh
+  staged/session bytes and current policy/credentials/boot/deadline at the actual installer commit.
+- Serialize durable one-use consumption, receipt/audit and installer submission; demonstrate how the
+  adapter prevents a pause, expiry, replay or crash from submitting with previously consumed authority.
+  A saved intent followed by a later PackageInstaller call is insufficient. A storage transaction alone
+  does not establish atomicity with Android. If the required boundary cannot be proved, keep Update
+  unavailable and report the exact limitation to the Lead.
+- Preserve spent debits and the fixed deadline after every failure. Closing sessions ends package access
+  only; startup always revokes temporary authority. Never recover an Update grant as retry authority.
+- Verify the existing updater rules separately: local host/port only, no redirects, 100 MB/2 minute limits,
+  private staging, exact package, pinned signer, newer version, session package binding, post-update
+  self-check, and no rollback promise. These policy facts do not implement download/signature checking.
+- Add adapter boundary tests for file/session substitution, hash/version/signer/package changes, delayed
+  staging, pauses before and after consumption, duplicate submissions, credential changes, both crash
+  sides, reboot, startup, effect failures and installer readbacks. Request policy-owner changes through
+  a separate policy slice if the proven adapter protocol needs a refined seam.
+
+`UpdateCommitPolicyTest` tests the pure facts/deadline/credential/one-use proposals. It does not test an
+installer or prove process ownership. `ElevationController.prepare(Update)` still returns null, including
+when the approval port is present. Do not expose an Update UI action based on this seam alone.
