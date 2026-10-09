@@ -1,0 +1,13 @@
+## Removal: does grey outlive Plainphone?
+$ keys
+enabled=1 mode=0
+colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]] 
+$ adb shell dpm remove-active-admin com.plainphone.spike.grey/.AdminReceiver
+Success: Admin removed ComponentInfo{com.plainphone.spike.grey/com.plainphone.spike.grey.AdminReceiver}
+$ adb uninstall com.plainphone.spike.grey
+Success
+$ keys (after uninstall)
+enabled=1 mode=0
+colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]] 
+$ adb shell settings put secure accessibility_display_daltonizer_enabled 0   (clean-up)
+colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]] 

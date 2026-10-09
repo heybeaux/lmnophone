@@ -1,0 +1,55 @@
+## Q4. What else WRITE_SECURE_SETTINGS lets Plainphone change, and do Device Owner restrictions still hold? (API 35, emulator-5650, Plainphone = Device Owner + grant)
+### b) DISALLOW_INSTALL_UNKNOWN_SOURCES vs install_non_market_apps
+$ cmd get secure install_non_market_apps
+secure install_non_market_apps=1
+$ cmd restrict-add no_install_unknown_sources
+OK added no_install_unknown_sources
+$ cmd put secure install_non_market_apps 1
+put secure install_non_market_apps=1 -> true, now 0
+$ cmd restrict-clear no_install_unknown_sources
+OK cleared no_install_unknown_sources
+### c) DISALLOW_SHARE_LOCATION vs location_mode
+$ cmd get secure location_mode
+secure location_mode=3
+$ cmd restrict-add no_share_location
+OK added no_share_location
+$ cmd get secure location_mode
+secure location_mode=0
+$ cmd put secure location_mode 3
+put secure location_mode=3 -> true, now 0
+$ cmd restrict-clear no_share_location
+OK cleared no_share_location
+### d) Keys no restriction guards (each written by the app, then restored from adb)
+$ cmd put secure enabled_accessibility_services com.example.fake/.Svc   (was null)
+put secure enabled_accessibility_services=com.example.fake/.Svc -> true, now com.example.fake/.Svc
+$ cmd put secure accessibility_enabled 1   (was 0)
+put secure accessibility_enabled=1 -> true, now 1
+$ cmd put secure default_input_method com.example.fake/.Ime   (was com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME)
+put secure default_input_method=com.example.fake/.Ime -> true, now com.example.fake/.Ime
+$ cmd put global verifier_verify_adb_installs 0   (was 0)
+put global verifier_verify_adb_installs=0 -> true, now 0
+$ cmd put secure accessibility_display_inversion_enabled 1   (was null)
+put secure accessibility_display_inversion_enabled=1 -> true, now 1
+### e) User-side ways to turn grey off
+$ adb shell settings get secure sysui_qs_tiles
+internet,bt,flashlight,dnd,alarm,airplane,controls,wallet,rotation,qr_code_scanner,battery,cast,screenrecord,custom(com.google.android.gms/.nearby.sharing.SharingTileService),mictoggle,cameratoggle,custom(com.google.android.permissioncontroller/com.android.permissioncontroller.permission.service.v33.SafetyCenterQsTileService)
+$ adb shell settings get secure accessibility_shortcut_target_service / accessibility_button_targets
+
+null
+### a) DISALLOW_DEBUGGING_FEATURES (adb drops while it is set; the app runs the probe in one go and logs to PPGREY)
+$ adb shell settings put global development_settings_enabled 0
+$ cmd dbg-probe
+10-08 21:35:49.885  4507  4507 I PPGREY  : cmd [dbg-probe] -> started; read logcat -s PPGREY when adb is back
+10-08 21:35:52.897  4507  4820 I PPGREY  : dbg-probe restricted: adb_enabled=0 development_settings_enabled=0
+10-08 21:35:52.903  4507  4820 I PPGREY  : dbg-probe restricted: put global development_settings_enabled=1 -> true, now 1
+10-08 21:35:52.903  4507  4820 I PPGREY  : dbg-probe restricted: put global adb_enabled=1 -> true, now 0
+10-08 21:35:53.912  4507  4820 I PPGREY  : dbg-probe cleared: adb_enabled=0
+10-08 21:35:53.913  4507  4820 I PPGREY  : dbg-probe cleared: put global adb_enabled=1 -> true, now 1
+$ adb shell settings get global adb_enabled / development_settings_enabled (after)
+1
+1
+$ dumpsys user restrictions
+    Effective restrictions:
+      no_add_private_profile
+      no_add_managed_profile
+      no_add_clone_profile

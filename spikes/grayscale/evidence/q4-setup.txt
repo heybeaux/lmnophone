@@ -1,0 +1,7 @@
+## Fresh -wipe-data boot (adb had been switched off by the first Q4 attempt). Setup repeated:
+Performing Streamed Install
+Success
+Success: Device owner set to package com.plainphone.spike.grey/.AdminReceiver
+Active admin set to component com.plainphone.spike.grey/.AdminReceiver
+version=grey-1(1) deviceOwner=true WRITE_SECURE_SETTINGS=true lockTask=0 accessibility_display_daltonizer_enabled=null accessibility_display_daltonizer=null
+putInt mode=true enabled=true -> accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0

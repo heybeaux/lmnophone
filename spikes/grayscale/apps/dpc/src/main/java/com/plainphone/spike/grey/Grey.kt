@@ -72,6 +72,24 @@ object Grey {
                 "setPermissionGrantState(WRITE_SECURE_SETTINGS, GRANTED) -> $r; hasGrant=${hasGrant(c)}"
             }
             "dpm-secure" -> { dpm.setSecureSetting(admin, a1!!, a2!!); "setSecureSetting $a1=$a2 -> now ${get(c, "secure", a1)}" }
+            // Q4: does the grant get past DISALLOW_DEBUGGING_FEATURES? Adding it turns adb off, so this runs
+            // in one go: add, try writes, clear, then switch adb back on. Results go to logcat (PPGREY).
+            "dbg-probe" -> {
+                Thread {
+                    val g = { k: String -> Settings.Global.getString(c.contentResolver, k) }
+                    dpm.addUserRestriction(admin, "no_debugging_features"); Thread.sleep(3000)
+                    log("dbg-probe restricted: adb_enabled=${g("adb_enabled")} development_settings_enabled=${g("development_settings_enabled")}")
+                    for (k in listOf("development_settings_enabled", "adb_enabled")) {
+                        val r = try { Settings.Global.putString(c.contentResolver, k, "1").toString() } catch (t: Throwable) { "${t.javaClass.simpleName}: ${t.message}" }
+                        log("dbg-probe restricted: put global $k=1 -> $r, now ${g(k)}")
+                    }
+                    dpm.clearUserRestriction(admin, "no_debugging_features"); Thread.sleep(1000)
+                    log("dbg-probe cleared: adb_enabled=${g("adb_enabled")}")
+                    val r = Settings.Global.putString(c.contentResolver, "adb_enabled", "1")
+                    log("dbg-probe cleared: put global adb_enabled=1 -> $r, now ${g("adb_enabled")}")
+                }.start()
+                "started; read logcat -s PPGREY when adb is back"
+            }
             "restrict-add" -> { dpm.addUserRestriction(admin, a1!!); "OK added $a1" }
             "restrict-clear" -> { dpm.clearUserRestriction(admin, a1!!); "OK cleared $a1" }
             "lt-packages" -> {
