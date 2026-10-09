@@ -20,6 +20,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import androidx.compose.ui.semantics.SemanticsProperties
 import org.junit.Rule
 import org.junit.Test
 import org.plainphone.ui.home.HomeApp
@@ -64,6 +66,21 @@ class HomeScreenTest {
         assertEquals(listOf(HomeEvent.OpenMessages, HomeEvent.OpenPhone, HomeEvent.OpenMore,
             HomeEvent.OpenApp("app-1"), HomeEvent.OpenNotice), events)
     }
+    @Test fun accessibilityScrollDirectionMatchesVisualOrder() {
+        compose.setContent {
+            PlainphoneTheme {
+                Box(Modifier.size(360.dp, 560.dp)) {
+                    HomeScreen(HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct",
+                        (1..20).map { HomeApp("app-$it", "App $it") }, HomeNotice.ModeChangeWaiting), {})
+                }
+            }
+        }
+        val range = compose.onNodeWithTag("home-apps").fetchSemanticsNode()
+            .config[SemanticsProperties.VerticalScrollAxisRange]
+        assertFalse("Earlier visual apps must use normal accessibility scroll direction", range.reverseScrolling)
+        compose.onNodeWithText("App 20").assertIsDisplayed()
+    }
+
     @Test fun cancellingWithDuplicateIdsRemainsUsable() {
         val events = mutableListOf<HomeEvent>()
         compose.setContent {
