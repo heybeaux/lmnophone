@@ -7,7 +7,12 @@ package org.plainphone.policy
  * until lane D implements and independently verifies this contract.
  */
 interface ModeSwitchCommitter : PeopleChangeCommitter {
-    /** Exact combined record instance shared by SessionController and ElevationController. */
+    /**
+     * Exact combined record instance shared by SessionController and ElevationController, constructed
+     * with ElevationStore(theSameWaitingChangeStore). This binding is required, immutable, and checked
+     * by the executor. Its durable operation-aware gate survives ordinary controller cleanup and is
+     * restored from waiting storage before any executor pass after startup. No alternate waiting view.
+     */
     val elevationStore: ElevationStore
 
     /**
@@ -28,7 +33,7 @@ interface ModeSwitchCommitter : PeopleChangeCommitter {
      * Terminal COMPLETED or CANCELLED write plus fixed-contact receipts/audit, comparing the same
      * credential/waiting/elevation revisions as applyModePatch. expectedElevation must be clear of
      * temporary authority. Preserve it and its entire ledger. False leaves the journal and latch
-     * held; success permits the executor to release its process-local revocation latch. Rollback
+     * held; success makes the durable operation terminal and permits release of the local cleanup latch. Rollback
      * intent still uses move, since writing a restrictive direction never releases authority.
      */
     fun finishMode(expectedCredentials: CredentialState, expectedWaiting: WaitingState,

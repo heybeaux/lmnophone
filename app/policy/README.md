@@ -832,10 +832,25 @@ committer implements `ModeSwitchCommitter` and its effects implement
 ### Mode-switch completion and rollback adapter contract
 
 Use one non-reentrant serialized coordinator and the **same** `ElevationStore`
-instance for supervised sessions, elevations and `ModeSwitchCommitter`. The
-shared journal includes both supervised package access and elevation authority.
-Never construct a new ledger for a switch. Missing/corrupt ledger data holds the
-operation until conservative elevation startup repair succeeds.
+instance for supervised sessions, elevations and `ModeSwitchCommitter`. Construct
+it as `ElevationStore(theSameWaitingChangeStore)`; the mode executor rejects an
+unbound store or one bound to another waiting source. The shared journal includes
+both supervised package access and elevation authority.
+
+The access gate combines an ordinary cleanup latch with a fresh read of the
+**durable waiting operation**. A COMMITTING or ROLLING_BACK mode switch holds the
+gate even when session/elevation startup or tick clears its own cleanup latch.
+This also restores the gate before the first executor pass after process start.
+An unreadable/missing waiting record holds it until reconciliation. Pending waits
+keep ordinary session/elevation rules. Only a durable terminal state (or successful
+lost-record reconciliation) clears the operation's contribution to the gate.
+
+Initial provisioning must durably create an empty combined elevation record in
+**both modes**, including supervised setup. Never initialize over an existing or
+damaged ledger during startup, migration or switching. Missing/corrupt ledger
+data in normal operation holds the switch until conservative elevation startup
+repair succeeds. Lane D must test initial supervised setup followed by a switch
+and immediate elevation, initial self-managed setup, and restart persistence.
 
 A forward pass checks request, storage generation, direction, mode and structure:
 
@@ -854,7 +869,8 @@ A forward pass checks request, storage generation, direction, mode and structure
    untouched and the waiting record COMMITTING. Never use people-only applyPatch.
 5. Read back the marker. A later pass rechecks/revokes temporary authority, then
    `finishMode` writes COMPLETED plus fixed-contact receipts, comparing all three
-   records again. Only terminal success releases the local revocation latch.
+   records again. Terminal success releases the mode gate and executor cleanup
+   latch; ordinary controller cleanup cannot release the mode gate.
 
 The marker's historical name covers both people and mode patches. Preserve it
 through every PIN/recovery/counter write. Replay recognizes request ID, waiting

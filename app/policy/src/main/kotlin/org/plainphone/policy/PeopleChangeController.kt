@@ -144,7 +144,8 @@ class PeopleChangeController(
     }
 
     private fun supported(op: WaitingOperation): Boolean = op.peoplePatch != null ||
-        (op.modePatch != null && committer is ModeSwitchCommitter && effects is ModeSwitchEffects)
+        (op.modePatch != null && committer is ModeSwitchCommitter && effects is ModeSwitchEffects &&
+            committer.elevationStore.waitingChanges === store)
 
     private sealed interface ModeCleanup {
         data class Ready(val record: ElevationRecord) : ModeCleanup
@@ -155,7 +156,7 @@ class PeopleChangeController(
     private fun clearModeAuthority(before: WaitingState, current: CredentialState): ModeCleanup {
         val port = (committer as ModeSwitchCommitter).elevationStore
         val modeEffects = effects as ModeSwitchEffects
-        port.revocationPending = true // Both live controllers share this fail-closed latch.
+        port.revocationPending = true // Local cleanup latch; the durable operation independently holds the gate.
         fun failure(reason: PeopleChangeFailure) = ModeCleanup.Failed(failed(reason))
         if (!stillCurrent(before, current)) return failure(PeopleChangeFailure.STATE_CHANGED)
         val old = port.read() ?: return failure(PeopleChangeFailure.ELEVATION_READ)
