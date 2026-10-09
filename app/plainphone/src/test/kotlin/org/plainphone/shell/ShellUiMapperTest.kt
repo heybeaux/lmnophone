@@ -30,7 +30,7 @@ import org.plainphone.ui.user.MoreMode
 class ShellUiMapperTest {
     private val now = ZonedDateTime.of(2026, 10, 8, 10, 42, 0, 0, ZoneId.of("Europe/London"))
     private val base = PhoneSnapshot(
-        now = now, mode = Mode.TRUSTED, trustedPeople = listOf("Sam", "Jo"), requestRecipient = "Sam",
+        now = now, userName = "Alex", mode = Mode.TRUSTED, trustedPeople = listOf("Sam", "Jo"), requestRecipient = "Sam",
         selfManagedWaitMinutes = 10, apps = listOf(ApprovedApp("a.clock", "Clock"), ApprovedApp("a.maps", "Maps")),
         notices = NoticeInput(Mode.TRUSTED), requests = emptyList(),
     )
