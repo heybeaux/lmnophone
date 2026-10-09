@@ -468,8 +468,8 @@ class JointAuthorityStore internal constructor(
 
     /** The entry keeps its original `intent-clear-` file name although it can also hold REQUESTED. */
     private fun intentRecords(requestId: String): Pair<AtomicRecord, AtomicRecord> {
-        val hash = MessageDigest.getInstance("SHA-256").digest(requestId.toByteArray()).joinToString("") { "%02x".format(it) }
-        return AtomicRecord(dir, "intent-clear-$hash", SCHEMA) to AtomicRecord(dir, "intent-requested-$hash", SCHEMA)
+        val hash = intentHash(requestId)
+        return AtomicRecord(dir, "$INTENT_ENTRY$hash", SCHEMA) to AtomicRecord(dir, "$INTENT_MARKER$hash", SCHEMA)
     }
 
     private fun intentPayload(tag: Byte, requestId: String) = byteArrayOf(tag) + requestId.toByteArray()
@@ -501,29 +501,73 @@ class JointAuthorityStore internal constructor(
     /**
      * Explicit startup step, run before any controller reads this store. A record written by a
      * schema 1-3 store reads as missing until it is migrated. Migration reads it with the old
-     * rules, converts every section (unchanged formats come out byte for byte), checks the result
-     * decodes, and commits it with the normal fence protocol. The first new copy goes over a file
-     * that does not hold the old record, and the first current fence is the commit point. Until
-     * then the old record stays readable to a retry; after it, the old files are never read again.
-     * True when the store holds a readable current record. An old record that does not decode is
-     * left untouched and refused.
+     * rules, converts every section to its canonical current encoding, checks the result decodes,
+     * and commits it with the normal protocol. Values are kept; bytes are kept only where the old
+     * bytes were already canonical (unordered maps and sets, such as several people, come out
+     * sorted, which keeps the byte compare-and-set checks exact). The first new copy goes over a
+     * file that does not hold the old record, so the old record stays readable to a retry until
+     * both new copies agree; after that the old files are never read again. Schema 3 cancel
+     * intents are rewritten in the current format too (see [migrateIntents]).
+     *
+     * True only when the migration is complete: both copies and both fences hold one readable
+     * current record and no old intent is left. False means "not ready; run again later". The
+     * record may already be current, but a caller must not act on it until a run returns true. An
+     * old record that does not decode is left untouched and refused.
      */
     fun migrate(): Boolean = coordinator.run(false) {
+        val intents = migrateIntents()
+        migrateRecord() && intents
+    }
+
+    /** Callers hold the coordinator. */
+    private fun migrateRecord(): Boolean {
         // Both new copies may already agree before any new fence is written; that record is current.
         val loaded = load()
         if (loaded != null || fenceA.read() != null || fenceB.read() != null) {
-            val current = loaded ?: return@run false
-            if (listOf(copyA, copyB, fenceA, fenceB).all { it.read() != null }) return@run true
-            // Finish an interrupted migration, so no old fence or copy is left beside one current fence.
-            if (current.sequence == Long.MAX_VALUE) return@run false
-            return@run save(current, Snapshot(current.sequence + 1, current.sections))
+            val current = loaded ?: return false
+            if (!readable(current)) return false
+            if (complete(current)) return true
+            // Finish an interrupted migration, so no old fence or copy is left beside the current record.
+            if (current.sequence == Long.MAX_VALUE) return false
+            val next = Snapshot(current.sequence + 1, current.sections)
+            return save(current, next) && complete(next)
         }
-        val legacy = LegacyAuthority.load(dir) ?: return@run false
-        if (legacy.sequence == Long.MAX_VALUE) return@run false
-        val next = Snapshot(legacy.sequence + 1, LegacyAuthority.convert(legacy, matchingInventory) ?: return@run false)
-        if (!readable(next)) return@run false
+        val legacy = LegacyAuthority.load(dir) ?: return false
+        if (legacy.sequence == Long.MAX_VALUE) return false
+        val next = Snapshot(legacy.sequence + 1, LegacyAuthority.convert(legacy, matchingInventory) ?: return false)
+        if (!readable(next)) return false
         val keepB = "authority-b" in legacy.holders
-        save(null, next, spare = if (keepB) copyA else copyB)
+        return save(null, next, spare = if (keepB) copyA else copyB) && complete(next)
+    }
+
+    /** Both copies and both fences hold exactly [s]. */
+    private fun complete(s: Snapshot): Boolean {
+        val bytes = s.encode(); val fence = fenceBytes(s.sequence)
+        return copyA.read()?.contentEquals(bytes) == true && copyB.read()?.contentEquals(bytes) == true &&
+            fenceA.read()?.contentEquals(fence) == true && fenceB.read()?.contentEquals(fence) == true
+    }
+
+    /**
+     * Rewrites every cancel intent the schema 3 store left (see [LegacyAuthority.intentRequests])
+     * as a current entry: REQUESTED while any marker exists for the request, else CLEAR, then a
+     * current marker if one existed. A crash between the two writes still reads REQUESTED, from
+     * the old marker. Old files that name no request of their own are left alone and read
+     * UNKNOWN, so nothing is guessed CLEAR. True when no rewritable old intent is left. Callers
+     * hold the coordinator.
+     */
+    private fun migrateIntents(): Boolean {
+        val requests = LegacyAuthority.intentRequests(dir) ?: return false
+        var done = true
+        for (requestId in requests) {
+            val (entry, marker) = intentRecords(requestId)
+            val requested = marker.exists()
+            val tag = if (requested) REQUESTED_TAG else CLEAR_TAG
+            fun rewrite(record: AtomicRecord, payload: ByteArray) = record.read()?.contentEquals(payload) == true || record.write(payload) {}
+            val entrySaved = rewrite(entry, intentPayload(tag, requestId))
+            val markerSaved = !requested || (entrySaved && rewrite(marker, intentPayload(REQUESTED_TAG, requestId)))
+            done = done && entrySaved && markerSaved
+        }
+        return done
     }
 
     /**
@@ -740,6 +784,8 @@ class JointAuthorityStore internal constructor(
         const val ATTEMPTS = 16
         const val CLEAR_TAG: Byte = 'C'.code.toByte()
         const val REQUESTED_TAG: Byte = 'R'.code.toByte()
+        const val INTENT_ENTRY = "intent-clear-"
+        const val INTENT_MARKER = "intent-requested-"
         val coordinators = ConcurrentHashMap<String, Coordinator>()
         /** Creates [dir] if needed so symlinks resolve; falls back to the normalized absolute path. */
         fun canonical(dir: File): String = try {
@@ -749,6 +795,10 @@ class JointAuthorityStore internal constructor(
         }
     }
 }
+
+/** The hex SHA-256 of [requestId] that names its cancel-intent files, in every schema since 3. */
+internal fun intentHash(requestId: String): String =
+    MessageDigest.getInstance("SHA-256").digest(requestId.toByteArray()).joinToString("") { "%02x".format(it) }
 
 /** A single checksummed file replaced by synced temp-file rename, then read back. */
 internal class AtomicRecord(private val dir: File, name: String, private val schema: Int) {

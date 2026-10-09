@@ -16,10 +16,13 @@ internal class LegacyRecord(val schema: Int, val sequence: Long, val sections: L
  * Read-only access to records written before schema 4. Those stores wrote copy A, copy B, then
  * both fences, and served the newest valid copy at or above the fence. Schema 1 had four
  * sections (no approvals) and a ledger-only elevation; schemas 1-2 had no people patch in
- * waiting operations. Nothing here writes; [JointAuthorityStore.migrate] does that.
+ * waiting operations. Schema 3 also kept cancel intents. Nothing here writes;
+ * [JointAuthorityStore.migrate] does that.
  */
 internal object LegacyAuthority {
     private val copies = listOf("authority-a", "authority-b")
+    /** Cancel intents first appeared in schema 3; schema 4 changed their payload. */
+    private const val INTENT_SCHEMA = 3
 
     fun load(dir: File): LegacyRecord? {
         for (schema in 3 downTo 1) {
@@ -39,7 +42,27 @@ internal object LegacyAuthority {
         return null
     }
 
-    /** Current-format sections holding the same values, or null if any old section does not decode. */
+    /**
+     * Request ids with a cancel intent in the schema 3 format: an entry holding the bare request
+     * id (CLEAR) and a separate marker holding it (REQUESTED). A file counts only if it decodes as
+     * schema 3 and its content hashes to its own name. Null when the directory can't be listed.
+     */
+    fun intentRequests(dir: File): Set<String>? {
+        val files = dir.listFiles() ?: return null
+        return files.mapNotNull { file ->
+            val prefix = listOf("intent-clear-", "intent-requested-").firstOrNull { file.name.startsWith(it) && file.name.endsWith(".rec") }
+                ?: return@mapNotNull null
+            val name = file.name.removeSuffix(".rec")
+            val id = AtomicRecord(dir, name, INTENT_SCHEMA).read()?.let { String(it) } ?: return@mapNotNull null
+            // The name is the hash of the id's bytes, so a match also proves the bytes round-trip.
+            id.takeIf { intentHash(it) == name.removePrefix(prefix) }
+        }.toSet()
+    }
+
+    /**
+     * Current-format sections holding the same values, in their canonical encoding (unordered maps
+     * and sets sorted), or null if any old section does not decode.
+     */
     fun convert(r: LegacyRecord, matchingInventory: BuildInventory?): List<ByteArray>? {
         val s = r.sections
         val credentials = AuthorityCodec.decodeCredentials(s[Section.CREDENTIALS.ordinal]) ?: return null
