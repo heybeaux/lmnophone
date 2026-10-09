@@ -2,6 +2,7 @@
 package org.plainphone.links
 
 import org.plainphone.core.NeverHideList
+import org.plainphone.core.CertDigest
 import org.plainphone.core.PackageName
 import kotlin.test.*
 
