@@ -22,7 +22,7 @@ The idea the copy must get across, in this order:
 |---|---|---|
 | **Title** | Open the Play Store for 10 minutes | Open full phone settings for 5 minutes |
 | **Body, block 1** | Stay with the phone until you tap Done. | Stay with the phone until you tap Done. |
-| **Body, block 1b** (right under it) | Keep the phone in your hands. Don't give it to {user} while the Play Store is open: it can show web pages, so the phone isn't simple for these minutes. | Keep the phone in your hands. Don't give it to {user} while settings are open: they can show web pages and undo Plainphone's settings. |
+| **Body, block 1b** (right under it) | Keep the phone in your hands. Don't give it to {user} while the Play Store is open: it can show web pages, so the phone isn't simple for these minutes. | Keep the phone in your hands. Don't give it to {user} while settings are open: they can show web pages and change things Plainphone relies on. |
 | **Body, block 2** | Search for the app, tap **Install**, and wait until it says **Open**. Then go back to the home screen (swipe up from the bottom of the screen). Plainphone checks the phone, then shows **Done**. | Make the change, then go back to the home screen (swipe up from the bottom of the screen). Plainphone checks the phone, then shows **Done**. |
 | **Body, block 2b** | The Play Store also closes if the screen turns off, a call comes in, or after 10 minutes. | Settings also closes if the screen turns off, a call comes in, or after 5 minutes. |
 | **Body, block 4** (only for Settings) | — | Some changes get put back afterwards, such as the texting app or the keyboard. Ordinary changes, like ringtone or Wi-Fi, are kept. |
