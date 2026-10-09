@@ -53,19 +53,21 @@ data class PersonCredential(
 enum class CredentialChannel { PIN, RECOVERY }
 data class LockoutNotice(val person: TrustedPersonId, val channel: CredentialChannel, val revision: Long)
 
-class CredentialState(val mode: Mode, people: Map<TrustedPersonId, PersonCredential>, val revision: Long = 0, val structureGeneration: Long = 0, pendingNotices: Set<LockoutNotice> = emptySet(), val recoveryProfile: RecoveryProfile? = null) {
+class CredentialState(val mode: Mode, people: Map<TrustedPersonId, PersonCredential>, val revision: Long = 0, val structureGeneration: Long = 0, pendingNotices: Set<LockoutNotice> = emptySet(), val recoveryProfile: RecoveryProfile? = null,
+    val appliedPeopleChange: AppliedPeopleChange? = null) {
     val pendingNotices: Set<LockoutNotice> = immutableSet(pendingNotices)
     val people: Map<TrustedPersonId, PersonCredential> = Collections.unmodifiableMap(people.toMap())
     init {
         require(people.size in 1..2 && (mode == Mode.TRUSTED || people.size == 1))
         require(revision >= 0 && structureGeneration >= 0)
         require(recoveryProfile == null || recoveryProfile.holderUserIds.keys == people.keys)
+        require(appliedPeopleChange == null || appliedPeopleChange.structureGeneration <= structureGeneration)
     }
     fun replacing(person: TrustedPersonId, credential: PersonCredential, notice: CredentialChannel? = null): CredentialState {
         require(person in people)
         val nextRevision = Math.addExact(revision, 1)
         val notices = pendingNotices + if (notice == null) emptySet() else setOf(LockoutNotice(person, notice, nextRevision))
-        return CredentialState(mode, people + (person to credential), nextRevision, structureGeneration, notices, recoveryProfile)
+        return CredentialState(mode, people + (person to credential), nextRevision, structureGeneration, notices, recoveryProfile, appliedPeopleChange)
     }
 }
 

@@ -14,7 +14,7 @@ class WaitingIdentity(val requestId: String, val cancelCode: String) {
 /** Reserve IDs and cancel codes durably; neither may ever be reused, including after abandoned preparation. */
 fun interface WaitingIdentitySource { fun reserve(): WaitingIdentity }
 
-enum class WaitingEvent { STARTED, CANCELLED_ON_PHONE, DEPENDENCY_CHANGED, COMMITTING, COMPLETED, SKIPPED }
+enum class WaitingEvent { STARTED, CANCELLED_ON_PHONE, DEPENDENCY_CHANGED, COMMITTING, COMPLETED, SKIPPED, ROLLING_BACK, CANCELLED_AFTER_ROLLBACK }
 class WaitingText(val key: String, val event: WaitingEvent, val operation: WaitingOperation,
     recipientGenerations: Map<TrustedPersonId, Long>,
     recipientContacts: Map<TrustedPersonId, PersonContact?> = recipientGenerations.keys.associateWith { null }) {
@@ -34,6 +34,8 @@ class WaitingOperation(
     val skipperGeneration: Long? = null,
     val peoplePatch: TrustedPersonPatch? = null,
     recipientContacts: Map<TrustedPersonId, PersonContact?> = recipientGenerations.keys.associateWith { null },
+    val stopper: TrustedPersonId? = null,
+    val stopperGeneration: Long? = null,
 ) {
     init {
         require(generation >= 0 && structureGeneration >= 0)
@@ -44,6 +46,9 @@ class WaitingOperation(
         require(restoredSteps == 0 || phase == WaitingPhase.COMMITTING || phase == WaitingPhase.COMPLETED)
         require(recipientGenerations.isNotEmpty() && recipientGenerations.values.all { it >= 0 })
         require(recipientContacts.keys == recipientGenerations.keys)
+        require((stopper == null) == (stopperGeneration == null))
+        require(stopperGeneration == null || (stopperGeneration >= 0 && peoplePatch != null &&
+            phase in setOf(WaitingPhase.ROLLING_BACK, WaitingPhase.CANCELLED)))
         require(peoplePatch == null || (mode == Mode.TRUSTED && restoredSteps == 0 &&
             peoplePatch.starter == starter && peoplePatch.structureGeneration == structureGeneration &&
             peoplePatch.dependencyGenerations[starter] == generation))
@@ -68,9 +73,12 @@ class WaitingOperation(
         dependencyGenerations.all { (person, generation) -> current.people[person]?.generation == generation } &&
         (peoplePatch == null || current.recoveryProfile != null)
     internal fun withSkipper(person: TrustedPersonId, generation: Long) = WaitingOperation(identity, starter, this.generation,
-        structureGeneration, mode, startedAt, WaitingPhase.COMMITTING, recipientGenerations, 0, person, generation, peoplePatch, recipientContacts)
-    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, restoredSteps, skipper, skipperGeneration, peoplePatch, recipientContacts)
-    internal fun withRestoredSteps(count: Int) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, count, skipper, skipperGeneration, peoplePatch, recipientContacts)
+        structureGeneration, mode, startedAt, WaitingPhase.COMMITTING, recipientGenerations, 0, person, generation, peoplePatch, recipientContacts, stopper, stopperGeneration)
+    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, restoredSteps, skipper, skipperGeneration, peoplePatch, recipientContacts, stopper, stopperGeneration)
+    internal fun withRestoredSteps(count: Int) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, count, skipper, skipperGeneration, peoplePatch, recipientContacts, stopper, stopperGeneration)
+    internal fun withRollback(person: TrustedPersonId, generation: Long) = WaitingOperation(identity, starter, this.generation,
+        structureGeneration, mode, startedAt, WaitingPhase.ROLLING_BACK, recipientGenerations, restoredSteps,
+        skipper, skipperGeneration, peoplePatch, recipientContacts, person, generation)
 }
 class WaitingState(val revision: Long = 0, val operation: WaitingOperation? = null, texts: List<WaitingText> = emptyList(),
     val storageGeneration: String = "initial", recoveryReceipts: List<RecoveryReceipt> = emptyList()) {
@@ -82,7 +90,12 @@ class WaitingState(val revision: Long = 0, val operation: WaitingOperation? = nu
         WaitingState(revision, operation, texts, storageGeneration, recoveryReceipts)
 }
 interface WaitingChangeStore {
-    /** Highest-revision valid checksum copy in the current storage generation. null means damaged, not vacant. */
+    /**
+     * Highest-revision valid checksum copy in the current storage generation. Never return a replica
+     * older than an acknowledged state/transaction (especially cancellation or rollback). Fence such
+     * replicas durably; if the newer state cannot be recovered, return null for reconciliation.
+     * Null means damaged/unreadable, not vacant. A checksum alone cannot prove a sole replica current.
+     */
     fun read(): WaitingState?
     /** Atomically persist operation + texts; compare storage generation AND durable revision; preserve generation and increase revision on every write. */
     fun compareAndSet(expected: WaitingState, replacement: WaitingState): Boolean
