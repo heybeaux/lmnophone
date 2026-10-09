@@ -46,6 +46,7 @@ import org.plainphone.policy.WaitingSkipCommitter
 import org.plainphone.policy.WaitingSkipSupport
 import org.plainphone.policy.WaitingStart
 import org.plainphone.policy.WaitingState
+import org.plainphone.policy.WaitingText
 
 /** Real policy controllers over the real file-backed joint store; every check also reopens from disk. */
 class FrictionTransactionsTest {
@@ -245,5 +246,32 @@ class FrictionTransactionsTest {
         assertEquals(FrictionSettingsOutcome.APPLIED, rig.stricter(FrictionSettings(1_800_000, 0)))
         rig.wire(); assertEquals(FrictionWaitingOutcome.COMPLETED, rig.executor().finish(id))
         assertEquals(FrictionSettings(1_800_000, 0), rig.friction())
+    }
+
+    @Test fun failedFirstFenceDuringCompletionLeavesCommittingAndActiveFriction() {
+        // PLA-116 F1 repro: NOT_READY must never leave the target active.
+        val rig = Rig(); val id = rig.start(); rig.mature(id)
+        File(rig.dir, "fence-a.rec.tmp").mkdirs()
+        assertEquals(FrictionWaitingOutcome.NOT_READY, rig.executor().finish(id))
+        File(rig.dir, "fence-a.rec.tmp").deleteRecursively()
+        assertEquals(base, rig.friction())
+        assertEquals(WaitingPhase.COMMITTING, rig.disk().waitingStore.read()!!.operation!!.phase)
+        rig.wire(); assertEquals(FrictionWaitingOutcome.COMPLETED, rig.executor().finish(id))
+        assertEquals(looser, rig.friction())
+    }
+
+    @Test fun journalAtTheTextLimitHoldsTheChangeInsteadOfLosingTheRecord() {
+        // PLA-116 F2 repro: a full journal must stay readable; the controller cannot advance it.
+        val rig = Rig(); val id = rig.start()
+        val pending = rig.store.waitingStore.read()!!
+        val filler = List(4096 - pending.texts.size) { WaitingText("filler-$it", WaitingEvent.STARTED, pending.operation!!, mapOf(rig.self to 0L)) }
+        assertTrue(rig.store.waitingStore.compareAndSet(pending,
+            WaitingState(pending.revision + 1, pending.operation, pending.texts + filler, pending.storageGeneration, pending.recoveryReceipts)))
+        rig.at(day)
+        assertTrue(rig.waiting.tick(id, BatteryState(1, false)) != WaitingOutcome.COMMITTING)
+        val after = checkNotNull(rig.disk().waitingStore.read())
+        assertEquals(WaitingPhase.PENDING, after.operation!!.phase)
+        assertEquals(4096, after.texts.size)
+        assertEquals(base, rig.friction())
     }
 }

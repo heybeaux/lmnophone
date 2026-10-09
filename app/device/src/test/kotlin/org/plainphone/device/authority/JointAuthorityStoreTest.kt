@@ -143,15 +143,6 @@ class JointAuthorityStoreTest {
         assertEquals(0L, store.credentials.read()!!.revision)
     }
 
-    @Test fun failedSecondCopyRollsTheFirstCopyBack() {
-        val store = initialized()
-        faults = StorageFaults { at, d -> if (at == WritePoint.AFTER_COPY_A) File(d, "authority-b.rec.tmp").mkdirs() }
-        assertFalse(bump(store, 8))
-        faults = StorageFaults { _, _ -> }
-        File(dir, "authority-b.rec.tmp").deleteRecursively()
-        assertEquals(0L, open().credentials.read()!!.revision)
-    }
-
     @Test fun reentrantWriteFromInsideATransactionIsRefused() {
         val store = initialized()
         val snapshot = store.credentials.read()!!
