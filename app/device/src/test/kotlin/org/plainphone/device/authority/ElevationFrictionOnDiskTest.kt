@@ -121,7 +121,7 @@ class ElevationFrictionOnDiskTest {
         assertEquals(ElevationLimits(base.countdownMillis, base.dailyLimit), rig.store.activeLimits())
         assertEquals(FrictionSettingsOutcome.APPLIED, rig.stricter(FrictionSettings(30 * minute, 0)))
         assertEquals(ElevationLimits(30 * minute, 0), rig.disk().activeLimits())
-        listOf("fence-a", "fence-b").forEach { File(rig.dir, "$it.rec").delete() }
+        listOf("fence-a", "fence-b", "authority-a").forEach { File(rig.dir, "$it.rec").delete() }
         // Unreadable credentials grant no turns and the longest countdown.
         assertEquals(ElevationLimits(86_400_000L, 0), rig.disk().activeLimits())
     }
@@ -183,8 +183,9 @@ class ElevationFrictionOnDiskTest {
     @Test fun crashAroundAStricterEditWithALiveCountdownIsAllOldOrAllNew() {
         // PLA-147: authenticate first with no faults armed, so the crash lands inside the edit's own write.
         val target = FrictionSettings(30 * minute, 0)
+        // Both copies agreeing is the commit point.
         val visibleAfterCrash = mapOf(WritePoint.BEFORE_COPY_A to false, WritePoint.AFTER_COPY_A to false,
-            WritePoint.AFTER_FENCE_A to false, WritePoint.AFTER_COPY_B to true, WritePoint.AFTER_FENCE to true)
+            WritePoint.AFTER_COPY_B to true, WritePoint.AFTER_FENCE_A to true, WritePoint.AFTER_FENCE to true)
         for (point in WritePoint.entries) {
             val rig = Rig(); rig.request(); rig.at(10 * minute)
             val before = rig.disk().elevationStore.read()!!

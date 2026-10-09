@@ -68,19 +68,43 @@ class StoreCommitProtocolTest {
         }
     }
 
-    @Test fun firstFenceFailureIsTheUncommittedCase() {
-        val dir = tmp.newFolder(); val store = initialized(dir)
-        File(dir, "fence-a.rec.tmp").mkdirs()
-        assertFalse(bump(store, 4))
-        assertEquals(0, open(dir).credentials.read()!!.people.getValue(self).pinCounter.failures)
+    // Both copies agreeing is the commit point; a fence write failing after that is reported as committed.
+    @Test fun fenceFailureAfterBothCopiesIsTheCommittedCase() {
+        for (name in listOf("fence-a", "fence-b")) {
+            val dir = tmp.newFolder(); val store = initialized(dir)
+            File(dir, "$name.rec.tmp").mkdirs()
+            assertTrue(name, bump(store, 4))
+            assertEquals(name, 4, open(dir).credentials.read()!!.people.getValue(self).pinCounter.failures)
+        }
     }
 
-    @Test fun readbackFailureOfTheFirstFenceKeepsTheOldRecord() {
+    @Test fun corruptSecondCopyOnReadbackKeepsTheOldRecord() {
         val dir = tmp.newFolder(); val store = initialized(dir)
-        faults = StorageFaults { at, d -> if (at == WritePoint.AFTER_FENCE_A) File(d, "fence-a.rec").writeBytes(ByteArray(5)) }
+        faults = StorageFaults { at, d -> if (at == WritePoint.AFTER_COPY_B) File(d, "authority-b.rec").writeBytes(ByteArray(5)) }
         assertFalse(bump(store, 4))
         faults = StorageFaults { _, _ -> }
         assertEquals(0L, open(dir).credentials.read()!!.revision)
+    }
+
+    // PLA-148: one directory-wide write denial at any point. The result is exactly what reads back,
+    // the record is never older than acknowledged, and a refused write never surfaces after later loss.
+    @Test fun directoryWriteDenialAtEveryPointReportsExactlyWhatReadsBack() {
+        for (point in WritePoint.entries) {
+            val dir = tmp.newFolder(); val store = initialized(dir)
+            assertTrue(bump(store, 1))
+            faults = StorageFaults { at, d -> if (at == point) d.setWritable(false, false) }
+            val result = try { bump(store, 2) } finally { dir.setWritable(true, false); faults = StorageFaults { _, _ -> } }
+            val read = open(dir).credentials.read()
+            assertEquals("$point result=$result", if (result) 2L else 1L, read?.revision)
+            for (name in files) {
+                val saved = File(dir, "$name.rec").takeIf { it.exists() }?.readBytes()
+                File(dir, "$name.rec").delete()
+                val after = open(dir).credentials.read()
+                assertTrue("$point result=$result lost $name: ${after?.revision}",
+                    after == null || after.revision == (if (result) 2L else 1L))
+                saved?.let { File(dir, "$name.rec").writeBytes(it) }
+            }
+        }
     }
 
     @Test fun crashAtEveryPointThenEveryLaterWriteStaysConsistent() {
@@ -176,7 +200,7 @@ class StoreCommitProtocolTest {
         val acknowledged = if (bump(store, 12)) 1L else 0L
         File(dir, "fence-b.rec.tmp").delete()
         assertEquals(acknowledged, open(dir).credentials.read()?.revision)
-        faults = StorageFaults { at, d -> if (at == WritePoint.AFTER_FENCE_A) File(d, "fence-a.rec").writeBytes(ByteArray(5)) }
+        faults = StorageFaults { at, d -> if (at == WritePoint.AFTER_COPY_B) File(d, "authority-b.rec").writeBytes(ByteArray(5)) }
         assertFalse(bump(store, 13))
         faults = StorageFaults { _, _ -> }
         assertEquals(acknowledged, open(dir).credentials.read()?.revision)

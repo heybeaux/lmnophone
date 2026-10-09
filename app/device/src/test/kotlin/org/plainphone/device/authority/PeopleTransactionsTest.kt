@@ -510,19 +510,24 @@ class PeopleTransactionsTest {
             rig.faults = StorageFaults { _, _ -> }
             rig.wire()
             val after = rig.credentials(); val phase = rig.journal().operation!!.phase
-            // Either fence failing means the write is not on both sides: refused, and the old record kept.
-            assertFalse(fence, result is WaitingSkipResult.Committing)
-            assertEquals(fence, before.revision, after.revision)
-            assertEquals(fence, before.people.getValue(ben).generation, after.people.getValue(ben).generation)
-            assertEquals(fence, WaitingPhase.PENDING, phase)
+            // The result is exactly what reads back: committed with the new holder, or refused with the old.
+            if (result is WaitingSkipResult.Committing) {
+                assertEquals(fence, before.revision + 1, after.revision)
+                assertEquals(fence, WaitingPhase.COMMITTING, phase)
+            } else {
+                assertEquals(fence, before.revision, after.revision)
+                assertEquals(fence, before.people.getValue(ben).generation, after.people.getValue(ben).generation)
+                assertEquals(fence, WaitingPhase.PENDING, phase)
+            }
         }
     }
 
-    @Test fun failedFenceDuringPatchKeepsOldHoldersAndReportsFailure() {
+    @Test fun failedSecondCopyDuringPatchKeepsOldHoldersAndReportsFailure() {
+        // Copy B is the commit point; its write failing refuses the patch.
         val rig = Rig()
         val id = rig.startAdd(); rig.mature(id)
         rig.faults = StorageFaults { at, d ->
-            if (at == WritePoint.AFTER_COPY_A) { File(d, "fence-a.rec").deleteRecursively(); File(d, "fence-a.rec/x").apply { parentFile.mkdirs(); writeText("x") } }
+            if (at == WritePoint.AFTER_COPY_A) { File(d, "authority-b.rec").deleteRecursively(); File(d, "authority-b.rec/x").apply { parentFile.mkdirs(); writeText("x") } }
         }
         val result = rig.people.tick(id, WaitingPhase.COMMITTING)
         rig.faults = StorageFaults { _, _ -> }
@@ -532,7 +537,7 @@ class PeopleTransactionsTest {
         assertEquals(setOf(anna), rig.credentials().people.keys)
         assertEquals(WaitingPhase.COMMITTING, rig.journal().operation!!.phase)
         // Once storage recovers, the retry applies.
-        File(rig.dir, "fence-a.rec").deleteRecursively()
+        File(rig.dir, "authority-b.rec").deleteRecursively()
         assertEquals(PeopleChangeOutcome.APPLIED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
     }
 

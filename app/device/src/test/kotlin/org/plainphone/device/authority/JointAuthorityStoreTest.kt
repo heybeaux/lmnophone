@@ -110,9 +110,12 @@ class JointAuthorityStoreTest {
         assertNull(open().credentials.read())
     }
 
-    @Test fun missingFenceCannotProveAnyReplicaCurrent() {
+    @Test fun withoutAnyFenceOnlyTwoAgreeingCopiesRead() {
         val store = initialized(); assertTrue(bump(store, 1))
         dir.listFiles()!!.filter { it.name.startsWith("fence") }.forEach { it.delete() }
+        // No older record exists after an acknowledgement, so two agreeing copies are current.
+        assertEquals(1L, open().credentials.read()!!.revision)
+        copyB().delete()
         assertNull(open().credentials.read())
     }
 

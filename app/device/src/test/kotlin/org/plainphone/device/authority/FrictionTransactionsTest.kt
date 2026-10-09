@@ -249,15 +249,24 @@ class FrictionTransactionsTest {
     }
 
     @Test fun failedFirstFenceDuringCompletionLeavesCommittingAndActiveFriction() {
-        // PLA-116 F1 repro: NOT_READY must never leave the target active.
+        // PLA-116 F1 repro, moved before the commit point (copy B): NOT_READY never leaves the target active.
         val rig = Rig(); val id = rig.start(); rig.mature(id)
-        File(rig.dir, "fence-a.rec.tmp").mkdirs()
+        File(rig.dir, "authority-b.rec.tmp").mkdirs()
         assertEquals(FrictionWaitingOutcome.NOT_READY, rig.executor().finish(id))
-        File(rig.dir, "fence-a.rec.tmp").deleteRecursively()
+        File(rig.dir, "authority-b.rec.tmp").deleteRecursively()
         assertEquals(base, rig.friction())
         assertEquals(WaitingPhase.COMMITTING, rig.disk().waitingStore.read()!!.operation!!.phase)
         rig.wire(); assertEquals(FrictionWaitingOutcome.COMPLETED, rig.executor().finish(id))
         assertEquals(looser, rig.friction())
+    }
+
+    @Test fun fenceFailureAfterBothCopiesCompletesAndSaysSo() {
+        val rig = Rig(); val id = rig.start(); rig.mature(id)
+        File(rig.dir, "fence-a.rec.tmp").mkdirs()
+        assertEquals(FrictionWaitingOutcome.COMPLETED, rig.executor().finish(id))
+        File(rig.dir, "fence-a.rec.tmp").deleteRecursively()
+        assertEquals(looser, rig.friction())
+        assertEquals(WaitingPhase.COMPLETED, rig.disk().waitingStore.read()!!.operation!!.phase)
     }
 
     @Test fun journalAtTheTextLimitHoldsTheChangeInsteadOfLosingTheRecord() {
