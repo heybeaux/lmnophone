@@ -7,7 +7,10 @@ import java.io.DataOutputStream
 import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Files
 import java.security.MessageDigest
+import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import org.plainphone.core.BuildInventory
@@ -35,6 +38,8 @@ import org.plainphone.policy.PersonContact
 import org.plainphone.policy.RecoveryProfile
 import org.plainphone.policy.WaitingChangeKind
 import org.plainphone.policy.WaitingHandOverCommitter
+import org.plainphone.policy.WaitingIdentity
+import org.plainphone.policy.WaitingIdentitySource
 import org.plainphone.policy.WaitingOperation
 import org.plainphone.policy.WaitingSkipCommitter
 import org.plainphone.policy.WaitingText
@@ -46,6 +51,9 @@ import org.plainphone.policy.WaitingState
 internal enum class Section { CREDENTIALS, WAITING, ELEVATION, RECEIPTS, APPROVALS }
 /** In write order: spare copy ("A"), first fence (the commit point), second fence, other copy ("B"). */
 internal enum class WritePoint { BEFORE_COPY_A, AFTER_COPY_A, AFTER_FENCE_A, AFTER_FENCE, AFTER_COPY_B }
+/** Storage could not durably reserve a new identity; the caller shows "not ready" and retries later. */
+class IdentityUnavailable : IllegalStateException("identity reservation unavailable")
+
 /** Test seam for crash and readback faults at fixed points of a transaction. */
 internal fun interface StorageFaults { fun at(point: WritePoint, dir: File) }
 
@@ -216,6 +224,64 @@ class JointAuthorityStore internal constructor(
         }
         override fun read(requestId: String): CancelIntent = coordinator.run(CancelIntent.UNKNOWN) { intent(requestId) }
     }
+
+    private var entropy: (Int) -> ByteArray = { n -> ByteArray(n).also { SecureRandom().nextBytes(it) } }
+
+    /** Test seam: the random source for identities. */
+    internal fun withEntropy(source: (Int) -> ByteArray) = apply { entropy = source }
+
+    /**
+     * Request IDs and cancel codes, each reserved before it is returned and never reused, even when
+     * the preparation is abandoned. A reservation is a file in `reserved/` created exclusively and
+     * never deleted; its existence alone (even empty or damaged) marks the value as taken. Cancel codes
+     * are 8 digits so they can be typed in a text reply; a taken code is drawn again. Throws
+     * [IdentityUnavailable] when storage cannot record a reservation: nothing unreserved is handed out.
+     */
+    val identities: WaitingIdentitySource = WaitingIdentitySource {
+        coordinator.run(null) {
+            val request = reserve("request") { "req-" + hex(entropy(16)) } ?: return@run null
+            val code = reserve("cancel") { digits(entropy(8)) } ?: return@run null
+            WaitingIdentity(request, code)
+        } ?: throw IdentityUnavailable()
+    }
+
+    /** A new, never-reused slot ID for an incoming trusted person, or null if none can be reserved. */
+    fun reservePerson(): TrustedPersonId? = coordinator.run(null) {
+        reserve("person") { "person-" + hex(entropy(16)) }?.let(::TrustedPersonId)
+    }
+
+    /** Callers hold the coordinator. Up to [ATTEMPTS] draws; null if none could be reserved durably. */
+    private fun reserve(kind: String, draw: () -> String): String? {
+        val folder = File(dir, "reserved")
+        if (!folder.isDirectory && !folder.mkdirs()) return null
+        repeat(ATTEMPTS) {
+            val value = draw()
+            val file = File(folder, "$kind-" + hex(MessageDigest.getInstance("SHA-256").digest(value.toByteArray())))
+            try {
+                Files.createFile(file.toPath())
+            } catch (_: FileAlreadyExistsException) {
+                return@repeat
+            } catch (_: IOException) {
+                return null
+            }
+            // Created means taken, even if the rest fails; only a fully synced reservation is handed out.
+            return try {
+                java.io.FileOutputStream(file).use { it.write(value.toByteArray()); it.fd.sync() }
+                try {
+                    java.nio.channels.FileChannel.open(folder.toPath(), java.nio.file.StandardOpenOption.READ).use { it.force(true) }
+                } catch (_: IOException) {
+                    // Directory sync is not supported everywhere; the file itself is synced.
+                }
+                value
+            } catch (_: IOException) {
+                null
+            }
+        }
+        return null
+    }
+
+    private fun hex(bytes: ByteArray) = bytes.joinToString("") { "%02x".format(it) }
+    private fun digits(bytes: ByteArray) = "%08d".format(Math.floorMod(ByteBuffer.wrap(bytes).long, 100_000_000L))
 
     /**
      * Turn-off and people skips: one write rotates only the skipper's PIN and code, moves the exact
@@ -642,6 +708,7 @@ class JointAuthorityStore internal constructor(
         const val SCHEMA = 4
         val BUSY = setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
         val TERMINAL = setOf(WaitingPhase.COMPLETED, WaitingPhase.CANCELLED)
+        const val ATTEMPTS = 16
         const val CLEAR_TAG: Byte = 'C'.code.toByte()
         const val REQUESTED_TAG: Byte = 'R'.code.toByte()
         val coordinators = ConcurrentHashMap<String, Coordinator>()
