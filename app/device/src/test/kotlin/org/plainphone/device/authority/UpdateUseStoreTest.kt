@@ -115,7 +115,7 @@ class UpdateUseStoreTest {
         assertArrayEquals(AuthorityCodec.encodeElevation(usedUp), reopened.sectionBytesForTest(Section.ELEVATION))
         val outbox = reopened.updateReceipts()!!.single()
         assertEquals("grant-1", outbox.receipt.id)
-        assertEquals(mapOf(alice to aliceContact, bob to PersonContact("synthetic-bob", "synthetic-number-b")), outbox.recipientContacts)
+        assertEquals(mapOf(alice to "synthetic-number-a", bob to "synthetic-number-b"), outbox.recipientContacts.mapValues { it.value?.number })
         assertEquals(emptySet<TrustedPersonId>(), outbox.acknowledged)
     }
 

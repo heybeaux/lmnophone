@@ -57,6 +57,11 @@ import org.plainphone.policy.SessionJournal
 import org.plainphone.policy.SessionPhase
 import org.plainphone.policy.StagedUpdateBinding
 import org.plainphone.policy.TrustedPersonPatch
+import org.plainphone.policy.UpdatePhase
+import org.plainphone.policy.UpdateReceipt
+import org.plainphone.policy.UpdateRecord
+import org.plainphone.policy.UpdateSelfCheck
+import org.plainphone.policy.UpdateSubmission
 import org.plainphone.policy.WaitingChangeKind
 import org.plainphone.policy.WaitingEvent
 import org.plainphone.policy.WaitingIdentity
@@ -81,6 +86,31 @@ class StoredFrictionReceipt(
         fun of(r: FrictionSettingsReceipt) =
             StoredFrictionReceipt(r.key, r.actor, r.source, r.target, r.recipientGenerations, r.recipientContacts)
     }
+}
+
+/**
+ * An Update submission receipt in the outbox. Recipients and addresses are frozen in the same write
+ * as the submission; null means no address, never looked up later. [acknowledged] holds recipients
+ * whose notice was durably handed over; the entry leaves the outbox once every recipient is in it.
+ */
+class StoredUpdateReceipt(
+    val receipt: UpdateReceipt,
+    recipientContacts: Map<TrustedPersonId, PersonContact?>,
+    acknowledged: Set<TrustedPersonId> = emptySet(),
+) {
+    val recipientContacts: Map<TrustedPersonId, PersonContact?> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientContacts))
+    val acknowledged: Set<TrustedPersonId> = java.util.Collections.unmodifiableSet(acknowledged.toSortedSet(compareBy { it.value }))
+    init {
+        require(this.recipientContacts.keys == receipt.recipientGenerations.keys)
+        require(receipt.recipientGenerations.keys.containsAll(this.acknowledged) && this.acknowledged != receipt.recipientGenerations.keys)
+    }
+    override fun toString() = "StoredUpdateReceipt(redacted)"
+}
+
+/** The UPDATE section: the policy's update record plus the receipt outbox the policy never sees. */
+internal class UpdateSection(val record: UpdateRecord, outbox: List<StoredUpdateReceipt>) {
+    val outbox: List<StoredUpdateReceipt> = java.util.Collections.unmodifiableList(outbox.toList())
+    init { require(this.outbox.map { it.receipt.id }.toSet().size == this.outbox.size) }
 }
 
 /**
@@ -236,6 +266,41 @@ internal object AuthorityCodec {
             StoredFrictionReceipt(key, actor, source, target, generations, contacts)
         }
     }
+
+    fun encodeUpdate(u: UpdateSection): ByteArray? = write {
+        writeLong(u.record.revision)
+        optional(u.record.submission) { s ->
+            writeInt(s.sessionId); writeUTF(s.sha256); writeLong(s.versionCode); updateReceipt(s.receipt)
+            optional(s.elevationDeadline) { boot(it) }; writeUTF(s.phase.name); writeUTF(s.selfCheck.name)
+        }
+        list(u.outbox) { r ->
+            writeUTF(r.receipt.id); writeUTF(r.receipt.actor.value); writeLong(r.receipt.actorGeneration)
+            recipients(r.receipt.recipientGenerations, r.recipientContacts)
+            list(r.acknowledged.map { it.value }.sorted()) { writeUTF(it) }
+        }
+    }
+
+    /** Null for missing, truncated or padded data, and for any receipt the policy would refuse. */
+    fun decodeUpdate(bytes: ByteArray): UpdateSection? = read(bytes) {
+        val revision = readLong()
+        val submission = optional {
+            UpdateSubmission(readInt(), readUTF(), readLong(), updateReceipt(), optional { boot() },
+                UpdatePhase.valueOf(readUTF()), UpdateSelfCheck.valueOf(readUTF()))
+        }
+        val outbox = list {
+            val id = readUTF(); val actor = TrustedPersonId(readUTF()); val generation = readLong()
+            val (generations, contacts) = recipients()
+            StoredUpdateReceipt(UpdateReceipt(id, actor, generation, generations), contacts, set { TrustedPersonId(readUTF()) })
+        }
+        UpdateSection(UpdateRecord(revision, submission), outbox)
+    }
+
+    private fun DataOutputStream.updateReceipt(r: UpdateReceipt) {
+        writeUTF(r.id); writeUTF(r.actor.value); writeLong(r.actorGeneration)
+        list(r.recipientGenerations.entries.sortedBy { it.key.value }) { (id, g) -> writeUTF(id.value); writeLong(g) }
+    }
+    private fun DataInputStream.updateReceipt() = UpdateReceipt(readUTF(), TrustedPersonId(readUTF()), readLong(),
+        map { TrustedPersonId(readUTF()) to readLong() })
 
     private class Unsupported : RuntimeException()
     private fun unsupported(): Nothing = throw Unsupported()

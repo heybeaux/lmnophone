@@ -48,8 +48,14 @@ import org.plainphone.policy.WaitingChangeStore
 import org.plainphone.policy.WaitingEvent
 import org.plainphone.policy.WaitingPhase
 import org.plainphone.policy.WaitingState
+import org.plainphone.policy.UpdatePhase
+import org.plainphone.policy.UpdateRecord
+import org.plainphone.policy.UpdateSelfCheck
+import org.plainphone.policy.UpdateSubmission
+import org.plainphone.policy.UpdateUseStore
+import org.plainphone.policy.StagedUpdateBinding
 
-internal enum class Section { CREDENTIALS, WAITING, ELEVATION, RECEIPTS, APPROVALS }
+internal enum class Section { CREDENTIALS, WAITING, ELEVATION, RECEIPTS, APPROVALS, UPDATE }
 /** In write order: copy A, copy B (both agreeing is the commit point), fence A, fence B. */
 internal enum class WritePoint { BEFORE_COPY_A, AFTER_COPY_A, AFTER_COPY_B, AFTER_FENCE_A, AFTER_FENCE }
 /** Storage could not durably reserve a new identity; the caller shows "not ready" and retries later. */
@@ -60,7 +66,8 @@ internal fun interface StorageFaults { fun at(point: WritePoint, dir: File) }
 
 /**
  * One device-protected record joining credentials, the waiting operation and its texts, the
- * elevation record, the friction receipt outbox and the app approval state with its receipt outbox. Every transaction is a single replacement of
+ * elevation record, the friction receipt outbox, the app approval state with its receipt outbox, and
+ * the Update record with its receipt outbox. Every transaction is a single replacement of
  * the whole record, so a crash exposes either the old or the new record and never a mix.
  *
  * The record is kept as two copies (`authority-a`, `authority-b`) and two fences holding the
@@ -74,10 +81,12 @@ internal fun interface StorageFaults { fun at(point: WritePoint, dir: File) }
  * older record remains, so any later loss reads that record or nothing. A section that would not
  * decode is never written.
  *
- * All views share one non-reentrant coordinator per directory, keyed by its canonical path so
- * symlinked aliases share it too. A call made from inside a running
- * transaction is refused rather than allowed to interleave. Each section is preserved byte for
- * byte by writers that do not replace it.
+ * All views share one coordinator per directory, keyed by its canonical path so symlinked aliases
+ * share it too. A write made from inside a running transaction is refused rather than allowed to
+ * interleave; reads from a transaction's final check see the record under comparison. A thread
+ * waits at most [coordinatorWaitMillis] for the coordinator and is then refused, so a lock taken
+ * outside the store in the other order (such as PinVault's) can delay a call but never deadlock it.
+ * Each section is preserved byte for byte by writers that do not replace it.
  *
  * An active session journal reads back only against [matchingInventory], the inventory of this
  * exact build. Without it, a record holding an active session reads as null (damaged).
@@ -158,6 +167,137 @@ class JointAuthorityStore internal constructor(
             if (again.sequence != s.sequence || !current(again)) return@commit null
             s.with(Section.APPROVALS, approvalBytes).with(Section.ELEVATION, elevationBytes)
         }
+    }
+
+    /**
+     * The Update record on the same coordinator (see [UpdateUseStore]). [commitUpdateUse] writes the
+     * used-up elevation, SUBMITTED and its receipt with frozen recipient addresses in one record
+     * replacement; the receipt joins the outbox, so an undelivered earlier receipt survives a later
+     * submission. Only the exact replacement elevation the controller builds is accepted.
+     */
+    val update: UpdateUseStore = object : UpdateUseStore {
+        override val elevationStore: ElevationStore get() = this@JointAuthorityStore.elevationStore
+
+        override fun readUpdate(): UpdateRecord? = section(Section.UPDATE)?.let(AuthorityCodec::decodeUpdate)?.record
+
+        override fun compareAndSetUpdate(expected: UpdateRecord, replacement: UpdateRecord): Boolean = commit { s ->
+            val stored = AuthorityCodec.decodeUpdate(s.sections[Section.UPDATE.ordinal]) ?: return@commit null
+            if (!resultOnly(expected, replacement) || !sameRecord(stored.record, expected)) return@commit null
+            s.with(Section.UPDATE, AuthorityCodec.encodeUpdate(UpdateSection(replacement, stored.outbox)))
+        }
+
+        override fun commitUpdateUse(expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
+            expectedCredentials: CredentialState, expectedUpdate: UpdateRecord, submission: UpdateSubmission,
+            finalCheck: () -> Boolean): Boolean = commit { s ->
+            if (!usable(expectedElevation, replacementElevation, expectedCredentials, expectedUpdate, submission)) return@commit null
+            val elevationBytes = AuthorityCodec.encodeElevation(replacementElevation) ?: return@commit null
+            fun current(of: Snapshot): UpdateSection? {
+                val stored = AuthorityCodec.decodeUpdate(of.sections[Section.UPDATE.ordinal]) ?: return null
+                return stored.takeIf {
+                    sameRecord(it.record, expectedUpdate) &&
+                        of.matches(Section.ELEVATION, AuthorityCodec.encodeElevation(expectedElevation)) &&
+                        of.matches(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(expectedCredentials))
+                }
+            }
+            val stored = current(s) ?: return@commit null
+            if (stored.outbox.any { it.receipt.id == submission.receipt.id }) return@commit null
+            val contacts = submission.receipt.recipientGenerations.keys.associateWith { expectedCredentials.people.getValue(it).contact }
+            val next = try {
+                UpdateSection(UpdateRecord(expectedUpdate.revision + 1, submission), stored.outbox + StoredUpdateReceipt(submission.receipt, contacts))
+            } catch (_: IllegalArgumentException) {
+                return@commit null
+            }
+            val updateBytes = AuthorityCodec.encodeUpdate(next) ?: return@commit null
+            // Once, after all blocking work. The check may read this record; any write it tries is refused.
+            if (!coordinator.viewing(s, finalCheck)) return@commit null
+            val again = load() ?: return@commit null
+            if (again.sequence != s.sequence || current(again) == null) return@commit null
+            s.with(Section.ELEVATION, elevationBytes).with(Section.UPDATE, updateBytes)
+        }
+    }
+
+    /** Update receipts awaiting delivery, oldest first. Null when the record is unreadable. */
+    fun updateReceipts(): List<StoredUpdateReceipt>? = section(Section.UPDATE)?.let(AuthorityCodec::decodeUpdate)?.outbox
+
+    /**
+     * Durably records that [person]'s notice for receipt [id] was handed over. A receipt leaves the
+     * outbox once every recipient is acknowledged. True when, afterwards, nothing for [person] under
+     * [id] is pending (including when it already was not).
+     */
+    fun acknowledgeUpdateReceipt(id: String, person: TrustedPersonId): Boolean {
+        var settled = false
+        val written = commit { s ->
+            val stored = AuthorityCodec.decodeUpdate(s.sections[Section.UPDATE.ordinal]) ?: return@commit null
+            val entry = stored.outbox.firstOrNull { it.receipt.id == id }
+            if (entry == null || person !in entry.receipt.recipientGenerations || person in entry.acknowledged) {
+                settled = true
+                return@commit null
+            }
+            val outbox = stored.outbox.mapNotNull { r ->
+                if (r !== entry) r else (r.acknowledged + person).let { acked ->
+                    if (acked == r.receipt.recipientGenerations.keys) null else StoredUpdateReceipt(r.receipt, r.recipientContacts, acked)
+                }
+            }
+            s.with(Section.UPDATE, AuthorityCodec.encodeUpdate(UpdateSection(stored.record, outbox)))
+        }
+        return written || settled
+    }
+
+    /** The stored record equals [expected] in every field, compared through the canonical encoding. */
+    private fun sameRecord(stored: UpdateRecord, expected: UpdateRecord): Boolean {
+        val a = AuthorityCodec.encodeUpdate(UpdateSection(stored, emptyList())) ?: return false
+        return a.contentEquals(AuthorityCodec.encodeUpdate(UpdateSection(expected, emptyList())))
+    }
+
+    /**
+     * The result transitions the protocol writes, one revision at a time, with every other field
+     * (session, hash, version, receipt, deadline) kept: SUBMITTED -> INSTALLED or FAILED, FAILED ->
+     * INSTALLED (a late install), and INSTALLED's pending self-check -> PASSED or FAILED.
+     */
+    private fun resultOnly(expected: UpdateRecord, replacement: UpdateRecord): Boolean {
+        val before = expected.submission ?: return false
+        val after = replacement.submission ?: return false
+        if (expected.revision == Long.MAX_VALUE || replacement.revision != expected.revision + 1) return false
+        val kept = after.copy(phase = before.phase, selfCheck = before.selfCheck)
+        if (!sameRecord(UpdateRecord(0, kept), UpdateRecord(0, before))) return false
+        val pending = UpdateSelfCheck.PENDING
+        return when (before.phase) {
+            UpdatePhase.SUBMITTED -> after.phase != UpdatePhase.SUBMITTED && after.selfCheck == pending
+            UpdatePhase.FAILED -> after.phase == UpdatePhase.INSTALLED && after.selfCheck == pending
+            UpdatePhase.INSTALLED -> before.selfCheck == pending && after.phase == UpdatePhase.INSTALLED && after.selfCheck != pending
+        }
+    }
+
+    /**
+     * The use shapes the controller builds. No outstanding SUBMITTED or pending self-check; a new
+     * SUBMITTED whose receipt names exactly the current holders and generations. Self-managed: the
+     * live Update grant for these exact bytes, held by the receipt's actor, is used up to the same
+     * ledger with no grant or holder, one revision higher, keeping its deadline in the submission.
+     * Supervised: no countdown or grant, the elevation written back unchanged and no deadline.
+     */
+    private fun usable(expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
+        credentials: CredentialState, expectedUpdate: UpdateRecord, submission: UpdateSubmission): Boolean {
+        val previous = expectedUpdate.submission
+        if (expectedUpdate.revision == Long.MAX_VALUE || previous?.phase == UpdatePhase.SUBMITTED ||
+            (previous?.phase == UpdatePhase.INSTALLED && previous.selfCheck == UpdateSelfCheck.PENDING) ||
+            submission.phase != UpdatePhase.SUBMITTED || submission.selfCheck != UpdateSelfCheck.PENDING) return false
+        val receipt = submission.receipt
+        if (receipt.recipientGenerations != credentials.people.mapValues { it.value.generation } ||
+            expectedElevation.journal != SessionJournal.Empty) return false
+        val grant = expectedElevation.state.grant
+        if (grant == null) {
+            if (expectedElevation.state.countdown != null || submission.elevationDeadline != null) return false
+            val bytes = AuthorityCodec.encodeElevation(expectedElevation) ?: return false
+            return bytes.contentEquals(AuthorityCodec.encodeElevation(replacementElevation))
+        }
+        val holder = expectedElevation.person ?: return false
+        if (grant.target != ElevationTarget.Update(StagedUpdateBinding(submission.sha256, submission.versionCode)) ||
+            grant.packageAccessOpen || grant.id != receipt.id || holder.person != receipt.actor ||
+            holder.generation != receipt.actorGeneration || submission.elevationDeadline != grant.deadline ||
+            expectedElevation.revision == Long.MAX_VALUE) return false
+        val used = AuthorityCodec.encodeElevation(ElevationRecord(expectedElevation.revision + 1, ElevationState(expectedElevation.state.ledger)))
+            ?: return false
+        return used.contentEquals(AuthorityCodec.encodeElevation(replacementElevation))
     }
 
     /**
@@ -469,7 +609,7 @@ class JointAuthorityStore internal constructor(
     /** The entry keeps its original `intent-clear-` file name although it can also hold REQUESTED. */
     private fun intentRecords(requestId: String): Pair<AtomicRecord, AtomicRecord> {
         val hash = intentHash(requestId)
-        return AtomicRecord(dir, "$INTENT_ENTRY$hash", SCHEMA) to AtomicRecord(dir, "$INTENT_MARKER$hash", SCHEMA)
+        return AtomicRecord(dir, "$INTENT_ENTRY$hash", INTENT_SCHEMA) to AtomicRecord(dir, "$INTENT_MARKER$hash", INTENT_SCHEMA)
     }
 
     private fun intentPayload(tag: Byte, requestId: String) = byteArrayOf(tag) + requestId.toByteArray()
@@ -490,9 +630,11 @@ class JointAuthorityStore internal constructor(
         approvals: AppApprovalState = AppApprovalState()): Boolean = coordinator.run(false) {
         // Copies without any fence are a creation that never committed; they may be replaced.
         if (fenceA.exists() || fenceB.exists() || load() != null) return@run false
+        // Enrollment is the only place an empty Update record is created.
         val sections = listOf(AuthorityCodec.encodeCredentials(credentials) ?: return@run false,
             AuthorityCodec.encodeWaiting(waiting) ?: return@run false, AuthorityCodec.encodeElevation(elevation) ?: return@run false,
-            AuthorityCodec.encodeReceipts(emptyList()) ?: return@run false, AuthorityCodec.encodeApprovals(approvals) ?: return@run false)
+            AuthorityCodec.encodeReceipts(emptyList()) ?: return@run false, AuthorityCodec.encodeApprovals(approvals) ?: return@run false,
+            AuthorityCodec.encodeUpdate(UpdateSection(UpdateRecord(), emptyList())) ?: return@run false)
         val genesis = Snapshot(0, sections)
         if (!readable(genesis)) return@run false
         save(null, genesis)
@@ -709,6 +851,7 @@ class JointAuthorityStore internal constructor(
             Section.ELEVATION -> AuthorityCodec.decodeElevation(bytes, matchingInventory) != null
             Section.RECEIPTS -> AuthorityCodec.decodeReceipts(bytes) != null
             Section.APPROVALS -> AuthorityCodec.decodeApprovals(bytes) != null
+            Section.UPDATE -> AuthorityCodec.decodeUpdate(bytes) != null
         }
     }
 
@@ -760,10 +903,14 @@ class JointAuthorityStore internal constructor(
     private class Coordinator {
         private val lock = ReentrantLock()
         private var viewed: Snapshot? = null
-        /** Non-reentrant: a nested call from the thread already inside a transaction is refused. */
+        /** A nested call from the thread already inside a transaction is refused, as is a wait past the limit. */
         fun <T> run(refused: T, block: () -> T): T {
             if (lock.isHeldByCurrentThread) return refused
-            lock.lock()
+            try {
+                if (!lock.tryLock(coordinatorWaitMillis, java.util.concurrent.TimeUnit.MILLISECONDS)) return refused
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt(); return refused
+            }
             try { return block() } finally { lock.unlock() }
         }
         /** Inside a transaction only: lets [block] read [snapshot]. Writes from it are still refused. */
@@ -775,20 +922,24 @@ class JointAuthorityStore internal constructor(
         fun view(): Snapshot? = if (lock.isHeldByCurrentThread) viewed else null
     }
 
-    private companion object {
-        /** 2 adds the app approval section; 3 stores people patches; 4 commits at the fence with canonical maps. */
-        const val SCHEMA = 4
-        val BUSY = setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
-        val FAIL_CLOSED_LIMITS = ElevationLimits(86_400_000L, 0)
-        val TERMINAL = setOf(WaitingPhase.COMPLETED, WaitingPhase.CANCELLED)
-        const val ATTEMPTS = 16
-        const val CLEAR_TAG: Byte = 'C'.code.toByte()
-        const val REQUESTED_TAG: Byte = 'R'.code.toByte()
-        const val INTENT_ENTRY = "intent-clear-"
-        const val INTENT_MARKER = "intent-requested-"
-        val coordinators = ConcurrentHashMap<String, Coordinator>()
+    companion object {
+        /** Longest wait for another thread's transaction before a call is refused (not ready). */
+        @Volatile internal var coordinatorWaitMillis: Long = 10_000
+        /** 2 adds the app approval section; 3 stores people patches; 4 commits at the fence with canonical maps; 5 adds Update. */
+        private const val SCHEMA = 5
+        /** Cancel-intent files keep the schema 4 format; the Update section did not change them. */
+        private const val INTENT_SCHEMA = 4
+        private val BUSY = setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
+        private val FAIL_CLOSED_LIMITS = ElevationLimits(86_400_000L, 0)
+        private val TERMINAL = setOf(WaitingPhase.COMPLETED, WaitingPhase.CANCELLED)
+        private const val ATTEMPTS = 16
+        private const val CLEAR_TAG: Byte = 'C'.code.toByte()
+        private const val REQUESTED_TAG: Byte = 'R'.code.toByte()
+        private const val INTENT_ENTRY = "intent-clear-"
+        private const val INTENT_MARKER = "intent-requested-"
+        private val coordinators = ConcurrentHashMap<String, Coordinator>()
         /** Creates [dir] if needed so symlinks resolve; falls back to the normalized absolute path. */
-        fun canonical(dir: File): String = try {
+        private fun canonical(dir: File): String = try {
             dir.mkdirs(); dir.canonicalPath
         } catch (_: IOException) {
             dir.absoluteFile.normalize().path

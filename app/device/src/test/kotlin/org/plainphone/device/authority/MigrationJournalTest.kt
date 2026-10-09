@@ -42,7 +42,7 @@ class MigrationJournalTest {
     private fun hash(id: String) = MessageDigest.getInstance("SHA-256").digest(id.toByteArray()).joinToString("") { "%02x".format(it) }
     private fun entry(dir: File, id: String) = File(dir, "intent-clear-${hash(id)}.rec")
     private fun marker(dir: File, id: String) = File(dir, "intent-requested-${hash(id)}.rec")
-    private fun schemaOf(file: File) = (1..4).firstOrNull { RecordCodec.decode(file.readBytes(), it) != null }
+    private fun schemaOf(file: File) = (1..5).firstOrNull { RecordCodec.decode(file.readBytes(), it) != null }
     private fun liveRequest(dir: File) = Schema3Store(dir).waitingStore.read()!!.operation!!.identity.requestId
 
     @Test fun clearIntentIsRewrittenInTheCurrentFormat() {
@@ -121,7 +121,7 @@ class MigrationJournalTest {
             assertFalse("retry, blocked $blockedNames", JointAuthorityStore(dir).migrate())
             blocked.forEach { assertTrue(it.delete()) }
             assertTrue("unblocked $blockedNames", JointAuthorityStore(dir).migrate())
-            for (name in listOf("authority-a", "authority-b", "fence-a", "fence-b")) assertEquals(name, 4, schemaOf(File(dir, "$name.rec")))
+            for (name in listOf("authority-a", "authority-b", "fence-a", "fence-b")) assertEquals(name, 5, schemaOf(File(dir, "$name.rec")))
             assertNull(LegacyAuthority.load(dir))
         }
     }
@@ -129,10 +129,10 @@ class MigrationJournalTest {
     @Test fun currentRecordWithAnUnreadableSectionIsNotReportedMigrated() {
         val dir = fixture(3)
         assertTrue(JointAuthorityStore(dir).migrate())
-        val payload = RecordCodec.decode(File(dir, "authority-a.rec").readBytes(), 4)!!
+        val payload = RecordCodec.decode(File(dir, "authority-a.rec").readBytes(), 5)!!
         val (sequence, sections) = LegacyAuthority.decode(payload, Section.entries.size)!!
         val bad = sections.toMutableList().also { it[Section.APPROVALS.ordinal] = byteArrayOf(9) }
-        val encoded = RecordCodec.encode(4, LegacyAuthority.encode(sequence, bad))
+        val encoded = RecordCodec.encode(5, LegacyAuthority.encode(sequence, bad))
         listOf("authority-a", "authority-b").forEach { File(dir, "$it.rec").writeBytes(encoded) }
         val store = JointAuthorityStore(dir)
         assertFalse(store.migrate())

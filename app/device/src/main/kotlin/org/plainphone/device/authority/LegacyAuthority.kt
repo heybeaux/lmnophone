@@ -9,12 +9,14 @@ import java.nio.ByteBuffer
 import org.plainphone.core.BuildInventory
 import org.plainphone.policy.AppApprovalState
 
-/** A committed record as a schema 1-3 store read it, and which copy files held it. */
+/** A committed record as a schema 1-4 store read it, and which copy files held it. */
 internal class LegacyRecord(val schema: Int, val sequence: Long, val sections: List<ByteArray>, val holders: Set<String>)
 
 /**
- * Read-only access to records written before schema 4. Those stores wrote copy A, copy B, then
- * both fences, and served the newest valid copy at or above the fence. Schema 1 had four
+ * Read-only access to records written before schema 5. Schema 1-3 stores wrote copy A, copy B, then
+ * both fences, and served the newest valid copy at or above the fence. Schema 4 served the two
+ * copies when they agreed at or above the fence, else the single copy at exactly the fence, and
+ * had no Update section (Update was never enabled, so none can have been recorded). Schema 1 had four
  * sections (no approvals) and a ledger-only elevation; schemas 1-2 had no people patch in
  * waiting operations. Schema 3 also kept cancel intents. Nothing here writes;
  * [JointAuthorityStore.migrate] does that.
@@ -25,6 +27,7 @@ internal object LegacyAuthority {
     private const val INTENT_SCHEMA = 3
 
     fun load(dir: File): LegacyRecord? {
+        loadFenced(dir)?.let { return it }
         for (schema in 3 downTo 1) {
             val fences = listOf("fence-a", "fence-b").mapNotNull { AtomicRecord(dir, it, schema).read() }
             if (fences.isEmpty()) continue
@@ -40,6 +43,20 @@ internal object LegacyAuthority {
             return LegacyRecord(schema, newest.second.first, newest.second.second, same.map { it.first }.toSet())
         }
         return null
+    }
+
+    /** The schema 4 read rule; null when no schema 4 fence or agreeing copy pair exists. */
+    private fun loadFenced(dir: File): LegacyRecord? {
+        val fence = listOf("fence-a", "fence-b").mapNotNull { AtomicRecord(dir, it, 4).read() }
+            .mapNotNull { if (it.size == 8) ByteBuffer.wrap(it).long else null }.maxOrNull()
+        val held = copies.mapNotNull { name -> AtomicRecord(dir, name, 4).read()?.let { bytes -> decode(bytes, 5)?.let { Triple(name, it, bytes) } } }
+        if (held.size == 2 && held[0].third.contentEquals(held[1].third) && (fence == null || held[0].second.first >= fence))
+            return LegacyRecord(4, held[0].second.first, held[0].second.second, copies.toSet())
+        if (fence == null) return null
+        val atFence = held.filter { it.second.first == fence }
+        val first = atFence.firstOrNull() ?: return null
+        if (atFence.any { !it.third.contentEquals(first.third) }) return null
+        return LegacyRecord(4, fence, first.second.second, atFence.map { it.first }.toSet())
     }
 
     /**
@@ -74,7 +91,8 @@ internal object LegacyAuthority {
         val approvals = if (r.schema == 1) AppApprovalState() else AuthorityCodec.decodeApprovals(s[Section.APPROVALS.ordinal]) ?: return null
         return listOf(AuthorityCodec.encodeCredentials(credentials) ?: return null, AuthorityCodec.encodeWaiting(waiting) ?: return null,
             AuthorityCodec.encodeElevation(elevation) ?: return null, AuthorityCodec.encodeReceipts(receipts) ?: return null,
-            AuthorityCodec.encodeApprovals(approvals) ?: return null)
+            AuthorityCodec.encodeApprovals(approvals) ?: return null,
+            AuthorityCodec.encodeUpdate(UpdateSection(org.plainphone.policy.UpdateRecord(), emptyList())) ?: return null)
     }
 
     fun decode(bytes: ByteArray, count: Int): Pair<Long, List<ByteArray>>? = try {
