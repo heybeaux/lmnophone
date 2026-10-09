@@ -158,7 +158,8 @@ h3 { font-size: 22px; line-height: 28px; margin-bottom: var(--s2); }
   .notice { margin-bottom: var(--s8); }
   h2 { font-size: 32px; line-height: 40px; }
   .section { padding-top: 64px; }
-  .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s8) var(--s4); }
+  .shots { grid-template-columns: 1fr; gap: var(--s8); }
+  .shots li { max-width: 300px; }
   .btn { width: 100%; }
 }
 
