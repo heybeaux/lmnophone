@@ -54,12 +54,14 @@ object PolicyEngine {
             SweepMode.USER_APPS_ONLY -> (input.previousHidden + sweepCandidates) - neverHide - accessible
             SweepMode.NONE -> input.previousHidden - neverHide
         })
+        // The last stored minimum UI may retain inherited membership after an OTA.
+        // It does not add entries on an unknown build or enable stale inventory effects.
         val ui = immutableSet(when {
             input.lockedBoot -> input.previousLockTask + floor.emergencyUi
             baseline -> setOf(input.plainphone, input.messages) + floor.emergencyUi + inventory?.minimumUi.orEmpty()
             unknown -> input.previousLockTask + floor.emergencyUi
             else -> setOf(input.plainphone) + approved + floor.emergencyUi + inventory.minimumUi
-        }.plus(input.plainphone).plus(session) - hidden - (invalidApprovals - floor.emergencyUi - inventory?.minimumUi.orEmpty() - input.plainphone - input.messages))
+        }.plus(input.plainphone).plus(session) - hidden - (invalidApprovals - floor.emergencyUi - input.inventory?.minimumUi.orEmpty() - input.plainphone - input.messages))
         val unhidden = immutableSet(neverHide + if (input.lockedBoot) emptySet() else accessible - hidden)
         val restrictions = immutableSet(Restriction.entries)
         val features = immutableSet(LockTaskFeature.entries)
