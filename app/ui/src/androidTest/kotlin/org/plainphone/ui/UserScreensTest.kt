@@ -39,7 +39,7 @@ class UserScreensTest {
         val state = mutableStateOf(AskForAppUiState("Sam"))
         show { AskForAppScreen(state.value, events::add) }
         compose.onNodeWithText("Send to Sam").assertIsDisplayed().assertIsNotEnabled()
-        compose.onNodeWithTag("request-message").performScrollTo().performTextInput("Bus times")
+        compose.onNodeWithTag("request-message").performScrollTo().performClick().performTextInput("Bus times")
         assertEquals(listOf(AskForAppEvent.MessageChanged("Bus times")), events)
         compose.runOnIdle { state.value = state.value.copy(message = "Bus times", canSend = true) }
         compose.onNodeWithText("Send to Sam").assertIsDisplayed().performClick()
