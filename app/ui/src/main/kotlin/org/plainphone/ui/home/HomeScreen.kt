@@ -28,6 +28,7 @@ import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
@@ -42,6 +43,8 @@ import org.plainphone.ui.theme.PlainphoneColors
 import org.plainphone.ui.theme.PlainphoneSpace
 import org.plainphone.ui.theme.PlainphoneTheme
 import org.plainphone.ui.theme.PlainphoneType
+import org.plainphone.ui.components.waitingTimeText
+import org.plainphone.ui.components.trustedPeopleText
 
 /** Host supplies the safe content area, after system bars. No clock, policy or navigation here. */
 @Composable
@@ -75,21 +78,24 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
             bottom = bottom(true)
         }
         if (height - top.height - bottom.height < minimumApp) {
-            noticeLines = 2
-            top = top(noticeLines, false)
+            inlineClock = true
+            top = top(noticeLines, true)
         }
         if (height - top.height - bottom.height < minimumApp) {
-            inlineClock = true
+            noticeLines = 2
             top = top(noticeLines, true)
         }
         val available = height - top.height - bottom.height
         if (available < 28.dp.roundToPx()) {
             // Unsupported smaller viewports: preserve text and touch sizes using one scroll page.
             val page = subcompose("whole-page") {
-                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                Column(Modifier.fillMaxSize().testTag("home-whole-page")
+                    .verticalScroll(rememberScrollState())) {
                     HomeTop(state, noticeLines, inlineClock, largeText, onEvent)
-                    state.apps.forEach { app ->
-                        HomeAppRow(app.name) { onEvent(HomeEvent.OpenApp(app.id)) }
+                    Column(verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S3)) {
+                        state.apps.forEach { app ->
+                            HomeAppRow(app.name) { onEvent(HomeEvent.OpenApp(app.id)) }
+                        }
                     }
                     HomeBottom(briefMore, onEvent)
                 }
@@ -103,9 +109,11 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
                 HomeBottom(briefMore, onEvent)
             }.single().measure(natural)
             val apps = subcompose("apps") {
-                LazyColumn(Modifier.fillMaxSize().testTag("home-apps"),
+                LazyColumn(Modifier.fillMaxSize().testTag("home-apps"), reverseLayout = true,
                     verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S3, Alignment.Bottom)) {
-                    items(state.apps, key = { it.id }) { app ->
+                    // Reversing both keeps the supplied visual order, with the last app at the bottom.
+                    // Positional keys tolerate duplicate opaque IDs without dropping either entry.
+                    items(state.apps.asReversed()) { app ->
                         HomeAppRow(app.name) { onEvent(HomeEvent.OpenApp(app.id)) }
                     }
                 }
@@ -134,7 +142,7 @@ private fun HomeTop(state: HomeUiState, noticeLines: Int, inlineClock: Boolean,
             Text(state.time, style = PlainphoneType.Clock)
             Text(if (largeText) state.shortDate else state.date, style = PlainphoneType.Date)
         }
-        state.notice?.let { notice ->
+        state.notice?.let { noticeText(it) }?.let { text ->
             Spacer(Modifier.height(PlainphoneSpace.S6))
             val shape = RoundedCornerShape(PlainphoneSpace.BoxRadius)
             Row(Modifier.fillMaxWidth().testTag("home-notice")
@@ -143,7 +151,7 @@ private fun HomeTop(state: HomeUiState, noticeLines: Int, inlineClock: Boolean,
                 .heightIn(min = 48.dp).padding(PlainphoneSpace.S4),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
-                Text(noticeText(notice), style = PlainphoneType.Body.copy(fontWeight = FontWeight.Medium),
+                Text(text, style = PlainphoneType.Body.copy(fontWeight = FontWeight.Medium),
                     modifier = Modifier.weight(1f), maxLines = noticeLines, overflow = TextOverflow.Ellipsis)
                 Text("›", style = PlainphoneType.Body.copy(color = PlainphoneColors.Ink2),
                     modifier = Modifier.clearAndSetSemantics {})
@@ -154,7 +162,7 @@ private fun HomeTop(state: HomeUiState, noticeLines: Int, inlineClock: Boolean,
 
 @Composable
 private fun HomeBottom(briefMore: Boolean, onEvent: (HomeEvent) -> Unit) {
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth().padding(top = PlainphoneSpace.S3)) {
         HomeAppRow(stringResource(R.string.home_messages)) { onEvent(HomeEvent.OpenMessages) }
         HomeAppRow(stringResource(R.string.home_phone)) { onEvent(HomeEvent.OpenPhone) }
         val shape = RoundedCornerShape(percent = 50)
@@ -184,16 +192,20 @@ private fun HomeAppRow(name: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun noticeText(notice: HomeNotice): String = when (notice) {
+private fun noticeText(notice: HomeNotice): String? = when (notice) {
     HomeNotice.NeedsAttention -> stringResource(R.string.notice_attention)
-    is HomeNotice.TurnOffWaiting -> stringResource(R.string.notice_turn_off, notice.time)
+    is HomeNotice.TurnOffWaiting -> stringResource(R.string.notice_turn_off,
+        waitingTimeText(notice.time, notice.day))
     HomeNotice.PeopleChangeWaiting -> stringResource(R.string.notice_people)
     HomeNotice.ModeChangeWaiting -> stringResource(R.string.notice_mode)
-    is HomeNotice.OpeningUp -> stringResource(R.string.notice_opening, notice.minutes)
+    is HomeNotice.OpeningUp -> pluralStringResource(R.plurals.notice_opening, notice.minutes, notice.minutes)
     HomeNotice.ReadyToStart -> stringResource(R.string.notice_ready)
-    is HomeNotice.MonthlyCheck -> stringResource(R.string.notice_monthly, notice.trustedPeople)
+    is HomeNotice.MonthlyCheck -> trustedPeopleText(notice.trustedPeople)?.let {
+        stringResource(R.string.notice_monthly, it)
+    }
     HomeNotice.SelfManagedMonthlyCheck -> stringResource(R.string.notice_monthly_self)
     HomeNotice.AlreadyInProgress -> stringResource(R.string.notice_in_progress)
+    HomeNotice.Cancelling -> stringResource(R.string.notice_cancelling)
 }
 
 @Preview(name = "Home 100%", widthDp = 360, heightDp = 640, fontScale = 1f)

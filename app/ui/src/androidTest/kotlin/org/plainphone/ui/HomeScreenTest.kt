@@ -12,6 +12,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -37,14 +38,14 @@ class HomeScreenTest {
         val events = mutableListOf<HomeEvent>()
         compose.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(2f)) {
-            PlainphoneTheme {
-                // Content remaining on 360 × 640 after 32/48 dp system bars.
-                Box(Modifier.size(360.dp, 560.dp)) {
-                    HomeScreen(HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct",
-                        (1..20).map { HomeApp("app-$it", "App $it") },
-                        HomeNotice.ModeChangeWaiting), events::add)
+                PlainphoneTheme {
+                    // Content remaining on 360 × 640 after 32/48 dp system bars.
+                    Box(Modifier.size(360.dp, 560.dp)) {
+                        HomeScreen(HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct",
+                            (1..20).map { HomeApp("app-$it", "App $it") },
+                            HomeNotice.ModeChangeWaiting), events::add)
+                    }
                 }
-            }
             }
         }
         // The last supplied app must be present immediately, above the pinned block.
@@ -79,5 +80,24 @@ class HomeScreenTest {
         compose.onNodeWithText("Work camera").assertIsDisplayed().performClick()
         compose.onNodeWithText("Cancelling…").assertIsDisplayed().performClick()
         assertEquals(listOf(HomeEvent.OpenApp("same"), HomeEvent.OpenNotice), events)
+    }
+
+    @Test fun belowMinimumViewportStillReachesPinnedActionsByScrolling() {
+        val events = mutableListOf<HomeEvent>()
+        compose.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(2f)) {
+                PlainphoneTheme {
+                    Box(Modifier.size(360.dp, 320.dp)) {
+                        HomeScreen(HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct",
+                            (1..8).map { HomeApp("app-$it", "App $it") },
+                            HomeNotice.ModeChangeWaiting), events::add)
+                    }
+                }
+            }
+        }
+        compose.onNodeWithTag("home-whole-page").assertExists()
+        compose.onNodeWithText("Phone").performScrollTo().assertIsDisplayed().performClick()
+        compose.onNodeWithText("More").performScrollTo().assertIsDisplayed().performClick()
+        assertEquals(listOf(HomeEvent.OpenPhone, HomeEvent.OpenMore), events)
     }
 }

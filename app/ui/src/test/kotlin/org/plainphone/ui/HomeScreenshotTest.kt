@@ -25,7 +25,7 @@ class HomeScreenshotTest(private val scale: Float) {
         deviceConfig = DeviceConfig.PIXEL_5.copy(
             screenWidth = 360, screenHeight = 640,
             xdpi = 160, ydpi = 160, density = Density.MEDIUM,
-            fontScale = scale,
+            fontScale = scale, locale = "en",
         ),
         showSystemUi = false,
         maxPercentDifference = 0.0,

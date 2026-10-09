@@ -38,7 +38,9 @@ internal fun Modifier.plainphoneAction(
             drawContent()
             if (focused) {
                 val stroke = PlainphoneSpace.Focus.toPx()
-                val outset = stroke * 1.5f
+                // Full-width rows and lazy-list edges clip an outside ring. Keep that ring
+                // inside the touch target, with a 2 dp gap to its edge. Inset buttons have room.
+                val outset = if (shape == RectangleShape) -stroke * 1.5f else stroke * 1.5f
                 drawRoundRect(PlainphoneColors.Ink,
                     topLeft = Offset(-outset, -outset),
                     size = Size(size.width + 2 * outset, size.height + 2 * outset),

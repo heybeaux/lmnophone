@@ -21,7 +21,7 @@ import org.plainphone.ui.theme.PlainphoneTheme
 class HomeShortScreenshotTest(private val height: Int) {
     @get:Rule val paparazzi = Paparazzi(
         deviceConfig = DeviceConfig.PIXEL_5.copy(screenWidth = 360, screenHeight = height,
-            xdpi = 160, ydpi = 160, density = Density.MEDIUM, fontScale = 2f),
+            xdpi = 160, ydpi = 160, density = Density.MEDIUM, fontScale = 2f, locale = "en"),
         showSystemUi = false, maxPercentDifference = 0.0,
     )
     @Test fun fallback() = paparazzi.snapshot {
@@ -34,6 +34,6 @@ class HomeShortScreenshotTest(private val height: Int) {
     }
     companion object {
         @JvmStatic @Parameterized.Parameters(name = "height={0}")
-        fun heights() = listOf(arrayOf(560), arrayOf(520), arrayOf(480))
+        fun heights() = listOf(arrayOf(560), arrayOf(540), arrayOf(480))
     }
 }

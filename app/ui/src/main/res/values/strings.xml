@@ -9,10 +9,19 @@
     <string name="notice_turn_off">Plainphone will turn off after %1$s. Tap to cancel.</string>
     <string name="notice_people">A change to trusted people is waiting. Tap to cancel.</string>
     <string name="notice_mode">A change to how this phone is set up is waiting. Tap to cancel.</string>
-    <string name="notice_opening">Opening up in %1$d minutes</string>
+    <plurals name="notice_opening">
+        <item quantity="one">Opening up in %1$d minute</item>
+        <item quantity="other">Opening up in %1$d minutes</item>
+    </plurals>
     <string name="notice_ready">Ready – tap to start</string>
     <string name="notice_monthly">Ask %1$s to do the monthly phone check</string>
     <string name="notice_monthly_self">Time for your monthly phone check</string>
     <string name="notice_in_progress">Already in progress</string>
+    <string name="notice_cancelling">Cancelling…</string>
+    <string name="names_or">%1$s or %2$s</string>
+    <string name="names_and">%1$s and %2$s</string>
+    <string name="notice_time_tomorrow">%1$s tomorrow</string>
+    <string name="notice_time_day">%1$s %2$s</string>
+    <string name="notice_short_date_format">EEE d MMM</string>
     <string name="lexend_notice">Lexend – SIL Open Font License 1.1</string>
 </resources>
