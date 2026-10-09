@@ -42,7 +42,8 @@ object Signin {
         if (!ok) return "JOURNAL_WRITE_FAILED (nothing relaxed)"
         dpm.setLockTaskPackages(admin, (prevLt + PKG).distinct().toTypedArray())
         val unhid = dpm.setApplicationHidden(admin, PKG, false)
-        main.postDelayed({ if (active(c) && System.currentTimeMillis() >= deadline) end(c, "deadline") }, seconds * 1000 + 200)
+        // Re-read the journal: a timer left over from an earlier session must not end this one.
+        main.postDelayed({ if (active(c) && System.currentTimeMillis() >= Emu.prefs(c).getLong("j_deadline", Long.MAX_VALUE)) end(c, "deadline") }, seconds * 1000 + 200)
         Emu.log("signin start ${t()} journal=ok unhide=$unhid deadlineIn=${seconds}s")
         return "OK session started; " + state(c)
     }

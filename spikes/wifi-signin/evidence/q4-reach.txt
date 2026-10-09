@@ -115,3 +115,93 @@ top after CONTINUE ANYWAY VIA BROWSER: com.plainphone.spike.emu/.MainActivity
 screen: "Plainphone emu spike (throwaway)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop lock task" "deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.g
 10-08 17:43:28.515  4297  4297 I PPEMU   : signin close-on-validated -> OK session ended (validated) hide=true; active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=105 wifiCaptive=false wifiValidated=true
 10-08 17:43:28.519   555   572 I ActivityTaskManager: START u0 {flg=0x30000000 cmp=com.plainphone.spike.emu/.MainActivity} with LAUNCH_SINGLE_TASK from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result code=3
+## overflow: tap (1022,202)
+top: com.plainphone.spike.emu/.MainActivity
+screen: "Plainphone emu spike (throwaway)" "This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi." "Forget this network" "Use sign-in page (5 min)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop loc
+10-08 17:44:43.901   555  1604 W InputManager-JNI: Input channel object 'e04bf83 com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity (client)' was disposed without first being removed with the inp
+10-08 17:44:43.919  4297  4297 I PPEMU   : signin end reason=deadline uptime=2768456ms hide=true hiddenNow=true
+10-08 17:44:43.942   555   598 V WindowManager: Sent Transition (#22) createdAt=10-08 17:44:43.890 via request=TransitionRequestInfo { type = CLOSE, triggerTask = TaskInfo{userId=0 taskId=63 displayId=0 isRunning=false baseIntent=Intent { a
+10-08 17:44:44.457   555  1604 W WindowManager: Exception thrown during dispatchAppVisibility Window{e04bf83 u0 com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity EXITING}
+    mLockTaskModeState=LOCKED
+after BACK top: com.plainphone.spike.emu/.MainActivity | "Plainphone emu spike (throwaway)" "This Wi-Fi needs a sign-
+## filepicker: tap (408,936)
+top: com.android.camera2/com.android.camera.CameraActivity
+screen: "Options" "Options" "Shutter" 
+10-08 17:44:52.664   555  1604 I ActivityTaskManager: START u0 {act=android.media.action.STILL_IMAGE_CAMERA cmp=com.android.camera2/com.android.camera.CameraActivity} with LAUNCH_SINGLE_TASK from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result 
+    mLockTaskModeState=LOCKED
+after BACK top: com.plainphone.spike.emu/.MainActivity | "Plainphone emu spike (throwaway)" "This Wi-Fi needs a sign-
+## tel: tap (114,1349)
+top: com.plainphone.spike.emu/.MainActivity
+screen: "Plainphone emu spike (throwaway)" "This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi." "Forget this network" "Use sign-in page (5 min)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop loc
+    mLockTaskModeState=LOCKED
+after BACK top: com.plainphone.spike.emu/.MainActivity | "Plainphone emu spike (throwaway)" "This Wi-Fi needs a sign-
+## overflow: tap (1022,202)
+top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "Do not use this network" "Use this network as is" 
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity | "Sign in to AndroidWifi" "10.0.2.2" "More options" 
+## filepicker: tap (408,936)
+top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and connect" "1 Accept and connect" "2 Outside site (example.com)" "2 Outside site (example.com)" "3 JS redirect to Wikipedia" "4 target=_blank (bbc.com)" "4 target=_blank (bbc.com)" "5 File picker: " "Choose
+    mLockTaskModeState=LOCKED
+after BACK top: com.plainphone.spike.emu/.MainActivity | "Plainphone emu spike (throwaway)" "This Wi-Fi needs a sign-
+## tel: tap (114,1349)
+top: com.plainphone.spike.emu/.MainActivity
+screen: "Plainphone emu spike (throwaway)" "This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi." "Forget this network" "Use sign-in page (5 min)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop loc
+    mLockTaskModeState=LOCKED
+after BACK top: com.plainphone.spike.emu/.MainActivity | "Plainphone emu spike (throwaway)" "This Wi-Fi needs a sign-
+## tel: tap (114,1349)
+top: com.google.android.dialer/com.android.dialer.main.impl.MainActivity
+screen: "More options" "555-1234" "backspace" "1," "1" "2,ABC" "2" "ABC" "3,DEF" "3" "DEF" "4,GHI" "4" "GHI" "5,JKL" "5" "JKL" "6,MNO" "6" "MNO" "7,PQRS" "7" "PQRS" "8,TUV" "8" "TUV" "9,WXYZ" "9" "WXYZ" "*" "*" "0" "0" "+" "#" "#" "Call" "dial" 
+10-08 17:47:25.850   555  1597 I ActivityTaskManager: START u0 {act=android.intent.action.DIAL dat=tel:xxxxxxx flg=0x10000000 cmp=com.google.android.dialer/com.android.dialer.main.impl.MainActivity} with LAUNCH_SINGLE_TASK from uid 10115 (B
+10-08 17:47:26.391  7270  7270 D VRI[CaptivePortalLoginActivity]: visibilityChanged oldVisibility=true newVisibility=false
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.dialer/com.android.dialer.main.impl.MainActivity | "key pad" "555-1234" "555-1234" "Start voice search" "More o
+## mailto: tap (168,1452)
+top: com.google.android.dialer/com.android.dialer.main.impl.MainActivity
+screen: "key pad" "555-1234" "555-1234" "Start voice search" "More options" 
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.dialer/com.android.dialer.main.impl.MainActivity | "Call your favorite contacts with just one tap" "Add a favor
+## download: tap (228,1555)
+top: com.google.android.dialer/com.android.dialer.main.impl.MainActivity
+screen: "Call your favorite contacts with just one tap" "Add a favorite" "key pad" "Search contacts" "Search contacts" "Start voice search" "More options" "Favorites" "Favorites" "Recents" "Recents" "Contacts" "Contacts" "Voicemail" "Voicemail" 
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity | "Sign in to AndroidWifi" "10.0.2.2" "More options" 
+## google: tap (204,1658)
+top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "plainphone - Google Search" "Learn more about World Space Week 2026" "Learn more about World Space Week 2026" "Sign in" "Sign in" "Search settings" "Main menu" "Google Search" "plainphone" "Clear Search" "AI Mode" "AI Mode" "All" "All" "Shopping" "Shopping" "
+10-08 17:48:05.815  7270  7270 D CaptivePortalLoginActivity: onPageStarted: www.google.com
+10-08 17:48:06.104  7270  7270 D CaptivePortalLoginActivity: onPageStarted: www.google.com
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity | "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and conn
+## windowopen: tap (168,1766)
+top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "Mozilla - Internet for people, not profit (US)" "Primary" "Menu" "Mozilla" "Mozilla" "Pause animation" "Welcome to Mozilla" "From trustworthy tech to policies that defend your digital rights, we put you first — always." "Learn about us" "Learn about us" "A st
+10-08 17:48:19.682  7270  7270 D CaptivePortalLoginActivity: onPageStarted: www.mozilla.org
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity | "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and conn
+## googlechrome: tap (288,1142)
+top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and connect" "1 Accept and connect" "2 Outside site (example.com)" "2 Outside site (example.com)" "3 JS redirect to Wikipedia" "4 target=_blank (bbc.com)" "4 target=_blank (bbc.com)" "5 File picker: " "Choose
+    mLockTaskModeState=LOCKED
+(on portal)
+## NOTE: mailto and download rows above were tapped while the Dialer was on top; invalid, redone below
+top before: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+## mailto: tap (168,1452)
+top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+screen: "quantum_ic_warning_amber_96" "&#10;" "The network you are trying to join is requesting to open another application." "The network you are trying to join is requesting to open another application." "For example, the login page may require a specific applicatio
+10-08 17:48:47.095  7270  7270 D CaptivePortalLoginActivity: onPageStarted: 
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity | "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and conn
+## download: tap (228,1555)
+top: android/com.android.internal.app.BlockedAppActivity
+screen: "App is not available" "Files is not available right now." "OK" 
+10-08 17:49:00.928   816   853 V WindowManagerShell: Transition requested (#38): android.os.BinderProxy@25b3a39 TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=115 displayId=0 isRunning=true baseIntent=Intent { a
+10-08 17:49:00.928   555  1597 I ActivityTaskManager: START u0 {act=android.intent.action.CREATE_DOCUMENT cat=[android.intent.category.OPENABLE] typ=application/pdf cmp=com.google.android.documentsui/com.android.documentsui.picker.PickActiv
+10-08 17:49:00.932  7270  7270 D CaptivePortalLoginActivity: Download service connected
+10-08 17:49:01.013   555   598 V WindowManager: Sent Transition (#38) createdAt=10-08 17:49:00.923 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=115 displayId=0 isRunning=true baseIntent=Intent { ac
+    mLockTaskModeState=LOCKED
+after BACK top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity | "Ferry Wi-Fi" "Ferry Wi-Fi (fake portal)" "1 Accept and conn
+10-08 17:49:00.916  7270  7270 D CaptivePortalLoginActivity: Starting download for http://10.0.2.2:8099/download.pdf, type application/pdf with display name ferry.pdf
+10-08 17:49:00.928   555  1597 I ActivityTaskManager: START u0 {act=android.intent.action.CREATE_DOCUMENT cat=[android.intent.category.OPENABLE] typ=application/pdf cmp=com.google.android.documentsui/com.android.documentsui.picker.PickActivity (has extras)} with LAUNCH_MULTIPLE from uid 10115 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+10-08 17:49:00.932  7270  7270 D CaptivePortalLoginActivity: Download service connected

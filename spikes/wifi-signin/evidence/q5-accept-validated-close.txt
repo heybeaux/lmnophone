@@ -1,0 +1,20 @@
+## Q5: tap Accept on the portal (session active)
+active=true secondsLeft=778 hidden=false inLockTask=true lockTaskState=1 wifiNet=108 wifiCaptive=true wifiValidated=false
+top: com.plainphone.spike.emu/.MainActivity
+screen: "Plainphone emu spike (throwaway)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop lock task" "d
+active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=108 wifiCaptive=false wifiValidated=true
+10-08 17:49:19.943  6604  6604 I PPEMU   : cmd [signin-state] -> active=true secondsLeft=778 hidden=false inLockTask=true lockTaskState=1 wifiNet=108 wifiCaptive=true wifiValidated=false
+10-08 17:49:19.996  7270  7270 D CaptivePortalLoginActivity: onPageStarted: 10.0.2.2
+10-08 17:49:21.016   555   730 D ConnectivityService: [108 WIFI] validation passed
+10-08 17:49:21.016   555   730 I ConnectivityService: Update capabilities for net 108 : -CAPTIVE_PORTAL+VALIDATED
+10-08 17:49:21.019  6604  6664 I PPEMU   : wifi-cb net=108 captive=false validated=true uptime=3045557ms
+10-08 17:49:21.019  7270  7288 D CaptivePortalLoginActivity: Result DISMISSED for http://10.0.2.2:8099/login
+10-08 17:49:21.021   865  7183 D NetworkMonitor/108: CaptivePortal App responded with 0
+10-08 17:49:21.092  6604  6604 I PPEMU   : signin end reason=validated uptime=3045609ms hide=true hiddenNow=true
+10-08 17:49:21.093  6604  6604 I PPEMU   : signin close-on-validated -> OK session ended (validated) hide=true; active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=108 wifiCaptive=false wifiVa
+10-08 17:49:21.113   555  1603 I ActivityTaskManager: START u0 {flg=0x30000000 cmp=com.plainphone.spike.emu/.MainActivity} with LAUNCH_SINGLE_TASK from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result code=3
+10-08 17:49:21.161  6604  6664 I PPEMU   : wifi-cb net=108 captive=false validated=true uptime=3045699ms
+10-08 17:49:21.167   555   730 D ConnectivityService: [108 WIFI] validation passed
+10-08 17:49:24.165  6604  6664 I PPEMU   : wifi-cb net=108 captive=false validated=true uptime=3048703ms
+10-08 17:49:27.170  6604  6664 I PPEMU   : wifi-cb net=108 captive=false validated=true uptime=3051707ms
+10-08 17:49:30.233  6604  6604 I PPEMU   : cmd [signin-state] -> active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=108 wifiCaptive=false wifiValidated=true
