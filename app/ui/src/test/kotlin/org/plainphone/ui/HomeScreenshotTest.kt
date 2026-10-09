@@ -31,6 +31,9 @@ class HomeScreenshotTest(private val scale: Float) {
         maxPercentDifference = 0.0,
     )
 
+    @Test fun zeroApps() = snapshot(null, emptyList())
+    @Test fun oneApp() = snapshot(null, listOf(HomeApp("camera", "Camera")))
+
     @Test fun firstLook() = snapshot(null)
     @Test fun overdueMonthlyCheck() = snapshot(HomeNotice.MonthlyCheck(listOf("Sam", "Jo")))
     @Test fun attention() = snapshot(HomeNotice.NeedsAttention)
