@@ -554,6 +554,10 @@ class ElevationControllerTest {
 
     @Test fun `stricter edit lengthens owned live countdown without a tick before old expiry`() {
         setup(); activeFriction(); val r = request(); advance(300_000)
+        val saved = record!!; val countdown = saved.state.countdown!!
+        record = ElevationRecord(saved.revision, ElevationState(saved.state.ledger,
+            assertNotNull(ElevationCountdown.restore(countdown.id, countdown.target, countdown.startedAt, countdown.durationMillis))),
+            saved.journal, saved.person)
         val editor = settingsEditor(); val edit = assertNotNull(editor.prepareStricter(person, FrictionSettings(1_200_000, 2)))
         val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, edit.action)).authority
         assertEquals(FrictionSettingsOutcome.APPLIED, editor.applyStricter(edit, fresh))

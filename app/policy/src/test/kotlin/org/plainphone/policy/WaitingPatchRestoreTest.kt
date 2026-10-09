@@ -21,7 +21,7 @@ class WaitingPatchRestoreTest {
         val people = if (two) mapOf(a to credential.copy(generation = 3), b to credential.copy(generation = 7))
             else mapOf(a to credential.copy(generation = 3))
         return CredentialState(mode, people, 10, 4, recoveryProfile = RecoveryProfile(
-            people.keys.associateWith { "synthetic-${it.value}" }, "synthetic-backup"))
+            people.keys.associateWith { "synthetic-${it.value}" }, "synthetic-backup", FrictionSettings(600_000, 2)))
     }
     private fun decode(p: IncomingPersonEnrollment) = assertNotNull(IncomingPersonEnrollment.restore(
         p.person, p.credential, p.resetProtectionUserId, p.confirmations, p.witness))

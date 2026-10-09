@@ -51,14 +51,22 @@ class IncomingPersonEnrollment private constructor(
     override fun toString() = "IncomingPersonEnrollment(redacted)"
 
     companion object {
+        /**
+         * Decode original pending inputs, never current credentials or authority. Nested value types
+         * must already be validated. A pending trusted person requires a contact, generation zero and unused failure counters.
+         */
+        fun restore(person: TrustedPersonId, credential: PersonCredential, resetProtectionUserId: String,
+            confirmations: EnrollmentConfirmations, witness: EnrollmentWitness): IncomingPersonEnrollment? {
+            if (!confirmations.complete || resetProtectionUserId.isBlank() || resetProtectionUserId.any(Char::isWhitespace) ||
+                credential.contact == null || credential.generation != 0L || credential.pinCounter != FailureCounter() ||
+                credential.recoveryCounter != FailureCounter()) return null
+            return IncomingPersonEnrollment(person, credential, resetProtectionUserId, confirmations, witness)
+        }
+
         fun confirm(person: TrustedPersonId, contact: PersonContact, resetProtectionUserId: String,
             prepared: PreparedCredential, confirmations: EnrollmentConfirmations,
             witness: EnrollmentWitness): IncomingPersonEnrollment? {
-            if (!confirmations.complete || resetProtectionUserId.isBlank() || resetProtectionUserId.any(Char::isWhitespace)) return null
-            val credential = prepared.credential
-            if (credential.generation != 0L || credential.pinCounter != FailureCounter() ||
-                credential.recoveryCounter != FailureCounter()) return null
-            return IncomingPersonEnrollment(person, credential.copy(contact = contact), resetProtectionUserId, confirmations, witness)
+            return restore(person, prepared.credential.copy(contact = contact), resetProtectionUserId, confirmations, witness)
         }
     }
 }
@@ -113,6 +121,30 @@ class TrustedPersonPatch private constructor(
     override fun toString() = "TrustedPersonPatch($kind, redacted)"
 
     companion object {
+        /**
+         * Decode the original immutable patch without re-deriving generations from live credentials.
+         * This validates stored shape only: controller authority, wait and live eligibility checks
+         * still apply. A handover witness can be the unaffected holder absent from dependencies.
+         */
+        fun restore(kind: WaitingChangeKind, starter: TrustedPersonId, structureGeneration: Long,
+            dependencyGenerations: Map<TrustedPersonId, Long>, removedSlots: Set<TrustedPersonId>,
+            incoming: IncomingPersonEnrollment?): TrustedPersonPatch? {
+            if (structureGeneration < 0 || dependencyGenerations.values.any { it < 0 } ||
+                dependencyGenerations.keys != removedSlots + starter || dependencyGenerations.size !in 1..2 ||
+                incoming?.person in dependencyGenerations) return null
+            val witness = incoming?.witness as? EnrollmentWitness.CurrentPerson
+            if (witness != null && witness.person == incoming.person) return null
+            val valid = when (kind) {
+                WaitingChangeKind.ADD_PERSON -> removedSlots.isEmpty() && incoming != null &&
+                    (witness == null || witness.person == starter)
+                WaitingChangeKind.HAND_OVER -> removedSlots == setOf(starter) && incoming != null
+                WaitingChangeKind.REMOVE_PERSON -> removedSlots.size == 1 && incoming == null
+                else -> false
+            }
+            if (!valid) return null
+            return TrustedPersonPatch(kind, starter, structureGeneration, dependencyGenerations, removedSlots, incoming)
+        }
+
         fun add(current: CredentialState, starter: TrustedPersonId, incoming: IncomingPersonEnrollment): TrustedPersonPatch? {
             if (current.people.size != 1) return null
             return prepare(current, WaitingChangeKind.ADD_PERSON, starter, emptySet(), incoming)
