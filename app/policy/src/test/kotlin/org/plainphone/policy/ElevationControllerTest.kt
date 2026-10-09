@@ -405,4 +405,46 @@ class ElevationControllerTest {
         assertFalse(physicallyOpen); assertNull(record!!.state.grant); assertEquals(1, record!!.state.ledger.debits.size)
     }
 
+    @Test fun `supervised reader cannot take over an elevation after a mode and structure change`() {
+        setup(); val sessions = sharedSessions(); assertTrue(sessions.onStart())
+        val r = request(); advance(600_000); start(r)
+        credentials = CredentialState(Mode.TRUSTED, credentials!!.people, structureGeneration = 1)
+        assertNull(sessions.access())
+        assertEquals(SessionOutcome.CLOSED, sessions.tick())
+        assertFalse(physicallyOpen); assertEquals(SessionJournal.Empty, record!!.journal)
+        assertFalse(record!!.state.grant!!.packageAccessOpen); assertEquals(1, record!!.state.ledger.debits.size)
+        assertNull(controller.access()); assertEquals(ElevationOutcome.LAPSED, controller.tick())
+        assertNull(record!!.state.grant)
+    }
+    @Test fun `foreign journal projection remains restrictive and can still close after failed CAS`() {
+        setup(); val sessions = sharedSessions(); assertTrue(sessions.onStart())
+        val r = request(); advance(600_000); start(r)
+        credentials = CredentialState(Mode.TRUSTED, credentials!!.people, structureGeneration = 1)
+        failure = "save-CLOSING"
+        assertEquals(SessionOutcome.NOT_READY, sessions.tick())
+        assertNull(sessions.access()); assertNull(controller.access())
+        assertEquals(1, record!!.state.ledger.debits.size)
+        failure = null; assertEquals(SessionOutcome.CLOSED, sessions.tick())
+        assertFalse(physicallyOpen); assertEquals(SessionJournal.Empty, record!!.journal)
+        assertFalse(record!!.state.grant!!.packageAccessOpen)
+    }
+    @Test fun `effective terminal decision at low battery stays terminal through all cleanup failures`() {
+        for (point in listOf("save-CLOSING", "revoke", "protected", "readback", "save-clear")) {
+            val f = ElevationControllerTest(); f.setup(); val r = f.request(); f.advance(600_000); f.start(r)
+            assertTrue(f.controller.installed(r.id, f.app)); f.battery = BatteryState(4, false); f.failure = point
+            assertEquals(ElevationOutcome.NOT_READY, f.controller.endPackageAccess(r.id, SessionEnd.SCREEN_OFF), point)
+            f.failure = null; f.battery = BatteryState(50, false) // Recovery of the trigger must not undo the decision.
+            assertEquals(ElevationOutcome.ENDED, f.controller.tick(), point)
+            assertNull(f.record!!.state.grant, point); assertNull(f.controller.candidate(f.app), point)
+            assertFalse(f.physicallyOpen, point); assertEquals(1, f.record!!.state.ledger.debits.size, point)
+        }
+    }
+    @Test fun `effective terminal decision survives retry even while battery remains low`() {
+        setup(); val r = request(); advance(600_000); start(r); assertTrue(controller.installed(r.id, app))
+        battery = BatteryState(4, false); failure = "revoke"
+        assertEquals(ElevationOutcome.NOT_READY, controller.endPackageAccess(r.id, SessionEnd.SCREEN_OFF))
+        failure = null; assertEquals(ElevationOutcome.ENDED, controller.endPackageAccess(r.id, SessionEnd.LEFT_PACKAGES))
+        assertNull(record!!.state.grant); assertNull(controller.candidate(app)); assertEquals(1, record!!.state.ledger.debits.size)
+    }
+
 }
