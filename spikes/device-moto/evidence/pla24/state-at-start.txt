@@ -1,0 +1,20 @@
+host_utc=2026-10-09T06:28:53Z device_time=2026-10-08T23:28:53-0700
+deviceOwner=true lockTaskModeState=0 lockTaskPackages=[com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[] suspended=[] locked=false debugLiftAt=0
+mLockTaskModeState=NONE
+topResumedActivity=ActivityRecord{c4d94f9 u0 com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher t130}
+boot_count=5 stay_on=2 screen_off_timeout=60000
+uptime:  23:28:54 up  7:07,  0 users,  load average: 11.54, 11.42, 11.37
+mWakefulness=Awake
+mHoldingDisplaySuspendBlocker=true
+AC powered: false USB powered: true status: 5 level: 100 
+Wi-Fi is enabled
+Active default network: 100
+--- versions (pkg versionName versionCode lastUpdateTime updated-system-app?)
+com.google.android.apps.messaging | messages.android_20261002_00_RC00.phone_dynamic | 324451063 | 2026-10-08 16:06:39 | updated=2
+com.google.android.dialer | 141.0.666893082 | 17410828 | 2026-10-08 12:56:34 | updated=0
+com.google.android.gm | 2026.09.21.992487546.Release | 66054195 | 2026-10-08 16:10:21 | updated=2
+com.google.android.deskclock | 9.1 (965977594) | 76112330 | 2026-10-08 16:04:51 | updated=2
+com.google.android.apps.photos | 7.96.0.993165104 | 52511175 | 2026-10-08 16:03:24 | updated=2
+com.google.android.calculator | 9.3 (967717812) | 85022643 | 2026-10-08 16:08:36 | updated=2
+com.google.android.gms | 26.37.37 (260400-994713346) | 263737035 | 2026-10-08 13:04:39 | updated=2
+com.android.vending | 53.4.34-34 [0] [PR] 991240293 | 85343440 | 2026-10-08 13:03:06 | updated=2

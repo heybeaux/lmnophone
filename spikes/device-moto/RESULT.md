@@ -14,6 +14,7 @@
 - Spike code:
   - `dpc/app`: spike DPC `com.plainphone.spike.dpc`, built with `android:testOnly="true"`.
     Home screen, in-app **RELEASE** button (tap twice), and a DUMP-protected adb command hook (`Commands.kt`).
+    Since PLA-24 (R5), MainActivity only runs ops relayed by that hook (see § R5).
   - `dpc/target`: tiny app we own (`com.plainphone.spike.target`), v1 and v2, used as an update source for S2.
   - `tools/pp.sh`: adb helpers (`cmd`, `top`, `shot`, `tap`, `ui`, `log`).
 - Build: `cd dpc && ./gradlew :app:assembleDebug :target:assembleDebug` (AGP 8.11.0, Kotlin 2.1.20, compileSdk 35).
@@ -27,18 +28,57 @@
 | A2 way back | **yes** | `remove-active-admin` and the in-app RELEASE both return the phone to `no owners` with no wipe; provisioning again works each time. |
 | A3 Q1 lock task | **partly** | Launch matrix done for BLOCK off/on with a no-lock-task control. Reboot: lock task comes back by itself. A non-always-allowed adb key **cannot be re-authorized while lock task is on**. Not tested: power menu (needs the physical button), lock-screen emergency, calls/SMS. |
 | A4 Q5 baseline escapes | **partly** | Factory reset, OEM unlock, add user and Quick Settings are closed by their controls. `no_config_default_apps` does **not** stop a Home-app change (the DPC HOME pin does). **A DPC crash ends lock task and drops to the Moto launcher, unlocked, until Home is pressed.** Safe mode not tested (needs the physical buttons). |
-| A5 Q13 Motorola extras | **yes** | 20 extras + 3 Facebook installer packages hide cleanly; hiding breaks nothing core; BLOCK off leaks same-task starts of 6 of them until hidden. Hiding the Moto launcher closes the A4 crash escape (≥60 s → ~0.5 s). Clone/private/managed profiles are blocked by DO base restrictions. Gestures not tested (physical). |
+| A5 Q13 Motorola extras | **yes, for the named probes** | 20 packages hide cleanly, including the 3 Facebook system packages (21 with the Moto launcher, as in A6/A7). A 60 s UI smoke check found no core breakage; that is not proof nothing breaks. BLOCK off leaks same-task starts of 6 of them until hidden. With the Moto launcher hidden, **one** crash recovered in ~0.5 s instead of ≥60 s (BLOCK off); escape during recovery not tested (R2). Clone/private/managed profiles are blocked by DO base restrictions. Gestures not tested (physical). |
 | A6 Q6 reboot survival | **yes** | 21 hidden apps, 4 restrictions and the HOME pin all survive a reboot. `no_config_default_apps` never takes effect on this build. |
 | A7 Q7 release without wipe | **yes** | `clearDeviceOwnerApp()` from inside lock task: no owners, all unhidden, restrictions cleared, no wipe, both test photos byte-identical (MD5). |
 | Phase B sign-in | done | **Test account, signed in by the agent** (board comment 9a1887c6), not Beaux's personal account. No 2-step prompt. All 7 sync items turned off. |
 | S1 `DISALLOW_INSTALL_APPS` vs Play | **yes, it blocks** | Play auto-updates fail with `SecurityException: User restriction prevents installing` (Finsky status 5402); `adb install -r` also fails. |
 | S2 clear → install → re-add | **yes** | DO install while restricted fails at `createSession`; clear → silent install (588 ms, no prompt) → re-add: about 0.83 s window on the phone. |
 | S3 suspend Play | **no** | `setPackagesSuspended([com.android.vending])` is refused: Play is the required package verifier. |
-| S4 hidden Play vs lock task | **lock task: yes; hidden: no** | Hidden Play: its jobs can't start, so nothing updates. Lock task with Play unhidden: `market://` is blocked, and **23 apps updated in the background within 6 min**. |
+| S4 hidden Play vs lock task | **lock task: yes; hidden: no** | Hidden Play: its jobs can't start, so nothing updates. Lock task with Play unhidden: `market://` is blocked, and **23 apps updated in the background within 6 min of forcing Play's jobs**. Forced, not unattended; GMS was not among the 23 (R1). Unattended run: see Q2 unattended (72 h). |
 | B-Q1 lock task follow-ups (BLOCK on) | **yes** | Pre-grant works for camera, mic and location; Camera → Photos is closed; the emergency dialer screen opens; the image attaches through Messages' own picker; lock task comes back after a reboot. |
-| B-Q4 must-have apps | **partly**: before sign-in done; signed-in checks in PLA-20 | All 5 apps probed under BLOCK before sign-in. **Outlook's in-app WebView browses off-site from its Privacy link.** Google sign-in in Slack/Spotify/Outlook needs GMS → blocked. Telegram loops until pre-granted. Signed-in checks wait for Beaux. |
+| B-Q4 must-have apps | **partly**: before sign-in done; signed-in checks in PLA-20 | All 5 apps probed under BLOCK before sign-in. **Outlook's in-app WebView browses off-site from its Privacy link.** Google sign-in in Spotify and Outlook goes to GMS → blocked; Slack's Google sign-in fails even with lock task off (not traced). Telegram loops until pre-granted. Signed-in checks wait for Beaux. |
 | 9-1-1 routes (PLA-40) | **SOS: no, unless Personal Safety is allowlisted** | Power ×5 under lock task + BLOCK: "Personal Safety is not available right now". With `com.google.android.apps.safetyhub` on the lock-task list, the SOS screen opens. Phone route works from home and from inside Messages. Lock-screen Emergency (emulator) goes to Personal Safety too and is blocked without it. No call placed. |
-| S7 install race | **partly** | DPC hid a newly installed app 4.6 s after `firstInstallTime`. Deep links failed for ~4 s (package frozen), but the app's **process started ~0.35 s before the hide**; no window was displayed. |
+| S7 install race | **partly** | DPC hid a newly installed app 4.6 s after `firstInstallTime`. Deep links failed for ~4 s (package frozen), but the app's **process started ~0.35 s before the hide**. App code execution not instrumented; no `Displayed` log line. One measured race, lock task off (R3). |
+
+## R1–R5 corrections (PLA-24)
+
+The Verifier's review ([PLA-6](/PLA/issues/PLA-6), `docs/reviews/PLA-6-device-spike-review.md`) asked for five corrections.
+The text above has been changed in place; each changed line names the finding.
+
+| Finding | What changed |
+|---|---|
+| **R1** forced ≠ unattended; GMS not shown | S4 and its Status row now say the 23 updates followed **forced** Play jobs. GMS wasn't among them, and the Phone app failed with 1055. Unattended updating is a separate test: [Q2 unattended (72 h)](#q2-unattended-72-h-pla-24-throwaway). |
+| **R2** one crash recovery ≠ closed window | A5: "crash fallback closed" is now "a single crash recovers in ~0.5 s (BLOCK off); escape during recovery not tested". A stronger test (an unapproved fixture racing repeated crashes, BLOCK on) belongs on a dedicated emulator. |
+| **R3** process start ≠ `onCreate` ran | S7: the process **started** before the hide; app-code execution wasn't instrumented. "No `Displayed` line" is the absence of a log line. 4.6 s is one measured race with lock task off, not a bound. |
+| **R4** counts and summaries | A5: **20 packages including the 3 Facebook system packages**; 21 with the Moto launcher (A6/A7). "Nothing core breaks" is now labelled a 60 s UI smoke check. The B-Q4 opening line now covers all five apps, and the GMS sign-in pattern excludes Slack (it fails the same way with lock task off). |
+| **R5** exported test dispatcher | See below. |
+
+### R5. The exported MainActivity test dispatcher (harness boundary)
+
+**Before (PLA-5 builds, up to commit `2c6dc7d`):** `MainActivity` is exported with no permission, because it is the launcher
+and HOME entry. Its `handle()` ran `op=crash`, `lt-stop`, `lt-start` and `launch` from **any** intent, in `onCreate` or
+`onNewIntent`. So any app could crash the DPC or stop lock task without going through the DUMP-protected
+`CommandReceiver`. **The PLA-5 containment results are harness results.** They show what the platform does with a given
+policy. They do not show that the spike DPC itself resists a hostile app. The visible RELEASE and "Stop lock task"
+buttons are also deliberate spike exits.
+
+**Fix (this commit, `dpc/app`):** `Spike.relayToken` is a random UUID created once per DPC process. `Commands.relay()`
+(reachable only through `CommandReceiver`, which needs `android.permission.DUMP`) attaches it to the relayed intent.
+`MainActivity.handle()` drops any `op` whose token doesn't match, and logs `ignored op [...]`.
+A permission on the activity wasn't an option: it is the HOME and launcher entry, so the system and launchers must be able to start it.
+
+**Check on the phone** (`evidence/pla24/r5-check.txt`, 2026-10-09T06:29Z, the R5 build installed with `adb install -r -t`):
+
+| Start | Result |
+|---|---|
+| `am start -n …/.MainActivity --es op crash` (cold start, no token) | `ignored op [crash]`; the process kept the same pid |
+| `am start -n …/.MainActivity --es op lt-start` (`onNewIntent`, no token) | `ignored op [lt-start]`; lock task stayed `NONE` |
+| `pp.sh cmd crash` (through `CommandReceiver`) | relayed; `FATAL EXCEPTION … PPSPIKE deliberate crash`, as designed |
+
+Limit: the outside starts came from the adb shell, not from an ordinary installed fixture app. The shell has no token, just
+like any other app, so the code path is the same. This is still a throwaway harness. Any production DPC needs its own
+review of exported components.
 
 ## A0. Baseline
 
@@ -408,21 +448,25 @@ The same-task starts were made by our own spike code. A real user needs an allow
 Still, with BLOCK off **hiding is what closes them**.
 
 **Can each be hidden?** `setApplicationHidden(admin, pkg, true)` returned `true` and `isApplicationHidden` → `true`
-for all 20 extras plus the 3 Facebook system packages (`hide-results.txt`). They disappear from `pm list packages`,
+for all 20 packages in `hide-results.txt`. **The 20 include the 3 Facebook system packages** (`appmanager`, `system`, `services`); hiding the Moto launcher as well gives the 21 in A6/A7. They disappear from `pm list packages`,
 and their launcher entries no longer resolve (`inventory-after-hide.tsv`).
 
 **Does hiding break anything?** With all of them hidden, under lock task (BLOCK off), all of these worked (`breakage.txt`):
 Phone (`GoogleDialtactsActivity`), Messages, Camera, a new photo (MediaStore 1 → 2), the emergency dialer screen
 (`com.android.phone/.EmergencyDialer`; not dialed) and the notification shade. Over 60 s the only process death was a cached
 `com.android.managedprovisioning`, which is normal. WebView is the standalone `com.google.android.webview` (127.0.6533.103),
-so hiding Chrome does not affect WebView. **Not tested:** Moto Actions gestures (chop flashlight, twist camera, back-tap)
+so hiding Chrome does not affect WebView. This was a short UI smoke check, **not** proof that nothing core breaks (R4). **Not tested:** Moto Actions gestures (chop flashlight, twist camera, back-tap)
 need physical motion. Hiding `com.motorola.actions` presumably removes them; unverified.
 
-**Moto launcher hidden = crash fallback closed** (`crash-fallback.txt`). With `com.motorola.launcher3` hidden, the
+**Moto launcher hidden: a single crash recovers in ~0.5 s** (`crash-fallback.txt`; corrected per R2, was "crash fallback closed"). With `com.motorola.launcher3` hidden, the
 only HOME candidates are the spike and `com.android.settings/.FallbackHome`. A spike crash under lock task gives
 `Not force finishing home activity com.plainphone.spike.dpc/.MainActivity` → HOME restart of the spike at +0.12 s →
 `startLockTask()` at +0.35 s → `lock task entering` at **+0.51 s**. The top stays on the spike, against ≥60 s on the open Moto
-launcher in A4.
+launcher in A4. **Limits (R2):** BLOCK was **off** (features `SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS`), there was one
+induced crash, and polling started at +2 s. Nothing tried to open a queued notification, deep link or explicit launch
+during the ~0.5 s, and repeated crashes weren't tried. So recovery from one crash got shorter in this configuration;
+escape during recovery is **not tested**, and the window is not closed. A stronger test (an unapproved fixture racing
+repeated crashes with BLOCK on) belongs on a dedicated emulator.
 
 **Cloned Apps / Private Space / work profile** (`cloned-apps.txt`): `pm create-user --profileOf 0 --user-type
 android.os.usertype.profile.CLONE` fails **even in the control**: `Cannot add user: no_add_clone_profile is enabled`.
@@ -584,8 +628,11 @@ jobs then gave `Unable to start service … PhoneskyJobServiceBackground … not
 - **Bonus finding:** while Play was hidden and then unhidden, a "Moto App Launcher keeps stopping" dialog appeared
   over lock task. It was dismissed with Back, and lock task stayed `LOCKED`.
 
-**What this means for Plainphone (spike-level):** "Play enabled and signed in, but shut out by lock task" keeps both apps
-and GMS updating, with no user-visible Play. Hiding or suspending Play is not an option. Permanent `DISALLOW_INSTALL_APPS`
+**What this means for Plainphone (spike-level, corrected per R1):** with Play enabled and signed in but shut out by lock task,
+Play's update jobs can still install app updates with no Play screen visible. **This was a forced diagnostic**
+(`cmd jobscheduler run -f`), not unattended updating. GMS (`com.google.android.gms`) is **not** in the 23-package list, so GMS
+updating is not shown. The Phone app (`com.google.android.dialer`) update failed with 1055, so this is not an
+all-approved-apps pass. Unattended updating is tested separately in [Q2 unattended (72 h)](#q2-unattended-72-h-pla-24-throwaway). Hiding or suspending Play is not an option. Permanent `DISALLOW_INSTALL_APPS`
 stops all Play updates, including mainline.
 
 ## S7. Remove-after-install race
@@ -607,9 +654,11 @@ every ~250 ms (`deeplink-loop.out`). Telegram (`org.telegram.messenger` 12.10.6)
 | 16:11:02.101 | Telegram activity force-removed; later deep links get `result code=-91` (no resolve) |
 | 16:11:02.962 | Finsky reports `INSTALLED` (after the hide) |
 
-- No `Displayed org.telegram…` line appeared, so no Telegram window reached the screen. But the process ran for about
-  0.35 s, so `Application.onCreate` and whatever the app starts there did run.
-- Implication: a hide-on-`PACKAGE_ADDED` DPC leaves a gap of about 4–5 s. Most of it is platform latency before the
+- No `Displayed org.telegram…` line appeared. That is the absence of one log line, not frame-by-frame proof that no
+  window was ever drawn. The process **started** about 0.35 s before the hide. Whether application binding,
+  `Application.onCreate`, network work or UI ran was **not instrumented** (corrected per R3, was "onCreate … did run").
+- Implication: in this one measured race, a hide-on-`PACKAGE_ADDED` DPC left a gap of 4.6 s. That is one measurement,
+  not a bound for future installs. The watcher is reactive and was tested only with lock task **off**. Most of it is platform latency before the
   broadcast, not DPC work. To close it, the DPC would have to stop new installs (S1/S2), not race them.
 
 ## B-Q1. Lock task follow-ups, all with BLOCK on
@@ -632,7 +681,8 @@ local account after Play updated it (S4); it isn't a Google sign-in.
 
 ## B-Q4. Must-have apps (Slack, Spotify, Telegram, Gmail, Outlook)
 
-**Result: partly. Telegram's screens before sign-in are done; the rest is waiting on the board** (see the end of this section).
+**Result: partly. All five apps were probed under BLOCK before sign-in (tables below). Signed-in checks are deferred to Beaux's
+pass on the first real build (§ B-Q4 signed in).** (Corrected per R4: this line used to say only Telegram was done.)
 Evidence: `evidence/phase-b/bq4/`.
 
 ### Telegram `org.telegram.messenger` 12.10.6 (versionCode 71122), from Play (the S7 install)
@@ -724,8 +774,9 @@ Inbox screens were never dumped or screenshotted. `tools/gm-nav.sh` lists only a
 
 ### B-Q4 summary so far
 
-- **Pattern:** every app's Google sign-in goes through GMS (`SignInActivity`), and every Help and Account link goes
-  through GMS too. BLOCK stops all of these. Allowing `com.google.android.gms` would open the account sign-in UI,
+- **Pattern (narrowed per R4):** Spotify's and Outlook's Google sign-in go to GMS `SignInActivity`, and Gmail's Help and
+  Account links go to GMS too. BLOCK stops all of these. **Slack is different:** its Google sign-in fails with the same
+  error with lock task off and starts no activity, so GMS blocking isn't shown as the cause. Allowing `com.google.android.gms` would open the account sign-in UI,
   but also GMS Help and the account web pages: that is a large web surface. Plainphone should do Google sign-ins
   during a supervised setup window, not by allowlisting GMS.
 - **Credential Manager and the permission controller** are blocked under BLOCK. Telegram loops on them, while Spotify and Slack recover.

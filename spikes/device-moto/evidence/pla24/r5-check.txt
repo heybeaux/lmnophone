@@ -1,0 +1,23 @@
+# PLA-24 R5 check, 2026-10-09T06:29:48Z
+## install R5 build (adb install -r -t)
+Performing Streamed Install
+Success
+deviceOwner=true lockTaskModeState=0 lockTaskPackages=[com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[] suspended=[] locked=false debugLiftAt=0
+## 1. outside start: am start -n MainActivity --es op crash (no token)
+Starting: Intent { cmp=com.plainphone.spike.dpc/.MainActivity (has extras) }
+10-08 23:29:51.775   795   795 I PPSPIKE : ignored op [crash]: no relay token (not from CommandReceiver)
+pid after outside op: 795
+## 2. outside start, onNewIntent path: --es op lt-start (activity already running)
+Starting: Intent { cmp=com.plainphone.spike.dpc/.MainActivity (has extras) }
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+10-08 23:29:53.955   795   795 I PPSPIKE : ignored op [lt-start]: no relay token (not from CommandReceiver)
+    mLockTaskModeState=NONE
+## 3. relay through DUMP-protected CommandReceiver: cmd crash (expect crash)
+OK relayed crash to MainActivity (result in logcat PPSPIKE)
+10-08 23:29:56.407   795   795 I PPSPIKE : cmd [crash] -> OK relayed crash to MainActivity (result in logcat PPSPIKE)
+10-08 23:29:56.409  1853  1887 I ActivityManager: Broadcast completed: result=1, data="OK relayed crash to MainActivity (result in logcat PPSPIKE)"
+10-08 23:29:56.423   795   795 E AndroidRuntime: FATAL EXCEPTION: main
+10-08 23:29:56.423   795   795 E AndroidRuntime: java.lang.RuntimeException: PPSPIKE deliberate crash
+## after
+topResumedActivity=ActivityRecord{c4d94f9 u0 com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher t130}
+topResumedActivity=ActivityRecord{c4d94f9 u0 com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher t130}

@@ -105,13 +105,18 @@ class MainActivity : Activity() {
 
     /** Ops relayed from CommandReceiver, so launches happen from this (allowed) activity. */
     private fun handle(intent: Intent?) {
-        when (intent?.getStringExtra("op")) {
+        val op = intent?.getStringExtra("op") ?: return
+        intent.removeExtra("op")
+        if (intent.getStringExtra("token") != Spike.relayToken) {
+            Spike.log("ignored op [$op]: no relay token (not from CommandReceiver)")
+            return
+        }
+        when (op) {
             "lt-start" -> lock()
             "lt-stop" -> { runCatching { stopLockTask() }; refresh() }
             "crash" -> Handler(Looper.getMainLooper()).post { throw RuntimeException("PPSPIKE deliberate crash") }
             "launch" -> launchSpec(intent.getStringExtra("spec").orEmpty())
         }
-        intent?.removeExtra("op")
     }
 
     private fun launchSpec(spec: String) {

@@ -110,7 +110,7 @@ object Commands {
 
     private fun relay(c: Context, extras: Intent): String {
         c.startActivity(
-            Intent(c, MainActivity::class.java).putExtras(extras)
+            Intent(c, MainActivity::class.java).putExtras(extras).putExtra("token", Spike.relayToken)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
         )
         return "OK relayed ${extras.getStringExtra("op")} to MainActivity (result in logcat PPSPIKE)"

@@ -10,6 +10,12 @@ import android.util.Log
 object Spike {
     const val TAG = "PPSPIKE"
 
+    /**
+     * PLA-24 R5: MainActivity is exported (it is the launcher/HOME entry), so any app could send it an `op` extra.
+     * Ops are honoured only with this per-process token, which only [Commands.relay] (behind DUMP) attaches.
+     */
+    val relayToken: String = java.util.UUID.randomUUID().toString()
+
     /** Lock task feature names accepted by the `lt-features` command. */
     val FEATURES = linkedMapOf(
         "SYSTEM_INFO" to DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO,
