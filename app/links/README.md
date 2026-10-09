@@ -33,6 +33,8 @@ Pure Kotlin/JVM. No `android.*`. Spec: `openspec/changes/add-plainphone-spike-an
 - `IntentFacts.action` is read only to tell a web intent (`ACTION_VIEW` plus an exact `http`/`https` scheme, as in
   `Intent.isWebIntent`). `IntentFacts.customTabs` is context only.
 - `PackageFacts` and `IntentFacts` are plain data that lane D fills from PackageManager.
+- `PackageFacts.signingCerts` and `PlainphoneIdentity.signingCerts` use lane A's `org.plainphone.core.CertDigest`
+  (the seam recorded on `main` at `0b7061e`). The standalone `core-shim/` copies that type until the real `:core` lands.
 
 ## Notes for lane D
 - `IntentFacts.resolvers` must be what `queryIntentActivities` returns for the intent as dispatched: one entry per
@@ -52,6 +54,9 @@ Pure Kotlin/JVM. No `android.*`. Spec: `openspec/changes/add-plainphone-spike-an
 - `approved` must be the effective lock-task set. Packages that share a UID with a lock-task package are eligible
   too; lane D expands the set and keeps it separate from trusted-person approval.
 - Catalog `REVIEW` notes carry no reviewed app version yet; the versioned web-leak notes come with task 5.2.
+- `android-app:` package, scheme and authority decoding assumes `encodeAppIntent` is enabled. AOSP Android 15's
+  `Uri.decodeIfNeeded` leaves encoded values unchanged when that feature flag is off; this parser always decodes
+  them. Lane D must check percent-encoded forms against the emulator build before claiming parseUri parity.
 
 ## Tests
 `./gradlew :links:test` once the skeleton lands. Until then (standalone build, temporary `core-shim/`):
