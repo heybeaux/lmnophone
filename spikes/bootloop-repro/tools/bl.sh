@@ -11,7 +11,7 @@ waitboot() { local t=0 lim=${1:-180}; while [ $t -lt $lim ]; do [ "$(A shell get
 crashes() { A logcat -d -b crash 2>/dev/null | grep -c 'FATAL EXCEPTION IN SYSTEM PROCESS'; }
 bootid() { A shell cat /proc/sys/kernel/random/boot_id 2>/dev/null | tr -d '\r'; }
 # wait until the boot id changes (device actually rebooted), up to 120 s
-waitnewboot() { local old="$1" t=0; while [ $t -lt 120 ]; do local b; b=$(bootid); [ -n "$b" ] && [ "$b" != "$old" ] && return 0; sleep 2; t=$((t+2)); done; echo "NO NEW BOOT"; return 1; }
+waitnewboot() { local old="$1" t=0 b; while [ $t -lt 120 ]; do b=$(bootid); [ -n "$b" ] && [ "$b" != "$old" ] && return 0; sleep 2; t=$((t+2)); done; echo "NO NEW BOOT"; return 1; }
 # trial <hide|unhide> <pkg> <delay-s> <adb|svc|kill> <label>
 # Assumes the opposite state is already durable. Logs to evidence/<label>.txt. Prints one table row.
 trial() {
@@ -31,3 +31,5 @@ trial() {
   echo "RESULT: $r" >> $out
   echo "| $label | $dir | $pkg | ${d}s | $kind | $r | $(crashes) |"
 }
+# reset: load clean snapshot, then make <pkg> durably <state> (hidden|visible) by waiting past the 10 s write delay
+reset() { A emu avd snapshot load do-clean2 >/dev/null; sleep 3; waitboot 30 >/dev/null; A logcat -c -b all; case $2 in hidden) cmd hide $1;; suspended) cmd suspend $1;; *) true;; esac >/dev/null; sleep ${SETTLE:-15}; }

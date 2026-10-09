@@ -1,0 +1,1 @@
+| a36-t01-unhide-captive-2s-adb | unhide | com.google.android.captiveportallogin | 2s | adb | LOOP | 33 |

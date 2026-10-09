@@ -1,0 +1,14 @@
+unhide CP 20 adb t02-sanity-unhide-captive-20s-adb
+unhide CP 5 adb t03-unhide-captive-5s-adb
+unhide CP 5 adb t04-unhide-captive-5s-adb
+unhide CP 2 adb t05-unhide-captive-2s-adb
+unhide CP 15 adb t06-unhide-captive-15s-adb
+unhide CP 30 adb t07-unhide-captive-30s-adb
+unhide CP 60 adb t08-unhide-captive-60s-adb
+unhide CP 2 svc t09-unhide-captive-2s-svc
+hide CP 2 adb t10-hide-captive-2s-adb
+unhide com.android.settings 2 adb t11-unhide-settings-2s-adb
+unhide com.android.vending 2 adb t12-unhide-vending-2s-adb
+unhide com.plainphone.spike.emu 2 adb t13-unhide-userapp-2s-adb
+unhide CP 8 adb t14-unhide-captive-8s-adb
+unhide CP 12 adb t15-unhide-captive-12s-adb

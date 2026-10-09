@@ -1,0 +1,4 @@
+unhide CP 2 kill t16-unhide-captive-2s-kill
+unsuspend CP 2 adb t17-unsuspend-captive-2s-adb
+suspend CP 2 adb t18-suspend-captive-2s-adb
+unhide CP 3 adb t19-unhide-captive-3s-adb
