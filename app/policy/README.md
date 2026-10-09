@@ -535,3 +535,11 @@ atomically consume that grant with the approval write; this fix does not add tha
 Shared-store tests exercise both startup orders with credentials unavailable, legacy close, failed
 close/clear CAS with cross-controller suppression, supervised mode admission, conflicting opening,
 and the existing supervised approval suite over the combined store.
+
+
+Restrictive elevation intent is monotonic within the running controller: once Done or deadline has
+requested terminal cleanup, a later screen-off/call/leave event cannot downgrade it to retaining the
+grant. A terminal request can strengthen an earlier package-only close. Failed startup or damaged-record
+recovery also leaves a recovery-required latch: subsequent `tick` calls retry revoke/check/readback and
+repair instead of stopping permanently at NOT_READY. Until success, preparation and all authority remain
+unavailable. Process death still requires startup revocation and never restores a grant.

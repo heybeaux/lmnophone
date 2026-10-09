@@ -71,6 +71,7 @@ class ElevationController(
     private val ids: AppApprovalIdSource,
 ) {
     private var initialized = false
+    private var recoveryRequired = false
     private var ownedId: String? = null
     private val requests = mutableSetOf<ElevationRequest>()
     private var play: PlaySessionState? = null
@@ -79,7 +80,7 @@ class ElevationController(
 
     /** Before any access or other controller work, including Direct Boot. No credential read is needed. */
     @Synchronized fun onStart(): ElevationOutcome {
-        initialized = false; ownedId = null; requests.clear(); play = null; closing = null
+        initialized = false; recoveryRequired = true; ownedId = null; requests.clear(); play = null; closing = null
         store.revocationPending = true
         val before = store.read()
         if (!effects.revokeAllRelaxations() || !effects.protectedStateCheck() || !effects.readBackPolicy()) return ElevationOutcome.NOT_READY
@@ -90,7 +91,7 @@ class ElevationController(
         if (before?.revision == Long.MAX_VALUE) return ElevationOutcome.NOT_READY
         val next = ElevationRecord((before?.revision ?: -1) + 1, state)
         if (!store.compareAndSet(before, next, null)) return ElevationOutcome.NOT_READY
-        initialized = true; store.revocationPending = false
+        initialized = true; recoveryRequired = false; store.revocationPending = false
         return ElevationOutcome.IDLE
     }
 
@@ -171,7 +172,7 @@ class ElevationController(
     }
 
     @Synchronized fun tick(): ElevationOutcome {
-        if (!initialized) return ElevationOutcome.NOT_READY
+        if (!initialized) return if (recoveryRequired) onStart() else ElevationOutcome.NOT_READY
         closing?.let { return close(it) }
         val before = store.read() ?: return onStart().let { ElevationOutcome.NOT_READY }
         if (store.revocationPending) {
@@ -258,7 +259,12 @@ class ElevationController(
         close(Close(id, false, ElevationOutcome.ENDED))
         return ElevationOutcome.NOT_READY
     }
-    private fun close(request: Close): ElevationOutcome {
+    private fun close(proposed: Close): ElevationOutcome {
+        // A later package-only end must never weaken a terminal Done/deadline already awaiting cleanup.
+        val request = closing?.let { pending ->
+            if (pending.id != proposed.id) return ElevationOutcome.NOT_READY
+            if (!pending.retain) pending else proposed
+        } ?: proposed
         store.revocationPending = true
         closing = request // Latch before reading/writing; a failed closing CAS cannot expose old OPEN access.
         val before = store.read() ?: return onStart().let { ElevationOutcome.NOT_READY }
