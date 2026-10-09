@@ -248,9 +248,12 @@ permissions, app removal, recovery-code lockout and stuck handover use that copy
   and text size. If the full title plus a body line cannot fit above the actions,
   band/body/actions share one scroll area. Secondary stays above primary.
   Otherwise actions remain pinned. Scroll and sending updates never switch the
-  layout; screen identity or display/font/rotation changes remeasure. New tasks
+  layout; screen identity, action presence or display/font/rotation changes
+  remeasure. Keyboard padding is applied after this decision, so opening the IME
+  keeps the focused field in the same composition. New tasks
   open at the top. Android's native scrollbar occupies the empty edge gutter and
   is excluded from accessibility; Compose supplies accessible scrolling.
 
-See `evidence/slice3-ready.md` for final checks and review evidence. The older
+See `evidence/slice3-ready.md` for the base slice checks and
+`evidence/slice3-review-fixes.md` for the real-keyboard and footer regressions. The older
 checkpoint report records the pre-answer state only.
