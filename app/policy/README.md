@@ -100,7 +100,37 @@ Tests cover all 16 priority combinations, first look, all waiting kinds, hidden 
 
 `tick(requestId, battery)` re-reads the operation and ignores stale or terminal requests. It cancels on starter credential generation, mode or structure changes; an unrelated person's PIN generation does not cancel it. Maturity requires 24 hours of proven time, with old epochs conservatively anchored at new epoch zero. Clock failure grants no maturity. Battery below 5% without charging defers commit. Persisted committing/rolling-back phases keep the single slot and refuse PIN-free cancellation; this gate never changes their direction or re-checks post-commit dependencies.
 
-`cancel(requestId)` needs no authority, latches pending cancellation before attempting its atomic state/receipt write, and reports cancellation only after success. Within the running controller, failed writes prevent a later timer from committing and are retried. A process interruption before any cancellation write cannot produce a durable success acknowledgement; startup uses the last valid durable state. Restrictive cancellation remains possible if clock checkpointing fails. Calls/emergency must never depend on this gate, its storage, receipt dispatch or future restore effects. Use the same serialized dispatcher as PinVault, credential writes and the eventual restore controller; session startup revocation still runs first.
+`cancel(requestId)` needs no authority. It records a process-local latch and writes REQUESTED to the
+separate `CancelIntentStore` before reading the operation or attempting the atomic cancelled-state/
+receipt write. A failed intent write does not prevent attempting the restrictive operation write.
+Only that operation write yields CANCELLED. Tick retries matching cancellation before maturity;
+a persisted intent survives controller/process restart, even if the operation store was unreadable
+or its write failed. Stale IDs cannot replace the matching intent or reverse terminal/committing direction.
+
+`CancelIntentStore` is a required port; there is no volatile default. Initialize a durable CLEAR entry
+before a new pending operation is written. REQUESTED is monotonic. Missing, damaged or unreadable
+intent entries return UNKNOWN, which blocks maturity. Writes are idempotent and return true only
+when durable. Lane D implements this in device-protected storage independently of the operation
+copies, on the common serialized dispatcher. Request IDs are never reused. Do not delete an entry
+for an active operation; terminal-entry garbage collection must never turn REQUESTED into CLEAR.
+Existing pending records without an intent entry require explicit reconciliation, not guessed CLEAR.
+
+`WaitingOperation.recipientGenerations` is an immutable start-time snapshot, persisted in every phase,
+independent of outbox acknowledgement. Cancellation uses current credentials if readable, otherwise
+this fallback; it also works if the clock is unavailable. Lane D must retain the corresponding original
+delivery addresses alongside the operation snapshot, independently of STARTED text delivery/removal.
+The new field is required on restore; do not synthesize an empty recipient list for an old record.
+
+Durability limit: if BOTH the separate intent write and the cancelled-state write fail before anything
+is saved, a process death cannot recover that unsaved user action. The live controller still blocks and
+retries; it never reports Cancelled. This slice does not claim to solve total persistence failure or the
+spec's lost-record reconciliation path. The independent intent port closes the restart gap when the
+intent is durable and the operation write fails. Fault tests distinguish interruption before/after the
+intent write. Android filesystem durability and failure correlation require lane D verification.
+
+Calls/emergency must never depend on this gate, its storage, receipt dispatch or future restore effects.
+Use the same serialized dispatcher as PinVault, credential writes and the eventual restore controller;
+session startup revocation still runs first.
 
 Tests are written first for person-bound authority, atomic start/receipts (including interruption before/after write), single-slot protection, fake proven-clock reboot/restart/epoch behavior, exact maturity, low battery, dependency cancellation, failed cancel/commit writes, stale callbacks, invalid storage/credentials, and receipt preservation/acknowledgement. These tests prove the bounded gate, not the unfinished turn-off sequence or Android durability.
 
