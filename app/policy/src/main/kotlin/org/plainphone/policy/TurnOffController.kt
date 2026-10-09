@@ -54,6 +54,10 @@ class TurnOffController(
 
     @Synchronized
     fun tick(requestId: String): TurnOffResult {
+        // Never let a different kind enter the destructive restore runner, even with owner absent.
+        if (store.read()?.operation?.kind?.let { it != WaitingChangeKind.TURN_OFF } == true) {
+            return TurnOffResult(TurnOffOutcome.IGNORED)
+        }
         if (!initialized) {
             initialized = effects.revokeTemporaryAccess()
             if (!initialized) {
@@ -67,6 +71,7 @@ class TurnOffController(
         if (!owner) return complete(before, requestId)
         if (before == null) return failed(TurnOffFailure.JOURNAL_READ)
         val operation = before.operation ?: return TurnOffResult(TurnOffOutcome.IGNORED)
+        if (operation.kind != WaitingChangeKind.TURN_OFF) return TurnOffResult(TurnOffOutcome.IGNORED)
         if (operation.identity.requestId != requestId) return TurnOffResult(TurnOffOutcome.IGNORED)
         if (operation.phase == WaitingPhase.COMPLETED) return failed(TurnOffFailure.STATE_MISMATCH)
         if (operation.phase != WaitingPhase.COMMITTING) return TurnOffResult(TurnOffOutcome.IGNORED)
@@ -106,12 +111,15 @@ class TurnOffController(
     private fun complete(before: WaitingState?, requestId: String): TurnOffResult {
         if (before == null) return TurnOffResult(TurnOffOutcome.OFF, journalPending = true)
         val operation = before.operation ?: return TurnOffResult(TurnOffOutcome.OFF)
+        if (operation.kind != WaitingChangeKind.TURN_OFF) return TurnOffResult(TurnOffOutcome.IGNORED)
         if (operation.identity.requestId != requestId) return TurnOffResult(TurnOffOutcome.OFF, journalPending = true)
         if (operation.phase == WaitingPhase.COMPLETED) return TurnOffResult(TurnOffOutcome.OFF)
         val revision = nextRevision(before) ?: return TurnOffResult(TurnOffOutcome.OFF, journalPending = true)
         val completed = operation.withPhase(WaitingPhase.COMPLETED)
-        val recipients = credentials()?.people?.mapValues { it.value.generation } ?: operation.recipientGenerations
-        val receipt = WaitingText("${requestId.length}:$requestId:$revision", WaitingEvent.COMPLETED, completed, recipients)
+        val current = credentials()
+        val recipients = current?.people?.mapValues { it.value.generation } ?: operation.recipientGenerations
+        val contacts = current?.people?.mapValues { it.value.contact } ?: operation.recipientContacts
+        val receipt = WaitingText("${requestId.length}:$requestId:$revision", WaitingEvent.COMPLETED, completed, recipients, contacts)
         val saved = store.compareAndSet(before, before.replacing(revision, completed, before.texts + receipt))
         return TurnOffResult(TurnOffOutcome.OFF, journalPending = !saved)
     }

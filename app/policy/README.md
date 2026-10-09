@@ -665,9 +665,9 @@ record. It alters only the named slots and associated reset-protection IDs, keep
 counters, contacts, pending notices, backup and friction, and increments revision/structure once.
 Credential recovery now preserves the selected holder's contact alongside replacing their secrets.
 
-This slice does not enable a people-change action. The next reviewed slice must integrate this model
-with the existing single waiting slot, fresh authority, 24-hour proven time, cancellation and skip
-transaction. The committing controller must persist direction, set/read back the candidate's full
+The model alone does not enable a people-change action. The waiting integration below adds the
+single slot, fresh authority, 24-hour proven time, cancellation and skip transaction. The remaining
+committing controller must persist direction, set/read back the candidate's full
 reset-protection list including backup, then atomically apply the patch; rollback must persist intent
 before restoring the current active list. It must recognize an already-applied patch on restart rather
 than retrying calculation to reinstall the enrollment PIN. Fixed-recipient receipts and platform effects
@@ -676,3 +676,54 @@ this model or a calculated candidate as permission to update the active credenti
 
 `TrustedPersonPatchTest` covers this model boundary with synthetic contacts/accounts and a fake hash
 port. It does not establish Android persistence, readback, account validity or completion behavior.
+
+## People waits and recovery handover (second people-change slice)
+
+`WaitingChangeController.prepareAdd`, `prepareHandOver` and `prepareRemove` produce a process-local
+preparation owned by that controller. `startPeopleChange` requires confirmation and a fresh PIN grant
+bound to that exact preparation and starter. Handover's starter is always the outgoing holder. Start
+rechecks the patch's full dependency set, initializes the never-reused cancel intent, then writes PENDING
+and its fixed-recipient STARTED receipt together. Incoming credentials remain outside the active store.
+
+All kinds share the existing waiting journal and slot. Pending waits mature only at 24 hours of proven
+running time, including epoch repair and reboot rules. Pending dependency changes cancel on the next
+serialized tick; the adapter must dispatch that tick immediately after any credential change. Ordinary
+PIN recovery does not skip a wait. PIN-free cancellation, its durable intent, missing-record holds and
+stale-request checks are shared with turn-off. People changes do not unhide anything, so the battery
+guard specific to discretionary unhide does not delay their commit decision. Turn-off's guard remains.
+
+`skip` uses the existing joint recovery transaction for all supported pending kinds. It checks every
+old dependency before recovery and atomically rotates only the skipper, queues SKIPPED and enters
+COMMITTING. Skipper authority replaces starter authority; removed/replaced slots remain explicit patch
+dependencies. Once committing, ordinary credential changes do not cancel the operation.
+
+`startHandOverWithRecovery` is the outgoing-code alternative. The local screen must name the exact
+handover and separately confirm starting and skipping its wait. It checks only the outgoing holder's
+code, uses the vault's independent recovery counters, and requires a new PIN. The new optional
+`WaitingHandOverCommitter` port must atomically join that credential rotation, STARTED and SKIPPED
+receipts with distinct keys, and the COMMITTING record. It compares the same active credential store,
+waiting generation/revision, vacant/terminal slot, and reserved request's CLEAR cancel intent. It must
+publish either all old values or all new values after a crash. With no explicitly wired support this
+alternative is unavailable; the older turn-off skip port does not imply support. No new code is returned
+until success, and incoming credentials still grant nothing. This port needs lane D implementation and
+independent durability tests under its own gate before product wiring.
+
+`WaitingText.recipientContacts` freezes each recipient's contact alongside the generation when queued.
+The operation retains its original snapshot for restrictive cancellation when credentials cannot be read,
+even after the original STARTED receipt is acknowledged. A null legacy contact explicitly means the
+address is unavailable: report delivery unavailable/gave up, never resolve it from a later slot. A removed
+holder's already-queued receipt retains its original address; later events address only current holders.
+`LockoutNotice` is audit/source-event data, not a receipt with fixed delivery destinations. Preserve
+removed-slot notices for audit without treating that removed slot as a current recipient. The adapter
+must broadcast a notice to the holders current when it queues the receipt and freeze that snapshot;
+it must neither retarget nor discard an already-queued receipt. Delivery failure never gates policy.
+
+`TurnOffController` rejects people operations before any effects, including when Device Owner is
+absent. The normal policy plan and emergency floor remain intact in every people phase. Forward
+reset-protection effects, patch application, completion receipts and fresh-PIN rollback are still the
+next slice. Do not expose people-change product actions until that executor and its adapter are wired.
+
+`PeopleWaitingTest` covers the start/wait/cancel/skip boundary, recovery-code handover, counter
+separation, exact deadlines and repaired epochs, shared-slot contention, crash boundaries for ordinary
+and joint writes, fixed/legacy/removed contacts, kind isolation and unchanged locked/unlocked policy.
+These JVM fakes establish policy behavior, not Android durable storage, account validity or FRP.
