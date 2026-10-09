@@ -90,8 +90,13 @@ class ModeSwitchControllerTest {
             }
             override fun applyPatch(expectedCredentials: CredentialState, replacementCredentials: CredentialState,
                 expectedWaiting: WaitingState): Boolean = error("mode switch called people-only patch")
+            override fun finishMode(expectedCredentials: CredentialState, expectedWaiting: WaitingState,
+                replacementWaiting: WaitingState, expectedElevation: ElevationRecord): Boolean = moveChecked(
+                    expectedCredentials, expectedWaiting, replacementWaiting, expectedElevation)
             override fun move(expectedCredentials: CredentialState, expectedWaiting: WaitingState,
-                replacementWaiting: WaitingState): Boolean {
+                replacementWaiting: WaitingState): Boolean = moveChecked(expectedCredentials, expectedWaiting, replacementWaiting, null)
+            private fun moveChecked(expectedCredentials: CredentialState, expectedWaiting: WaitingState,
+                replacementWaiting: WaitingState, expectedElevation: ElevationRecord?): Boolean {
                 val stage = when (replacementWaiting.operation!!.phase) {
                     WaitingPhase.ROLLING_BACK -> "rollback-intent"
                     WaitingPhase.CANCELLED -> "cancelled"
@@ -99,7 +104,8 @@ class ModeSwitchControllerTest {
                     else -> error("unexpected executor transition")
                 }
                 return edge(stage) {
-                    if (fail == stage || credentials !== expectedCredentials || waiting !== expectedWaiting) false
+                    if (fail == stage || credentials !== expectedCredentials || waiting !== expectedWaiting ||
+                        (expectedElevation != null && elevation !== expectedElevation)) false
                     else { waiting = replacementWaiting; true }
                 }
             }
@@ -578,4 +584,46 @@ class ModeSwitchControllerTest {
         outcome(PeopleChangeOutcome.COMPLETED, f.tick(fresh = true))
         assertEquals(1, f.patchWrites)
     }
+    @Test fun `mode terminal transaction refuses changed elevation record before releasing authority latch`() {
+        for (rollback in listOf(false, true)) {
+            val f = F()
+            if (rollback) outcome(PeopleChangeOutcome.ROLLING_BACK, f.stop())
+            else outcome(PeopleChangeOutcome.APPLIED, f.tick())
+            f.hook = { event -> if (event == if (rollback) "cancelled" else "completed") {
+                f.elevation = f.elevation!!.replacing(f.elevation!!.state)
+            } }
+            failed(PeopleChangeFailure.PERSISTENCE, f.tick(if (rollback) WaitingPhase.ROLLING_BACK else WaitingPhase.COMMITTING))
+            assertTrue(f.elevationStore.revocationPending)
+            assertFalse(f.waiting!!.operation!!.phase in setOf(WaitingPhase.COMPLETED, WaitingPhase.CANCELLED))
+            f.hook = null
+            outcome(if (rollback) PeopleChangeOutcome.CANCELLED else PeopleChangeOutcome.COMPLETED,
+                f.tick(if (rollback) WaitingPhase.ROLLING_BACK else WaitingPhase.COMMITTING, fresh = true))
+        }
+    }
+
+    @Test fun `live elevation controller loses old grant on self to supervised swap without losing debit`() {
+        val f = F(Mode.SELF_MANAGED)
+        f.waiting = f.waiting!!.replacing(f.waiting!!.revision + 1, f.waiting!!.operation!!.withPhase(WaitingPhase.PENDING))
+        f.elevation = ElevationRecord()
+        val e = elevationController(f)
+        assertEquals(ElevationOutcome.IDLE, e.onStart())
+        val r = e.prepare(f.a, ElevationTarget.Play)!!
+        val grant = assertIs<PinResult.Authorized>(f.vault.authenticate(f.a, f.pin, r.action)).authority
+        assertEquals(ElevationOutcome.COUNTING, e.request(r, grant))
+        f.now = f.now!!.let { it.copy(proven = it.proven.copy(totalMillis = it.proven.totalMillis + 600_000),
+            boot = it.boot.copy(elapsedMillis = it.boot.elapsedMillis + 600_000)) }
+        assertEquals(ElevationOutcome.STARTED, e.start(r.id, r.target))
+        assertNotNull(e.access())
+        val ledger = f.elevation!!.state.ledger
+        assertEquals(WaitingOutcome.COMMITTING, f.waitingController.tick(f.id, BatteryState(50, false)))
+        outcome(PeopleChangeOutcome.APPLIED, f.tick())
+        outcome(PeopleChangeOutcome.COMPLETED, f.tick())
+        assertNull(e.access())
+        assertNull(e.prepare(f.a, ElevationTarget.Play))
+        assertNull(e.prepare(f.incoming, ElevationTarget.Play))
+        assertSame(ledger, f.elevation!!.state.ledger)
+        assertEquals(ElevationOutcome.IDLE, e.onStart())
+        assertSame(ledger, f.elevation!!.state.ledger)
+    }
+
 }
