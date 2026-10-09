@@ -28,6 +28,7 @@ sections. One heading per item, then one or two sentences. The required items ar
 | 8 | Phone software updates | Android updates can arrive before the Plainphone team has checked them; some security updates install anyway. Until we check, a new update could add a way around Plainphone that we haven't seen. |
 | 9 | A bad Plainphone update | There's no undo for a Plainphone update. If one goes badly wrong, the fix is to wipe the phone and set it up again. |
 | 10 | Emergency alerts | Plainphone doesn't block emergency alerts. {build_alert_line} |
+| 11 | What Google and apps collect | Plainphone doesn't change what Google or each app's maker collects. The phone still uses a Google account for the Play Store, and each app follows its own privacy rules. Plainphone itself sends nothing anywhere. |
 
 `{build_alert_line}` is "We checked that alerts appear on this phone ({date})." when the real-device check
 was observed, or "We couldn't test that an alert appears on this phone's software. This was agreed on {date}." when Beaux recorded a build-scoped exception. It is never left blank.
@@ -36,6 +37,8 @@ was observed, or "We couldn't test that an alert appears on this phone's softwar
 - **Notes:** item 6 must also say, per device-lockdown, that reset protection doesn't put Plainphone back. The
   sentence "Plainphone doesn't come back by itself" covers this; the engineer must not shorten it away. Items 7–10 are not
   required by the spec's list, but are part of what Beaux accepted, so the trusted person should see them too.
+  Item 11 was added after the copy-test pilot, where the reader's biggest worry was "Google (due to tracking
+  etc)". It is true today: the design has no servers and no analytics.
 
 ## L2. Phone software changed – review pending
 
@@ -49,10 +52,14 @@ Exact text: **Phone software changed – review pending**
 
 - **Title:** Phone software changed – review pending
 - **Body:**
-  The phone updated its own software on {date}. The Plainphone team hasn't checked this version yet.
-  {user} can keep using the phone as normal: the same apps, and Emergency still works. There's nothing you need
-  to do. {helper} has been sent a text and will install a Plainphone update.
-  Until then, there's a small chance a new part of the phone lets an app get around Plainphone.
+  Android, the phone's own software, updated itself on {date}. The Plainphone team checks each new version for
+  gaps, and hasn't checked this one yet.
+  Nothing has changed for {user}: the same apps, the same limits, and Emergency still works. There's nothing you
+  need to do. {helper} has been sent a text and will install a Plainphone update.
+  Until then, there's a small chance the update added a gap that lets an app get around Plainphone.
+- **Copy-test change (pilot):** the earlier last line ("a new part of the phone lets an app get around
+  Plainphone") was read as "{user} will have elevated permissions". The body now says nothing changed for
+  {user}, and calls the risk "a gap".
 - **Primary:** OK
 - **Secondary:** What changed → L2c
 
@@ -105,6 +112,8 @@ confirmations, journal and resume, report "Off" only when Device Owner is gone, 
   Play Store, and the home screen will look different.
   Photos, messages and contacts are kept. Nothing is erased.
   To use Plainphone again later, {helper} has to set it up again with a computer.
+  Plainphone only turns off this way, with your PIN. A flat battery, a restart or a phone update doesn't turn it
+  off.
 - **Primary:** Continue
 - **Secondary:** Keep Plainphone on
 

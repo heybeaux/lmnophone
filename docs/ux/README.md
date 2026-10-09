@@ -142,3 +142,24 @@ recommendation; none changes a promise.
    alone may cover her need, which is the calmest answer. If it is an Outlook.com or work address, wait for the
    signed-in B-Q4 result; if that fails too, the Lead decides between a new, narrow "add an account" session (a
    spec change, with its own tests) and leaving Outlook off.
+
+**From Beaux's copy-test pilot (round 3, [copy-test.md](copy-test.md#round-3-beauxs-pilot)).** These are
+product decisions, not wording. The copy doesn't promise any of them.
+
+8. **Changing the trusted person, or more than one.** The pilot reader asked "Can I change this person? Can I have
+   multiple people in Sam's role?" The MVP has one trusted person, and no screen to change who it is.
+   **Recommendation:** for the MVP, changing who it is means {helper} sets the phone up again; About this phone
+   then says so in one line. More than one trusted person is a later change, with its own spec.
+9. **Web for a few minutes.** "I would perhaps prefer the ability to turn web browsing on for 2-5 minutes." This
+   is the same need as the Wi-Fi sign-in page ([PLA-17](/PLA/issues/PLA-17), [wifi-signin-override.md](wifi-signin-override.md)).
+   **Recommendation:** decide both together, as one time-limited "open for a few minutes" mechanism, so the user
+   learns one thing. If the answer is no, the blocked-link screen stays as it is.
+10. **Automating the monthly app updates.** "Can we not automate this? Or make it simpler for me to navigate to?"
+    Automatic updates conflict with the approved "block installs, update only in a supervised window" design.
+    **Recommendation:** keep the design; ask the AE whether Plainphone can open the Play Store straight on its
+    "Updates available" list, which removes the three steps of directions on the monthly-check screen.
+11. **Turning Plainphone off as a way round.** "What if a kid has this phone and uses this as a bypass method?"
+    Off needs the PIN or recovery code, so only someone who has those can do it. **Recommendation:** no change
+    for the MVP (Beaux and the trusted person are adults). For a child's phone, consider a waiting period or {helper}'s
+    confirmation, as a later spec change.
+

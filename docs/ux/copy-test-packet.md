@@ -1,6 +1,7 @@
 # Copy test packet (for a person who has never seen Plainphone)
 
-Use this for the human copy test in [copy-test.md](copy-test.md). It holds the current words only, with the names
+Use this for the human copy test in [copy-test.md](copy-test.md). This version includes the fixes from Beaux's
+pilot run (round 3). It holds the current words only, with the names
 changed (Margaret uses the phone, Sam looks after it, Alex is the helper) so the tester doesn't know the real users.
 
 ## How to run it (about 30 minutes)
@@ -21,7 +22,7 @@ changed (Margaret uses the phone, Sam looks after it, Alex is the helper) so the
 
 ### Questions
 1. You want an app for the local bus times. What exactly do you do?
-2. The main screen says "Ask Sam to do the monthly phone check". What does that mean? Is something wrong with your phone? What will you do?
+2. The main screen says "Ask Sam to do the monthly phone check" (this line only appears when the check is more than a week late). What does that mean? Is something wrong with your phone? What will you do?
 3. You tapped a link in a text from a friend and got Screen 6. What happened, in your own words? What would you tap, and why?
 4. What happens if you tap "Send to Sam"? Would you feel OK doing that? Why or why not?
 5. You're at a hotel and see Screen 7. What does it mean? What would you do? Can you still make a call?
@@ -39,14 +40,15 @@ You are reading the screens of a new, simplified phone. Margaret uses the phone.
 SCREEN 1 (the main screen)
   10:42
   Thursday 8 October
-  [ Emergency 9-1-1 ]   (red button)
+  [ Emergency 9-1-1 ]   (red button; small line inside it: "Opens the dialer")
+  (a gap)
   [ Phone ]
   [ Messages ]
-  Ask Sam to do the monthly phone check  ›
+  Ask Sam to do the monthly phone check  ›   (only shown when the monthly check is more than a week late)
   Spotify
   Slack
   Camera
-  More
+  More — Ask for an app, settings, help
 
 SCREEN 2 (after tapping "Ask Sam to do the monthly phone check")
   Title: The monthly phone check
@@ -56,8 +58,8 @@ SCREEN 2 (after tapping "Ask Sam to do the monthly phone check")
 
 SCREEN 3 (sometimes the main screen shows "Plainphone needs attention" instead; tapping it shows this)
   Title: Something needs checking
-  Plainphone, the program that keeps this phone simple, needs Sam to check one of its settings.
-  It isn't a virus, and you haven't done anything wrong. Calls, texts, Emergency and your apps still work.
+  Plainphone, the program that keeps this phone simple, needs Sam to look at it. An app on this phone couldn't be tidied away.
+  Your phone is fine to use: calls, texts, Emergency and your apps all work. You haven't done anything wrong.
   What should I do?  (link)
   [ OK ]
 
@@ -72,7 +74,8 @@ SCREEN 5 (Ask for an app)
   Sam adds apps to this phone, together with you. Tell Sam which app you'd like and what it's for. Sam gets a text.
   Your message: [                         ]
   [ Send to Sam ]
-  Then: "Sent to Sam. Next time you're together, Sam can add it on this phone. Your request is saved here too." [ OK ]
+  Then: "Sent to Sam. Next time you're together, Sam can add it on this phone. Your request is saved here too, and you can see below when Sam's phone has it." [ OK ]
+  Below the box, your requests: "the bus times app…  Thu  · Sam's phone got it ✓"  (or "Sent", "Didn't send – Try again", "Added ✓")
   If it fails: "This didn't send. The phone may have no signal right now. Your request is saved, and Sam will see it on this phone." [ Try again ]  OK, leave it saved (link)
   After 5 requests in a day: "That's 5 requests today. You can ask again tomorrow. Your requests from today are saved for Sam." [ OK ]
 
@@ -85,11 +88,10 @@ SCREEN 6 (after tapping a web link someone sent in a text message)
   If "Look at it with Sam" is tapped: "Send this link to Sam, to look at together? Sam will get this text: 'Plainphone: Margaret would like to look at this link with you: cheap-flights.example/deals'"  [ Send ]  Don't send (link)
 
 SCREEN 7 (Wi-Fi message)
+  Title: Calls and texts still work
+  when the phone has signal (the bars at the top of the screen).
   This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
-  Calls and Emergency don't depend on Wi-Fi when there's a mobile signal.
-  Forget this network: the phone stops trying to join this Wi-Fi.
-  Mobile data: the phone's own internet connection, which works wherever there's signal.
-  You can still call when the phone has signal (the bars at the top of the screen).
+  Forget this network stops the phone trying to join this Wi-Fi.
   [ Forget this network ]   OK (link)
 
 SCREEN 8 (About this phone)
@@ -148,23 +150,24 @@ SCREEN B (request card)
 
 SCREEN C (before opening the Play Store). Title: Open the Play Store for 10 minutes
   **Stay with the phone until you tap Done.**
+  Keep the phone in your hands. Don't give it to Margaret while the Play Store is open: it can show web pages, so the phone isn't simple for these minutes.
   Search for the app, tap Install, and wait until it says Open. Then go back to the home screen (swipe up from the bottom of the screen). Plainphone checks the phone, then shows Done.
   The Play Store also closes if the screen turns off, a call comes in, or after 10 minutes.
-  Play Store help and account pages can show web pages. Don't hand the phone over while it's open.
   [ Open the Play Store ]   (then Sam enters the PIN)
-  While open, a notification says: "Play Store open · 8 min left · Tap here to finish"
+  While open, a notification says: "Play Store open · Keep the phone with you · 8 min left · Tap here to finish"
 
 SCREEN D (after installing an app and pressing Home). Title: Add Transit?
   Transit: Bus & Subway Times. Made by Transit Inc.
   Margaret asked for: "the bus times app, to check the ferry bus". This app is Transit, made by Transit Inc. Make sure it's the one Margaret meant.
   Web pages inside this app: Not reviewed yet – this app may open web pages inside it
+  The Plainphone team checks apps for this and writes a note for each one. They haven't checked Transit. To ask them to, tell Alex.
   [ Next ]   Don't add (link)
   Next screen. Title: Add an app nobody has checked?
-  Nobody has checked whether Transit can show web pages inside it. Some apps can show any website, which would let Margaret reach websites this phone normally keeps out. If you're not sure, ask Alex first. You can remove it later.
+  The Plainphone team hasn't checked whether Transit can show web pages inside it. Some apps can show any website, which would let Margaret reach websites this phone normally keeps out. If you're not sure, wait: ask Alex to get it checked first. You can also add it now and remove it later.
   [ Add anyway ]  Don't add (link)
 
 SCREEN E. Title: What can Transit use?
-  Choose together with Margaret. Margaret won't be asked later, while using the app. If you choose "Don't allow", the parts of Transit that need it won't work. You can change this later.
+  Choose together with Margaret. Transit won't ask Margaret about these later, and Margaret can't change them alone. If Margaret wants a change, you change it together, with the phone in your hands: "Apps on this phone" → Transit → "What Transit can use". If you choose "Don't allow", the parts of Transit that need it won't work.
   Location (where the phone is) — Show things near you, or let Transit know where you are   ( Allow ) ( Don't allow )
   Notifications — Show alerts at the top of the screen               ( Allow ) ( Don't allow )
   [ Next ]  (disabled until each one is chosen)
@@ -188,12 +191,13 @@ SCREEN G. Title: What Plainphone can't stop
   Phone software updates — Android updates can arrive before the Plainphone team has checked them; some security updates install anyway. Until we check, a new update could add a way around Plainphone that we haven't seen.
   A bad Plainphone update — There's no undo for a Plainphone update. If one goes badly wrong, the fix is to wipe the phone and set it up again.
   Emergency alerts — Plainphone doesn't block emergency alerts. We checked that alerts appear on this phone (14 May).
+  What Google and apps collect — Plainphone doesn't change what Google or each app's maker collects. The phone still uses a Google account for the Play Store, and each app follows its own privacy rules. Plainphone itself sends nothing anywhere.
   [ Done ]
 
 SCREEN H. Title: Phone software changed – review pending
-  The phone updated its own software on 2 Nov. The Plainphone team hasn't checked this version yet.
-  Margaret can keep using the phone as normal: the same apps, and Emergency still works. There's nothing you need to do. Alex has been sent a text and will install a Plainphone update.
-  Until then, there's a small chance a new part of the phone lets an app get around Plainphone.
+  Android, the phone's own software, updated itself on 2 Nov. The Plainphone team checks each new version for gaps, and hasn't checked this one yet.
+  Nothing has changed for Margaret: the same apps, the same limits, and Emergency still works. There's nothing you need to do. Alex has been sent a text and will install a Plainphone update.
+  Until then, there's a small chance the update added a gap that lets an app get around Plainphone.
   [ OK ]   What changed (link)
 
 SCREEN I (Monthly check). Title: Monthly check
@@ -208,6 +212,7 @@ SCREEN J (Turn Plainphone off). Title: Turn Plainphone off?
   This makes Margaret's phone an ordinary Android phone again. Every app will open, including web browsers and the Play Store, and the home screen will look different.
   Photos, messages and contacts are kept. Nothing is erased.
   To use Plainphone again later, Alex has to set it up again with a computer.
+  Plainphone only turns off this way, with your PIN. A flat battery, a restart or a phone update doesn't turn it off.
   [ Continue ]  Keep Plainphone on (link)
   Then: "Are you sure? Plainphone will be turned off on Margaret's phone." [ Yes, turn it off ] (red)  then PIN
   Then: "Last check. Once it's off, only Alex can turn it back on, using a computer. Keep the phone on and plugged in if you can. It takes a minute or two." [ Turn off now ]

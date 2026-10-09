@@ -155,6 +155,10 @@ installed, each goes through T4 in turn.
     | Reviewed for this version or newer | "Checked for version {reviewed}." |
     | App is newer than the reviewed version | **"Reviewed for an older version"**, then "Checked for version {reviewed}. This is version {installed}." |
     | No catalog entry | **"Not reviewed yet – this app may open web pages inside it"** |
+
+    Under "Not reviewed yet", one more line (the pilot reader asked who reviews, and how to ask): "The Plainphone
+    team checks apps for this and writes a note for each one. They haven't checked {app}. To ask them to, tell
+    {helper}."
 - **Primary:** Next
 - **Secondary:** Don't add → "{app} stays hidden. It can't be opened." **OK**.
 
@@ -163,9 +167,9 @@ installed, each goes through T4 in turn.
 Only when there is no catalog entry (web-containment, "Approving an unreviewed app").
 
 - **Title:** Add an app nobody has checked?
-- **Body:** Nobody has checked whether {app} can show web pages inside it. Some apps can show any website, which
-  would let {user} reach websites this phone normally keeps out. If you're not sure, ask {helper} first. You can
-  remove it later.
+- **Body:** The Plainphone team hasn't checked whether {app} can show web pages inside it. Some apps can show any
+  website, which would let {user} reach websites this phone normally keeps out. If you're not sure, wait: ask
+  {helper} to get it checked first. You can also add it now and remove it later.
 - **Primary:** Add anyway
 - **Secondary:** Don't add
 
@@ -175,9 +179,10 @@ Only when there is no catalog entry (web-containment, "Approving an unreviewed a
 
 ```
 What can Spotify use?
-Choose together with {user}. If you
-choose "Don't allow", parts of Spotify
-that need it won't work.
+Choose together with {user}. Spotify
+won't ask about these later. To change
+them, you do it together, in "Apps on
+this phone".
 
 Microphone
 For voice search.
@@ -195,8 +200,13 @@ To show what's playing.
 ```
 
 - **Title:** What can {app} use?
-- **Body:** Choose together with {user}. {user} won't be asked later, while using the app. If you choose
-  "Don't allow", the parts of {app} that need it won't work. You can change this later.
+- **Body:** Choose together with {user}. {app} won't ask {user} about these later, and {user} can't change them
+  alone. If {user} wants a change, you change it together, with the phone in your hands: "Apps on this phone" →
+  {app} → "What {app} can use". If you choose "Don't allow", the parts of {app} that need it won't work.
+- **Copy-test change (pilot):** the earlier body said "{user} won't be asked later" and "You can change this
+  later" without saying who or how. The pilot reader read it as {user} being locked out and having to bring
+  the phone to {tp}. That is how it works, so the screen now says it plainly. The change path depends on
+  [Open question 4](README.md#open-questions-for-the-lead).
 - One block per Android permission group the app requests. Each block: plain name, one line of why (from the
   catalog if there is an entry, otherwise the generic line below), and two large choice buttons.
 - **Nothing is pre-selected.** Next stays disabled until every block has a choice. (A forced choice is slower,

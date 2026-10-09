@@ -19,10 +19,17 @@ Each screen is written as:
 1. **Time and date**, one line each. At 200% the date may shorten to "Thu 8 Oct".
 2. **Emergency 9-1-1**: full-width, red, the only red on the screen. Taps open the system dialer with 911
    already typed (`ACTION_DIAL`, not a call). The user still presses the green call button.
+   - **A bump never calls.** Small grey line inside the button, under "9-1-1": **"Opens the dialer"**. Beaux's
+     copy-test pilot worried about bumping it by accident; the dialer is already the confirm step, so no extra
+     confirm screen is added (it would slow a real emergency).
+   - **Spacing:** at least 16 dp of empty space between Emergency and Phone, more than between any other two
+     tiles, so a thumb reaching for Phone doesn't land on Emergency. No long-press or swipe actions on it.
 3. **Phone** and **Messages**: full-width tiles, always there.
 4. **Notice line** (only when one applies, see below). Never above items 2 and 3.
 5. **The other added apps**, one per row, in the order {tp} chose. Large icon, name beside it.
-6. **More**: last row, same style as an app. See [Open question 1](README.md#open-questions-for-the-lead).
+6. **More**: last row, same style as an app, with a small line under the name: **"Ask for an app, settings,
+   help"**. In the pilot, the reader looked for a way to ask for an app and found it only after a while. See
+   [Open question 1](README.md#open-questions-for-the-lead).
 
 Nothing else: no search bar, no widgets, no badges, no dots, no suggestions, no feeds, no swipe-up drawer.
 
@@ -34,7 +41,9 @@ Nothing else: no search bar, no widgets, no badges, no dots, no suggestions, no 
 │ Thursday 8 October           │
 │ ┌──────────────────────────┐ │
 │ │      Emergency 9-1-1     │ │  ← red
+│ │      Opens the dialer    │ │
 │ └──────────────────────────┘ │
+│                              │  ← extra gap
 │ ┌──────────────────────────┐ │
 │ │ ☎  Phone                 │ │
 │ └──────────────────────────┘ │
@@ -48,6 +57,8 @@ Nothing else: no search bar, no widgets, no badges, no dots, no suggestions, no 
 │  ◉ Slack                     │
 │  ◉ Camera                    │
 │  ◉ More                      │
+│    Ask for an app, settings, │
+│    help                      │
 └──────────────────────────────┘
 ```
 
@@ -60,7 +71,9 @@ Nothing else: no search bar, no widgets, no badges, no dots, no suggestions, no 
 │ ┌──────────────────────────┐ │
 │ │       Emergency          │ │
 │ │       9-1-1              │ │
+│ │    Opens the dialer      │ │
 │ └──────────────────────────┘ │
+│                              │
 │ ┌──────────────────────────┐ │
 │ │ ☎  Phone                 │ │
 │ └──────────────────────────┘ │
@@ -90,6 +103,11 @@ Only one shows at a time. If both apply, "Plainphone needs attention" wins.
 The spec text for the monthly line is "Ask [trusted person] to do the monthly phone check"; `{tp}` is that name.
 No full stop on either line: they are labels, not sentences.
 
+**The monthly line is rare.** It shows only when the check is more than 7 days late, which means {tp} has
+already had texts about it and hasn't done it yet. Most months the user never sees it. The copy-test packet
+showed it without saying so, and the pilot reader asked why something monthly takes space on the main screen.
+The packet now says when it appears.
+
 ## U2. "About the monthly check" (from the notice line)
 
 **Spec:** approved-apps ("Tapping it SHALL only explain what the check is; it SHALL NOT open Play").
@@ -107,13 +125,23 @@ No full stop on either line: they are labels, not sentences.
 
 - **Title:** Something needs checking
 - **Body:**
-  Plainphone, the program that keeps this phone simple, needs {tp} or {helper} to check one of its settings.
-  It isn't a virus, and you haven't done anything wrong. Calls, texts, Emergency and your apps still work.
+  Plainphone, the program that keeps this phone simple, needs {tp} or {helper} to look at it. {reason}
+  Your phone is fine to use: calls, texts, Emergency and your apps all work. You haven't done anything wrong.
+- `{reason}` is one plain sentence, from this list (the first that applies):
+
+  | Cause | `{reason}` |
+  |---|---|
+  | Unknown phone software (recommended, Open question 3) | "The phone updated its own software, and Plainphone hasn't been checked with it yet." |
+  | A hide failed | "An app on this phone couldn't be tidied away." |
+  | Failed post-update check | "A check after an update didn't finish." |
+  | Safe fallback in use | "Plainphone is running in a simpler, safer way until it's looked at." |
 - **Primary:** OK
 - **Secondary:** What should I do?
   → "Show this screen to {tp} or {helper} next time you see them. You don't need to do anything else."
 - **Notes:** Never show error codes here. The detail is in trusted-person mode (T2) and in the helper details.
   If `{helper}` and `{tp}` are the same person, say the name once.
+- **Copy-test change (pilot):** the earlier body said "It isn't a virus". The pilot reader then thought it *was*
+  a virus: naming the fear planted it. The word is gone, and the screen now says what is wrong in plain terms.
 
 ## U4. More
 
@@ -146,8 +174,26 @@ A menu page: three large rows, then a plain text link. No primary button.
 ### U5b. Sent
 
 - **Title:** Sent to {tp}
-- **Body:** Next time you're together, {tp} can add it on this phone. Your request is saved here too.
+- **Body:** Next time you're together, {tp} can add it on this phone. Your request is saved here too, and you
+  can see below when {tp}'s phone has it.
 - **Primary:** OK
+
+### U5e. Your requests (below the box on U5a)
+
+The pilot reader asked: "I don't know if he got it or not." So each saved request shows its status:
+
+| Status | When |
+|---|---|
+| "Sending…" | Until Android reports the text sent |
+| "Sent" | Sent, no delivery report yet |
+| **"{tp}'s phone got it ✓"** | The network's delivery report arrived (`deliveryIntent`) |
+| "Didn't send – Try again" | Sending failed (U5c) |
+| "Added ✓" or "Not added" | After {tp} deals with it in trusted-person mode |
+
+- Each row: the first line of the request, the day, and the status. Newest first, at most 10; older ones drop
+  off.
+- **Never say {tp} has read it or seen it.** A delivery report means the text reached {tp}'s phone, nothing
+  more. Some carriers don't send delivery reports; then the row stays "Sent", which is still true.
 
 ### U5c. Didn't send
 
@@ -242,11 +288,17 @@ Each opens one simple screen. Android Settings never appears.
 | The network reports a sign-in page | **This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.** | Primary: **Forget this network** · Secondary: OK |
 | Connected, but no internet and no sign-in page detected | **This Wi-Fi isn't reaching the internet.** | Primary: **Forget this network** · Secondary: OK |
 
-Below either message, three more lines (the spec sentence above stays exactly as written):
-- "Forget this network: the phone stops trying to join this Wi-Fi."
-- "Mobile data: the phone's own internet connection, which works wherever there's signal."
-- "You can still call when the phone has signal (the bars at the top of the screen).""
-(We do not promise more: no phone can call with neither a mobile signal nor working Wi-Fi.)
+**Layout, in this order** (the spec sentence stays exactly as written; only what's around it changed):
+1. **Title, large:** "Calls and texts still work"
+2. Under it: "when the phone has signal (the bars at the top of the screen)."
+3. The spec message, in normal text.
+4. One line: "Forget this network stops the phone trying to join this Wi-Fi."
+5. Primary **Forget this network**, secondary **OK**.
+
+**Copy-test change (pilot):** the earlier screen led with the sign-in page and put calls last. The pilot reader
+came away thinking "I don't think I'll be able to make calls from it." Calls now come first, and the mobile-data
+explanation was dropped to keep it short. (We still don't promise more: no phone can call with neither a mobile
+signal nor working Wi-Fi.)
 
 ## U8. About this phone
 
