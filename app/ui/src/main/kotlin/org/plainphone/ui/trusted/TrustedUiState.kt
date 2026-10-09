@@ -13,18 +13,22 @@ sealed interface WhoAreYouEvent {
     data class Choose(val id: String) : WhoAreYouEvent
     data object Back : WhoAreYouEvent
 }
-enum class PinStage { Enter, Locked, Recovery, NewPin, RecoveryIssued }
+enum class PinStage { Enter, Locked, Recovery, RecoveryLocked, NewPin, RecoveryIssued }
+enum class RecoveryLockoutKind { PinAvailable, PinWaiting, Skip }
 data class PinUiState(
     val context: AdminContext, val stage: PinStage = PinStage.Enter,
     val value: String = "", val confirmation: String = "", val canContinue: Boolean = false,
     val sending: Boolean = false, val wrongPin: Boolean = false, val wait: String = "",
     val otherName: String? = null, val pendingChange: String? = null,
     val freshExplanation: Boolean = false, val recoveryCode: String = "",
+    val recoveryLockout: RecoveryLockoutKind = RecoveryLockoutKind.PinAvailable,
+    val pinWait: String = "", val helper: String = "", val wrongRecoveryCode: Boolean = false,
 )
 sealed interface PinEvent {
     data class ValueChanged(val value: String) : PinEvent
     data class ConfirmationChanged(val value: String) : PinEvent
     data object Continue : PinEvent
+    data object EnterPin : PinEvent
     data object UseRecoveryCode : PinEvent
     data object ChooseSomeoneElse : PinEvent
     data object Ok : PinEvent
@@ -58,7 +62,8 @@ enum class PermissionDecision { Allow, Deny }
 data class PermissionChoice(val id: String, val group: PermissionGroup, val why: String? = null,
     val decision: PermissionDecision? = null, val unavailable: Boolean = false)
 data class PermissionsUiState(val context: AdminContext, val appName: String,
-    val permissions: List<PermissionChoice>, val canContinue: Boolean = false, val sending: Boolean = false)
+    val permissions: List<PermissionChoice>, val canContinue: Boolean = false, val sending: Boolean = false,
+    val waitMinutes: Int = 10)
 sealed interface PermissionsEvent {
     data class Choose(val id: String, val decision: PermissionDecision) : PermissionsEvent
     data object Continue : PermissionsEvent
@@ -103,7 +108,7 @@ data class WaitingChangeUiState(val context: AdminContext? = null, val stage: Wa
     val day: String = "", val startedAt: String = "", val happensAt: String = "",
     val newName: String = "", val helper: String = "", val userName: String = "",
     val canSkip: Boolean = false, val canStop: Boolean = false, val turningOff: Boolean = false,
-    val sending: Boolean = false, val otherCommitting: Boolean = false)
+    val sending: Boolean = false, val otherCommitting: Boolean = false, val changeToSelfManaged: Boolean = false)
 sealed interface WaitingChangeEvent {
     data object Cancel : WaitingChangeEvent
     data object ConfirmCancel : WaitingChangeEvent

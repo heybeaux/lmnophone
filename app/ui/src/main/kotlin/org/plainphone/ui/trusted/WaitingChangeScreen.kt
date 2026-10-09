@@ -13,6 +13,7 @@ fun WaitingChangeScreen(state: WaitingChangeUiState, onEvent: (WaitingChangeEven
     val change = state.change.withoutBidiControls()
     val everyone = trustedPeopleText(state.everyone, everyone = true)
     val self = everyone == null
+    val selfManaged = state.context != null && state.context.trustedPersonName == null
     val title = when (state.stage) {
         WaitingStage.Details -> s(R.string.wait_title)
         WaitingStage.ConfirmCancel -> s(R.string.wait_cancel_title)
@@ -28,7 +29,7 @@ fun WaitingChangeScreen(state: WaitingChangeUiState, onEvent: (WaitingChangeEven
         WaitingStage.Stuck -> s(R.string.wait_stuck)
         WaitingStage.StopConfirm -> s(R.string.wait_stop_title)
         WaitingStage.Stopping -> s(R.string.wait_stopping)
-        WaitingStage.Stopped -> s(R.string.wait_stopped)
+        WaitingStage.Stopped -> s(if (selfManaged) R.string.wait_stopped_self else R.string.wait_stopped)
         WaitingStage.StillStopping -> s(R.string.wait_stopping)
         WaitingStage.Recovered -> s(R.string.wait_recovered)
         WaitingStage.Repair -> s(R.string.wait_repair)
@@ -102,8 +103,16 @@ fun WaitingChangeScreen(state: WaitingChangeUiState, onEvent: (WaitingChangeEven
             WaitingStage.SkipIntro -> Words(s(R.string.wait_skip_body, everyone.orEmpty()))
             WaitingStage.SkipConfirm -> Words(s(R.string.wait_skip_confirm_body, change))
             WaitingStage.SkipStarted -> Words(s(R.string.wait_skip_started_body, change))
-            WaitingStage.Stuck -> Words(s(R.string.wait_stuck_body, change, everyone.orEmpty()))
-            WaitingStage.StopConfirm -> Words(s(R.string.wait_stop_body, everyone.orEmpty(), state.newName.withoutBidiControls()))
+            WaitingStage.Stuck -> if (selfManaged) {
+                Words(s(R.string.wait_stuck_self_start, state.newName.withoutBidiControls()))
+                Words(s(R.string.wait_stuck_self_unchanged))
+                Words(s(R.string.wait_stuck_self_unknown))
+            } else Words(s(R.string.wait_stuck_body, change, everyone.orEmpty()))
+            WaitingStage.StopConfirm -> Words(when {
+                selfManaged -> s(R.string.wait_stop_self_body, state.newName.withoutBidiControls())
+                state.changeToSelfManaged -> s(R.string.wait_stop_to_self_body, everyone.orEmpty(), state.context?.userName.orEmpty().withoutBidiControls())
+                else -> s(R.string.wait_stop_body, everyone.orEmpty(), state.newName.withoutBidiControls())
+            })
             WaitingStage.StillStopping -> Words(s(R.string.wait_still_stopping, state.helper.withoutBidiControls()))
             WaitingStage.Recovered -> {
                 Words(if (self) s(R.string.wait_recovered_self, state.userName.withoutBidiControls())

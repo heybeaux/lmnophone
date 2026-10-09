@@ -56,7 +56,7 @@ fun AppReviewScreen(state: AppReviewUiState, onEvent: (AppReviewEvent) -> Unit) 
             }
             AppReviewStage.Unreviewed -> Words(s(R.string.admin_unreviewed_body, app, user, helper))
             AppReviewStage.Confirm -> Words(s(R.string.admin_add_body, state.allowed, state.denied))
-            AppReviewStage.Remove -> Words(s(R.string.admin_remove_body, app, user))
+            AppReviewStage.Remove -> Words(if (state.context.trustedPersonName == null) s(R.string.app_self_remove_body, app) else s(R.string.admin_remove_body, app, user))
             else -> Unit
         }
     }
@@ -81,7 +81,10 @@ fun PermissionsScreen(state: PermissionsUiState, onEvent: (PermissionsEvent) -> 
     val app = state.appName.withoutBidiControls()
     AdminFrame(state.context, s(R.string.admin_permissions_title, app), s(R.string.admin_next),
         { onEvent(PermissionsEvent.Continue) }, enabled = state.canContinue && !state.sending) {
-        Words(s(R.string.admin_permissions_body, state.context.userName.withoutBidiControls(), app))
+        if (state.context.trustedPersonName == null) {
+            Words(s(R.string.admin_self_permissions, app))
+            Words(s(R.string.admin_self_permissions_later, app, state.waitMinutes))
+        } else Words(s(R.string.admin_permissions_body, state.context.userName.withoutBidiControls(), app))
         state.permissions.forEach { permission ->
             val (title, why) = permissionResources.getValue(permission.group)
             val label = s(title)

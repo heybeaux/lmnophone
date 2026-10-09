@@ -31,18 +31,12 @@ import org.plainphone.ui.theme.*
 internal fun AdminFrame(context: AdminContext?, title: String, primary: String? = null,
     onPrimary: () -> Unit = {}, enabled: Boolean = true, secondary: String? = null,
     secondaryEnabled: Boolean = true, onSecondary: () -> Unit = {}, content: @Composable ColumnScope.() -> Unit) {
-    Column(Modifier.fillMaxSize().background(PlainphoneColors.Paper)) {
-        if (context != null) Text(
-            context.trustedPersonName?.let { stringResource(R.string.more_for, it.withoutBidiControls()) }
-                ?: stringResource(R.string.more_your_settings),
-            style = PlainphoneType.Small.copy(color = PlainphoneColors.Paper, fontWeight = FontWeight.Medium),
-            modifier = Modifier.fillMaxWidth().background(PlainphoneColors.Ink)
-                .heightIn(min = 40.dp).padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S2))
-        Box(Modifier.weight(1f)) {
-            TaskScreen(title, primary, onPrimary, primaryEnabled = enabled, secondary = secondary,
-                secondaryEnabled = secondaryEnabled, onSecondary = onSecondary, content = content)
-        }
+    val band = context?.let {
+        it.trustedPersonName?.let { name -> stringResource(R.string.more_for, name.withoutBidiControls()) }
+            ?: stringResource(R.string.more_your_settings)
     }
+    TaskScreen(title, primary, onPrimary, primaryEnabled = enabled, secondary = secondary,
+        secondaryEnabled = secondaryEnabled, onSecondary = onSecondary, band = band, content = content)
 }
 @Composable internal fun Words(text: String) = Text(text, style = PlainphoneType.Body)
 @Composable internal fun Heading(text: String) = Text(text, style = PlainphoneType.Row, modifier = Modifier.semantics { heading() })

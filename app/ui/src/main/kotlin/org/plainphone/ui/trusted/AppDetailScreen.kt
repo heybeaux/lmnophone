@@ -21,7 +21,7 @@ fun AppDetailScreen(state: AppDetailUiState, onEvent: (AppDetailEvent) -> Unit) 
         AppDetailStage.TextsNotSending -> s(R.string.app_texts_title)
     }
     val primary = when (state.stage) {
-        AppDetailStage.Details -> s(R.string.app_detail_remove, user)
+        AppDetailStage.Details -> if (state.context.trustedPersonName == null) s(R.string.app_self_remove, app) else s(R.string.app_detail_remove, user)
         AppDetailStage.DidNotUpdate -> s(R.string.app_sorted)
         AppDetailStage.TextsNotSending -> s(if (state.sending) R.string.ask_sending else R.string.app_test_text)
         else -> s(R.string.app_leave_hidden)
@@ -43,7 +43,8 @@ fun AppDetailScreen(state: AppDetailUiState, onEvent: (AppDetailEvent) -> Unit) 
                 } }
                 Heading(s(R.string.app_detail_permissions, app))
                 state.permissions.forEach { Words(it) }
-                ActionRow(s(R.string.app_detail_change, app), enabled = !state.sending) { onEvent(AppDetailEvent.Permissions) }
+                if (state.context.trustedPersonName == null) Words(s(R.string.app_self_permissions_later, app))
+                else ActionRow(s(R.string.app_detail_change, app), enabled = !state.sending) { onEvent(AppDetailEvent.Permissions) }
             }
             AppDetailStage.DidNotUpdate -> Words(s(R.string.app_failed_body, state.updated, app, helper))
             AppDetailStage.Unexpected, AppDetailStage.CouldNotHide -> {
