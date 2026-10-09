@@ -370,7 +370,7 @@ A session SHALL be started by a trusted person in supervised mode, or by the use
 
 A **non-handback state** means: the trusted person (or, in self-managed mode, the user) sees "Not ready – call the helper". Calls, Emergency and alerts stay available throughout. No check SHALL gate them.
 
-**Accepted limit.** If Plainphone cannot run while a relaxation is in place, nothing revokes it automatically. That applies whatever the cause: a bad update, a storage or startup fault, or a crash loop. The relaxation stays until a helper fixes the phone. This SHALL be disclosed, and the first trusted person SHALL explicitly accept it before the MVP is approved. In self-managed mode, nobody is watching when this happens; this SHALL be disclosed too. Q12 measures this behaviour; it does not prove that the failure cannot happen. The disclosure SHALL also say that during a session, Settings or Play pages may show web content, such as help or account pages.
+**Accepted limit.** If Plainphone cannot run while a relaxation is in place, nothing revokes it automatically. That applies whatever the cause: a bad update, a storage or startup fault, or a crash loop. The relaxation stays until a helper fixes the phone. This SHALL be disclosed, and the board SHALL explicitly accept it before the MVP is approved. In self-managed mode, nobody is watching when this happens; this SHALL be disclosed too. Q12 measures this behaviour; it does not prove that the failure cannot happen. The disclosure SHALL also say that during a session, Settings or Play pages may show web content, such as help or account pages.
 
 #### Scenario: Screen turns off mid-session
 - **WHEN** the screen turns off during a Play or Settings session
