@@ -161,3 +161,77 @@ inspection. Shell-injected touch events may bypass accessibility exploration;
 this check used the dedicated emulator's native touch events. No physical phone
 was used. This verifies traversal/scrolling in the stated fixture, not every
 TalkBack version or an end-to-end integrated launcher.
+
+## Slice 3 checkpoint: trusted-person presentation
+
+The `trusted` package exports state/event entry points for identity selection,
+PIN/recovery, the trusted/self-managed menu, app review and permissions, app
+ordering/details, requests, people changes, waiting changes, session checks,
+Plainphone updates, self-managed openings/waits, history, and turning off.
+Every entry point has 360×640 previews at 100% and 200%. All static copy is in
+`trusted_strings.xml` and `trusted_extra_strings.xml`, from T1–T8, P1/P3–P6,
+M1–M8, U9/U10 and L4. The setup steps reused by M2c/M6 remain the setup slice;
+Continue emits navigation intent, not completed enrollment.
+
+Host obligations:
+
+- Supply `AdminContext(userName, trustedPersonName)` for trusted-person screens;
+  null `trustedPersonName` is self-managed. A null context on waiting-change
+  screens is the PIN-free user route. No screen reads storage, starts a timer,
+  opens an intent, sends a text, hashes a PIN, or changes policy.
+- Admin activities must be non-exported and use `FLAG_SECURE`, with backup
+  disabled. Apply those before composing these screens. The UI cannot enforce
+  the activity boundary. PIN/recovery input is masked, host-owned, and never
+  saved with `rememberSaveable`. Clear it on exit; show a new recovery code only
+  once, after the atomic credential write succeeds.
+- Choose identity before PIN entry for two people; skip selection for one or
+  self-managed. Check only the chosen opaque ID. Supply lockout time/counter
+  results; there are no counters or checks in Compose.
+- Supply installed app identity and reviewed-version status independently of
+  request text. Request text is plain, unmodified text, never a link. Requests
+  cannot stand in for installed package/signing-certificate authority.
+- Decide permission availability and `canContinue` in the view-model. Choices
+  begin null; an unavailable permission has no buttons. UI events contain the
+  supplied group ID and choice. The host requires fresh authority and performs
+  the permission/app change atomically. Permission choices stack at large text.
+- Supply menu rows, notices in priority order, app order, boundary-enabled move
+  buttons, and allowed people-change rows. Never offer removal of oneself or
+  the last person. Messages and Phone use `alwaysOn`, with no move/remove action.
+- Supply `canSkip` only for a pending supervised change; never for self-managed.
+  Supply `canStop` only for a stuck change that can still be stopped. The host
+  owns those policy decisions and must recheck them when an event arrives.
+  Recovery used to reset a PIN never skips a wait; the skip screen is a distinct
+  route naming the pending change. Its final event is not a committed skip.
+- Set sending before save/send/confirm work and reject duplicates at the host,
+  including taps arriving before recomposition. New submit controls disable
+  while sending. U5/U5c/U6b show `Sending…`; leaving a saved request stays enabled.
+- Supply `Cancelled` only after durable cancellation, `Committing` when cancel
+  is no longer possible, and `StillCancelling` on a failed save. UI never infers
+  one from another. User cancellation has no PIN event. Supplied dates and time
+  estimates use the policy clock; reboot/battery behavior remains outside UI.
+- Session Continue routes to fresh PIN where required. Only host readback may
+  select Restored. P2 is an Android notification owned by lane D, not an overlay
+  drawn by these screens. Self-managed variants display the supplied closing
+  time. Monthly-check completion requires its separate final confirmation.
+- History is supplied newest-first for 90 days, with no URLs, app content or
+  message text. Display strings for action/metadata/restored rows must come from
+  the flow copy. Credential attribution and recipient status are rendered
+  separately; records have no undo/delete action.
+- Enrollment steps, Google account checks, address validation/update transport,
+  and installation remain host/setup integration. `Off` is supplied only after
+  Device Owner is gone. Failed turning off offers retry/details, never a wipe.
+
+Validation: the send-label tests ran first on the dedicated API 35 emulator
+(`emulator-5740`) and all three failed before the fix. New screen fixtures failed
+compilation before the screen entry points existed. The trusted goldens cover
+all fixture stages at 100% and 200%; named variants also cover
+1.3/1.5/1.8/2.0 × one/two people × short/long synthetic names. They reserve 32 dp
+status and 48 dp navigation bars, as the earlier goldens do.
+
+This checkpoint is **not Slice ready**. The pending designer question on
+[PLA-112](/PLA/issues/PLA-112) asks for self-managed PIN/permissions copy,
+recovery-code lockout copy, and the self-managed stuck-handover copy. Long-name
+200% goldens also expose a title taller than the viewport left between the band
+and pinned actions. A whole-page scrolling fallback has been proposed for those
+cases. Do not mistake a matching golden for approval of that layout. Complete
+those items and rerun the required commands before the Lead/Verifier handoff.

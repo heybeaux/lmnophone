@@ -27,6 +27,8 @@ class UserScreensScreenshotTest(private val scale: Float) {
     @Test fun moreSelfManaged() = shot { MoreScreen(MoreUiState(MoreMode.SelfManaged(10)), {}) }
     @Test fun moreOneMinute() = shot { MoreScreen(MoreUiState(MoreMode.SelfManaged(1)), {}) }
     @Test fun requestEmpty() = shot { AskForAppScreen(AskForAppUiState("Sam"), {}) }
+    @Test fun requestSending() = shot { AskForAppScreen(AskForAppUiState("Sam", "The bus times app", canSend = true, sending = true), {}) }
+    @Test fun retrySending() = shot { AppRequestResultScreen(AppRequestResultUiState("Sam", AppRequestResult.Failed, sending = true), {}) }
     @Test fun requestReady() = shot { AskForAppScreen(AskForAppUiState("Sam", "The bus times app", canSend = true), {}) }
     @Test fun requestCounter() = tallShot { AskForAppScreen(AskForAppUiState("Sam", "The bus times app", charactersRemaining = 1), {}) }
     @Test fun requestHistory() = tallShot { AskForAppScreen(AskForAppUiState("Sam", requests = listOf(
