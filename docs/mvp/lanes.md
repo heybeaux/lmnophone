@@ -56,9 +56,12 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
   - Possible results: `OpenIn(pkg)`, `BlockedScreen(WEB_LINK | NOT_APPROVED | CHOOSER)`, `NoHandler(...)`.
   - `approved` includes the lock-task UI exceptions.
 - `PackageFacts` and `IntentFacts` are plain data that lane D fills from PackageManager. Lane C never calls Android.
-  - `IntentFacts.resolvers` is what `queryIntentActivities` returns for the intent as dispatched. Each `Resolver` carries `verifiedForHost`.
+  - `IntentFacts.resolvers` is what `queryIntentActivities` returns for the intent as dispatched: one `Resolver` per activity, with no package deduplication. Each `Resolver` carries `verifiedForHost`.
+  - `IntentFacts.explicitComponent` is true when the sender named a component, as opposed to only `setPackage`.
+  - `IntentFacts.resolved` (`Resolution.Activity | Chooser | None`) is what Android reported it would launch, including saved defaults and priorities.
   - `IntentFacts.intentUri` says how the sender handled an `intent:` URI.
   - `IntentFacts.linkCatcherPreferred` is true once lane D has set the persistent preferred activity for `VIEW http/https`.
+  - Facts that contradict each other give `NoHandler(INCONSISTENT_FACTS)`.
   - Details: `app/links/README.md`. Lead accepted these refinements on PLA-49.
 
 **`:ui` (lane B) exports:** one `@Composable` per screen, with this shape:
