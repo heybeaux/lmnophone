@@ -1,4 +1,4 @@
-**Status:** revision 2, after cross-model review PLA-31 (request changes, F1–F11; responses in `design.md`). Goes to re-review, then Beaux's approval. Nothing here is built until Beaux approves it.
+**Status:** revision 3, after cross-model reviews PLA-31 (F1–F11) and PLA-34 (N1–N6); responses in `design.md`. Goes to re-review, then Beaux's approval. Nothing here is built until Beaux approves it.
 
 ## Why
 
@@ -23,15 +23,16 @@ These change what the approved plan (`add-plainphone-spike-and-mvp`) promises ab
   - changing who is a trusted person (adding one, handing your role to someone else, removing the other one);
   - switching mode, **in either direction**;
   - in self-managed mode, loosening the waits or limits.
-  - **One at a time.** Only one waiting change can be pending on the phone.
-  - A PIN starts it. The record and the texts are saved together before anything is shown, so a crash can't lose the notice. Either trusted person, or anyone holding the phone, can cancel; by text reply too if the spike (Q15) shows replies can be received. In supervised mode, a trusted person's **recovery code** skips the wait, on a screen that names the change.
-  - **Re-checked before it happens.** If the PIN that started it has since been replaced, or the set of people or the mode has changed, the change is cancelled. So replacing a PIN someone saw also cancels anything they started.
+  - **One at a time.** Only one waiting change can be in progress on the phone, from start until it completes or is cancelled.
+  - **Recoverable.** Each change has one operation record (two copies, revision-numbered) with explicit forward, rollback and finished states. Each state change is saved together with its texts, so a crash can't lose a notice or turn a rollback into a forward run. If the record is lost, Plainphone makes reset protection match the people actually in charge.
+  - A PIN starts it. Either trusted person, or anyone holding the phone, can cancel; by a text reply quoting that request's cancel code too, if the spike (Q15) shows replies can be received. In supervised mode, a trusted person's **recovery code** skips the wait, on a screen that names the change.
+  - **Re-checked.** If a PIN it depends on is replaced, or the set of people or the mode changes, before it commits, the change is cancelled at once. So replacing a PIN someone saw also cancels anything they started. Other people's PIN changes don't affect it, and completing it changes only the people it names.
   - Time is counted on one "proven running time" clock. Restarts, switching the phone off and clock changes can only make a wait longer.
   - **Why changes to people and mode wait too:** someone who has seen a PIN could otherwise make themselves a trusted person for good. And a self-managed user could otherwise enrol a second identity they control as "trusted person" and skip every limit (PLA-31 F1).
 - **Self-managed mode (ADR 0001 option D, as a per-phone mode).**
   - Same app, same lockdown at rest. The user holds the PIN and is their own trusted person.
-  - **It is friction, not a lock.** The user can always get through: by waiting 24 hours, or by wiping the phone. Plainphone says so in plain words at setup and on "What Plainphone can't stop".
-  - **Opening up ("elevation")** is a single-use grant of one kind (Play, Settings, approve one app, or one Plainphone update), under the supervised-session contract (journal first, deadline, revoked on every start, protected-state check, mitigation B), plus friction:
+  - **It is friction, not a lock.** The user can always get through: by waiting at least 24 hours of the phone being on (longer if the change is cancelled or interrupted), or by wiping the phone. Plainphone says so in plain words at setup and on "What Plainphone can't stop".
+  - **Opening up ("elevation")** is a single-use grant of one kind (Play, Settings, approve one app, or one Plainphone update), checked just before the step that can't be undone. Play and Settings grants open a supervised session under its contract (journal first, deadline, revoked on every start, protected-state check, mitigation B). Friction:
     - a **10-minute countdown** after the PIN, then one more tap to start;
     - at most **2 elevations in any 24 hours**, counted before anything opens;
     - deadlines of 5 or 10 minutes, with no extending; one at a time;
@@ -39,7 +40,7 @@ These change what the approved plan (`add-plainphone-spike-and-mvp`) promises ab
   - **Reset protection** names the user's own Google account (and optionally a backup person). A recovery-mode wipe then erases the phone and lets the user set it up without Plainphone. Stated openly.
   - **The recovery code** resets the PIN only. In self-managed mode it does **not** skip any wait, because the user holds it. *This is the Lead's reading of Beaux's rule 3, which was given for trusted people; Beaux confirms it with this change.*
 - **Turning off waits 24 hours.** The existing off switch (fresh PIN, two confirmations, full restore list, journaled) gains the wait. When the wait ends and passes its re-check, turning off proceeds by itself and texts everyone. The home screen shows a line while it is pending, and Cancel is also on the "needs attention" screen and in Plainphone's settings.
-- **Privacy steps during setup.** After the user signs in to Google, the guide walks the helper and the user through: pausing Web & App Activity, turning Timeline off, turning ad personalisation off, and deleting the advertising ID. Each is recorded as done or skipped; Plainphone can't check them. "What Plainphone can't stop" gains an accurate line: Plainphone has no server, analytics or account; it sends texts only to the trusted people; Google still collects data Plainphone can't stop.
+- **Privacy steps during setup.** After the user signs in to Google, the guide walks the helper and the user through: pausing Web & App Activity, turning Timeline off, turning ad personalisation off, and deleting the advertising ID. Each is recorded as done or skipped; Plainphone can't check them. "What Plainphone can't stop" gains an accurate line: Plainphone has no server of its own, no analytics and no account; it sends texts to the trusted people and, only to update itself, connects to the helper's computer over home Wi-Fi; Google still collects data Plainphone can't stop.
 - **Mitigation B at every unhide** (PLA-22): sessions, approvals, repairs, the emergency floor and turning off. Discretionary unhides don't start on a nearly flat battery; emergency repairs are never delayed. A power loss in the short gap between the unhide and the save can still boot-loop the phone; that is measured and disclosed.
 
 ## Capabilities

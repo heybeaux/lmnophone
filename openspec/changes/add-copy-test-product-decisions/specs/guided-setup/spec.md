@@ -3,7 +3,7 @@
 ### Requirement: Setup asks which mode the phone uses
 Before any PIN is set, on-phone setup SHALL ask whether the phone is **supervised** (one or two trusted people) or **self-managed** (the user is their own trusted person). It SHALL explain each in plain words:
 - supervised: a trusted person approves apps and changes, and turning off waits 24 hours;
-- self-managed: the user holds the PIN, and Plainphone adds waits and limits so that distraction takes effort. It can't stop the user, who can always remove it by waiting 24 hours or by wiping the phone.
+- self-managed: the user holds the PIN, and Plainphone adds waits and limits so that distraction takes effort. It can't stop the user, who can remove it by waiting at least 24 hours of the phone being on (longer if the change is cancelled or interrupted) or by wiping the phone.
 
 In supervised mode, setup SHALL offer to add a second trusted person, and SHALL tell both that they are equals. In self-managed mode, setup SHALL show the friction defaults (10-minute countdown, 2 elevations a day) and let the user make them stricter.
 
