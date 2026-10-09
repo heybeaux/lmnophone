@@ -480,4 +480,143 @@ class PeopleChangeControllerTest {
         assertNull(f.controller.prepareStop(f.id, f.a))
         assertTrue(f.events.isEmpty())
     }
+
+    @Test fun `unavailable credential readback after patch cannot report applied or enable stop`() {
+        val f = F()
+        f.hook = { event -> if (event == "patch") f.fail = "credentials" }
+        failed(PeopleChangeFailure.PATCH_READBACK, f.tick())
+        assertNotNull(f.credentials!!.appliedPeopleChange)
+        assertNull(f.controller.prepareStop(f.id, f.b))
+        f.fail = null
+        f.hook = null
+        outcome(PeopleChangeOutcome.COMPLETED, f.tick(fresh = true))
+        assertEquals(1, f.patchWrites)
+    }
+
+    @Test fun `completion compares credentials with journal so changed recipients cannot be queued stale`() {
+        val f = F()
+        outcome(PeopleChangeOutcome.APPLIED, f.tick())
+        f.hook = { event -> if (event == "completed") f.replace(f.incoming) }
+        failed(PeopleChangeFailure.PERSISTENCE, f.tick())
+        assertFalse(f.waiting!!.texts.any { it.event == WaitingEvent.COMPLETED })
+        f.hook = null
+        outcome(PeopleChangeOutcome.COMPLETED, f.tick())
+        assertEquals(1L, f.waiting!!.texts.last().recipientGenerations[f.incoming])
+    }
+
+    @Test fun `old journal generation cannot complete a patch marked in a different generation`() {
+        val f = F()
+        outcome(PeopleChangeOutcome.APPLIED, f.tick())
+        val before = f.waiting!!
+        f.waiting = WaitingState(before.revision, before.operation, before.texts, "different-generation")
+        failed(PeopleChangeFailure.STATE_CHANGED, f.tick())
+        assertFalse(f.waiting!!.texts.any { it.event == WaitingEvent.COMPLETED })
+        assertEquals(1, f.patchWrites)
+    }
+
+    @Test fun `legacy null contacts and prior removed receipts survive successful completion`() {
+        val f = F()
+        val start = f.waiting!!.texts.first()
+        val c = f.credentials!!
+        f.credentials = c.replacing(f.b, c.people.getValue(f.b).copy(contact = null))
+        outcome(PeopleChangeOutcome.APPLIED, f.tick())
+        outcome(PeopleChangeOutcome.COMPLETED, f.tick())
+        val completed = f.waiting!!.texts.last()
+        assertEquals(setOf(f.b, f.incoming), completed.recipients)
+        assertNull(completed.recipientContacts[f.b])
+        assertSame(f.enrolled.credential.contact, completed.recipientContacts[f.incoming])
+        assertEquals(setOf(f.a, f.b), start.recipients)
+        assertNotNull(start.recipientContacts[f.a])
+        assertTrue(f.waiting!!.texts.any { it === start })
+    }
+
+    @Test fun `recovery skipper and PIN stopper identities survive rollback without reverting rotated secrets`() {
+        val f = F()
+        assertIs<RecoveryResult.Replaced>(f.vault.recover(f.b, f.second.recoveryCode.toCharArray(), f.newPin))
+        f.waiting = f.waiting!!.replacing(f.waiting!!.revision + 1, f.waiting!!.operation!!.withSkipper(f.b, 1))
+        val latest = f.credentials!!.people.getValue(f.b)
+        outcome(PeopleChangeOutcome.ROLLING_BACK, f.stop())
+        outcome(PeopleChangeOutcome.CANCELLED, f.tick(WaitingPhase.ROLLING_BACK, fresh = true))
+        val op = f.waiting!!.operation!!
+        assertEquals(f.b, op.skipper)
+        assertEquals(1L, op.skipperGeneration)
+        assertEquals(f.a, op.stopper)
+        assertSame(latest, f.credentials!!.people[f.b])
+        assertIs<PinResult.Authorized>(f.vault.authenticate(f.b, f.newPin, PrivilegedAction("test", "rotated")))
+    }
+
+    @Test fun `previous application marker does not block the next people change or revive old callbacks`() {
+        val f = F(WaitingChangeKind.ADD_PERSON)
+        outcome(PeopleChangeOutcome.APPLIED, f.tick())
+        outcome(PeopleChangeOutcome.COMPLETED, f.tick())
+        val oldId = f.id
+        val request = f.waitingController.prepareRemove(f.a, f.incoming)!!
+        val authority = assertIs<PinResult.Authorized>(f.vault.authenticate(f.a, f.pin, request.action)).authority
+        assertEquals(WaitingOutcome.PENDING, f.waitingController.startPeopleChange(request, authority, true))
+        f.now = ClockReading(RunningTime("epoch", 172_800_000), BootTime("boot", 172_800_000))
+        assertEquals(WaitingOutcome.COMMITTING, f.waitingController.tick(request.requestId, BatteryState(50, false)))
+        outcome(PeopleChangeOutcome.IGNORED, f.controller.tick(oldId, WaitingPhase.COMMITTING))
+        f.id = request.requestId
+        outcome(PeopleChangeOutcome.APPLIED, f.tick())
+        outcome(PeopleChangeOutcome.COMPLETED, f.tick())
+        assertEquals(2, f.patchWrites)
+        assertEquals(2L, f.credentials!!.structureGeneration)
+        assertEquals(setOf(f.a), f.credentials!!.people.keys)
+        assertEquals(request.requestId, f.credentials!!.appliedPeopleChange!!.requestId)
+    }
+
+    @Test fun `lost journal before and after patch reconciles active holders and backup without replaying enrollment`() {
+        for (applied in listOf(false, true)) {
+            val f = F()
+            if (applied) {
+                outcome(PeopleChangeOutcome.APPLIED, f.tick())
+                assertIs<RecoveryResult.Replaced>(f.vault.recover(f.incoming, f.prepared.recoveryCode.toCharArray(), f.newPin))
+            } else {
+                f.fail = "readback"
+                outcome(PeopleChangeOutcome.NEEDS_ATTENTION, f.tick())
+                f.fail = null
+            }
+            val truth = f.credentials!!
+            f.waiting = null
+            failed(PeopleChangeFailure.JOURNAL_READ, f.tick())
+            val loss = LostWaitingRecord("lost-episode")
+            val store = object : WaitingReconciliationStore {
+                override fun read() = f.waiting
+                override fun compareAndSet(expected: WaitingState, replacement: WaitingState) = false
+                override fun lostRecord() = if (f.waiting == null) loss else null
+                override fun completeReconciliation(lost: LostWaitingRecord, expectedCredentials: CredentialState,
+                    replacement: WaitingState): Boolean {
+                    if (f.waiting != null || f.credentials !== expectedCredentials || lost !== loss) return false
+                    f.waiting = replacement
+                    return true
+                }
+            }
+            val dialer = PackageName("test.systemdialer")
+            val effects = object : ReconciliationEffects {
+                override fun revokeTemporaryAccess() = true
+                override fun isDeviceOwner() = true
+                override fun applyPolicy(plan: PolicyPlan) = true
+                override fun applyResetProtection(userIds: Set<String>): Boolean { f.resetIds = userIds; return true }
+                override fun applyFriction(settings: FrictionSettings) = true
+                override fun readBackPolicy(plan: PolicyPlan) = true
+                override fun readBackResetProtection(userIds: Set<String>) = f.resetIds == userIds
+                override fun readBackFriction(settings: FrictionSettings) = true
+            }
+            val reconciler = WaitingReconciler(store, { f.credentials }, {
+                PolicyInput("model", "build", PackageName("test.home"), PackageName("test.sms"),
+                    listOf(InstalledPackage(dialer, true, 1)),
+                    listOf(FloorIdentity(dialer, FloorRole.SYSTEM_DIALER, IdentitySource.OS_MANAGED)))
+            }, effects, f.vault)
+            assertEquals(ReconcileOutcome.RECOVERED, reconciler.reconcile().outcome)
+            assertSame(truth, f.credentials)
+            assertEquals(truth.recoveryProfile!!.resetProtectionUserIds, f.resetIds)
+            assertEquals(truth.people.mapValues { it.value.generation }, f.waiting!!.recoveryReceipts.single().recipientGenerations)
+            assertEquals(RecoveredState.ACTIVE, f.waiting!!.recoveryReceipts.single().state)
+            assertEquals("lost-episode", f.waiting!!.storageGeneration)
+            assertNull(f.waiting!!.operation)
+            outcome(PeopleChangeOutcome.IGNORED, f.tick(fresh = true))
+            assertEquals(if (applied) setOf(f.b, f.incoming) else setOf(f.a, f.b), f.credentials!!.people.keys)
+        }
+    }
+
 }
