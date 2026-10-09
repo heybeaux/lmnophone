@@ -23,23 +23,54 @@ sections. One heading per item, then one or two sentences. The required items ar
 | ★3 | The Play Store and full settings | When you open the Play Store or full phone settings, the phone is open for those minutes, and their help pages can show the web. That's why you stay with the phone until you tap Done. |
 | ★4 | If Plainphone stops working while they're open | If Plainphone breaks while the Play Store or settings are open, they stay open until {helper} fixes the phone. Don't hand the phone back until Plainphone says it's ready. |
 | ★5 | Apps installed without you | If an app gets installed without you, it can't be opened. But if Plainphone can't hide it, it might still run unseen in the background, for any length of time. |
-| ★6 | Erasing the phone with its buttons | Anyone holding the phone can erase it using its buttons (a factory reset). After that, Google asks for your Google account, or the backup person's you chose at setup, before the phone can be used. Plainphone doesn't come back by itself: it has to be set up again, and anything not backed up is lost. |
+| ★6 | Erasing the phone with its buttons | Anyone holding the phone can erase it using its buttons (a factory reset). After that, Google asks for your Google account (with two trusted people: either one's), or the backup person's you chose at setup, before the phone can be used. Plainphone doesn't come back by itself: it has to be set up again, and anything not backed up is lost. |
 | 7 | Wi-Fi with a sign-in page | Wi-Fi that asks you to sign in or accept terms on a page first, like in hotels, hospitals or on ferries, won't work. Mobile data and home Wi-Fi are fine. |
 | 8 | Phone software updates | Android updates can arrive before the Plainphone team has checked them; some security updates install anyway. Until we check, a new update could add a way around Plainphone that we haven't seen. |
 | 9 | A bad Plainphone update | There's no undo for a Plainphone update. If one goes badly wrong, the fix is to wipe the phone and set it up again. |
 | 10 | Emergency alerts | Plainphone doesn't block emergency alerts. {build_alert_line} |
-| 11 | What Google and apps collect | Plainphone itself sends nothing anywhere. But the phone still runs Google's services, which collect data, and each app follows its own privacy rules. |
+| ★11 | What Google collects | Plainphone has no server of its own, no analytics and no account. It sends texts to your trusted people through your carrier, connects to your helper's computer over home Wi-Fi only to update itself, and keeps its history on the phone. But this phone runs Google's Android with a Google account, and Google collects some data that Plainphone can't stop. The privacy steps from setup reduce it. |
+| ★12 | Two trusted people *(only with two)* | {tp} and {other} are equals. Either of you can add apps, open the Play Store or settings, or turn Plainphone off. The 24-hour wait protects against someone who saw a PIN, not against the other trusted person: a recovery code skips it. |
+| ★13 | Changes can be held up | Someone who knows a PIN can keep starting changes, and anyone holding the phone can keep cancelling them. Nobody gains anything by it, but it can hold up a change you want. A trusted person's recovery code skips the wait. |
+| ★14 | Losing power at the wrong moment | If the phone loses power at the very moment Plainphone shows an app again, the phone may not start up. Then it has to be erased with its buttons and set up again. Plainphone keeps that moment as short as it can, and doesn't start these changes when the battery is below 5% unless the phone is charging. |
 
 `{build_alert_line}` is "We checked that alerts appear on this phone ({date})." when the real-device check
 was observed, or "We couldn't test that an alert appears on this phone's software. This was agreed on {date}." when Beaux recorded a build-scoped exception. It is never left blank.
 
 - **Primary:** I've read this (during setup); Done (afterwards)
+- **Notes on the new items ([PLA-42](/PLA/issues/PLA-42)):** item 11 is design C9's sentence, word for word (TPC
+  disclosure: no server, analytics or account; texts; the update connection; Google). It replaces the earlier
+  "Plainphone itself sends nothing anywhere", which wasn't accurate (PLA-31 F9). Items 12–14 are TPC's disclosure
+  items on two trusted people, denial of progress, and the unhide-to-save gap (device-lockdown, "Every unhide is
+  saved at once"). Item 14 doesn't promise the battery rule covers everything: repairs that keep 9-1-1 working are
+  never delayed, so "these changes" means adding apps, opening up and turning off.
 - **Notes:** item 6 must also say, per device-lockdown, that reset protection doesn't put Plainphone back. The
   sentence "Plainphone doesn't come back by itself" covers this; the engineer must not shorten it away. Items 7–10 are not
   required by the spec's list, but are part of what Beaux accepted, so the trusted person should see them too.
-  Item 11 was added after Beaux's copy test, where his biggest worry was "Google (due to tracking etc)". Wording
-  from the Lead (PLA-12, 2026-10-09). A setup step to reduce Google's data collection is coming; when it exists,
-  add "You can turn some of this off during setup." Not before.
+  Item 11 was added after Beaux's copy test, where his biggest worry was "Google (due to tracking etc)". The
+  setup privacy steps now exist ([S4e](flows-setup.md#s4e-make-google-collect-less)), so the item points to them.
+
+### L1, self-managed version
+
+**Spec:** TPC "Plain disclosure of leftover risk" (self-managed item; scenario "Self-managed user reads the limits":
+"it says plainly that Plainphone is friction, not a lock, in this mode"); C4.
+
+- **Title:** What Plainphone can't stop
+- **Intro:** In this mode Plainphone is friction, not a lock. Here's what that means, and what it can't stop.
+- **First item, heading "Friction, not a lock":** In self-managed mode, you hold the PIN. Plainphone adds waits and
+  limits so that distraction takes effort. It can't stop you, because you are in charge. You can always remove it
+  by waiting at least 24 hours of the phone being on (longer if the change is cancelled or interrupted), or by
+  wiping the phone. ([Flag 3](flows-people-modes-and-waits.md#flags-strings-i-think-should-change))
+- Then items 1, 2, 5, 7–11 and 14 as above, with "you" for {user}, and these in place of 3, 4, 6 and 13:
+
+| # | Heading | Text |
+|---|---|---|
+| 3 | The Play Store and full settings | When you open the Play Store or full phone settings, the phone is open for those minutes, and their help pages can show the web. Plainphone closes them at the time it shows. |
+| 4 | If Plainphone stops working while something is open | If Plainphone breaks while the Play Store or settings are open, they stay open until {helper} fixes the phone, and nobody is watching. |
+| 6 | Erasing the phone with its buttons | Anyone can erase this phone using its buttons. After that, Google asks for your own Google account (or the backup person's). So you can set the phone up again without Plainphone: a way out that doesn't wait 24 hours. Plainphone doesn't come back by itself, and anything not backed up is lost. |
+| 13 | Changes can be held up | Anyone holding your phone can cancel a change you started, and nothing in Plainphone can skip the wait. If that happens, keep the phone with you and start it again. |
+
+- Item 11 in this mode: [Flag 4](flows-people-modes-and-waits.md#flags-strings-i-think-should-change) (no trusted
+  people to text).
 
 ## L2. Phone software changed – review pending
 
@@ -102,8 +133,10 @@ for you to do."
 
 ## L4. Turning Plainphone off
 
-**Spec:** trusted-person-controls ("Turning Plainphone off restores everything it changed": fresh PIN, two plain
-confirmations, journal and resume, report "Off" only when Device Owner is gone, never fall back to a wipe).
+**Spec:** trusted-person-controls ("Turning Plainphone off restores everything it changed": a waiting change; fresh
+PIN, two plain confirmations, journal and resume, report "Off" only when Device Owner is gone, never fall back to a
+wipe); design C6. The wait itself, its texts and the skip are in
+[flows-people-modes-and-waits.md](flows-people-modes-and-waits.md#m3-changes-that-wait-24-hours).
 
 ### L4a. What happens
 
@@ -112,15 +145,19 @@ confirmations, journal and resume, report "Off" only when Device Owner is gone, 
   This makes {user}'s phone an ordinary Android phone again. Every app will open, including web browsers and the
   Play Store, and the home screen will look different.
   Photos, messages and contacts are kept. Nothing is erased.
+  It happens after at least 24 hours of the phone being on. Until then, anyone holding the phone can cancel, and
+  {everyone} will get a text now.
   To use Plainphone again later, {helper} has to set it up again with a computer.
-  Plainphone only turns off this way, with your PIN. A flat battery doesn't turn it off: when the phone starts
+  Plainphone only turns off this way, with a PIN. A flat battery doesn't turn it off: when the phone starts
   again, Plainphone is back.
 - **Primary:** Continue
 - **Secondary:** Keep Plainphone on
 
+- **Self-managed version:** "This makes your phone an ordinary Android phone again…", and the wait line reads
+  "It happens after at least 24 hours of the phone being on. Until then, you can cancel it. Nothing can make it
+  shorter."
 - **Notes:** the flat-battery line is from the Lead, based on PLA-5 A6 (the lockdown comes back after a
-  restart). Any waiting period before turning off depends on Beaux's answer on
-  [PLA-14](/PLA/issues/PLA-14#document-product-questions); don't describe one until then.
+  restart). The 24-hour wait is Beaux's choice (card `c60170d6`, approved in PLA-30).
 
 ### L4b. First confirmation
 
@@ -128,20 +165,32 @@ confirmations, journal and resume, report "Off" only when Device Owner is gone, 
 - **Body:** Plainphone will be turned off on {user}'s phone.
 - **Primary:** Yes, turn it off (black like every primary button; it stands out by its words and the extra confirmations, not by colour)
 - **Secondary:** No, keep it on
-- **Then:** PIN or recovery code (fresh).
+- **Then:** PIN or recovery code (fresh; with two trusted people, "Who are you?" first).
 
 ### L4c. Second confirmation
 
 - **Title:** Last check
-- **Body:** Once it's off, only {helper} can turn it back on, using a computer. Keep the phone on and plugged in if
-  you can. It takes a minute or two.
-- **Primary:** Turn off now
+- **Body:** Once it's off, only {helper} can turn it back on, using a computer. Plainphone turns off after at least
+  24 hours of the phone being on. Time while the phone is off doesn't count.
+- **Primary:** Start the 24-hour wait
 - **Secondary:** Cancel
+- **Then:** [M3c](flows-people-modes-and-waits.md#m3c-started) ("Waiting 24 hours"). The home line becomes
+  "Plainphone will turn off after {time}. Tap to cancel."
+
+### L4c2. When the wait ends
+
+Plainphone turns off by itself (C2: "It doesn't wait for anyone to come back and confirm"), after checking that the
+PIN that started it is unchanged. If the battery is below 5% and not charging, it waits for the charger (C6). In
+supervised mode, a trusted person can skip the wait with their recovery code
+([M3e](flows-people-modes-and-waits.md#m3e-skip-the-wait-with-a-recovery-code)): "Skip the wait and turn
+Plainphone off now?"
 
 ### L4d. Turning off
 
 - **Title:** Turning Plainphone off…
 - **Body:** Step {n} of {total}. Keep the phone on. Calls and Emergency still work.
+- Shown if someone is looking at the phone when the wait ends; otherwise it happens in the background, and the user
+  sees L4e when they next unlock.
 - No buttons.
 - **After a restart in the middle:** "Still turning off. Carrying on from where it stopped." (resumes at the next
   step not yet read back).
@@ -176,7 +225,7 @@ Plain names for the steps shown in `{step}` (from the spec's restore list):
 | keyguard disabled features | "restoring the lock screen" |
 | browser role | "letting a web browser open links" |
 | default SMS and dialer | "restoring the texting and phone apps" |
-| reset-protection policy | "removing {tp}'s account from reset protection" |
+| reset-protection policy | "removing {everyone}'s accounts from reset protection" (self-managed: "removing your account from reset protection") |
 | Play app restrictions | "restoring the Play Store" |
 | check home app and dialer | "checking the phone and home screen work" |
 | remove Device Owner | "handing the phone back to Android" |
