@@ -67,7 +67,7 @@ A menu page. At the top, a short **"Needs you"** list, only when something is wa
 | **Plainphone needs attention** | Same conditions as the home line | [L3](flows-limits-and-off.md#l3-plainphone-needs-attention-trusted-person-view) |
 | **Phone software changed – review pending** | The phone is on software Plainphone hasn't reviewed | [L2](flows-limits-and-off.md#l2-phone-software-changed--review-pending) |
 | **{n} requests from {user}** | Unanswered app requests | T3 |
-| **Monthly check due** (or "…overdue by {n} days") | From the due date | [P3](flows-sessions.md#p3-monthly-check) |
+| **Check for updates – due** (or "…overdue by {n} days") | From the due date | [P3](flows-sessions.md#p3-monthly-check) (the same path as the menu row) |
 | **{app} didn't update** (one row per app) | Recorded at a monthly check, not yet resolved | T6 |
 | **An app was installed that you haven't added** | Any install outside a session | T7 |
 | **Texts to you aren't sending** | Plainphone's SMS permission check failed | T8 |
@@ -79,7 +79,7 @@ A menu page. At the top, a short **"Needs you"** list, only when something is wa
 | **Add an app** | Opens the Play Store for 10 minutes | [P1](flows-sessions.md#p1-before-a-session) (Play) |
 | **Apps on this phone** | Change the order, remove, what each can use | T5 |
 | **Requests from {user}** | (count, if any) | T3 |
-| **Monthly check** | Last done: {date} | [P3](flows-sessions.md#p3-monthly-check) |
+| **Check for updates** | Last done: {date} | [P3](flows-sessions.md#p3-monthly-check) |
 | **Open full phone settings** | For 5 minutes, for things Phone settings doesn't have, like the screen lock | [P1](flows-sessions.md#p1-before-a-session) (Settings) |
 | **What Plainphone can't stop** | Read this before adding apps | [L1](flows-limits-and-off.md#l1-what-plainphone-cant-stop) |
 | **Install a Plainphone update** | Only with {helper}, when {helper} asks | [P6](flows-sessions.md#p6-install-a-plainphone-update) |
@@ -156,7 +156,7 @@ installed, each goes through T4 in turn.
     | App is newer than the reviewed version | **"Reviewed for an older version"**, then "Checked for version {reviewed}. This is version {installed}." |
     | No catalog entry | **"Not reviewed yet – this app may open web pages inside it"** |
 
-    Under "Not reviewed yet", one more line (the pilot reader asked who reviews, and how to ask): "The Plainphone
+    Under "Not reviewed yet", one more line (Beaux asked who reviews, and how to ask): "The Plainphone
     team checks apps for this and writes a note for each one. They haven't checked {app}. To ask them to, tell
     {helper}."
 - **Primary:** Next
@@ -203,8 +203,8 @@ To show what's playing.
 - **Body:** Choose together with {user}. {app} won't ask {user} about these later, and {user} can't change them
   alone. If {user} wants a change, you change it together, with the phone in your hands: "Apps on this phone" →
   {app} → "What {app} can use". If you choose "Don't allow", the parts of {app} that need it won't work.
-- **Copy-test change (pilot):** the earlier body said "{user} won't be asked later" and "You can change this
-  later" without saying who or how. The pilot reader read it as {user} being locked out and having to bring
+- **Copy-test change (round 3, Beaux):** the earlier body said "{user} won't be asked later" and "You can change this
+  later" without saying who or how. Beaux read it as {user} being locked out and having to bring
   the phone to {tp}. That is how it works, so the screen now says it plainly. The change path depends on
   [Open question 4](README.md#open-questions-for-the-lead).
 - One block per Android permission group the app requests. Each block: plain name, one line of why (from the

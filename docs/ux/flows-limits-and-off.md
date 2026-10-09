@@ -28,7 +28,7 @@ sections. One heading per item, then one or two sentences. The required items ar
 | 8 | Phone software updates | Android updates can arrive before the Plainphone team has checked them; some security updates install anyway. Until we check, a new update could add a way around Plainphone that we haven't seen. |
 | 9 | A bad Plainphone update | There's no undo for a Plainphone update. If one goes badly wrong, the fix is to wipe the phone and set it up again. |
 | 10 | Emergency alerts | Plainphone doesn't block emergency alerts. {build_alert_line} |
-| 11 | What Google and apps collect | Plainphone doesn't change what Google or each app's maker collects. The phone still uses a Google account for the Play Store, and each app follows its own privacy rules. Plainphone itself sends nothing anywhere. |
+| 11 | What Google and apps collect | Plainphone itself sends nothing anywhere. But the phone still runs Google's services, which collect data, and each app follows its own privacy rules. |
 
 `{build_alert_line}` is "We checked that alerts appear on this phone ({date})." when the real-device check
 was observed, or "We couldn't test that an alert appears on this phone's software. This was agreed on {date}." when Beaux recorded a build-scoped exception. It is never left blank.
@@ -37,8 +37,9 @@ was observed, or "We couldn't test that an alert appears on this phone's softwar
 - **Notes:** item 6 must also say, per device-lockdown, that reset protection doesn't put Plainphone back. The
   sentence "Plainphone doesn't come back by itself" covers this; the engineer must not shorten it away. Items 7–10 are not
   required by the spec's list, but are part of what Beaux accepted, so the trusted person should see them too.
-  Item 11 was added after the copy-test pilot, where the reader's biggest worry was "Google (due to tracking
-  etc)". It is true today: the design has no servers and no analytics.
+  Item 11 was added after Beaux's copy test, where his biggest worry was "Google (due to tracking etc)". Wording
+  from the Lead (PLA-12, 2026-10-09). A setup step to reduce Google's data collection is coming; when it exists,
+  add "You can turn some of this off during setup." Not before.
 
 ## L2. Phone software changed – review pending
 
@@ -57,7 +58,7 @@ Exact text: **Phone software changed – review pending**
   Nothing has changed for {user}: the same apps, the same limits, and Emergency still works. There's nothing you
   need to do. {helper} has been sent a text and will install a Plainphone update.
   Until then, there's a small chance the update added a gap that lets an app get around Plainphone.
-- **Copy-test change (pilot):** the earlier last line ("a new part of the phone lets an app get around
+- **Copy-test change (round 3, Beaux):** the earlier last line ("a new part of the phone lets an app get around
   Plainphone") was read as "{user} will have elevated permissions". The body now says nothing changed for
   {user}, and calls the risk "a gap".
 - **Primary:** OK
@@ -112,10 +113,14 @@ confirmations, journal and resume, report "Off" only when Device Owner is gone, 
   Play Store, and the home screen will look different.
   Photos, messages and contacts are kept. Nothing is erased.
   To use Plainphone again later, {helper} has to set it up again with a computer.
-  Plainphone only turns off this way, with your PIN. A flat battery, a restart or a phone update doesn't turn it
-  off.
+  Plainphone only turns off this way, with your PIN. A flat battery doesn't turn it off: when the phone starts
+  again, Plainphone is back.
 - **Primary:** Continue
 - **Secondary:** Keep Plainphone on
+
+- **Notes:** the flat-battery line is from the Lead, based on PLA-5 A6 (the lockdown comes back after a
+  restart). Any waiting period before turning off depends on Beaux's answer on
+  [PLA-14](/PLA/issues/PLA-14#document-product-questions); don't describe one until then.
 
 ### L4b. First confirmation
 

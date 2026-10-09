@@ -1,7 +1,7 @@
 # Copy test packet (for a person who has never seen Plainphone)
 
-Use this for the human copy test in [copy-test.md](copy-test.md). This version includes the fixes from Beaux's
-pilot run (round 3). It holds the current words only, with the names
+The words Beaux read for his copy test (round 3 in [copy-test.md](copy-test.md)), now with his fixes applied.
+Kept as a record and for later testers, only if Beaux asks for them. It holds the current words only, with the names
 changed (Margaret uses the phone, Sam looks after it, Alex is the helper) so the tester doesn't know the real users.
 
 ## How to run it (about 30 minutes)
@@ -22,7 +22,7 @@ changed (Margaret uses the phone, Sam looks after it, Alex is the helper) so the
 
 ### Questions
 1. You want an app for the local bus times. What exactly do you do?
-2. The main screen says "Ask Sam to do the monthly phone check" (this line only appears when the check is more than a week late). What does that mean? Is something wrong with your phone? What will you do?
+2. The main screen says "Ask Sam to do the monthly phone check" (this line only appears when the check is due). What does that mean? Is something wrong with your phone? What will you do?
 3. You tapped a link in a text from a friend and got Screen 6. What happened, in your own words? What would you tap, and why?
 4. What happens if you tap "Send to Sam"? Would you feel OK doing that? Why or why not?
 5. You're at a hotel and see Screen 7. What does it mean? What would you do? Can you still make a call?
@@ -44,7 +44,7 @@ SCREEN 1 (the main screen)
   (a gap)
   [ Phone ]
   [ Messages ]
-  Ask Sam to do the monthly phone check  ›   (only shown when the monthly check is more than a week late)
+  Ask Sam to do the monthly phone check  ›   (only shown when the monthly check is due)
   Spotify
   Slack
   Camera
@@ -129,12 +129,12 @@ SCREEN A (Sam opens "For Sam" and enters the PIN). Title: Looking after Margaret
   This is for adding apps and keeping the phone working. You can't see Margaret's messages, photos, or what Margaret does in apps.
   Needs you:
    - 1 request from Margaret
-   - Monthly check due
+   - Check for updates – due
   Menu:
    Add an app — Opens the Play Store for 10 minutes
    Apps on this phone — Change the order, remove, what each can use
    Requests from Margaret
-   Monthly check — Last done: 3 Sep
+   Check for updates — Last done: 3 Sep
    Open full phone settings — For 5 minutes, for things Phone settings doesn't have, like the screen lock
    What Plainphone can't stop — Read this before adding apps
    Install a Plainphone update — Only with Alex, when Alex asks
@@ -191,7 +191,7 @@ SCREEN G. Title: What Plainphone can't stop
   Phone software updates — Android updates can arrive before the Plainphone team has checked them; some security updates install anyway. Until we check, a new update could add a way around Plainphone that we haven't seen.
   A bad Plainphone update — There's no undo for a Plainphone update. If one goes badly wrong, the fix is to wipe the phone and set it up again.
   Emergency alerts — Plainphone doesn't block emergency alerts. We checked that alerts appear on this phone (14 May).
-  What Google and apps collect — Plainphone doesn't change what Google or each app's maker collects. The phone still uses a Google account for the Play Store, and each app follows its own privacy rules. Plainphone itself sends nothing anywhere.
+  What Google and apps collect — Plainphone itself sends nothing anywhere. But the phone still runs Google's services, which collect data, and each app follows its own privacy rules.
   [ Done ]
 
 SCREEN H. Title: Phone software changed – review pending
@@ -200,19 +200,19 @@ SCREEN H. Title: Phone software changed – review pending
   Until then, there's a small chance the update added a gap that lets an app get around Plainphone.
   [ OK ]   What changed (link)
 
-SCREEN I (Monthly check). Title: Monthly check
+SCREEN I (Check for updates). Title: Check for updates
   You'll open the Play Store's list of updates and update anything that's waiting. Afterwards, Plainphone asks which apps didn't update. About 10 minutes. Updates carry on even after the Play Store closes.
   **Stay with the phone until you tap Done.**
   In the Play Store: tap your Google picture or initial at the top right, then Manage apps & device, then Updates available. Tap Update all if you see it.
   [ Start the check ]   Not now (link)
   Afterwards: "Did everything update?" [ Yes, all up to date ]  Some apps didn't update (link)
-  Then: "Confirm the monthly check. Enter your PIN to confirm you looked at the Play Store's update list. The next check will be due on 8 Nov." [ Confirm ]
+  Then: "Confirm the update check. Enter your PIN to confirm you looked at the Play Store's update list. The next check will be due on 8 Nov." [ Confirm ]
 
 SCREEN J (Turn Plainphone off). Title: Turn Plainphone off?
   This makes Margaret's phone an ordinary Android phone again. Every app will open, including web browsers and the Play Store, and the home screen will look different.
   Photos, messages and contacts are kept. Nothing is erased.
   To use Plainphone again later, Alex has to set it up again with a computer.
-  Plainphone only turns off this way, with your PIN. A flat battery, a restart or a phone update doesn't turn it off.
+  Plainphone only turns off this way, with your PIN. A flat battery doesn't turn it off: when the phone starts again, Plainphone is back.
   [ Continue ]  Keep Plainphone on (link)
   Then: "Are you sure? Plainphone will be turned off on Margaret's phone." [ Yes, turn it off ] (red)  then PIN
   Then: "Last check. Once it's off, only Alex can turn it back on, using a computer. Keep the phone on and plugged in if you can. It takes a minute or two." [ Turn off now ]

@@ -143,10 +143,13 @@ recommendation; none changes a promise.
    signed-in B-Q4 result; if that fails too, the Lead decides between a new, narrow "add an account" session (a
    spec change, with its own tests) and leaving Outlook off.
 
-**From Beaux's copy-test pilot (round 3, [copy-test.md](copy-test.md#round-3-beauxs-pilot)).** These are
-product decisions, not wording. The copy doesn't promise any of them.
+**From Beaux's copy test (round 3, [copy-test.md](copy-test.md#round-3-beaux-the-human-copy-test-for-this-stage)).** These are
+product decisions, not wording. The copy doesn't promise any of them. **Status:** the Lead has answered them in the
+[PLA-14 product-questions document](/PLA/issues/PLA-14#document-product-questions), and Beaux is choosing there.
+The trusted-person and web-window flows wait for his choices. Copy already changed from the Lead's answers:
+Screen J (flat battery), "can't stop" item 11 (Google), and one "Check for updates" path.
 
-8. **Changing the trusted person, or more than one.** The pilot reader asked "Can I change this person? Can I have
+8. **Changing the trusted person, or more than one.** Beaux asked "Can I change this person? Can I have
    multiple people in Sam's role?" The MVP has one trusted person, and no screen to change who it is.
    **Recommendation:** for the MVP, changing who it is means {helper} sets the phone up again; About this phone
    then says so in one line. More than one trusted person is a later change, with its own spec.

@@ -108,8 +108,8 @@ The AE confirms which one works; the Lead picks.
 | **L2.** Plainphone reconnects the Wi-Fi; the person taps Android's notification | A Plainphone screen: **Tap "Sign in to Wi-Fi network"** / "Pull down from the very top of the screen, then tap **Sign in to Wi-Fi network**. It can take up to 30 seconds to appear." If it hasn't appeared after 30 seconds: "It didn't appear. The sign-in page has closed. Try again from the Wi-Fi screen." (In B this try is not counted.) | As shown |
 | **L3.** Plainphone shows the sign-in page in its own window, on that Wi-Fi only (untested) | The sign-in page appears inside Plainphone, with a thin bar at the top: "Wi-Fi sign-in · open until {time} · **Stop**" | The bar. Plainphone could also keep the page to the sign-in site; that is the AE's call |
 
-L2 is the hardest for a stranger: it relies on a gesture and an Android label we don't control. The copy-test
-should include it if L2 is the path we take.
+L2 is the hardest for a stranger: it relies on a gesture and an Android label we don't control. If L2 is the path
+we take, Beaux checks it on the real build on the spare Motorola.
 
 ## During the 5 minutes (both variants)
 
@@ -368,7 +368,7 @@ For whichever variant is chosen. Listed so the Lead can size it; none is made he
 | T2 front page | Trip pass row (WA5) | Optional | WB5 row |
 | Setup, step 7 | Switch default question | No | Yes |
 | "What Plainphone can't stop" (flows-limits-and-off) | Replace "Wi-Fi with a sign-in page … won't work" with: "Wi-Fi sign-in pages — When a Wi-Fi needs a sign-in page, it can be opened for 5 minutes. While it's open, it can show other websites." | Yes | Yes |
-| copy-test | W0, WA1/WB1, W5, and L2 if used, on cold readers | Yes | Yes |
+| Human check | Beaux checks W0, WA1/WB1, W5, and L2 if used, on the real build on the spare Motorola. No outside testers for now (Telegram 4477) | Yes | Yes |
 
 ## Open questions for the Lead
 
