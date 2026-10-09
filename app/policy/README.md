@@ -543,3 +543,16 @@ grant. A terminal request can strengthen an earlier package-only close. Failed s
 recovery also leaves a recovery-required latch: subsequent `tick` calls retry revoke/check/readback and
 repair instead of stopping permanently at NOT_READY. Until success, preparation and all authority remain
 unavailable. Process death still requires startup revocation and never restores a grant.
+
+
+The supervised journal projection exposes every elevation-owned active journal as CLOSING, even
+when the underlying elevation journal is OPEN. It is visible for restrictive cleanup but cannot
+be returned as supervised access after a mode/structure change. Compare-and-set compares that same
+projected view, then atomically updates the freshly read full record; it never writes the projection
+back as an independent record. Ordinary supervised sessions still expose their actual phase.
+
+A close also latches its **effective** retention decision after checking live conditions, before
+any CLOSING write or effect. If low battery or another failed live condition requires ending the
+grant, that decision stays terminal through retry even when the trigger later recovers or the
+CLOSING journal no longer has open-access preconditions. Successful terminal cleanup returns ENDED,
+clears candidate data and preserves the debit.

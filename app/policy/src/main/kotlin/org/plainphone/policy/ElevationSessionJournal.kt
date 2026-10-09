@@ -7,13 +7,19 @@ package org.plainphone.policy
  * One shared ElevationStore instance also fences failed revocation across both live controllers.
  */
 internal class ElevationSessionJournal(private val store: ElevationStore) : JournalStore {
-    override fun read(): SessionJournal = store.read()?.journal ?: SessionJournal.Damaged
+    // A foreign session is visible for restrictive cleanup, never as supervised OPEN authority.
+    private fun projected(record: ElevationRecord): SessionJournal {
+        val active = record.journal as? SessionJournal.Active
+        return if (record.state.grant != null && active != null) active.copy(phase = SessionPhase.CLOSING)
+            else record.journal
+    }
+    override fun read(): SessionJournal = store.read()?.let(::projected) ?: SessionJournal.Damaged
     override fun beginRevocation() { store.revocationPending = true }
     override fun revocationPending(): Boolean = store.revocationPending
 
     override fun compareAndSet(expected: SessionJournal, replacement: SessionJournal): Boolean {
         val before = store.read() ?: return false // Only elevation startup can repair a damaged debit ledger.
-        if (before.journal != expected || before.revision == Long.MAX_VALUE || replacement == SessionJournal.Damaged) return false
+        if (projected(before) != expected || before.revision == Long.MAX_VALUE || replacement == SessionJournal.Damaged) return false
         val active = replacement as? SessionJournal.Active
         val grant = before.state.grant
         val nextState = if (grant != null) {

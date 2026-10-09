@@ -272,6 +272,11 @@ class ElevationController(
             return onStart().let { ElevationOutcome.NOT_READY }
         }
         val retain = request.retain && live(before)
+        // Persist the effective decision in the retry latch before CLOSING removes the live-access
+        // preconditions (notably battery). Recovery of a failed effect must not resurrect this grant.
+        val effective = request.copy(retain = retain,
+            outcome = if (request.retain && !retain) ElevationOutcome.ENDED else request.outcome)
+        closing = effective
         val state = if (retain) ElevationMachine.closePackageAccess(before.state, request.id).state else ElevationMachine.onRestart(before.state)
         val active = before.journal as? SessionJournal.Active
         // While closing, retain the grant data solely to validate the journal; no access() can return it.
@@ -285,7 +290,7 @@ class ElevationController(
         if (!save(saved, state, SessionJournal.Empty, before.person.takeIf { state.grant != null }, null)) return ElevationOutcome.NOT_READY
         if (!retain) { ownedId = null; play = null }
         closing = null; store.revocationPending = false
-        return request.outcome
+        return effective.outcome
     }
     private fun save(before: ElevationRecord, state: ElevationState, journal: SessionJournal,
         person: ElevationPersonBinding?, current: CredentialState?): Boolean {
