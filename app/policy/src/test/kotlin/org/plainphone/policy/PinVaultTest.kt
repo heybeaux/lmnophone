@@ -158,6 +158,27 @@ class PinVaultTest {
         assertEquals(1.toByte(), verifier.salt[0]); assertEquals(2.toByte(), verifier.hash[0])
     }
 
+    @Test fun `tenth failure notice survives a restart and later successful entry`() {
+        enroll()
+        repeat(10) {
+            val result = assertIs<PinResult.Wrong>(vault.authenticate(first, wrong, action))
+            advance(result.remainingMillis)
+        }
+        assertEquals(1, store.state!!.pendingNotices.size)
+        val notice = store.state!!.pendingNotices.single()
+        assertEquals(first, notice.person)
+        assertEquals(CredentialChannel.PIN, notice.channel)
+        assertIs<PinResult.Authorized>(PinVault(store, kdf, FakeEntropy(), clock).authenticate(first, pinA, action))
+        assertEquals(setOf(notice), store.state!!.pendingNotices)
+    }
+
+    @Test fun `authority cannot survive reboot`() {
+        enroll()
+        val auth = assertIs<PinResult.Authorized>(vault.authenticate(first, pinA, action)).authority
+        time = time.copy(boot = BootTime("next", 0))
+        assertFalse(vault.consume(auth, action))
+    }
+
     private class FakeDerivation : KeyDerivation {
         val checkedSalts = mutableListOf<List<Byte>>()
         val iterations = mutableListOf<Int>()
