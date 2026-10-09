@@ -131,6 +131,7 @@ class IntentUriDecodeTest {
         assertEquals("\ufffd\u00001", fallback("%+1"))
         assertEquals("a\ufffd", fallback("a%"))
         assertEquals("a\ufffd", fallback("a%2"))
+        assertEquals("\ufffd\u0000\uff11", fallback("%\uff11\uff11"))
     }
 
     @Test fun `extra keys are percent-decoded too`() {

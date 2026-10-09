@@ -16,6 +16,13 @@ Pure Kotlin/JVM. No `android.*`. Spec: `openspec/changes/add-plainphone-spike-an
   - `approved` = approved apps plus lock-task UI exceptions.
   - `intent:` URIs are reconstructed by `IntentUri.parse`, following `Intent.parseUri(..., URI_INTENT_SCHEME)`
     (raw or Chrome-style sanitised). `S.browser_fallback_url` is never followed.
+  - `IntentUri` is a port of AOSP `Intent.parseUriInternal` and `getIntentOld`, `ComponentName.unflattenFromString`
+    and `Uri.decode`. A `SEL;` selector is kept only when the outer intent has no package. With no `#` the result is a
+    plain `VIEW` of the `intent:` data. A `#` without `#Intent;` is the old format, which can name a component.
+    Unknown keys and unparsable typed extras are malformed. It is stricter than Android in one place: a package value
+    that can't be a package name is malformed, which also ends in `NoHandler`.
+- `IntentFacts.action` and `IntentFacts.customTabs` are context only. `LinkDecider` doesn't read them; their effect
+  is already in `resolvers`.
 - `PackageFacts` and `IntentFacts` are plain data that lane D fills from PackageManager.
 
 ## Notes for lane D
