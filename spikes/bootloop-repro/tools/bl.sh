@@ -1,8 +1,9 @@
 #!/bin/bash
-# THROWAWAY SPIKE (PLA-22). Helpers. Always pass the serial: never touch emulator-5590, emulator-5604 or SPARE_DEVICE_SERIAL.
+# THROWAWAY SPIKE (PLA-22). Helpers. Always pass the serial: never touch emulator-5590, emulator-5604 or any physical device.
 # Usage: source tools/bl.sh emulator-5620
 S="${1:?serial}"
-case "$S" in emulator-5590|emulator-5604|SPARE_DEVICE_SERIAL) echo "REFUSED: $S is not ours"; return 1 2>/dev/null || exit 1;; esac
+case "$S" in emulator-*) ;; *) echo "REFUSED: emulator serial required" >&2; return 1 2>/dev/null || exit 1;; esac
+case "$S" in emulator-5590|emulator-5604) echo "REFUSED: $S is not ours"; return 1 2>/dev/null || exit 1;; esac
 A() { adb -s "$S" "$@" < /dev/null; }
 cmd() { A shell am broadcast -a com.plainphone.spike.bootloop.CMD -n com.plainphone.spike.bootloop/.CommandReceiver --es cmd "'$*'" | perl -0ne 'if (/data="(.*)"\s*$/s) { print "$1\n" } else { print }'; }
 # wait for sys.boot_completed=1 up to $1 seconds; prints seconds taken or TIMEOUT

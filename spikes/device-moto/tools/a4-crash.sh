@@ -2,8 +2,9 @@
 # THROWAWAY SPIKE (PLA-5). A4: crash the spike's foreground activity twice and record dialog, lock task state,
 # and where an "App info" tap leads. Usage: tools/a4-crash.sh <outdir> <label>
 set -uo pipefail
-SERIAL="${SERIAL:-SPARE_DEVICE_SERIAL}"
-case "$SERIAL" in emulator-5590|emulator-5604) echo "refusing: $SERIAL belongs to another team" >&2; exit 2;; esac
+: "${SERIAL:?Set SERIAL to the explicitly approved test device}"
+case "$SERIAL" in emulator-*) echo "refusing: physical-device helper requires an approved physical device" >&2; exit 2;; esac
+export SERIAL
 a() { adb -s "$SERIAL" "$@"; }
 here="$(cd "$(dirname "$0")" && pwd)"; P="$here/pp.sh"
 out="$1"; label="$2"; mkdir -p "$out"

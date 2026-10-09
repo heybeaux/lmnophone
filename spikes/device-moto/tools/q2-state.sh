@@ -2,8 +2,9 @@
 # THROWAWAY SPIKE (PLA-24). Read-only state + versions for the Q2 unattended run.
 # Usage: bash tools/q2-state.sh   (prints to stdout; no changes to the phone)
 set -uo pipefail
-SERIAL="${SERIAL:-SPARE_DEVICE_SERIAL}"
-case "$SERIAL" in emulator-*) echo "refusing: $SERIAL is not the Motorola" >&2; exit 2;; esac
+: "${SERIAL:?Set SERIAL to the explicitly approved test device}"
+case "$SERIAL" in emulator-*) echo "refusing: physical-device helper requires an approved physical device" >&2; exit 2;; esac
+export SERIAL
 a() { adb -s "$SERIAL" "$@"; }
 PKGS="${PKGS:-com.google.android.apps.messaging com.google.android.dialer com.google.android.gm com.google.android.deskclock com.google.android.apps.photos com.google.android.calculator com.google.android.gms com.android.vending org.telegram.messenger com.Slack com.spotify.music com.microsoft.office.outlook com.google.android.webview}"
 echo "host_utc=$(date -u +%FT%TZ) device_time=$(a shell date +%FT%T%z)"
