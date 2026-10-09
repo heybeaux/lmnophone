@@ -16,6 +16,7 @@ internal class ElevationSessionJournal(private val store: ElevationStore) : Jour
     override fun read(): SessionJournal = store.read()?.let(::projected) ?: SessionJournal.Damaged
     override fun beginRevocation() { store.revocationPending = true }
     override fun revocationPending(): Boolean = store.revocationPending
+    override fun ownedByElevation(): Boolean = store.read()?.state?.grant != null
 
     override fun compareAndSet(expected: SessionJournal, replacement: SessionJournal): Boolean {
         val before = store.read() ?: return false // Only elevation startup can repair a damaged debit ledger.

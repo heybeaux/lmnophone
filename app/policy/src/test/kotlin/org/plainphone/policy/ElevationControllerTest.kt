@@ -447,4 +447,51 @@ class ElevationControllerTest {
         assertNull(record!!.state.grant); assertNull(controller.candidate(app)); assertEquals(1, record!!.state.ledger.debits.size)
     }
 
+    @Test fun `supervised periodic ticks leave healthy self-managed Play and Settings to their owner`() {
+        for (target in listOf(ElevationTarget.Play, ElevationTarget.Settings)) {
+            val f = ElevationControllerTest(); f.setup(); val sessions = f.sharedSessions(); assertTrue(sessions.onStart())
+            val r = f.request(target); f.advance(600_000); assertEquals(ElevationOutcome.STARTED, f.start(r))
+            val before = f.record!!; val access = f.controller.access(); f.events.clear()
+            repeat(3) {
+                assertEquals(SessionOutcome.IGNORED, sessions.tick())
+                assertEquals(ElevationOutcome.ACTIVE, f.controller.tick())
+                assertNull(sessions.access()); assertEquals(access, f.controller.access())
+            }
+            assertSame(before, f.record); assertTrue(f.physicallyOpen); assertTrue(f.events.isEmpty())
+            f.advance(if (target == ElevationTarget.Play) 600_000 else 300_000)
+            assertEquals(ElevationOutcome.LAPSED, f.controller.tick()); assertFalse(f.physicallyOpen)
+            assertEquals(1, f.record!!.state.ledger.debits.size)
+        }
+    }
+    @Test fun `supervised tick still closes its own leftover journal after switching to self-managed`() {
+        setup(); credentials = CredentialState(Mode.TRUSTED, credentials!!.people)
+        val supervisedEffects = object : SessionEffects by effects {
+            override fun open(access: SessionAccess): Boolean { physicallyOpen = true; return true }
+        }
+        val sessions = SessionController(store, supervisedEffects, clock, inventory, vault) { credentials?.mode }
+        assertTrue(sessions.onStart())
+        val action = PrivilegedAction("session:PLAY", "supervised-leftover")
+        val auth = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, action)).authority
+        assertEquals(SessionOutcome.OPENED, sessions.start(action.binding, WindowKind.PLAY, battery, auth))
+        assertNull(record!!.state.grant); assertTrue(physicallyOpen)
+        credentials = CredentialState(Mode.SELF_MANAGED, credentials!!.people, structureGeneration = 1)
+        assertNull(sessions.access()); assertEquals(SessionOutcome.CLOSED, sessions.tick())
+        assertFalse(physicallyOpen); assertEquals(SessionJournal.Empty, record!!.journal)
+        assertTrue(record!!.state.ledger.debits.isEmpty())
+    }
+    @Test fun `supervised tick does not ignore shared pending revocation in self-managed mode`() {
+        setup(); val sessions = sharedSessions(); assertTrue(sessions.onStart())
+        val r = request(); advance(600_000); start(r); failure = "revoke"
+        assertEquals(ElevationOutcome.NOT_READY, controller.done(r.id))
+        failure = null; assertEquals(SessionOutcome.CLOSED, sessions.tick())
+        assertFalse(physicallyOpen); assertEquals(ElevationOutcome.ENDED, controller.tick())
+        assertNull(record!!.state.grant); assertEquals(1, record!!.state.ledger.debits.size)
+    }
+    @Test fun `unknown mode does not qualify for deferring an elevation tick`() {
+        setup(); val sessions = sharedSessions(); assertTrue(sessions.onStart())
+        val r = request(); advance(600_000); start(r); credentials = null
+        assertEquals(SessionOutcome.CLOSED, sessions.tick()); assertFalse(physicallyOpen)
+        assertEquals(1, record!!.state.ledger.debits.size); assertNull(sessions.access())
+    }
+
 }

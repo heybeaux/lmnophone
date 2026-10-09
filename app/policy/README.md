@@ -556,3 +556,18 @@ any CLOSING write or effect. If low battery or another failed live condition req
 grant, that decision stays terminal through retry even when the trigger later recovers or the
 CLOSING journal no longer has open-access preconditions. Successful terminal cleanup returns ENDED,
 clears candidate data and preserves the debit.
+
+
+### Periodic tick ownership
+
+With the combined store, an initialized supervised controller's `tick` returns IGNORED for an
+elevation-owned active journal while the current mode is explicitly SELF_MANAGED and no local/shared
+revocation is pending. It never returns elevation access as supervised authority. Run the elevation
+controller's tick as well: it owns the grant's credential, battery, policy, clock and deadline checks.
+A shared periodic dispatcher may tick both controllers after both startup paths succeed.
+
+This exception does not apply to genuine supervised journals left over after a mode change, to
+TRUSTED/unknown mode, to damaged storage, or to an already requested revocation. Those cases still
+close/retry. `JournalStore.ownedByElevation()` is an ownership query on the same serialized coordinator;
+legacy stores default false, and the policy-owned combined projection supplies it without changing
+the durable schema. Existing app-return, screen-off/call and startup routing is unchanged.
