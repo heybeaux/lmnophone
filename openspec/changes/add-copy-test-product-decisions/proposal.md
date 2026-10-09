@@ -1,4 +1,4 @@
-**Status:** revision 3, after cross-model reviews PLA-31 (F1–F11) and PLA-34 (N1–N6); responses in `design.md`. Goes to re-review, then Beaux's approval. Nothing here is built until Beaux approves it.
+**Status:** revision 4. Cross-model reviews: PLA-31 (F1–F11) and PLA-34 (N1–N6) requested changes; PLA-35 **approved with changes** (R1–R4), applied here. Responses in `design.md`. Next: Beaux's approval. Nothing here is built until Beaux approves it.
 
 ## Why
 
@@ -18,14 +18,14 @@ These change what the approved plan (`add-plainphone-spike-and-mvp`) promises ab
   - Either can do every trusted-person action alone. Neither can see or change the other's PIN.
   - **Texts go to both**, including a receipt to the person who acted, so a PIN used by someone else shows up. App requests go to both.
   - **Disagreements:** the two are equals. For actions the other person can put back later (approving or removing an app, opening a session), the last action stands, and both see it in a shared history. For actions that can't be put back, a 24-hour wait applies and anyone can cancel (next bullet).
-- **One 24-hour wait rule ("waiting changes")** for actions that can't be put back:
+- **One 24-hour wait rule ("waiting changes")** for actions that can't be put back (installing a signed Plainphone update is the stated exception: it takes effect at once, as today, with no rollback):
   - turning Plainphone off;
   - changing who is a trusted person (adding one, handing your role to someone else, removing the other one);
   - switching mode, **in either direction**;
   - in self-managed mode, loosening the waits or limits.
   - **One at a time.** Only one waiting change can be in progress on the phone, from start until it completes or is cancelled.
-  - **Recoverable.** Each change has one operation record (two copies, revision-numbered) with explicit forward, rollback and finished states. Each state change is saved together with its texts, so a crash can't lose a notice or turn a rollback into a forward run. If the record is lost, Plainphone makes reset protection match the people actually in charge.
-  - A PIN starts it. Either trusted person, or anyone holding the phone, can cancel; by a text reply quoting that request's cancel code too, if the spike (Q15) shows replies can be received. In supervised mode, a trusted person's **recovery code** skips the wait, on a screen that names the change.
+  - **Recoverable.** Each change has one operation record (two copies, revision-numbered) with explicit forward, rollback and finished states. Each state change is saved together with its texts, so a crash can't lose a notice or turn a rollback into a forward run. If the record is lost, Plainphone reconciles to the people actually in charge (or reports "Off" if turning off had already finished) and tells everyone what it found.
+  - A PIN starts it. While it is pending (not once it is in progress), either trusted person, or anyone holding the phone, can cancel; by a text reply quoting that request's cancel code too, if the spike (Q15) shows replies can be received. In supervised mode, a trusted person's **recovery code** skips the wait, on a screen that names the change.
   - **Re-checked.** If a PIN it depends on is replaced, or the set of people or the mode changes, before it commits, the change is cancelled at once. So replacing a PIN someone saw also cancels anything they started. Other people's PIN changes don't affect it, and completing it changes only the people it names.
   - Time is counted on one "proven running time" clock. Restarts, switching the phone off and clock changes can only make a wait longer.
   - **Why changes to people and mode wait too:** someone who has seen a PIN could otherwise make themselves a trusted person for good. And a self-managed user could otherwise enrol a second identity they control as "trusted person" and skip every limit (PLA-31 F1).

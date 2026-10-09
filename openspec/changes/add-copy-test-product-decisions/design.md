@@ -1,4 +1,4 @@
-**Revision 3.** Revision 1 (commit `c6f2289`) was reviewed in PLA-31: request changes, F1–F11. Revision 2 (`b634c67`) was re-reviewed in PLA-34: 4 fixed, 7 partly fixed, plus N1–N6. Response tables are at the end.
+**Revision 4.** Revision 1 (commit `c6f2289`) was reviewed in PLA-31: request changes, F1–F11. Revision 2 (`b634c67`) was re-reviewed in PLA-34: request changes, N1–N6. Revision 3 (`d7b9b31`) was re-reviewed in PLA-35: **approve with changes**, R1–R4, applied here with its acceptance cases added to the tasks. Response tables are at the end.
 
 ## Context
 
@@ -75,10 +75,10 @@ Inputs reused here:
 4. in self-managed mode, loosening the friction (a shorter countdown, more elevations a day).
 
 **Two stores (N1).** Revision 3 keeps the whole mechanism in two kinds of record, both in device-protected storage:
-- the **credential store**: the mode, each PIN holder's slot (name, number, PIN hash, code hash, lockout counters, `userId`, credential generation), and the structure generation. It is always written as one atomic record.
+- the **credential store**: the mode, each PIN holder's slot (name, number, PIN hash, code hash, lockout counters, `userId`, credential generation), the backup person's `userId` if any, the current self-managed friction settings, and the structure generation. It is always written as one atomic record, and it is the durable source for who is in charge (R1).
 - the **operation record**: one per waiting change. It holds everything the change needs (below) and its **state**. It is written as one atomic record with a **revision number** that goes up on every write, and kept in **two copies**. Plainphone reads both and uses the valid copy with the highest revision. A checksum shows a copy is intact; the revision shows which is newest.
 
-**The operation record holds:** the request id; the kind; the immutable inputs (for example the incoming person's PIN hash, code hash, number and `userId`, and the exact credential patch, see C3); the **dependencies** (the slot ids it touches, each with its credential generation, and the structure generation); which credential started it; a short **cancel code** for text replies (C2, "Cancelling"); the clock reading and clock epoch (below); the state; and the text queue obligations for the current state, with recipients fixed when they were added.
+**The operation record holds:** the request id; the kind; the immutable inputs (for example the incoming person's PIN hash, code hash, number and `userId`, and the exact credential patch, see C3); the **dependencies** (the slot ids it touches, each with its credential generation, and the structure generation); which credential started it; a **cancel code** for text replies (C2, "Cancelling"), unique to this request and never reused on this phone; the clock reading and clock epoch (below); the state; and the text queue obligations for the current state, with recipients fixed when they were added.
 
 **States.**
 
@@ -114,7 +114,7 @@ Inputs reused here:
 - Wall-clock time is for display only. Screens say: "Time while the phone is off doesn't count."
 
 **Texts at the start**, draft wording, finalised by UX:
-> Plainphone: {name} asked to turn Plainphone off on {user}'s phone. It will turn off after at least 24 hours of the phone being on. To stop it, open the phone and tap Cancel{, or reply CANCEL 4821}.
+> Plainphone: {name} asked to turn Plainphone off on {user}'s phone. It will turn off after at least 24 hours of the phone being on. To stop it, open the phone and tap Cancel{, or reply CANCEL {code}}.
 
 The reply part appears only if Q15 passes.
 
@@ -132,11 +132,16 @@ The reply part appears only if Q15 passes.
 
 **Commit.** When the wait matures, Plainphone re-checks the dependencies and the mode against the current credential store. If they hold, one write moves the operation to committing, with the forward steps listed. Otherwise it is cancelled.
 
-**Lost or damaged operation record (N1).** If no valid copy of the operation record can be read (both damaged, both missing, or unreadable), Plainphone **reconciles**: the credential store is the truth.
-- For a change of people or mode: Plainphone sets the reset-protection list to match the people in the current credential store, and reads it back. That either finishes a change whose credential swap already happened, or undoes one whose swap didn't. Both end consistent.
-- For a turn-off: Plainphone re-applies the full lockdown policy (the normal policy pass), so a half-done turn-off ends locked down, not half open.
-- Then it records the slot as free, texts everyone ("A change was interrupted and didn't finish. Start it again if you still want it."), and logs it in the history.
-- If reconciling can't read back (for example reset protection won't update), the slot stays held, "Plainphone needs attention" shows, and a trusted person (or the self-managed user) can run **Repair** with their PIN: it retries the same reconcile and shows what failed. Calls, Emergency and alerts are never gated on any of this.
+**Lost or damaged operation record (N1, R1, R2).** If no valid copy of the operation record can be read (both damaged, both missing, or unreadable), Plainphone can't know what kind of change it was. So it **reconciles the same way whatever the kind**, from surviving state only:
+- **If Plainphone is no longer Device Owner,** turning off had already finished its last step. The existing rule applies: Plainphone reports "Off". Nothing can undo that.
+- **Otherwise,** with the credential store as the truth:
+  - re-apply the complete active policy (the normal policy pass), so a half-done turn-off ends locked down, not half open;
+  - set the reset-protection list to every PIN holder's `userId` in the credential store plus the backup person's, send the broadcast, and read it back;
+  - use the friction settings stored in the credential store. Pending credentials and pending friction values are never adopted.
+- That either finishes a change of people or mode whose credential patch was already applied, or undoes one whose patch wasn't. Both end consistent.
+- **The notice reports what was recovered, not a guess about the change.** Draft: "Plainphone recovered from an interrupted change. Trusted people now: {names}. Mode: {mode}. Plainphone is on and locked down. If you were changing something, check whether it happened before you start it again." It never says the change was cancelled or didn't finish, because it can't know.
+- Then it frees the slot and logs it in the history.
+- **If the credential store itself is invalid,** or reconciling can't read back, the slot stays held, "Plainphone needs attention" shows, and nothing is guessed. A current PIN holder can run **Repair** with their PIN: it retries exactly this reconcile and shows what failed. A PIN used for Repair authorises only that; it never skips a wait, starts a change or adopts pending values. Calls, Emergency and alerts are never gated on any of this.
 
 **When the wait ends.** The change goes ahead by itself after the re-check, then texts everyone. It doesn't wait for anyone to come back and confirm.
 
@@ -155,7 +160,7 @@ All three changes need a current trusted person's PIN. **The user alone can neve
 **The patch (N2).** The operation record holds a **patch**, not a whole new credential set: "add slot Y", "remove slot X", "replace slot X with slot Y", or "set mode to M, remove slots X…, add slot Y". Applying it touches only those slots. Every other slot keeps whatever it holds at that moment, including a PIN changed during the wait.
 
 **Completing (F4, N1).** Forward steps, each idempotent and read back:
-1. set the reset-protection list to the IDs the credential store will hold after the patch, send `FRP_CONFIG_CHANGED` to Play services, read the list back;
+1. set the reset-protection list to the IDs the credential store will hold after the patch, plus the backup person's, send `FRP_CONFIG_CHANGED` to Play services, read the list back;
 2. only when step 1 reads back correctly: apply the patch to the credential store in one atomic write, raising the structure generation;
 3. move to completed, with the completion texts queued, in one write.
 
@@ -194,7 +199,7 @@ After a restart at any point, either the old people or the new people are in cha
 
 | Kind | Package access | What the grant allows | Bound to | Deadline |
 |---|---|---|---|---|
-| Play | A Play session (`com.android.vending`) | installing in Play; then, back in Plainphone, approving apps installed during that session | each approval to the installed package and its signer, as in the base rules | 10 minutes |
+| Play | A Play session (`com.android.vending`) | installing in Play; then, back in Plainphone, approving **each** app installed during that session, until the deadline (R3) | each approval to the installed package and its signer, as in the base rules | 10 minutes |
 | Settings | A Settings session | changing settings | – | 5 minutes |
 | Approve | None | approving **one** already-installed hidden app | the package and signer the user picks; used up by that approval | 5 minutes |
 | Update | None | **one** Plainphone update, through the approved plan's updater unchanged | the verified staged bytes and version; used up by that install | 10 minutes |
@@ -205,7 +210,7 @@ Steps:
 3. **Debit.** On Start, Plainphone writes the debit and the grant (with its session journal entry, for Play and Settings) in one atomic write, before anything is relaxed. Starts are serialized, so a double tap can't get two.
 4. **Package access ends** on the session contract's triggers: Done, screen off, an incoming call, leaving the session's packages, or the deadline. Ending package access runs the protected-state check as usual. For a Play grant, returning to Plainphone to approve what was installed ends Play access but keeps the grant until its deadline.
 5. **The grant ends** at its deadline, on Done, or on any Plainphone restart. A restart never extends or restores it.
-6. **Last check before the irreversible step.** Plainphone checks the grant (still live, right kind, not used up, binding matches) immediately before the step that can't be undone: the approval write, or the PackageInstaller commit for an update. Using up the grant and that check happen together. If the check fails, nothing happens. An install committed before the deadline is allowed to finish after it, with no rollback promised.
+6. **Last check before the irreversible step.** Plainphone checks the grant (still live, right kind, not used up, binding matches) immediately before the step that can't be undone: the approval write, or the PackageInstaller commit for an update. The check and its effect happen together: an Approve or Update grant is used up by its one action; a Play grant records that package's approval and stays live for the other apps installed in that session until its deadline. If the check fails, nothing happens. An install committed before the deadline is allowed to finish after it, with no rollback promised.
 7. **Updates.** The base updater's first step closes any open supervised session and reads the policy back. That closes package access, not the Update grant, which has no package access of its own.
 
 **One at a time.** At most one countdown or grant exists. A second request shows the one in progress.
@@ -311,7 +316,7 @@ During on-phone setup, straight after the user signs in to Google, the guide and
 
 - **[A trusted person can always override the other]** → by design (Beaux: "either can approve"). Receipts to both, the history list and the waits make it visible. Said plainly at setup.
 - **[A PIN proves knowledge, not identity]** → the waits, receipts and generation checks exist because of this. A self-managed user can enrol a second identity as "trusted person"; that is now a 24-hour waiting change like everything else.
-- **[Self-managed mode doesn't stop a determined user]** → by design, and said openly. The Device Owner keeps the friction from being skipped by safe mode, adb or a launcher change. A wipe is always a way out.
+- **[Self-managed mode doesn't stop a determined user]** → by design, and said openly. Option A's controls (restrictions, Home pin, lock task) are meant to keep the friction from being skipped by safe mode, adb or a launcher change; they are verified per build, and safe mode is not yet tested on the spare (PLA-5 A4). A wipe is always a way out.
 - **[More texts]** → receipts to both people for every action. UX may batch routine receipts daily; waiting-change texts go at once.
 - **[One change in progress at a time; denial of progress]** → someone with a PIN can keep starting decoy changes, and anyone holding the phone can keep cancelling. Neither gains anything, but either can delay a legitimate change. A supervised trusted person can skip with their recovery code; a self-managed user has no escape from someone who keeps their phone. Disclosed.
 - **[Cancel by text can be forged]** → it can only cancel, and only the request whose cancel code it quotes. A trusted person whose turn-off is blocked by forged cancels can use their recovery code to skip.
@@ -380,3 +385,16 @@ These are the Lead's additions, beyond the literal answers on card `c60170d6`. B
 | Consistency: elevation is not always a session | C4 and the ADR note: Play and Settings grants open a session; Approve and Update don't. Irreversibility headline names the signed-update exception |
 | Evidence: Device Owner containment | C4 cites the ADR controls table, marks them as intended and verified per build, and notes `no_config_default_apps` didn't take effect on the spare (PLA-5 A4/A6) |
 | Evidence: recovery scenario | Scoped to app-only failures; the PLA-22 system boot loop is excluded (TPC recovery requirement, risks) |
+
+## Review response (PLA-35, revision 3 → 4)
+
+PLA-35 verdict: **approve with changes**. No new high finding.
+
+| Finding | Where addressed |
+|---|---|
+| R1 lost-record recovery target | C2: one reconcile whatever the kind; "Off" if Device Owner is already gone; otherwise the full policy pass, the full reset-protection list including the backup, and the stored friction settings; the credential store now holds the backup `userId` and friction settings; invalid store means hold and report, never guess; Repair authorises only the reconcile. C3 step 1 includes the backup. TPC "Waiting changes", device-lockdown |
+| R2 truthful recovery notice | C2: the notice reports the people, mode and state recovered and never claims the change didn't finish. TPC; task 3.1 |
+| R3 Play approvals | C4, TPC: a Play grant approves each app installed in its session until the deadline; Approve and Update are used up by their one action. Task 2.6 adds the two-app Play case |
+| R4 copy | TPC disclosure names the update connection; the C4 risk line qualified; the proposal names the signed-update exception; "pending only" next to Cancel; the session-contract headline and ADR say package access follows the session contract while approval, update and turn-off follow their own rules; turn-off scenario says proven running time |
+| Implementation attacks | Added to tasks 1.2, 2.3, 2.6 and 4.1 as named acceptance cases: stale sole replica, replay after patch, skip races, Repair, epochs, the irreversible-step pauses, cancel-code reuse |
+
