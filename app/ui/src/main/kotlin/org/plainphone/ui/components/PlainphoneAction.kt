@@ -27,13 +27,16 @@ import org.plainphone.ui.theme.PlainphoneSpace
 @Composable
 internal fun Modifier.plainphoneAction(
     shape: Shape = RectangleShape,
+    enabled: Boolean = true,
+    filled: Boolean = false,
     onClick: () -> Unit,
 ): Modifier {
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
     val focused by interactions.collectIsFocusedAsState()
     return this
-        .then(if (pressed) Modifier.background(PlainphoneColors.Fill2, shape) else Modifier)
+        .then(if (pressed && enabled) Modifier.background(
+            if (filled) PlainphoneColors.Paper.copy(alpha = 0.2f) else PlainphoneColors.Fill2, shape) else Modifier)
         .drawWithContent {
             drawContent()
             if (focused) {
@@ -48,5 +51,5 @@ internal fun Modifier.plainphoneAction(
             }
         }
         .clickable(interactionSource = interactions, indication = null,
-            role = Role.Button, onClick = onClick)
+            role = Role.Button, enabled = enabled, onClick = onClick)
 }

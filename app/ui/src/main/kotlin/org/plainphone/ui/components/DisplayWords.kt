@@ -28,7 +28,7 @@ internal fun waitingTimeText(time: String, day: HomeNoticeDay): String {
     return when (day.daysFromToday) {
         1 -> stringResource(R.string.notice_time_tomorrow, time)
         in 2..6 -> stringResource(R.string.notice_time_day, time,
-            day.date.dayOfWeek.getDisplayName(TextStyle.FULL, locale))
+            day.date.dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, locale))
         in 7..Int.MAX_VALUE -> stringResource(R.string.notice_time_day, time,
             day.date.format(DateTimeFormatter.ofPattern(
                 stringResource(R.string.notice_short_date_format), locale)))

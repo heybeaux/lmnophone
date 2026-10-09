@@ -112,7 +112,7 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
                 LazyColumn(Modifier.fillMaxSize().testTag("home-apps"), reverseLayout = true,
                     verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S3, Alignment.Bottom)) {
                     // Reversing both keeps the supplied visual order, with the last app at the bottom.
-                    // Positional keys tolerate duplicate opaque IDs without dropping either entry.
+                    // Positional keys tolerate duplicate IDs; host insertions may move focus/press state.
                     items(state.apps.asReversed()) { app ->
                         HomeAppRow(app.name) { onEvent(HomeEvent.OpenApp(app.id)) }
                     }

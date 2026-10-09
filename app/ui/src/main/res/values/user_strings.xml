@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Plainphone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <string name="back_home">‹ Home</string>
+    <string name="back_more">‹ More</string>
+    <string name="user_ok">OK</string>
+    <string name="user_send">Send</string>
+    <string name="user_try_again">Try again</string>
+    <string name="more_emergency">Emergency 9‑1‑1</string>
+    <string name="more_emergency_note">Opens the dialer with 9‑1‑1 typed in</string>
+    <string name="more_phone_settings">Phone settings</string>
+    <string name="more_phone_settings_note">Wi-Fi, sound, text size</string>
+    <string name="more_ask">Ask for an app</string>
+    <string name="more_ask_note">%1$s adds apps with you</string>
+    <string name="more_for">For %1$s</string>
+    <string name="more_for_note">Where %1$s adds apps, with a PIN</string>
+    <string name="more_for_two_note">Where %1$s add apps, with a PIN</string>
+    <string name="more_add">Add an app</string>
+    <string name="more_your_settings">Your settings</string>
+    <string name="more_your_settings_note">With your PIN</string>
+    <string name="more_about">About this phone</string>
+    <string name="ask_body">%1$s adds apps to this phone, together with you. Tell %1$s which app you\'d like and what it\'s for. %1$s gets a text.</string>
+    <string name="ask_label">Your message</string>
+    <string name="ask_hint">For example: the bus times app, to check the ferry bus</string>
+    <string name="ask_send">Send to %1$s</string>
+    <string name="ask_history">Your requests</string>
+    <string name="ask_sending">Sending…</string>
+    <string name="ask_sent">Sent</string>
+    <string name="ask_delivered">%1$s\'s phone got it ✓</string>
+    <string name="ask_failed">Didn\'t send – Try again</string>
+    <string name="ask_added">Added ✓</string>
+    <string name="ask_not_added">Not added</string>
+    <string name="ask_sent_title">Sent to %1$s</string>
+    <string name="ask_sent_body">Next time you\'re together, %1$s can add it on this phone. Your request is saved here too, and you can see below when %1$s\'s phone has it.</string>
+    <string name="ask_failed_title">This didn\'t send</string>
+    <string name="ask_failed_body">The phone may have no signal right now. Your request is saved, and %1$s will see it on this phone.</string>
+    <string name="ask_leave_saved">OK, leave it saved</string>
+    <string name="ask_limit_title">That\'s 5 requests today</string>
+    <string name="ask_limit_body">You can ask again tomorrow. Your requests from today are saved for %1$s.</string>
+    <string name="link_title">This link can\'t open here</string>
+    <string name="link_goes_to">It goes to:</string>
+    <string name="link_body">This phone is set up without web pages, to keep it simple. That doesn\'t mean the link is bad.</string>
+    <string name="link_apps_note">Links to your own apps, like Spotify, still open in the app.</string>
+    <string name="link_unusual">This address uses unusual letters. It may not be what it looks like.</string>
+    <string name="link_too_long">This link is too long to show.</string>
+    <string name="link_back">Go back</string>
+    <string name="link_share">Look at it with %1$s</string>
+    <string name="link_confirm_title">Send this link to %1$s, to look at together?</string>
+    <string name="link_confirm_body">%1$s will get this text:</string>
+    <string name="link_dont_send">Don\'t send</string>
+    <string name="link_sent">Sent to %1$s.</string>
+    <string name="link_failed_title">This didn\'t send.</string>
+    <string name="link_failed_body">The phone may have no signal.</string>
+    <string name="wifi_title">Calls and texts still work</string>
+    <string name="wifi_signal">when the phone has signal (the bars at the top of the screen).</string>
+    <string name="wifi_signin">This Wi-Fi needs a sign-in page, which Plainphone doesn\'t allow. Use mobile data or another Wi-Fi.</string>
+    <string name="wifi_no_internet">This Wi-Fi isn\'t reaching the internet.</string>
+    <string name="wifi_forget_explanation">Forget this network stops the phone trying to join this Wi-Fi.</string>
+    <string name="wifi_forget">Forget this network</string>
+    <plurals name="more_wait">
+        <item quantity="one">Opens the Play Store, after a %1$d-minute wait</item>
+        <item quantity="other">Opens the Play Store, after a %1$d-minute wait</item>
+    </plurals>
+    <plurals name="ask_characters_left">
+        <item quantity="one">%1$d character left</item>
+        <item quantity="other">%1$d characters left</item>
+    </plurals>
+</resources>
