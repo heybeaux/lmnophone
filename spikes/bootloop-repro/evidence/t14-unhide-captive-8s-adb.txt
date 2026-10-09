@@ -1,0 +1,8 @@
+## t14-unhide-captive-8s-adb: unhide com.google.android.captiveportallogin, reboot=adb after 8s (18:29:47)
+boot_id before: 8df1743f-d107-4874-b9fa-382df3f36c3a
+state com.google.android.captiveportallogin hidden=true suspended=false
+unhide com.google.android.captiveportallogin -> true
+booted 3s
+state com.google.android.captiveportallogin hidden=false suspended=false
+system_server crashes in crash buffer: 0
+RESULT: BOOTED

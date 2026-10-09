@@ -1,4 +1,6 @@
-unhide CP 2 kill t16-unhide-captive-2s-kill
-unsuspend CP 2 adb t17-unsuspend-captive-2s-adb
-suspend CP 2 adb t18-suspend-captive-2s-adb
-unhide CP 3 adb t19-unhide-captive-3s-adb
+unhideflush CP 2 adb t16-mitB-unhideflush-captive-2s-adb
+unhideflush com.android.settings 2 adb t17-mitB-unhideflush-settings-2s-adb
+unsuspend CP 2 adb t18-mitA-unsuspend-captive-2s-adb
+suspend CP 2 adb t19-mitA-suspend-captive-2s-adb
+unhideflush CP 0 adb t20-mitB-unhideflush-captive-0s-adb
+unhide CP 2 kill t21-unhide-captive-2s-kill

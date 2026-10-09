@@ -13,3 +13,5 @@
 | t11-unhide-settings-2s-adb | unhide | com.android.settings | 2s | adb | LOOP | 27 |
 | t12-unhide-vending-2s-adb | unhide | com.android.vending | 2s | adb | LOOP | 24 |
 | t13-unhide-userapp-2s-adb | unhide | com.plainphone.spike.emu | 2s | adb | LOOP | 19 |
+| t14-unhide-captive-8s-adb | unhide | com.google.android.captiveportallogin | 8s | adb | BOOTED | 0 |
+| t15-unhide-captive-12s-adb | unhide | com.google.android.captiveportallogin | 12s | adb | BOOTED | 0 |

@@ -21,5 +21,7 @@
                 <action android:name="com.plainphone.spike.bootloop.CMD" />
             </intent-filter>
         </receiver>
+        <!-- No-op component. Toggled with PackageManager.SYNCHRONOUS to force PackageManager to write package-restrictions now. -->
+        <receiver android:name=".FlushToggle" android:exported="false" />
     </application>
 </manifest>

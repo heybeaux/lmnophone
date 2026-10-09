@@ -32,4 +32,4 @@ trial() {
   echo "| $label | $dir | $pkg | ${d}s | $kind | $r | $(crashes) |"
 }
 # reset: load clean snapshot, then make <pkg> durably <state> (hidden|visible) by waiting past the 10 s write delay
-reset() { A emu avd snapshot load do-clean2 >/dev/null; sleep 3; waitboot 30 >/dev/null; A logcat -c -b all; case $2 in hidden) cmd hide $1;; suspended) cmd suspend $1;; *) true;; esac >/dev/null; sleep ${SETTLE:-15}; }
+reset() { A emu avd snapshot load ${SNAP:-do-clean2} >/dev/null; sleep 3; waitboot 30 >/dev/null; A logcat -c -b all; case $2 in hidden) cmd hide $1;; suspended) cmd suspend $1;; *) true;; esac >/dev/null; sleep ${SETTLE:-15}; }
