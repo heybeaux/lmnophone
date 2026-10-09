@@ -41,6 +41,8 @@ class UserScreensScreenshotTest(private val scale: Float) {
     @Test fun requestLimit() = shot { AppRequestResultScreen(AppRequestResultUiState("Sam", AppRequestResult.DailyLimit), {}) }
     @Test fun blockedLink() = shot { BlockedLinkScreen(BlockedLinkUiState.Blocked("example.invalid", shareWith = "Sam"), {}) }
     @Test fun unusualHost() = shot { BlockedLinkScreen(BlockedLinkUiState.Blocked("xn--e1afmkfd.invalid", unusualLetters = true, shareWith = "Sam"), {}) }
+    @Test fun unusualHostTwoPeople() = shot { BlockedLinkScreen(BlockedLinkUiState.Blocked("xn--e1afmkfd.invalid", unusualLetters = true, shareWith = "Sam and Jo"), {}) }
+    @Test fun confirmSending() = shot { BlockedLinkScreen(BlockedLinkUiState.Confirm("Sam", "Plainphone: Margaret would like to look at this link with you: example.invalid/bus", sending = true), {}) }
     @Test fun longHost() = shot { BlockedLinkScreen(BlockedLinkUiState.Blocked("a".repeat(63) + ".invalid"), {}) }
     @Test fun overlongLink() = shot { BlockedLinkScreen(BlockedLinkUiState.TooLong, {}) }
     @Test fun confirmLinkTwoPeople() = shot { BlockedLinkScreen(BlockedLinkUiState.Confirm("Sam and Jo", "Plainphone: Margaret would like to look at this link with you: example.invalid/bus"), {}) }

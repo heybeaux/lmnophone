@@ -6,8 +6,12 @@ package org.plainphone.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
@@ -74,12 +78,36 @@ class UserScreensTest {
         compose.onNodeWithText("OK").assertIsDisplayed()
     }
     @Test fun unusualWarningIsFullyVisibleWithoutScrolling() {
-        show { BlockedLinkScreen(BlockedLinkUiState.Blocked("xn--e1afmkfd.invalid", true, "Sam"), {}) }
-        val warning = compose.onNodeWithText("This address uses unusual letters. It may not be what it looks like.")
-        warning.assertIsDisplayed()
-        val full = warning.fetchSemanticsNode().layoutInfo.coordinates.size.height
-        val visible = warning.fetchSemanticsNode().boundsInRoot.height
-        org.junit.Assert.assertTrue("Entire warning must be visible", visible >= full - 1)
+        data class Case(val scale: Float, val recipient: String, val host: String)
+        val cases = listOf(1.3f, 1.5f, 1.8f, 2f).flatMap { scale ->
+            listOf("Sam", "Sam and Jo").flatMap { recipient ->
+                listOf("xn--e1afmkfd.invalid", "a".repeat(63) + ".invalid").map { host ->
+                    Case(scale, recipient, host)
+                }
+            }
+        }
+        val current = mutableStateOf(cases.first())
+        compose.setContent {
+            val case = current.value
+            CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, case.scale)) {
+                PlainphoneTheme {
+                    Box(Modifier.size(360.dp, 560.dp)) {
+                        // Each case starts with fresh scroll state, exactly as on initial entry.
+                        key(case) { BlockedLinkScreen(BlockedLinkUiState.Blocked(case.host, true, case.recipient), {}) }
+                    }
+                }
+            }
+        }
+        cases.forEach { case ->
+            compose.runOnIdle { current.value = case }
+            val warning = compose.onNodeWithText("This address uses unusual letters. It may not be what it looks like.")
+            warning.assertIsDisplayed()
+            val node = warning.fetchSemanticsNode()
+            org.junit.Assert.assertTrue("Entire warning must be visible: $case",
+                node.boundsInRoot.height >= node.layoutInfo.coordinates.size.height - 1)
+            // A visible label is restored at every scale, even where it starts below the fold.
+            compose.onNodeWithText("It goes to:").assertExists()
+        }
     }
     @Test fun hostStripsBidiOverridesBeforeDisplay() {
         show { BlockedLinkScreen(BlockedLinkUiState.Blocked("safe\u202E.invalid"), {}) }
@@ -93,17 +121,18 @@ class UserScreensTest {
         compose.onNodeWithText("Plainphone: Margaret would like to look at this link with you: safe.invalid/bus")
             .assertExists()
     }
-    @Test fun confirmSendIsDisabledWhileHostSendsAndCanBeCancelled() {
+    @Test fun confirmActionsAreDisabledWhileHostSends() {
         val events = mutableListOf<BlockedLinkEvent>()
         val state = mutableStateOf(BlockedLinkUiState.Confirm("Sam", "example.invalid/bus"))
         show { BlockedLinkScreen(state.value) {
             events.add(it)
             if (it == BlockedLinkEvent.Send) state.value = state.value.copy(sending = true)
         } }
+        compose.onNodeWithText("Don't send").assertIsEnabled().performClick()
         compose.onNodeWithText("Send").performClick()
         compose.onNodeWithText("Send").assertIsNotEnabled().performTouchInput { click() }
-        compose.onNodeWithText("Don't send").performClick()
-        assertEquals(listOf(BlockedLinkEvent.Send, BlockedLinkEvent.DontSend), events)
+        compose.onNodeWithText("Don't send").assertIsNotEnabled().performTouchInput { click() }
+        assertEquals(listOf(BlockedLinkEvent.DontSend, BlockedLinkEvent.Send), events)
     }
     @Test fun resultRetryIsDisabledWhileHostSendsAndReenabledAfterFailure() {
         val events = mutableListOf<AppRequestResultEvent>()
