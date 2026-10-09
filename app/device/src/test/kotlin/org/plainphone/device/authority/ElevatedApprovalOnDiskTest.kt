@@ -5,7 +5,6 @@ package org.plainphone.device.authority
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -76,7 +75,7 @@ class ElevatedApprovalOnDiskTest {
     private val clock = RunningClock { now }
     private val inventory = BuildInventory("model", "build", 1, NeverHideList(setOf(sms, play)), setOf(sms), setOf(PackageName("test.settings")))
     private var faults = StorageFaults { _, _ -> }
-    private var store = open()
+    private lateinit var store: JointAuthorityStore
     private fun open() = JointAuthorityStore(dir, { point, d -> faults.at(point, d) }, inventory)
 
     private val pin get() = CharArray(6) { '1' }
@@ -84,7 +83,7 @@ class ElevatedApprovalOnDiskTest {
     private fun vault() = PinVault(store.credentials, KeyDerivation { chars, salt, _ ->
         java.security.MessageDigest.getInstance("SHA-256").digest(chars.concatToString().toByteArray() + salt)
     }, SecretEntropy { n -> ByteArray(n) { (++entropy).toByte() } }, clock)
-    private var vault = vault()
+    private lateinit var vault: PinVault
 
     private val events = mutableListOf<String>()
     private var crash: String? = null
@@ -134,6 +133,7 @@ class ElevatedApprovalOnDiskTest {
     }
 
     private fun enroll() {
+        store = open(); vault = vault()
         val credential = vault.prepareCredential(pin).credential
         assertTrue(store.initialize(CredentialState(Mode.SELF_MANAGED, mapOf(person to credential)),
             WaitingState(storageGeneration = "live"), ElevationRecord()))
@@ -141,7 +141,7 @@ class ElevatedApprovalOnDiskTest {
     }
 
     private fun grant(target: ElevationTarget): String {
-        val request = assertNotNull(elevations.prepare(person, target))!!
+        val request = checkNotNull(elevations.prepare(person, target))
         val auth = (vault.authenticate(person, pin, request.action) as PinResult.Authorized).authority
         assertEquals(ElevationOutcome.COUNTING, elevations.request(request, auth))
         advance(600_000)
@@ -156,8 +156,8 @@ class ElevatedApprovalOnDiskTest {
     private fun advance(ms: Long) {
         now = ClockReading(now.proven.copy(totalMillis = now.proven.totalMillis + ms), now.boot.copy(elapsedMillis = now.boot.elapsedMillis + ms))
     }
-    private fun request(identity: ApprovalBinding) = assertNotNull(approvals.prepareElevated(identity.packageName,
-        PermissionSelection(manifest(identity), mapOf(camera to PermissionChoice.ALLOW))))!!
+    private fun request(identity: ApprovalBinding) = checkNotNull(approvals.prepareElevated(identity.packageName,
+        PermissionSelection(manifest(identity), mapOf(camera to PermissionChoice.ALLOW))))
 
     @Test fun playGrantApprovesTwoObservedAppsDurablyWithOneDebit() {
         enroll()
@@ -223,7 +223,7 @@ class ElevatedApprovalOnDiskTest {
         var sawBothSides = setOf<Boolean>()
         for (k in first..last) for (point in WritePoint.entries) {
             dir.deleteRecursively(); id = 0; transactions = 0; crashAt = null
-            store = open(); vault = vault(); enroll(); grant(ElevationTarget.Approve(a)); val again = request(a)
+            enroll(); grant(ElevationTarget.Approve(a)); val again = request(a)
             crashAt = transactions + (k - first + 1) to point
             try { approvals.approveElevated(again) } catch (_: SimulatedCrash) { }
             crashAt = null

@@ -6,7 +6,6 @@ import java.io.File
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -130,8 +129,8 @@ class ElevationApprovalStoreTest {
             setOf(play), BootTime(boot.bootId, boot.elapsedMillis + 600_000), SessionPhase.OPEN, inventory))
         val approve = grantRecord(target = ElevationTarget.Approve(a))
         for (r in listOf(countdown, active, approve)) {
-            val bytes = assertNotNull(AuthorityCodec.encodeElevation(r))!!
-            val back = assertNotNull(AuthorityCodec.decodeElevation(bytes, inventory))!!
+            val bytes = checkNotNull(AuthorityCodec.encodeElevation(r))
+            val back = checkNotNull(AuthorityCodec.decodeElevation(bytes, inventory))
             assertArrayEquals(bytes, AuthorityCodec.encodeElevation(back))
             assertEquals(r.person, back.person)
             assertEquals(r.journal, back.journal)
@@ -141,9 +140,9 @@ class ElevationApprovalStoreTest {
         }
     }
 
-    @Test fun activeJournalWithoutMatchingInventoryIsDamagedNotEmpty() {
-        val active = grantRecord(open = true, journal = SessionJournal.restore("grant-1", WindowKind.PLAY,
-            setOf(play), BootTime(boot.bootId, boot.elapsedMillis + 600_000), SessionPhase.OPENING, inventory))
+    @Test fun settingsJournalWithoutMatchingInventoryIsDamagedNotEmpty() {
+        val active = grantRecord(target = ElevationTarget.Settings, open = true, journal = SessionJournal.restore("grant-1",
+            WindowKind.SETTINGS, setOf(settings), BootTime(boot.bootId, boot.elapsedMillis + 300_000), SessionPhase.OPENING, inventory))
         val bytes = AuthorityCodec.encodeElevation(active)!!
         assertNull(AuthorityCodec.decodeElevation(bytes, null))
     }
@@ -156,7 +155,7 @@ class ElevationApprovalStoreTest {
             val at = (0..original.size - 8).last { i -> (0 until 8).all { original[i + it] == marker[it] } }
             original.copyOf().also { it[at + 7] = (it[at + 7] + 1).toByte() }
         }
-        assertNotNull(AuthorityCodec.decodeElevation(bytes, inventory))
+        checkNotNull(AuthorityCodec.decodeElevation(bytes, inventory))
         assertNull(AuthorityCodec.decodeElevation(tampered, inventory))
     }
 
