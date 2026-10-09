@@ -900,3 +900,60 @@ terminal races, lost-record reconciliation, live controller authority, and
 immediate new self-managed elevation with an exhausted preserved ledger. Fakes
 prove ordering and policy behavior only. Lane D must independently prove Android
 atomicity, persistent fencing, physical closure and readback before enablement.
+
+## Self-managed friction edits — first slice (PLA-98)
+
+`FrictionSettingsPatch` is immutable proposal data. It captures the current user's
+credential generation, structure generation, active source settings and target.
+Only self-managed mode with a valid recovery profile is eligible. The approved
+ranges remain 10 minutes–24 hours and 0–3 daily starts. Unchanged values are a
+no-op (no preparation, PIN consumption or write). Invalid values fail validation.
+The same-direction classifier accepts either/both stricter components or
+either/both looser components. This slice implements **only stricter application**;
+looser proposals confer no authority and cannot enter the immediate controller.
+
+The approved spec describes individual setting edits, not a mixed atomic form.
+The API therefore rejects mixed-direction proposals without applying anything.
+An adapter can offer separate edits: apply a stricter choice using a fresh PIN,
+then prepare a looser waiting request from those new active settings. It must
+never automatically split one confirmation into an immediate loosening. A changed
+source setting invalidates an earlier patch; the future waiting integration must
+cancel that stale pending target durably instead of undoing an intervening
+stricter edit. It must also retain the existing credential dependency rules.
+
+`FrictionSettingsController.prepareStricter` creates a process-local, exact-action
+request. `applyStricter` consumes the current user's fresh PIN once. Recovery
+only resets credentials; it supplies no settings authority. Different requests,
+controllers, replaced credentials and stale source settings cannot reuse it.
+The request ID source must reserve IDs unique across restarts and receipts.
+
+Lane D must implement `FrictionSettingsStore.applyStricter` as **one durable
+transaction** comparing credential revision, waiting storage generation/revision,
+and elevation revision. Atomically write active credential-store friction, the
+extended live countdown and the fixed-recipient routine receipt/audit. Preserve
+all credential fields, profile/backup IDs, notices, applied markers, the entire
+debit list (even expired entries), grant, fixed grant deadline and session journal.
+The waiting record is unchanged. A live countdown must be extended in this
+transaction: waiting for its next tick could let it lapse at its old deadline.
+Already-lapsed countdowns are not resurrected. Missing/unreadable state or
+COMMITTING/ROLLING_BACK operations refuse the edit; PENDING waits allow stricter
+edits without releasing or replacing the one waiting slot.
+
+Both controllers must use the **same** ElevationStore instance, constructed with
+the exact WaitingChangeStore. Run every operation on the shared non-reentrant
+coordinator. Complete normal startup revocation/conservative ledger repair before
+enabling edits. `ElevationController`'s limits supplier must read the active
+credential recovery profile at each request/tick/Start; never pending settings,
+a UI cache, or fallback defaults after a read failure. Reconciliation continues
+to use only active credential-store friction. Settings writes never repair or
+initialize the ledger. A setting edit cannot grant a turn, extend a grant or
+restore local ownership after restart. Readback failure returns NOT_READY even
+when the restrictive transaction was durably applied; re-read active values and
+require a new preparation/PIN rather than replaying the consumed request.
+
+Product settings remain unavailable until the complete waiting workflow and
+reviewed Android adapter integration land. This first slice does not implement
+looser waiting start/commit/cancellation, lost-setting-operation replay, or its
+completion receipts. The next PLA-98 slice must reuse the shared waiting
+controller and cover those paths. Mode integration remains PLA-97; this seam
+adds no mode provisioning, physical-device work, Update or web/Wi-Fi enablement.
