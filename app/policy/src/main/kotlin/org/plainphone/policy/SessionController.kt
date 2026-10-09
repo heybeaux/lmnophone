@@ -46,6 +46,9 @@ sealed interface SessionJournal {
     }
 }
 interface JournalStore {
+    /** Shared stores latch restrictive intent before effects or a possibly failing journal write. */
+    fun beginRevocation() {}
+    fun revocationPending(): Boolean = false
     /** Device-protected only. Invalid/missing checksum on an entry returns Damaged. */
     fun read(): SessionJournal
     /** Durable compare-and-set; never acknowledge before the checksum-protected write completes. */
@@ -82,7 +85,12 @@ class SessionController(
     private val clock: RunningClock,
     private val inventory: BuildInventory?,
     private val authority: AuthorityConsumer,
+    private val supervisedMode: () -> Boolean = { true },
 ) {
+    /** Combined-store entry: policy owns the journal projection and checks current supervised mode. */
+    constructor(store: ElevationStore, effects: SessionEffects, clock: RunningClock,
+        inventory: BuildInventory?, authority: AuthorityConsumer, mode: () -> Mode?) :
+        this(ElevationSessionJournal(store), effects, clock, inventory, authority, { mode() == Mode.TRUSTED })
     var handbackReady: Boolean = false
         private set
     private var initialized = false
@@ -93,6 +101,7 @@ class SessionController(
     @Synchronized
     fun onStart(): Boolean {
         initialized = false; handbackReady = false; closingRequested = true
+        store.beginRevocation()
         val before = store.read()
         if (!effects.revokeAllRelaxations()) return false
         if (!effects.protectedStateCheck() || !effects.readBackPolicy()) return false
@@ -104,6 +113,8 @@ class SessionController(
     @Synchronized
     fun start(id: String, kind: WindowKind, battery: BatteryState, freshAuthority: FreshAuthority): SessionOutcome {
         if (!initialized) return SessionOutcome.NOT_READY
+        if (!supervisedMode()) return SessionOutcome.REFUSED
+        if (store.revocationPending()) return SessionOutcome.NOT_READY
         val before = store.read()
         if (before != SessionJournal.Empty) return SessionOutcome.BUSY
         if (!handbackReady) return SessionOutcome.NOT_READY
@@ -132,7 +143,7 @@ class SessionController(
 
     @Synchronized
     fun access(): SessionAccess? {
-        if (!initialized || closingRequested) return null
+        if (!initialized || closingRequested || store.revocationPending() || !supervisedMode()) return null
         val active = store.read() as? SessionJournal.Active ?: return null
         if (active.phase != SessionPhase.OPEN) return null
         val now = clock.checkpoint() ?: return null
@@ -161,6 +172,7 @@ class SessionController(
 
     private fun close(before: SessionJournal.Active): SessionOutcome {
         closingRequested = true
+        store.beginRevocation()
         handbackReady = false
         val closing = before.copy(phase = SessionPhase.CLOSING)
         if (!store.compareAndSet(before, closing)) {

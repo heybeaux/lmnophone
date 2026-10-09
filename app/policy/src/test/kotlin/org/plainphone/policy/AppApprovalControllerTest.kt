@@ -59,20 +59,22 @@ class AppApprovalControllerTest {
             return true
         }
     }
-    private var journal: SessionJournal = SessionJournal.Empty
+    private val existingDebit = ElevationDebit("previous-elevation", RunningTime("epoch", 0))
+    private var combined = ElevationRecord(state = ElevationState(ElevationLedger(listOf(existingDebit))))
+    private val journal: SessionJournal get() = combined.journal
     private val inventory = BuildInventory("model", "build", 1, NeverHideList(setOf(sms, PLAY_PACKAGE)), setOf(sms), setOf(PackageName("test.settings")))
-    private val sessions = SessionController(object : JournalStore {
-        override fun read() = journal
-        override fun compareAndSet(expected: SessionJournal, replacement: SessionJournal): Boolean {
-            if (journal != expected) return false
-            journal = replacement; return true
+    private val sessions = SessionController(object : ElevationStore() {
+        override fun read() = combined
+        override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean {
+            if (combined !== expected || (expectedCredentials != null && credentials !== expectedCredentials)) return false
+            combined = replacement; return true
         }
     }, object : SessionEffects {
         override fun revokeAllRelaxations() = event("revoke")
         override fun open(access: SessionAccess) = true
         override fun protectedStateCheck() = event("protected")
         override fun readBackPolicy() = event("session-readback")
-    }, clock, inventory, vault)
+    }, clock, inventory, vault) { credentials?.mode }
     private var manifest: PermissionManifest? = PermissionManifest(binding, 1, "build", listOf(
         RuntimePermission(camera, "Camera", listOf("Taking photos"), PermissionGrantCapability.SUPPORTED)))
     private var policy = PolicyInput("model", "build", home, sms,
@@ -120,6 +122,8 @@ class AppApprovalControllerTest {
         assertEquals(AppApprovalOutcome.APPROVED, controller.approve(r, auth(r)))
         assertNull(sessions.access())
         assertEquals(SessionJournal.Empty, journal)
+        assertEquals(listOf(existingDebit), combined.state.ledger.debits)
+        assertNull(combined.state.grant)
         assertEquals(binding, state!!.apps.getValue(app).identity)
         assertEquals(mapOf(camera to PermissionChoice.ALLOW), state!!.apps.getValue(app).permissions.choices)
         assertNull(state!!.pending)
