@@ -11,8 +11,8 @@ import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -20,8 +20,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import androidx.compose.ui.semantics.SemanticsProperties
+import org.junit.Assert.assertTrue
+import android.view.accessibility.AccessibilityNodeInfo
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Rule
 import org.junit.Test
 import org.plainphone.ui.home.HomeApp
@@ -66,19 +67,33 @@ class HomeScreenTest {
         assertEquals(listOf(HomeEvent.OpenMessages, HomeEvent.OpenPhone, HomeEvent.OpenMore,
             HomeEvent.OpenApp("app-1"), HomeEvent.OpenNotice), events)
     }
-    @Test fun accessibilityScrollDirectionMatchesVisualOrder() {
+    @Test fun platformAccessibilityCanRevealEarlierApps() {
         compose.setContent {
-            PlainphoneTheme {
-                Box(Modifier.size(360.dp, 560.dp)) {
-                    HomeScreen(HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct",
-                        (1..20).map { HomeApp("app-$it", "App $it") }, HomeNotice.ModeChangeWaiting), {})
+            DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(2f)) {
+                PlainphoneTheme {
+                    Box(Modifier.size(360.dp, 560.dp)) {
+                        HomeScreen(HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct",
+                            (1..8).map { HomeApp("app-$it", "App $it") }, HomeNotice.ModeChangeWaiting), {})
+                    }
                 }
             }
         }
-        val range = compose.onNodeWithTag("home-apps").fetchSemanticsNode()
-            .config[SemanticsProperties.VerticalScrollAxisRange]
-        assertFalse("Earlier visual apps must use normal accessibility scroll direction", range.reverseScrolling)
-        compose.onNodeWithText("App 20").assertIsDisplayed()
+        compose.waitForIdle()
+        fun scrollNode(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+            if (node.isScrollable) return node
+            for (i in 0 until node.childCount) {
+                val child = node.getChild(i) ?: continue
+                scrollNode(child)?.let { return it }
+            }
+            return null
+        }
+        val root = InstrumentationRegistry.getInstrumentation().uiAutomation.rootInActiveWindow
+        val list = requireNotNull(scrollNode(root)) { "Platform accessibility has no scrollable list" }
+        assertTrue("Earlier apps must be reachable through Android accessibility", list.performAction(
+            AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD))
+        compose.waitForIdle()
+        compose.onNodeWithText("App 6").assertIsDisplayed()
+        compose.onNodeWithText("Phone").assertIsDisplayed()
     }
 
     @Test fun cancellingWithDuplicateIdsRemainsUsable() {
