@@ -79,4 +79,52 @@ class SignerBoundPolicyTest {
         assertTrue(sms in plan.unhide)
     }
 
+    @Test fun `inherited ordinary system membership cannot replace approval and signer facts`() {
+        val person = TrustedPersonId("holder")
+        val preparing = AppApprovalState(pending = AppApprovalOperation(record,
+            AppApprovalReceipt(record.id, person, mapOf(person to 0L)), AppApprovalPhase.PREPARING))
+        val cases = listOf(
+            "missing store" to input().copy(approvalState = null, installedIdentities = emptyList()),
+            "empty store" to input().copy(approvalState = AppApprovalState()),
+            "preparing" to input().copy(approvalState = preparing),
+            "missing signers" to input().copy(installedIdentities = emptyList()),
+            "changed signer" to input().copy(installedIdentities = listOf(
+                ApprovalBinding(app, setOf(CertDigest("cd".repeat(32)))))),
+        )
+        for ((name, base) in cases) for (system in listOf(true, false))
+            for (locked in listOf(true, false)) for (known in listOf(true, false)) {
+                val context = "$name system=$system locked=$locked known=$known"
+                val plan = PolicyEngine.decide(base.copy(
+                    installed = listOf(InstalledPackage(app, system, 1)),
+                    inventory = if (known) base.inventory else null,
+                    lockedBoot = locked, previousLockTask = setOf(app)))
+                assertFalse(app in plan.lockTaskPackages, context)
+                assertFalse(app in plan.unhide, context)
+                if (system && (!known || locked)) assertFalse(app in plan.hidden, context)
+            }
+    }
+
+    @Test fun `validated system approval retains inherited UI while required UI needs no app approval`() {
+        val dialer = PackageName("test.dialer")
+        val minimum = PackageName("test.minimum")
+        val keyboard = PackageName("test.keyboard")
+        val required = setOf(home, sms, dialer, minimum)
+        val installed = (required + keyboard + app).map { InstalledPackage(it, true, 1) }
+        val inventory = BuildInventory("model", "build", 1,
+            NeverHideList(required + keyboard), setOf(sms, minimum), emptySet())
+        for (known in listOf(true, false)) for (locked in listOf(true, false)) {
+            val plan = PolicyEngine.decide(input().copy(installed = installed,
+                identities = listOf(FloorIdentity(dialer, FloorRole.SYSTEM_DIALER, IdentitySource.OS_MANAGED),
+                    FloorIdentity(keyboard, FloorRole.KEYBOARD, IdentitySource.OS_MANAGED)),
+                inventory = if (known) inventory else null, lockedBoot = locked,
+                previousLockTask = required + keyboard + app))
+            assertTrue(app in plan.lockTaskPackages, "known=$known locked=$locked")
+            assertTrue(setOf(home, sms, dialer).all { it in plan.lockTaskPackages })
+            if (known) assertTrue(minimum in plan.lockTaskPackages)
+            assertTrue(keyboard in plan.unhide)
+            assertFalse(keyboard in plan.lockTaskPackages)
+            assertFalse(required.any { it in plan.hidden })
+        }
+    }
+
 }
