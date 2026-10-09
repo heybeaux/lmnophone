@@ -63,7 +63,7 @@ class AppApprovalControllerTest {
     private var combined = ElevationRecord(state = ElevationState(ElevationLedger(listOf(existingDebit))))
     private val journal: SessionJournal get() = combined.journal
     private val inventory = BuildInventory("model", "build", 1, NeverHideList(setOf(sms, PLAY_PACKAGE)), setOf(sms), setOf(PackageName("test.settings")))
-    private val sessions = SessionController(object : ElevationStore {
+    private val sessions = SessionController(object : ElevationStore() {
         override fun read() = combined
         override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean {
             if (combined !== expected || (expectedCredentials != null && credentials !== expectedCredentials)) return false

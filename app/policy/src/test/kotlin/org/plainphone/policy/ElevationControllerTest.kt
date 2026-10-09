@@ -45,7 +45,7 @@ class ElevationControllerTest {
         if (crash == name) error("simulated process death")
         return failure != name
     }
-    private val store = object : ElevationStore {
+    private val store = object : ElevationStore() {
         override fun read() = record
         override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean {
             val stage = when {
@@ -328,6 +328,7 @@ class ElevationControllerTest {
         failure = "save-CLOSING"
         assertEquals(SessionOutcome.NOT_READY, sessions.end(r.id, SessionEnd.INCOMING_CALL))
         assertTrue(record!!.state.grant!!.packageAccessOpen); assertEquals(1, record!!.state.ledger.debits.size)
+        assertNull(controller.access()); assertNull(controller.candidate(app))
         failure = null; assertEquals(SessionOutcome.CLOSED, sessions.tick())
         assertFalse(record!!.state.grant!!.packageAccessOpen); assertEquals(1, record!!.state.ledger.debits.size)
         assertEquals(ElevationOutcome.IDLE, controller.onStart()); assertEquals(1, record!!.state.ledger.debits.size)
@@ -336,6 +337,7 @@ class ElevationControllerTest {
         setup(); val r = request(); advance(600_000); start(r); val sessions = sharedSessions()
         failure = "save-clear"; assertFalse(sessions.onStart())
         assertTrue(record!!.state.grant!!.packageAccessOpen); assertEquals(1, record!!.state.ledger.debits.size)
+        assertNull(controller.access()); assertNull(controller.prepare(person, ElevationTarget.Play))
         failure = null; assertEquals(ElevationOutcome.IDLE, controller.onStart()); assertTrue(sessions.onStart())
         assertEquals(1, record!!.state.ledger.debits.size); assertFalse(physicallyOpen)
     }
