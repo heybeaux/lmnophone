@@ -1,0 +1,32 @@
+# Check 1 (emulator emulator-5742, API 35, google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys), build 875b572, 2026-10-09T22:29:07Z. No call button is ever pressed.
+start-up apply: 10-09 15:29:03.488  8594  8611 I Plainphone: PREVIEW2 APPLY complete=true failed=null applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOC
+topResumedActivity=ActivityRecord{d80e6f4 u0 org.plainphone/.MainActivity t10}
+mLockTaskModeState=LOCKED
+## 1a Home > More > Emergency 9-1-1
+topResumedActivity=ActivityRecord{c8a03b7 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t11}
+mLockTaskModeState=LOCKED
+screen shows: text="911"
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+## 1b Home key, then Home > Phone, type 9 1 1
+topResumedActivity=ActivityRecord{d80e6f4 u0 org.plainphone/.MainActivity t10}
+topResumedActivity=ActivityRecord{c8a03b7 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t11}
+mLockTaskModeState=LOCKED
+screen shows: text="911"
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+## 1c Lock screen Emergency call (emulator only: temporary PIN 1590, cleared at the end)
+Pin set to '1590'
+text="Emergency" content-desc="" bounds="[368,2084][712,2210]" 
+tap_text: 'Emergency call' not on screen
+topResumedActivity=ActivityRecord{125fbd1 u0 com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity t12}
+mLockTaskModeState=LOCKED
+screen shows: 
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+(key events don't reach this dial pad; digits tapped: 9 at 872,1810; 1 at 206,1429 twice. Call is at 540,2210 and is not touched.)
+screen shows: text="911"
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+topResumedActivity=ActivityRecord{125fbd1 u0 com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity t12}
+mLockTaskModeState=LOCKED
+Lock credential cleared
+topResumedActivity=ActivityRecord{d80e6f4 u0 org.plainphone/.MainActivity t10}
+mLockTaskModeState=LOCKED
+PIN cleared: locksettings get-disabled=false
