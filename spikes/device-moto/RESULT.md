@@ -731,13 +731,16 @@ Inbox screens were never dumped or screenshotted. `tools/gm-nav.sh` lists only a
   2. **Gmail's add-account flow** loads Microsoft's login page in a WebView. Off-page links go to Chrome (blocked);
      the page's own links are untested.
   3. Facebook (Spotify) and Help links use Custom Tabs or GMS, which are blocked.
-- **Moved to [PLA-20](/PLA/issues/PLA-20)** (Lead's call, comment `25c667f5`; the sign-in card `b2e73c09` was withdrawn). Still to do once Beaux signs in: sign-in, signing in again, password reset,
+- **Deferred** (PLA-20: Beaux will test signed in on the first real build; see § B-Q4 signed in). Was: **moved to [PLA-20](/PLA/issues/PLA-20)** (Lead's call, comment `25c667f5`; the sign-in card `b2e73c09` was withdrawn). Still to do once Beaux signs in: sign-in, signing in again, password reset,
   notifications and links for Telegram, Slack, Spotify and Outlook; Telegram's in-app browser; links in Gmail HTML mail
   and the Chat tab (absent on this account).
 
 ## B-Q4 signed in (PLA-20, THROWAWAY)
 
-**Status: waiting for Beaux to sign in.** Evidence: `evidence/phase-b/bq4s/`.
+**Status: deferred by Beaux. No signed-in test was run on the spare phone.** Evidence: `evidence/phase-b/bq4s/`.
+Beaux declined the sign-in card `2d9260a3` (2026-10-09): *"I will test this when the first plain phone build is on my
+device."* So the signed-in checks move to his own pass on the first real Plainphone build. Nothing below this line was
+measured with an app signed in. The web-leak notes are what we know **before sign-in** only.
 
 ### Step 1. Phone state at wake (2026-10-09T01:40Z, `evidence/phase-b/bq4s/state-at-wake.txt`)
 
@@ -752,6 +755,39 @@ Matches the end state the Verifier left at [PLA-6](/PLA/issues/PLA-6) close:
 
 Nothing changed: lock task is already off and no restrictions are set, so Beaux can sign in with the normal phone
 (Google sign-in through GMS, browsers and the permission controller all reachable). The sign-in card on PLA-20 asks him to confirm.
+
+### Carry-over checklist for the first Plainphone build (not tested here)
+
+These are the open questions from the PLA-20 brief. Run them on the real build, with BLOCK on and first-run permissions
+pre-granted, once Beaux has signed in himself:
+
+| App | Still to check after sign-in |
+|---|---|
+| **Telegram** | **Key test:** can the in-app browser reach any site by following links? "Web tabs"; bots and mini apps reachable from the main screens; where outside links go; notifications and what a tap opens; sign-out, sign-in again, password/2FA reset screens. |
+| **Slack** | In-app web routes (help, workspace links, SSO); where outside links go; notifications; sign-out and sign-in again (Google sign-in failed on this managed phone even with lock task off, see B-Q4). |
+| **Spotify** | In-app web routes (account, help, podcasts' links); where outside links go; notifications; sign-out and sign-in again (only email-code sign-in works under BLOCK, see B-Q4). |
+| **Outlook** | Is the Privacy & Cookies WebView (the accepted PLA-5 leak) still reachable from Settings or elsewhere? Does sign-out bring the pre-sign-in route back? Links in mail; notifications. |
+| **Gmail** | Links in HTML mail, using only one test message Beaux sends to himself. |
+
+### Web-leak notes per app (plain language, before sign-in only)
+
+- **Telegram:** before sign-in, no web pages can be opened. After sign-in: **unknown.** Telegram has its own browser
+  and mini apps, so it is the app most likely to leak. Check it first on the real build.
+- **Slack:** before sign-in, no web pages can be opened. After sign-in: unknown.
+- **Spotify:** before sign-in, no web pages can be opened (the Facebook login page is blocked). After sign-in: unknown.
+- **Outlook:** **leaks before sign-in.** The Privacy link opens a web page that can follow links to other sites. Beaux
+  accepted this on [PLA-14](/PLA/issues/PLA-14). After sign-in: unknown.
+- **Gmail:** the add-account screen shows Microsoft's login page. Its own links stay on Microsoft's pages, and other links
+  go to Chrome, which is blocked (Verifier, [PLA-6](/PLA/issues/PLA-6)). Links in mail: unknown.
+
+### End state at PLA-20 close (2026-10-09, `pp.sh cmd status`)
+
+Unchanged from step 1:
+- The spike DPC is Device Owner and removable (`testOnlyAdmin=true`).
+- `restrictions=[] hidden=[] suspended=[]`, lock task `NONE`.
+- HOME = Moto launcher. Accounts: the Phase B Google account and Meet's local `tachyon` account.
+- No app signed in. Telegram, Slack, Spotify and Outlook are still installed.
+- USB adb works. `adb_wifi_enabled=0`.
 
 ## Final end state at PLA-5 close (2026-10-09T00:37Z, checked again)
 
