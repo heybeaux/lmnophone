@@ -28,6 +28,22 @@ class MonthlyCheckTest {
         assertNull(MonthlyCheck.reminder(state, due.plusDays(8), person))
     }
 
+    @Test fun `definitive failure gets a distinct next day key while pending restart reuses that attempt`() {
+        val first = MonthlyCheck.reminder(initial(), due, person)!!
+        val failed = MonthlyCheck.reminderResult(first.state, first, false)
+        val retry = MonthlyCheck.reminder(failed, due.plusDays(1), person)!!
+        assertNotEquals(first.key, retry.key)
+        val restored = MonthlyCheckState(retry.state.cycleId, retry.state.dueDate,
+            retry.state.lastCompleted, retry.state.reminders, retry.state.unresolvedFailures)
+        val replay = MonthlyCheck.reminder(restored, due.plusDays(2), person)!!
+        assertEquals(retry.key, replay.key)
+        assertEquals(due.plusDays(1), replay.attemptDate)
+        assertSame(restored, MonthlyCheck.reminderResult(restored, first, true))
+        val outboxKeys = mutableSetOf(first.key)
+        assertTrue(outboxKeys.add(retry.key))
+        assertFalse(outboxKeys.add(replay.key))
+    }
+
     @Test fun `restart retains outbox identity and delivered recipient stops independently`() {
         val pending = MonthlyCheck.reminder(initial(), due, person)!!
         val restored = MonthlyCheckState(pending.state.cycleId, pending.state.dueDate,
