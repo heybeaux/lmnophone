@@ -39,7 +39,7 @@ Pure Kotlin/JVM. No `android.*`. Spec: `openspec/changes/add-plainphone-spike-an
   `Intent.isWebIntent`). `IntentFacts.customTabs` is context only.
 - `PackageFacts` and `IntentFacts` are plain data that lane D fills from PackageManager.
 - `PackageFacts.signingCerts` and `PlainphoneIdentity.signingCerts` use lane A's `org.plainphone.core.CertDigest`
-  (the seam recorded on `main` at `0b7061e`). The standalone `core-shim/` copies that type until the real `:core` lands.
+  (the seam recorded on `main` at `0b7061e`), consumed from the real `:core` module.
 
 ## Notes for lane D
 - `IntentFacts.resolvers` must be what `queryIntentActivities` returns for the intent as dispatched: one entry per
@@ -65,5 +65,5 @@ Pure Kotlin/JVM. No `android.*`. Spec: `openspec/changes/add-plainphone-spike-an
   them. Lane D must check percent-encoded forms against the emulator build before claiming parseUri parity.
 
 ## Tests
-`./gradlew :links:test` once the skeleton lands. Until then (standalone build, temporary `core-shim/`):
-`cd app/links && ../../spikes/emulator/apps/gradlew -p . :links:test`
+From `app/`: `./gradlew :links:test`. `app/settings.gradle.kts` includes `:links`, which depends on `:core`
+(see `app/README.md`).
