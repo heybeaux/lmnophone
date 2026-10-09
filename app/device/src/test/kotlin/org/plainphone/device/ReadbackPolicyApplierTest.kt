@@ -51,20 +51,21 @@ class ReadbackPolicyApplierTest {
         changedPackages = emptySet(), needsAttention = false, notifyBuildReview = false,
     )
 
+    /** A re-apply: the floor's lock-task membership is already in place, so only LOCK_TASK writes the list. */
     private fun port(vararg hiddenNow: String) = FakeDevicePolicyPort(
         listOf(pp, dialer, messages, gms, camera, chrome, maps).associateWith { if (it in hiddenNow) hiddenApp() else visible() },
-    )
+    ).apply { lockTask = names(pp, dialer) }
 
     private fun firstIndex(ops: List<String>, prefix: String) = ops.indexOfFirst { it.startsWith(prefix) }
 
     @Test fun appliesStepsTwoToSevenInPlanOrderAndReadsEachBack() {
-        val port = port(camera)
+        val port = port(dialer, camera)
         val result = ReadbackPolicyApplier(port).apply(plan())
 
         assertTrue(result.complete)
         assertNull(result.failedStage)
         assertEquals(ApplyStage.entries.drop(1), result.applied)
-        val order = listOf("restrict", "unhide $camera", "hide $chrome", "lockTask", "features", "home")
+        val order = listOf("restrict", "unhide $dialer", "hide $chrome", "unhide $camera", "lockTask", "features", "home")
         val at = order.map { firstIndex(port.ops, it) }
         assertTrue("every stage wrote: ${port.ops}", at.all { it >= 0 })
         assertEquals(at.sorted(), at)
