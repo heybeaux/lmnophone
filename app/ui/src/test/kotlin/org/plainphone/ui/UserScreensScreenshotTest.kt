@@ -34,6 +34,8 @@ class UserScreensScreenshotTest(private val scale: Float) {
         AppRequestRow("two", "A recipe app", "2 Oct", AppRequestStatus.Added))), {}) }
     @Test fun requestFailureRow() = shot { AskForAppScreen(AskForAppUiState("Sam", requests = listOf(
         AppRequestRow("one", "The bus times app", "Thu", AppRequestStatus.Failed))), {}) }
+    @Test fun sentWithDeliveryHistory() = shot { AppRequestResultScreen(AppRequestResultUiState("Sam", AppRequestResult.Sent,
+        requests = listOf(AppRequestRow("one", "The bus times app", "Thu", AppRequestStatus.Delivered("Sam")))), {}) }
     @Test fun requestSent() = shot { AppRequestResultScreen(AppRequestResultUiState("Sam", AppRequestResult.Sent), {}) }
     @Test fun requestFailed() = shot { AppRequestResultScreen(AppRequestResultUiState("Sam", AppRequestResult.Failed), {}) }
     @Test fun requestLimit() = shot { AppRequestResultScreen(AppRequestResultUiState("Sam", AppRequestResult.DailyLimit), {}) }
