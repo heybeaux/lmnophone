@@ -46,6 +46,7 @@ We do not build a custom ROM. We do not ship a launcher-only version. The emulat
 
 - **Why not C.** It costs the most, breaks banking apps, and puts us on a per-phone build treadmill. The closest commercial product does not do it either. Techless's own help center says Wisephone is "Samsung hardware with our WiseOS software and configurations" with "Samsung Knox" and "MDM security", and that unenrolling returns the phone "to a standard Android operating environment" (documented). That does not prove we can match Knox using only public APIs. C only gets better if essential controls turn out to need OS changes **and** Beaux accepts the cost of maintaining a ROM.
 - **Why not D.** It is friction, not a lock. It only wins if Beaux and the trusted person decide they want voluntary friction instead.
+  - *Note (2026-10-09, PLA-30, pending Beaux's approval):* Beaux asked for voluntary friction as a **choice per phone**, not instead of A. It is built as "self-managed mode" on the same Device Owner app. See "Notes: option D as a mode, and who can relax the lockdown" below.
 - **Why A before B.** For these two users, what matters most day to day is: the apps they need, texting with iPhone users, 9-1-1, and recovery that doesn't need a developer. A is expected to do better on all four, but none of that is proven until the spike and their real app list are tested (Q4). B gets better if privacy or independence from Google matters more to them **and** the same test list passes on B. B also needs a Pixel.
 
 ## Controls the design relies on
@@ -183,6 +184,29 @@ The candidate becomes the decision only if, on the emulator, and later on one ph
 **If the adb setup route is blocked on a real phone (Q3):**
 - This alone does not switch us to B.
 - B must first pass the same list of checks (1–6), on a Pixel.
+
+## Notes: option D as a mode, and who can relax the lockdown (PLA-30)
+
+*Added 2026-10-09 by the Lead. Pending Beaux's approval of the OpenSpec change `add-copy-test-product-decisions`. The architecture (option A) does not change.*
+
+Beaux's copy-test answers (card `c60170d6`, Telegram 4481) touch two promises in this ADR.
+
+**1. Option D comes back as a mode, not as the architecture.**
+- A phone is **supervised** (one or two trusted people) or **self-managed** (the user is their own trusted person).
+- Self-managed mode keeps everything in option A: Device Owner, hidden apps, lock task with in-task launches blocked, restrictions, emergency floor, web containment. Only who can relax it changes.
+- **It is friction, not a lock**, and Plainphone says so in those words. The user holds the PIN. Opening up needs a 10-minute wait, is limited to 2 times a day, closes at the session deadline, and can never be made permanent. Making it stricter is instant; making it looser waits 24 hours.
+- Keeping the Device Owner is what makes this better than option D alone: the friction can't be skipped through safe mode, adb or a launcher change.
+- Reset protection names the user's own account in this mode, so a recovery-mode wipe gives the user a plain phone. That matches the friction promise and is disclosed.
+
+**2. Who can relax the lockdown.** "A supervised session is the only way the lockdown is relaxed" still holds, with these changes:
+- **Two trusted people, as equals.** Either can approve apps and open sessions alone. Each has their own PIN, lockout, recovery code and reset-protection ID. Both get texts.
+- **The user**, in self-managed mode only, through an elevation: a supervised session with friction, under the same journal, deadline, revoke-on-every-start and protected-state rules.
+- **Changes that can't be undone afterwards wait 24 hours:** turning off, changing who the trusted people are, and switching to self-managed. Texts go out at once, and either trusted person (or anyone holding the phone) can cancel. In supervised mode, a trusted person's recovery code skips the wait. In self-managed mode, nothing does.
+- **The user alone can never change who the trusted people are.**
+- **PLA-22 mitigation B** becomes step 3 of the session contract, with a low-battery guard.
+- The PLA-17 web and Wi-Fi sign-in windows would be a further relaxation path. They are a separate change.
+
+**What this does not change:** go/no-go conditions 1–7, the emergency promises, the custody limit Beaux accepted (it now also applies, unwatched, to self-managed elevations, and that is disclosed), and the device approval rules.
 
 ## Review response (revisions 2 and 3)
 
