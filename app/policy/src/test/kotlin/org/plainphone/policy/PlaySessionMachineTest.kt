@@ -62,7 +62,7 @@ class PlaySessionMachineTest {
         for (reason in SessionEnd.entries) {
             val state = PlaySessionMachine.installed(begun(), "session", identity, start, access).state
             val ended = PlaySessionMachine.end(state, "session", reason)
-            assertEquals(reason, ended.endedBecause)
+            assertEquals(PlayEndReason.SessionEnded(reason), ended.endedBecause)
             val late = PlaySessionMachine.installed(ended, "session", ApprovalBinding(other, setOf(signer)), start, access)
             assertFalse(late.accepted)
             assertSame(ended, late.state)
@@ -105,10 +105,23 @@ class PlaySessionMachineTest {
         assertEquals(setOf(foreign), changed.candidates.getValue(app).signingCerts)
     }
 
+    @Test fun `clock cannot move backwards after an accepted event`() {
+        val later = BootTime("boot", 20_000)
+        val state = PlaySessionMachine.installed(begun(), "session", identity, later, access).state
+        val result = PlaySessionMachine.installed(state, "session", identity, start, access)
+        assertFalse(result.accepted)
+        assertEquals(PlayEndReason.INVALID_CLOCK, result.state.endedBecause)
+    }
+
+    @Test fun `candidate collection cannot be mutated by callers`() {
+        val state = PlaySessionMachine.installed(begun(), "session", identity, start, access).state
+        assertFailsWith<UnsupportedOperationException> { (state.candidates as MutableMap).clear() }
+    }
+
     @Test fun `process restart never restores Play candidate authority`() {
         val state = PlaySessionMachine.installed(begun(), "session", identity, start, access).state
         val ended = PlaySessionMachine.onRestart(state)
-        assertNotNull(ended.endedBecause)
+        assertEquals(PlayEndReason.RESTART, ended.endedBecause)
         assertFalse(PlaySessionMachine.installed(ended, "session", identity, start, access).accepted)
     }
 }
