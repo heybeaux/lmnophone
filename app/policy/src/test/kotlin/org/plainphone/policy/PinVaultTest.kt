@@ -24,6 +24,14 @@ class PinVaultTest {
         kdf.checkedSalts.clear()
     }
 
+    @Test fun `person-bound authority cannot misattribute the starter dependency`() {
+        enroll()
+        val grant = assertIs<PinResult.Authorized>(vault.authenticate(first, pinA, action)).authority
+        assertFalse(vault.consumeFor(grant, action, second))
+        assertTrue(vault.consumeFor(grant, action, first))
+        assertFalse(vault.consumeFor(grant, action, first))
+    }
+
     @Test fun `PIN requires at least six ASCII digits and strong derivation inputs`() {
         listOf(charArrayOf(), CharArray(5) { '1' }, "abcdef".toCharArray(), "１２３４５６".toCharArray()).forEach {
             assertFailsWith<IllegalArgumentException> { vault.prepareCredential(it) }
