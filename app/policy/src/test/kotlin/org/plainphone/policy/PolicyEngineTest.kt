@@ -166,4 +166,11 @@ class PolicyEngineTest {
         val b = PolicyEngine.decide(input().copy(installed = input().installed.reversed(), identities = input().identities.reversed()))
         assertEquals(a, b)
     }
+    @Test fun `reapproved app is explicitly unhidden and read back`() {
+        val plan = PolicyEngine.decide(input().copy(previousHidden = setOf(approved)))
+        assertFalse(approved in plan.hidden)
+        assertTrue(approved in plan.unhide)
+        assertTrue(approved in plan.expected.unhiddenAndEnabled)
+    }
+
 }
