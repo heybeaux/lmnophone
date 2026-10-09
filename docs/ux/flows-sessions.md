@@ -61,7 +61,7 @@ design D3.
 - The text on the due date ([texts table](README.md#texts-plainphone-sends)).
 - "Check for updates – due" in "Needs you" on the front page (T2), from the due date.
 - The user's home line "Ask {tp} to do the monthly phone check", shown only when the check is due (see
-  [U1](flows-user.md#the-two-notice-lines)).
+  [U1](flows-user.md#the-notice-line)).
 
 **One path for {tp}.** On {tp}'s screens this is always called **Check for updates**: the "Needs you" item and the
 menu row open the same screen. "Monthly check" stays the internal name (and the spec's wording on the user's home

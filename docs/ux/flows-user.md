@@ -106,9 +106,9 @@ At most one line shows. When several apply, the **first** in this table wins:
 | 1 | **Plainphone needs attention** | Anything device-lockdown or approved-apps says shows it: a hide that failed, the safe fallback in use, a failed post-update check, a damaged running-time record, and (recommended) unknown phone software | U3 (which also shows a waiting change, if there is one) |
 | 2 | **Plainphone will turn off after {time}. Tap to cancel.** | Turning off is a waiting change (24 hours of the phone being on) | U9 |
 | 2 | **A change to trusted people is waiting. Tap to cancel.** | Adding, handing over or removing a trusted person is waiting | U9 |
-| 2 | **A change to how this phone is set up is waiting. Tap to cancel.** | Switching mode, or (self-managed) shortening the countdown or raising the daily limit, is waiting. *Wording proposed; the spec gives exact text only for the two above.* | U9 |
+| 2 | **A change to how this phone is set up is waiting. Tap to cancel.** | Switching mode, or (self-managed) shortening the countdown or raising the daily limit, is waiting. Exact text from the spec ([PLA-39](/PLA/issues/PLA-39)). | U9 |
 | 3 | **Opening up in {n} minutes** · **Ready – tap to start** | Self-managed mode only: an elevation countdown is running, or has ended and is waiting for Start | U10 |
-| 4 | **Ask {tp} to do the monthly phone check** | Only when the check is due (see the note below). In self-managed mode: **Time for your monthly phone check** (*wording proposed; the spec says only that it asks the user*) | U2 |
+| 4 | **Ask {tp} to do the monthly phone check** | Only when the check is due (see the note below). With two trusted people, `{tp}` is "Sam or Jo" ([Flag 2](flows-people-modes-and-waits.md#flags-strings-i-think-should-change)). In self-managed mode: **Time for your monthly phone check** (exact text from the spec) | U2 (self-managed: [M7i](flows-people-modes-and-waits.md#m7i-monthly-check)) |
 
 Only one waiting change can exist at a time (trusted-person-controls), so row 2 is never more than one line.
 
@@ -159,6 +159,7 @@ The packet now says when it appears.
   | Failed post-update check | "A check after an update didn't finish." |
   | Safe fallback in use | "Plainphone is running in a simpler, safer way until it's looked at." |
   | Running-time record couldn't be saved (trusted-person-controls, "Damaged, missing or inconsistent P") | "Plainphone couldn't save its timer, so any waiting change is paused." |
+  | A change is stuck, or Plainphone needs repair ([M4](flows-people-modes-and-waits.md#m4-a-change-is-stuck)) | "Plainphone is finishing a change and needs {helper} to look at it." |
 - **If a change is waiting** (it's hidden from the home screen while this screen's line shows): a grey box under
   the body, the same box as on U9:
   **"Waiting: {what}"** (`{what}` as on U9: "Plainphone will turn off after {time}", "A change to trusted people",
@@ -186,6 +187,13 @@ A menu page: the Emergency row, a 16 dp gap, three large rows, then a plain text
 | **Ask for an app** | {tp} adds apps with you | U5 |
 | **For {tp}** | Where {tp} adds apps, with a PIN | Trusted-person PIN ([T1](flows-trusted-person.md#t1-pin-entry)) |
 | About this phone (text link at the bottom) | (none) | U8 |
+
+**Two trusted people:** the row reads **For Sam and Jo**, small line "Where Sam or Jo add apps, with a PIN"; it
+opens "Who are you?" ([M1](flows-people-modes-and-waits.md#m1-who-are-you)).
+
+**Self-managed mode** ([M7a](flows-people-modes-and-waits.md#m7a-your-settings)): **Ask for an app** becomes **Add an
+app** (small line "Opens the Play Store, after a {wait}-minute wait"), and **For {tp}** becomes **Your settings**
+(small line "With your PIN"). Both ask for the user's PIN.
 
 **Why here, and first:** Beaux took the button off the home screen so it can't be bumped (Telegram 4487). Here it
 takes a deliberate tap on More, then on the row, then on call, so a stray tap never reaches a call. It's first
@@ -349,12 +357,14 @@ mandates it. It restates facts already in the design (no monitoring, no servers,
 - **Body:**
   Plainphone is the program that keeps this phone simple. {tp} helps choose which apps are on it, together with
   you, with the phone in {tp}'s hands. "For {tp}" needs {tp}'s PIN so that nobody else can change your phone.
-  {tp} can't read your messages, see where you are, or see what you do in your apps. Plainphone doesn't send
-  information anywhere.
+  {tp} can't read your messages, see where you are, or see what you do in your apps. Plainphone has no server of
+  its own, no analytics and no account. It connects to {helper}'s computer over home Wi-Fi only to update itself.
   Plainphone sends {tp} a text only when you choose to ask for an app or share a link, when the monthly check is
-  due, when Plainphone needs a check or a phone update is coming, when a big change (like turning Plainphone off)
-  starts, is cancelled or finishes, or if {tp}'s PIN is typed wrongly many times (so {tp} knows if someone is
-  guessing it).
+  due, when Plainphone needs a check or a phone update is coming, when {tp}'s PIN is used to change something on
+  this phone, when a big change (like turning Plainphone off) starts, is cancelled or finishes, or if {tp}'s PIN is
+  typed wrongly many times (so {tp} knows if someone is guessing it).
+  The phone keeps a list of changes from the last 90 days. It doesn't include your messages, websites or what you
+  do in apps.
 - **Primary:** OK
 - **Then, a section with its own heading: "To call 9-1-1"**
   - Tap **Phone**, type 9-1-1, and press call.
@@ -363,6 +373,13 @@ mandates it. It restates facts already in the design (no monitoring, no servers,
   - {sos_line}
   `{sos_line}` is "Or press the power button 5 times quickly." **only if** feasibility question Q14 confirms the
   Emergency SOS gesture works on this phone while Plainphone is running. Otherwise the line is left out.
+- **Two trusted people:** `{tp}` is "Sam and Jo" throughout, and one line is added after the first sentence:
+  "Sam and Jo are equals: either can add apps with you."
+- **Self-managed version of the body:** Plainphone is the program that keeps this phone simple. You hold its PIN.
+  It adds waits before you can open things up, so that distraction takes effort. It's friction, not a lock.
+  Plainphone has no server of its own, no analytics and no account. It connects to {helper}'s computer over home
+  Wi-Fi only to update itself. It sends a text to {helper} only if the phone needs fixing. (No helper: "It doesn't
+  send texts.")
 - **Secondary:** Who to call for help → "{helper}: {helper phone}. {tp}: {tp phone}."
 - **Notes:** if any approved app is itself a tracking app (for example a family-location app), this screen does
   not cover it; that app's own notice applies. Plainphone makes no claim about what other apps send.
@@ -376,23 +393,28 @@ turn-off").
 Opened from the home-screen notice line (row 2 in [U1](#the-notice-line)), from the box on U3, and from the box at
 the top of Phone settings (U7). **No PIN anywhere on these screens**: anyone holding the phone can cancel.
 
-`{who}` is the person who asked (in self-managed mode, "You"). `{everyone}` is every trusted person's name ("Sam",
-or "Sam and Jo"). `{change}` is one of:
+`{name}` is the person whose PIN started it (in self-managed mode, "your"). `{everyone}` is every trusted person's
+name ("Sam", or "Sam and Jo"). `{change}` is one of these (the full list, with the words for texts, is in
+[M3](flows-people-modes-and-waits.md#m3-changes-that-wait-24-hours)):
 
 | Kind | `{change}` |
 |---|---|
 | Turning off | turn Plainphone off |
 | Adding a trusted person | add {name} as a trusted person |
-| Handing a role over | hand {name}'s place over to {new name} |
-| Removing a trusted person | remove {name} as a trusted person |
-| Switching mode | switch to you looking after your own phone · switch to {tp} looking after this phone |
+| Handing a role over | hand {name}'s place to {new} |
+| Removing a trusted person | remove {other} as a trusted person |
+| Switching mode | switch to {user} looking after this phone · switch to {new} looking after this phone |
 | Self-managed: shorter countdown | shorten the wait before opening up to {n} minutes |
 | Self-managed: higher daily limit | allow {n} openings a day |
 
 ### U9a. The waiting change
 
 - **Title:** Plainphone will turn off (for turning off) · A change is waiting (for everything else)
-- **Box** (grey): **{who} asked to {change}.** Second line: "Asked {day} at {time}."
+- **Box** (grey): **{Change}.** Second line: "Started with {name}'s PIN, {day} at {time}." (Self-managed:
+  "You started this {day} at {time}.")
+- **Why not "{name} asked":** a PIN shows that someone knew it, not who typed it (design C1, "Authority is a
+  credential, not a person"). If a child used Sam's PIN, "Sam asked" would be untrue. Changed in
+  [PLA-42](/PLA/issues/PLA-42).
 - **Body:**
   It will happen after {time}, once the phone has been on for 24 hours. Time while the phone is off doesn't
   count, so this can move later.
@@ -405,12 +427,12 @@ or "Sam and Jo"). `{change}` is one of:
 ### U9b. Confirm
 
 - **Title:** Cancel this change?
-- **Body:** {Who} won't {change}. {everyone} will get a text saying it was cancelled. To do it later, someone has to
-  ask again, and the 24 hours start again.
+- **Body:** This won't happen: {change}. {everyone} will get a text saying it was cancelled. To do it later,
+  someone has to start it again, and the 24 hours start again.
 - **Primary:** Yes, cancel it → U9d (or U9c if saving is slow)
 - **Secondary:** No, keep it waiting → U9a
 
-(In self-managed mode the body starts "This won't happen." instead of "{Who} won't {change}.")
+(In self-managed mode, "{everyone} will get a text…" is left out: there's nobody to text.)
 
 ### U9c. Still cancelling (only if saving fails)
 
@@ -425,7 +447,7 @@ and can't be pressed. If saving fails:
 ### U9d. Cancelled
 
 - **Title:** Cancelled
-- **Body:** {Who} won't {change}. {everyone} will get a text about it.
+- **Body:** This won't happen: {change}. {everyone} will get a text about it.
 - **Primary:** OK → home. The notice line has gone.
 - **Notes:** "will get" and not "got": the texts are queued, and delivery doesn't change anything (trusted-person
   controls).
@@ -449,8 +471,12 @@ away and everyone is texted, as the spec says. The user sees nothing else.
 (notice line, row 3).
 
 These are the two screens behind the home-screen line while a countdown runs. How the user starts an opening (PIN,
-choosing the Play Store or full phone settings) belongs with the self-managed flows, which aren't drawn yet. `{kind}`
-is "the Play Store" or "full phone settings". `{left}` is how many openings are left today.
+choosing what to open) is [M7b](flows-people-modes-and-waits.md#m7b-before-opening-up). `{kind}` is "the Play Store",
+"full phone settings", "adding {app}" or "a Plainphone update". `{left}` is how many openings are left today.
+For adding a hidden app and for an update, the titles read "Adding {app} in {n} minutes" / "Ready to add {app}" and
+"Update in {n} minutes" / "Ready to install the update", and the first sentence of U10a reads "You can add {app}
+when the countdown ends." / "You can install the update when the countdown ends." The home lines stay as the spec
+gives them.
 
 ### U10a. Counting down (line: "Opening up in {n} minutes")
 
