@@ -146,6 +146,12 @@
 - Does the Wi-Fi sign-in page bypass the VPN?
 - QUIC drop and HTTPS-record stripping.
 
+**Q15. How much battery and data does hiding save, and do hidden apps really do nothing?** *(board request, PLA-123; spike [PLA-125](/PLA/issues/PLA-125), after the MVP test build)*
+- **[device]** Two 24-hour idle windows on the spare (stock, then the MVP policy), per-app CPU, wakeups, jobs and Wi-Fi bytes.
+- Negative control: a package that was busy in the stock window shows zero work once hidden, including after a reboot.
+- Never-hide check: the OTA updater, IMS, carrier services and RCS stay unhidden.
+- Recommendation and budget: `docs/battery-data-recommendation.md`.
+
 **Q11. Does a GrapheneOS emulator build answer Q1, Q3 and Q6?** Only if it costs under a day. Only relevant if Beaux picks a Pixel.
 
 ## Decided by policy, not by testing
