@@ -1,0 +1,26 @@
+== XT2415 ==
+2 activities found:
+  Activity #0:
+    priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true
+    com.android.phone/.EmergencyDialer
+  Activity #1:
+    priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true
+    com.google.android.apps.safetyhub/.emergencydialer.ui.EmergencyDialerActivity
+1 activities found:
+  Activity #0:
+    priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true
+    com.android.phone/.EmergencyDialer
+com.google.android.apps.safetyhub
+
+== emulator-5660 ==
+2 activities found:
+  Activity #0:
+    priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true
+    com.android.phone/.EmergencyDialer
+  Activity #1:
+    priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true
+    com.google.android.apps.safetyhub/.emergencydialer.ui.EmergencyDialerActivity
+1 activities found:
+  Activity #0:
+    priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true
+    com.android.phone/.EmergencyDialer

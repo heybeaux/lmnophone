@@ -1,0 +1,7 @@
+  Accounts: 0
+Performing Streamed Install
+Success
+Success: Device owner set to package com.plainphone.spike.dpc/.AdminReceiver
+Active admin set to component com.plainphone.spike.dpc/.AdminReceiver
+Pin set to '1593'
+google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.036/12592187:user/release-keys

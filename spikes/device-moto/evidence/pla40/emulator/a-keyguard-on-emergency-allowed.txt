@@ -1,0 +1,24 @@
+OK lockTaskPackages=[com.google.android.dialer, com.google.android.apps.safetyhub, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc]
+tapped 540,2147
+topResumedActivity=ActivityRecord{13c1d39 u0 com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity t92}
+content-desc="View emergency information"
+content-desc="backspace"
+text="#"
+text="0"
+text="1"
+text="2"
+text="3"
+text="4"
+text="5"
+text="6"
+text="7"
+text="8"
+text="9"
+text="Call"
+saved evidence/pla40/emulator/a4-emergency-dialer-allowed.png
+    mLockTaskModeState=LOCKED
+    isKeyguardShowing=true
+10-08 22:20:36.677   564   866 I ActivityTaskManager: START u0 {act=android.intent.action.DIAL_EMERGENCY flg=0x14800000 pkg=com.google.android.apps.safetyhub cmp=com.google.android.apps.safetyhub/.emergencydialer.ui.EmergencyDialerActivity (has extras)} with LAUNCH_MULTIPLE from 
+10-08 22:20:36.744   564   866 I ActivityTaskManager: START u0 {cmp=com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity} with LAUNCH_MULTIPLE from uid 10139 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+  mCalls: 
+  mCallAudioManager:

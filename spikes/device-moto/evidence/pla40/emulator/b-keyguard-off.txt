@@ -1,0 +1,9 @@
+ResumedActivity: ActivityRecord{d2f62d9 u0 android/com.android.internal.app.BlockedAppActivity t91}
+OK lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK (87)
+    isKeyguardShowing=false
+topResumedActivity=ActivityRecord{d2f62d9 u0 android/com.android.internal.app.BlockedAppActivity t91}
+text="App is not available"
+text="OK"
+text="Personal Safety is not available right now."
+text="Emergency dialer screen (does not call)"
+    isKeyguardShowing=false

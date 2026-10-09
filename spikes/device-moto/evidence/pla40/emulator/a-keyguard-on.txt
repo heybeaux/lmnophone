@@ -1,0 +1,21 @@
+OK lockTaskPackages=[com.google.android.dialer, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc]
+OK lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK (119)
+OK persistent preferred HOME = spike
+OK relayed lt-start to MainActivity (result in logcat PPSPIKE)
+    mLockTaskModeState=LOCKED
+ResumedActivity: ActivityRecord{3716c14 u0 com.plainphone.spike.dpc/.MainActivity t90}
+    isKeyguardShowing=true
+ResumedActivity: ActivityRecord{3716c14 u0 com.plainphone.spike.dpc/.MainActivity t90}
+content-desc="10:18"
+content-desc="Battery 100 percent."
+content-desc="Device locked"
+content-desc="Phone signal full."
+content-desc="Thu, Oct 8"
+content-desc="Wifi signal full."
+text="10&#10;18"
+text="T-Mobile"
+text="This device belongs to your organization"
+text="Thu, Oct 8"
+saved evidence/pla40/emulator/a1-lockscreen.png
+Physical size: 1080x2400
+saved evidence/pla40/emulator/a2-bouncer.png

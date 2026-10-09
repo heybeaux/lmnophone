@@ -1,0 +1,24 @@
+tapped 540,2147
+ResumedActivity: ActivityRecord{d2f62d9 u0 android/com.android.internal.app.BlockedAppActivity t91}
+content-desc="0"
+content-desc="1"
+content-desc="2"
+content-desc="3"
+content-desc="4"
+content-desc="5"
+content-desc="6"
+content-desc="7"
+content-desc="8"
+content-desc="9"
+content-desc="Delete"
+content-desc="Enter"
+saved evidence/pla40/emulator/a3-emergency-dialer.png
+    mLockTaskModeState=LOCKED
+    isKeyguardShowing=true
+10-08 22:20:10.025   794   867 V WindowManagerShell: Transition requested (#12): android.os.BinderProxy@9ab72ce TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=91 displayId=0 isRunning=true baseIntent=Intent { flg=0x10800000 cmp=android/com.android.int
+10-08 22:20:10.025   564  2543 I ActivityTaskManager: START u0 {act=android.intent.action.DIAL_EMERGENCY flg=0x14800000 pkg=com.google.android.apps.safetyhub cmp=com.google.android.apps.safetyhub/.emergencydialer.ui.EmergencyDialerActivity (has extras)} with LAUNCH_MULTIPLE from 
+10-08 22:20:10.029   564   596 I ActivityManager: Start proc 4107:android:ui/1000 for top-activity {android/com.android.internal.app.BlockedAppActivity}
+10-08 22:20:10.100   564  2543 D CoreBackPreview: Window{bd4f26f u0 android/com.android.internal.app.BlockedAppActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@484c05, mPriority=0, mIsAnimationCallback=false}
+10-08 22:20:10.102   564   584 V WindowManager: Sent Transition (#12) createdAt=10-08 22:20:10.022 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=91 displayId=0 isRunning=true baseIntent=Intent { flg=0x10800000 cmp=android/com.android.inte
+  mCalls: 
+  mCallAudioManager:
