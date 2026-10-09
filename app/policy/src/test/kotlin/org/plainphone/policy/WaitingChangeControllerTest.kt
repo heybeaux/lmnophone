@@ -11,12 +11,13 @@ class WaitingChangeControllerTest {
     private var credentials: CredentialState? = CredentialState(Mode.TRUSTED, mapOf(first to credential, second to credential))
     private var time: ClockReading? = ClockReading(RunningTime("epoch", 0), BootTime("boot", 0))
     private val store = Store()
+    private val intents = Intents()
     private var sequence = 0
     private var allowed = true
     private var consumedPerson: TrustedPersonId? = null
     private val authority = PersonAuthorityConsumer { _, _, person -> consumedPerson = person; allowed }
     private fun controller() = WaitingChangeController(store, { credentials }, RunningClock { time }, authority,
-        WaitingIdentitySource { sequence++; WaitingIdentity("request-$sequence", "synthetic-code-$sequence") })
+        WaitingIdentitySource { sequence++; WaitingIdentity("request-$sequence", "synthetic-code-$sequence") }, intents)
     private val controller = controller()
     private val battery = BatteryState(50, false)
     private fun start(): String {
@@ -221,6 +222,121 @@ class WaitingChangeControllerTest {
             assertEquals(if (afterWrite) WaitingOutcome.PENDING else WaitingOutcome.IGNORED,
                 controller().tick(request.requestId, battery))
         }
+    }
+
+    @Test fun `cancel uses persisted start recipients after acknowledgement and unreadable credentials`() {
+        val id = start()
+        val recipients = store.state!!.operation!!.recipientGenerations
+        assertTrue(controller.acknowledge(store.state!!.texts.single().key))
+        assertTrue(store.state!!.texts.isEmpty())
+        credentials = null
+        time = null
+        assertEquals(WaitingOutcome.CANCELLED, controller().cancel(id))
+        assertEquals(recipients, store.state!!.texts.single().recipientGenerations)
+        assertEquals(setOf(first, second), store.state!!.texts.single().recipients)
+        assertFailsWith<UnsupportedOperationException> { (recipients as MutableMap<TrustedPersonId, Long>).clear() }
+    }
+
+    @Test fun `durable cancel intent survives failed operation write and restart at maturity`() {
+        val id = start()
+        store.fail = true
+        assertEquals(WaitingOutcome.NOT_READY, controller.cancel(id))
+        assertEquals(CancelIntent.REQUESTED, intents.read(id))
+        at(24)
+        assertEquals(WaitingOutcome.NOT_READY, controller().tick(id, battery))
+        store.fail = false
+        assertEquals(WaitingOutcome.CANCELLED, controller().tick(id, battery))
+        assertEquals(WaitingEvent.CANCELLED_ON_PHONE, store.state!!.texts.last().event)
+    }
+
+    @Test fun `durable cancel intent survives unreadable operation record and reboot`() {
+        val id = start()
+        store.unreadable = true
+        assertEquals(WaitingOutcome.NOT_READY, controller.cancel(id))
+        assertEquals(WaitingOutcome.NOT_READY, controller.cancel("stale"))
+        store.unreadable = false
+        time = ClockReading(RunningTime("epoch", 86_400_000), BootTime("reboot", 0))
+        assertEquals(WaitingOutcome.CANCELLED, controller().tick(id, battery))
+        assertTrue(store.state!!.texts.none { it.event == WaitingEvent.COMMITTING })
+    }
+
+    @Test fun `missing or damaged intent state cannot permit maturity`() {
+        val id = start()
+        at(24)
+        intents.records.remove(id)
+        assertEquals(WaitingOutcome.NOT_READY, controller().tick(id, battery))
+        intents.records[id] = CancelIntent.CLEAR
+        intents.unreadable = true
+        assertEquals(WaitingOutcome.NOT_READY, controller().tick(id, battery))
+        assertEquals(WaitingPhase.PENDING, store.state!!.operation!!.phase)
+        intents.unreadable = false
+        assertEquals(WaitingOutcome.COMMITTING, controller().tick(id, battery))
+    }
+
+    @Test fun `failed intent write still allows durable restrictive cancellation`() {
+        val id = start()
+        intents.fail = true
+        assertEquals(WaitingOutcome.CANCELLED, controller.cancel(id))
+        assertEquals(WaitingOutcome.IGNORED, controller().tick(id, battery))
+        assertEquals(WaitingPhase.CANCELLED, store.state!!.operation!!.phase)
+    }
+
+    @Test fun `failed intent initialization cannot start a wait or replay its authority`() {
+        val request = controller.prepareTurnOff(first)!!
+        intents.fail = true
+        assertEquals(WaitingOutcome.NOT_READY, controller.startTurnOff(request, FreshAuthority(), true, true))
+        assertNull(store.state!!.operation)
+        intents.fail = false
+        assertEquals(WaitingOutcome.REFUSED, controller.startTurnOff(request, FreshAuthority(), true, true))
+    }
+
+    @Test fun `interruption around intent write retries cancellation only if durable or still in memory`() {
+        for (afterWrite in listOf(false, true)) {
+            val id = start()
+            intents.crash = true
+            intents.crashAfterWrite = afterWrite
+            assertFailsWith<IllegalStateException> { controller.cancel(id) }
+            intents.crash = false
+            at(24)
+            // Before any write, only the still-live controller can know the intent.
+            val resumed = if (afterWrite) controller() else controller
+            assertEquals(WaitingOutcome.CANCELLED, resumed.tick(id, battery))
+            at(0)
+        }
+    }
+
+    @Test fun `current recipients override fallback and old intents do not cancel later requests`() {
+        val old = start()
+        credentials = credentials!!.replacing(second, credential.copy(generation = 3))
+        assertEquals(WaitingOutcome.CANCELLED, controller.cancel(old))
+        assertEquals(3L, store.state!!.texts.last().recipientGenerations.getValue(second))
+        val next = start()
+        assertEquals(CancelIntent.REQUESTED, intents.read(old))
+        at(24)
+        assertEquals(WaitingOutcome.COMMITTING, controller().tick(next, battery))
+        assertEquals(WaitingOutcome.ALREADY_IN_PROGRESS, controller().cancel(next))
+        assertEquals(WaitingOutcome.ALREADY_IN_PROGRESS, controller().tick(next, battery))
+    }
+
+    private class Intents : CancelIntentStore {
+        val records = mutableMapOf<String, CancelIntent>()
+        var fail = false
+        var unreadable = false
+        var crash = false
+        var crashAfterWrite = false
+        override fun initialize(requestId: String): Boolean {
+            if (fail || records[requestId] == CancelIntent.REQUESTED) return false
+            records[requestId] = CancelIntent.CLEAR
+            return true
+        }
+        override fun request(requestId: String): Boolean {
+            if (crash && !crashAfterWrite) error("interrupted before intent write")
+            if (fail) return false
+            records[requestId] = CancelIntent.REQUESTED
+            if (crash) error("interrupted after intent write")
+            return true
+        }
+        override fun read(requestId: String) = if (unreadable) CancelIntent.UNKNOWN else records[requestId] ?: CancelIntent.UNKNOWN
     }
 
     private class Store : WaitingChangeStore {

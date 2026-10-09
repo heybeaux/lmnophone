@@ -24,10 +24,16 @@ class WaitingText(val key: String, val event: WaitingEvent, val operation: Waiti
 class WaitingOperation(
     val identity: WaitingIdentity, val starter: TrustedPersonId, val generation: Long,
     val structureGeneration: Long, val mode: Mode, val startedAt: RunningTime, val phase: WaitingPhase,
+    recipientGenerations: Map<TrustedPersonId, Long>,
 ) {
-    init { require(generation >= 0 && structureGeneration >= 0) }
+    init {
+        require(generation >= 0 && structureGeneration >= 0)
+        require(recipientGenerations.isNotEmpty() && recipientGenerations.values.all { it >= 0 })
+    }
+    /** Start-time fallback retained independently of acknowledged outbox texts. */
+    val recipientGenerations: Map<TrustedPersonId, Long> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientGenerations))
     val kind = WaitingChangeKind.TURN_OFF
-    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase)
+    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations)
 }
 class WaitingState(val revision: Long = 0, val operation: WaitingOperation? = null, texts: List<WaitingText> = emptyList()) {
     init { require(revision >= 0) }
@@ -39,6 +45,21 @@ interface WaitingChangeStore {
     /** Atomically persist operation + texts; compare durable revision, increase it on every write. */
     fun compareAndSet(expected: WaitingState, replacement: WaitingState): Boolean
 }
+/** UNKNOWN includes missing, corrupt or temporarily unreadable data; it never authorizes commit. */
+enum class CancelIntent { CLEAR, REQUESTED, UNKNOWN }
+/**
+ * Separate durable, device-protected intent journal, serialized with operation writes.
+ * True means the write survived a crash (including directory metadata); failures return false.
+ * Request IDs are never reused. REQUESTED is monotonic and initialize must never clear it.
+ */
+interface CancelIntentStore {
+    /** Establish a known CLEAR record before starting a new operation; false if already REQUESTED. */
+    fun initialize(requestId: String): Boolean
+    /** Persist REQUESTED even when the operation record is temporarily unreadable. Idempotent. */
+    fun request(requestId: String): Boolean
+    fun read(requestId: String): CancelIntent
+}
+
 /** Opaque, process-local preparation. Never deserialize it or treat it as authority. */
 class WaitingStart internal constructor(internal val identity: WaitingIdentity, internal val starter: TrustedPersonId,
     internal val generation: Long, internal val structureGeneration: Long, internal val mode: Mode) {
@@ -59,6 +80,7 @@ class WaitingChangeController(
     private val clock: RunningClock,
     private val authority: PersonAuthorityConsumer,
     private val identities: WaitingIdentitySource,
+    private val cancelIntents: CancelIntentStore,
 ) {
     private val cancellationRequests = mutableSetOf<String>()
 
@@ -81,8 +103,9 @@ class WaitingChangeController(
         val now = clock.checkpoint() ?: return WaitingOutcome.NOT_READY
         if (!authority.consumeFor(freshAuthority, request.action, request.starter)) return WaitingOutcome.REFUSED
         request.used = true // Fresh authorization and preparation cannot be replayed after a failed write.
+        if (!cancelIntents.initialize(request.requestId)) return WaitingOutcome.NOT_READY
         val operation = WaitingOperation(request.identity, request.starter, request.generation,
-            request.structureGeneration, request.mode, now.proven, WaitingPhase.PENDING)
+            request.structureGeneration, request.mode, now.proven, WaitingPhase.PENDING, current.people.mapValues { it.value.generation })
         return if (write(before, operation, WaitingEvent.STARTED, current.people.mapValues { it.value.generation })) WaitingOutcome.PENDING else WaitingOutcome.NOT_READY
     }
 
@@ -90,6 +113,8 @@ class WaitingChangeController(
     fun cancel(requestId: String): WaitingOutcome {
         // Keep each intent until a valid record can identify the pending request.
         cancellationRequests.add(requestId)
+        // Still attempt the restrictive operation write if this independent write fails.
+        cancelIntents.request(requestId)
         val before = store.read() ?: return WaitingOutcome.NOT_READY
         reconcileCancellations(before)
         val operation = before.operation ?: return WaitingOutcome.IGNORED
@@ -105,7 +130,13 @@ class WaitingChangeController(
         val operation = before.operation ?: return WaitingOutcome.IGNORED
         if (operation.identity.requestId != requestId) return WaitingOutcome.IGNORED
         if (operation.phase != WaitingPhase.PENDING) return phaseResult(operation.phase)
-        if (requestId in cancellationRequests) return cancelPending(before, operation, WaitingEvent.CANCELLED_ON_PHONE)
+        val intent = cancelIntents.read(requestId)
+        if (requestId in cancellationRequests || intent == CancelIntent.REQUESTED) {
+            // Retry the independent journal as well while the process-local latch is available.
+            cancelIntents.request(requestId)
+            return cancelPending(before, operation, WaitingEvent.CANCELLED_ON_PHONE)
+        }
+        if (intent == CancelIntent.UNKNOWN) return WaitingOutcome.NOT_READY
         val current = credentials() ?: return WaitingOutcome.NOT_READY
         if (current.mode != operation.mode || current.structureGeneration != operation.structureGeneration ||
             current.people[operation.starter]?.generation != operation.generation) {
@@ -128,9 +159,9 @@ class WaitingChangeController(
     }
 
     private fun cancelPending(before: WaitingState, operation: WaitingOperation, event: WaitingEvent): WaitingOutcome {
-        val current = credentials() ?: return WaitingOutcome.NOT_READY
+        val recipients = credentials()?.people?.mapValues { it.value.generation } ?: operation.recipientGenerations
         clock.checkpoint() // A failed clock cannot prevent a restrictive cancellation.
-        if (!write(before, operation.withPhase(WaitingPhase.CANCELLED), event, current.people.mapValues { it.value.generation })) return WaitingOutcome.NOT_READY
+        if (!write(before, operation.withPhase(WaitingPhase.CANCELLED), event, recipients)) return WaitingOutcome.NOT_READY
         cancellationRequests.remove(operation.identity.requestId)
         return WaitingOutcome.CANCELLED
     }
