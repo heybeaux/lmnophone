@@ -41,6 +41,7 @@ fun PlainphoneShell(
                 is ShellRoute.RequestResult ->
                     AppRequestResultScreen(mapper.result(snapshot, route.result)) { onStep(navigator.onResult(state, it)) }
                 is ShellRoute.BlockedLink -> BlockedLinkScreen(route.stage) { onStep(navigator.onLink(state, it)) }
+                ShellRoute.NotInBuild -> NotInBuildScreen { onStep(navigator.back(state)) }
                 is ShellRoute.Wifi ->
                     WifiMessageScreen(WifiMessageUiState(route.problem)) { onStep(navigator.onWifi(state, it)) }
             }

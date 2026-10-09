@@ -28,6 +28,8 @@ sealed interface ShellRoute {
         val first: BlockedLinkUiState = stage,
     ) : ShellRoute
     data class Wifi(val problem: WifiProblem) : ShellRoute
+    /** Test builds: the feature behind this action isn't wired yet, and the screen says so. */
+    data object NotInBuild : ShellRoute
 }
 
 /** Back stack (Home at the bottom) and the request being written. */
@@ -65,8 +67,16 @@ sealed interface ShellEffect {
 
 data class Step(val state: ShellState, val effect: ShellEffect? = null)
 
-/** Pure navigation. Destinations whose screens haven't merged yet leave the state unchanged. */
-class ShellNavigator(private val phone: PhoneSource, private val outbox: RequestOutbox) {
+/**
+ * Pure navigation. Destinations whose screens haven't merged yet leave the state unchanged. In a
+ * [testBuild] (preview-2 onward) every action that isn't wired opens [ShellRoute.NotInBuild] instead,
+ * so nothing looks as if it worked when it didn't.
+ */
+class ShellNavigator(
+    private val phone: PhoneSource,
+    private val outbox: RequestOutbox,
+    private val testBuild: Boolean = false,
+) {
 
     fun back(s: ShellState): Step =
         if (s.stack.size > 1) Step(s.copy(stack = s.stack.dropLast(1))) else Step(s, ShellEffect.Finish)
@@ -76,15 +86,15 @@ class ShellNavigator(private val phone: PhoneSource, private val outbox: Request
         HomeEvent.OpenPhone -> Step(s, ShellEffect.OpenDialer)
         HomeEvent.OpenMessages -> Step(s, ShellEffect.OpenMessages)
         is HomeEvent.OpenApp -> Step(s, ShellEffect.OpenApp(e.id))
-        HomeEvent.OpenNotice -> Step(s)
+        HomeEvent.OpenNotice -> if (testBuild) notInBuild(s) else Step(s)
     }
 
     fun onMore(s: ShellState, e: MoreEvent): Step = when (e) {
         MoreEvent.Back -> back(s)
         MoreEvent.OpenEmergencyDialer -> Step(s, ShellEffect.OpenEmergencyDialer)
-        MoreEvent.AskForApp -> push(s.copy(draft = ""), ShellRoute.AskForApp)
+        MoreEvent.AskForApp -> if (testBuild) notInBuild(s) else push(s.copy(draft = ""), ShellRoute.AskForApp)
         MoreEvent.OpenPhoneSettings, MoreEvent.AddApp, MoreEvent.OpenTrustedPerson,
-        MoreEvent.OpenSelfManagedSettings, MoreEvent.OpenAbout -> Step(s)
+        MoreEvent.OpenSelfManagedSettings, MoreEvent.OpenAbout -> if (testBuild) notInBuild(s) else Step(s)
     }
 
     fun onAsk(s: ShellState, e: AskForAppEvent): Step = when (e) {
@@ -110,7 +120,8 @@ class ShellNavigator(private val phone: PhoneSource, private val outbox: Request
                 ShareLinkText.format(snapshot.userName, link.sanitizedTarget)))
             BlockedLinkEvent.DontSend -> stage(link.first)
             // Preview: nothing is sent and the link isn't kept.
-            BlockedLinkEvent.Send -> stage(BlockedLinkUiState.Sent(snapshot.requestRecipient))
+            BlockedLinkEvent.Send ->
+                if (testBuild) notInBuild(s) else stage(BlockedLinkUiState.Sent(snapshot.requestRecipient))
         }
     }
 
@@ -119,6 +130,8 @@ class ShellNavigator(private val phone: PhoneSource, private val outbox: Request
     }
 
     private fun push(s: ShellState, route: ShellRoute) = Step(s.copy(stack = s.stack + route))
+
+    private fun notInBuild(s: ShellState) = push(s, ShellRoute.NotInBuild)
 
     private fun send(s: ShellState): Step {
         if (s.current != ShellRoute.AskForApp || !RequestRules.canSend(s.draft)) return Step(s)

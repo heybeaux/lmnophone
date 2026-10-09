@@ -4,7 +4,10 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-    <!-- Until device wiring lands (PLA-104). -->
-    <string name="app_name">Plainphone (preview)</string>
+    <string name="app_name">Plainphone (preview-2)</string>
     <string name="admin_description">Keeps this phone calm: only approved apps open.</string>
+    <!-- Test builds (PLA-144): any action whose feature isn't wired yet. -->
+    <string name="not_in_build_title">Not in this test build yet</string>
+    <string name="not_in_build_body">This part of Plainphone comes in a later test build. Nothing was changed or sent.</string>
+    <string name="not_in_build_ok">OK</string>
 </resources>
