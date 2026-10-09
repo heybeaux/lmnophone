@@ -430,4 +430,45 @@ class AppApprovalControllerTest {
         }
     }
 
+    @Test fun `package replacement during cleanup invalidates readback even with identical policy sets`() {
+        for (change in listOf("version", "signer")) {
+            stuckApproval(); val r = assertNotNull(controller.prepareWithdrawal(person))
+            atEvent = { if (it == "policy-readback") {
+                policy = if (change == "version") policy.copy(installed = policy.installed.map {
+                    if (it.name == app) it.copy(versionCode = it.versionCode + 1) else it
+                }) else policy.copy(installedIdentities = listOf(ApprovalBinding(app, setOf(CertDigest("cd".repeat(32))))))
+            } }
+            assertEquals(AppApprovalOutcome.NOT_READY, controller.withdrawPending(r, r.approvalId, withdrawalAuth(r)))
+            assertEquals(AppApprovalPhase.WITHDRAWING, state!!.pending!!.phase)
+            atEvent = null
+            assertEquals(AppApprovalOutcome.WITHDRAWN, controller.resume())
+            policy = policy.copy(installed = policy.installed.map { if (it.name == app) it.copy(versionCode = 1) else it },
+                installedIdentities = listOf(binding))
+        }
+    }
+
+    @Test fun `saved withdrawal survives credential replacement and retains its original receipt recipients`() {
+        stuckApproval(); val r = assertNotNull(controller.prepareWithdrawal(person)); failure = "restore-policy"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.withdrawPending(r, r.approvalId, withdrawalAuth(r)))
+        credentials = CredentialState(Mode.SELF_MANAGED, mapOf(other to credentials!!.people.getValue(other).copy(generation = 9)), structureGeneration = 1)
+        failure = null; now = ClockReading(RunningTime("new-epoch", 0), BootTime("reboot", 0))
+        controller = controller()
+        assertEquals(AppApprovalOutcome.WITHDRAWN, controller.onStart())
+        assertEquals(mapOf(person to 0L, other to 0L), state!!.receipts.last().recipientGenerations)
+        assertEquals(person, state!!.receipts.last().actor)
+    }
+
+    @Test fun `invalid withdrawal journals and mismatched receipt types are rejected`() {
+        stuckApproval(); val op = state!!.pending!!
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.WITHDRAWING) }
+        val wrong = AppApprovalReceipt("withdrawal", person, mapOf(person to 0L), AppApprovalReceiptKind.WITHDRAWN, "another-approval")
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.WITHDRAWING, wrong) }
+        val valid = AppApprovalReceipt("withdrawal", person, mapOf(person to 0L), AppApprovalReceiptKind.WITHDRAWN, op.record.id)
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.COMMITTED, valid) }
+        assertFailsWith<IllegalArgumentException> {
+            AppApprovalState(apps = state!!.apps, pending = AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.WITHDRAWING, valid),
+                receipts = state!!.receipts + valid)
+        }
+    }
+
 }
