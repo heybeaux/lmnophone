@@ -770,4 +770,46 @@ class AppApprovalControllerTest {
         assertEquals(mapOf(person to 0L, other to 0L), state!!.receipts.single().recipientGenerations)
     }
 
+
+    @Test fun `withdrawing a permission edit preserves reapproval provenance across restart`() {
+        activeApproval(true); val r = editRequest(); failure = "hide"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.editPermissions(r, r.approvalId, editAuth(r)))
+        val withdrawal = assertNotNull(controller.prepareWithdrawal(person)); failure = null
+        assertEquals(AppApprovalOutcome.WITHDRAWN, controller.withdrawPending(withdrawal, withdrawal.approvalId, withdrawalAuth(withdrawal)))
+        assertEquals(binding, state!!.removedApps[app])
+        controller = controller(); assertEquals(AppApprovalOutcome.READY, controller.onStart())
+        assertNotNull(controller.prepareReapproval(app, other, PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.DENY))))
+    }
+
+    @Test fun `active removal after permission edit preserves both action receipts`() {
+        activeApproval(true); val r = editRequest(); permissionReadback = mapOf(camera to PermissionReadback.DENIED)
+        assertEquals(AppApprovalOutcome.PERMISSIONS_CHANGED, controller.editPermissions(r, r.approvalId, editAuth(r)))
+        val removal = assertNotNull(controller.prepareRemoval(app, other))
+        assertEquals(AppApprovalOutcome.REMOVED, controller.removeApproved(removal, removal.approvalId, removalAuth(removal, other)))
+        assertEquals(listOf(AppApprovalReceiptKind.PERMISSIONS_CHANGED, AppApprovalReceiptKind.REMOVED), state!!.receipts.map { it.kind })
+        assertEquals(binding, state!!.removedApps[app])
+    }
+
+    @Test fun `permission edit holds on new build facts battery and partial multi permission writes`() {
+        activeApproval(true)
+        val microphone = PermissionName("android.permission.RECORD_AUDIO")
+        manifest = PermissionManifest(binding, 2, "build", manifest!!.permissions + RuntimePermission(microphone, "Microphone",
+            listOf("Recording"), PermissionGrantCapability.SUPPORTED))
+        policy = policy.copy(installed = policy.installed.map { if (it.name == app) it.copy(versionCode = 2) else it })
+        val selection = PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.DENY, microphone to PermissionChoice.ALLOW))
+        val r = assertNotNull(controller.preparePermissionEdit(app, person, selection)); val a = editAuth(r)
+        battery = BatteryState(1, false)
+        assertEquals(AppApprovalOutcome.LOW_BATTERY, controller.editPermissions(r, r.approvalId, a))
+        assertNull(state!!.pending); assertTrue(events.isEmpty())
+        battery = BatteryState(50, false)
+        val next = assertNotNull(controller.preparePermissionEdit(app, person, selection))
+        atEvent = { if (it == "permission") policy = policy.copy(fingerprint = "ota") }
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.editPermissions(next, next.approvalId, editAuth(next)))
+        assertEquals(1, events.count { it == "permission" }); assertFalse("unhide" in events)
+        atEvent = null; policy = policy.copy(fingerprint = "build")
+        permissionReadback = mapOf(camera to PermissionReadback.DENIED, microphone to PermissionReadback.GRANTED)
+        assertEquals(AppApprovalOutcome.PERMISSIONS_CHANGED, controller.resume())
+        assertEquals(selection.choices, state!!.apps.getValue(app).permissions.choices)
+    }
+
 }
