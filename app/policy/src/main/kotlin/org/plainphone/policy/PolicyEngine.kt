@@ -29,7 +29,9 @@ object PolicyEngine {
         val neverHide = immutableSet(floor.neverHide + inventory?.neverHide?.packages.orEmpty() + input.plainphone + input.messages)
         val conflicts = immutableSet(input.classifiedBrowsers.intersect(neverHide))
         val sessionOnly = setOf(PLAY_PACKAGE) + inventory?.settingsSessionPackages.orEmpty()
-        val approved = if (baseline) emptySet() else input.approved - input.classifiedBrowsers - sessionOnly
+        val approved = if (baseline) emptySet() else input.approvalState?.approvedPackages(input.installed, input.installedIdentities).orEmpty() - input.classifiedBrowsers - sessionOnly
+        val invalidApprovals = (input.approvalState?.apps?.keys.orEmpty() + input.approved +
+            input.installed.filter { !it.isSystem }.map { it.name }) - approved - sessionOnly
         val session = input.sessionAccess?.takeIf { access ->
             !baseline && !input.lockedBoot && input.currentBoot?.let { access.isLive(it) } == true &&
                 access.packages == sessionPackages(access.kind, inventory)
@@ -55,7 +57,7 @@ object PolicyEngine {
             baseline -> setOf(input.plainphone, input.messages) + floor.emergencyUi + inventory?.minimumUi.orEmpty()
             unknown -> input.previousLockTask + floor.emergencyUi
             else -> setOf(input.plainphone) + approved + floor.emergencyUi + inventory.minimumUi
-        }.plus(input.plainphone).plus(session) - hidden)
+        }.plus(input.plainphone).plus(session) - hidden - (invalidApprovals - floor.emergencyUi - inventory?.minimumUi.orEmpty() - input.plainphone - input.messages))
         val unhidden = immutableSet(neverHide + if (input.lockedBoot) emptySet() else accessible - hidden)
         val restrictions = immutableSet(Restriction.entries)
         val features = immutableSet(LockTaskFeature.entries)
