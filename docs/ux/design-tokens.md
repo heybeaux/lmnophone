@@ -189,14 +189,24 @@ The other-apps area must always show **at least one full app row (56 dp)**. When
 order, each only if still needed:
 
 1. The More bar drops its second line.
-2. The notice line is cut to 2 lines (it still ends with "…" and `›`).
-3. The time and date go on one line: the time in `title` style, the date beside it in `date` style ("Thu 8 Oct").
+2. The time and date go on one line: the time in `title` style, the date beside it in `date` style ("Thu 8 Oct").
    Both keep growing with text size; they just stop stacking.
+3. The notice line is cut to 2 lines (it still ends with "…" and `›`).
 4. The other-apps area may shrink to half a row (28 dp). It still scrolls; the cut-off name shows there's more.
 5. Below the smallest supported screen only: the whole home screen scrolls as one page. This is the one case where
    Phone and Messages can need a scroll, and it is outside what Plainphone supports.
 
 **Never:** shrink any text below its scaled size, or shrink Messages, Phone or More.
+
+**Why the clock gives way before the notice** (PLA-47 review, 2026-10-09). The notice is how the person learns that
+something about their phone is about to change, and a 2-line cut can remove the words that say so ("A change to how
+this phone is…"). The clock still reads at a glance on one line. So the clock stops stacking first.
+
+**When the notice is cut** (at 3 lines, or 2 at step 3), "Tap to cancel." is often the part that goes. That is
+acceptable, because the meaning is in the first words. Three things still have to be true:
+- the `›` and the whole box still show it can be tapped;
+- TalkBack reads the **full** line, never the cut one;
+- the screen it opens (U9) shows the full sentence and the Cancel button.
 
 **Check at 360 × 640 dp and 200%, with the longest notice showing.** Measured in mockup frame 10 (a browser
 render using the 200% sizes above, so illustrative):
@@ -208,11 +218,16 @@ render using the 200% sizes above, so illustrative):
 | Messages 56 + Phone 56 + gap 8 + More 64 (one line, step 1) + bottom 8 | 192 |
 | **Total without the other apps** | **494** |
 
-With a 32 dp status bar and a 24 dp gesture bar the content is 584 dp, which leaves **90 dp** for the other apps:
-one full row and part of the next, the rest scrolling. With a 48 dp three-button bar it's 66 dp, still a full row.
-So without the Emergency button, step 1 is the only step needed on any supported screen; steps 2–5 stay as the
-safety net for larger Display sizes. On the target phone (412 × 915 dp) at 200%, frame 3 leaves 365 dp
-for the other apps.
+With a 32 dp status bar and a 24 dp gesture bar the content is 584 dp. That leaves 90 dp for the other apps, or 66 dp
+with a 48 dp three-button bar.
+
+**The build measured more than this.** In the `:ui` goldens (PLA-47, commit `f87ff6e`), real Lexend line heights run
+about 12 dp over the table above: the time and date take about 123 dp, not 111. The browser render and its 3-line
+notice are optimistic. So **on the smallest screen at 200%, expect steps 1 and 2 to apply** (More loses its second
+line, and the time and date go on one line), and step 3 may also apply when the notice is long. An earlier version
+of this section said step 1 alone was enough. That was wrong. Don't size anything from the table above; the goldens
+are the measure. On the target phone (412 × 915 dp) at 200%, frame 3 leaves 365 dp for the other apps, and no step
+should be needed.
 
 ### Calling 9-1-1
 
