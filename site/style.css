@@ -32,6 +32,7 @@ body {
   font-weight: 400;
   font-size: 18px;
   line-height: 26px;
+  overflow-wrap: break-word;
 }
 
 a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
@@ -45,7 +46,8 @@ em.plain { font-style: normal; font-weight: 500; }
 .narrow > * { max-width: 712px; }
 
 /* Top bar */
-.top { display: flex; justify-content: space-between; align-items: center; min-height: 72px; }
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--s2) var(--s6); min-height: 72px; }
+.top a { display: inline-flex; align-items: center; min-height: 48px; min-width: 48px; }
 .mark { font-size: 22px; line-height: 28px; font-weight: 500; text-decoration: none; }
 .toplink { font-size: 16px; }
 
