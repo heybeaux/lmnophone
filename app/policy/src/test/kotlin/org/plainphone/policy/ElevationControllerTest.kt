@@ -45,7 +45,15 @@ class ElevationControllerTest {
         if (crash == name) error("simulated process death")
         return failure != name
     }
-    private val store = object : ElevationStore() {
+    private val waitingStore = object : WaitingChangeStore {
+        private var state = WaitingState()
+        override fun read() = state
+        override fun compareAndSet(expected: WaitingState, replacement: WaitingState): Boolean {
+            if (state !== expected) return false
+            state = replacement; return true
+        }
+    }
+    private val store = object : ElevationStore(waitingStore) {
         override fun read() = record
         override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean {
             val stage = when {
@@ -74,7 +82,9 @@ class ElevationControllerTest {
         override fun readBackPolicy() = event("readback")
     }
     private var id = 0
-    private fun controller() = ElevationController(store, { credentials }, vault, clock, { limits }, { policy },
+    private fun controller() = ElevationController(store, { credentials }, vault, clock, {
+        credentials?.recoveryProfile?.friction?.let { ElevationLimits(it.countdownMillis, it.dailyLimit) } ?: limits
+    }, { policy },
         { battery }, effects, AppApprovalIdSource { "elevation-${++id}" })
     private var controller = controller()
     private fun setup() {
@@ -492,6 +502,52 @@ class ElevationControllerTest {
         val r = request(); advance(600_000); start(r); credentials = null
         assertEquals(SessionOutcome.CLOSED, sessions.tick()); assertFalse(physicallyOpen)
         assertEquals(1, record!!.state.ledger.debits.size); assertNull(sessions.access())
+    }
+
+    private fun settingsEditor(): FrictionSettingsController {
+        val transaction = object : FrictionSettingsStore {
+            override val waitingStore get() = this@ElevationControllerTest.waitingStore
+            override val elevationStore get() = store
+            override fun applyStricter(expectedCredentials: CredentialState, replacementCredentials: CredentialState,
+                expectedWaiting: WaitingState, expectedElevation: ElevationRecord, replacementElevation: ElevationRecord): Boolean {
+                if (credentials !== expectedCredentials || record !== expectedElevation || waitingStore.read() !== expectedWaiting) return false
+                credentials = replacementCredentials; record = replacementElevation; return true
+            }
+        }
+        return FrictionSettingsController(transaction, credentialStore, vault, clock, AppApprovalIdSource { "edit-${++id}" })
+    }
+    private fun activeFriction() {
+        val c = credentials!!
+        credentials = CredentialState(c.mode, c.people, c.revision + 1, c.structureGeneration, c.pendingNotices,
+            RecoveryProfile(mapOf(person to "synthetic-user"), null, FrictionSettings(600_000, 2)))
+    }
+
+    @Test fun `stricter edit lengthens owned live countdown without a tick before old expiry`() {
+        setup(); activeFriction(); val r = request(); advance(300_000)
+        val editor = settingsEditor(); val edit = assertNotNull(editor.prepareStricter(person, FrictionSettings(1_200_000, 2)))
+        val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, edit.action)).authority
+        assertEquals(FrictionSettingsOutcome.APPLIED, editor.applyStricter(edit, fresh))
+        advance(600_000) // Original Start window would have lapsed here.
+        assertEquals(ElevationOutcome.COUNTING, controller.tick())
+        assertEquals(ElevationOutcome.REFUSED, start(r)); assertFalse(physicallyOpen)
+        advance(300_000)
+        assertEquals(ElevationOutcome.STARTED, start(r)); assertTrue(physicallyOpen)
+        assertEquals(ElevationOutcome.REFUSED, start(r)); assertEquals(1, record!!.state.ledger.debits.size)
+    }
+
+    @Test fun `lowered active limit blocks owned Start and preserves previous debit through restart`() {
+        setup(); activeFriction(); val first = request(); advance(600_000)
+        assertEquals(ElevationOutcome.STARTED, start(first)); assertEquals(ElevationOutcome.ENDED, controller.done(first.id))
+        val next = request(); val ledger = record!!.state.ledger
+        val editor = settingsEditor(); val edit = assertNotNull(editor.prepareStricter(person, FrictionSettings(600_000, 1)))
+        val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, edit.action)).authority
+        assertEquals(FrictionSettingsOutcome.APPLIED, editor.applyStricter(edit, fresh)); assertSame(ledger, record!!.state.ledger)
+        advance(600_000)
+        assertEquals(ElevationOutcome.LIMIT_REACHED, start(next)); assertFalse(physicallyOpen)
+        controller = controller(); assertEquals(ElevationOutcome.IDLE, controller.onStart())
+        assertSame(ledger, record!!.state.ledger)
+        val afterRestart = prepare()
+        assertEquals(ElevationOutcome.LIMIT_REACHED, controller.request(afterRestart, auth(afterRestart)))
     }
 
 }
