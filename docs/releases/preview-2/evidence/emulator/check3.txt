@@ -1,0 +1,22 @@
+# Check 3 (emulator emulator-5742, API 35, root adb, build f1d2c58), 2026-10-09T22:33:11Z
+Reads /data/system/users/0/package-restrictions.xml (via abx2xml) right after each apply. Clock = com.google.android.deskclock.
+Start (Clock in the starter list):
+22:33:12.075 file mtime 15:32:45.960 | clock: no hidden attr = shown | flush on disk: disabled-components
+## Control: Clock taken off the list -> hidden; hides get no flip
+22:33:13.412 file mtime 15:33:12.072 | clock: hidden="true" | flush on disk: disabled-components
+22:33:14.581 file mtime 15:33:12.072 | clock: hidden="true" | flush on disk: disabled-components
+after ~14 s:
+22:33:26.793 file mtime 15:33:12.072 | clock: hidden="true" | flush on disk: disabled-components
+## Clock put back on the list -> unhidden; the applier flips FlushMarker right after
+22:33:28.149 file mtime 15:33:26.784 | clock: no hidden attr = shown | flush on disk: enabled-components
+22:33:29.364 file mtime 15:33:26.784 | clock: no hidden attr = shown | flush on disk: enabled-components
+## Apply log
+10-09 15:32:45.965  8594  9249 I Plainphone: PREVIEW2 APPLY complete=true failed=null applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] hidden=13 absent=[] flipFailures=[] floorUnreadable=[]
+10-09 15:33:12.055  8594  9311 I Plainphone: PREVIEW2 APPLY complete=true failed=null applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] hidden=14 absent=[] flipFailures=[] floorUnreadable=[]
+10-09 15:33:26.781  8594  9391 I Plainphone: PREVIEW2 APPLY complete=true failed=null applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] hidden=13 absent=[] flipFailures=[] floorUnreadable=[]
+
+## Reading
+- Unhide: apply finished 15:33:26.781 (log); package-restrictions.xml mtime 15:33:26.784 shows Clock shown and
+  FlushMarker flipped disabled -> enabled. The unhide was on disk at once. flipFailures=[] on every apply.
+- Control: on this API 35 emulator the hide was also on disk at once (mtime 15:33:12.072, 17 ms after the apply), so
+  the control does not separate the flip from the platform's own write here. Mitigation B stays best effort (PLA-25).
