@@ -97,4 +97,7 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 - new behaviour has tests written first;
 - the slice comment on the lane issue lists the spec requirements covered.
 
-**Gate:** lanes A, B and C, and lane D's emulator work, don't wait for the go/no-go gate (PLA-14). Installing on the spare Motorola follows the gate decision on PLA-14. The Android Platform Engineer is the only one who drives that phone.
+**Gate:**
+- The skeleton (D0) and lanes A, B and C don't wait for the go/no-go gate (PLA-14).
+- Lane D's device integration (D1) waits for PLA-14, as Beaux directed. Any change to that is his call, asked on PLA-14.
+- The Android Platform Engineer is the only one who drives the spare Motorola.
