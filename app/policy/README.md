@@ -225,7 +225,9 @@ every PIN holder's reset-protection userId, the optional backup userId, and acti
 The holder map must exactly match the current credential slots. PIN authentication and PIN/code
 replacement preserve this profile. A missing profile is not filled with defaults: it produces
 NEEDS_ATTENTION and keeps the slot held. Schema migration/enrollment must persist verified profile
-data with the credential record; do not construct it from a pending patch. Identifiers are sensitive;
+data with the credential record; do not construct it from a pending patch. Lane D's guided setup must
+write a complete profile before enrollment finishes, so a fresh phone can always be reconciled.
+Handover and mode-change credential commits must update that profile atomically with the active slots. Identifiers are sensitive;
 keep them out of logs and screenshots. Their diagnostic representation is redacted.
 
 The input port must supply live OS facts and the complete active policy store on the common serialized
@@ -235,7 +237,11 @@ required broadcast), and active friction settings, then reads all three back. Fr
 must not reset consumed daily debits or adopt a pending countdown/limit. A failed effect/readback
 returns a typed reason for the needs-attention/Repair screen and leaves the slot held. Invalid policy,
 missing emergency dialer, and locked-boot partial inputs cannot claim complete recovery; retry with
-full policy inputs after unlock. Calls, Emergency and alerts remain available through every failure.
+full policy inputs after unlock. Classifier conflicts and refused destructive requests do not prevent
+recovery when readbacks pass: the applied plan keeps its diagnostics and needsAttention flag for the
+normal attention UI, while the lost slot is released. Do not interpret RECOVERED as clearing those
+policy diagnostics. A refused action remains refused. Calls, Emergency and alerts remain available
+through every failure.
 
 `WaitingReconciliationStore.lostRecord()` distinguishes confirmed loss of both copies from a temporary
 read failure. Temporary/unclassifiable I/O failure returns no loss token and keeps the gate held. For

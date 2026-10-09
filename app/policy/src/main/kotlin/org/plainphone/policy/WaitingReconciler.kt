@@ -121,7 +121,9 @@ class WaitingReconciler(
         if (input.health == PolicyHealth.BOTH_INVALID || input.lockedBoot) return failed(ReconcileFailure.POLICY_INPUT)
         // A lost journal can never authorize forward restore or a surviving session relaxation.
         val plan = PolicyEngine.decide(input.copy(waitingOperation = null, sessionAccess = null, currentBoot = null))
-        if (plan.needsAttention) return failed(ReconcileFailure.POLICY_INPUT)
+        // Diagnostic conflicts/refusals may persist on a build; they must not strand the waiting slot.
+        // Preserve them on the applied plan, but require the live system dialer independently.
+        if (!EmergencyFloor.compute(input.installed, input.identities).hasSystemDialer) return failed(ReconcileFailure.POLICY_INPUT)
         val resetIds = profile.resetProtectionUserIds
         if (!effects.applyPolicy(plan)) return failed(ReconcileFailure.POLICY_APPLY)
         if (!effects.applyResetProtection(resetIds)) return failed(ReconcileFailure.RESET_APPLY)
