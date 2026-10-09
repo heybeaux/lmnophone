@@ -1,0 +1,28 @@
+topResumedActivity=ActivityRecord{5b127e0 u0 android/com.android.internal.app.BlockedAppActivity t160}
+text="App is not available"
+text="OK"
+text="Personal Safety is not available right now."
+saved evidence/pla40/lt-1-after-presses.png
+    mLockTaskModeState=LOCKED
+10-08 22:12:23.769  1853  3905 I GestureLauncherService: 2 consecutive power button taps detected, 2 consecutive slow power button taps detected
+10-08 22:12:23.769  1853  3905 I GestureLauncherService: Power button double tap gesture detected, launching camera. Interval=184ms
+10-08 22:12:23.828  1853  6202 I ActivityTaskManager: START u0 {act=motorola.camera.intent.action.STILL_IMAGE_PREVIEW flg=0x14000000 cmp=com.motorola.camera3/com.motorola.camera.LaunchAction (has extras)} with LAUNCH_SINGLE_TASK from uid 10391 (startActivityAsUser) (BAL_ALLOW_NON_APP_VISIBLE_WINDOW) result code=0
+10-08 22:12:23.931  1853  3905 I GestureLauncherService: 3 consecutive power button taps detected, 3 consecutive slow power button taps detected
+10-08 22:12:24.071  1853  6202 I GestureLauncherService: 4 consecutive power button taps detected, 4 consecutive slow power button taps detected
+10-08 22:12:24.226  1853  6202 I GestureLauncherService: Emergency gesture detected. Gesture time: 641 ms
+10-08 22:12:24.226  1853  6202 I GestureLauncherService: 5 consecutive power button taps detected, 5 consecutive slow power button taps detected
+10-08 22:12:24.226  1853  6202 I GestureLauncherService: Emergency gesture detected, launching.
+10-08 22:12:24.264  1853  6202 W ActivityTaskManager: startActivity called from non-Activity context; forcing Intent.FLAG_ACTIVITY_NEW_TASK for: Intent { flg=0x800000 cmp=android/com.android.internal.app.BlockedAppActivity (has extras) }
+10-08 22:12:24.264  1853  6202 D ActivityTaskManager: [GlobalFreeform] use default Rect(162, 162 - 1242, 1929) scale=0.7 for ActivityRecord{5b127e0 u0 android/com.android.internal.app.BlockedAppActivity
+10-08 22:12:24.264  1853  6202 D ActivityTaskManager: [GlobalFreeform] use default Rect(162, 162 - 1242, 1929) scale=0.7 for ActivityRecord{5b127e0 u0 android/com.android.internal.app.BlockedAppActivity t-1}
+10-08 22:12:24.267  1853  6202 D ActivityTaskManager: [GlobalFreeform] use default Rect(162, 162 - 1242, 1929) scale=0.7 for ActivityRecord{5b127e0 u0 android/com.android.internal.app.BlockedAppActivity t-1}
+10-08 22:12:24.268  1243  1762 I BufferQueueDebug: [ActivityRecord{5b127e0 u0 android/com.android.internal.app.BlockedAppActivity t160}#2154](this:0xb4000078c34bd4f0,id:-1,api:0,p:-1,c:-1) BufferQueue core=(1243:/system/bin/surfaceflinger)
+10-08 22:12:24.273  1853  6202 I ActivityTaskManager: START u0 {act=com.android.systemui.action.LAUNCH_EMERGENCY flg=0x14000000 cmp=com.google.android.apps.safetyhub/.emergencysos.ui.EmergencySosActivity} with LAUNCH_SINGLE_TASK from uid 10391 (startActivityAsUser) (BAL_ALLOW_NON_APP_VISIBLE_WINDOW) result code=0
+10-08 22:12:24.273  2218  2286 V WindowManagerShell: Transition requested (#178): android.os.BinderProxy@315fcda TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=160 displayId=0 isRunning=true baseIntent=Intent { flg=0x10800000 cmp=android/com.android.internal.app.BlockedAppActivity } baseActivity=ComponentInfo{android/com.android.internal.app.BlockedAppActivity} topActi
+10-08 22:12:24.277 29632 29632 I TopTaskTracker: onTaskMovedToFront: (moved taskInfo to front) taskId=160, baseIntent=Intent { flg=0x10800000 cmp=android/com.android.internal.app.BlockedAppActivity }
+10-08 22:12:24.296  1853  1899 I ActivityManager: Start proc 29997:android:ui/1000 for next-top-activity {android/com.android.internal.app.BlockedAppActivity}
+10-08 22:12:24.366  1853  2217 I PowerHalWrapper: amsBoostNotify pid:29997,activity:com.android.internal.app.BlockedAppActivity, package:android, mProcessCreatePackandroid 
+10-08 22:12:24.368  1853  2217 I mtkpower_client: [PowerHal_Wrap_notifyAppState] android/com.android.internal.app.BlockedAppActivity pid=29997 activityId:95496160 state:1
+10-08 22:12:24.369  1195  1259 I libPowerHal: [perfNotifyAppState] pack:android, act:com.android.internal.app.BlockedAppActivity, state:1, pid:29997, uid:1000, fps:-1
+  mCalls: 
+  mCallAudioManager:
