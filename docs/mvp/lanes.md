@@ -14,7 +14,7 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 
 | Module | Kind | Lane / owner | Contents |
 |---|---|---|---|
-| `:core` | Kotlin/JVM, no Android | A (Policy) | Shared value types only: `PackageName`, `Mode` (`TRUSTED`, `SELF_MANAGED`), `TrustedPersonId`, `WindowKind` (`PLAY`, `SETTINGS`, `APPROVE`, `UPDATE`, `WEB`, `WIFI_SIGNIN`), `RunningClock` (the proven running-time clock interface), `BuildInventory` model, `NeverHideList`. |
+| `:core` | Kotlin/JVM, no Android | A (Policy) | Shared value types only: `PackageName`, `Mode` (`TRUSTED`, `SELF_MANAGED`), `TrustedPersonId`, `WindowKind` (`PLAY`, `SETTINGS`, `APPROVE`, `UPDATE`, `WEB`, `WIFI_SIGNIN`), `RunningClock` (the proven running-time clock interface), `BuildInventory` model, `NeverHideList`, `CertDigest` (64 lower-case hex; approvals bind package + signer, PLA-46 review). |
 | `:policy` | Kotlin/JVM, no Android | A (Policy) | The policy engine and every state machine, as pure logic with JVM unit tests. |
 | `:links` | Kotlin/JVM, no Android | C (Link & Browser) | Browser classifier, link matrix, blocked-link decision. |
 | `:ui` | Android library, Compose | B (UI) | Screens, theme (tokens, Lexend), UI state and event types. No policy logic. |
