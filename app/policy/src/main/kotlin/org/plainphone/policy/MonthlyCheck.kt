@@ -28,7 +28,8 @@ data class MonthlyReminderStatus(val attemptedOn: LocalDate, val pending: Boolea
 data class MonthlyReminderKey(val cycleId: String, val recipient: TrustedPersonId, val attemptDate: LocalDate)
 data class MonthlyReminderRequest(val state: MonthlyCheckState, val key: MonthlyReminderKey, val attemptDate: LocalDate)
 enum class MonthlyNoticeAction { EXPLAIN }
-data class MonthlyNotice(val visible: Boolean, val text: String, val tapAction: MonthlyNoticeAction = MonthlyNoticeAction.EXPLAIN)
+enum class MonthlyNoticeKind { SUPERVISED_OVERDUE, SELF_MANAGED_OVERDUE }
+data class MonthlyNotice(val visible: Boolean, val kind: MonthlyNoticeKind, val tapAction: MonthlyNoticeAction = MonthlyNoticeAction.EXPLAIN)
 
 /** Process-local purpose binding, created only by the monthly-check flow after its Play session opens. */
 class MonthlyReview internal constructor(internal val cycleId: String, internal val access: SessionAccess, internal val startedAt: BootTime)
@@ -57,8 +58,8 @@ object MonthlyCheck {
 
     fun notice(state: MonthlyCheckState, today: LocalDate, mode: Mode): MonthlyNotice = MonthlyNotice(
         ChronoUnit.DAYS.between(state.dueDate, today) > 7,
-        if (mode == Mode.SELF_MANAGED) "Time for your monthly phone check"
-        else "Ask [trusted person] to do the monthly phone check",
+        if (mode == Mode.SELF_MANAGED) MonthlyNoticeKind.SELF_MANAGED_OVERDUE
+        else MonthlyNoticeKind.SUPERVISED_OVERDUE,
     )
 
     /** Adapter calls only for the session opened by the check, never an arbitrary existing Play session. */
