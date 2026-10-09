@@ -72,6 +72,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** The Home key always lands on the home screen, whatever Plainphone screen was open. */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.hasCategory(Intent.CATEGORY_HOME)) shell.state = ShellState()
+    }
+
     override fun onResume() {
         super.onResume()
         if (shell.phone != null) enterLockTask()
