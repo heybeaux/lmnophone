@@ -37,7 +37,7 @@ enum class IntentUriHandling {
     /** Reconstructed with `Intent.parseUri(..., URI_INTENT_SCHEME)` and fired as is (a naive app or WebView host). */
     RAW,
 
-    /** Reconstructed, then sanitised the way Chrome does: component and selector dropped, `BROWSABLE` added. */
+    /** Chromium 138-style query sanitising: component and selector dropped, `BROWSABLE` added. */
     SANITISED,
 }
 
@@ -50,7 +50,7 @@ enum class IntentUriHandling {
  * @property targetPackage the package from `setPackage` or the explicit component, if any. It must agree with a
  *   reconstructed `intent:` URI; disagreement is [NoHandlerReason.INCONSISTENT_FACTS].
  * @property explicitComponent [targetPackage] comes from an explicit component (one activity), not `setPackage`
- *   (every matching activity of the package).
+ *   (every matching activity of the package). More than one explicit-component candidate is inconsistent.
  * @property viaChooser the intent is wrapped in `Intent.createChooser`.
  * @property customTabs a Custom Tabs launch. With no package it is the client's `launchUrl` fallback
  *   (Plainphone provides no Custom Tabs, so the provider list is empty once browsers are hidden).

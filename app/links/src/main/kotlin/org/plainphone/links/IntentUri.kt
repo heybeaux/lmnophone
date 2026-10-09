@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.links
 
-import org.plainphone.core.PackageName
 import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 
-/** The parts of an `intent:` URI that decide where it goes. */
+/** The parts of an `intent:` URI that decide where it goes; package strings are unvalidated wire values. */
 data class ParsedIntentUri(
     val action: String?,
     val data: String?,
-    val packageName: PackageName?,
-    val componentPackage: PackageName?,
+    val packageName: String?,
+    val componentPackage: String?,
     val categories: Set<String>,
     val browserFallbackUrl: String?,
     val selector: ParsedIntentUri?,
@@ -50,7 +49,8 @@ object IntentUri {
 
     /**
      * Returns null where `parseUri` throws (`URISyntaxException`, or the `NumberFormatException` it lets through for
-     * bad launch flags), and, as a stricter rule of this module, where a package value cannot be a real package name.
+     * bad launch flags). Package strings stay raw, as in AOSP: dispatch precedence and sanitising can discard them
+     * before resolution. A non-null empty package still suppresses a selector.
      * Input that is neither an `intent:` nor an `android-app:` URI is not reconstructed here and also gives null.
      */
     fun parse(uri: String): ParsedIntentUri? {
@@ -271,15 +271,12 @@ object IntentUri {
     private fun finish(draft: Draft, selector: ParsedIntentUri?) = ParsedIntentUri(
         action = draft.action,
         data = draft.data,
-        packageName = draft.packageName?.let(::packageOrThrow),
-        componentPackage = draft.componentPackage?.let(::packageOrThrow),
+        packageName = draft.packageName,
+        componentPackage = draft.componentPackage,
         categories = draft.categories.toSet(),
         browserFallbackUrl = draft.fallback,
         selector = selector,
     )
-
-    private fun packageOrThrow(value: String): PackageName =
-        runCatching { PackageName(value) }.getOrNull() ?: throw Malformed()
 
     /** `ComponentName.unflattenFromString`: needs a '/' with a class name after it, otherwise no component. */
     private fun unflattenPackage(value: String): String? {

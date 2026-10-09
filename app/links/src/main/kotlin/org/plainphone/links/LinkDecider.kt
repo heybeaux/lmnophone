@@ -56,7 +56,7 @@ sealed interface LinkDecision {
  * @param linkCatcher Plainphone's package (it holds the link-catcher activity).
  */
 class LinkDecider(private val linkCatcher: PackageName) {
-    private data class Dispatch(val target: PackageName?, val explicit: Boolean, val action: String?, val data: String?)
+    private data class Dispatch(val target: String?, val explicit: Boolean, val action: String?, val data: String?)
 
     private sealed interface Pick {
         data class Activity(val packageName: PackageName) : Pick
@@ -72,12 +72,13 @@ class LinkDecider(private val linkCatcher: PackageName) {
 
         val dispatch = dispatched(intent) ?: return LinkDecision.NoHandler(NoHandlerReason.MALFORMED_INTENT_URI)
         if (intent.targetPackage != null &&
-            (intent.targetPackage != dispatch.target || intent.explicitComponent != dispatch.explicit)
+            (intent.targetPackage.value != dispatch.target || intent.explicitComponent != dispatch.explicit)
         ) return inconsistent()
 
         val candidates = intent.resolvers
         val target = dispatch.target
-        if (target != null && candidates.any { it.packageName != target }) return inconsistent()
+        if (target != null && candidates.any { it.packageName.value != target }) return inconsistent()
+        if (dispatch.explicit && candidates.size > 1) return inconsistent()
         val empty = if (target != null) NoHandlerReason.TARGET_NOT_RESOLVABLE else NoHandlerReason.NO_RESOLVER
 
         val pick = when (val resolved = intent.resolved) {
@@ -109,7 +110,7 @@ class LinkDecider(private val linkCatcher: PackageName) {
         val data = intent.data
         val reconstruct = intent.intentUri != IntentUriHandling.NOT_PARSED && data != null &&
             (data.startsWith("intent:") || data.startsWith("android-app:"))
-        if (!reconstruct) return Dispatch(intent.targetPackage, intent.explicitComponent, intent.action, data)
+        if (!reconstruct) return Dispatch(intent.targetPackage?.value, intent.explicitComponent, intent.action, data)
 
         val parsed = IntentUri.parse(data!!) ?: return null
         val selector = parsed.selector
@@ -125,7 +126,7 @@ class LinkDecider(private val linkCatcher: PackageName) {
     /** Android's choice when lane D did not report it: one candidate opens, more are a chooser. */
     private fun infer(dispatch: Dispatch, candidates: List<Resolver>, catcherPreferred: Boolean): Pick? {
         if (candidates.isEmpty()) return null
-        dispatch.target?.takeIf { dispatch.explicit }?.let { return Pick.Activity(it) }
+        if (dispatch.explicit) return Pick.Activity(candidates.single().packageName)
 
         val web = dispatch.target == null && isWebIntent(dispatch.action, dispatch.data)
         val pool = candidates.filter { it.verifiedForHost }.takeIf { web && it.isNotEmpty() } ?: candidates

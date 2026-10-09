@@ -26,8 +26,13 @@ Pure Kotlin/JVM. No `android.*`. Spec: `openspec/changes/add-plainphone-spike-an
   - `IntentUri` is a port of AOSP `Intent.parseUriInternal` (including `android-app:`) and `getIntentOld`, `ComponentName.unflattenFromString`
     and `Uri.decode`. A `SEL;` selector is kept only when the outer intent has no package. With no `#` the result is a
     plain `VIEW` of the `intent:` data. A `#` without `#Intent;` is the old format, which can name a component.
-    Unknown keys and unparsable typed extras are malformed. It is stricter than Android in one place: a package value
-    that can't be a package name is malformed, which also ends in `NoHandler`.
+    Unknown keys and unparsable typed extras are malformed. `ParsedIntentUri` preserves package/component package
+    strings as raw wire values, including empty or invalid-looking names. Component precedence and sanitising apply
+    before the effective target is compared with the typed resolver packages; irrelevant values never reject a launch.
+    An effective target without a matching activity is `TARGET_NOT_RESOLVABLE`, not a parser error.
+  - `SANITISED` models Chromium 138.0.7204.50's `ExternalNavigationHandler.sanitizeQueryIntentActivitiesIntent`:
+    component and selector removed, `BROWSABLE` added. This is not a claim about historical Chromium, all browser
+    senders or Chrome's full navigation/fallback policy. Its source is pinned in the test evidence.
   - A selector's own `package=` does not restrict resolution: `ComputerEngine.queryIntentActivitiesInternal` reads the
     package from the outer intent before it swaps in the selector (android-15.0.0_r1).
 - `IntentFacts.action` is read only to tell a web intent (`ACTION_VIEW` plus an exact `http`/`https` scheme, as in
@@ -40,7 +45,8 @@ Pure Kotlin/JVM. No `android.*`. Spec: `openspec/changes/add-plainphone-spike-an
 - `IntentFacts.resolvers` must be what `queryIntentActivities` returns for the intent as dispatched: one entry per
   activity, hidden packages absent, and the link-catcher present exactly when it matches. Set `explicitComponent`
   for an explicit component (not `setPackage`). Fill `resolved` from `resolveActivity(intent, MATCH_DEFAULT_ONLY)`
-  (`ResolverActivity` is `Resolution.Chooser`) so saved preferences and priorities are honoured.
+  (`ResolverActivity` is `Resolution.Chooser`) so saved preferences and priorities are honoured. An explicit component
+  can yield at most one activity; multiple candidates fail closed even when `resolved` names that package.
 - A visible generic web handler (an approved http-only app, or a never-hide conflict) makes Android show a chooser,
   which lock task blocks (`BlockedScreen(CHOOSER)`). A persistent preferred activity for `VIEW http/https` to the
   link-catcher fixes it; set `IntentFacts.linkCatcherPreferred` once it exists. Spike evidence: `spikes/emulator/RESULT.md`
