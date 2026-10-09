@@ -174,7 +174,7 @@ readbacks. Use the common serialized dispatcher for all operations, policy appli
 calls. Startup session revocation must precede this controller and may not unconditionally re-apply
 full lockdown while a valid operation is COMMITTING. The final full readback also catches changes
 introduced by restart revocation. Calls, emergency and alerts must not wait on this sequence.
-Recovery-code skip and Android execution remain separate work. Lost-record reconciliation is below.
+Android execution remains separate work. Lost-record reconciliation and recovery-code skip are below.
 
 The waiting gate now checks credential dependencies before the UNKNOWN intent maturity guard.
 An unreadable intent store therefore cannot postpone restrictive dependency cancellation and its
@@ -273,5 +273,61 @@ never removes Device Owner and never adopts pending values. Automatic startup re
 PIN; the PIN requirement applies to the explicit Repair action.
 
 This slice implements the pure recovery/Repair protocol and its storage/effect contracts. Android
-recovery execution, delivery durability, recovery-code skip and the other waiting-change kinds remain
-unfinished. Total storage unavailability remains held with needs-attention; it is not guessed vacant.
+recovery execution, delivery durability and the other waiting-change kinds remain unfinished.
+The bounded turn-off recovery-code skip is below. Total storage unavailability remains held with needs-attention; it is not guessed vacant.
+
+
+## Recovery-code skip of a pending turn-off
+
+Configure the single live `WaitingChangeController` with `WaitingSkipSupport`, using the same PinVault,
+credential store, waiting store and serialized dispatcher as all other actions. Without this explicit
+transaction support, skip is refused. There is no default two-write implementation. The UI must show
+that exact pending turn-off and ask for skip confirmation, the selected person's recovery code and a
+new PIN. Pass the displayed request ID to `skip`; a stale ID never selects a newer operation.
+
+Skip is available only in TRUSTED mode and only while PENDING. The new PIN must meet the existing
+six-ASCII-digit minimum. Self-managed mode, absent holders, stale requests, terminal/committing/rollback
+states, unknown intent data and insufficient battery cannot replace credentials or skip. Charging
+satisfies the existing low-battery gate. The controller checks these conditions again in the successful
+recovery-code callback before invoking the transaction. Skip bypasses the 24-hour time gate only; it
+never bypasses cancellation, storage validity or battery requirements.
+
+Cancellation takes precedence. Both persisted REQUESTED intent and the live controller's unresolved
+cancel latch cause cancellation/retry instead of skip. A dependency change already present before skip
+cancels the operation at once, just as the ordinary waiting tick does. Only after these checks does the
+skipper replace starter authority. The original starter metadata remains for audit, while `skipper`,
+`skipperGeneration`, `authorityPerson` and `authorityGeneration` identify the new committing authority.
+Those fields survive all restore checkpoints and completion. Later credential changes cannot reverse
+a committed turn-off. Only turn-off waits are implemented by this controller today.
+
+PinVault's internal recovery verification path is shared with forgotten-PIN recovery: identical code
+normalization, per-person recovery counters, lockout schedule and tenth-failure notice. Wrong/delayed
+attempts persist through the existing credential store and never modify the operation. A PIN lockout
+does not block a valid recovery code. An ordinary `PinVault.recover` call still only resets the selected
+PIN/code and never skips an operation. No reusable recovery authority is exposed.
+
+For a successful skip, `WaitingSkipCommitter` must atomically compare the current credential revision,
+waiting storage generation/revision, matching PENDING request and CLEAR cancellation intent, then save:
+
+- the selected person's new PIN verifier, new recovery-code verifier, reset counters and incremented
+  credential generation, preserving every other holder and the active recovery profile;
+- the operation in COMMITTING with the skipper recorded;
+- a SKIPPED receipt with the new current recipient generations and corresponding fixed delivery
+  addresses, preserving existing waiting texts and recovery receipts.
+
+This is one logical durable transaction across the credential and operation records. A write-ahead
+transaction/replay scheme is an adapter choice, but all readers must see all old values or all new
+values, including after interruption between physical writes. Do not acknowledge two independent
+writes as atomic. Run transaction recovery before PinVault, waiting controllers or policy readers.
+Do not allow re-entrant UI callbacks or another live waiting controller inside this serialized action.
+Lane D must prove crash/fsync behavior; the JVM fake verifies the required all-or-nothing observations.
+
+Only the successful transaction returns `WaitingSkipResult.Committing` with the newly generated
+recovery code, for one-time display to the skipper. A failed transaction returns NOT_READY and exposes
+no new code or committing success. A crash after a durable commit resumes COMMITTING; resubmitting skip
+reports Already in progress and does not regenerate or replay a code. No plaintext recovery code is
+stored or logged. Existing one-time-code custody/display limits also apply here.
+
+The skip does not itself restore settings or remove Device Owner. Feed the committed request to
+TurnOffController under the already documented operation-aware policy rules. No Android or completion
+SMS guarantee is added by these pure JVM tests.
