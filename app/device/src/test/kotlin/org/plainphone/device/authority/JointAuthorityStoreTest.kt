@@ -134,6 +134,36 @@ class JointAuthorityStoreTest {
         }
     }
 
+    /** A non-empty directory where a record file goes makes that file's write or rename fail. */
+    private fun blockFile(d: File, name: String) { File(d, name).apply { deleteRecursively(); mkdirs() }; File(d, "$name/x").writeText("x") }
+
+    /**
+     * PLA-128 F2: each physical write fails (returns, not a crash) in turn. The result must equal what
+     * reads back, and an acknowledged record must be fenced against the old copies.
+     */
+    @Test fun failedWriteAtEveryStepReportsExactlyTheVisibleRecord() {
+        val steps = listOf(WritePoint.BEFORE_COPY_A to "authority-a.rec.tmp", WritePoint.AFTER_COPY_A to "fence-a.rec",
+            WritePoint.AFTER_FENCE_A to "fence-b.rec", WritePoint.AFTER_FENCE to "authority-b.rec.tmp")
+        for ((point, blocked) in steps) {
+            tmp.root.listFiles()!!.forEach { it.deleteRecursively() }
+            val store = initialized()
+            val old = copyA().readBytes()
+            faults = StorageFaults { at, d -> if (at == point) blockFile(d, blocked) }
+            val result = bump(store, 7)
+            faults = StorageFaults { _, _ -> }
+            val visible = open().credentials.read()
+            assertEquals("$point", if (result) 1L else 0L, visible?.revision)
+            assertEquals("$point", visible?.revision, store.credentials.read()?.revision)
+            if (result) {
+                copyA().writeBytes(old); copyB().writeBytes(old)
+                assertNull("$point old copies are fenced", open().credentials.read())
+            } else {
+                File(dir, blocked).deleteRecursively()
+                assertTrue("$point next write after recovery", bump(open(), 8))
+            }
+        }
+    }
+
     @Test fun readbackFailureReturnsFalseAndChangesNothing() {
         val store = initialized()
         faults = StorageFaults { at, d -> if (at == WritePoint.AFTER_COPY_A) File(d, "authority-a.rec").writeBytes(byteArrayOf(1, 2, 3)) }

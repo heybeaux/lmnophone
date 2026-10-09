@@ -201,6 +201,35 @@ class PeopleTransactionsTest {
         assertEquals(CancelIntent.REQUESTED, rig.disk().cancelIntents.read("r2"))
     }
 
+    /** PLA-128 F1: the REQUESTED marker alone must not be the only record of a cancel. */
+    @Test fun losingEitherIntentFileAfterRequestStaysRequested() {
+        for (lost in listOf("intent-requested-", "intent-clear-")) {
+            val rig = Rig()
+            val id = rig.startAdd()
+            // The intent write succeeded but the cancelled-state write never happened.
+            assertTrue(rig.store.cancelIntents.request(id))
+            rig.dir.listFiles()!!.filter { it.name.startsWith(lost) }.forEach { assertTrue(it.delete()) }
+            rig.wire()
+            assertEquals(lost, CancelIntent.REQUESTED, rig.store.cancelIntents.read(id))
+            assertFalse(lost, rig.store.cancelIntents.initialize(id))
+            rig.now = ClockReading(RunningTime("epoch", day), BootTime("boot", day))
+            assertEquals(lost, WaitingOutcome.CANCELLED, rig.waiting.tick(id, battery))
+            assertEquals(lost, WaitingPhase.CANCELLED, rig.journal().operation!!.phase)
+        }
+    }
+
+    @Test fun losingBothIntentFilesReadsUnknownAndBlocksMaturity() {
+        val rig = Rig()
+        val id = rig.startAdd()
+        assertTrue(rig.store.cancelIntents.request(id))
+        rig.dir.listFiles()!!.filter { it.name.startsWith("intent-") }.forEach { assertTrue(it.delete()) }
+        rig.wire()
+        assertEquals(CancelIntent.UNKNOWN, rig.store.cancelIntents.read(id))
+        rig.now = ClockReading(RunningTime("epoch", day), BootTime("boot", day))
+        assertEquals(WaitingOutcome.NOT_READY, rig.waiting.tick(id, battery))
+        assertEquals(WaitingPhase.PENDING, rig.journal().operation!!.phase)
+    }
+
     @Test fun damagedIntentEntriesNeverReadAsClear() {
         val rig = Rig()
         val intents = rig.store.cancelIntents
@@ -468,6 +497,49 @@ class PeopleTransactionsTest {
         assertEquals(WaitingPhase.COMMITTING, journal.operation!!.phase)
         assertEquals(ben, journal.operation!!.skipper)
         assertEquals(WaitingEvent.SKIPPED, journal.texts.last().event)
+    }
+
+    /** PLA-128 F2: a failed fence write must not report NotSkipped over rotated credentials. */
+    @Test fun failedFenceWritesReportExactlyWhatIsDurable() {
+        for ((point, fence) in listOf(WritePoint.AFTER_COPY_A to "fence-a.rec", WritePoint.AFTER_FENCE_A to "fence-b.rec")) {
+            val rig = Rig(people = 2)
+            val id = rig.startRemove()
+            val before = rig.credentials()
+            rig.faults = StorageFaults { at, d ->
+                if (at == point) { File(d, fence).deleteRecursively(); File(d, "$fence/x").apply { parentFile.mkdirs(); writeText("x") } }
+            }
+            val result = rig.waiting.skip(id, ben, rig.codes.getValue(ben).toCharArray(), rig.newPin, true, battery)
+            rig.faults = StorageFaults { _, _ -> }
+            rig.wire()
+            val after = rig.credentials(); val phase = rig.journal().operation!!.phase
+            assertEquals(fence, point == WritePoint.AFTER_FENCE_A, result is WaitingSkipResult.Committing)
+            if (result is WaitingSkipResult.Committing) {
+                assertEquals(fence, before.revision + 1, after.revision)
+                assertEquals(fence, WaitingPhase.COMMITTING, phase)
+            } else {
+                assertEquals(fence, before.revision, after.revision)
+                assertEquals(fence, before.people.getValue(ben).generation, after.people.getValue(ben).generation)
+                assertEquals(fence, WaitingPhase.PENDING, phase)
+            }
+        }
+    }
+
+    @Test fun failedFenceDuringPatchKeepsOldHoldersAndReportsFailure() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        rig.faults = StorageFaults { at, d ->
+            if (at == WritePoint.AFTER_COPY_A) { File(d, "fence-a.rec").deleteRecursively(); File(d, "fence-a.rec/x").apply { parentFile.mkdirs(); writeText("x") } }
+        }
+        val result = rig.people.tick(id, WaitingPhase.COMMITTING)
+        rig.faults = StorageFaults { _, _ -> }
+        assertEquals(PeopleChangeOutcome.NEEDS_ATTENTION, result.outcome)
+        assertEquals(PeopleChangeFailure.PERSISTENCE, result.failure)
+        rig.wire()
+        assertEquals(setOf(anna), rig.credentials().people.keys)
+        assertEquals(WaitingPhase.COMMITTING, rig.journal().operation!!.phase)
+        // Once storage recovers, the retry applies.
+        File(rig.dir, "fence-a.rec").deleteRecursively()
+        assertEquals(PeopleChangeOutcome.APPLIED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
     }
 
     @Test fun crashAtEverySkipWritePointExposesAllOldOrAllNew() {
