@@ -93,6 +93,72 @@ class UserScreensTest {
         compose.onNodeWithText("Plainphone: Margaret would like to look at this link with you: safe.invalid/bus")
             .assertExists()
     }
+    @Test fun confirmSendIsDisabledWhileHostSendsAndCanBeCancelled() {
+        val events = mutableListOf<BlockedLinkEvent>()
+        val state = mutableStateOf(BlockedLinkUiState.Confirm("Sam", "example.invalid/bus"))
+        show { BlockedLinkScreen(state.value) {
+            events.add(it)
+            if (it == BlockedLinkEvent.Send) state.value = state.value.copy(sending = true)
+        } }
+        compose.onNodeWithText("Send").performClick()
+        compose.onNodeWithText("Send").assertIsNotEnabled().performTouchInput { click() }
+        compose.onNodeWithText("Don't send").performClick()
+        assertEquals(listOf(BlockedLinkEvent.Send, BlockedLinkEvent.DontSend), events)
+    }
+    @Test fun resultRetryIsDisabledWhileHostSendsAndReenabledAfterFailure() {
+        val events = mutableListOf<AppRequestResultEvent>()
+        val state = mutableStateOf(AppRequestResultUiState("Sam", AppRequestResult.Failed))
+        show { AppRequestResultScreen(state.value) {
+            events.add(it)
+            if (it == AppRequestResultEvent.Retry) state.value = state.value.copy(sending = true)
+        } }
+        compose.onNodeWithText("Try again").performClick()
+        compose.onNodeWithText("Try again").assertIsNotEnabled().performTouchInput { click() }
+        assertEquals(listOf(AppRequestResultEvent.Retry), events)
+        compose.runOnIdle { state.value = state.value.copy(sending = false) }
+        compose.onNodeWithText("Try again").assertIsEnabled().performClick()
+        compose.onNodeWithText("OK, leave it saved").performClick()
+        assertEquals(listOf(AppRequestResultEvent.Retry, AppRequestResultEvent.Retry, AppRequestResultEvent.Ok), events)
+    }
+    @Test fun retryHistoryRowStopsOfferingRetryWhileSending() {
+        val events = mutableListOf<AppRequestResultEvent>()
+        val row = AppRequestRow("one", "Bus times", "Thu", AppRequestStatus.Failed)
+        val state = mutableStateOf(AppRequestResultUiState("Sam", AppRequestResult.Sent, listOf(row)))
+        show { AppRequestResultScreen(state.value) {
+            events.add(it)
+            if (it is AppRequestResultEvent.RetryRequest) state.value = state.value.copy(
+                requests = listOf(row.copy(status = AppRequestStatus.Sending)))
+        } }
+        compose.onNodeWithText("Didn't send – Try again").performScrollTo().performClick()
+        compose.onNodeWithText("Didn't send – Try again").assertDoesNotExist()
+        compose.onNodeWithText("Sending…").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("OK").performClick()
+        assertEquals(listOf(AppRequestResultEvent.RetryRequest("one"), AppRequestResultEvent.Ok), events)
+    }
+    @Test fun linkSentAndFailedOfferOk() {
+        val events = mutableListOf<BlockedLinkEvent>()
+        val state = mutableStateOf<BlockedLinkUiState>(BlockedLinkUiState.Sent("Sam"))
+        show { BlockedLinkScreen(state.value, events::add) }
+        compose.onNodeWithText("OK").performClick()
+        compose.runOnIdle { state.value = BlockedLinkUiState.Failed }
+        compose.onNodeWithText("OK").performClick()
+        assertEquals(listOf(BlockedLinkEvent.Ok, BlockedLinkEvent.Ok), events)
+    }
+    @Test fun selfManagedMoreAndBackEvents() {
+        val events = mutableListOf<MoreEvent>()
+        show { MoreScreen(MoreUiState(MoreMode.SelfManaged(10)), events::add) }
+        compose.onNodeWithText("‹ Home").performClick()
+        compose.onNodeWithText("Phone settings").performScrollTo().performClick()
+        compose.onNodeWithText("Add an app").performScrollTo().performClick()
+        compose.onNodeWithText("Your settings").performScrollTo().performClick()
+        assertEquals(listOf(MoreEvent.Back, MoreEvent.OpenPhoneSettings, MoreEvent.AddApp, MoreEvent.OpenSelfManagedSettings), events)
+    }
+    @Test fun requestBackEvent() {
+        val events = mutableListOf<AskForAppEvent>()
+        show { AskForAppScreen(AskForAppUiState("Sam"), events::add) }
+        compose.onNodeWithText("‹ More").performClick()
+        assertEquals(listOf(AskForAppEvent.Back), events)
+    }
     @Test fun overlongLinkOffersNoSend() {
         val events = mutableListOf<BlockedLinkEvent>()
         show { BlockedLinkScreen(BlockedLinkUiState.TooLong, events::add) }
