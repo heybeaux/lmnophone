@@ -1,6 +1,6 @@
 # MVP lanes, modules and interfaces
 
-Owner: Plainphone Lead. Board direction: Beaux, Telegram 4496/4498 (2026-10-09). Parent issue: PLA-15.
+Owner: Plainphone Lead. Board direction: Beaux, Telegram 4496/4498 (2026-10-09). Parent issue: PLA-15. Lane issues: D0 skeleton PLA-44, A Policy PLA-46, B UI PLA-47, C Link PLA-49, D1 Device PLA-48.
 
 The MVP is built in four parallel lanes. Each lane owns one or more Gradle modules and the API those modules export. Lanes build against the seams below. To change another lane's API, ask its owner on their lane issue; the Lead settles disagreements.
 
@@ -71,7 +71,7 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 | D0 skeleton | Android Platform Engineer | `../plainphone-device` | `mvp/skeleton` |
 | A Policy | Policy Engineer (GPT) | `../plainphone-policy` | `mvp/policy` |
 | B UI | UI Engineer (GPT) | `../plainphone-ui` | `mvp/ui` |
-| C Link & Browser | Link & Browser Engineer (Fugu) | `../plainphone-links` | `mvp/links` |
+| C Link & Browser | Link & Browser Engineer (GPT-6 fallback; Fugu when the subscription is active) | `../plainphone-links` | `mvp/links` |
 | D Device | Android Platform Engineer | `../plainphone-device` | `mvp/device` |
 
 **Getting started:**
@@ -89,7 +89,7 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 
 **Review before every merge:**
 - The Verifier & Escape Artist reviews the lane slice.
-- Lanes A and B are written by an OpenAI model, so the Lead (Claude) also does a code review of each slice. That keeps the cross-model rule.
+- Lanes A, B and C are written by OpenAI models. C is on the GPT-6 fallback while the Fugu subscription is inactive. So the Lead (Claude) also does a code review of each of their slices, which keeps the cross-model rule. Lane D (Claude) is reviewed by the Verifier.
 
 **A slice is ready when:**
 - it's rebased on `main`;
