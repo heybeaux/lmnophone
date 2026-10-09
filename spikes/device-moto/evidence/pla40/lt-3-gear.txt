@@ -1,0 +1,14 @@
+topResumedActivity=ActivityRecord{ae4ecca u0 com.google.android.apps.safetyhub/.emergencysos.ui.EmergencySosActivity t164}
+topResumedActivity=ActivityRecord{b3acfd4 u0 com.google.android.apps.safetyhub/.emergencysos.settings.EmergencySosSettingsActivity t165}
+content-desc="Animation"
+content-desc="Emergency SOS"
+content-desc="Navigate up"
+text="Change settings"
+text="Get all Emergency SOS actions"
+text="How it works"
+text="Press the power button quickly 5 times or more"
+text="Sign in to your Google Account. This lets you use all actions when you start Emergency SOS."
+text="Sign in"
+text="Touch &amp; hold to start emergency actions"
+text="Try a demo"
+saved evidence/pla40/lt-3-sos-gear.png

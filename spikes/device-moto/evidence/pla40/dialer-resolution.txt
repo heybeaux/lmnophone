@@ -1,0 +1,16 @@
+com.google.android.dialer
+
+com.google.android.dialer
+com.google.android.dialer
+1 activities found:
+  Activity #0:
+    priority=0 preferredOrder=0 match=0x208000 specificIndex=-1 isDefault=true
+    com.google.android.dialer/com.android.dialer.main.impl.MainActivity
+1 activities found:
+  Activity #0:
+    priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true
+    com.google.android.dialer/com.android.dialer.main.impl.MainActivity
+1 activities found:
+  Activity #0:
+    priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true
+    com.android.phone/.EmergencyDialer

@@ -1,0 +1,26 @@
+tapped 875,1427
+topResumedActivity=ActivityRecord{b23c768 u0 com.google.android.apps.safetyhub/.home.HomeActivity t166}
+content-desc="Account and settings.&#10;Choose an account"
+content-desc="Features"
+content-desc="Home"
+content-desc="Show updates page with new udpates"
+content-desc="Your info"
+text="Do more with Personal Safety"
+text="Features"
+text="Home"
+text="Personal Safety"
+text="Sign in to your Google Account to use Emergency Sharing, Safety Check, and more"
+text="Sign in"
+text="Your info"
+saved evidence/pla40/lt-4-signin.png
+10-08 22:13:49.240  1853  3902 I ActivityTaskManager: START u0 {act=com.google.android.apps.safetyhub.ACTION_FORCE_SELECT_ACCOUNT flg=0x14000000 cmp=com.google.android.apps.safetyhub/.home.HomeActivity (has extras)} with LAUNCH_SINGLE_TOP from uid 10262 (start
+tapped 539,1327
+topResumedActivity=ActivityRecord{4792a79 u0 com.google.android.apps.safetyhub/.common.account.selector.ui.SafetyHubSelectAccountActivity t166}
+content-desc="Expand account list."
+text="By continuing, you agree to Google's Terms of Service. Google's Privacy Policy describes how your data is handled."
+text="Continue"
+text="Quickly connect to the right help with Emergency Sharing, Safety Check, and more"
+text="Use Personal Safety without an account"
+text="Welcome to Personal Safety"
+10-08 22:14:02.345  1853  6201 I ActivityTaskManager: START u0 {act=com.google.android.apps.safetyhub.ACTION_FORCE_SELECT_ACCOUNT flg=0x14000000 cmp=com.google.android.apps.safetyhub/.home.HomeActivity (has extras)} with LAUNCH_SINGLE_TOP from uid 10262 (start
+10-08 22:14:02.746  1853  6201 I ActivityTaskManager: START u0 {cmp=com.google.android.apps.safetyhub/.common.account.selector.ui.SafetyHubSelectAccountActivity (has extras)} with LAUNCH_MULTIPLE from uid 10262 (startActivityAsUser) (BAL_ALLOW_VISIBLE_WINDOW) 

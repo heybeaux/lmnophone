@@ -1,0 +1,11 @@
+topResumedActivity=ActivityRecord{22f0925 u0 android/com.android.internal.app.BlockedAppActivity t166}
+text="App is not available"
+text="Chrome is not available right now."
+text="OK"
+saved evidence/pla40/lt-6-privacy-link.png
+10-08 22:14:19.788  1853  3902 I ActivityTaskManager: START u0 {act=android.intent.action.VIEW dat=https://policies.google.com/... cmp=com.android.chrome/com.google.android.apps.chrome.IntentDispatcher (has extras)} with LAUNCH_MULTIPLE from uid 10262 (startActivityAsUser) (BAL_ALLOW_VISIBLE_WINDOW)
+10-08 22:14:19.788  2218  2286 V WindowManagerShell: Transition requested (#193): android.os.BinderProxy@890716d TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=166 displayId=0 isRunning=true baseIntent=Intent { act=com.google.android.apps.safetyhub.ACTION_FORCE_SELECT_AC
+10-08 22:14:19.901  1853  2486 D CoreBackPreview: Window{8c69487 u0 android/com.android.internal.app.BlockedAppActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@e1637dd, mPriority=0, mIsAnimationCallback=false}
+10-08 22:14:19.941  2218  2286 V WindowManagerShell: onTransitionReady (#193) android.os.BinderProxy@890716d: {id=193 t=OPEN f=0x0 trk=0 opt={t=FROM_STYLE} r=[0@Point(0, 0)] c=[{null m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{22f0925 u0 android/com.android.internal.app.Blocked
+10-08 22:14:19.941  2218  2286 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=193 t=OPEN f=0x0 trk=0 opt={t=FROM_STYLE} r=[0@Point(0, 0)] c=[{null m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{22f0925 u0 android/com.android.interna
+10-08 22:14:19.942  2218  2286 V WindowManagerShell: start default transition animation, info = {id=193 t=OPEN f=0x0 trk=0 opt={t=FROM_STYLE} r=[0@Point(0, 0)] c=[{null m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{22f0925 u0 android/com.android.internal.app.BlockedAppActivity)/@

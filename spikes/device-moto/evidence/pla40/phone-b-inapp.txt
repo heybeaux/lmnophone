@@ -1,0 +1,15 @@
+0
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+in app:
+topResumedActivity=ActivityRecord{29121fa u0 com.google.android.apps.messaging/.gaia.expresssignin.BugleExpressSignInActivity t168}
+after Home:
+topResumedActivity=ActivityRecord{6ce0bca u0 com.plainphone.spike.dpc/.MainActivity t127}
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+after Phone:
+topResumedActivity=ActivityRecord{8f0fc32 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t167}
+text="911"
+saved evidence/pla40/phone-b-inapp-911.png
+  mCalls: 
+  mCallAudioManager:
+    mLockTaskModeState=LOCKED

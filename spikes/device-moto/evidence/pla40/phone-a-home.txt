@@ -1,0 +1,18 @@
+OK lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc]
+topResumedActivity=ActivityRecord{6ce0bca u0 com.plainphone.spike.dpc/.MainActivity t127}
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+topResumedActivity=ActivityRecord{8f0fc32 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t167}
+topResumedActivity=ActivityRecord{8f0fc32 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t167}
+content-desc="dial"
+text="Call"
+saved evidence/pla40/phone-a-home-911.png
+    mLockTaskModeState=LOCKED
+  mCalls: 
+  mCallAudioManager:
+10-08 22:15:18.651  1853  3898 I ActivityTaskManager: START u0 {flg=0x30000000 cmp=com.plainphone.spike.dpc/.MainActivity (has extras)} with LAUNCH_SINGLE_TASK from uid 10438 (startActivityAsUser) (BAL_ALLOW_VISIBLE_WINDOW) result code=3
+10-08 22:15:18.713  1853  3906 I ActivityTaskManager: START u0 {act=android.intent.action.DIAL flg=0x10000000 pkg=com.google.android.dialer cmp=com.google.android.dialer/com.android.dialer.main.impl.MainActivity} with LAUNCH_SINGLE_TASK from uid 1043
+text="911"
+saved evidence/pla40/phone-a-home-911.png
+  mCalls: 
+  mCallAudioManager:
+    mLockTaskModeState=LOCKED

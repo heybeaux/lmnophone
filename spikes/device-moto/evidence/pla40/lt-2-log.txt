@@ -1,0 +1,26 @@
+OK lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.safetyhub, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc]
+topResumedActivity=ActivityRecord{6ce0bca u0 com.plainphone.spike.dpc/.MainActivity t127}
+topResumedActivity=ActivityRecord{9419ca7 u0 com.google.android.apps.safetyhub/.emergencysos.ui.EmergencySosActivity t162}
+content-desc="Call 5550100"
+content-desc="Emergency SOS settings"
+content-desc="Touch &amp; hold for 3 seconds to start"
+text="Call 5550100"
+text="Cancel"
+text="Emergency SOS"
+text="Touch &amp; hold for 3 seconds to start"
+text="Your phone will:"
+saved evidence/pla40/lt-2-safetyhub-allowed.png
+    mLockTaskModeState=LOCKED
+10-08 22:12:59.677  1853  2486 I GestureLauncherService: Power button double tap gesture detected, launching camera. Interval=175ms
+10-08 22:13:00.137  1853  3905 I GestureLauncherService: Emergency gesture detected. Gesture time: 635 ms
+10-08 22:13:00.137  1853  3905 I GestureLauncherService: Emergency gesture detected, launching.
+10-08 22:13:00.182  1853  3905 I ActivityTaskManager: START u0 {act=com.android.systemui.action.LAUNCH_EMERGENCY flg=0x14000000 cmp=com.google.android.apps.safetyhub/.emergencysos.ui.EmergencySosActivity} with LAUNCH_SINGLE_TASK from uid 10391 (startActivityAsUser) (BAL_ALLOW_NON_APP_VISIBLE_WINDOW)
+10-08 22:13:00.182  2218  2286 V WindowManagerShell: Transition requested (#183): android.os.BinderProxy@aea102a TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=162 displayId=0 isRunning=true baseIntent=Intent { act=com.android.systemui.action.LAUNCH_EMERGENCY flg=0x14800
+10-08 22:13:00.235 29632 29632 I TopTaskTracker: onTaskMovedToFront: (moved taskInfo to front) taskId=162, baseIntent=Intent { act=com.android.systemui.action.LAUNCH_EMERGENCY flg=0x14800000 cmp=com.google.android.apps.safetyhub/.emergencysos.ui.EmergencySosActivity }
+10-08 22:13:00.282  1853  1887 V WindowManager: Sent Transition (#183) createdAt=10-08 22:13:00.173 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=162 displayId=0 isRunning=true baseIntent=Intent { act=com.android.systemui.action.LAUNCH_EMERGENCY flg=0x148000
+  mCalls: 
+  mCallAudioManager:
+topResumedActivity=ActivityRecord{59e8270 u0 com.motorola.camera3/com.motorola.camera.LaunchAction t161}
+    mLockTaskModeState=LOCKED
+  mCalls: 
+  mCallAudioManager:

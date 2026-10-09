@@ -1,0 +1,14 @@
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+topResumedActivity=ActivityRecord{8f0fc32 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t167}
+text="911"
+saved evidence/pla40/phone-c-pinned-dial-911.png
+10-08 22:16:15.759  1853  1947 I ActivityTaskManager: START u0 {flg=0x30000000 cmp=com.plainphone.spike.dpc/.MainActivity (has extras)} with LAUNCH_SINGLE_TASK from uid 10438 (startActivityAsUser) (BAL_ALLOW_VISIBLE_WINDOW) result code=3
+10-08 22:16:15.767  1853  2205 I ActivityTaskManager: START u0 {act=android.intent.action.DIAL dat=tel:xxx flg=0x10000000 pkg=com.google.android.dialer cmp=com.google.android.dialer/com.android.dialer.main.impl.MainActivity} with LAUNCH_SINGLE_TASK from uid 10
+OK relayed launch to MainActivity (result in logcat PPSPIKE)
+topResumedActivity=ActivityRecord{a08e7b5 u0 com.android.phone/.EmergencyDialer t169}
+saved evidence/pla40/phone-d-emergency-dialer.png
+10-08 22:16:23.686  1853  3905 I ActivityTaskManager: START u0 {flg=0x30000000 cmp=com.plainphone.spike.dpc/.MainActivity (has extras)} with LAUNCH_SINGLE_TASK from uid 10438 (startActivityAsUser) (BAL_ALLOW_VISIBLE_WINDOW) result code=3
+10-08 22:16:23.702  1853  3905 I ActivityTaskManager: START u0 {act=com.android.phone.EmergencyDialer.DIAL flg=0x10000000 pkg=com.android.phone cmp=com.android.phone/.EmergencyDialer} with LAUNCH_MULTIPLE from uid 10438 (startActivityAsUser) (BAL_ALLOW_VISIBLE
+  mCalls: 
+  mCallAudioManager:
+topResumedActivity=ActivityRecord{6ce0bca u0 com.plainphone.spike.dpc/.MainActivity t127}
