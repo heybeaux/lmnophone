@@ -95,6 +95,9 @@ The escape threat list is in `research/evidence/webview-and-escape-threats.md` (
   - web pages inside approved apps;
   - Google account or help screens inside required system components, if testing finds any;
   - a recovery-mode wipe.
+- **Board decision on a found leak (Beaux, Telegram 4463, 2026-10-08).** Outlook 5.2639.2 (PLA-5 B-Q4): Privacy & Cookies opens Outlook's own WebView, which follows off-site links under lock task with BLOCK on, before sign-in and again after sign-out. Beaux **accepts** it. Outlook stays in the catalog for the trusted person, with a plain web-leak note in the catalog and setup guide.
+  - The decision covers Outlook only. If a later Outlook version makes the route easier (for example a visible browse button), it goes back to Beaux.
+  - **Rule for later gate calls.** Beaux: "The overall goal is to cut down on distractions, not make the phone unusable." A small web leak that takes deliberate effort, inside an otherwise useful app, is weighed against usability. It is not a failure by itself. Leaks that are easy to reach, or that change what an app is for, still go to Beaux.
 
 **Risk 4. Google developer verification.**
 - Canada is in Google's "2027 global" wave; no month is given (documented).

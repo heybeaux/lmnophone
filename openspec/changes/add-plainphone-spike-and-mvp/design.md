@@ -301,6 +301,7 @@ Anything else needs a supervised Settings session. There is no generic "helper t
    - Gmail and Outlook both render HTML mail and open links. Each may open links inside the app (an in-app browser or Custom Tab) rather than handing them to Android, so the blocked-link screen may never see them.
    - Gmail is preinstalled on the Motorola, so it is a system app, and it carries other Google surfaces (Chat, Meet tabs).
    - Outlook's sign-in, and adding a Google account to Outlook, may go through a web sign-in page. With every browser hidden, that sign-in may fail.
+   - **Found and accepted (Beaux, Telegram 4463):** in Outlook 5.2639.2, Privacy & Cookies opens a WebView that follows off-site links, before sign-in and after sign-out (PLA-5 B-Q4). Outlook stays in the catalog with a plain web-leak note (ADR Risk 3). A later version that makes the route easier goes back to Beaux.
 5. **Carrier.** Rogers, which is on Apple's RCS-with-iPhone list.
 6. **Helper and signing key.** Beaux is the helper and keeps the key. The offline backup is on an encrypted USB stick or in his password manager, kept away from the laptop.
 
