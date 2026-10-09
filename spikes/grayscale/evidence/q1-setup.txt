@@ -1,0 +1,26 @@
+$ adb install -t grey-v1.apk
+Performing Streamed Install
+Success
+$ adb shell dpm set-device-owner com.plainphone.spike.grey/.AdminReceiver
+Success: Device owner set to package com.plainphone.spike.grey/.AdminReceiver
+Active admin set to component com.plainphone.spike.grey/.AdminReceiver
+--- before grant
+$ cmd status
+version=grey-1(1) deviceOwner=true WRITE_SECURE_SETTINGS=false lockTask=0 accessibility_display_daltonizer_enabled=null accessibility_display_daltonizer=null
+$ cmd grey-on   (no grant)
+ERROR SecurityException: Permission denial, must have one of: [android.permission.WRITE_SECURE_SETTINGS]
+$ cmd dpm-grant  (Device Owner tries to grant itself WRITE_SECURE_SETTINGS)
+setPermissionGrantState(WRITE_SECURE_SETTINGS, GRANTED) -> false; hasGrant=false
+$ cmd dpm-secure accessibility_display_daltonizer_enabled 1
+ERROR SecurityException: Permission denial: Device owners cannot update accessibility_display_daltonizer_enabled
+$ keys
+enabled=null mode=null
+--- grant
+$ adb shell pm grant com.plainphone.spike.grey android.permission.WRITE_SECURE_SETTINGS
+exit=0
+$ dumpsys package (grant)
+versionCode=1 minSdk=33 targetSdk=35
+android.permission.WRITE_SECURE_SETTINGS
+android.permission.WRITE_SECURE_SETTINGS: granted=true
+$ cmd status
+version=grey-1(1) deviceOwner=true WRITE_SECURE_SETTINGS=true lockTask=0 accessibility_display_daltonizer_enabled=null accessibility_display_daltonizer=null

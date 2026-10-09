@@ -1,0 +1,14 @@
+$ cmd home-set
+OK persistent preferred HOME
+$ keys (before)
+enabled=null mode=null
+$ cmd grey-on
+21:24:43.683
+putInt mode=true enabled=true -> accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0
+$ keys
+enabled=1 mode=0
+$ dumpsys color_display (daltonizer state)
+$ cmd grey-off
+putInt mode=true enabled=true -> accessibility_display_daltonizer_enabled=0 accessibility_display_daltonizer=0
+$ keys
+enabled=0 mode=0
