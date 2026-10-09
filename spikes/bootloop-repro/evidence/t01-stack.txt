@@ -1,0 +1,15 @@
+--------- beginning of crash
+10-08 18:08:17.315   552   628 E AndroidRuntime: *** FATAL EXCEPTION IN SYSTEM PROCESS: PackageManager
+10-08 18:08:17.315   552   628 E AndroidRuntime: java.lang.IllegalStateException: Cannot broadcast before boot completed
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at com.android.server.am.ActivityManagerService.verifyBroadcastLocked(ActivityManagerService.java:16263)
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at com.android.server.am.ActivityManagerService.broadcastIntentWithFeature(ActivityManagerService.java:16311)
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at com.android.server.pm.BroadcastHelper.sendBootCompletedBroadcastToSystemApp(BroadcastHelper.java:264)
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at com.android.server.pm.BroadcastHelper.lambda$sendPackageAddedForNewUsers$3(BroadcastHelper.java:656)
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at com.android.server.pm.BroadcastHelper.$r8$lambda$Oug9dEN74-YzL_S_zLOLodG8ONM(BroadcastHelper.java:0)
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at com.android.server.pm.BroadcastHelper$$ExternalSyntheticLambda2.run(R8$$SyntheticClass:0)
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at android.os.Handler.handleCallback(Handler.java:959)
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:232)
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:317)
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+10-08 18:08:17.315   552   628 E AndroidRuntime: 	at com.android.server.ServiceThread.run(ServiceThread.java:46)

@@ -1,0 +1,17 @@
+## t01-unhide-captive-5s-adb: unhide com.google.android.captiveportallogin, reboot=adb after 5s (18:07:57)
+boot_id before: 7ff2da1d-2026-4c85-877d-4400c47649a1
+state com.google.android.captiveportallogin hidden=true suspended=false
+unhide com.google.android.captiveportallogin -> true
+b=''
+b=''
+b=''
+b=''
+b=''
+b=''
+b=''
+TIMEOUT
+system_server crashes in crash buffer: 44
+10-08 18:08:17.315   552   628 E AndroidRuntime: java.lang.IllegalStateException: Cannot broadcast before boot completed
+10-08 18:08:17.315   552   552 E AndroidRuntime: java.lang.RuntimeException: Failed to boot service com.android.server.devicepolicy.DevicePolicyManagerService$Lifecycle: onBootPhase threw an exception during phase 500
+10-08 18:08:17.315   552   552 E AndroidRuntime: Caused by: java.lang.IllegalStateException: Cannot broadcast before boot completed
+RESULT: LOOP

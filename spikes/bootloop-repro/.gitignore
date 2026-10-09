@@ -1,0 +1,4 @@
+apps/.gradle/
+apps/dpc/build/
+apps/build/
+apps/local.properties
