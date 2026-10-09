@@ -33,10 +33,13 @@ import org.plainphone.policy.ElevationPersonBinding
 import org.plainphone.policy.ElevationRecord
 import org.plainphone.policy.ElevationState
 import org.plainphone.policy.ElevationTarget
+import org.plainphone.policy.EnrollmentConfirmations
+import org.plainphone.policy.EnrollmentWitness
 import org.plainphone.policy.FailureCounter
 import org.plainphone.policy.FrictionSettings
 import org.plainphone.policy.FrictionSettingsPatch
 import org.plainphone.policy.FrictionSettingsReceipt
+import org.plainphone.policy.IncomingPersonEnrollment
 import org.plainphone.policy.LockoutNotice
 import org.plainphone.policy.PermissionChoice
 import org.plainphone.policy.PermissionGrantCapability
@@ -53,6 +56,8 @@ import org.plainphone.policy.SecretVerifier
 import org.plainphone.policy.SessionJournal
 import org.plainphone.policy.SessionPhase
 import org.plainphone.policy.StagedUpdateBinding
+import org.plainphone.policy.TrustedPersonPatch
+import org.plainphone.policy.WaitingChangeKind
 import org.plainphone.policy.WaitingEvent
 import org.plainphone.policy.WaitingIdentity
 import org.plainphone.policy.WaitingOperation
@@ -82,7 +87,8 @@ class StoredFrictionReceipt(
  * Strict binary encoding for each section of the joint authority record. Every decoder rejects
  * truncated, padded or invalid data by returning null; it never builds an empty or default state.
  *
- * Encoders return null for data this adapter cannot yet read back: people and mode-switch patches.
+ * Encoders return null for data this adapter cannot yet read back: mode-switch patches. People
+ * patches store the original immutable enrollment and decode through the policy's restore checks.
  * Live countdowns, grants and session journals decode through the policy's restore functions, which
  * restore data only. The controllers still revoke on startup; nothing here restores authority.
  * Sets and maps whose order carries no meaning are written sorted, so equal states encode equally.
@@ -93,8 +99,7 @@ internal object AuthorityCodec {
     fun encodeCredentials(s: CredentialState): ByteArray = write {
         writeUTF(s.mode.name); writeLong(s.revision); writeLong(s.structureGeneration)
         list(s.people.entries) { (id, p) ->
-            writeUTF(id.value); verifier(p.pin); verifier(p.recovery); counter(p.pinCounter); counter(p.recoveryCounter)
-            writeLong(p.generation); optional(p.contact) { contact(it) }
+            writeUTF(id.value); credential(p)
         }
         list(s.pendingNotices) { writeUTF(it.person.value); writeUTF(it.channel.name); writeLong(it.revision) }
         optional(s.recoveryProfile) { profile ->
@@ -107,7 +112,7 @@ internal object AuthorityCodec {
 
     fun decodeCredentials(bytes: ByteArray): CredentialState? = read(bytes) {
         val mode = Mode.valueOf(readUTF()); val revision = readLong(); val structure = readLong()
-        val people = map { TrustedPersonId(readUTF()) to PersonCredential(verifier(), verifier(), counter(), counter(), readLong(), optional { contact() }) }
+        val people = map { TrustedPersonId(readUTF()) to credential() }
         val noticeList = list { LockoutNotice(TrustedPersonId(readUTF()), CredentialChannel.valueOf(readUTF()), readLong()) }
         val notices = noticeList.toSet().also { require(it.size == noticeList.size) }
         val profile = optional {
@@ -144,6 +149,9 @@ internal object AuthorityCodec {
         }
         WaitingState(revision, operation, texts, generation, receipts)
     }
+
+    /** For exact comparisons of one operation; null when it holds an unsupported patch. */
+    fun encodeOperation(op: WaitingOperation): ByteArray? = write { operation(op) }
 
     fun encodeElevation(r: ElevationRecord): ByteArray? = write {
         writeLong(r.revision)
@@ -249,7 +257,7 @@ internal object AuthorityCodec {
     }
 
     private fun DataOutputStream.operation(op: WaitingOperation) {
-        if (op.peoplePatch != null || op.modePatch != null) unsupported()
+        if (op.modePatch != null) unsupported()
         writeUTF(op.identity.requestId); writeUTF(op.identity.cancelCode); writeUTF(op.starter.value)
         writeLong(op.generation); writeLong(op.structureGeneration); writeUTF(op.mode.name); time(op.startedAt)
         writeUTF(op.phase.name); recipients(op.recipientGenerations, op.recipientContacts); writeInt(op.restoredSteps)
@@ -259,6 +267,7 @@ internal object AuthorityCodec {
         optional(op.frictionPatch) { p ->
             writeUTF(p.starter.value); writeLong(p.generation); writeLong(p.structureGeneration); friction(p.source); friction(p.target)
         }
+        optional(op.peoplePatch) { peoplePatch(it) }
     }
 
     private fun DataInputStream.operation(): WaitingOperation {
@@ -270,9 +279,51 @@ internal object AuthorityCodec {
         val patch = optional {
             requireNotNull(FrictionSettingsPatch.restore(TrustedPersonId(readUTF()), readLong(), readLong(), friction(), friction()))
         }
+        val people = optional { peoplePatch() }
         return WaitingOperation(identity, starter, generation, structure, mode, startedAt, phase, generations, restored,
-            skipper, skipperGeneration, null, contacts, stopper, stopperGeneration, null, patch)
+            skipper, skipperGeneration, people, contacts, stopper, stopperGeneration, null, patch)
     }
+
+    /** The original patch and pending enrollment; only verifiers are stored, never a recovery code. */
+    private fun DataOutputStream.peoplePatch(p: TrustedPersonPatch) {
+        writeUTF(p.kind.name); writeUTF(p.starter.value); writeLong(p.structureGeneration)
+        list(p.dependencyGenerations.entries) { (id, g) -> writeUTF(id.value); writeLong(g) }
+        list(p.removedSlots.map { it.value }.sorted()) { writeUTF(it) }
+        optional(p.incoming) { e ->
+            writeUTF(e.person.value); credential(e.credential); writeUTF(e.resetProtectionUserId)
+            with(e.confirmations) {
+                listOf(inPerson, nameAndNumberEntered, ownPinSet, recoveryCodeReceived, resetProtectionIdFromOwnDevice,
+                    testTextReceived, offDeviceSignInChecked, independentSecondFactorChecked, accountAtLeast72HoursOld)
+            }.forEach { writeBoolean(it) }
+            when (val w = e.witness) {
+                EnrollmentWitness.Helper -> writeByte(0)
+                is EnrollmentWitness.CurrentPerson -> { writeByte(1); writeUTF(w.person.value) }
+            }
+        }
+    }
+
+    private fun DataInputStream.peoplePatch(): TrustedPersonPatch {
+        val kind = WaitingChangeKind.valueOf(readUTF()); val starter = TrustedPersonId(readUTF()); val structure = readLong()
+        val dependencies = map { TrustedPersonId(readUTF()) to readLong() }
+        val removed = set { TrustedPersonId(readUTF()) }
+        val incoming = optional {
+            val person = TrustedPersonId(readUTF()); val credential = credential(); val account = readUTF()
+            val c = EnrollmentConfirmations(flag(), flag(), flag(), flag(), flag(), flag(), flag(), flag(), flag())
+            val witness = when (readByte().toInt()) {
+                0 -> EnrollmentWitness.Helper
+                1 -> EnrollmentWitness.CurrentPerson(TrustedPersonId(readUTF()))
+                else -> throw IllegalArgumentException()
+            }
+            requireNotNull(IncomingPersonEnrollment.restore(person, credential, account, c, witness))
+        }
+        return requireNotNull(TrustedPersonPatch.restore(kind, starter, structure, dependencies, removed, incoming))
+    }
+
+    private fun DataOutputStream.credential(p: PersonCredential) {
+        verifier(p.pin); verifier(p.recovery); counter(p.pinCounter); counter(p.recoveryCounter); writeLong(p.generation)
+        optional(p.contact) { contact(it) }
+    }
+    private fun DataInputStream.credential() = PersonCredential(verifier(), verifier(), counter(), counter(), readLong(), optional { contact() })
 
     private fun DataOutputStream.recipients(generations: Map<TrustedPersonId, Long>, contacts: Map<TrustedPersonId, PersonContact?>) {
         list(generations.entries) { (id, g) -> writeUTF(id.value); writeLong(g); optional(contacts[id]) { contact(it) } }

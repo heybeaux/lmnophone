@@ -7,11 +7,17 @@ import java.io.DataOutputStream
 import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import org.plainphone.core.BuildInventory
+import org.plainphone.core.Mode
+import org.plainphone.core.TrustedPersonId
 import org.plainphone.policy.AppApprovalPhase
 import org.plainphone.policy.AppApprovalState
+import org.plainphone.policy.AppliedPeopleChange
+import org.plainphone.policy.CancelIntent
+import org.plainphone.policy.CancelIntentStore
 import org.plainphone.policy.CredentialState
 import org.plainphone.policy.CredentialStore
 import org.plainphone.policy.ElevationApprovalStore
@@ -20,6 +26,14 @@ import org.plainphone.policy.ElevationStore
 import org.plainphone.policy.FrictionSettingsReceipt
 import org.plainphone.policy.SessionJournal
 import org.plainphone.policy.FrictionWaitingStore
+import org.plainphone.policy.PeopleChangeCommitter
+import org.plainphone.policy.PersonContact
+import org.plainphone.policy.RecoveryProfile
+import org.plainphone.policy.WaitingChangeKind
+import org.plainphone.policy.WaitingHandOverCommitter
+import org.plainphone.policy.WaitingOperation
+import org.plainphone.policy.WaitingSkipCommitter
+import org.plainphone.policy.WaitingText
 import org.plainphone.policy.WaitingChangeStore
 import org.plainphone.policy.WaitingEvent
 import org.plainphone.policy.WaitingPhase
@@ -146,6 +160,220 @@ class JointAuthorityStore internal constructor(
             (used == null || (used.id == grant.id && used.target == grant.target && used.startedAt == grant.startedAt &&
                 used.deadline == grant.deadline && !used.packageAccessOpen && used.approved.containsAll(grant.approved) &&
                 replacementElevation.person == expectedElevation.person))
+    }
+
+    /**
+     * Cancel intents, kept apart from the joint record so a request survives even when that record is
+     * unreadable. Each request has a CLEAR entry and, once asked, a separate REQUESTED marker. The marker
+     * is never removed, and its presence alone (even damaged) reads as REQUESTED, so it is monotonic.
+     * A missing or damaged CLEAR entry with no marker reads as UNKNOWN. Same coordinator as every write.
+     */
+    val cancelIntents: CancelIntentStore = object : CancelIntentStore {
+        override fun initialize(requestId: String): Boolean = coordinator.run(false) {
+            val (clear, requested) = intentRecords(requestId)
+            if (requested.exists()) false
+            else clear.read()?.contentEquals(requestId.toByteArray()) == true || clear.write(requestId.toByteArray()) {}
+        }
+        override fun request(requestId: String): Boolean = coordinator.run(false) {
+            val requested = intentRecords(requestId).second
+            requested.read()?.contentEquals(requestId.toByteArray()) == true || requested.write(requestId.toByteArray()) {}
+        }
+        override fun read(requestId: String): CancelIntent = coordinator.run(CancelIntent.UNKNOWN) { intent(requestId) }
+    }
+
+    /**
+     * Turn-off and people skips: one write rotates only the skipper's PIN and code, moves the exact
+     * PENDING request to COMMITTING with that skipper, and appends one SKIPPED receipt addressed from the
+     * rotated record. Refused unless the request's cancel intent reads CLEAR inside this transaction.
+     */
+    val skipCommitter: WaitingSkipCommitter = WaitingSkipCommitter { expectedCredentials, replacementCredentials, expectedWaiting, replacementWaiting ->
+        commit { s ->
+            val before = expectedWaiting.operation ?: return@commit null
+            val after = replacementWaiting.operation ?: return@commit null
+            val skipper = after.skipper ?: return@commit null
+            if (before.phase != WaitingPhase.PENDING || before.skipper != null ||
+                !sameOperation(after, before.copied(WaitingPhase.COMMITTING, skipper = skipper, skipperGeneration = after.skipperGeneration)) ||
+                !rotatesOnly(expectedCredentials, replacementCredentials, skipper) ||
+                after.skipperGeneration != replacementCredentials.people.getValue(skipper).generation) return@commit null
+            joint(s, expectedCredentials, replacementCredentials, expectedWaiting, replacementWaiting,
+                listOf(WaitingEvent.SKIPPED to replacementCredentials))
+        }
+    }
+
+    /**
+     * The outgoing holder's code starts and skips a handover in one write: their PIN and code rotate,
+     * STARTED (addressed from the old record) and SKIPPED (from the rotated one) are queued, and the slot
+     * moves from vacant or terminal straight to COMMITTING. Incoming credentials stay in the patch only.
+     */
+    val handOverCommitter: WaitingHandOverCommitter = WaitingHandOverCommitter { expectedCredentials, replacementCredentials, expectedWaiting, replacementWaiting ->
+        commit { s ->
+            val after = replacementWaiting.operation ?: return@commit null
+            val patch = after.peoplePatch ?: return@commit null
+            if (expectedWaiting.operation?.phase !in setOf(null, WaitingPhase.COMPLETED, WaitingPhase.CANCELLED) ||
+                patch.kind != WaitingChangeKind.HAND_OVER || after.phase != WaitingPhase.COMMITTING ||
+                after.skipper != after.starter || after.stopper != null || !patch.dependenciesMatch(expectedCredentials) ||
+                !snapshotOf(after.recipientGenerations, after.recipientContacts, expectedCredentials) ||
+                !rotatesOnly(expectedCredentials, replacementCredentials, after.starter) ||
+                after.skipperGeneration != replacementCredentials.people.getValue(after.starter).generation) return@commit null
+            val started = after.copied(WaitingPhase.PENDING, skipper = null, skipperGeneration = null)
+            val texts = replacementWaiting.texts.takeLast(2)
+            if (texts.size != 2 || !sameOperation(texts[0].operation, started)) return@commit null
+            joint(s, expectedCredentials, replacementCredentials, expectedWaiting, replacementWaiting,
+                listOf(WaitingEvent.STARTED to expectedCredentials, WaitingEvent.SKIPPED to replacementCredentials))
+        }
+    }
+
+    /**
+     * People patch and direction moves. [applyPatch] writes the whole patched credential record with
+     * its applied marker while the journal stays COMMITTING; [move] writes only the journal and its one
+     * receipt. Both compare the credential and journal records inside the same transaction.
+     */
+    val peopleCommitter: PeopleChangeCommitter = object : PeopleChangeCommitter {
+        override fun applyPatch(expectedCredentials: CredentialState, replacementCredentials: CredentialState,
+            expectedWaiting: WaitingState): Boolean = commit { s ->
+            val op = expectedWaiting.operation ?: return@commit null
+            val patch = op.peoplePatch ?: return@commit null
+            if (op.phase != WaitingPhase.COMMITTING || applied(expectedWaiting, expectedCredentials) ||
+                expectedCredentials.mode != Mode.TRUSTED || expectedCredentials.structureGeneration != op.structureGeneration ||
+                patch.incoming?.person in expectedCredentials.people ||
+                !expectedCredentials.people.keys.containsAll(patch.dependencyGenerations.keys)) return@commit null
+            val profile = expectedCredentials.recoveryProfile ?: return@commit null
+            // The one acceptable result, built the same way as the policy's candidate, then compared byte for byte.
+            val people = expectedCredentials.people.toMutableMap()
+            val accounts = profile.holderUserIds.toMutableMap()
+            patch.removedSlots.forEach { people.remove(it); accounts.remove(it) }
+            patch.incoming?.let { people[it.person] = it.credential; accounts[it.person] = it.resetProtectionUserId }
+            if (people.size !in 1..2 || expectedCredentials.revision == Long.MAX_VALUE ||
+                expectedCredentials.structureGeneration == Long.MAX_VALUE) return@commit null
+            val structure = expectedCredentials.structureGeneration + 1
+            val wanted = CredentialState(expectedCredentials.mode, people, expectedCredentials.revision + 1, structure,
+                expectedCredentials.pendingNotices, RecoveryProfile(accounts, profile.backupUserId, profile.friction),
+                AppliedPeopleChange(op.identity.requestId, expectedWaiting.storageGeneration, structure))
+            val bytes = AuthorityCodec.encodeCredentials(replacementCredentials)
+            if (!bytes.contentEquals(AuthorityCodec.encodeCredentials(wanted)) ||
+                !s.matches(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(expectedCredentials)) ||
+                !s.matches(Section.WAITING, AuthorityCodec.encodeWaiting(expectedWaiting))) return@commit null
+            s.with(Section.CREDENTIALS, bytes)
+        }
+
+        override fun move(expectedCredentials: CredentialState, expectedWaiting: WaitingState, replacementWaiting: WaitingState): Boolean = commit { s ->
+            val before = expectedWaiting.operation ?: return@commit null
+            val after = replacementWaiting.operation ?: return@commit null
+            if (before.peoplePatch == null) return@commit null
+            val done = applied(expectedWaiting, expectedCredentials)
+            val (shape, event) = when {
+                before.phase == WaitingPhase.COMMITTING && after.phase == WaitingPhase.ROLLING_BACK && !done -> {
+                    val stopper = after.stopper ?: return@commit null
+                    if (expectedCredentials.people[stopper]?.generation != after.stopperGeneration) return@commit null
+                    before.copied(WaitingPhase.ROLLING_BACK, stopper = stopper, stopperGeneration = after.stopperGeneration) to WaitingEvent.ROLLING_BACK
+                }
+                before.phase == WaitingPhase.COMMITTING && after.phase == WaitingPhase.COMPLETED && done ->
+                    before.copied(WaitingPhase.COMPLETED) to WaitingEvent.COMPLETED
+                before.phase == WaitingPhase.ROLLING_BACK && after.phase == WaitingPhase.CANCELLED && !done ->
+                    before.copied(WaitingPhase.CANCELLED) to WaitingEvent.CANCELLED_AFTER_ROLLBACK
+                else -> return@commit null
+            }
+            if (!sameOperation(after, shape)) return@commit null
+            joint(s, expectedCredentials, null, expectedWaiting, replacementWaiting, listOf(event to expectedCredentials))
+        }
+    }
+
+    /**
+     * The shared tail of every joint people write: both stored sections still match, the journal
+     * advances by one revision in the same storage generation, earlier texts and recovery receipts are
+     * kept exactly, and each new receipt is addressed from one whole credential snapshot.
+     */
+    private fun joint(s: Snapshot, expectedCredentials: CredentialState, replacementCredentials: CredentialState?,
+        expectedWaiting: WaitingState, replacementWaiting: WaitingState, added: List<Pair<WaitingEvent, CredentialState>>): Snapshot? {
+        val after = replacementWaiting.operation ?: return null
+        val before = expectedWaiting.operation
+        // A live request keeps its ID; a new one never reuses the ID of the terminal request it replaces.
+        val sameRequest = before?.identity?.requestId == after.identity.requestId
+        if (!advances(expectedWaiting, replacementWaiting) || (before != null && (before.phase in TERMINAL) == sameRequest)) return null
+        if (replacementWaiting.texts.size != expectedWaiting.texts.size + added.size ||
+            !sameTexts(replacementWaiting.texts.take(expectedWaiting.texts.size), expectedWaiting) ||
+            !sameRecoveryReceipts(expectedWaiting, replacementWaiting)) return null
+        val keys = expectedWaiting.texts.map { it.key }.toMutableSet()
+        replacementWaiting.texts.drop(expectedWaiting.texts.size).zip(added).forEachIndexed { i, (text, expected) ->
+            val (event, credentials) = expected
+            if (text.event != event || !keys.add(text.key) || text.key.isBlank() ||
+                !snapshotOf(text.recipientGenerations, text.recipientContacts, credentials) ||
+                (i == added.lastIndex && !sameOperation(text.operation, after))) return null
+        }
+        // Entering COMMITTING (skip or handover) needs a CLEAR intent read inside this transaction.
+        if (after.phase == WaitingPhase.COMMITTING && before?.phase != WaitingPhase.COMMITTING &&
+            intent(after.identity.requestId) != CancelIntent.CLEAR) return null
+        if (!s.matches(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(expectedCredentials)) ||
+            !s.matches(Section.WAITING, AuthorityCodec.encodeWaiting(expectedWaiting))) return null
+        val waiting = AuthorityCodec.encodeWaiting(replacementWaiting) ?: return null
+        var next = s.with(Section.WAITING, waiting)
+        if (replacementCredentials != null) next = next.with(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(replacementCredentials))
+        return next
+    }
+
+    /** True only when [replacement] differs from [expected] by one revision and [person]'s new PIN and code. */
+    private fun rotatesOnly(expected: CredentialState, replacement: CredentialState, person: TrustedPersonId): Boolean {
+        val old = expected.people[person] ?: return false
+        val new = replacement.people[person] ?: return false
+        if (expected.revision == Long.MAX_VALUE || replacement.revision != expected.revision + 1 || new.generation != old.generation + 1 ||
+            new.contact?.name != old.contact?.name || new.contact?.number != old.contact?.number ||
+            AuthorityCodec.encodeCredentials(CredentialState(replacement.mode, mapOf(person to new))).contentEquals(
+                AuthorityCodec.encodeCredentials(CredentialState(expected.mode, mapOf(person to old))))) return false
+        val restored = CredentialState(replacement.mode, replacement.people + (person to old), expected.revision,
+            replacement.structureGeneration, replacement.pendingNotices, replacement.recoveryProfile, replacement.appliedPeopleChange)
+        return replacement.people.keys == expected.people.keys &&
+            AuthorityCodec.encodeCredentials(restored).contentEquals(AuthorityCodec.encodeCredentials(expected))
+    }
+
+    /** A receipt's frozen recipients are exactly one record's holders, generations and contacts (null stays null). */
+    private fun snapshotOf(generations: Map<TrustedPersonId, Long>,
+        contacts: Map<TrustedPersonId, PersonContact?>, credentials: CredentialState): Boolean =
+        generations == credentials.people.mapValues { it.value.generation } && contacts.keys == credentials.people.keys &&
+            credentials.people.all { (id, p) -> contacts[id]?.name == p.contact?.name && contacts[id]?.number == p.contact?.number }
+
+    private fun applied(waiting: WaitingState, credentials: CredentialState): Boolean {
+        val op = waiting.operation ?: return false
+        val marker = credentials.appliedPeopleChange ?: return false
+        if (op.structureGeneration == Long.MAX_VALUE) return false
+        val target = op.structureGeneration + 1
+        return marker.requestId == op.identity.requestId && marker.waitingGeneration == waiting.storageGeneration &&
+            marker.structureGeneration == target && credentials.structureGeneration == target
+    }
+
+    private fun sameOperation(a: WaitingOperation, b: WaitingOperation): Boolean {
+        val left = AuthorityCodec.encodeOperation(a) ?: return false
+        return left.contentEquals(AuthorityCodec.encodeOperation(b))
+    }
+
+    private fun sameTexts(texts: List<WaitingText>, expected: WaitingState): Boolean {
+        val probe = AuthorityCodec.encodeWaiting(WaitingState(0, null, texts, "probe")) ?: return false
+        return probe.contentEquals(AuthorityCodec.encodeWaiting(WaitingState(0, null, expected.texts, "probe")))
+    }
+
+    private fun sameRecoveryReceipts(expected: WaitingState, replacement: WaitingState): Boolean {
+        val probe = AuthorityCodec.encodeWaiting(WaitingState(0, null, emptyList(), "probe", replacement.recoveryReceipts)) ?: return false
+        return probe.contentEquals(AuthorityCodec.encodeWaiting(WaitingState(0, null, emptyList(), "probe", expected.recoveryReceipts)))
+    }
+
+    private fun WaitingOperation.copied(phase: WaitingPhase, skipper: TrustedPersonId? = this.skipper,
+        skipperGeneration: Long? = this.skipperGeneration, stopper: TrustedPersonId? = this.stopper,
+        stopperGeneration: Long? = this.stopperGeneration) = WaitingOperation(identity, starter, generation, structureGeneration, mode,
+        startedAt, phase, recipientGenerations, restoredSteps, skipper, skipperGeneration, peoplePatch, recipientContacts,
+        stopper, stopperGeneration, modePatch, frictionPatch)
+
+    private fun intentRecords(requestId: String): Pair<AtomicRecord, AtomicRecord> {
+        val hash = MessageDigest.getInstance("SHA-256").digest(requestId.toByteArray()).joinToString("") { "%02x".format(it) }
+        return AtomicRecord(dir, "intent-clear-$hash", SCHEMA) to AtomicRecord(dir, "intent-requested-$hash", SCHEMA)
+    }
+
+    /** Callers hold the coordinator. */
+    private fun intent(requestId: String): CancelIntent {
+        val (clear, requested) = intentRecords(requestId)
+        return when {
+            requested.exists() -> CancelIntent.REQUESTED
+            clear.read()?.contentEquals(requestId.toByteArray()) == true -> CancelIntent.CLEAR
+            else -> CancelIntent.UNKNOWN
+        }
     }
 
     /** Enrollment-time creation of the first record. Refuses if any copy or fence already exists. */
@@ -312,9 +540,10 @@ class JointAuthorityStore internal constructor(
     }
 
     private companion object {
-        /** 2 adds the app approval section. */
-        const val SCHEMA = 2
+        /** 2 adds the app approval section; 3 stores people patches in waiting operations. */
+        const val SCHEMA = 3
         val BUSY = setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
+        val TERMINAL = setOf(WaitingPhase.COMPLETED, WaitingPhase.CANCELLED)
         val coordinators = ConcurrentHashMap<String, Coordinator>()
     }
 }
