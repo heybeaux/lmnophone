@@ -120,7 +120,7 @@ still work, which calms me down"), and could still call at a hotel.
 | Q5 (hotel Wi-Fi): "I don't think I'll be able to make calls from it." **The screen failed its main job.** | Title is now "Calls and texts still work", first; the spec sentence follows; the mobile-data definition is gone ([U7](flows-user.md#wi-fi-messages-exact-text-from-web-containment)). |
 | Q6: "Can I change this person? Can I have multiple people in Sam's role?" | Product question for the Lead (question 8). |
 | Q7: "it mentions a virus, so now I'm thinking it's a virus." "No clear description as to what's wrong." | "Virus" removed. The screen now gives a plain reason, such as "An app on this phone couldn't be tidied away" ([U3](flows-user.md#u3-plainphone-needs-attention-from-the-notice-line)). |
-| Q8: "'Emergency 9-1-1' on the main screen makes me worried I'll bump it by accident." | A bump only opens the dialer; it never calls. The button now says so ("Opens the dialer"), with a wider gap before Phone. No extra confirm screen, which would slow a real emergency. |
+| Q8: "'Emergency 9-1-1' on the main screen makes me worried I'll bump it by accident." | A bump only opens the dialer; it never calls. The button now says so ("Opens the dialer"), with a wider gap before Phone. No extra confirm screen, which would slow a real emergency. **Superseded:** Beaux took the button off the home screen (Telegram 4487). 9-1-1 is now dialled from Phone, More → Emergency 9-1-1, or the lock screen ([U1](flows-user.md#u1-home-screen)). |
 | Q8: "'This phone is set up without web pages': what if I need them?" | Same as Q3: product question 9. |
 | Q9: bossy, babyish or watched? "No, I don't think so." | — |
 

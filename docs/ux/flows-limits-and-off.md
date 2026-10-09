@@ -93,7 +93,7 @@ for you to do."
 | Cause | Line | What to do |
 |---|---|---|
 | Hiding an app failed | "{app} couldn't be hidden. It still can't be opened." | "Ask {helper} to remove it." |
-| Both saved settings copies broken (safe fallback in use) | "Plainphone's saved settings were damaged, so it's using a basic safe setup: Phone, Messages and Emergency." | "{helper} needs to set Plainphone up again, or install an update." |
+| Both saved settings copies broken (safe fallback in use) | "Plainphone's saved settings were damaged, so it's using a basic safe setup: Phone and Messages. 9-1-1 still works." | "{helper} needs to set Plainphone up again, or install an update." |
 | Post-update self-check failed | "After the last Plainphone update, a check didn't pass: {item}." | "Call {helper}." |
 | Unknown phone software (recommended, [Open question 3](README.md#open-questions-for-the-lead)) | "The phone has new software that hasn't been reviewed." | "See 'Phone software changed – review pending'." |
 

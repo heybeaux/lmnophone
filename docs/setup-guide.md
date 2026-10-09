@@ -277,20 +277,28 @@ with that.
 You need a second phone. **Never place a real 9-1-1 call** to test. That needs a separate procedure agreed with
 E-Comm or the carrier and approved by Beaux.
 
-### I1. Emergency button opens the emergency dialer, without calling
+### I1. 9-1-1 can be reached in every state, without calling
 
-In each state, tap **Emergency** (or the lock screen's **Emergency** link), check the emergency dialer appears,
-then back out **without dialling**. Tick each one in the setup record.
+There's no Emergency button on the home screen, on purpose (Beaux: "I don't want users bumping it by accident").
+9-1-1 is reached through **Phone**, through **More → Emergency 9-1-1**, and from the lock screen's **Emergency
+call**. In each state below, use the route named, check that Android's dialer (or its emergency dialer) appears,
+then back out **without pressing call**. Don't type 9-1-1 yourself. Tick each one in the setup record.
 
-- [ ] Lock screen, straight after a restart, before the first unlock
-- [ ] Lock screen
-- [ ] Home screen
-- [ ] Inside an app (press Home, then Emergency)
-- [ ] During a PIN wait (enter a wrong PIN 5 times, then try)
-- [ ] With the Play Store open for 10 minutes (trusted person starts it)
-- [ ] During a Plainphone update (only if one is being installed)
-- [ ] After Plainphone restarts (restart the phone)
+- [ ] Lock screen, straight after a restart, before the first unlock: tap **Emergency call**
+- [ ] Lock screen: tap **Emergency call**
+- [ ] Home screen: tap **Phone**
+- [ ] Home screen: tap **More**, then **Emergency 9-1-1**. The dialer opens with 9-1-1 already typed in. Back out.
+- [ ] Inside an app: press Home, then tap **Phone**
+- [ ] During a PIN wait (enter a wrong PIN 5 times, then press Home and tap **Phone**)
+- [ ] With the Play Store open for 10 minutes (trusted person starts it): press Home, then tap **Phone**
+- [ ] During a Plainphone update (only if one is being installed): tap **Emergency call** on the lock screen, or
+      **Phone** if the home screen shows
+- [ ] After Plainphone restarts (restart the phone): unlock, then tap **Phone**
 - [ ] From the power menu, if the phone has an emergency entry there
+- [ ] Power button pressed 5 times (Emergency SOS): **skip this** unless the Plainphone team has confirmed that
+      it works on this model and software version while Plainphone is running (feasibility question Q14,
+      [PLA-40](/PLA/issues/PLA-40)). If they have, do this one **with the Plainphone team**, not alone: the SOS
+      countdown calls 9-1-1 by itself if nobody cancels it in time.
 
 ### I2. Calls and texts
 
@@ -313,7 +321,11 @@ then back out **without dialling**. Tick each one in the setup record.
 ### I4. Talk it through with the user
 
 Sit with the user for ten minutes. Show them:
-- the **Emergency** button, and that it opens the dialer with 911 typed in, ready to call;
+- **how to call 9-1-1.** There's no Emergency button on the home screen, so a bump can't start it. Show them:
+  tap **Phone**, type 9-1-1, and press call; or tap **More**, then **Emergency 9-1-1**, which opens the dialer
+  with 9-1-1 typed in, ready to call; or, on the lock screen, tap **Emergency call**. Add "or press the power
+  button 5 times quickly" **only if** the Plainphone team confirmed it works on this phone (Q14). The same list is
+  on **More → About this phone**;
 - **Phone**, **Messages** and their apps;
 - **More → Ask for an app**, and that the trusted person gets a text;
 - what happens when a web link doesn't open, and that "Send to {trusted person}" is there;

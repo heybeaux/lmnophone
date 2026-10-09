@@ -114,7 +114,8 @@ These are places where the spec and good copy pull in different directions, or t
 recommendation; none changes a promise.
 
 1. **"Nothing else" on the home screen.** calm-home-screen's "First look" scenario says the user sees the time,
-   date, Emergency, Phone, Messages and their apps, "and nothing else". But the user also needs a way to ask for
+   date, Phone, Messages and their other approved apps, "and nothing else" (Emergency is no longer on the home
+   screen: Beaux, Telegram 4487). But the user also needs a way to ask for
    an app, reach Plainphone's own settings, and hand the phone to the trusted person. **Recommendation:** one
    last tile, "More", below the apps, styled like an app tile. Amend the scenario to "…and their other approved
    apps, then More". Also confirm that "one primary action" applies to task screens, not menu pages.
