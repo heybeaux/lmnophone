@@ -116,14 +116,35 @@ class SignerBoundPolicyTest {
             val plan = PolicyEngine.decide(input().copy(installed = installed,
                 identities = listOf(FloorIdentity(dialer, FloorRole.SYSTEM_DIALER, IdentitySource.OS_MANAGED),
                     FloorIdentity(keyboard, FloorRole.KEYBOARD, IdentitySource.OS_MANAGED)),
-                inventory = if (known) inventory else null, lockedBoot = locked,
+                inventory = inventory, fingerprint = if (known) "build" else "ota-build", lockedBoot = locked,
                 previousLockTask = required + keyboard + app))
             assertTrue(app in plan.lockTaskPackages, "known=$known locked=$locked")
             assertTrue(setOf(home, sms, dialer).all { it in plan.lockTaskPackages })
-            if (known) assertTrue(minimum in plan.lockTaskPackages)
+            assertTrue(minimum in plan.lockTaskPackages)
             assertTrue(keyboard in plan.unhide)
             assertFalse(keyboard in plan.lockTaskPackages)
             assertFalse(required.any { it in plan.hidden })
+        }
+    }
+
+    @Test fun `stored minimum UI on unknown build never adds absent previous membership or old never hide`() {
+        val minimum = PackageName("test.minimum")
+        val oldDependency = PackageName("test.old.dependency")
+        val staleInventory = BuildInventory("model", "old-build", 1,
+            NeverHideList(setOf(minimum, oldDependency)), setOf(minimum), emptySet())
+        for (locked in listOf(true, false)) for (health in PolicyHealth.entries) {
+            val plan = PolicyEngine.decide(input().copy(fingerprint = "ota-build", inventory = staleInventory,
+                installed = listOf(InstalledPackage(minimum, true, 1), InstalledPackage(oldDependency, true, 1)),
+                lockedBoot = locked, health = health, approvalState = null, installedIdentities = emptyList(),
+                previousHidden = setOf(oldDependency), previousLockTask = setOf(home, sms)))
+            assertFalse(minimum in plan.lockTaskPackages)
+            assertFalse(minimum in plan.hidden)
+            assertFalse(minimum in plan.unhide)
+            assertFalse(oldDependency in plan.neverHide)
+            assertTrue(oldDependency in plan.hidden)
+            assertFalse(oldDependency in plan.unhide)
+            assertEquals(if (locked || health == PolicyHealth.BOTH_INVALID) SweepMode.NONE else SweepMode.USER_APPS_ONLY,
+                plan.sweepMode)
         }
     }
 
