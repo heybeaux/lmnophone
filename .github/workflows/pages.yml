@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   check:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     outputs:
       ready: ${{ steps.pages.outputs.ready }}
@@ -37,7 +38,7 @@ jobs:
 
   deploy:
     needs: check
-    if: needs.check.outputs.ready == 'true'
+    if: github.ref == 'refs/heads/main' && needs.check.outputs.ready == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
