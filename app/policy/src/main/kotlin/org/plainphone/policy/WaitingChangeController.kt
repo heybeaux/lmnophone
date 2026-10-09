@@ -37,10 +37,14 @@ class WaitingOperation(
     val stopper: TrustedPersonId? = null,
     val stopperGeneration: Long? = null,
     val modePatch: ModeSwitchPatch? = null,
+    val frictionPatch: FrictionSettingsPatch? = null,
 ) {
     init {
         require(generation >= 0 && structureGeneration >= 0)
-        require(peoplePatch == null || modePatch == null)
+        require(listOfNotNull(peoplePatch, modePatch, frictionPatch).size <= 1)
+        require(frictionPatch == null || (mode == Mode.SELF_MANAGED && restoredSteps == 0 && skipper == null &&
+            frictionPatch.direction == FrictionDirection.LOOSER && frictionPatch.starter == starter &&
+            frictionPatch.generation == generation && frictionPatch.structureGeneration == structureGeneration))
         require(modePatch == null || (restoredSteps == 0 && modePatch.sourceMode == mode &&
             modePatch.starter == starter && modePatch.structureGeneration == structureGeneration &&
             modePatch.dependencyGenerations[starter] == generation))
@@ -61,7 +65,8 @@ class WaitingOperation(
     /** Start-time fallback retained independently of acknowledged outbox texts. */
     val recipientGenerations: Map<TrustedPersonId, Long> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientGenerations))
     val recipientContacts: Map<TrustedPersonId, PersonContact?> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientContacts))
-    val kind: WaitingChangeKind get() = peoplePatch?.kind ?: if (modePatch != null) WaitingChangeKind.SWITCH_MODE else WaitingChangeKind.TURN_OFF
+    val kind: WaitingChangeKind get() = peoplePatch?.kind ?: frictionPatch?.waitingKind ?:
+        if (modePatch != null) WaitingChangeKind.SWITCH_MODE else WaitingChangeKind.TURN_OFF
     val authorityPerson: TrustedPersonId get() = skipper ?: starter
     val authorityGeneration: Long get() = skipperGeneration ?: generation
     /** A skipper replaces starter authority, but never drops a slot the patch removes/replaces. */
@@ -77,14 +82,14 @@ class WaitingOperation(
         current.structureGeneration == structureGeneration &&
         dependencyGenerations.all { (person, generation) -> current.people[person]?.generation == generation } &&
         (peoplePatch == null || current.recoveryProfile != null) &&
-        (modePatch?.structureMatches(current) != false)
+        (modePatch?.structureMatches(current) != false) && (frictionPatch?.dependenciesMatch(current) != false)
     internal fun withSkipper(person: TrustedPersonId, generation: Long) = WaitingOperation(identity, starter, this.generation,
-        structureGeneration, mode, startedAt, WaitingPhase.COMMITTING, recipientGenerations, 0, person, generation, peoplePatch, recipientContacts, stopper, stopperGeneration, modePatch)
-    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, restoredSteps, skipper, skipperGeneration, peoplePatch, recipientContacts, stopper, stopperGeneration, modePatch)
-    internal fun withRestoredSteps(count: Int) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, count, skipper, skipperGeneration, peoplePatch, recipientContacts, stopper, stopperGeneration, modePatch)
+        structureGeneration, mode, startedAt, WaitingPhase.COMMITTING, recipientGenerations, 0, person, generation, peoplePatch, recipientContacts, stopper, stopperGeneration, modePatch, frictionPatch)
+    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, restoredSteps, skipper, skipperGeneration, peoplePatch, recipientContacts, stopper, stopperGeneration, modePatch, frictionPatch)
+    internal fun withRestoredSteps(count: Int) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, count, skipper, skipperGeneration, peoplePatch, recipientContacts, stopper, stopperGeneration, modePatch, frictionPatch)
     internal fun withRollback(person: TrustedPersonId, generation: Long) = WaitingOperation(identity, starter, this.generation,
         structureGeneration, mode, startedAt, WaitingPhase.ROLLING_BACK, recipientGenerations, restoredSteps,
-        skipper, skipperGeneration, peoplePatch, recipientContacts, person, generation, modePatch)
+        skipper, skipperGeneration, peoplePatch, recipientContacts, person, generation, modePatch, frictionPatch)
 }
 class WaitingState(val revision: Long = 0, val operation: WaitingOperation? = null, texts: List<WaitingText> = emptyList(),
     val storageGeneration: String = "initial", recoveryReceipts: List<RecoveryReceipt> = emptyList()) {
@@ -125,9 +130,9 @@ interface CancelIntentStore {
 class WaitingStart internal constructor(internal val identity: WaitingIdentity, internal val starter: TrustedPersonId,
     internal val generation: Long, internal val structureGeneration: Long, internal val mode: Mode,
     internal val peoplePatch: TrustedPersonPatch? = null, internal val owner: Any? = null,
-    internal val modePatch: ModeSwitchPatch? = null) {
+    internal val modePatch: ModeSwitchPatch? = null, internal val frictionPatch: FrictionSettingsPatch? = null) {
     val requestId: String get() = identity.requestId
-    val action = PrivilegedAction(peoplePatch?.let { "waiting:${it.kind.name}" } ?: modePatch?.let { "waiting:mode:${it.targetMode.name}" } ?: "waiting:turn-off",
+    val action = PrivilegedAction(frictionPatch?.let { "waiting:friction:${it.waitingKind.name}" } ?: peoplePatch?.let { "waiting:${it.kind.name}" } ?: modePatch?.let { "waiting:mode:${it.targetMode.name}" } ?: "waiting:turn-off",
         "${identity.requestId.length}:${identity.requestId}${starter.value.length}:${starter.value}")
     internal var used = false
 }
@@ -135,7 +140,7 @@ enum class WaitingOutcome { PENDING, COMMITTING, CANCELLED, REFUSED, BUSY, NOT_R
 
 /**
  * The common serialized dispatcher owns this controller, PinVault and all credential/operation writes.
- * This controller starts turn-off/people/mode waits and skips through explicitly wired recovery transactions.
+ * This controller starts turn-off/people/mode/friction waits and skips through explicitly wired recovery transactions.
  * It never restores settings, clears Device Owner, applies people/mode patches or reports Off.
  * Damaged state remains held until WaitingReconciler completes.
  */
@@ -179,13 +184,27 @@ class WaitingChangeController(
     fun prepareSupervised(starter: TrustedPersonId, incoming: IncomingPersonEnrollment): WaitingStart? =
         credentials()?.let { ModeSwitchPatch.toSupervised(it, starter, incoming) }?.let(::prepareMode)
 
+    @Synchronized
+    fun prepareFriction(starter: TrustedPersonId, target: FrictionSettings): WaitingStart? {
+        val patch = credentials()?.let { FrictionSettingsPatch.create(it, starter, target) }
+            ?.takeIf { it.direction == FrictionDirection.LOOSER } ?: return null
+        return WaitingStart(identities.reserve(), starter, patch.generation, patch.structureGeneration,
+            Mode.SELF_MANAGED, owner = preparationOwner, frictionPatch = patch)
+    }
+
+    @Synchronized
+    fun startFrictionChange(request: WaitingStart, freshAuthority: FreshAuthority, confirmed: Boolean): WaitingOutcome {
+        if (!confirmed || request.frictionPatch == null || request.peoplePatch != null || request.modePatch != null) return WaitingOutcome.REFUSED
+        return start(request, freshAuthority)
+    }
+
     private fun prepareMode(patch: ModeSwitchPatch) = WaitingStart(identities.reserve(), patch.starter,
         patch.dependencyGenerations.getValue(patch.starter), patch.structureGeneration, patch.sourceMode,
         owner = preparationOwner, modePatch = patch)
 
     @Synchronized
     fun startModeSwitch(request: WaitingStart, freshAuthority: FreshAuthority, confirmed: Boolean): WaitingOutcome {
-        if (!confirmed || request.modePatch == null || request.peoplePatch != null) return WaitingOutcome.REFUSED
+        if (!confirmed || request.modePatch == null || request.peoplePatch != null || request.frictionPatch != null) return WaitingOutcome.REFUSED
         return start(request, freshAuthority)
     }
 
@@ -194,13 +213,13 @@ class WaitingChangeController(
 
     @Synchronized
     fun startTurnOff(request: WaitingStart, freshAuthority: FreshAuthority, firstConfirmation: Boolean, secondConfirmation: Boolean): WaitingOutcome {
-        if (!firstConfirmation || !secondConfirmation || request.peoplePatch != null || request.modePatch != null) return WaitingOutcome.REFUSED
+        if (!firstConfirmation || !secondConfirmation || request.peoplePatch != null || request.modePatch != null || request.frictionPatch != null) return WaitingOutcome.REFUSED
         return start(request, freshAuthority)
     }
 
     @Synchronized
     fun startPeopleChange(request: WaitingStart, freshAuthority: FreshAuthority, confirmed: Boolean): WaitingOutcome {
-        if (!confirmed || request.peoplePatch == null || request.modePatch != null) return WaitingOutcome.REFUSED
+        if (!confirmed || request.peoplePatch == null || request.modePatch != null || request.frictionPatch != null) return WaitingOutcome.REFUSED
         return start(request, freshAuthority)
     }
 
@@ -217,14 +236,15 @@ class WaitingChangeController(
         if (!cancelIntents.initialize(request.requestId)) return WaitingOutcome.NOT_READY
         val operation = WaitingOperation(request.identity, request.starter, request.generation,
             request.structureGeneration, request.mode, now.proven, WaitingPhase.PENDING, current.people.mapValues { it.value.generation },
-            peoplePatch = request.peoplePatch, recipientContacts = current.contacts(), modePatch = request.modePatch)
+            peoplePatch = request.peoplePatch, recipientContacts = current.contacts(), modePatch = request.modePatch, frictionPatch = request.frictionPatch)
         return if (write(before, operation, WaitingEvent.STARTED, current.people.mapValues { it.value.generation }, current.contacts())) WaitingOutcome.PENDING else WaitingOutcome.NOT_READY
     }
 
     private fun startDependenciesMatch(request: WaitingStart, current: CredentialState): Boolean =
         current.mode == request.mode && current.structureGeneration == request.structureGeneration &&
             current.people[request.starter]?.generation == request.generation &&
-            (request.peoplePatch?.dependenciesMatch(current) != false) && (request.modePatch?.dependenciesMatch(current) != false)
+            (request.peoplePatch?.dependenciesMatch(current) != false) && (request.modePatch?.dependenciesMatch(current) != false) &&
+            (request.frictionPatch?.dependenciesMatch(current) != false)
 
     /**
      * Explicit outgoing-code alternative: the screen names this exact handover and confirms both

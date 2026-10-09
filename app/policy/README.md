@@ -901,59 +901,117 @@ immediate new self-managed elevation with an exhausted preserved ledger. Fakes
 prove ordering and policy behavior only. Lane D must independently prove Android
 atomicity, persistent fencing, physical closure and readback before enablement.
 
-## Self-managed friction edits — first slice (PLA-98)
+## Self-managed friction settings (PLA-98)
 
-`FrictionSettingsPatch` is immutable proposal data. It captures the current user's
-credential generation, structure generation, active source settings and target.
-Only self-managed mode with a valid recovery profile is eligible. The approved
-ranges remain 10 minutes–24 hours and 0–3 daily starts. Unchanged values are a
-no-op (no preparation, PIN consumption or write). Invalid values fail validation.
-The same-direction classifier accepts either/both stricter components or
-either/both looser components. This slice implements **only stricter application**;
-looser proposals confer no authority and cannot enter the immediate controller.
+`FrictionSettingsPatch` holds immutable source/target values, the current user's
+credential generation and the structure generation. Only self-managed mode with
+a valid recovery profile is eligible. The approved ranges remain 10 minutes–24
+hours and 0–3 daily starts. Invalid values fail validation. Unchanged values yield
+no preparation, PIN consumption or write. Both fields can change together in the
+same direction. The approved spec describes individual setting edits, not a mixed
+atomic form: the API rejects mixed-direction proposals without applying anything.
+Offer separate edits, each with fresh authorization. Never silently split one
+confirmation into an immediate looser component.
 
-The approved spec describes individual setting edits, not a mixed atomic form.
-The API therefore rejects mixed-direction proposals without applying anything.
-An adapter can offer separate edits: apply a stricter choice using a fresh PIN,
-then prepare a looser waiting request from those new active settings. It must
-never automatically split one confirmation into an immediate loosening. A changed
-source setting invalidates an earlier patch; the future waiting integration must
-cancel that stale pending target durably instead of undoing an intervening
-stricter edit. It must also retain the existing credential dependency rules.
+### Immediate stricter changes
 
-`FrictionSettingsController.prepareStricter` creates a process-local, exact-action
-request. `applyStricter` consumes the current user's fresh PIN once. Recovery
-only resets credentials; it supplies no settings authority. Different requests,
-controllers, replaced credentials and stale source settings cannot reuse it.
-The request ID source must reserve IDs unique across restarts and receipts.
+`FrictionSettingsController.prepareStricter` returns a process-local, exact-action
+request; `applyStricter` consumes the current user's fresh PIN once. IDs must be
+unique across restarts and receipts. `FrictionSettingsStore.applyStricter` compares
+credential revision, waiting storage generation/revision and elevation revision,
+then atomically writes active friction, any extended live countdown, and a routine
+receipt/audit with fixed recipients. A missed tick must not lose the countdown at
+its old lapse time. Already-lapsed countdowns are never resurrected. Preserve the
+exact ledger, including expired/foreign-epoch debits, grant, grant deadline,
+session journal, credentials, profile/backup IDs, notices and applied markers.
 
-Lane D must implement `FrictionSettingsStore.applyStricter` as **one durable
-transaction** comparing credential revision, waiting storage generation/revision,
-and elevation revision. Atomically write active credential-store friction, the
-extended live countdown and the fixed-recipient routine receipt/audit. Preserve
-all credential fields, profile/backup IDs, notices, applied markers, the entire
-debit list (even expired entries), grant, fixed grant deadline and session journal.
-The waiting record is unchanged. A live countdown must be extended in this
-transaction: waiting for its next tick could let it lapse at its old deadline.
-Already-lapsed countdowns are not resurrected. Missing/unreadable state or
-COMMITTING/ROLLING_BACK operations refuse the edit; PENDING waits allow stricter
-edits without releasing or replacing the one waiting slot.
+A pending **friction** operation changes this transaction: the optional
+`FrictionWaitingStore.tightenAndCancel` must also write that exact operation as
+CANCELLED and its DEPENDENCY_CHANGED receipt/audit in the same write. The stricter
+values can never coexist with an acknowledged still-pending older looser target.
+Without this joint port, the edit returns NOT_READY. Other pending waiting kinds
+are unchanged. COMMITTING/ROLLING_BACK operations hold stricter edits until their
+terminal state; no supported settings writer changes the source underneath a
+committing friction operation.
 
-Both controllers must use the **same** ElevationStore instance, constructed with
-the exact WaitingChangeStore. Run every operation on the shared non-reentrant
-coordinator. Complete normal startup revocation/conservative ledger repair before
-enabling edits. `ElevationController`'s limits supplier must read the active
-credential recovery profile at each request/tick/Start; never pending settings,
-a UI cache, or fallback defaults after a read failure. Reconciliation continues
-to use only active credential-store friction. Settings writes never repair or
-initialize the ledger. A setting edit cannot grant a turn, extend a grant or
-restore local ownership after restart. Readback failure returns NOT_READY even
-when the restrictive transaction was durably applied; re-read active values and
-require a new preparation/PIN rather than replaying the consumed request.
+### Looser waiting changes
 
-Product settings remain unavailable until the complete waiting workflow and
-reviewed Android adapter integration land. This first slice does not implement
-looser waiting start/commit/cancellation, lost-setting-operation replay, or its
-completion receipts. The next PLA-98 slice must reuse the shared waiting
-controller and cover those paths. Mode integration remains PLA-97; this seam
-adds no mode provisioning, physical-device work, Update or web/Wi-Fi enablement.
+`WaitingChangeController.prepareFriction` accepts shorter countdowns and/or higher
+limits. `startFrictionChange` requires confirmation and the exact fresh current-user
+PIN and creates the shared PENDING operation plus start receipt. The immutable
+patch, starting generation/structure and active source settings are dependencies.
+For a combined looser target, the kind is SHORTEN_COUNTDOWN; the entire target
+still waits together, and receipt/screen copy must describe **both** changed
+values. A daily-limit-only target uses RAISE_DAILY_LIMIT. No pending target is an
+active setting or an elevation authorization.
+
+The existing waiting controller owns the one slot, exact 24-hour proven-running
+age, clock epochs, PIN-free Cancel, durable cancel intents, delivery acknowledgment
+and fixed-recipient state receipts. Unknown cancel intent or unreadable clocks
+cannot mature a wait. After each PIN/recovery/structure mutation, the shared
+coordinator must run dependency checking before displaying or dispatching another
+operation, as for the other waiting kinds. A pending changed dependency cancels;
+self recovery never skips. Stricter setting edits invalidate a pending friction
+operation atomically, as above. Cancel remains available on normal and attention
+screens. From COMMITTING, PIN-free Cancel reports Already in progress.
+
+`FrictionWaitingController.finish(requestId)` accepts only this journal's exact
+COMMITTING friction operation. It ignores other kinds/directions/IDs. After
+COMMITTING, a PIN/recovery change does not stop the operation: the current
+credentials and counters survive, while mode/structure/source friction are still
+validated. There are no Android effects or independent cache-activation steps.
+
+`FrictionWaitingStore.completeFriction` must compare all three record revisions,
+waiting storage generation/request/direction and source friction in **one durable
+transaction**, then atomically write target friction in the credential record and
+COMPLETED plus the fixed-recipient completion receipt/audit in the waiting record.
+The entire elevation record is unchanged, including its revision and exact debit
+list. A running countdown retains its already-established duration; a shorter
+setting applies to future countdowns. Grant deadlines never move. A raised limit
+uses the preserved debits and may allow additional starts only after completion.
+
+False means nothing changed. A crash reveals old settings + COMMITTING or target
+settings + COMPLETED + receipt, never half activation. The terminal operation is
+the replay marker; no separate credential-only applied marker is needed. Retry
+recognizes COMPLETED without reapplying the target, even after a subsequent
+stricter edit or PIN reset. A readback failure returns NOT_READY; retry reads the
+durable journal. Acknowledging receipts cannot remove the audit or replay marker.
+Never implement either transaction as sequential independently acknowledged store
+writes. Fence stale replicas across **all** stores, even if the newest operation
+copy disappears; checksum validity alone is insufficient.
+
+### Persistence, startup and enablement
+
+Use the exact shared ElevationStore instance constructed with the exact
+WaitingChangeStore. Store substitutions are rejected. PinVault, settings,
+waiting, elevation/session, approval and updater mutations/readbacks run on the
+same non-reentrant coordinator; per-controller synchronization is not sufficient.
+Every `ElevationLimits` consumer, especially request/tick/Start, must read active
+`CredentialState.recoveryProfile.friction` there, never pending targets, cached UI
+values or default settings after a failed read. Hold the action if active state is
+unavailable. Setting writes do not initialize or repair the ledger.
+
+Complete normal startup revocation and conservative ledger repair before enabling
+settings. Do not restore process-local countdown/grant ownership after restart.
+`FrictionSettingsPatch.restore` is a validated data decoder, never authorization:
+decode the original starter/generation/structure/source/target, validate the
+surrounding WaitingOperation, and reject invalid checksums/revisions/generations.
+Do not reconstruct dependencies from current credentials or proposed active data.
+Read the highest valid **fenced** journal revision, retaining immutable patch data
+through every phase change and receipt. Null storage is damaged/unavailable,
+never vacant.
+
+Lost-operation recovery remains `WaitingReconciler`: active credential-store
+friction is truth before and after the atomic completion. Never adopt a pending
+patch or infer that an unknown operation cancelled/completed. Revoke temporary
+access without refunding debits, apply/read back the active complete policy,
+backup-inclusive reset protection and active friction, then atomically replace the
+lost journal under a new storage generation with a recovered-state receipt.
+
+Lane D follow-up PLA-100 owns settings transaction persistence/coordinator,
+receipt delivery and product integration, including real storage failure,
+stale-copy, restart and reboot tests. PLA-97 separately owns mode integration and
+both-mode initial ledger provisioning. Settings stay unavailable until reviewed
+policy **and** adapter integration; mode switching, Update and web/Wi-Fi retain
+their existing gates. JVM fakes verify pure logic and ordering, not Android
+atomicity or physical containment.

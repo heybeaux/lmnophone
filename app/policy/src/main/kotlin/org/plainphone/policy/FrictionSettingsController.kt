@@ -19,8 +19,16 @@ class FrictionSettingsPatch private constructor(
         current.structureGeneration == structureGeneration && current.people[starter]?.generation == generation &&
         current.recoveryProfile?.friction == source
 
-    internal fun replacement(current: CredentialState): CredentialState? {
-        if (!dependenciesMatch(current) || current.revision == Long.MAX_VALUE) return null
+    internal val waitingKind: WaitingChangeKind get() = if (target.countdownMillis < source.countdownMillis)
+        WaitingChangeKind.SHORTEN_COUNTDOWN else WaitingChangeKind.RAISE_DAILY_LIMIT
+
+    internal fun replacement(current: CredentialState): CredentialState? =
+        if (dependenciesMatch(current)) replacementForCommit(current) else null
+
+    /** After COMMITTING, a replaced PIN must survive and cannot stop this already-decided operation. */
+    internal fun replacementForCommit(current: CredentialState): CredentialState? {
+        if (current.mode != Mode.SELF_MANAGED || current.structureGeneration != structureGeneration ||
+            starter !in current.people || current.recoveryProfile?.friction != source || current.revision == Long.MAX_VALUE) return null
         val profile = current.recoveryProfile!!
         return CredentialState(current.mode, current.people, current.revision + 1, current.structureGeneration,
             current.pendingNotices, RecoveryProfile(profile.holderUserIds, profile.backupUserId, target), current.appliedPeopleChange)
@@ -36,10 +44,21 @@ class FrictionSettingsPatch private constructor(
             if (current.mode != Mode.SELF_MANAGED) return null
             val person = current.people[starter] ?: return null
             val source = current.recoveryProfile?.friction ?: return null
+            return restore(starter, person.generation, current.structureGeneration, source, target)
+        }
+
+        /**
+         * Decode immutable journal inputs only; this never creates PIN authority or a WaitingStart.
+         * Reject malformed generations/settings/direction. The adapter must validate the surrounding
+         * operation, checksum, storage generation and durable revision before exposing this data.
+         */
+        fun restore(starter: TrustedPersonId, generation: Long, structureGeneration: Long,
+            source: FrictionSettings, target: FrictionSettings): FrictionSettingsPatch? {
+            if (generation < 0 || structureGeneration < 0) return null
             val stricter = target.countdownMillis > source.countdownMillis || target.dailyLimit < source.dailyLimit
             val looser = target.countdownMillis < source.countdownMillis || target.dailyLimit > source.dailyLimit
             if (stricter == looser) return null
-            return FrictionSettingsPatch(starter, person.generation, current.structureGeneration, source, target,
+            return FrictionSettingsPatch(starter, generation, structureGeneration, source, target,
                 if (stricter) FrictionDirection.STRICTER else FrictionDirection.LOOSER)
         }
     }
@@ -139,11 +158,26 @@ class FrictionSettingsController(
         val next = before.replacing(state, person = before.person.takeIf { state.countdown != null || state.grant != null })
         val receipt = FrictionSettingsReceipt("friction:${request.id.length}:${request.id}", request.patch.starter,
             request.patch.source, request.patch.target, current)
-        if (!store.applyStricter(current, replacement, waiting, before, next, receipt)) return FrictionSettingsOutcome.NOT_READY
+        val pending = waiting.operation?.takeIf { it.phase == WaitingPhase.PENDING && it.frictionPatch != null }
+        val cancelled = pending?.let { frictionTransition(waiting, it.withPhase(WaitingPhase.CANCELLED), WaitingEvent.DEPENDENCY_CHANGED, current) }
+        val savedJoint = if (pending != null) {
+            // A restrictive setting and invalidation of a pending looser target are one decision.
+            // Without the joint port, never acknowledge only half of that decision.
+            val joint = store as? FrictionWaitingStore ?: return FrictionSettingsOutcome.NOT_READY
+            if (cancelled == null) return FrictionSettingsOutcome.NOT_READY
+            joint.tightenAndCancel(current, replacement, waiting, cancelled, before, next, receipt)
+        } else store.applyStricter(current, replacement, waiting, before, next, receipt)
+        if (!savedJoint) return FrictionSettingsOutcome.NOT_READY
         val saved = credentials.read() ?: return FrictionSettingsOutcome.NOT_READY
         val savedElevation = elevationStore.read() ?: return FrictionSettingsOutcome.NOT_READY
         if (saved.revision != replacement.revision || saved.recoveryProfile?.friction != request.patch.target ||
             savedElevation.revision != next.revision) return FrictionSettingsOutcome.NOT_READY
+        if (cancelled != null) {
+            val savedWaiting = waitingStore.read() ?: return FrictionSettingsOutcome.NOT_READY
+            if (savedWaiting.storageGeneration != cancelled.storageGeneration || savedWaiting.revision != cancelled.revision ||
+                savedWaiting.operation?.identity?.requestId != pending!!.identity.requestId ||
+                savedWaiting.operation?.phase != WaitingPhase.CANCELLED) return FrictionSettingsOutcome.NOT_READY
+        }
         return FrictionSettingsOutcome.APPLIED
     }
 }
