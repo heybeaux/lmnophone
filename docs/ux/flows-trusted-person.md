@@ -46,7 +46,7 @@ also needs the PIN. The first time a second PIN is asked for, one line explains 
 - **Body:** This is the long code you wrote down when Plainphone was set up. Upper and lower case don't matter.
 - **Primary:** Continue
 - **Then:** "Choose a new PIN" (6 or more digits, typed twice), then "Here is your new recovery code" (shown once,
-  same screen as setup [S2b](flows-setup.md#s2-pin-and-recovery-code-step-2-of-7)). The old PIN and old code stop working at
+  same screen as setup [S3b](flows-setup.md#s3-pins-and-recovery-codes-step-3-of-8)). The old PIN and old code stop working at
   the same moment.
 - **Note on screen, once:** "This code can't get past Google's reset protection if the phone is ever wiped. Only
   your Google account can do that."

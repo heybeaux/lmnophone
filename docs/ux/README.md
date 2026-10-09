@@ -122,7 +122,7 @@ recommendation; none changes a promise.
 2. **Helper and trusted person are the same person.** On the trusted person's phone, Beaux is both. guided-setup says the
    helper confirms "the trusted person, and not the helper, has the recovery code". That can't be satisfied as
    written. **Recommendation:** when the two are the same person, the setup screen asks instead that the code is
-   kept **away from the phone and away from the user** ([flows-setup.md](flows-setup.md#s2-pin-and-recovery-code-step-2-of-7)).
+   kept **away from the phone and away from the user** ([flows-setup.md](flows-setup.md#s3-pins-and-recovery-codes-step-3-of-8)).
 3. **Home line on unknown phone software.** The spec puts "Phone software changed – review pending" in
    trusted-person mode only. **Recommendation:** also show "Plainphone needs attention" on the user's home screen
    while the build is unknown, so the user knows to mention it. It is calm and true.
