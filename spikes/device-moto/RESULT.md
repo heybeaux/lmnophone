@@ -32,7 +32,7 @@
 | S3 suspend Play | **no** | `setPackagesSuspended([com.android.vending])` is refused: Play is the required package verifier. |
 | S4 hidden Play vs lock task | **lock task: yes; hidden: no** | Hidden Play: its jobs can't start, so nothing updates. Lock task with Play unhidden: `market://` is blocked, and **23 apps updated in the background within 6 min**. |
 | B-Q1 lock task follow-ups (BLOCK on) | **yes** | Pre-grant works for camera, mic and location; Camera → Photos is closed; the emergency dialer screen opens; the image attaches through Messages' own picker; lock task comes back after a reboot. |
-| B-Q4 must-have apps | **partly** (before sign-in done) | All 5 apps probed under BLOCK before sign-in. **Outlook's in-app WebView browses off-site from its Privacy link.** Google sign-in in Slack/Spotify/Outlook needs GMS → blocked. Telegram loops until pre-granted. Signed-in checks wait for Beaux. |
+| B-Q4 must-have apps | **partly**: before sign-in done; signed-in checks in PLA-20 | All 5 apps probed under BLOCK before sign-in. **Outlook's in-app WebView browses off-site from its Privacy link.** Google sign-in in Slack/Spotify/Outlook needs GMS → blocked. Telegram loops until pre-granted. Signed-in checks wait for Beaux. |
 | S7 install race | **partly** | DPC hid a newly installed app 4.6 s after `firstInstallTime`. Deep links failed for ~4 s (package frozen), but the app's **process started ~0.35 s before the hide**; no window was displayed. |
 
 ## A0. Baseline
@@ -731,9 +731,22 @@ Inbox screens were never dumped or screenshotted. `tools/gm-nav.sh` lists only a
   2. **Gmail's add-account flow** loads Microsoft's login page in a WebView. Off-page links go to Chrome (blocked);
      the page's own links are untested.
   3. Facebook (Spotify) and Help links use Custom Tabs or GMS, which are blocked.
-- **Still to do once Beaux signs in** (the board said he'll say when): sign-in, signing in again, password reset,
+- **Moved to [PLA-20](/PLA/issues/PLA-20)** (Lead's call, comment `25c667f5`; the sign-in card `b2e73c09` was withdrawn). Still to do once Beaux signs in: sign-in, signing in again, password reset,
   notifications and links for Telegram, Slack, Spotify and Outlook; Telegram's in-app browser; links in Gmail HTML mail
   and the Chat tab (absent on this account).
+
+## Final end state at PLA-5 close (2026-10-09T00:37Z, checked again)
+
+PLA-5 is closed; the Verifier ([PLA-6](/PLA/issues/PLA-6)) drives the phone next, then PLA-20.
+- Spike DPC `com.plainphone.spike.dpc` is Device Owner, `testOnlyAdmin=true`, so `dpm remove-active-admin` works (§ A2).
+  **No restrictions**, nothing hidden or suspended, lock task `NONE`, lock-task packages = the spike only.
+- HOME = `com.motorola.launcher3`; the spike's persistent HOME is cleared.
+- Accounts: the Google **test account** (sync off) + Meet's local `tachyon` account. **Remove the test account before any
+  recovery wipe** (reset protection is tied to it).
+- Installed and not signed in: Telegram 12.10.6 (data cleared), Slack 26.09.50.0, Spotify 9.1.88.2204, Outlook 5.2639.2.
+  Gmail was opened once on the test account (no email opened). Policy-fixed pre-grants: Telegram (phone, camera, mic,
+  location, contacts, notifications), Slack (camera, notifications), Gmail (notifications), Camera and Messages (B-Q1 set).
+- adb over USB with this Mac's key always-allowed. Wireless debugging off (`adb_wifi_enabled=0`). `stay_on_while_plugged_in=2`.
 
 ## Current state (2026-10-09T00:29Z, after B-Q4 probes)
 
