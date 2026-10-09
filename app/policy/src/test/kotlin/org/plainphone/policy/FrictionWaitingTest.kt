@@ -404,4 +404,65 @@ class FrictionWaitingTest {
         }
     }
 
+    @Test fun `decoded patch retains immutable precommit dependencies without adopting current credentials`() {
+        val f = F(); val r = f.prepare(); val p = r.frictionPatch!!
+        val restored = assertNotNull(FrictionSettingsPatch.restore(p.starter, p.generation, p.structureGeneration, p.source, p.target))
+        assertEquals(p.target, restored.target); assertEquals(p.source, restored.source)
+        assertTrue(restored.dependenciesMatch(f.credentials!!))
+        f.credentials = f.credentials!!.replacing(f.self, f.credentials!!.people.getValue(f.self).copy(generation = 1))
+        assertFalse(restored.dependenciesMatch(f.credentials!!))
+        assertNotNull(restored.replacementForCommit(f.credentials!!))
+        assertNull(FrictionSettingsPatch.restore(f.self, -1, 0, f.base, p.target))
+        assertNull(FrictionSettingsPatch.restore(f.self, 0, -1, f.base, p.target))
+        assertNull(FrictionSettingsPatch.restore(f.self, 0, 0, f.base, f.base))
+        assertNull(FrictionSettingsPatch.restore(f.self, 0, 0, f.base, FrictionSettings(600_000, 0)))
+    }
+
+    @Test fun `executor rejects a foreign waiting store or runtime store replacement`() {
+        val f = F(); val id = f.start(); f.mature(id); val foreign = F()
+        var shared: WaitingChangeStore = f.waitingStore
+        val swapping = object : FrictionWaitingStore by f.transactions { override val waitingStore get() = shared }
+        val executor = FrictionWaitingController(swapping, f.credentialStore, f.clock)
+        shared = foreign.waitingStore
+        assertEquals(FrictionWaitingOutcome.NOT_READY, executor.finish(id))
+        assertEquals(FrictionWaitingOutcome.NOT_READY, FrictionWaitingController(swapping, f.credentialStore, f.clock).finish(id))
+        assertEquals(0, f.writes)
+    }
+
+    @Test fun `friction waiting cannot invoke turn off or people and mode effects`() {
+        val f = F(); val id = f.start(); f.mature(id)
+        val off = TurnOffController(f.waitingStore, object : TurnOffEffects {
+            override fun revokeTemporaryAccess(): Boolean = error("foreign effect")
+            override fun isDeviceOwner(): Boolean? = error("foreign effect")
+            override fun restoreRecorded(step: TurnOffStep): Boolean = error("foreign effect")
+            override fun readBackRecorded(step: TurnOffStep): Boolean = error("foreign effect")
+            override fun anotherHomeResolves(): Boolean = error("foreign effect")
+            override fun systemDialerResolves(): Boolean = error("foreign effect")
+            override fun removeDeviceOwner(): Boolean = error("foreign effect")
+        }, { f.credentials })
+        assertEquals(TurnOffOutcome.IGNORED, off.tick(id).outcome)
+        val committer = object : PeopleChangeCommitter {
+            override fun applyPatch(expectedCredentials: CredentialState, replacementCredentials: CredentialState, expectedWaiting: WaitingState): Boolean = error("foreign patch")
+            override fun move(expectedCredentials: CredentialState, expectedWaiting: WaitingState, replacementWaiting: WaitingState): Boolean = error("foreign transition")
+        }
+        val effects = object : PeopleResetProtectionEffects {
+            override fun setResetProtection(userIds: Set<String>): Boolean = error("foreign effect")
+            override fun broadcastResetProtectionChanged(): Boolean = error("foreign effect")
+            override fun readBackResetProtection(userIds: Set<String>): Boolean = error("foreign effect")
+        }
+        val people = PeopleChangeController(f.waitingStore, f.credentialStore, committer, effects, f.clock, f.vault)
+        assertEquals(PeopleChangeOutcome.IGNORED, people.tick(id, WaitingPhase.COMMITTING).outcome)
+        assertEquals(0, f.writes)
+    }
+
+    @Test fun `terminal replay after later stricter edit never reapplies completed looser values`() {
+        val f = F(); val id = f.start(); f.mature(id)
+        assertEquals(FrictionWaitingOutcome.COMPLETED, f.executor().finish(id))
+        assertEquals(FrictionSettingsOutcome.APPLIED, f.stricter())
+        val current = f.credentials
+        assertEquals(FrictionWaitingOutcome.COMPLETED, f.executor().finish(id))
+        assertSame(current, f.credentials); assertEquals(FrictionSettings(1_800_000, 0), f.credentials!!.recoveryProfile!!.friction)
+        assertEquals(1, f.waiting!!.texts.count { it.event == WaitingEvent.COMPLETED })
+    }
+
 }
