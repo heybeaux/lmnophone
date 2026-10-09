@@ -46,6 +46,7 @@ class AppApprovalControllerTest {
         override fun compareAndSet(expected: AppApprovalState, replacement: AppApprovalState, expectedCredentials: CredentialState?): Boolean {
             beforeSave?.invoke()
             val stage = when {
+                replacement.pending?.phase == AppApprovalPhase.EDITING -> "save-editing"
                 replacement.pending?.phase == AppApprovalPhase.PREPARING -> "save-preparing"
                 replacement.pending?.phase == AppApprovalPhase.COMMITTED -> "save-committed"
                 replacement.pending?.phase == AppApprovalPhase.WITHDRAWING -> "save-withdrawing"
@@ -613,6 +614,160 @@ class AppApprovalControllerTest {
         assertFailsWith<IllegalArgumentException> { AppApprovalOperation(record, null, AppApprovalPhase.REMOVING, wrong) }
         assertFailsWith<IllegalArgumentException> { AppApprovalState(apps = state!!.apps, removedApps = mapOf(app to binding)) }
         assertFailsWith<UnsupportedOperationException> { (AppApprovalState(removedApps = mapOf(app to binding)).removedApps as MutableMap).clear() }
+    }
+
+
+    private fun editRequest(who: TrustedPersonId = person, choice: PermissionChoice = PermissionChoice.DENY) =
+        assertNotNull(controller.preparePermissionEdit(app, who, PermissionSelection(manifest!!, mapOf(camera to choice))))
+    private fun editAuth(r: AppPermissionEditRequest, who: TrustedPersonId = person) =
+        assertIs<PinResult.Authorized>(vault.authenticate(who, pin, r.action)).authority
+
+    @Test fun `either holder edits permissions immediately with a fresh PIN and last edit stands`() {
+        activeApproval(true)
+        for ((who, choice) in listOf(other to PermissionChoice.DENY, person to PermissionChoice.ALLOW)) {
+            val before = state!!.apps.getValue(app)
+            val r = editRequest(who, choice)
+            permissionReadback = mapOf(camera to if (choice == PermissionChoice.ALLOW) PermissionReadback.GRANTED else PermissionReadback.DENIED)
+            events.clear()
+            assertEquals(AppApprovalOutcome.PERMISSIONS_CHANGED, controller.editPermissions(r, r.approvalId, editAuth(r, who)))
+            val after = state!!.apps.getValue(app)
+            assertNotEquals(before.id, after.id)
+            assertEquals(mapOf(camera to choice), after.permissions.choices)
+            assertNull(state!!.pending); assertTrue(state!!.removedApps.isEmpty())
+            val receipt = state!!.receipts.last()
+            assertEquals(AppApprovalReceiptKind.PERMISSIONS_CHANGED, receipt.kind)
+            assertEquals(before.id, receipt.approvalId); assertEquals(after.id, receipt.id)
+            assertEquals(who, receipt.actor); assertEquals(setOf(person, other), receipt.recipientGenerations.keys)
+            assertTrue(events.indexOf("revoke") < events.indexOf("save-editing"))
+            assertTrue(events.indexOf("save-editing") < events.indexOf("hide"))
+            assertTrue(events.indexOf("hide") < events.indexOf("permission"))
+            assertTrue(events.indexOf("permissions-readback") < events.indexOf("save-committed"))
+            assertTrue(events.indexOf("save-committed") < events.indexOf("unhide"))
+            assertEquals(AppApprovalOutcome.REFUSED, controller.editPermissions(r, r.approvalId, editAuth(r, who)))
+        }
+        assertEquals(2, state!!.receipts.size) // acknowledged original approval is not recreated
+    }
+
+    @Test fun `permission edit requires exact confirmation fresh person action generation structure and boot`() {
+        val initialClock = now
+        for (bad in listOf("confirmation", "person", "action", "expiry", "generation", "structure", "reboot", "mode")) {
+            now = initialClock; activeApproval()
+            val before = state!!.apps.getValue(app)
+            val r = editRequest()
+            val a = when (bad) {
+                "person" -> editAuth(r, other)
+                "action" -> assertIs<PinResult.Authorized>(vault.authenticate(person, pin, PrivilegedAction("other", "x"))).authority
+                else -> editAuth(r)
+            }
+            when (bad) {
+                "expiry" -> now = ClockReading(RunningTime("epoch", 120_000), BootTime("boot", 120_000))
+                "generation" -> credentials = credentials!!.replacing(person, credentials!!.people.getValue(person).copy(generation = 1))
+                "structure" -> credentials = CredentialState(Mode.TRUSTED, credentials!!.people, structureGeneration = 1)
+                "reboot" -> now = ClockReading(RunningTime("epoch", 1), BootTime("next", 0))
+                "mode" -> credentials = CredentialState(Mode.SELF_MANAGED, mapOf(person to credentials!!.people.getValue(person)))
+            }
+            assertEquals(AppApprovalOutcome.REFUSED, controller.editPermissions(r, if (bad == "confirmation") "wrong" else r.approvalId, a), bad)
+            assertSame(before, state!!.apps[app]); assertNull(state!!.pending); assertTrue(events.isEmpty())
+        }
+    }
+
+    @Test fun `permission edit rejects missing approval incomplete choices replacement signer and stale requests`() {
+        setup()
+        val selection = PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.DENY))
+        assertNull(controller.preparePermissionEdit(app, person, selection))
+        activeApproval()
+        assertNull(controller.preparePermissionEdit(app, person, PermissionSelection(manifest!!, emptyMap())))
+        val stale = editRequest(); val staleAuth = editAuth(stale)
+        val current = editRequest(other)
+        permissionReadback = mapOf(camera to PermissionReadback.DENIED)
+        assertEquals(AppApprovalOutcome.PERMISSIONS_CHANGED, controller.editPermissions(current, current.approvalId, editAuth(current, other)))
+        assertEquals(AppApprovalOutcome.REFUSED, controller.editPermissions(stale, stale.approvalId, staleAuth))
+        val changed = ApprovalBinding(app, setOf(CertDigest("cd".repeat(32))))
+        manifest = PermissionManifest(changed, 1, "build", manifest!!.permissions)
+        policy = policy.copy(installedIdentities = listOf(changed))
+        assertNull(controller.preparePermissionEdit(app, person, PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.ALLOW))))
+    }
+
+    @Test fun `permission edit crash replay only resumes durable direction and never duplicates receipt`() {
+        for (point in listOf("revoke", "protected", "session-readback", "save-editing", "after-save-editing", "hide", "permission",
+            "permissions-readback", "save-committed", "after-save-committed", "unhide", "policy-readback", "save-finished", "after-save-finished")) {
+            permissionReadback = mapOf(camera to PermissionReadback.GRANTED)
+            activeApproval(true)
+            val oldId = state!!.apps.getValue(app).id
+            val r = editRequest(); val a = editAuth(r)
+            permissionReadback = mapOf(camera to PermissionReadback.DENIED); crash = point
+            assertFailsWith<IllegalStateException>(point) { controller.editPermissions(r, r.approvalId, a) }
+            val durable = state!!.apps.getValue(app).id != oldId
+            if (state!!.pending != null) assertFalse(app in PolicyEngine.decide(policy.copy(approvalState = state)).lockTaskPackages)
+            crash = null; events.clear(); controller = controller()
+            assertEquals(if (durable && state!!.pending != null) AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.READY,
+                controller.onStart(), point)
+            assertEquals("revoke", events.first()); assertNull(state!!.pending)
+            assertEquals(if (durable) PermissionChoice.DENY else PermissionChoice.ALLOW, state!!.apps.getValue(app).permissions.choices[camera])
+            assertEquals(if (durable) 1 else 0, state!!.receipts.size)
+            assertEquals(AppApprovalOutcome.REFUSED, controller.editPermissions(r, r.approvalId, a))
+        }
+    }
+
+    @Test fun `failed permission edit effects readbacks and writes hold pending without false completion`() {
+        for (point in listOf("save-editing", "hide", "permission", "save-committed", "unhide", "policy-readback", "save-finished", "bad-permissions")) {
+            permissionReadback = mapOf(camera to PermissionReadback.GRANTED); activeApproval(true)
+            val oldId = state!!.apps.getValue(app).id; val r = editRequest()
+            if (point != "bad-permissions") permissionReadback = mapOf(camera to PermissionReadback.DENIED)
+            failure = point
+            assertEquals(AppApprovalOutcome.NOT_READY, controller.editPermissions(r, r.approvalId, editAuth(r)), point)
+            if (point == "save-editing") {
+                assertEquals(oldId, state!!.apps.getValue(app).id); assertNull(state!!.pending); assertTrue(state!!.receipts.isEmpty())
+            } else {
+                assertNotNull(state!!.pending); assertEquals(1, state!!.receipts.size)
+                assertFalse(app in PolicyEngine.decide(policy.copy(approvalState = state)).lockTaskPackages)
+                failure = null; permissionReadback = mapOf(camera to PermissionReadback.DENIED)
+                assertEquals(AppApprovalOutcome.PERMISSIONS_CHANGED, controller.resume())
+                assertEquals(AppApprovalOutcome.READY, controller.resume()); assertEquals(1, state!!.receipts.size)
+            }
+        }
+    }
+
+    @Test fun `permission edit checks credential CAS and live facts before saving and before each write`() {
+        activeApproval(true); val r = editRequest(); val a = editAuth(r)
+        beforeSave = { credentials = credentials!!.replacing(person, credentials!!.people.getValue(person).copy(generation = 1)) }
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.editPermissions(r, r.approvalId, a))
+        assertNull(state!!.pending); assertFalse("hide" in events)
+        beforeSave = null
+        activeApproval(true); val next = editRequest()
+        atEvent = { if (it == "hide") manifest = PermissionManifest(binding, 2, "build", manifest!!.permissions) }
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.editPermissions(next, next.approvalId, editAuth(next)))
+        assertEquals(AppApprovalPhase.EDITING, state!!.pending!!.phase)
+        assertFalse("permission" in events); assertFalse("unhide" in events)
+    }
+
+    @Test fun `stuck permission edit can be withdrawn with a new PIN instead of blocking every later action`() {
+        for (point in listOf("hide", "unhide")) {
+            permissionReadback = mapOf(camera to PermissionReadback.GRANTED); activeApproval(true)
+            val r = editRequest(); permissionReadback = mapOf(camera to PermissionReadback.DENIED); failure = point
+            assertEquals(AppApprovalOutcome.NOT_READY, controller.editPermissions(r, r.approvalId, editAuth(r)))
+            assertNull(controller.preparePermissionEdit(app, person, PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.DENY))))
+            val withdrawal = assertNotNull(controller.prepareWithdrawal(other))
+            failure = null; events.clear()
+            assertEquals(AppApprovalOutcome.WITHDRAWN, controller.withdrawPending(withdrawal, withdrawal.approvalId, withdrawalAuth(withdrawal, other)))
+            assertFalse(app in state!!.apps); assertNull(state!!.pending); assertFalse("permission" in events); assertFalse("unhide" in events)
+            assertEquals(listOf(AppApprovalReceiptKind.PERMISSIONS_CHANGED, AppApprovalReceiptKind.WITHDRAWN), state!!.receipts.map { it.kind })
+        }
+    }
+
+    @Test fun `permission edit journals reject mismatched kinds and preserve fixed recipients after restart`() {
+        activeApproval(true); val r = editRequest(); failure = "hide"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.editPermissions(r, r.approvalId, editAuth(r)))
+        val op = state!!.pending!!
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(op.record, null, AppApprovalPhase.EDITING) }
+        val wrong = AppApprovalReceipt(op.record.id, person, mapOf(person to 0L))
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(op.record, wrong, AppApprovalPhase.EDITING) }
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.PREPARING) }
+        credentials = CredentialState(Mode.SELF_MANAGED, mapOf(other to credentials!!.people.getValue(other).copy(generation = 9)), structureGeneration = 1)
+        now = ClockReading(RunningTime("new", 0), BootTime("new", 0)); failure = null
+        permissionReadback = mapOf(camera to PermissionReadback.DENIED)
+        controller = controller(); assertEquals(AppApprovalOutcome.PERMISSIONS_CHANGED, controller.onStart())
+        assertEquals(mapOf(person to 0L, other to 0L), state!!.receipts.single().recipientGenerations)
     }
 
 }
