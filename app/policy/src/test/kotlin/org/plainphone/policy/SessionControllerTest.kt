@@ -15,6 +15,7 @@ class SessionControllerTest {
     private var boundary = 0
     private var failWrite = false
     private var checkWorks = true
+    private var revokeWorks = true
     private var readbackWorks = true
     private var authorized = true
     private var relaxed = false
@@ -30,7 +31,7 @@ class SessionControllerTest {
         }
     }
     private val effects = object : SessionEffects {
-        override fun revokeAllRelaxations(): Boolean { hit("before-revoke"); relaxed = false; hit("after-revoke"); return true }
+        override fun revokeAllRelaxations(): Boolean { hit("before-revoke"); if (!revokeWorks) return false; relaxed = false; hit("after-revoke"); return true }
         override fun open(access: SessionAccess): Boolean { hit("before-open"); relaxed = true; hit("after-open"); return true }
         override fun protectedStateCheck(): Boolean { hit("check"); return checkWorks }
         override fun readBackPolicy(): Boolean { hit("readback"); return readbackWorks }
@@ -181,6 +182,35 @@ class SessionControllerTest {
             assertEquals("before-revoke", calls.first())
             assertFalse(relaxed)
         }
+    }
+
+    @Test fun `failed close write invalidates access for every end trigger`() {
+        for (trigger in SessionEnd.entries) {
+            journal = SessionJournal.Empty; failWrite = false
+            val c = ready(); start(c); failWrite = true
+            assertEquals(SessionOutcome.NOT_READY, c.end("session", trigger))
+            assertNull(c.access(), trigger.name)
+            assertFalse(c.handbackReady)
+            assertFalse(relaxed)
+            failWrite = false
+            assertEquals(SessionOutcome.CLOSED, c.tick())
+            assertEquals(SessionJournal.Empty, journal)
+        }
+    }
+
+    @Test fun `failed close write and revoke retries on tick before the deadline`() {
+        val c = ready(); start(c); failWrite = true; revokeWorks = false
+        assertEquals(SessionOutcome.NOT_READY, c.end("session", SessionEnd.INCOMING_CALL))
+        assertTrue(relaxed)
+        assertNull(c.access())
+        assertEquals(SessionOutcome.NOT_READY, c.tick())
+        failWrite = false; revokeWorks = true; calls.clear()
+        assertEquals(SessionOutcome.CLOSED, c.tick())
+        assertEquals("before-revoke", calls.first())
+        assertFalse(relaxed)
+        assertTrue(c.handbackReady)
+        assertEquals(SessionJournal.Empty, journal)
+        assertEquals(SessionOutcome.OPENED, start(c, "fresh-session"))
     }
 
     private class SimulatedCrash : RuntimeException()

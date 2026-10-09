@@ -179,6 +179,46 @@ class PinVaultTest {
         assertFalse(vault.consume(auth, action))
     }
 
+    @Test fun `fresh authority expires at two minutes of boot time`() {
+        enroll()
+        var auth = assertIs<PinResult.Authorized>(vault.authenticate(first, pinA, action)).authority
+        advance(119_999)
+        assertTrue(vault.consume(auth, action))
+        auth = assertIs<PinResult.Authorized>(vault.authenticate(first, pinA, action)).authority
+        advance(120_000)
+        assertFalse(vault.consume(auth, action))
+        assertFalse(vault.consume(auth, action))
+    }
+
+    @Test fun `authority lifetime ignores epoch repairs and rejects backwards boot time`() {
+        enroll(); advance(500_000)
+        var auth = assertIs<PinResult.Authorized>(vault.authenticate(first, pinA, action)).authority
+        time = time.copy(proven = RunningTime("repaired", 0))
+        advance(120_000)
+        assertFalse(vault.consume(auth, action))
+        auth = assertIs<PinResult.Authorized>(vault.authenticate(first, pinA, action)).authority
+        time = time.copy(boot = time.boot.copy(elapsedMillis = time.boot.elapsedMillis - 1))
+        assertFalse(vault.consume(auth, action))
+    }
+
+    @Test fun `recovery accepts uppercase and groups of four with spaces or hyphens`() {
+        for (separator in listOf("", " ", "-", " - ")) {
+            val prepared = vault.prepareCredential(pinA)
+            store.state = CredentialState(Mode.TRUSTED, mapOf(first to prepared.credential))
+            val written = prepared.recoveryCode.uppercase().chunked(4).joinToString(separator).toCharArray()
+            assertIs<RecoveryResult.Replaced>(vault.recover(first, written, pinB))
+            assertIs<PinResult.Authorized>(vault.authenticate(first, pinB, action))
+        }
+    }
+
+    @Test fun `recovery rejects other punctuation without silently dropping it`() {
+        val prepared = vault.prepareCredential(pinA)
+        store.state = CredentialState(Mode.TRUSTED, mapOf(first to prepared.credential))
+        assertIs<RecoveryResult.Wrong>(vault.recover(first, (prepared.recoveryCode + "!").toCharArray(), pinB))
+        assertEquals(1, store.state!!.people.getValue(first).recoveryCounter.failures)
+        assertEquals(0, store.state!!.people.getValue(first).pinCounter.failures)
+    }
+
     private class FakeDerivation : KeyDerivation {
         val checkedSalts = mutableListOf<List<Byte>>()
         val iterations = mutableListOf<Int>()

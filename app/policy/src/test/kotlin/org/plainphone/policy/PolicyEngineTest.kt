@@ -197,4 +197,39 @@ class PolicyEngineTest {
         assertFalse(browser in plan.lockTaskPackages)
     }
 
+    @Test fun `Plainphone stays in unknown and locked boot UI with no previous list`() {
+        for (unknown in listOf(false, true)) for (locked in listOf(false, true)) {
+            val plan = PolicyEngine.decide(input().copy(inventory = if (unknown) null else input().inventory,
+                lockedBoot = locked, previousLockTask = emptySet(), previousHidden = setOf(home)))
+            assertTrue(home in plan.lockTaskPackages, "unknown=$unknown locked=$locked")
+            assertFalse(home in plan.hidden)
+        }
+    }
+
+    @Test fun `ordinary approval cannot open Play without a live session`() {
+        val plan = PolicyEngine.decide(input().copy(approved = setOf(play)))
+        assertFalse(play in plan.lockTaskPackages)
+        assertFalse(play in plan.hidden) // Keep Play's inventory dependency unhidden.
+    }
+
+    @Test fun `ordinary approval cannot open Settings or its same UID siblings`() {
+        val settings = PackageName("test.settings")
+        val sibling = PackageName("test.settings.sibling")
+        val inventory = BuildInventory("model", "build", 1, input().inventory!!.neverHide, setOf(sms), setOf(settings, sibling))
+        for (target in setOf(settings, sibling)) {
+            val plan = PolicyEngine.decide(input().copy(inventory = inventory, approved = setOf(target),
+                installed = input().installed + InstalledPackage(target, true, 1)))
+            assertFalse(target in plan.lockTaskPackages)
+            assertTrue(target in plan.hidden)
+            assertFalse(target in plan.unhide)
+        }
+    }
+
+    @Test fun `session-only approval exclusion still preserves emergency precedence`() {
+        val inventory = BuildInventory("model", "build", 1, input().inventory!!.neverHide, setOf(sms), setOf(dialer))
+        val plan = PolicyEngine.decide(input().copy(inventory = inventory, approved = setOf(dialer)))
+        assertTrue(dialer in plan.lockTaskPackages)
+        assertFalse(dialer in plan.hidden)
+    }
+
 }
