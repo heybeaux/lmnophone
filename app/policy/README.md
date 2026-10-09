@@ -609,39 +609,103 @@ epoch repair, permission/readback failures and crashes before/after the joint wr
 the pure-policy contract, not Android storage atomicity, package-event completeness or hidden-package
 permission support. Those require lane D integration and independent verification.
 
-## Updater final-check seam (runtime path remains unavailable)
+## Update controller protocol (production remains disabled; PLA-136)
 
-`UpdateCommitPolicy.propose(record, ownedGrantId, credentials, pinnedSelf, installedVersionCode,
-stagedFacts, clockReading)` is the pure-policy seam for lane D's updater. It checks self-managed
-person/generation/structure, exact Update kind/ID, closed package access/journal, valid staged APK
-signature, exact pinned package and signer set, strictly increasing version, the grant's SHA-256/version
-binding, boot and strict deadline. `StagedApkFacts` must describe the exact bytes in the immutable
-installer session, freshly verified at the final commit boundary. Neither field values nor the result
-are authority. `CONSUMED` is only a proposed replacement state; the function writes and installs nothing.
+`ElevationController.submitUpdate()` takes no caller grant, ID, session or facts. It uses its own
+process-local PIN-bound grant, closes package access with policy readback, reads `UpdateInstaller`
+facts, proposes use through `UpdateCommitPolicy`, then calls `UpdateUseStore.commitUpdateUse`.
+Inside that transaction the final callback reads the session facts again and checks ownership,
+credentials, policy, boot and the strict deadline after blocking work. Only a successful joint write
+is followed immediately by one installer commit. No public consume-then-act operation exists.
 
-The Android Platform Engineer owns the remaining integration under the D1 gate. Required actions:
+`UpdateUseStore` is the device adapter's combined store port. On the same coordinator as credentials,
+elevation, sessions and mode changes it must reject reentrant controller mutations, while allowing
+`finalCheck` to read credential/elevation stores, policy input and the clock, and to call
+`PinVault.consumeFor`, re-entrantly on that coordinator thread. It must:
 
-- Define the actual installer boundary and failure/recovery protocol before enabling Update. It must
-  revalidate controller-owned process-local grant authority (not a restored record or caller ID), fresh
-  staged/session bytes and current policy/credentials/boot/deadline at the actual installer commit.
-- Serialize durable one-use consumption, receipt/audit and installer submission; demonstrate how the
-  adapter prevents a pause, expiry, replay or crash from submitting with previously consumed authority.
-  A saved intent followed by a later PackageInstaller call is insufficient. A storage transaction alone
-  does not establish atomicity with Android. If the required boundary cannot be proved, keep Update
-  unavailable and report the exact limitation to the Lead.
-- Preserve spent debits and the fixed deadline after every failure. Closing sessions ends package access
-  only; startup always revokes temporary authority. Never recover an Update grant as retry authority.
-- Verify the existing updater rules separately: local host/port only, no redirects, 100 MB/2 minute limits,
-  private staging, exact package, pinned signer, newer version, session package binding, post-update
-  self-check, and no rollback promise. These policy facts do not implement download/signature checking.
-- Add adapter boundary tests for file/session substitution, hash/version/signer/package changes, delayed
-  staging, pauses before and after consumption, duplicate submissions, credential changes, both crash
-  sides, reboot, startup, effect failures and installer readbacks. Request policy-owner changes through
-  a separate policy slice if the proven adapter protocol needs a refined seam.
+1. Compare the exact elevation, credential and update records/revisions.
+2. Finish blocking work, invoke `finalCheck` synchronously exactly once, then compare again.
+3. Write the consumed elevation and `SUBMITTED{sessionId, sha256, versionCode, receipt}` record in one
+   durable transaction, without yielding. Preserve the ledger and original deadline (also retained
+   in the submission for evidence). Reject outstanding submissions and pending self-checks.
 
-`UpdateCommitPolicyTest` tests the pure facts/deadline/credential/one-use proposals. It does not test an
-installer or prove process ownership. `ElevationController.prepare(Update)` still returns null, including
-when the approval port is present. Do not expose an Update UI action based on this seam alone.
+`UpdateSubmission.receipt` is required durable evidence: `UpdateReceipt` carries a stable ID (the
+originating grant/request ID), actor person and generation, and a copied, immutable map of every
+recipient's generation. The actor is the self-managed elevation holder or the supervised PIN holder.
+The same joint transaction must freeze delivery destinations for those generations, following the
+approval PREPARING receipt pattern. Queueing only in memory after installer commit is insufficient:
+the process can die immediately. On startup reconcile and deliver the submission notice to every
+captured trusted person, using its stable ID for deduplication and durable delivery acknowledgments.
+Never resolve an old receipt to a replacement person's current address. Preserve outstanding receipts
+in a durable outbox when a later submission replaces the record; result/self-check CAS writes retain
+the original receipt. A receipt describes submission/use-up, not confirmed installation. Delivery
+does not authorize installation or gate policy progress.
+
+A false check/CAS changes neither record. A crash exposes the original pair or the complete pair.
+The supervised path uses the same transaction, preserving the elevation record unchanged and using
+the exact request's fresh person-bound PIN authority inside `finalCheck`, after the final hash read.
+Requests are process-local and cannot be restored. Supervised preparation refuses any OPENING, OPEN
+or CLOSING session without effects or journal writes; finish it through `SessionController` before
+preparing Update. Missing/damaged stores fail closed.
+
+`UpdateInstaller.finalFacts()` reads the SHA-256 through `Session.openRead` **after the last write**.
+Package, exact signer set and version must come from the verified immutable private staged file whose
+hash equals that session hash. The controller checks exact self identity, valid signature, strictly
+newer installed version and exact grant/request digest plus version. The session ID and all facts
+must agree across the two reads. A same-version reinstall is refused by policy.
+
+Startup uses the internal `UpdateProtocol.onStart` wrapper: abandon every own installer session,
+then call `ElevationController.onStart` to revoke all temporary authority, then reconcile the saved
+submission. For SUBMITTED **or FAILED**, installed version equal to the staged version means
+INSTALLED; a readable higher or lower version means FAILED. FAILED remains recoverable because an
+already-committed platform install may finish after our restart. Unreadable version (`null`) means
+NOT_READY with no update-record write; retry on the next startup. INSTALLED is written before the
+idempotent post-update self-check; its separate PENDING/PASSED/FAILED result survives/retries a crash.
+A result callback must match the saved session; success for SUBMITTED or FAILED requires equal
+version readback and runs the journaled self-check. Completed INSTALLED results cannot run it again.
+Route **only terminal** installer statuses to `onResult`; never translate `STATUS_PENDING_USER_ACTION`
+into failure. Never commit on startup, replay a saved submission, refund a turn or extend a deadline.
+
+An internal `ElevationController.onStart()` triggered by tick/close recovery invalidates Update.
+The adapter must rerun the full `UpdateProtocol.onStart` wrapper before Update becomes available.
+
+`ElevationController.updateNeedsAttention()` exposes whether the last saved submission is INSTALLED
+with a FAILED self-check, including after restart. It only reads the journal. When true, the adapter
+must display **Plainphone needs attention** and durably queue the failure notice to every trusted
+person, with stable deduplication and delivery retry. Do not present installation success as a passed
+health check or promise rollback. Missing state/NOT_READY remains an unavailable state, not evidence
+of health. This slice adds neither a UI action nor production wiring.
+
+A thrown installer call returns COMMIT_UNCERTAIN: authority stays spent and SUBMITTED stays durable,
+since the platform may already have accepted the install. Startup/readback resolves it. An ambiguous
+store exception disables this process's Update path until startup recovery. Package closure failures
+hold the shared revocation gate. Neither failure creates retry authority.
+
+**Release gate:** no public constructor or factory installs `UpdateProtocol`. `prepare(Update)` and
+both submission paths still refuse in production, even if the approval adapter is present. JVM tests
+wire the internal seam to exercise the full controller. Lane D can implement the exported ports now;
+Lead must arrange Claude review of this GPT-authored slice and the cross-model adapter review before
+any later change exposes production wiring or an Update UI action. This work does not self-approve.
+
+**Known gaps from the proved installer protocol (PLA-86 / PLA-126):** the deadline binds authority
+use-up, not platform install start. G2: a paused process may call commit after the deadline, only for
+the exact hash-bound, pinned-signer, newer self package. G1: a crash between use-up and commit spends
+the turn and installs nothing; startup abandons the open session. G3: no session write after the final
+hash read is a code rule, not a platform guarantee. The store transaction is not atomic with Android.
+Evidence: `mvp/device:spikes/installer-boundary/README.md` and its API 35 emulator transcripts
+`evidence/pm-session-rules-api35.txt`, `evidence/app-self-update-api35.txt` (2026-10-09).
+
+Lane D still owns local host/port checks, no redirects, 100 MB / 2 minute bounds, private staging,
+Android APK signature verification, pinned signer and exact self package, `setAppPackageName`, the
+post-update handover self-check and no rollback promise. Pure policy performs none of those Android
+or download effects. Device tests must prove storage atomicity, exclusive session ownership, the
+last-write/hash rule, startup abandonment and both crash sides against the real adapter.
+
+`UpdateControllerTest` covers final fact substitutions, duplicates, stale/restored authority,
+credential/structure/mode/boot/deadline changes, pauses before and after use, both crash sides of the
+joint write and commit, ambiguous exceptions, statuses/readbacks, closure and self-check recovery.
+`UpdateCommitPolicyTest` retains the pure proposal checks. JVM fakes prove the controller contract,
+not Android atomicity or the adapter's hash/signature implementation.
 
 ## Trusted-person enrollment and patch model (first people-change slice)
 
@@ -1163,3 +1227,17 @@ the original dependency generations. Neither re-derives a patch from current cre
 A handover's other-holder witness need not be in its dependency map. Live eligibility,
 PIN authority, the wait and commit checks still belong to the controllers; restoration
 neither enrolls an active credential nor authorizes an operation.
+
+## Self-managed app removal
+
+The current holder may remove an active approval or withdraw a stuck committed
+approval with a fresh action-bound PIN in either mode. The request captures its
+mode, holder, credential/structure generations and boot; switching modes never
+reuses that authority. Both operations follow the existing restrictive journal
+and readback sequence, require no elevation or turn, and never uninstall the app
+or refund debits. A self-managed hidden app can be reapproved only through the
+existing live Play/Approve grant rules. Direct PIN-only reapproval and direct
+self-managed permission editing remain unavailable. The audit asks the Lead to
+resolve the latter against the approved action table before any new authority
+path is implemented. Android persistence, effect readbacks and delivery remain
+lane D obligations.

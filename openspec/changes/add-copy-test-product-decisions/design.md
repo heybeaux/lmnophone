@@ -327,6 +327,25 @@ During on-phone setup, straight after the user signs in to Google, the guide and
 - **[Reset protection with two or three IDs is untested]** → Q10 grows to cover it, including changed lists and failed updates. Google documents configurable account lists, changing them over time, and the broadcast ([FRP guidance](https://developer.android.com/work/dpc/security#factory_reset_protection)); whether this build enforces three IDs is a device test.
 - **[`RECEIVE_SMS` for cancel replies]** → non-default SMS apps can receive `SMS_RECEIVED_ACTION` ([Telephony reference](https://developer.android.com/reference/android/provider/Telephony)), but `RECEIVE_SMS` is hard-restricted and needs installer allowlisting as well as a runtime grant ([permission reference](https://developer.android.com/reference/android/Manifest.permission#RECEIVE_SMS)). Not tested. Q15 decides; without it, cancel is on the phone only, and no copy mentions replies.
 
+### Known installer limitations (PLA-136; Update stays disabled)
+
+The API 35 emulator evidence in `mvp/device:spikes/installer-boundary/README.md` and
+`evidence/app-self-update-api35.txt` establishes the protocol selected by Lead in PLA-126.
+The durable deadline check binds **authority use-up**, not the platform's install start:
+
+- **G2 — pause after use-up:** the process may resume and start the install after the deadline,
+  but only of the exact hash-bound, pinned-signer, strictly newer self package.
+- **G1 — crash before commit:** a crash between the joint use-up/SUBMITTED write and `commit()`
+  spends the turn and installs nothing. Startup abandons all own sessions before revoking
+  temporary elevation authority. It classifies the submission by installed version and never retries
+  the install or refunds the turn.
+- **G3 — mutable session:** no write is allowed after the final hash read through `Session.openRead`.
+  This is an adapter code rule, not a platform guarantee. `setChecksums` does not bind the digest.
+
+The pure controller/store protocol remains behind the existing fail-closed Update refusal until
+both policy and device adapter pass cross-model review. The Lead takes the rule-6 wording to Beaux;
+this note records the implementation limits and does **not** change C4 rule 6.
+
 ## Migration Plan
 
 - The approved change archives first; this change's deltas then apply to the archived specs.
