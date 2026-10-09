@@ -12,8 +12,8 @@ class AppApprovalRecord(val id: String, selection: PermissionSelection) {
     init { require(id.isNotBlank()) }
 }
 
-enum class AppApprovalPhase { PREPARING, COMMITTED, WITHDRAWING, REMOVING }
-enum class AppApprovalReceiptKind { APPROVED, WITHDRAWN, REMOVED }
+enum class AppApprovalPhase { PREPARING, COMMITTED, WITHDRAWING, REMOVING, EDITING }
+enum class AppApprovalReceiptKind { APPROVED, WITHDRAWN, REMOVED, PERMISSIONS_CHANGED }
 class AppApprovalReceipt(val id: String, val actor: TrustedPersonId, recipientGenerations: Map<TrustedPersonId, Long>,
     val kind: AppApprovalReceiptKind = AppApprovalReceiptKind.APPROVED, val approvalId: String = id,
 ) {
@@ -27,9 +27,12 @@ class AppApprovalOperation(val record: AppApprovalRecord, val receipt: AppApprov
     val withdrawalReceipt: AppApprovalReceipt? = null,
 ) {
     init {
-        // An active app's approval receipt may already be acknowledged; never recreate it for removal.
+        // An active app's latest approval/edit receipt may already be acknowledged; never recreate it.
         require(phase == AppApprovalPhase.REMOVING || receipt != null)
-        require(receipt == null || (record.id == receipt.id && receipt.kind == AppApprovalReceiptKind.APPROVED))
+        require(receipt == null || (record.id == receipt.id && receipt.kind in setOf(
+            AppApprovalReceiptKind.APPROVED, AppApprovalReceiptKind.PERMISSIONS_CHANGED)))
+        if (phase == AppApprovalPhase.PREPARING) require(receipt?.kind == AppApprovalReceiptKind.APPROVED)
+        if (phase == AppApprovalPhase.EDITING) require(receipt?.kind == AppApprovalReceiptKind.PERMISSIONS_CHANGED)
         val finalKind = when (phase) {
             AppApprovalPhase.WITHDRAWING -> AppApprovalReceiptKind.WITHDRAWN
             AppApprovalPhase.REMOVING -> AppApprovalReceiptKind.REMOVED
@@ -143,7 +146,19 @@ class AppRemovalRequest internal constructor(
     val packageName: PackageName get() = record.identity.packageName
     val action: PrivilegedAction get() = PrivilegedAction("app:remove", receiptId)
 }
-enum class AppApprovalOutcome { READY, APPROVED, WITHDRAWN, REMOVED, REFUSED, BUSY, LOW_BATTERY, NOT_READY }
+class AppPermissionEditRequest internal constructor(
+    internal val previous: AppApprovalRecord,
+    internal val replacement: AppApprovalRecord,
+    internal val person: TrustedPersonId,
+    internal val credentialGeneration: Long,
+    internal val structureGeneration: Long,
+    internal val preparedAt: BootTime,
+) {
+    val approvalId: String get() = previous.id
+    val packageName: PackageName get() = previous.identity.packageName
+    val action: PrivilegedAction get() = PrivilegedAction("app:permissions", replacement.id)
+}
+enum class AppApprovalOutcome { READY, APPROVED, WITHDRAWN, REMOVED, PERMISSIONS_CHANGED, REFUSED, BUSY, LOW_BATTERY, NOT_READY }
 
 /**
  * Supervised new-app approval. One shared dispatcher owns this, SessionController, PinVault, facts and
@@ -166,10 +181,11 @@ class AppApprovalController(
     private val requests = mutableSetOf<AppApprovalRequest>()
     private val withdrawals = mutableSetOf<AppApprovalWithdrawalRequest>()
     private val removals = mutableSetOf<AppRemovalRequest>()
+    private val edits = mutableSetOf<AppPermissionEditRequest>()
 
     @Synchronized
     fun onStart(): AppApprovalOutcome {
-        initialized = false; requests.clear(); withdrawals.clear(); removals.clear()
+        initialized = false; requests.clear(); withdrawals.clear(); removals.clear(); edits.clear()
         if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
         val state = store.read() ?: return AppApprovalOutcome.NOT_READY
         val op = state.pending
@@ -250,6 +266,7 @@ class AppApprovalController(
         val op = state.pending ?: return AppApprovalOutcome.READY
         if (state.revision == Long.MAX_VALUE) return AppApprovalOutcome.NOT_READY
         if (op.phase == AppApprovalPhase.WITHDRAWING || op.phase == AppApprovalPhase.REMOVING) return finishWithdrawal(state, op)
+        if (op.phase == AppApprovalPhase.EDITING) return finishPermissionEdit(state, op)
         if (op.phase != AppApprovalPhase.COMMITTED) return AppApprovalOutcome.NOT_READY
         if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
         if (!permissionsMatch(op.record)) return AppApprovalOutcome.NOT_READY
@@ -257,15 +274,16 @@ class AppApprovalController(
         if (!effects.applyPolicy(plan) || !effects.readBackPolicy(plan)) return AppApprovalOutcome.NOT_READY
         if (planFor(op.record, state) == null || !permissionsMatch(op.record)) return AppApprovalOutcome.NOT_READY
         if (!store.compareAndSet(state, state.replacing(pending = null), null)) return AppApprovalOutcome.NOT_READY
-        return AppApprovalOutcome.APPROVED
+        return if (op.receipt?.kind == AppApprovalReceiptKind.PERMISSIONS_CHANGED)
+            AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.APPROVED
     }
 
-    /** Review the exact stuck approval; no stale-manifest guess or old PIN can withdraw it. */
+    /** Review the exact stuck approval/edit; no stale-manifest guess or old PIN can withdraw it. */
     @Synchronized
     fun prepareWithdrawal(person: TrustedPersonId): AppApprovalWithdrawalRequest? {
         if (!initialized) return null
         val state = store.read() ?: return null
-        val op = state.pending?.takeIf { it.phase == AppApprovalPhase.COMMITTED } ?: return null
+        val op = state.pending?.takeIf { it.phase in setOf(AppApprovalPhase.COMMITTED, AppApprovalPhase.EDITING) } ?: return null
         if (state.revision > Long.MAX_VALUE - 2) return null
         val current = credentials()?.takeIf { it.mode == Mode.TRUSTED } ?: return null
         val credential = current.people[person] ?: return null
@@ -282,7 +300,7 @@ class AppApprovalController(
         if (!initialized) return AppApprovalOutcome.NOT_READY
         val state = store.read() ?: return AppApprovalOutcome.NOT_READY
         val op = state.pending ?: return AppApprovalOutcome.REFUSED
-        if (op.phase != AppApprovalPhase.COMMITTED || op.record.id != request.approvalId ||
+        if (op.phase !in setOf(AppApprovalPhase.COMMITTED, AppApprovalPhase.EDITING) || op.record.id != request.approvalId ||
             state.revision > Long.MAX_VALUE - 2 || state.receipts.any { it.id == request.receiptId } ||
             state.apps.values.any { it.id == request.receiptId }) return AppApprovalOutcome.REFUSED
         if (matchingCredentials(request) == null || !sameBoot(request.preparedAt)) return AppApprovalOutcome.REFUSED
@@ -294,6 +312,70 @@ class AppApprovalController(
             AppApprovalReceiptKind.WITHDRAWN, request.approvalId)
         val withdrawing = state.replacing(pending = AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.WITHDRAWING, receipt))
         if (!store.compareAndSet(state, withdrawing, current)) return AppApprovalOutcome.NOT_READY
+        return resume()
+    }
+
+    @Synchronized
+    fun preparePermissionEdit(packageName: PackageName, person: TrustedPersonId, selection: PermissionSelection): AppPermissionEditRequest? {
+        if (!initialized) return null
+        val state = store.read() ?: return null
+        if (state.pending != null || state.revision > Long.MAX_VALUE - 3) return null
+        val previous = state.apps[packageName] ?: return null
+        val current = credentials()?.takeIf { it.mode == Mode.TRUSTED } ?: return null
+        val credential = current.people[person] ?: return null
+        if (selection.manifest.identity != previous.identity || !battery().allowsDiscretionaryUnhide ||
+            PermissionChoices.plan(selection, manifest(packageName)) !is PermissionPlanning.Ready) return null
+        val id = ids.next()
+        if (id.isBlank() || state.apps.values.any { it.id == id } || state.receipts.any { it.id == id }) return null
+        val replacement = AppApprovalRecord(id, selection)
+        if (planFor(replacement, state) == null) return null
+        val now = clock.checkpoint() ?: return null
+        return AppPermissionEditRequest(previous, replacement, person, credential.generation,
+            current.structureGeneration, now.boot).also { edits.add(it) }
+    }
+
+    @Synchronized
+    fun editPermissions(request: AppPermissionEditRequest, confirmedApprovalId: String, fresh: FreshAuthority): AppApprovalOutcome {
+        if (!edits.remove(request) || confirmedApprovalId != request.approvalId) return AppApprovalOutcome.REFUSED
+        if (!initialized) return AppApprovalOutcome.NOT_READY
+        val state = store.read() ?: return AppApprovalOutcome.NOT_READY
+        if (state.pending != null) return AppApprovalOutcome.BUSY
+        val previous = state.apps[request.packageName] ?: return AppApprovalOutcome.REFUSED
+        if (previous.id != request.approvalId || !previous.permissions.manifest.sameFacts(request.previous.permissions.manifest) ||
+            previous.permissions.choices != request.previous.permissions.choices || state.revision > Long.MAX_VALUE - 3 ||
+            state.apps.values.any { it.id == request.replacement.id } || state.receipts.any { it.id == request.replacement.id }) return AppApprovalOutcome.REFUSED
+        if (matchingCredentials(request) == null || !sameBoot(request.preparedAt) || planFor(request.replacement, state) == null)
+            return AppApprovalOutcome.REFUSED
+        if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
+        if (!authority.consumeFor(fresh, request.action, request.person)) return AppApprovalOutcome.REFUSED
+        if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
+        val current = matchingCredentials(request) ?: return AppApprovalOutcome.NOT_READY
+        if (!sameBoot(request.preparedAt) || !battery().allowsDiscretionaryUnhide || planFor(request.replacement, state) == null)
+            return AppApprovalOutcome.NOT_READY
+        // The receipt describes saved choices, not completed effects or delivery. Pending always excludes access.
+        val receipt = AppApprovalReceipt(request.replacement.id, request.person, current.people.mapValues { it.value.generation },
+            AppApprovalReceiptKind.PERMISSIONS_CHANGED, request.approvalId)
+        val editing = state.replacing(apps = state.apps + (request.packageName to request.replacement),
+            pending = AppApprovalOperation(request.replacement, receipt, AppApprovalPhase.EDITING), receipts = state.receipts + receipt)
+        if (!store.compareAndSet(state, editing, current)) return AppApprovalOutcome.NOT_READY
+        return resume()
+    }
+
+    private fun matchingCredentials(request: AppPermissionEditRequest): CredentialState? = credentials()?.takeIf {
+        it.mode == Mode.TRUSTED && it.structureGeneration == request.structureGeneration &&
+            it.people[request.person]?.generation == request.credentialGeneration
+    }
+
+    private fun finishPermissionEdit(state: AppApprovalState, op: AppApprovalOperation): AppApprovalOutcome {
+        if (state.revision > Long.MAX_VALUE - 2) return AppApprovalOutcome.NOT_READY
+        if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
+        if (planFor(op.record, state) == null || !effects.hideAndReadBack(op.record.identity)) return AppApprovalOutcome.NOT_READY
+        for (write in op.record.permissions.writes) {
+            if (planFor(op.record, state) == null || !effects.setPermission(op.record.identity, write)) return AppApprovalOutcome.NOT_READY
+        }
+        if (!permissionsMatch(op.record) || planFor(op.record, state) == null) return AppApprovalOutcome.NOT_READY
+        val committed = state.replacing(pending = AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.COMMITTED))
+        if (!store.compareAndSet(state, committed, null)) return AppApprovalOutcome.NOT_READY
         return resume()
     }
 
@@ -346,7 +428,7 @@ class AppApprovalController(
         if (withdrawalPlan(state, op) != checked) return AppApprovalOutcome.NOT_READY
         val finished = state.replacing(apps = state.apps - op.record.identity.packageName, pending = null,
             receipts = state.receipts + checkNotNull(op.withdrawalReceipt),
-            removedApps = if (op.phase == AppApprovalPhase.REMOVING)
+            removedApps = if (op.phase == AppApprovalPhase.REMOVING || op.receipt?.kind == AppApprovalReceiptKind.PERMISSIONS_CHANGED)
                 state.removedApps + (op.record.identity.packageName to op.record.identity) else state.removedApps)
         if (!store.compareAndSet(state, finished, null)) return AppApprovalOutcome.NOT_READY
         return if (op.phase == AppApprovalPhase.REMOVING) AppApprovalOutcome.REMOVED else AppApprovalOutcome.WITHDRAWN
