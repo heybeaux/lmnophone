@@ -28,13 +28,18 @@ class IncomingSelfManagedEnrollment private constructor(
     override fun toString() = "IncomingSelfManagedEnrollment(redacted)"
 
     companion object {
+        /** Decode original pending fields only; never installs credentials or grants authority. */
+        fun restore(person: TrustedPersonId, credential: PersonCredential, resetProtectionUserId: String,
+            confirmations: SelfManagedEnrollmentConfirmations, witness: EnrollmentWitness): IncomingSelfManagedEnrollment? {
+            if (!confirmations.complete || resetProtectionUserId.isBlank() || resetProtectionUserId.any(Char::isWhitespace) ||
+                credential.contact != null || credential.generation != 0L || credential.pinCounter != FailureCounter() ||
+                credential.recoveryCounter != FailureCounter()) return null
+            return IncomingSelfManagedEnrollment(person, credential, resetProtectionUserId, confirmations, witness)
+        }
+
         fun confirm(person: TrustedPersonId, resetProtectionUserId: String, prepared: PreparedCredential,
             confirmations: SelfManagedEnrollmentConfirmations, witness: EnrollmentWitness): IncomingSelfManagedEnrollment? {
-            if (!confirmations.complete || resetProtectionUserId.isBlank() || resetProtectionUserId.any(Char::isWhitespace)) return null
-            val credential = prepared.credential
-            if (credential.generation != 0L || credential.pinCounter != FailureCounter() ||
-                credential.recoveryCounter != FailureCounter()) return null
-            return IncomingSelfManagedEnrollment(person, credential.copy(contact = null), resetProtectionUserId, confirmations, witness)
+            return restore(person, prepared.credential.copy(contact = null), resetProtectionUserId, confirmations, witness)
         }
     }
 }
@@ -85,6 +90,35 @@ class ModeSwitchPatch private constructor(
     override fun toString() = "ModeSwitchPatch($sourceMode, $targetMode, redacted)"
 
     companion object {
+        /**
+         * Decode original switch inputs; never derives replacements from current credentials.
+         * Stored dependencies must describe all outgoing holders, including the starter. This is
+         * data only: applying it still requires controller authority, waiting and eligibility checks.
+         */
+        fun restore(starter: TrustedPersonId, sourceMode: Mode, structureGeneration: Long,
+            dependencyGenerations: Map<TrustedPersonId, Long>, incomingSelfManaged: IncomingSelfManagedEnrollment?,
+            incomingTrustedPerson: IncomingPersonEnrollment?): ModeSwitchPatch? {
+            if (structureGeneration < 0 || dependencyGenerations.values.any { it < 0 } ||
+                starter !in dependencyGenerations || dependencyGenerations.size !in 1..2 ||
+                (sourceMode == Mode.SELF_MANAGED && dependencyGenerations.size != 1)) return null
+            val incoming: TrustedPersonId
+            val witness: EnrollmentWitness
+            when (sourceMode) {
+                Mode.TRUSTED -> {
+                    if (incomingSelfManaged == null || incomingTrustedPerson != null) return null
+                    incoming = incomingSelfManaged.person; witness = incomingSelfManaged.witness
+                }
+                Mode.SELF_MANAGED -> {
+                    if (incomingTrustedPerson == null || incomingSelfManaged != null) return null
+                    incoming = incomingTrustedPerson.person; witness = incomingTrustedPerson.witness
+                }
+            }
+            if (incoming in dependencyGenerations ||
+                (witness is EnrollmentWitness.CurrentPerson && witness.person !in dependencyGenerations)) return null
+            return ModeSwitchPatch(starter, sourceMode, structureGeneration, dependencyGenerations,
+                incomingSelfManaged, incomingTrustedPerson)
+        }
+
         fun toSelfManaged(current: CredentialState, starter: TrustedPersonId, incoming: IncomingSelfManagedEnrollment): ModeSwitchPatch? {
             if (current.mode != Mode.TRUSTED || !eligible(current, starter, incoming.person, incoming.witness)) return null
             return ModeSwitchPatch(starter, current.mode, current.structureGeneration,

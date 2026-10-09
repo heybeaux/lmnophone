@@ -58,6 +58,18 @@ class ElevationCountdown internal constructor(val id: String, val target: Elevat
     internal val readyAt = Math.addExact(startedAt.elapsedMillis, durationMillis)
     internal val lapsesAt = Math.addExact(readyAt, ELEVATION_START_WINDOW)
     init { require(id.isNotBlank() && durationMillis in ELEVATION_MIN_COUNTDOWN..ELEVATION_DAY) }
+
+    companion object {
+        /**
+         * Decode timing data only; never restores elevation authority or process-local ownership.
+         * The controller must still revoke on startup and bind a freshly authenticated request.
+         * Invalid fields, including ready/lapse arithmetic overflow, return null.
+         */
+        fun restore(id: String, target: ElevationTarget, startedAt: BootTime, durationMillis: Long): ElevationCountdown? =
+            try { ElevationCountdown(id, target, startedAt, durationMillis) }
+            catch (_: IllegalArgumentException) { null }
+            catch (_: ArithmeticException) { null }
+    }
 }
 /** Proposed grant data, NOT an authority capability. Only a controller's durable atomic step may use it. */
 class ElevationGrant internal constructor(val id: String, val target: ElevationTarget, val startedAt: BootTime,
@@ -68,6 +80,23 @@ class ElevationGrant internal constructor(val id: String, val target: ElevationT
         require(target == ElevationTarget.Play || this.approved.isEmpty())
         require(this.approved.map { it.packageName }.toSet().size == this.approved.size)
         require(!packageAccessOpen || target == ElevationTarget.Play || target == ElevationTarget.Settings)
+    }
+    companion object {
+        /**
+         * Decode immutable grant data, never elevation authority. No owner or live intake is restored;
+         * controller startup revocation and existing binding checks remain mandatory.
+         * Deadlines must retain the target's fixed duration. Invalid combinations return null.
+         */
+        fun restore(id: String, target: ElevationTarget, startedAt: BootTime, deadline: BootTime,
+            packageAccessOpen: Boolean, approved: Set<ApprovalBinding> = emptySet()): ElevationGrant? {
+            val duration = when (target) {
+                ElevationTarget.Play, is ElevationTarget.Update -> 600_000L
+                ElevationTarget.Settings, is ElevationTarget.Approve -> 300_000L
+            }
+            if (deadline.elapsedMillis - startedAt.elapsedMillis != duration) return null
+            return try { ElevationGrant(id, target, startedAt, deadline, packageAccessOpen, approved) }
+                catch (_: IllegalArgumentException) { null }
+        }
     }
     internal fun live(now: BootTime) = now.bootId == startedAt.bootId &&
         now.elapsedMillis >= startedAt.elapsedMillis && now.elapsedMillis < deadline.elapsedMillis

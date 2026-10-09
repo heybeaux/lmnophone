@@ -1132,3 +1132,34 @@ browser/portal effects, product entry points or conversions to policy authority.
 Tests retain browser/portal hiding and exclusion from unhide/lock-task plans on a
 supported inventory, normal/baseline health and locked boot. Existing unknown-build
 and emergency-floor exceptions continue unchanged.
+
+## Stored elevation data
+
+`ElevationCountdown.restore(id, target, startedAt, durationMillis)` and
+`ElevationGrant.restore(id, target, startedAt, deadline, packageAccessOpen, approved)`
+are public nullable decoders for validated scalar/value fields. Invalid combinations,
+countdown overflow, and grants whose deadline differs from the target's fixed duration
+return null. Approval sets are copied and immutable. Decode schema/checksum and nested
+value types first; a null decoder result means damaged data, never an empty ledger.
+These objects restore data only, never elevation authority or process-local ownership.
+Continue to run controller startup revocation and binding checks; preserve the debit
+ledger even when startup discards a restored countdown or grant.
+
+## Stored waiting inputs
+
+`IncomingPersonEnrollment.restore` and `IncomingSelfManagedEnrollment.restore`
+accept `(person, credential, resetProtectionUserId, confirmations, witness)`.
+They retain the saved credential verifiers and audit fields exactly, rejecting
+incomplete confirmations, malformed account IDs, nonzero generations or used counters.
+The trusted-person variant requires its saved contact; the self-managed variant requires
+no contact. No `PreparedCredential`, plaintext PIN/recovery code or current state is needed.
+
+`TrustedPersonPatch.restore(kind, starter, structureGeneration, dependencyGenerations,
+removedSlots, incoming)` validates the add, handover or removal shape.
+`ModeSwitchPatch.restore(starter, sourceMode, structureGeneration, dependencyGenerations,
+incomingSelfManaged, incomingTrustedPerson)` requires the enrollment matching the switch
+direction and one or two outgoing holders as appropriate. Both copy collections and retain
+the original dependency generations. Neither re-derives a patch from current credentials.
+A handover's other-holder witness need not be in its dependency map. Live eligibility,
+PIN authority, the wait and commit checks still belong to the controllers; restoration
+neither enrolls an active credential nor authorizes an operation.
