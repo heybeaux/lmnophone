@@ -120,6 +120,7 @@ class AppApprovalRequest internal constructor(
     internal val credentialGeneration: Long,
     internal val structureGeneration: Long,
     internal val preparedAt: BootTime,
+    internal val elevation: ApprovalElevation? = null,
 ) {
     val action: PrivilegedAction get() = PrivilegedAction("app:approve", record.id)
 }
@@ -176,6 +177,7 @@ class AppApprovalController(
     private val battery: () -> BatteryState,
     private val effects: AppApprovalEffects,
     private val ids: AppApprovalIdSource,
+    private val elevations: ElevationController? = null,
 ) {
     private var initialized = false
     private val requests = mutableSetOf<AppApprovalRequest>()
@@ -209,13 +211,21 @@ class AppApprovalController(
     fun prepareReapproval(packageName: PackageName, person: TrustedPersonId, selection: PermissionSelection): AppApprovalRequest? =
         prepareCandidate(store.read()?.removedApps?.get(packageName), packageName, person, selection)
 
+    /** The PIN was consumed for the countdown; this review derives authority from the owned live grant. */
+    @Synchronized
+    fun prepareElevated(packageName: PackageName, selection: PermissionSelection): AppApprovalRequest? {
+        if (!initialized || selection.manifest.identity.packageName != packageName) return null
+        val binding = elevations?.prepareApproval(selection.manifest.identity, store) ?: return null
+        return prepareCandidate(binding.identity, packageName, binding.person.person, selection, binding)
+    }
+
     private fun prepareCandidate(candidate: ApprovalBinding?, packageName: PackageName, person: TrustedPersonId,
-        selection: PermissionSelection): AppApprovalRequest? {
+        selection: PermissionSelection, elevation: ApprovalElevation? = null): AppApprovalRequest? {
         if (!initialized || candidate == null || candidate.packageName != packageName) return null
         val state = store.read() ?: return null
         if (state.pending != null || packageName in state.apps || state.revision == Long.MAX_VALUE) return null
         val current = credentials() ?: return null
-        if (current.mode != Mode.TRUSTED) return null
+        if (current.mode != if (elevation == null) Mode.TRUSTED else Mode.SELF_MANAGED) return null
         val credential = current.people[person] ?: return null
         if (candidate != selection.manifest.identity || !battery().allowsDiscretionaryUnhide) return null
         val live = manifest(packageName)
@@ -225,12 +235,12 @@ class AppApprovalController(
         val record = AppApprovalRecord(id, selection)
         if (planFor(record, state) == null) return null
         val now = clock.checkpoint() ?: return null
-        return AppApprovalRequest(record, person, credential.generation, current.structureGeneration, now.boot).also { requests.add(it) }
+        return AppApprovalRequest(record, person, credential.generation, current.structureGeneration, now.boot, elevation).also { requests.add(it) }
     }
 
     @Synchronized
     fun approve(request: AppApprovalRequest, fresh: FreshAuthority): AppApprovalOutcome {
-        if (!requests.remove(request)) return AppApprovalOutcome.REFUSED
+        if (!requests.remove(request) || request.elevation != null) return AppApprovalOutcome.REFUSED
         if (!initialized) return AppApprovalOutcome.NOT_READY
         val state = store.read() ?: return AppApprovalOutcome.NOT_READY
         if (state.pending != null) return AppApprovalOutcome.BUSY
@@ -241,6 +251,26 @@ class AppApprovalController(
         if (!authority.consumeFor(fresh, request.action, request.person)) return AppApprovalOutcome.REFUSED
         // Close Play and verify protected state before any permission or approval mutation.
         if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
+        return finishApproval(request, state, current)
+    }
+
+    @Synchronized
+    fun approveElevated(request: AppApprovalRequest): AppApprovalOutcome {
+        if (!requests.remove(request)) return AppApprovalOutcome.REFUSED
+        val binding = request.elevation ?: return AppApprovalOutcome.REFUSED
+        if (!initialized) return AppApprovalOutcome.NOT_READY
+        val state = store.read() ?: return AppApprovalOutcome.NOT_READY
+        if (state.pending != null) return AppApprovalOutcome.BUSY
+        if (request.record.identity.packageName in state.apps || state.revision > Long.MAX_VALUE - 3) return AppApprovalOutcome.REFUSED
+        val current = matchingCredentials(request) ?: return AppApprovalOutcome.REFUSED
+        if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
+        if (planFor(request.record, state) == null || !sameBoot(request)) return AppApprovalOutcome.REFUSED
+        // Ordinary approval closes package access only. Startup would revoke the grant and its history.
+        if (elevations?.closeForApproval(binding) != true) return AppApprovalOutcome.REFUSED
+        return finishApproval(request, state, current)
+    }
+
+    private fun finishApproval(request: AppApprovalRequest, state: AppApprovalState, current: CredentialState): AppApprovalOutcome {
         val receipt = AppApprovalReceipt(request.record.id, request.person, current.people.mapValues { it.value.generation })
         val op = AppApprovalOperation(request.record, receipt, AppApprovalPhase.PREPARING)
         val preparing = state.replacing(pending = op)
@@ -255,7 +285,13 @@ class AppApprovalController(
         val committed = preparing.replacing(apps = preparing.apps + (request.record.identity.packageName to request.record),
             pending = AppApprovalOperation(request.record, receipt, AppApprovalPhase.COMMITTED), receipts = preparing.receipts + receipt,
             removedApps = preparing.removedApps - request.record.identity.packageName)
-        if (!store.compareAndSet(preparing, committed, atCommit)) return AppApprovalOutcome.NOT_READY
+        val binding = request.elevation
+        val saved = if (binding == null) store.compareAndSet(preparing, committed, atCommit)
+        else elevations?.commitApproval(binding, store, preparing, committed, atCommit) {
+            permissionsMatch(request.record) && matchingCredentials(request) != null && sameBoot(request) &&
+                battery().allowsDiscretionaryUnhide && planFor(request.record, preparing) != null
+        } == true
+        if (!saved) return AppApprovalOutcome.NOT_READY
         return resume()
     }
 
@@ -460,7 +496,7 @@ class AppApprovalController(
     } == true
 
     private fun matchingCredentials(request: AppApprovalRequest): CredentialState? = credentials()?.takeIf {
-        it.mode == Mode.TRUSTED && it.structureGeneration == request.structureGeneration &&
+        it.mode == (if (request.elevation == null) Mode.TRUSTED else Mode.SELF_MANAGED) && it.structureGeneration == request.structureGeneration &&
             it.people[request.person]?.generation == request.credentialGeneration
     }
     private fun sameBoot(request: AppApprovalRequest): Boolean = clock.checkpoint()?.boot?.let {

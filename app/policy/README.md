@@ -404,7 +404,7 @@ D must version and validate EDITING and PERMISSIONS_CHANGED. PREPARING accepts o
 
 ## Elevation timing, grant and debit proposals
 
-`ElevationMachine` is the pure state-model portion of copy-change task 2.6. **It does not authorize runtime access.** `ElevationState`, `ElevationCountdown`, `ElevationGrant`, targets/actions and transition outcomes are immutable data/proposals, not `FreshAuthority` or controller-issued capabilities. No current approval, session or updater API consumes them. The fresh-PIN controller, durable combined-store transaction, receipts and effect integration are the next slice; self-managed elevation is not yet an available workflow.
+`ElevationMachine` is the pure state-model portion of copy-change task 2.6. **It does not authorize runtime access.** `ElevationState`, `ElevationCountdown`, `ElevationGrant`, targets/actions and transition outcomes are immutable data/proposals, not `FreshAuthority` or controller-issued capabilities. They are not capabilities. The controller lifecycle and approval integration described below validate their own process-local ownership; Update is still unavailable.
 
 `ElevationLimits` accepts only a 10-minute–24-hour countdown and 0–3 daily turns, defaulting to 10 minutes and 2. `request` proposes one countdown after the future controller validates the user's fresh PIN for the chosen kind and exact binding. Another countdown/grant is BUSY. `tick` projects readiness; it never starts access. A longer configured countdown extends the existing countdown from its original start; a later shorter value cannot accelerate it. A lapsed countdown cannot be revived by changing settings. Shortening countdowns or increasing limits still require the separate waiting-change controller; this model does not authorize settings changes.
 
@@ -489,14 +489,9 @@ It cannot authorize approval, and becomes unavailable at grant expiry, restart o
 The Android adapter still owes proof of event/snapshot completeness and installed-during-session
 provenance; these JVM tests do not establish Android package observation or containment.
 
-**Remaining action integration:** Approve and Update requests currently return null. There is no
-public grant-consumption API and no approval/update writer accepts this controller's state or
-candidate data as authority. Existing `AppApprovalController` remains supervised-only. The next
-slice must connect its final approval write to this controller's live owned Play history and atomically
-save consumption with the approval intent, preserving the grant for other observed Play packages.
-Approve must consume its exact bound app once; Update must serialize its exact staged bytes/version
-consumption with PackageInstaller commit. No caller-supplied ID, stale record or returned candidate
-may stand in for that final check. This lifecycle slice is not a complete self-managed workflow.
+**Approval integration:** Play and exact-app Approve consumption now use the optional
+`ElevationApprovalStore` and `AppApprovalController` path below. Update requests still return null;
+no persisted intent or pure proposal authorizes an installer call.
 
 The fake-effect tests cover fresh authority, atomic Start and credential races, explicit Start and
 limits, damaged repair, scope/battery/mode/clock changes, owned candidate intake, fixed deadlines,
@@ -571,3 +566,45 @@ TRUSTED/unknown mode, to damaged storage, or to an already requested revocation.
 close/retry. `JournalStore.ownedByElevation()` is an ownership query on the same serialized coordinator;
 legacy stores default false, and the policy-owned combined projection supplies it without changing
 the durable schema. Existing app-return, screen-off/call and startup routing is unchanged.
+
+
+## Live elevation approval consumption
+
+Copy-change task 2.6: construct one `ElevationApprovalStore` whose `elevationStore` is the exact
+shared instance used by both session controllers. Pass that approval store to `ElevationController`
+and pass that controller to `AppApprovalController`. Existing constructor wiring stays compatible;
+without the combined port, elevated approval and Approve countdowns remain unavailable.
+
+`prepareElevated(package, selection)` reads the controller's owned grant and actual Play history.
+The UI supplies only the app under review and complete permission choices. Play requires an observed
+installed package with the same fresh complete signer set; Approve requires its exact target. A caller's
+`PlaySessionState`, candidate ID, grant record or person cannot authorize this path. The fresh PIN was
+already consumed for the exact person/action/countdown at request. `approveElevated(request)` accepts
+only that approval controller's process-local request once. It closes Play access through the elevation
+owner, retaining the original live grant/history/deadline, and never calls either startup method during
+ordinary approval. Approve starts no package access and consumes its grant once.
+
+The existing transaction hides/readbacks the candidate, saves PREPARING, applies each chosen
+permission and reads it back. The new final port joins COMMITTED app record, receipt/outbox and grant
+consumption in one atomic durable write, comparing both record revisions and credential revision.
+For Play, this records the approved package and preserves the fixed deadline for other observed apps.
+For Approve, it removes the grant/person binding. Both preserve the debit. All sources and writers must
+share the same non-reentrant serialized coordinator; per-method synchronization does not replace it.
+
+The port invokes the supplied final check once, synchronously inside its transaction after any waits,
+then compares and writes without yielding. That check repeats manifest/installed/signing facts,
+permission readbacks, battery, credential generation/structure/mode, owned grant, boot and strict
+deadline. Only the exact internally owned PREPARING operation (revision, record, manifest, choices
+and receipt identity) is accommodated; ordinary tick and unrelated pending operations still fail closed.
+The adapter must not implement two writes or save a consumption intent followed by an approval write.
+
+Failures before COMMITTED publish neither approval nor receipt. Recovery discards PREPARING and
+revokes temporary authority; COMMITTED recovery finishes existing idempotent activation without
+consuming again or issuing another receipt. Every process/Direct-Boot start must revoke elevations
+before publishing other authority. A failed effect or restart never refunds a debit or extends a deadline.
+
+`ElevatedAppApprovalTest` exercises both grant kinds, forged history, unobserved and replaced signers,
+replayed requests, stale state, exact PREPARING scope, final-boundary clock/credential/mode changes,
+epoch repair, permission/readback failures and crashes before/after the joint write. JVM fakes establish
+the pure-policy contract, not Android storage atomicity, package-event completeness or hidden-package
+permission support. Those require lane D integration and independent verification.
