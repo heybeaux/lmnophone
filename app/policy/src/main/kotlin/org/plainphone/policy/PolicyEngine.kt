@@ -30,8 +30,10 @@ object PolicyEngine {
         val conflicts = immutableSet(input.classifiedBrowsers.intersect(neverHide))
         val sessionOnly = setOf(PLAY_PACKAGE) + inventory?.settingsSessionPackages.orEmpty()
         val approved = if (baseline) emptySet() else input.approvalState?.approvedPackages(input.installed, input.installedIdentities).orEmpty() - input.classifiedBrowsers - sessionOnly
+        // System installation and inherited UI membership are not approval authority.
+        // Prune discretionary UI independently of the sweep: unknown-build system apps stay unhidden.
         val invalidApprovals = (input.approvalState?.apps?.keys.orEmpty() + input.approved +
-            input.installed.filter { !it.isSystem }.map { it.name }) - approved - sessionOnly
+            input.installed.map { it.name }) - approved - sessionOnly
         val session = input.sessionAccess?.takeIf { access ->
             !baseline && !input.lockedBoot && input.currentBoot?.let { access.isLive(it) } == true &&
                 access.packages == sessionPackages(access.kind, inventory)
