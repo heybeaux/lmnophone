@@ -209,7 +209,7 @@ class AppApprovalControllerTest {
     }
 
     @Test fun `startup revokes first and abandons uncommitted work but completes committed work`() {
-        for (point in listOf("after-save-preparing", "permission", "permissions-readback", "after-save-committed", "unhide", "policy-readback", "after-save-finished")) {
+        for (point in listOf("revoke", "protected", "session-readback", "save-preparing", "after-save-preparing", "hide", "permission", "permissions-readback", "save-committed", "after-save-committed", "unhide", "policy-readback", "save-finished", "after-save-finished")) {
             state = AppApprovalState(); setup(); val r = request(); val a = auth(r); crash = point
             assertFailsWith<IllegalStateException> { controller.approve(r, a) }
             val committed = state!!.apps.isNotEmpty()

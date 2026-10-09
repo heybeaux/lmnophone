@@ -72,4 +72,11 @@ class SignerBoundPolicyTest {
         }
     }
 
+    @Test fun `signer pruning never removes the required Messages baseline on an unknown build`() {
+        val plan = PolicyEngine.decide(input().copy(inventory = null, lockedBoot = true, approvalState = null,
+            installed = listOf(InstalledPackage(sms, false, 1)), previousLockTask = setOf(sms)))
+        assertTrue(sms in plan.lockTaskPackages)
+        assertTrue(sms in plan.unhide)
+    }
+
 }
