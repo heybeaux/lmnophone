@@ -15,10 +15,10 @@ Do not infer foreground eligibility from never-hide membership. Only the emergen
 
 Test-first evidence: `CoreTypesTest` was committed while `:core:compileTestKotlin` failed on the absent types; implementation followed. Seven JVM tests cover identity validation, immutable inventories, minimum UI safety, and epoch readings.
 
-Before the shared skeleton lands, run from the repository root:
+Run from `app/` using the shared Gradle build:
 
 ```sh
-./spikes/emulator/apps/gradlew -p app/core :core:test :core:check
+./gradlew :core:test :core:check
 ```
 
-The temporary `settings.gradle.kts` is removed when rebasing onto the shared skeleton. This reuses the existing Gradle wrapper without editing it.
+The shared `app/settings.gradle.kts` owns the module graph; this module has no standalone build.

@@ -19,10 +19,11 @@ Session access comes from `SessionController.access()` with a fresh boot reading
 
 Core tests precede implementation in git history. Policy tests similarly ran red before implementation. Tests cover base tasks 4.2, 4.11 and the decision portion of 4.13: inventory/floor precedence, spoofed identities, every destructive guard operation, emergency UI membership, known/unknown/corrupt policy, changed packages, apply/readback order, locked boot, reapproval, and deterministic output. Device behavior and emergency release gates are not claimed by JVM tests.
 
-Before the skeleton lands:
+Run using the shared Gradle build:
 
 ```sh
-./spikes/emulator/apps/gradlew -p app/core :core:test :policy:test :core:check :policy:check
+cd app
+./gradlew :core:test :policy:test :core:check :policy:check
 ```
 
 ## PIN/recovery slice
