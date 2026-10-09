@@ -1,7 +1,8 @@
 <!-- Copyright 2026 Plainphone contributors; SPDX-License-Identifier: Apache-2.0 -->
 # Slice 3 checkpoint — PLA-112
 
-This is implementation evidence, not acceptance or a Slice ready handoff.
+Historical checkpoint, superseded by `slice3-ready.md` after the PLA-130 answer.
+This records the pre-answer state, not acceptance or a Slice ready handoff.
 
 - Base: local `main` `09bae12`, rebased without fetch. Worktree `plainphone-ui`,
   branch `mvp/ui`. No files outside `:ui` changed.

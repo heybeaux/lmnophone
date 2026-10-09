@@ -20,9 +20,27 @@ fun trustedFixtures(two: Boolean = true, long: Boolean = false): List<TrustedFix
         add(TrustedFixture("who") { WhoAreYouScreen(WhoAreYouUiState(people), {}) })
         PinStage.entries.forEach { stage ->
             add(TrustedFixture("pin_$stage") { PinScreen(PinUiState(context, stage, wait = "1 minute",
-                otherName = other.takeIf { two }, pendingChange = change, freshExplanation = true,
+                helper = other, pinWait = "2 minutes", otherName = other.takeIf { two }, pendingChange = change, freshExplanation = true,
                 recoveryCode = "EXAMPLE-CODE-NOT-A-SECRET"), {}) })
         }
+        RecoveryLockoutKind.entries.forEach { kind ->
+            add(TrustedFixture("recovery_locked_$kind") { PinScreen(PinUiState(context, PinStage.RecoveryLocked,
+                wait = "1 minute", pinWait = "2 minutes", helper = other, otherName = other.takeIf { two }, recoveryLockout = kind), {}) })
+        }
+        add(TrustedFixture("recovery_wrong") { PinScreen(PinUiState(context, PinStage.Recovery, wrongRecoveryCode = true), {}) })
+        add(TrustedFixture("self_pin", false) { PinScreen(PinUiState(AdminContext(user)), {}) })
+        add(TrustedFixture("self_recovery_locked") { PinScreen(PinUiState(AdminContext(user), PinStage.RecoveryLocked,
+            wait = "1 minute", helper = other), {}) })
+        add(TrustedFixture("self_permissions") { PermissionsScreen(PermissionsUiState(AdminContext(user), app.name,
+            PermissionGroup.entries.map { PermissionChoice(it.name, it) }), {}) })
+        add(TrustedFixture("self_app_detail") { AppDetailScreen(AppDetailUiState(AdminContext(user), app), {}) })
+        add(TrustedFixture("self_app_remove") { AppReviewScreen(AppReviewUiState(AdminContext(user), app, stage = AppReviewStage.Remove), {}) })
+        listOf(WaitingStage.Stuck, WaitingStage.StopConfirm, WaitingStage.Stopped).forEach { stage ->
+            add(TrustedFixture("self_handover_$stage") { WaitingChangeScreen(WaitingChangeUiState(AdminContext(user), stage, change,
+                newName = other, canStop = true), {}) })
+        }
+        add(TrustedFixture("stop_to_self") { WaitingChangeScreen(WaitingChangeUiState(context, WaitingStage.StopConfirm, change,
+            everyone = everyone, changeToSelfManaged = true), {}) })
         add(TrustedFixture("pin_wrong") { PinScreen(PinUiState(context, wrongPin = true), {}) })
         add(TrustedFixture("pin_sending") { PinScreen(PinUiState(context, sending = true, canContinue = true), {}) })
         add(TrustedFixture("menu") { AdminMenuScreen(AdminMenuUiState(context,

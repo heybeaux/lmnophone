@@ -3,8 +3,8 @@
 
 The merged first slice provides the Lexend theme and U1 home screen. Slice 2 adds
 U4 More, U5 app requests and results, U6 blocked-link states and the approved U7
-Wi-Fi messages. Settings controls, U2/U3 notices, U8 About, U9/U10 waiting/opening
-details, trusted-person flows and setup remain later slices. The source of truth is `docs/ux/design-tokens.md` and
+Wi-Fi messages. Settings controls, U2/U3 notices, U8 About and setup remain later slices. Slice 3 adds trusted-person,
+self-managed and U9/U10 waiting/opening screens. The source of truth is `docs/ux/design-tokens.md` and
 `docs/ux/flows-user.md` at the repository root.
 
 ## Host contract
@@ -85,7 +85,8 @@ an unqualified connected-device Gradle task for this lane.
 All five entry points in `org.plainphone.ui.user` use plain Kotlin state/events:
 `MoreScreen`, `AskForAppScreen`, `AppRequestResultScreen`, `BlockedLinkScreen`, and
 `WifiMessageScreen`. Wrap them in the theme and supply the safe content area.
-Task bodies scroll; primary and secondary actions remain below the scroll area.
+Task bodies scroll; actions normally remain pinned. The approved large-title
+fallback described below scrolls the whole task page.
 The request screen also consumes IME insets. More is a scrolling menu with no
 primary action. Resource copy comes from U4–U7; names are synthetic in fixtures.
 
@@ -135,7 +136,8 @@ issue apply to later screens; this slice does not wire those controllers.
   short-date strings wrap rather than shrink.
 - Some verbatim long confirmation titles take three lines at 200% on 360 dp.
   Copy is preserved and the body scrolls; no text is shrunk or ellipsized to meet
-  the tokens' two-line title target. This copy/layout conflict needs UX review.
+  the tokens' two-line title target. UX approved whole-page scrolling when the
+  full title and one body line cannot fit above pinned actions (PLA-130).
 
 ## TalkBack emulator inspection (2026-10-09)
 
@@ -162,14 +164,14 @@ this check used the dedicated emulator's native touch events. No physical phone
 was used. This verifies traversal/scrolling in the stated fixture, not every
 TalkBack version or an end-to-end integrated launcher.
 
-## Slice 3 checkpoint: trusted-person presentation
+## Slice 3: trusted-person presentation
 
 The `trusted` package exports state/event entry points for identity selection,
 PIN/recovery, the trusted/self-managed menu, app review and permissions, app
 ordering/details, requests, people changes, waiting changes, session checks,
 Plainphone updates, self-managed openings/waits, history, and turning off.
 Every entry point has 360×640 previews at 100% and 200%. All static copy is in
-`trusted_strings.xml` and `trusted_extra_strings.xml`, from T1–T8, P1/P3–P6,
+`trusted_strings.xml`, `trusted_extra_strings.xml` and `trusted_completion_strings.xml`, from T1–T8, P1/P3–P6,
 M1–M8, U9/U10 and L4. The setup steps reused by M2c/M6 remain the setup slice;
 Continue emits navigation intent, not completed enrollment.
 
@@ -228,10 +230,27 @@ all fixture stages at 100% and 200%; named variants also cover
 1.3/1.5/1.8/2.0 × one/two people × short/long synthetic names. They reserve 32 dp
 status and 48 dp navigation bars, as the earlier goldens do.
 
-This checkpoint is **not Slice ready**. The pending designer question on
-[PLA-112](/PLA/issues/PLA-112) asks for self-managed PIN/permissions copy,
-recovery-code lockout copy, and the self-managed stuck-handover copy. Long-name
-200% goldens also expose a title taller than the viewport left between the band
-and pinned actions. A whole-page scrolling fallback has been proposed for those
-cases. Do not mistake a matching golden for approval of that layout. Complete
-those items and rerun the required commands before the Lead/Verifier handoff.
+UX resolved the checkpoint questions in `7ab89de` (PLA-130). Self-managed PIN,
+permissions, app removal, recovery-code lockout and stuck handover use that copy.
+
+- `RecoveryLocked` hides the code field. Supply `RecoveryLockoutKind` for PIN
+  available, PIN waiting, or the supervised Skip route, plus formatted waits and
+  helper name. `EnterPin` routes back to PIN; `Ok` on Skip returns to the pending
+  change. Counters, delays, persistence and SMS decisions remain in the host.
+- Self-managed app details show permission choices without a direct edit action.
+  Removal routes to fresh PIN, then Removed; no wait or opening is consumed.
+  Re-adding uses the hidden-app wait/opening path. `waitMinutes` is host supplied.
+- A stuck self-managed handover retains the user's current authority. Set
+  `changeToSelfManaged` for the opposite route's Stop confirmation. A Stop event
+  still requires the current authority's PIN. No stuck/stopped SMS is sent when
+  there are no current trusted people; the UI never sends SMS.
+- Every task screen measures its real band/title/actions at the current bounds
+  and text size. If the full title plus a body line cannot fit above the actions,
+  band/body/actions share one scroll area. Secondary stays above primary.
+  Otherwise actions remain pinned. Scroll and sending updates never switch the
+  layout; screen identity or display/font/rotation changes remeasure. New tasks
+  open at the top. Android's native scrollbar occupies the empty edge gutter and
+  is excluded from accessibility; Compose supplies accessible scrolling.
+
+See `evidence/slice3-ready.md` for final checks and review evidence. The older
+checkpoint report records the pre-answer state only.
