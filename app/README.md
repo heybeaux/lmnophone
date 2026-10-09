@@ -13,7 +13,15 @@ The Gradle root for the MVP. The module map, the owner of each module, and the s
 | `:device` | Android library |
 | `:plainphone` | Android application, Device Owner receiver, minSdk 30 |
 
-Toolchain: JDK 17, AGP 8.11.0, Kotlin 2.1.20, compileSdk 36. Versions are in `gradle/libs.versions.toml`.
+Toolchain: JDK 17, AGP 8.11.0, Kotlin 2.1.20, compileSdk 36, minSdk 30. These values are set once, in `gradle/libs.versions.toml`. Module build files read them from `libs.versions.*` and `libs.plugins.*`. Never write a version number into a `build.gradle.kts`.
+
+## Rebasing a lane branch onto `main`
+
+Lane branches that started with a standalone build stop on add/add conflicts:
+
+- **`build.gradle.kts`: take `main`'s version** (`git checkout --ours -- <file>` while rebasing). Then re-add any line your lane added after skeleton commit `54f53ed`, written with `libs.*`.
+- **Source files: keep your lane's version** (`git checkout --theirs -- <file>`).
+- After the rebase, delete the lane's standalone `settings.gradle.kts` (and `core/.standalone` or `links/core-shim/`). Then run `./gradlew test assembleDebug` from `app/`.
 
 ## Build
 

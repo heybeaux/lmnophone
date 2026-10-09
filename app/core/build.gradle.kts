@@ -1,4 +1,4 @@
 // SPDX-License-Identifier: Apache-2.0
-plugins { kotlin("jvm") version "2.1.20" }
-kotlin { jvmToolchain(17) }
+plugins { alias(libs.plugins.kotlin.jvm) }
+kotlin { jvmToolchain(libs.versions.jdk.get().toInt()) }
 dependencies { testImplementation(kotlin("test-junit")) }

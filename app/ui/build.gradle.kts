@@ -10,19 +10,19 @@ plugins {
 
 android {
     namespace = "org.plainphone.ui"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
     defaultConfig {
-        minSdk = 30
+        minSdk = libs.versions.minSdk.get().toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
     }
     testOptions { unitTests.isIncludeAndroidResources = true }
 }
-kotlin { jvmToolchain(17) }
+kotlin { jvmToolchain(libs.versions.jdk.get().toInt()) }
 
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2025.06.01"))
