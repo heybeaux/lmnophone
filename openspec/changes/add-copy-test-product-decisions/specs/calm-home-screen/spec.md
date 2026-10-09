@@ -3,7 +3,6 @@
 ### Requirement: Plain home screen
 The home screen SHALL show:
 - the time and date
-- an Emergency button
 - Phone and Messages
 - the other approved apps, with large text labels and no icons, in an order the trusted person (or, in self-managed mode, the user) chooses
 
@@ -20,15 +19,15 @@ The one exception is a single **notice line**. The home screen SHALL show at mos
 
 Tapping a pending-change line SHALL let anyone holding the phone cancel that change, without a PIN. When the pending-change line is hidden by "Plainphone needs attention", the pending change and its Cancel SHALL be on the needs-attention screen and on Plainphone's own settings screen.
 
-The notice line SHALL NOT push Emergency, Phone or Messages off-screen at the largest font size.
+The notice line SHALL NOT push Phone or Messages off-screen at the largest font size.
 
 #### Scenario: First look
 - **WHEN** the user unlocks the phone
-- **THEN** they see the time, the date, Emergency, Phone, Messages and their other approved apps, and nothing else unless a notice line applies
+- **THEN** they see the time, the date, Phone, Messages and their other approved apps, and nothing else unless a notice line applies
 
 #### Scenario: Overdue monthly check at largest font
 - **WHEN** the monthly check is more than 7 days overdue and text size is at its largest
-- **THEN** the notice line shows, and Emergency, Phone and Messages are still visible without scrolling
+- **THEN** the notice line shows, and Phone and Messages are still visible without scrolling
 
 #### Scenario: Turn-off pending under "needs attention"
 - **WHEN** a turn-off is pending and "Plainphone needs attention" is the line shown

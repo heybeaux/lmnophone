@@ -3,7 +3,6 @@
 ### Requirement: Plain home screen
 The home screen SHALL show:
 - the time and date
-- an Emergency button
 - Phone and Messages
 - the other approved apps, with large text labels and no icons, in an order the trusted person chooses
 
@@ -13,22 +12,29 @@ There are two exceptions. When they apply, the home screen SHALL show one of the
 - the monthly-check line, "Ask [trusted person] to do the monthly phone check" (approved-apps);
 - "Plainphone needs attention" (device-lockdown).
 
-Neither line SHALL push Emergency, Phone or Messages off-screen at the largest font size.
+Neither line SHALL push Phone or Messages off-screen at the largest font size.
 
 #### Scenario: First look
 - **WHEN** the user unlocks the phone
-- **THEN** they see the time, the date, Emergency, Phone, Messages and their other approved apps, and nothing else unless one of the two notice lines applies
+- **THEN** they see the time, the date, Phone, Messages and their other approved apps, and nothing else unless one of the two notice lines applies
 
 #### Scenario: Overdue monthly check at largest font
 - **WHEN** the monthly check is more than 7 days overdue and text size is at its largest
-- **THEN** the notice line shows, and Emergency, Phone and Messages are still visible without scrolling
+- **THEN** the notice line shows, and Phone and Messages are still visible without scrolling
 
-### Requirement: Phone, Messages and Emergency are always present
-Phone, Messages and Emergency SHALL always be on the home screen. They SHALL NOT be removable through trusted-person controls.
+### Requirement: Phone and Messages are always present
+Phone and Messages SHALL always be on the home screen. They SHALL NOT be removable through trusted-person controls.
 
 #### Scenario: Trusted person views the app list
 - **WHEN** the trusted person views the app list in trusted-person mode
-- **THEN** Phone, Messages and Emergency are marked "always on" and have no remove action
+- **THEN** Phone and Messages are marked "always on" and have no remove action
+
+### Requirement: No emergency control on the home screen
+The home screen SHALL NOT show an Emergency or 9-1-1 button, tile or gesture target (Beaux, Telegram 4487). The user calls 9-1-1 through the routes in essential-calling-and-texting. Plainphone MAY offer an "Emergency 9-1-1" entry inside More, or behind a long-press. It SHALL NOT be reachable by one tap from the home screen.
+
+#### Scenario: Accidental tap on the home screen
+- **WHEN** the user taps anywhere on the home screen once
+- **THEN** no emergency dialer or emergency call starts
 
 ### Requirement: Built-in basic settings without Android Settings
 Plainphone SHALL provide its own settings screen, using Device Owner APIs, and SHALL NOT use Android Settings activities or panels. It SHALL cover:

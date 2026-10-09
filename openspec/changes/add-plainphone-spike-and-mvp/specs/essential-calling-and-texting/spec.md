@@ -12,7 +12,13 @@ The policy engine SHALL refuse any policy that would hide, suspend, disable or u
 
 The system dialer SHALL always be on the lock-task UI list. `LOCK_TASK_FEATURE_KEYGUARD` and `LOCK_TASK_FEATURE_HOME` SHALL always be set.
 
-The home screen's Emergency button SHALL send `ACTION_DIAL` for `tel:911` explicitly to the system dialer, after checking that the dialer resolves. From inside an approved app, the user SHALL reach Emergency by pressing Home. The power-menu emergency entry, where the build has one, SHALL remain available.
+**Invariant: 9-1-1 is always reachable, and never from an accidental tap on the home screen** (Beaux, Telegram 4487). The routes are:
+- **Phone:** the system dialer, reached from Phone on the home screen. From inside an approved app, the user presses Home, then Phone. Dialling 9-1-1 there SHALL work under lock task with in-task launches blocked.
+- **Lock screen:** stock Android's "Emergency call".
+- **Power button:** the Emergency SOS gesture (press power 5 times), where the build has it **and** Q14 shows it works while Plainphone's lock task is active. Otherwise the setup guide SHALL NOT mention it.
+- **Optional:** an "Emergency 9-1-1" entry inside More (calm-home-screen).
+
+Any emergency intent Plainphone sends SHALL be `ACTION_DIAL` for `tel:911` sent explicitly to the system dialer package, after checking that the dialer resolves. The power-menu emergency entry, where the build has one, SHALL remain available.
 
 #### Scenario: A policy tries to hide the dialer
 - **WHEN** any code path asks the policy engine to hide, suspend or disable the system dialer or one of its components
@@ -22,8 +28,9 @@ The home screen's Emergency button SHALL send `ACTION_DIAL` for `tel:911` explic
 - **WHEN** the user tries to reach the emergency dialer in each of these states:
   - from the lock screen before the first unlock
   - from the lock screen
-  - from home
-  - from inside an approved app (by pressing Home)
+  - from home (through Phone)
+  - from inside an approved app (Home, then Phone)
+  - with the power-button SOS gesture, where Q14 confirmed it
   - during setup
   - during a PIN lockout
   - during a supervised session

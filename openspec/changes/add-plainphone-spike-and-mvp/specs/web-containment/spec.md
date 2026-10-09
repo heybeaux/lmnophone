@@ -76,7 +76,7 @@ Plainphone SHALL NOT gate the emergency UI on Wi-Fi. It does not promise a radio
 
 #### Scenario: Hotel Wi-Fi
 - **WHEN** the phone joins a network that needs a sign-in page, with no mobile data
-- **THEN** no sign-in page opens, the message above is shown, the network can be forgotten, and the Emergency button still opens the dialer
+- **THEN** no sign-in page opens, the message above is shown, the network can be forgotten, and Phone still opens the dialer, where 9-1-1 can be dialled
 
 #### Scenario: Home Wi-Fi
 - **WHEN** the phone joins an ordinary WPA2 home network

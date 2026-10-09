@@ -124,8 +124,9 @@
 **Q14. Does the emergency gate behave correctly?**
 - Run the D5 / essential-calling UI test in every listed state, including the negative-control build, which must fail.
 - Run with the block flag on, during setup, during a PIN lockout and during a Play session.
-- Check that Alert Ready–style cell broadcasts still show where the emulator can inject them. Where it can't, record **inconclusive**, which blocks release until covered. Negative controls: Emergency goes nowhere, dialer missing from lock task, alert display disabled. Each must fail the gate.
-- States: before first unlock, lock screen, home, inside an approved app via Home, setup, PIN lockout, supervised session, Plainphone update, turning off, after restart, Plainphone can't start.
+- Check that Alert Ready–style cell broadcasts still show where the emulator can inject them. Where it can't, record **inconclusive**, which blocks release until covered. Negative controls: Phone (or the More emergency entry) doesn't open the system dialer, dialer missing from lock task, alert display disabled. Each must fail the gate.
+- States: before first unlock, lock screen, home via Phone, inside an approved app via Home then Phone, setup, PIN lockout, supervised session, Plainphone update, turning off, after restart, Plainphone can't start.
+- **[device] Power-button SOS (Telegram 4487):** on the XT2415, does pressing power 5 times open Emergency SOS while Plainphone's lock task is active, with BLOCK on? Stop at the SOS countdown screen and cancel it. **Never let it place a call.** Do this only after confirming, by a settings readback or a dry run with lock task off, that the countdown can be cancelled in time. If it can't be made safe, stop and report. If it doesn't work under lock task, report it before the gate.
 - **[device, before handover]** Emergency dialer in every state without placing a call; an incoming call answered and its keypad sending tones; an alert **observed** on screen (a scheduled Alert Ready test or an approved test method), or else the phone stays in custody or Beaux records acceptance of a narrower promise; manufacturer emergency components on the never-hide list. A live 9-1-1 call only under a separate procedure agreed with E-Comm or the carrier and approved by Beaux.
 
 **Q8. Do texting and calling defaults work?**

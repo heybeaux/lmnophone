@@ -37,7 +37,7 @@ Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 6, af
 ### New Capabilities
 - `device-lockdown`: Device Owner policies, lock task with in-task blocking, factory-reset protection, safe policy storage and boot recovery.
 - `approved-apps`: the allowlist. "Can't be opened" guarantee, updates and staleness warnings, the supervised Play session.
-- `calm-home-screen`: home screen, always-present Phone/Messages/Emergency, Plainphone's own basic settings.
+- `calm-home-screen`: home screen, always-present Phone and Messages, no Emergency button on the home screen (9-1-1 stays reachable through Phone, the lock screen and the power-button SOS gesture), Plainphone's own basic settings.
 - `trusted-person-controls`: PIN and recovery code, fresh authority for actions, app requests, the supervised session contract, Plainphone updates over local Wi-Fi, recovery when Plainphone cannot run, disclosure, turning off.
 - `web-containment`: browser classifier (excludes Plainphone itself), link handling rules, the isolated blocked-link screen, unsupported Wi-Fi sign-in pages, web-leak notes per app version.
 - `essential-calling-and-texting`: protections for 9-1-1, calls, texts and alerts, plus the behavioral release gate.

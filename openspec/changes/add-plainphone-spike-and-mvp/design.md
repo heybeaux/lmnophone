@@ -136,11 +136,11 @@ Q13 adds the manufacturer's emergency components, such as Motorola's SOS and eme
 
 **Getting to Emergency.**
 - Lock task always includes the dialer, and `KEYGUARD` and `HOME` are always set.
-- Inside an approved app: press Home, then Emergency. The power-menu entry stays where the phone has one.
+- No Emergency button on the home screen (Beaux, Telegram 4487). The routes are: Phone (the system dialer); the lock screen's Emergency call; the power-button SOS gesture where Q14 confirms it works under lock task; and an optional entry inside More. Inside an approved app: press Home, then Phone. The power-menu entry stays where the phone has one.
 - When Plainphone can't run: the lock screen and the system dialer still work.
 
 **Release gate.** The release gate covers every state that the emulator can reproduce. It must fail on three negative-control builds:
-- the Emergency button goes nowhere;
+- Phone (or the More emergency entry, if built) doesn't open the system dialer;
 - the dialer is missing from lock task;
 - the alert display is disabled.
 

@@ -68,7 +68,7 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 ## 5. MVP: words and flows
 
 - [ ] 5.1 UX: Plain-language flows and copy for: home, request an app, blocked link, trusted-person mode, "What Plainphone can't stop", turning off, setup. Human copy test: Beaux's pass on PLA-12 (Telegram 4473/4474) counts for this stage (Telegram 4477), and his wording fixes are applied. The next human check is Beaux using the real build on the spare Motorola. No outside testers until Beaux decides he's comfortable asking others.
-- [ ] 5.1b UX: Visual pass (PLA-36, Beaux, Telegram 4485). Black, white and grey only on the home screen and all Plainphone screens. Lexend font and the GC-inspired palette. A text-only home screen like Beaux's reference image. A monochrome Emergency button that is hard to bump. AE builds the MVP to this spec, and Beaux judges it on the real build (no mockup review).
+- [ ] 5.1b UX: Visual pass (PLA-36, Beaux, Telegram 4485). Black, white and grey only on the home screen and all Plainphone screens. Lexend font and the GC-inspired palette. A text-only home screen like Beaux's reference image. No Emergency button on the home screen (Telegram 4487); 9-1-1 through Phone, the lock screen and the power-button SOS gesture, with an optional entry inside More. AE builds the MVP to this spec, and Beaux judges it on the real build (no mockup review).
 - [ ] 5.2 UX: Starter catalog with web-leak notes for each version, covering Beaux and the trusted person's apps.
 - [ ] 5.3 UX + AE: `docs/setup-guide.md` and the checking script, including how to find the trusted person's `userId`. Dry-run them on the emulator, done by someone who did not write them.
 

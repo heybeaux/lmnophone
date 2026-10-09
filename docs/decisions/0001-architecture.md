@@ -61,6 +61,14 @@ We do not build a custom ROM. We do not ship a launcher-only version. The emulat
 | Plainphone never gets in the way of 9-1-1 | Never hide, suspend or disable the system dialer, Telecom, the cell broadcast receiver, Play services or the default SMS app. The dialer is always in lock task. `LOCK_TASK_FEATURE_KEYGUARD` is always set. Plainphone never filters incoming calls. A test that **actually taps through** the emergency flow blocks every release. | AOSP 15 LockTaskController L387–401 has a keyguard emergency exemption (code-confirmed). That is a rule for launching screens, **not** proof that a call goes through: real calls and location need a real phone. |
 | Texting works | `setDefaultSmsApplication` (API 29) → Google Messages. Never hide Play services. The phone plan needs data for RCS and MMS. | DPM reference; support.google.com/messages/answer/9363493 (documented) |
 
+**Board decision (Beaux, Telegram 4487, 2026-10-08):** no Emergency button on the home screen, so it can't be bumped by accident. The promise is now *9-1-1 is always reachable, and never from an accidental tap on the home screen*. The routes are:
+- Phone (the system dialer, pinned by package);
+- the lock screen's Emergency call;
+- the power-button Emergency SOS gesture, if Q14 confirms it works under lock task on the build;
+- an optional entry inside More.
+
+No live 9-1-1 call is made in testing without a separate board OK.
+
 The escape threat list is in `research/evidence/webview-and-escape-threats.md` (E01–E29), `research/evidence/canada-and-motorola.md` (Motorola extras), and the Verifier's review (F1–F17 in PLA-3).
 
 ## Risks that shape the plan
