@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.policy
 
+import org.plainphone.core.PackageName
+import org.plainphone.core.WindowKind
+
 object PolicyEngine {
     fun decide(input: PolicyInput): PolicyPlan {
         val floor = EmergencyFloor.compute(input.installed, input.identities)
@@ -10,6 +13,15 @@ object PolicyEngine {
         val neverHide = immutableSet(floor.neverHide + inventory?.neverHide?.packages.orEmpty() + input.plainphone + input.messages)
         val conflicts = immutableSet(input.classifiedBrowsers.intersect(neverHide))
         val approved = if (baseline) emptySet() else input.approved - input.classifiedBrowsers
+        val session = input.sessionAccess?.takeIf { access ->
+            !baseline && !input.lockedBoot && input.currentBoot?.let { access.isLive(it) } == true &&
+                when (access.kind) {
+                    WindowKind.PLAY -> access.packages == setOf(PackageName("com.android.vending"))
+                    WindowKind.SETTINGS -> inventory != null && access.packages.isNotEmpty() && access.packages == inventory.settingsSessionPackages
+                    else -> false
+                }
+        }?.packages.orEmpty()
+        val accessible = approved + session
         val sweep = when {
             input.lockedBoot || (unknown && baseline) -> SweepMode.NONE
             unknown -> SweepMode.USER_APPS_ONLY
@@ -17,12 +29,12 @@ object PolicyEngine {
         }
         val sweepCandidates = when (sweep) {
             SweepMode.NONE -> emptySet()
-            SweepMode.FULL -> input.installed.map { it.name }.toSet() - approved
-            SweepMode.USER_APPS_ONLY -> input.installed.filter { !it.isSystem }.map { it.name }.toSet() - approved
+            SweepMode.FULL -> input.installed.map { it.name }.toSet() - accessible
+            SweepMode.USER_APPS_ONLY -> input.installed.filter { !it.isSystem }.map { it.name }.toSet() - accessible
         }
         val hidden = immutableSet(when (sweep) {
             SweepMode.FULL -> sweepCandidates - neverHide
-            SweepMode.USER_APPS_ONLY -> (input.previousHidden + sweepCandidates) - neverHide - approved
+            SweepMode.USER_APPS_ONLY -> (input.previousHidden + sweepCandidates) - neverHide - accessible
             SweepMode.NONE -> input.previousHidden - neverHide
         })
         val ui = immutableSet(when {
@@ -30,8 +42,8 @@ object PolicyEngine {
             baseline -> setOf(input.plainphone, input.messages) + floor.emergencyUi + inventory?.minimumUi.orEmpty()
             unknown -> input.previousLockTask + floor.emergencyUi
             else -> setOf(input.plainphone) + approved + floor.emergencyUi + inventory.minimumUi
-        } - hidden)
-        val unhidden = immutableSet(neverHide + if (input.lockedBoot) emptySet() else approved - hidden)
+        }.plus(session) - hidden)
+        val unhidden = immutableSet(neverHide + if (input.lockedBoot) emptySet() else accessible - hidden)
         val restrictions = immutableSet(Restriction.entries)
         val features = immutableSet(LockTaskFeature.entries)
         val stages = if (input.lockedBoot) ApplyStage.entries.take(4) else ApplyStage.entries

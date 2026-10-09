@@ -2,6 +2,7 @@
 package org.plainphone.policy
 
 import java.util.Collections
+import org.plainphone.core.BootTime
 import org.plainphone.core.BuildInventory
 import org.plainphone.core.PackageName
 
@@ -44,6 +45,8 @@ data class PolicyInput(
     val requestedDestruction: List<DestructiveRequest> = emptyList(),
     val lastSupportedPackages: List<InstalledPackage> = emptyList(),
     val lockedBoot: Boolean = false,
+    val sessionAccess: SessionAccess? = null,
+    val currentBoot: BootTime? = null,
 )
 
 data class ExpectedPolicyState(

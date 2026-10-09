@@ -173,4 +173,28 @@ class PolicyEngineTest {
         assertTrue(approved in plan.expected.unhiddenAndEnabled)
     }
 
+    @Test fun `live Play access opens only Play without changing protections`() {
+        val access = SessionAccess("session", WindowKind.PLAY, setOf(play), BootTime("boot", 600_000))
+        val plan = PolicyEngine.decide(input().copy(sessionAccess = access, currentBoot = BootTime("boot", 0)))
+        assertTrue(play in plan.lockTaskPackages)
+        assertFalse(play in plan.hidden)
+        assertEquals(PolicyEngine.decide(input()).restrictions, plan.restrictions)
+    }
+
+    @Test fun `expired rebooted corrupt or locked boot session access grants nothing`() {
+        val access = SessionAccess("session", WindowKind.PLAY, setOf(play), BootTime("boot", 600_000))
+        val base = input().copy(sessionAccess = access, currentBoot = BootTime("boot", 0))
+        listOf(base.copy(currentBoot = BootTime("boot", 600_000)), base.copy(currentBoot = BootTime("other", 0)),
+            base.copy(currentBoot = null), base.copy(health = PolicyHealth.BOTH_INVALID), base.copy(lockedBoot = true)).forEach {
+            assertFalse(play in PolicyEngine.decide(it).lockTaskPackages)
+        }
+    }
+
+    @Test fun `session cannot smuggle unlisted packages into lock task`() {
+        val access = SessionAccess("session", WindowKind.PLAY, setOf(play, browser), BootTime("boot", 600_000))
+        val plan = PolicyEngine.decide(input().copy(sessionAccess = access, currentBoot = BootTime("boot", 0)))
+        assertFalse(play in plan.lockTaskPackages)
+        assertFalse(browser in plan.lockTaskPackages)
+    }
+
 }

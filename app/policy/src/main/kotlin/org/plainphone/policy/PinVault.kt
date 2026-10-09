@@ -10,7 +10,7 @@ class PinVault(
     private val derivation: KeyDerivation,
     private val entropy: SecretEntropy,
     private val clock: RunningClock,
-) {
+) : AuthorityConsumer {
     private data class Grant(val person: TrustedPersonId, val generation: Long, val action: PrivilegedAction, val bootId: String)
     private val grants = mutableMapOf<FreshAuthority, Grant>()
 
@@ -45,7 +45,7 @@ class PinVault(
 
     /** Must run on the same serialized action dispatcher as the following privileged write. */
     @Synchronized
-    fun consume(authority: FreshAuthority, action: PrivilegedAction): Boolean {
+    override fun consume(authority: FreshAuthority, action: PrivilegedAction): Boolean {
         val grant = grants[authority] ?: return false
         if (grant.action != action) return false
         grants.remove(authority)

@@ -159,5 +159,29 @@ class SessionControllerTest {
         }
     }
 
+    @Test fun `journal damage or loss during access revokes on the next tick`() {
+        for (broken in listOf(SessionJournal.Damaged, SessionJournal.Empty)) {
+            journal = SessionJournal.Empty
+            val c = ready(); start(c); journal = broken; calls.clear()
+            assertEquals(SessionOutcome.CLOSED, c.tick())
+            assertEquals("before-revoke", calls.first())
+            assertFalse(relaxed)
+        }
+    }
+
+    @Test fun `crash at every startup boundary retries revocation before other effects`() {
+        journal = SessionJournal.Damaged
+        controller().onStart()
+        val boundaries = boundary
+        for (crash in 1..boundaries) {
+            journal = SessionJournal.Damaged; relaxed = true; boundary = 0; crashAt = crash
+            assertFailsWith<SimulatedCrash> { controller().onStart() }
+            crashAt = null; calls.clear()
+            assertTrue(controller().onStart())
+            assertEquals("before-revoke", calls.first())
+            assertFalse(relaxed)
+        }
+    }
+
     private class SimulatedCrash : RuntimeException()
 }
