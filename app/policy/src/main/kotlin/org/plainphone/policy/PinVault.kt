@@ -89,7 +89,7 @@ class PinVault(
         val nextGeneration = try { Math.addExact(credential.generation, 1) } catch (_: ArithmeticException) { return RecoveryResult.Unavailable }
         if (state.revision == Long.MAX_VALUE) return RecoveryResult.Unavailable
         val prepared = prepareCredential(newPin)
-        val replacement = prepared.credential.copy(generation = nextGeneration)
+        val replacement = prepared.credential.copy(generation = nextGeneration, contact = credential.contact)
         if (!commit(state, state.replacing(person, replacement))) return RecoveryResult.Unavailable
         grants.entries.removeAll { it.value.person == person }
         return RecoveryResult.Replaced(prepared.recoveryCode)
