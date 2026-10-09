@@ -1,7 +1,7 @@
 # Wi-Fi sign-in pages: Lead's recommendation (PLA-17)
 
-Status: **revision 2, after the cross-model review ([PLA-28](/PLA/issues/PLA-28), request changes). Not
-approved.** Until Beaux approves a recommendation, Wi-Fi that needs a sign-in page stays unsupported (design D4,
+Status: **revision 3, after the cross-model review ([PLA-28](/PLA/issues/PLA-28)) and re-review
+([PLA-29](/PLA/issues/PLA-29): ready for Beaux with listed edits, applied here). Not approved.** Until Beaux approves a recommendation, Wi-Fi that needs a sign-in page stays unsupported (design D4,
 web-containment spec), and the MVP goes ahead on that basis.
 
 Inputs:
@@ -15,7 +15,8 @@ Inputs:
 
 ## Short answer
 
-1. **Allow sign-in pages for up to 5 minutes at a time, as an explicit exception that Beaux approves.** It is an
+1. **Allow sign-in pages with a 5-minute target per try, as an explicit exception that Beaux approves.** The
+   actual close delay is measured in the spike and accepted before anything is built. It is an
    exception to two current rules:
    - D2 rule 1: a fresh trusted-person PIN is needed to relax the lockdown;
    - web-containment: no sign-in pages.
@@ -25,8 +26,8 @@ Inputs:
 3. **Who starts it: the user, with limits** (UX variant B). The trusted person switches the option on with a fresh
    PIN, and it is off by default. The PIN-only choice (variant A, with an optional trip pass) is a legitimate,
    lower-access alternative. Beaux chooses.
-4. **The leak, said plainly:** *a Wi-Fi hotspot can offer access to other websites for the whole 5 minutes,
-   including search and social sites.* Real sign-in networks usually block most sites until sign-in, but Plainphone
+4. **The leak, said plainly:** *a Wi-Fi hotspot can offer access to other websites for the whole window
+   (5-minute target), including search and social sites.* Real sign-in networks usually block most sites until sign-in, but Plainphone
    can't tell a real one from a hostile one.
 5. **When:** a follow-up change after the MVP's core works. First, an emulator spike must pass the acceptance tests
    below. Nothing is approved for building until then.
@@ -40,7 +41,7 @@ Inputs:
 | In Android's app, `VALIDATED` arrived about 1 s after Accept, and the probe's session closed 73 ms later. "Use this network as is" and "Continue anyway" also set `VALIDATED` | PLA-18 Q5 (emulator, Android's app, HTTP-only probe fixture) | Close-on-validated works there. The timing is **not** yet measured for our window |
 | A Device Owner can't open Android's sign-in app with its sign-in state (`startCaptivePortalApp` is hidden; `CaptivePortal` has no public constructor). A dismissed notification only comes back after a Wi-Fi reconnect | PLA-18 Q3 (emulator; `javap` on android-36 `android.jar`) | Android's app means relying on its notification (UX path L2) |
 | If Plainphone's process dies mid-session, Android's sign-in app stays reachable until Home is pressed | PLA-18 Q6a (emulator) | Android's app inherits the D2 custody limit |
-| Unhiding an app followed by sudden power loss can leave system_server crashing on every boot, until a recovery wipe (which triggers FRP). It is a race: looped 8 of 9 at 2–5 s, booted 6 of 6 at 8 s or more. Hiding is safe. Mitigation B booted 3 of 3 | PLA-22 (emulator, API 35 and 36; AOSP `WRITE_SETTINGS_DELAY = 10*1000`) | Every session that unhides an app is exposed to this race. A user-started kind would be exposed more often, with nobody technical nearby |
+| Unhiding an app followed by sudden power loss can leave system_server crashing on every boot, until a recovery wipe (which triggers FRP). It is a race: looped 8 of 9 at 2–5 s, booted 6 of 6 at 8 s or more. No boot loop was observed in the tested hiding cases. Mitigation B booted 3 of 3 | PLA-22 (emulator, API 35 and 36; AOSP `WRITE_SETTINGS_DELAY = 10*1000`) | Every session that unhides an app is exposed to this race. A user-started kind would be exposed more often, with nobody technical nearby |
 | Android's own sign-in app binds its process to the Wi-Fi network, then inflates a WebView: `initializeWebView()` calls `mCm.bindProcessToNetwork(mNetwork)` before `setContentView` | AOSP `packages/modules/CaptivePortalLogin`, `CaptivePortalLoginActivity.java` (main), around L548–551 (code-confirmed) | A normal app can use the same public API (`bindProcessToNetwork`, API 23). Untested for our window, hence the spike |
 | `LinkProperties.getCaptivePortalData()` is `@hide` / `@SystemApi` and absent from the API 35 and 36 public SDKs | PLA-28 F4 (`javap`; AOSP LinkProperties) | Our window can't learn the portal URL from Android. It starts from a plain HTTP URL instead |
 | `reportNetworkConnectivity` is a hint to re-check, not a promise. It needs `INTERNET` and `ACCESS_NETWORK_STATE` | ConnectivityManager reference; PLA-18 Q3 saw it re-probe | The 5-minute deadline is needed even when validation never comes |
@@ -53,7 +54,7 @@ Inputs:
 |---|---|---|
 | **Trusted person's PIN each time (A)** | A1. Exposed to the unhide race at every start (needs mitigation B). Notification launch path (L2). Fails the ferry case | A2. Not exposed to the unhide race. Fails the ferry case unless a trip pass was set up |
 | **User starts it, with limits (B)** | B1. As A1, more often, alone. **Also needs an explicit waiver of D2's PIN rule for an unhide** | **B2. Recommended** |
-| **Keep unsupported** | | R0. Today's MVP. Ferries, hotels and hospitals don't work on Wi-Fi |
+| **Keep unsupported** | | R0. Today's MVP. Wi-Fi that needs a sign-in page stays unsupported |
 
 The two forks are independent. Who starts it (A or B) is Beaux's choice. How it opens is a technical choice, and
 the own window is better for either A or B.
@@ -68,15 +69,17 @@ the own window is better for either A or B.
   never hide or unhide it.
 - It is on Plainphone's self-exemption list (exact package and certificate). It declares no http(s) intent filters,
   so the D4 classifier doesn't count it as a browser.
-- **Permissions:** `INTERNET` and `ACCESS_NETWORK_STATE` only.
+- **Permissions:** `INTERNET`, `ACCESS_NETWORK_STATE`, and the one signature permission it needs to call Plainphone's
+  claim service.
 
 **Entry points (F2).**
 - Exactly **one** activity. No activity aliases, receivers, providers, pending intents or other services in its
   manifest.
 - It is protected by a signature permission, but that is only the first gate. A signature permission admits any app
   signed with the same key, and permanent lock-task membership removes the lock-task barrier. So:
-  - The activity takes **no URL, deadline or session data from its intent**. On every create, resume, new intent and
-    restore, it asks Plainphone for the live session, over one Plainphone service protected by a signature
+  - The activity takes **no URL, deadline or session data from its intent**. On its first create it claims the live
+    session once; on later resume, new intent or restore it checks that it is still the same live instance. It asks
+    Plainphone for the live session, over one Plainphone service protected by a signature
     permission. Plainphone checks that the caller's UID belongs to the companion package and certificate.
   - That service offers only two calls, "claim the session" and "report closed". It exposes no admin operation.
     The companion gains no Device Owner powers through it.
@@ -105,10 +108,12 @@ the own window is better for either A or B.
   is closed.
 - **What "fails closed" means now:**
   - if the companion crashes, the page is gone;
-  - if Plainphone crashes, the page stays open **at most until its own deadline**;
+  - if Plainphone crashes, the companion still closes the page at its own deadline, without needing Plainphone
+    to record "ended" first;
   - after a reboot, an old session can never reopen.
-  - The spike measures how late a close can be (the tolerance). The design states that measured number, not a hard
-    bound.
+  - The 5 minutes is a **target**. The spike measures the actual close delay under tested conditions, including a
+    stalled UI thread and an open JavaScript dialog. Beaux accepts the measured number before implementation. It
+    is evidence from those conditions, not a universal guarantee.
 
 **Network (F4, F6).**
 - Bind the process to the session's Wi-Fi `Network` before any WebView starts, and check the return value. If the
@@ -154,7 +159,7 @@ boot-loop causes.
 ### 2. Who starts it: the user, with limits (UX variant B)
 
 - **Offered only** when the connected Wi-Fi reports `CAPTIVE_PORTAL`. Checked again just before opening.
-- **5 minutes per try.** It ends as soon as the Wi-Fi works. No extending. Every retry is a new try.
+- **A 5-minute target per try** (actual close delay measured in the spike). It ends as soon as the Wi-Fi works. No extending. Every retry is a new try.
 - **3 tries in any 24 hours (F3).**
   - A try is debited durably **before** any web content loads. Starts are serialized, so a double tap can't get two.
   - A debit is never cleared by a crash, a reboot, a network change, a failed text or damaged storage. Damaged
@@ -163,7 +168,7 @@ boot-loop causes.
     elapsed time every few minutes. A debit's age is the **lowest** elapsed time Plainphone can prove. After a
     reboot, a debit may count for longer than 24 hours, and the screens disclose that. Wall-clock and time-zone
     changes never shorten it.
-  - That is at most 15 minutes a day for **user-started** tries. The trusted person can open extra tries with the
+  - That is a target of about 15 minutes in 24 hours for **user-started** tries, plus the measured close delay. The trusted person can open extra tries with the
     PIN.
 - **A text to the trusted person (F10).**
   - It is queued in the same write as the debit, and sent when there's signal. Retries run for 7 days.
@@ -171,9 +176,11 @@ boot-loop causes.
   - Delivery status (waiting, sent, gave up) is shown on both people's lists. A text can arrive late, or not at
     all after 7 days. In a rare crash right after sending, it could arrive twice.
   - **The text is a notice, not a control.** It never stops the page.
-  - Wording that stays true when late: "…This was 2 of 3 in the 24 hours before it was sent." (The UX Designer
-    finalizes it.)
-  - The text **doesn't send the Wi-Fi name or location**. Its arrival time still shows roughly when a page was used.
+  - Wording that stays true when late: "Plainphone: a Wi-Fi sign-in page was opened on {user}'s phone. This notice
+    may be delayed." No count in the text: a late text can't say truthfully how many tries were recent. The count
+    is on the lists. (The UX Designer finalizes it.)
+  - The text **doesn't send the Wi-Fi name or location**. Its arrival time shows when the notice was delivered,
+    which may or may not be close to when the page was used.
 - **The trusted person is in charge.**
   - A switch in trusted-person mode, changed with a fresh PIN.
   - Asked once at setup, and **off unless the trusted person says yes**.
@@ -195,7 +202,7 @@ only.
 | Where | Change |
 |---|---|
 | ADR 0001, Risk 3 | Replace "unsupported" with the sign-in window, its limits, the plain leak sentence, the unsupported portal kinds, and Beaux's exception decision |
-| Design D2 | A named exception: "Wi-Fi sign-in window: user-started without a PIN when the trusted person has switched it on; enforced by the companion's session contract; not a D2 session." The D2 rules for Play and Settings are unchanged |
+| Design D2 | A named exception: "Wi-Fi sign-in window: user-started without a fresh PIN when the trusted person has switched it on (choice a) or set a trip pass (choice b); enforced by the companion's session contract; not a D2 session." Strict PIN-each-time (choice c) needs no D2 exception. The D2 rules for Play and Settings are unchanged |
 | Design D4 | Replace "Wi-Fi sign-in pages are unsupported (N5)" with the window rules. Add the companion to the self-exemption list. CaptivePortalLogin **stays hidden** |
 | web-containment spec | Replace the "unsupported" requirement: trigger, session contract, network rules, WebView rules, unsupported portal kinds, new exact strings (W0) |
 | trusted-person-controls spec | The switch, its setup question, the front-page row, extra tries with the PIN, the quota reset with the PIN, the text and its delivery status |
@@ -218,6 +225,18 @@ only.
    - an audit showing no device-policy write at session start, close or recovery;
    - a measured close tolerance;
    - a production-like HTTPS probe setup, as well as the HTTP-only fixture.
+   - from the PLA-29 re-review:
+     - a normal launch makes exactly one claim and one debit across its first create, start and resume.
+       Duplicates, recreation, restore and replay get no fresh deadline and no content back;
+     - the page closes at expiry with Plainphone killed, the companion's UI thread stalled, or a JavaScript dialog
+       open. Measure when interaction and traffic actually stop;
+     - mixed-content and JavaScript-dialog policy recorded. Profile clearing finishes before the first load,
+       including after a crash, and no sign-in marker survives;
+     - the merged manifests and all of Plainphone's IPC audited. The companion's permissions are `INTERNET`,
+       `ACCESS_NETWORK_STATE` and the one signature permission for the claim service. Unauthorized callers can
+       neither mint sessions nor reach admin operations;
+     - text queue with no SIM, two SIMs, a changed recipient, and a crash right after sending. Uncertain delivery
+       is shown honestly.
 2. **Cross-model review** of the spike.
 3. **Follow-up OpenSpec change** with the spec deltas above. Beaux approves it before build.
 4. **Copy test** of W0 and WB1 on cold readers.
@@ -242,7 +261,7 @@ app automatically. Any fallback comes back to Beaux before it is built.
 
 ## Risks left
 
-1. **Other websites for up to 5 minutes**, 3 times in 24 hours for user-started tries (plus PIN tries). A hotspot
+1. **Other websites for the whole window** (5-minute target plus the measured close delay), 3 times in 24 hours for user-started tries (plus PIN tries). A hotspot
    can make this full web access. Bounded and disclosed, not prevented.
 2. **Some portals won't work:** Google-account sign-in, bank-app payment, other-app hand-offs, and RFC 8908-only
    portals.
@@ -250,7 +269,7 @@ app automatically. Any fallback comes back to Beaux before it is built.
    sandboxed renderer. A WebView bug could still give an attacker that app's small rights. WebView updates come
    through Play (the D3 monthly check).
 4. **`VALIDATED` doesn't prove sign-in.** It only ends the window early. W4 covers "closed but no internet".
-5. **Texts can be late or never arrive.** The lists show delivery status.
+5. **Texts can be late, never arrive, or rarely arrive twice.** The lists show delivery status.
 6. **After a reboot, a used try can count for longer than 24 hours** (conservative ageing).
 7. **Not yet tested:** our window at all, real portals and real phones.
 8. **Calls without signal.** Without your carrier's signal or working Wi-Fi, ordinary calls and texts fail.
@@ -261,14 +280,24 @@ app automatically. Any fallback comes back to Beaux before it is built.
 
 ## Questions for Beaux
 
+Approving here picks a **direction**. The spike, its cross-model review, and a later OpenSpec approval still
+gate building it.
+
 1. **Sign-in Wi-Fi: which?**
-   - (a) the user can open the sign-in page alone, once the trusted person has switched that on (recommended);
-   - (b) only with the trusted person's PIN each time, optionally with a trip pass for planned trips;
-   - (c) keep it unsupported.
-2. **The exception.** For (a) or (b): do you accept that a hotspot can show other websites, including search and
-   social sites, for the whole 5 minutes? And that some sign-in pages (Google account, bank app) still won't work?
+   - (a) the user can open the sign-in page alone, once the trusted person has switched that on with the PIN
+     (recommended);
+   - (b) the trusted person's PIN each time, plus an optional trip pass: before a trip, the trusted person lets the
+     user open sign-in pages alone for 1 to 7 days;
+   - (c) strictly the trusted person's PIN each time, with no trip pass;
+   - (d) keep it unsupported.
+2. **The exceptions.**
+   - For (a), and for a trip pass under (b): do you accept that the user opens a sign-in page **without a fresh
+     PIN**? That is an exception to the current custody rule.
+   - For (a), (b) or (c): do you accept that a hotspot can show other websites, including search and social sites,
+     for the whole window? The window has a 5-minute target, and the real close delay is measured before
+     building. Do you also accept that some sign-in pages (Google account, bank app) still won't work?
 3. **Wi-Fi calling.** Do you or the trusted person rely on Wi-Fi calling where there's no cell signal (home, cabin, ferry,
    work)?
-4. **The text to the trusted person.** Leave out the Wi-Fi's name, as recommended? It may arrive late, and it's a
-   notice, not a control.
+4. **The text to the trusted person.** Leave out the Wi-Fi's name, as recommended? The text is a notice, not a
+   control. It may arrive late, may never arrive, and rarely may arrive twice.
 5. **Timing.** Build it after the MVP's core works (recommended), or hold the first handover until it's in?
