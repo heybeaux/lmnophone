@@ -1,0 +1,12 @@
+INSTRUMENTATION_RESULT: stream=api=35 model=sdk_gphone64_arm64 fingerprint=google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys
+ok   this APK is Device Owner
+rotated target versionCode=2 signers=[44bc10b245d31e8d116375a554aa4df2aeca0a3a2aad76a58b40e1ad77c66088]
+control: signingCertificateHistory (not used) = [60fba8a5a57c2dcaf4dff03142be11c31725bbfc700d2ea0656b5fb39320294a, 44bc10b245d31e8d116375a554aa4df2aeca0a3a2aad76a58b40e1ad77c66088]
+ok   version 2 installed
+ok   live signer set is {44bc10b245d31e8d116375a554aa4df2aeca0a3a2aad76a58b40e1ad77c66088} (apksigner, minSdk 33+ signer)
+ok   signer set changed from {60fba8a5a57c2dcaf4dff03142be11c31725bbfc700d2ea0656b5fb39320294a}
+ok   the binding to the old signer no longer matches
+ok   the live binding is the new signer set only
+RESULT PASS phase=rotated
+
+INSTRUMENTATION_CODE: -1

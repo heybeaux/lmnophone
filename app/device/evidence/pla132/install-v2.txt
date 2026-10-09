@@ -1,0 +1,4 @@
+Install command complete in 84 ms
+    versionCode=2 minSdk=30 targetSdk=35
+    apkSigningVersion=4
+    signatures=PackageSignatures{2c958b2 version:4, signatures:[b24db5e1], past signatures:[547aa459 flags: 17, b24db5e1 flags: 17]}

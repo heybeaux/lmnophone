@@ -33,7 +33,8 @@ import org.plainphone.policy.SessionPhase
  *
  * `-e phase apply` runs the PLA-117 policy applier check instead ([org.plainphone.device.apply.DpmPortCheck]);
  * `-e phase reset` runs the PLA-92 reset-protection check ([org.plainphone.device.apply.ResetProtectionCheck]);
- * both need this APK as Device Owner.
+ * `-e phase facts` and `-e phase rotated` run the PLA-132 live package facts check
+ * ([org.plainphone.device.facts.PackageFactsCheck]); all of these need this APK as Device Owner.
  *
  * Plain [Instrumentation] so no test library has to load before unlock. Lines go to logcat (tag
  * PLA113) and to the `am instrument` output; the run fails on the first unmet expectation.
@@ -41,10 +42,12 @@ import org.plainphone.policy.SessionPhase
 class DirectBootJournalCheck : Instrumentation() {
     private val lines = mutableListOf<String>()
     private lateinit var phase: String
+    private var args: Bundle? = null
 
     override fun onCreate(arguments: Bundle?) {
         super.onCreate(arguments)
         phase = arguments?.getString("phase") ?: "missing"
+        args = arguments
         start()
     }
 
@@ -55,6 +58,8 @@ class DirectBootJournalCheck : Instrumentation() {
                 "locked" -> locked()
                 "apply" -> org.plainphone.device.apply.DpmPortCheck(targetContext, ::note).check()
                 "reset" -> org.plainphone.device.apply.ResetProtectionCheck(targetContext, ::note).check()
+                "facts" -> org.plainphone.device.facts.PackageFactsCheck(targetContext, args, ::note).facts()
+                "rotated" -> org.plainphone.device.facts.PackageFactsCheck(targetContext, args, ::note).rotated()
                 else -> fail("unknown phase $phase")
             }
             note("RESULT PASS phase=$phase")
