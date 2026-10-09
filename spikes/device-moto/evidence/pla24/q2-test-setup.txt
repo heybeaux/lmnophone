@@ -1,0 +1,16 @@
+# q2-setup MODE=test 2026-10-09T06:32:28Z
+uninstall-system-updates com.google.android.apps.messaging -> Uninstalling updates to com.google.android.apps.messaging...
+Success
+uninstall-system-updates com.google.android.gm -> Uninstalling updates to com.google.android.gm...
+Success
+uninstall-system-updates com.google.android.deskclock -> Uninstalling updates to com.google.android.deskclock...
+Success
+uninstall-system-updates com.google.android.apps.photos -> Uninstalling updates to com.google.android.apps.photos...
+Success
+uninstall-system-updates com.google.android.calculator -> Uninstalling updates to com.google.android.calculator...
+Success
+OK lockTaskPackages=[com.Slack, com.google.android.dialer, com.google.android.gm, com.spotify.music, com.google.android.apps.safetyhub, org.telegram.messenger, com.microsoft.office.outlook, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc]
+OK lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK (87)
+OK persistent preferred HOME = spike
+OK relayed lt-start to MainActivity (result in logcat PPSPIKE)
+stay_on=0

@@ -39,6 +39,7 @@
 | B-Q1 lock task follow-ups (BLOCK on) | **yes** | Pre-grant works for camera, mic and location; Camera → Photos is closed; the emergency dialer screen opens; the image attaches through Messages' own picker; lock task comes back after a reboot. |
 | B-Q4 must-have apps | **partly**: before sign-in done; signed-in checks in PLA-20 | All 5 apps probed under BLOCK before sign-in. **Outlook's in-app WebView browses off-site from its Privacy link.** Google sign-in in Spotify and Outlook goes to GMS → blocked; Slack's Google sign-in fails even with lock task off (not traced). Telegram loops until pre-granted. Signed-in checks wait for Beaux. |
 | 9-1-1 routes (PLA-40) | **SOS: no, unless Personal Safety is allowlisted** | Power ×5 under lock task + BLOCK: "Personal Safety is not available right now". With `com.google.android.apps.safetyhub` on the lock-task list, the SOS screen opens. Phone route works from home and from inside Messages. Lock-screen Emergency (emulator) goes to Personal Safety too and is blocked without it. No call placed. |
+| Q2 unattended (72 h) | **running** | Test window 2026-10-09T06:33Z → 2026-10-12T06:33Z with the intended policy; then a 72 h comparison window without lock task. See § Q2 unattended. |
 | S7 install race | **partly** | DPC hid a newly installed app 4.6 s after `firstInstallTime`. Deep links failed for ~4 s (package frozen), but the app's **process started ~0.35 s before the hide**. App code execution not instrumented; no `Displayed` log line. One measured race, lock task off (R3). |
 
 ## R1–R5 corrections (PLA-24)
@@ -79,6 +80,45 @@ A permission on the activity wasn't an option: it is the HOME and launcher entry
 Limit: the outside starts came from the adb shell, not from an ordinary installed fixture app. The shell has no token, just
 like any other app, so the code path is the same. This is still a throwaway harness. Any production DPC needs its own
 review of exported components.
+
+## Q2 unattended (72 h) (PLA-24, THROWAWAY)
+
+**Status: test window running. Result pending; readback due 2026-10-12T06:33Z.** Evidence: `evidence/pla24/`.
+Scripts: `tools/q2-setup.sh` (rollback and policy), `tools/q2-state.sh` (read-only versions and state).
+
+**Question:** with Plainphone's intended policy, do Play updates arrive with **nobody touching or forcing anything**?
+Only this kind of run counts as automatic updating (`docs/feasibility-questions.md` Q2); S4 was a forced diagnostic.
+
+### Test window setup (2026-10-09T06:32–06:33Z)
+
+- **Real pending updates** (`q2-test-setup.txt`): `pm uninstall-system-updates` on five preinstalled Google apps,
+  all `Success`. Two are approved apps: **Messages** (20261002 → factory 20240806) and **Gmail** (2026.09.21 → factory
+  2024.08.18). Three are not: Clock (9.1 → 7.9.1), Photos (7.96 → 7.11), Calculator (9.3 → 8.6.1).
+  **Phone** (`com.google.android.dialer`) was already pending: it has stayed at factory 141.0.666893082 since its S4
+  update failed with 1055. GMS and Play were **not** rolled back; their versions are only read back.
+- **Policy, as intended for Plainphone:** spike DPC is Device Owner and HOME (persistent preferred). Lock task `LOCKED`, spike on top.
+  Lock-task list: spike, Phone, `com.android.phone`, Messages, Gmail, Personal Safety (`safetyhub`, per PLA-40),
+  Telegram, Slack, Spotify, Outlook. Features `SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK` (87).
+  **Play is outside lock task**: not on the list, not hidden, not suspended. **No user restrictions** (in particular no
+  `no_install_apps`, which S1 showed blocks Play). Nothing hidden, so the PLA-22 boot-loop precaution doesn't come into play.
+- **Conditions:** Wi-Fi on (default network up), USB charging from the Mac (level 100), the Google test account signed in
+  (sync off since Phase B), `stay_on_while_plugged_in` set to 0 so the screen goes off (it was dozing at t0), `boot_count` 5.
+  No reboot is planned.
+- **Start state:** `q2-test-t0.txt` (2026-10-09T06:33:01Z). GMS 26.37.37 (263737035), Play 53.4.34-34.
+- **Hands off from 06:33Z.** No taps, no `cmd jobscheduler`, no Play screens, no adb commands to the phone. One exception:
+  a **read-only** `adb logcat` stream runs on the Mac for the whole window, filtered to Play and package-manager lines
+  (`q2-test-logcat.txt`), to catch the Phone app's install error if Play retries it. It sends no input.
+
+### Comparison window (planned, after the test window)
+
+One phone can't run both at once, so the comparison runs **after** the test window: the same five packages rolled back
+again, the same account, Wi-Fi and charging, but **no lock task, no HOME pin and no restrictions** (`MODE=compare tools/q2-setup.sh`), for 72 h.
+If the comparison updates and the test window doesn't, the policy is the cause. If neither updates, the result is **inconclusive**.
+
+### Phone app 1055
+
+The S4 record shows only `DOWNLOAD_PENDING` → `INSTALL_ERROR 1055` (`evidence/phase-b/s4/s4-locktask.log`), and that run's
+logcat is gone. Not yet explained; the window's logcat capture is the next evidence.
 
 ## A0. Baseline
 

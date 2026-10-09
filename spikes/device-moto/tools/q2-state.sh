@@ -5,7 +5,7 @@ set -uo pipefail
 SERIAL="${SERIAL:-SPARE_DEVICE_SERIAL}"
 case "$SERIAL" in emulator-*) echo "refusing: $SERIAL is not the Motorola" >&2; exit 2;; esac
 a() { adb -s "$SERIAL" "$@"; }
-PKGS="${PKGS:-com.google.android.apps.messaging com.google.android.dialer com.google.android.gm com.google.android.deskclock com.google.android.apps.photos com.google.android.calculator com.google.android.gms com.android.vending}"
+PKGS="${PKGS:-com.google.android.apps.messaging com.google.android.dialer com.google.android.gm com.google.android.deskclock com.google.android.apps.photos com.google.android.calculator com.google.android.gms com.android.vending org.telegram.messenger com.Slack com.spotify.music com.microsoft.office.outlook com.google.android.webview}"
 echo "host_utc=$(date -u +%FT%TZ) device_time=$(a shell date +%FT%T%z)"
 bash "$(dirname "$0")/pp.sh" cmd status
 a shell dumpsys activity activities | grep -m1 -E 'mLockTaskModeState' | sed 's/^ *//'
