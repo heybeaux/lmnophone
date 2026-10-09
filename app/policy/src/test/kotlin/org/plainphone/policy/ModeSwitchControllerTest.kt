@@ -626,4 +626,77 @@ class ModeSwitchControllerTest {
         assertSame(ledger, f.elevation!!.state.ledger)
     }
 
+    private fun sessions(f: F, store: ElevationStore = f.elevationStore) = SessionController(store, object : SessionEffects {
+        override fun revokeAllRelaxations(): Boolean { f.physicallyOpen = false; return true }
+        override fun open(access: SessionAccess): Boolean { f.physicallyOpen = true; return true }
+        override fun protectedStateCheck() = true
+        override fun readBackPolicy() = true
+    }, RunningClock { f.now }, policy(f).inventory, f.vault, { f.credentials?.mode })
+
+    private fun startPlay(f: F, sessions: SessionController, id: String): SessionOutcome {
+        val person = f.credentials!!.people.keys.first()
+        val grant = assertIs<PinResult.Authorized>(f.vault.authenticate(person, f.pin,
+            PrivilegedAction("session:PLAY", id))).authority
+        return sessions.start(id, WindowKind.PLAY, BatteryState(50, false), grant)
+    }
+
+    @Test fun `ordinary session cleanup cannot release committing switch fence after failed reset readback`() {
+        val f = F()
+        f.waiting = f.waiting!!.replacing(f.waiting!!.revision + 1, f.waiting!!.operation!!.withPhase(WaitingPhase.PENDING))
+        val session = sessions(f)
+        assertTrue(session.onStart())
+        assertEquals(SessionOutcome.OPENED, startPlay(f, session, "pending-session"))
+        assertEquals(WaitingOutcome.COMMITTING, f.waitingController.tick(f.id, BatteryState(50, false)))
+        f.fail = "readback"
+        failed(PeopleChangeFailure.RESET_READBACK, f.tick())
+        session.tick()
+        assertTrue(f.elevationStore.revocationPending, "session cleanup must not release the mode fence")
+        assertEquals(SessionOutcome.NOT_READY, startPlay(f, session, "must-not-reopen"))
+        assertNull(session.access()); assertFalse(f.physicallyOpen)
+        assertEquals(WaitingPhase.COMMITTING, f.waiting!!.operation!!.phase)
+    }
+
+    @Test fun `ordinary elevation cleanup cannot release unfinished switch fence`() {
+        val f = F()
+        val elevation = elevationController(f)
+        assertEquals(ElevationOutcome.IDLE, elevation.onStart())
+        f.fail = "readback"
+        failed(PeopleChangeFailure.RESET_READBACK, f.tick())
+        elevation.tick()
+        assertTrue(f.elevationStore.revocationPending, "elevation cleanup must not release the mode fence")
+        val session = sessions(f)
+        assertTrue(session.onStart())
+        assertEquals(SessionOutcome.NOT_READY, startPlay(f, session, "must-not-open"))
+        assertNull(elevation.prepare(f.a, ElevationTarget.Play))
+        assertFalse(f.physicallyOpen)
+    }
+
+    @Test fun `ordinary cleanups retain fence during rollback and after swap completion failure`() {
+        for (rollback in listOf(false, true)) {
+            val f = F(if (rollback) Mode.TRUSTED else Mode.SELF_MANAGED)
+            if (rollback) {
+                outcome(PeopleChangeOutcome.ROLLING_BACK, f.stop())
+                f.fail = "readback"
+                outcome(PeopleChangeOutcome.NEEDS_ATTENTION, f.tick(WaitingPhase.ROLLING_BACK))
+            } else {
+                outcome(PeopleChangeOutcome.APPLIED, f.tick())
+                f.fail = "completed"
+                failed(PeopleChangeFailure.PERSISTENCE, f.tick())
+            }
+            val session = sessions(f)
+            assertTrue(session.onStart())
+            val elevation = elevationController(f)
+            assertEquals(ElevationOutcome.IDLE, elevation.onStart())
+            session.tick(); elevation.tick()
+            assertTrue(f.elevationStore.revocationPending)
+            assertEquals(SessionOutcome.NOT_READY, startPlay(f, session, "still-unfinished"))
+            assertFalse(f.physicallyOpen)
+            f.fail = null
+            outcome(if (rollback) PeopleChangeOutcome.CANCELLED else PeopleChangeOutcome.COMPLETED,
+                f.tick(if (rollback) WaitingPhase.ROLLING_BACK else WaitingPhase.COMMITTING))
+            assertFalse(f.elevationStore.revocationPending)
+            assertEquals(SessionOutcome.OPENED, startPlay(f, session, "after-terminal"))
+        }
+    }
+
 }
