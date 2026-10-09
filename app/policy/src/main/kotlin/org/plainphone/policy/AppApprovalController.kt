@@ -12,8 +12,8 @@ class AppApprovalRecord(val id: String, selection: PermissionSelection) {
     init { require(id.isNotBlank()) }
 }
 
-enum class AppApprovalPhase { PREPARING, COMMITTED, WITHDRAWING }
-enum class AppApprovalReceiptKind { APPROVED, WITHDRAWN }
+enum class AppApprovalPhase { PREPARING, COMMITTED, WITHDRAWING, REMOVING }
+enum class AppApprovalReceiptKind { APPROVED, WITHDRAWN, REMOVED }
 class AppApprovalReceipt(val id: String, val actor: TrustedPersonId, recipientGenerations: Map<TrustedPersonId, Long>,
     val kind: AppApprovalReceiptKind = AppApprovalReceiptKind.APPROVED, val approvalId: String = id,
 ) {
@@ -23,14 +23,20 @@ class AppApprovalReceipt(val id: String, val actor: TrustedPersonId, recipientGe
         require(if (kind == AppApprovalReceiptKind.APPROVED) id == approvalId else id != approvalId)
     }
 }
-class AppApprovalOperation(val record: AppApprovalRecord, val receipt: AppApprovalReceipt, val phase: AppApprovalPhase,
+class AppApprovalOperation(val record: AppApprovalRecord, val receipt: AppApprovalReceipt?, val phase: AppApprovalPhase,
     val withdrawalReceipt: AppApprovalReceipt? = null,
 ) {
     init {
-        require(record.id == receipt.id && receipt.kind == AppApprovalReceiptKind.APPROVED)
-        if (phase == AppApprovalPhase.WITHDRAWING) {
-            require(withdrawalReceipt != null && withdrawalReceipt.kind == AppApprovalReceiptKind.WITHDRAWN &&
-                withdrawalReceipt.approvalId == record.id)
+        // An active app's approval receipt may already be acknowledged; never recreate it for removal.
+        require(phase == AppApprovalPhase.REMOVING || receipt != null)
+        require(receipt == null || (record.id == receipt.id && receipt.kind == AppApprovalReceiptKind.APPROVED))
+        val finalKind = when (phase) {
+            AppApprovalPhase.WITHDRAWING -> AppApprovalReceiptKind.WITHDRAWN
+            AppApprovalPhase.REMOVING -> AppApprovalReceiptKind.REMOVED
+            else -> null
+        }
+        if (finalKind != null) {
+            require(withdrawalReceipt != null && withdrawalReceipt.kind == finalKind && withdrawalReceipt.approvalId == record.id)
         } else require(withdrawalReceipt == null)
     }
 }
@@ -39,10 +45,14 @@ class AppApprovalState(
     apps: Map<PackageName, AppApprovalRecord> = emptyMap(),
     val pending: AppApprovalOperation? = null,
     receipts: List<AppApprovalReceipt> = emptyList(),
+    removedApps: Map<PackageName, ApprovalBinding> = emptyMap(),
 ) {
     val apps: Map<PackageName, AppApprovalRecord> = Collections.unmodifiableMap(LinkedHashMap(apps))
     val receipts: List<AppApprovalReceipt> = immutableList(receipts)
+    /** Prior removal provenance only; never included in approvedPackages. */
+    val removedApps: Map<PackageName, ApprovalBinding> = Collections.unmodifiableMap(LinkedHashMap(removedApps))
     init {
+        require(this.removedApps.all { (name, identity) -> name == identity.packageName && name !in this.apps })
         require(revision >= 0 && this.apps.all { (name, record) -> name == record.identity.packageName })
         require(this.apps.values.map { it.id }.toSet().size == this.apps.size)
         require(this.receipts.map { it.id }.toSet().size == this.receipts.size)
@@ -54,10 +64,12 @@ class AppApprovalState(
                 require(existing != null && existing.id == pending.record.id &&
                     existing.permissions.manifest.sameFacts(pending.record.permissions.manifest) &&
                     existing.permissions.choices == pending.record.permissions.choices)
-                val receipt = this.receipts.singleOrNull { it.id == pending.receipt.id }
-                require(receipt != null && receipt.actor == pending.receipt.actor &&
-                    receipt.recipientGenerations == pending.receipt.recipientGenerations &&
-                    receipt.kind == pending.receipt.kind && receipt.approvalId == pending.receipt.approvalId)
+                val original = pending.receipt
+                val receipt = this.receipts.singleOrNull { it.id == pending.record.id }
+                if (original == null) require(receipt == null)
+                else require(receipt != null && receipt.actor == original.actor &&
+                    receipt.recipientGenerations == original.recipientGenerations &&
+                    receipt.kind == original.kind && receipt.approvalId == original.approvalId)
                 require(pending.withdrawalReceipt?.let { withdrawal ->
                     this.receipts.none { it.id == withdrawal.id } && this.apps.values.none { it.id == withdrawal.id }
                 } != false)
@@ -65,8 +77,9 @@ class AppApprovalState(
         }
     }
     internal fun replacing(apps: Map<PackageName, AppApprovalRecord> = this.apps,
-        pending: AppApprovalOperation? = this.pending, receipts: List<AppApprovalReceipt> = this.receipts) =
-        AppApprovalState(Math.addExact(revision, 1), apps, pending, receipts)
+        pending: AppApprovalOperation? = this.pending, receipts: List<AppApprovalReceipt> = this.receipts,
+        removedApps: Map<PackageName, ApprovalBinding> = this.removedApps) =
+        AppApprovalState(Math.addExact(revision, 1), apps, pending, receipts, removedApps)
 
     /** Updates retain approval only for the exact complete signer set; duplicate OS facts fail closed. */
     fun approvedPackages(installed: List<InstalledPackage>, identities: List<ApprovalBinding>): Set<PackageName> {
@@ -118,7 +131,19 @@ class AppApprovalWithdrawalRequest internal constructor(
 ) {
     val action: PrivilegedAction get() = PrivilegedAction("app:withdraw-pending", receiptId)
 }
-enum class AppApprovalOutcome { READY, APPROVED, WITHDRAWN, REFUSED, BUSY, LOW_BATTERY, NOT_READY }
+class AppRemovalRequest internal constructor(
+    internal val record: AppApprovalRecord,
+    internal val receiptId: String,
+    internal val person: TrustedPersonId,
+    internal val credentialGeneration: Long,
+    internal val structureGeneration: Long,
+    internal val preparedAt: BootTime,
+) {
+    val approvalId: String get() = record.id
+    val packageName: PackageName get() = record.identity.packageName
+    val action: PrivilegedAction get() = PrivilegedAction("app:remove", receiptId)
+}
+enum class AppApprovalOutcome { READY, APPROVED, WITHDRAWN, REMOVED, REFUSED, BUSY, LOW_BATTERY, NOT_READY }
 
 /**
  * Supervised new-app approval. One shared dispatcher owns this, SessionController, PinVault, facts and
@@ -140,10 +165,11 @@ class AppApprovalController(
     private var initialized = false
     private val requests = mutableSetOf<AppApprovalRequest>()
     private val withdrawals = mutableSetOf<AppApprovalWithdrawalRequest>()
+    private val removals = mutableSetOf<AppRemovalRequest>()
 
     @Synchronized
     fun onStart(): AppApprovalOutcome {
-        initialized = false; requests.clear(); withdrawals.clear()
+        initialized = false; requests.clear(); withdrawals.clear(); removals.clear()
         if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
         val state = store.read() ?: return AppApprovalOutcome.NOT_READY
         val op = state.pending
@@ -159,14 +185,22 @@ class AppApprovalController(
     }
 
     @Synchronized
-    fun prepare(play: PlaySessionState, packageName: PackageName, person: TrustedPersonId, selection: PermissionSelection): AppApprovalRequest? {
-        if (!initialized) return null
+    fun prepare(play: PlaySessionState, packageName: PackageName, person: TrustedPersonId, selection: PermissionSelection): AppApprovalRequest? =
+        prepareCandidate(PlaySessionMachine.candidate(play, packageName), packageName, person, selection)
+
+    /** Previously removed apps can be reviewed again without another install; the marker grants nothing. */
+    @Synchronized
+    fun prepareReapproval(packageName: PackageName, person: TrustedPersonId, selection: PermissionSelection): AppApprovalRequest? =
+        prepareCandidate(store.read()?.removedApps?.get(packageName), packageName, person, selection)
+
+    private fun prepareCandidate(candidate: ApprovalBinding?, packageName: PackageName, person: TrustedPersonId,
+        selection: PermissionSelection): AppApprovalRequest? {
+        if (!initialized || candidate == null || candidate.packageName != packageName) return null
         val state = store.read() ?: return null
         if (state.pending != null || packageName in state.apps || state.revision == Long.MAX_VALUE) return null
         val current = credentials() ?: return null
         if (current.mode != Mode.TRUSTED) return null
         val credential = current.people[person] ?: return null
-        val candidate = PlaySessionMachine.candidate(play, packageName) ?: return null
         if (candidate != selection.manifest.identity || !battery().allowsDiscretionaryUnhide) return null
         val live = manifest(packageName)
         if (PermissionChoices.plan(selection, live) !is PermissionPlanning.Ready) return null
@@ -203,7 +237,8 @@ class AppApprovalController(
         val atCommit = matchingCredentials(request) ?: return AppApprovalOutcome.NOT_READY
         if (!sameBoot(request) || !battery().allowsDiscretionaryUnhide || planFor(request.record, preparing) == null) return AppApprovalOutcome.NOT_READY
         val committed = preparing.replacing(apps = preparing.apps + (request.record.identity.packageName to request.record),
-            pending = AppApprovalOperation(request.record, receipt, AppApprovalPhase.COMMITTED), receipts = preparing.receipts + receipt)
+            pending = AppApprovalOperation(request.record, receipt, AppApprovalPhase.COMMITTED), receipts = preparing.receipts + receipt,
+            removedApps = preparing.removedApps - request.record.identity.packageName)
         if (!store.compareAndSet(preparing, committed, atCommit)) return AppApprovalOutcome.NOT_READY
         return resume()
     }
@@ -214,7 +249,7 @@ class AppApprovalController(
         val state = store.read() ?: return AppApprovalOutcome.NOT_READY
         val op = state.pending ?: return AppApprovalOutcome.READY
         if (state.revision == Long.MAX_VALUE) return AppApprovalOutcome.NOT_READY
-        if (op.phase == AppApprovalPhase.WITHDRAWING) return finishWithdrawal(state, op)
+        if (op.phase == AppApprovalPhase.WITHDRAWING || op.phase == AppApprovalPhase.REMOVING) return finishWithdrawal(state, op)
         if (op.phase != AppApprovalPhase.COMMITTED) return AppApprovalOutcome.NOT_READY
         if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
         if (!permissionsMatch(op.record)) return AppApprovalOutcome.NOT_READY
@@ -262,15 +297,59 @@ class AppApprovalController(
         return resume()
     }
 
+    @Synchronized
+    fun prepareRemoval(packageName: PackageName, person: TrustedPersonId): AppRemovalRequest? {
+        if (!initialized) return null
+        val state = store.read() ?: return null
+        if (state.pending != null || state.revision > Long.MAX_VALUE - 2) return null
+        val record = state.apps[packageName] ?: return null
+        val current = credentials()?.takeIf { it.mode == Mode.TRUSTED } ?: return null
+        val credential = current.people[person] ?: return null
+        val id = ids.next()
+        if (id.isBlank() || state.apps.values.any { it.id == id } || state.receipts.any { it.id == id }) return null
+        val now = clock.checkpoint() ?: return null
+        return AppRemovalRequest(record, id, person, credential.generation, current.structureGeneration, now.boot).also { removals.add(it) }
+    }
+
+    @Synchronized
+    fun removeApproved(request: AppRemovalRequest, confirmedApprovalId: String, fresh: FreshAuthority): AppApprovalOutcome {
+        if (!removals.remove(request) || request.approvalId != confirmedApprovalId) return AppApprovalOutcome.REFUSED
+        if (!initialized) return AppApprovalOutcome.NOT_READY
+        val state = store.read() ?: return AppApprovalOutcome.NOT_READY
+        if (state.pending != null) return AppApprovalOutcome.BUSY
+        val currentRecord = state.apps[request.packageName] ?: return AppApprovalOutcome.REFUSED
+        if (currentRecord.id != request.approvalId || !currentRecord.permissions.manifest.sameFacts(request.record.permissions.manifest) ||
+            currentRecord.permissions.choices != request.record.permissions.choices || state.revision > Long.MAX_VALUE - 2 ||
+            state.receipts.any { it.id == request.receiptId } || state.apps.values.any { it.id == request.receiptId }) return AppApprovalOutcome.REFUSED
+        if (matchingCredentials(request) == null || !sameBoot(request.preparedAt)) return AppApprovalOutcome.REFUSED
+        if (!authority.consumeFor(fresh, request.action, request.person)) return AppApprovalOutcome.REFUSED
+        if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
+        val current = matchingCredentials(request) ?: return AppApprovalOutcome.NOT_READY
+        if (!sameBoot(request.preparedAt)) return AppApprovalOutcome.NOT_READY
+        val receipt = AppApprovalReceipt(request.receiptId, request.person, current.people.mapValues { it.value.generation },
+            AppApprovalReceiptKind.REMOVED, request.approvalId)
+        val removing = state.replacing(pending = AppApprovalOperation(currentRecord,
+            state.receipts.singleOrNull { it.id == currentRecord.id }, AppApprovalPhase.REMOVING, receipt))
+        if (!store.compareAndSet(state, removing, current)) return AppApprovalOutcome.NOT_READY
+        return resume()
+    }
+
+    private fun matchingCredentials(request: AppRemovalRequest): CredentialState? = credentials()?.takeIf {
+        it.mode == Mode.TRUSTED && it.structureGeneration == request.structureGeneration &&
+            it.people[request.person]?.generation == request.credentialGeneration
+    }
+
     private fun finishWithdrawal(state: AppApprovalState, op: AppApprovalOperation): AppApprovalOutcome {
         val checked = withdrawalPlan(state, op) ?: return AppApprovalOutcome.NOT_READY
         if (!effects.applyPolicy(checked.plan) || !effects.readBackPolicy(checked.plan)) return AppApprovalOutcome.NOT_READY
         // Facts can change even when the resulting policy sets are identical.
         if (withdrawalPlan(state, op) != checked) return AppApprovalOutcome.NOT_READY
         val finished = state.replacing(apps = state.apps - op.record.identity.packageName, pending = null,
-            receipts = state.receipts + checkNotNull(op.withdrawalReceipt))
+            receipts = state.receipts + checkNotNull(op.withdrawalReceipt),
+            removedApps = if (op.phase == AppApprovalPhase.REMOVING)
+                state.removedApps + (op.record.identity.packageName to op.record.identity) else state.removedApps)
         if (!store.compareAndSet(state, finished, null)) return AppApprovalOutcome.NOT_READY
-        return AppApprovalOutcome.WITHDRAWN
+        return if (op.phase == AppApprovalPhase.REMOVING) AppApprovalOutcome.REMOVED else AppApprovalOutcome.WITHDRAWN
     }
 
     private data class WithdrawalPlan(val plan: PolicyPlan, val installed: InstalledPackage?,
