@@ -112,6 +112,42 @@ class WaitingChangeControllerTest {
         assertEquals(WaitingOutcome.IGNORED, controller.tick(id, battery))
     }
 
+    @Test fun `unreadable cancel survives stale requests in either order and failed persistence`() {
+        for (staleFirst in listOf(false, true)) {
+            val id = start()
+            at(48)
+            store.unreadable = true
+            if (staleFirst) assertEquals(WaitingOutcome.NOT_READY, controller.cancel("stale"))
+            assertEquals(WaitingOutcome.NOT_READY, controller.cancel(id))
+            if (!staleFirst) assertEquals(WaitingOutcome.NOT_READY, controller.cancel("stale"))
+            store.unreadable = false
+            store.fail = true
+            assertEquals(WaitingOutcome.NOT_READY, controller.tick(id, battery))
+            assertEquals(WaitingPhase.PENDING, store.state!!.operation!!.phase)
+            store.fail = false
+            assertEquals(WaitingOutcome.CANCELLED, controller.tick(id, battery))
+            assertEquals(WaitingEvent.CANCELLED_ON_PHONE, store.state!!.texts.last().event)
+            assertTrue(store.state!!.texts.none { it.event == WaitingEvent.COMMITTING })
+            at(0)
+        }
+    }
+
+    @Test fun `unreadable stale cancel cannot cancel a replacement or reverse a committed direction`() {
+        val old = start()
+        assertEquals(WaitingOutcome.CANCELLED, controller.cancel(old))
+        val current = start()
+        store.unreadable = true
+        assertEquals(WaitingOutcome.NOT_READY, controller.cancel(old))
+        store.unreadable = false
+        at(24)
+        assertEquals(WaitingOutcome.COMMITTING, controller.tick(current, battery))
+        store.unreadable = true
+        assertEquals(WaitingOutcome.NOT_READY, controller.cancel(current))
+        store.unreadable = false
+        assertEquals(WaitingOutcome.ALREADY_IN_PROGRESS, controller.tick(current, battery))
+        assertEquals(WaitingPhase.COMMITTING, store.state!!.operation!!.phase)
+    }
+
     @Test fun `single slot stays held through commit and stale cancellation cannot hit new request`() {
         val firstId = start()
         val secondRequest = controller.prepareTurnOff(first)!!
@@ -192,7 +228,8 @@ class WaitingChangeControllerTest {
         var fail = false
         var crash = false
         var crashAfterWrite = false
-        override fun read() = state
+        var unreadable = false
+        override fun read() = if (unreadable) null else state
         override fun compareAndSet(expected: WaitingState, replacement: WaitingState): Boolean {
             if (fail || state?.revision != expected.revision) return false
             if (crash && !crashAfterWrite) error("interrupted before write")
