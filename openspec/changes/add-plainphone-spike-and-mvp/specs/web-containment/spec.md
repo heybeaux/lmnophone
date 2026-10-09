@@ -68,9 +68,11 @@ The blocked-link screen SHALL be its own exported activity, with no access to ad
 ### Requirement: Wi-Fi networks that need a sign-in page are unsupported
 Plainphone SHALL hide the Wi-Fi sign-in page app (CaptivePortalLogin). Plainphone SHALL NOT offer any session that shows it.
 
+This requirement holds for the MVP. Beaux approved a later Wi-Fi sign-in window (Telegram 4481, PLA-17). It will replace this requirement only through a follow-up OpenSpec change that he approves before it is built.
+
 When the connected network reports `NET_CAPABILITY_CAPTIVE_PORTAL`, Plainphone SHALL show: "This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi." When a connected Wi-Fi stays unvalidated, with no internet and no portal detected, Plainphone SHALL show: "This Wi-Fi isn't reaching the internet." Both messages SHALL offer "Forget this network".
 
-Plainphone SHALL NOT gate the emergency UI on Wi-Fi. It does not promise a radio connection when there is neither mobile service nor usable Wi-Fi. Beaux SHALL accept this trade-off as part of the leftover-risk acceptance, after it has been checked against how he and the trusted person actually use sign-in Wi-Fi and Wi-Fi calling.
+Plainphone SHALL NOT gate the emergency UI on Wi-Fi. It does not promise a radio connection when there is neither mobile service nor usable Wi-Fi. Beaux SHALL accept this trade-off as part of the leftover-risk acceptance. Checked against their use (Telegram 4481): they rely on Wi-Fi calling sometimes. Wi-Fi calling on ordinary Wi-Fi SHALL work with Plainphone's policy on; this is checked before handover.
 
 #### Scenario: Hotel Wi-Fi
 - **WHEN** the phone joins a network that needs a sign-in page, with no mobile data

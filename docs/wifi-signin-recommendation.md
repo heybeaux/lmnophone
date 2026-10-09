@@ -1,8 +1,14 @@
 # Wi-Fi sign-in pages: Lead's recommendation (PLA-17)
 
-Status: **revision 3, after the cross-model review ([PLA-28](/PLA/issues/PLA-28)) and re-review
-([PLA-29](/PLA/issues/PLA-29): ready for Beaux with listed edits, applied here). Not approved.** Until Beaux approves a recommendation, Wi-Fi that needs a sign-in page stays unsupported (design D4,
-web-containment spec), and the MVP goes ahead on that basis.
+Status: **direction approved by Beaux** (Telegram 4481, 2026-10-08, PLA-17 card `607628e3`). He chose (a): the
+user can open the sign-in window alone once a trusted person has switched it on. He accepts the trade-offs in
+question 2. They rely on Wi-Fi calling **sometimes**. The text leaves out the Wi-Fi's name. It is built **after
+the MVP core**.
+
+This approves a direction, not a build. The spike, its cross-model review, and a follow-up OpenSpec change that Beaux
+approves still come first. That change also covers the general web window Beaux chose on PLA-14 (Telegram 4481): one
+"open for a few minutes" mechanism with two kinds, sharing this session contract. Until then, sign-in Wi-Fi stays
+unsupported in the MVP. History: revision 1 → PLA-28 review → revision 2 → PLA-29 re-review → revision 3 (this text).
 
 Inputs:
 - the emulator probe, `spikes/wifi-signin/RESULT.md` ([PLA-18](/PLA/issues/PLA-18));

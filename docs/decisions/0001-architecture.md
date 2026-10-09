@@ -89,6 +89,10 @@ The escape threat list is in `research/evidence/webview-and-escape-threats.md` (
 - **Plan:**
   1. Hide general-purpose browsers, the Google app, Gemini, and **the Wi-Fi sign-in page (CaptivePortalLogin)**.
      - **Wi-Fi networks that need a sign-in page are unsupported in the MVP**, with no exception session. Plainphone says so plainly and offers to forget the network.
+     - **Board decision for later (Beaux, Telegram 4481, 2026-10-08, PLA-17).** Beaux (Telegram 4481, 2026-10-08, PLA-17 card) approved the **direction**: a Wi-Fi sign-in window that Plainphone ships (a companion app with no admin rights; Android's sign-in app stays hidden), which the user can open alone once a trusted person has switched it on with the PIN. Limits: a 5-minute target per try, 3 tries in 24 hours, a text to the trusted person each time with no Wi-Fi name. He accepts that a hotspot can show other websites for the whole window and that some sign-in pages (Google account, bank app) won't work. It is built **after the MVP core**, in a follow-up OpenSpec change shared with the general web window (Telegram 4481, PLA-14), after an emulator spike and cross-model review, and Beaux approves that change before build. Details: `docs/wifi-signin-recommendation.md` revision 3.
+       - This is an explicit exception to the fresh-PIN rule for relaxing the lockdown, and to web containment. It is **not** a D2 session: no device policy changes during use, so it avoids the observed PLA-22 unhide race. That claim depends on the spike's audit.
+       - Fallbacks that unhide Android's sign-in app are **not** approved. Any fallback goes back to Beaux.
+       - Wi-Fi calling: used sometimes. Checked on ordinary Wi-Fi before handover (task 6.3).
   2. Plainphone handles outside links that no approved app claims, and shows "This link is blocked". Navigation inside an approved app's own WebView is not intercepted.
   3. Every app on the list gets a web-leak note, reviewed per app version, that the trusted person reads before approving.
   4. A DNS filter is spiked only. It does **not** count as a protection in this MVP.

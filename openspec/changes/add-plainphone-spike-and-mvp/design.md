@@ -119,6 +119,7 @@ The home activity starts lock task before it draws its first interactive frame. 
 - CaptivePortalLogin is hidden, with no exception session.
 - When Android reports a captive portal, Plainphone shows: "This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi." It also offers "Forget this network".
 - Q4 checks that normal Wi-Fi still works.
+- **Later (approved direction, not in the MVP):** Beaux (Telegram 4481, 2026-10-08, PLA-17 card) approved the **direction**: a Wi-Fi sign-in window that Plainphone ships (a companion app with no admin rights; Android's sign-in app stays hidden), which the user can open alone once a trusted person has switched it on with the PIN. Limits: a 5-minute target per try, 3 tries in 24 hours, a text to the trusted person each time with no Wi-Fi name. He accepts that a hotspot can show other websites for the whole window and that some sign-in pages (Google account, bank app) won't work. It is built **after the MVP core**, in a follow-up OpenSpec change shared with the general web window (Telegram 4481, PLA-14), after an emulator spike and cross-model review, and Beaux approves that change before build. Details: `docs/wifi-signin-recommendation.md` revision 3. Until that change is approved and built, this section stands.
 
 **Web-leak notes** are kept per app version.
 
@@ -307,7 +308,6 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 
 7. **Plan, leftover risks and custody limit.** Accepted with the plan (PLA-1 confirmation eb7a21ba).
 
-**Still open for Beaux:**
-- **Wi-Fi sign-in and Wi-Fi calling.** No firm answer yet (Telegram 4448/4451). Beaux asked the team to assess a **time-boxed manual override**, about 5 minutes, that the user or the trusted person can turn on to get through a sign-in page (BC Ferries, a hotel, a hospital). This is a design request, not an approval. Until Beaux approves a recommendation, sign-in Wi-Fi stays unsupported as in D4, and the MVP proceeds on that basis. Whether either of them relies on Wi-Fi calling where there is no cell signal is still unanswered.
+8. **Wi-Fi sign-in and Wi-Fi calling (Telegram 4481, PLA-17).** Sign-in Wi-Fi stays unsupported in the MVP. The approved direction for later is in D4. Beaux and the trusted person rely on Wi-Fi calling **sometimes**, so the handover checklist (task 6.3) checks that Wi-Fi calling works on ordinary Wi-Fi with Plainphone's policy on. Wi-Fi calling on a sign-in network only works once the sign-in is done, which Beaux accepted.
 
 **For the spike:** Q1–Q14 in `docs/feasibility-questions.md`.
