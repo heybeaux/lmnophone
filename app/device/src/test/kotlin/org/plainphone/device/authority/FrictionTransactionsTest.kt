@@ -6,7 +6,6 @@ import java.io.File
 import java.security.MessageDigest
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -103,14 +102,14 @@ class FrictionTransactionsTest {
         fun editor() = FrictionSettingsController(store, store.credentials, vault, clock, AppApprovalIdSource { "edit-${++sequence}" })
         fun auth(r: WaitingStart) = (vault.authenticate(self, pin, r.action) as PinResult.Authorized).authority
         fun start(target: FrictionSettings = looser): String {
-            val r = assertNotNull(waiting.prepareFriction(self, target))!!
+            val r = checkNotNull(waiting.prepareFriction(self, target))
             assertEquals(WaitingOutcome.PENDING, waiting.startFrictionChange(r, auth(r), true))
             return r.requestId
         }
         fun at(total: Long, epoch: String = "epoch", boot: String = "boot") { now = ClockReading(RunningTime(epoch, total), BootTime(boot, total)) }
         fun mature(id: String) { at(day); assertEquals(WaitingOutcome.COMMITTING, waiting.tick(id, BatteryState(1, false))) }
         fun stricter(target: FrictionSettings = FrictionSettings(1_800_000, 0)): FrictionSettingsOutcome {
-            val editor = editor(); val r = assertNotNull(editor.prepareStricter(self, target))!!
+            val editor = editor(); val r = checkNotNull(editor.prepareStricter(self, target))
             val fresh = (vault.authenticate(self, pin, r.action) as PinResult.Authorized).authority
             return editor.applyStricter(r, fresh)
         }

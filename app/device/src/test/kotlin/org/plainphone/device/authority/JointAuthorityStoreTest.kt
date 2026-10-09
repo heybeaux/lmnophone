@@ -6,7 +6,6 @@ import java.io.File
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -125,7 +124,7 @@ class JointAuthorityStoreTest {
             try { bump(store, 4) } catch (_: SimulatedCrash) { }
             faults = StorageFaults { _, _ -> }
             val reopened = open()
-            val read = assertNotNull("after crash at $point", reopened.credentials.read())!!
+            val read = checkNotNull(reopened.credentials.read()) { "after crash at $point" }
             assertTrue("$point", read.revision == 0L || read.revision == 1L)
             assertEquals(if (read.revision == 1L) 4 else 0, read.people.getValue(self).pinCounter.failures)
             assertEquals("live", reopened.waitingStore.read()!!.storageGeneration)
@@ -155,10 +154,18 @@ class JointAuthorityStoreTest {
 
     @Test fun reentrantWriteFromInsideATransactionIsRefused() {
         val store = initialized()
+        val snapshot = store.credentials.read()!!
         var inner: Boolean? = null
-        faults = StorageFaults { at, _ -> if (at == WritePoint.AFTER_COPY_A && inner == null) inner = bump(store, 9) }
+        var innerRead: CredentialState? = snapshot
+        faults = StorageFaults { at, _ ->
+            if (at == WritePoint.AFTER_COPY_A && inner == null) {
+                innerRead = store.credentials.read()
+                inner = store.credentials.compareAndSet(snapshot, credentials(1, 9))
+            }
+        }
         assertTrue(bump(store, 1))
         assertEquals(false, inner)
+        assertNull(innerRead)
         assertEquals(1, open().credentials.read()!!.people.getValue(self).pinCounter.failures)
     }
 

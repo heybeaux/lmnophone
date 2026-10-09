@@ -4,7 +4,6 @@ package org.plainphone.device.authority
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.plainphone.core.Mode
@@ -58,7 +57,7 @@ class AuthorityCodecTest {
         for (contact in listOf(PersonContact("synthetic-self", "synthetic-contact"), null)) {
             val original = credentials(contact)
             val bytes = AuthorityCodec.encodeCredentials(original)
-            val decoded = assertNotNull(AuthorityCodec.decodeCredentials(bytes))!!
+            val decoded = checkNotNull(AuthorityCodec.decodeCredentials(bytes))
             assertArrayEquals(bytes, AuthorityCodec.encodeCredentials(decoded))
             assertEquals(original.revision, decoded.revision)
             assertEquals(original.pendingNotices, decoded.pendingNotices)
@@ -78,8 +77,8 @@ class AuthorityCodecTest {
             mapOf(self to PersonContact("synthetic-self", "synthetic-contact"), other to null))
         val state = WaitingState(1, pending, listOf(text), "live",
             listOf(RecoveryReceipt("loss-1", Mode.SELF_MANAGED, mapOf(self to 4L), base)))
-        val bytes = assertNotNull(AuthorityCodec.encodeWaiting(state))!!
-        val decoded = assertNotNull(AuthorityCodec.decodeWaiting(bytes))!!
+        val bytes = checkNotNull(AuthorityCodec.encodeWaiting(state))
+        val decoded = checkNotNull(AuthorityCodec.decodeWaiting(bytes))
         assertArrayEquals(bytes, AuthorityCodec.encodeWaiting(decoded))
         val patch = decoded.operation!!.frictionPatch!!
         assertEquals(base, patch.source)
