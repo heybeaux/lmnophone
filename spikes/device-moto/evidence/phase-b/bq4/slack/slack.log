@@ -1,0 +1,154 @@
+### 01 launch under BLOCK  (2026-10-09T00:13:01Z)
+top: u0 com.Slack/slack.features.applanding.AppLandingActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:12:55.662 {flg=0x30000000 cmp=com.plainphone.spike.dpc/.MainActivity (has extras)}
+  17:12:55.730 {act=android.intent.action.VIEW flg=0x10000000 xflg=0x1 cmp=com.Slack/slack.app.HomeActivity}
+  17:12:55.966 {act=android.intent.action.VIEW flg=0x10008000 cmp=com.Slack/slack.features.home.VintageHomeActivity}
+  17:12:56.059 {cmp=com.Slack/slack.features.applanding.AppLandingActivity}
+text:
+  text="Go on…"
+  text="Picture this: a messaging app, but built for work."
+  text="Sign in"
+### 02 Sign in  (2026-10-09T00:13:31Z)
+top: u0 com.Slack/slack.features.authoptions.AuthOptionsActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:13:27.253 {cmp=com.Slack/slack.features.authoptions.AuthOptionsActivity (has extras)}
+text:
+  content-desc="Back"
+  content-desc="Email address"
+  text="Enter your email"
+  text="Google"
+  text="Having trouble? Enter a workspace URL"
+  text="Looking for GovSlack? Sign in"
+  text="OR"
+  text="Or choose another option"
+  text="Sign in"
+  text="Signed in on a computer? Continue with a QR code"
+  text="name@work-email.com"
+### 03 Google sign-in  (2026-10-09T00:13:47Z)
+top: u0 com.Slack/slack.features.authoptions.AuthOptionsActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  content-desc="Back"
+  content-desc="Email address"
+  content-desc="Error"
+  text="Enter your email"
+  text="Google"
+  text="Having trouble? Enter a workspace URL"
+  text="Looking for GovSlack? Sign in"
+  text="OR"
+  text="Or choose another option"
+  text="Sign in"
+  text="Signed in on a computer? Continue with a QR code"
+  text="There was a problem authenticating with Google."
+  text="name@work-email.com"
+### 04 workspace URL  (2026-10-09T00:14:03Z)
+top: u0 com.Slack/slack.features.signin.ui.SignInActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:14:00.167 {cmp=com.Slack/slack.features.signin.ui.SignInActivity (has extras)}
+text:
+  content-desc="Back"
+  content-desc="Your Slack workspace URL"
+  text="Continue"
+  text="Enter a workspace URL"
+  text="If you’re having trouble signing in to Slack, enter your workspace URL to get in the right spot"
+  text="Sign In"
+  text="Trying to sign in to GovSlack?"
+  text="workspace-url.slack.com"
+### 05 QR code  (2026-10-09T00:14:23Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:14:19.976 {cmp=com.Slack/slack.features.signin.qr.QrCodeSignInActivity}
+  17:14:20.050 {act=android.content.pm.action.REQUEST_PERMISSIONS pkg=com.google.android.permissioncontroller cmp=com.google.android.permissioncontroller/com.android.permissioncontroller.permission.ui.GrantPermissionsAct
+text:
+  text="App is not available"
+  text="OK"
+  text="Permission controller is not available right now."
+grant com.Slack android.permission.CAMERA -> true state=1 granted=true
+grant com.Slack android.permission.POST_NOTIFICATIONS -> true state=1 granted=true
+### 06 QR code after camera pre-grant  (2026-10-09T00:14:44Z)
+top: u0 com.Slack/slack.features.signin.qr.QrCodeSignInActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  text="Got it"
+  text="Slack wants access to the camera"
+  text="This is so you can scan a QR code and sign in.&#10;&#10;Go to device settings to enable access to the camera."
+### 07 Got it  (2026-10-09T00:14:57Z)
+top: u0 com.Slack/slack.features.authoptions.AuthOptionsActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  content-desc="Back"
+  content-desc="Email address"
+  content-desc="Error"
+  text="Enter your email"
+  text="Google"
+  text="Having trouble? Enter a workspace URL"
+  text="Looking for GovSlack? Sign in"
+  text="OR"
+  text="Or choose another option"
+  text="Sign in"
+  text="Signed in on a computer? Continue with a QR code"
+  text="There was a problem authenticating with Google."
+  text="name@work-email.com"
+### 08 QR code re-entered  (2026-10-09T00:15:09Z)
+top: u0 com.Slack/slack.features.applanding.AppLandingActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  text="Go on…"
+  text="Picture this: a messaging app, but built for work."
+  text="Sign in"
+### 09 QR code with camera granted  (2026-10-09T00:15:29Z)
+top: u0 com.Slack/slack.features.signin.qr.QrCodeSignInActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:15:18.806 {cmp=com.Slack/slack.features.authoptions.AuthOptionsActivity (has extras)}
+  17:15:24.285 {cmp=com.Slack/slack.features.signin.qr.QrCodeSignInActivity}
+text:
+  content-desc="Back"
+  text="1"
+  text="2"
+  text="On Slack for desktop, click the workspace name at the top left."
+  text="Scan QR Code"
+  text="Select Sign in to workspace on mobile from the dropdown menu."
+  text="Where to find the QR Code"
+### 10 GovSlack link  (2026-10-09T00:15:45Z)
+top: u0 com.Slack/slack.features.authoptions.AuthOptionsActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  content-desc="Close sheet"
+  content-desc="Drag handle"
+  text="Connect to slack-gov.com"
+  text="Connect to slack.mil"
+  text="Sign in to GovSlack"
+### 11 CONTROL lock task off - Google sign-in  (2026-10-09T00:16:14Z)
+top: u0 com.Slack/slack.features.authoptions.AuthOptionsActivity
+lock: mLockTaskModeState=NONE
+starts:
+  17:15:57.917 {flg=0x30000000 cmp=com.plainphone.spike.dpc/.MainActivity (has extras)}
+  17:15:57.933 {act=android.intent.action.VIEW flg=0x10000000 xflg=0x1 cmp=com.Slack/slack.app.HomeActivity}
+  17:15:57.969 {act=android.intent.action.VIEW flg=0x10008000 cmp=com.Slack/slack.features.home.VintageHomeActivity}
+  17:15:58.010 {cmp=com.Slack/slack.features.applanding.AppLandingActivity}
+  17:16:04.333 {cmp=com.Slack/slack.features.authoptions.AuthOptionsActivity (has extras)}
+text:
+  content-desc="Back"
+  content-desc="Email address"
+  content-desc="Error"
+  text="Enter your email"
+  text="Google"
+  text="Having trouble? Enter a workspace URL"
+  text="Looking for GovSlack? Sign in"
+  text="OR"
+  text="Or choose another option"
+  text="Sign in"
+  text="Signed in on a computer? Continue with a QR code"
+  text="There was a problem authenticating with Google."
+  text="name@work-email.com"
