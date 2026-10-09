@@ -1,0 +1,8 @@
+# Q1 camera, API 35, flag ON
+texts: "Options" "Options" "Shutter" 
+$ ls /sdcard/DCIM/Camera (before)
+ls: /sdcard/DCIM/Camera: No such file or directory
+$ ls /sdcard/DCIM/Camera (after)
+ls: /sdcard/DCIM/Camera: No such file or directory
+top: com.android.camera2/com.android.camera.CameraActivity
+texts: "Options" "Options" "Shutter" 

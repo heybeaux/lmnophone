@@ -1,0 +1,7 @@
+OK persistent preferred HOME = emu spike
+OK lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.messaging, com.android.phone]
+OK lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK (119)
+OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+setPermissionGrantState(com.plainphone.spike.emu,android.permission.ACCESS_FINE_LOCATION,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+OK relayed lt-start (result in logcat PPEMU)
+deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[] locked=true

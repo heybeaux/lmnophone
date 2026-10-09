@@ -1,0 +1,43 @@
+# Messages first run, flag ON, API 35
+first-run 'How it works' -> com.google.android.apps.messaging/.gaia.expresssignin.BugleExpressSignInActivity
+first-run 'Sign In' -> android/com.android.internal.app.BlockedAppActivity
+'Use Messages without an account' -> com.google.android.apps.messaging/.ui.ConversationListActivity
+  "Messages" "Search messages" "Sign in" "Conversation list" "Once you start a new conversation, you’ll see it listed here" "Once you start a new conversation, you’ll see it listed here" "Start chat" "Start chat" 
+# Messages account-disc menu items
+Sign In -> android/com.android.internal.app.BlockedAppActivity
+    {act=android.settings.ADD_ACCOUNT_SETTINGS cmp=com.android.settings/.accounts.AddAccountSettings (has extras)} with LAUNCH_MULTIPLE from uid 10140 (BAL_ALLOW_VISIBLE_WINDOW) result code=0 
+Device pairing -> com.google.android.apps.messaging/.gaia.expresssignin.BugleExpressSignInActivity
+    {act=android.intent.action.VIEW cmp=com.google.android.apps.messaging/.gaia.expresssignin.BugleExpressSignInActivity (has extras)} with LAUNCH_MULTIPLE from uid 10140 (BAL_ALLOW_VISIBLE_WINDOW) result 
+    texts: "Sign In" "Use Messages without an account" "Pair with other devices using your Google Account" "How it works" 
+Help &amp; feedback -> com.google.android.apps.messaging/.gaia.expresssignin.BugleExpressSignInActivity
+    
+    texts: "Sign In" "Use Messages without an account" "Pair with other devices using your Google Account" "How it works" 
+Privacy Policy -> com.google.android.apps.messaging/.gaia.expresssignin.BugleExpressSignInActivity
+    
+    texts: "Sign In" "Use Messages without an account" "Pair with other devices using your Google Account" "How it works" 
+Terms of Service -> com.google.android.apps.messaging/.gaia.expresssignin.BugleExpressSignInActivity
+    
+    texts: "Sign In" "Use Messages without an account" "Pair with other devices using your Google Account" "How it works" 
+Spam &amp; blocked -> com.google.android.apps.messaging/.gaia.expresssignin.BugleExpressSignInActivity
+    
+    texts: "Sign In" "Use Messages without an account" "Pair with other devices using your Google Account" "How it works" 
+# Messages account-disc menu items (re-run with sign-in screen dismissed)
+Help &amp; feedback -> com.google.android.apps.messaging/.ui.gaia.GaiaDittoActivity
+    
+    texts: "Navigate up" "Device pairing" "Use your phone number to send and receive messages on devices signed into your Google account" "How to pair. Expanded. Double tap to collapse" "How to pair" "1" "Sign in to the Google Messages app on your phone" "2" "Open Google Messages on your other devices or go to https://messages.google.com/web" "3" "On your other devices, sign in to the same Google Account" "P
+Privacy Policy -> com.google.android.apps.messaging/.ui.gaia.GaiaDittoActivity
+    
+    texts: "Navigate up" "Device pairing" "Use your phone number to send and receive messages on devices signed into your Google account" "How to pair. Expanded. Double tap to collapse" "How to pair" "1" "Sign in to the Google Messages app on your phone" "2" "Open Google Messages on your other devices or go to https://messages.google.com/web" "3" "On your other devices, sign in to the same Google Account" "P
+Terms of Service -> com.google.android.apps.messaging/.ui.gaia.GaiaDittoActivity
+    
+    texts: "Navigate up" "Device pairing" "Use your phone number to send and receive messages on devices signed into your Google account" "How to pair. Expanded. Double tap to collapse" "How to pair" "1" "Sign in to the Google Messages app on your phone" "2" "Open Google Messages on your other devices or go to https://messages.google.com/web" "3" "On your other devices, sign in to the same Google Account" "P
+Spam &amp; blocked -> com.google.android.apps.messaging/.ui.gaia.GaiaDittoActivity
+    
+    texts: "Navigate up" "Device pairing" "Use your phone number to send and receive messages on devices signed into your Google account" "How to pair. Expanded. Double tap to collapse" "How to pair" "1" "Sign in to the Google Messages app on your phone" "2" "Open Google Messages on your other devices or go to https://messages.google.com/web" "3" "On your other devices, sign in to the same Google Account" "P
+Archived -> com.google.android.apps.messaging/.ui.gaia.GaiaDittoActivity
+    
+    texts: "Navigate up" "Device pairing" "Use your phone number to send and receive messages on devices signed into your Google account" "How to pair. Expanded. Double tap to collapse" "How to pair" "1" "Sign in to the Google Messages app on your phone" "2" "Open Google Messages on your other devices or go to https://messages.google.com/web" "3" "On your other devices, sign in to the same Google Account" "P
+Messages settings -> com.google.android.apps.messaging/.ui.gaia.GaiaDittoActivity
+    
+    texts: "Navigate up" "Device pairing" "Use your phone number to send and receive messages on devices signed into your Google account" "How to pair. Expanded. Double tap to collapse" "How to pair" "1" "Sign in to the Google Messages app on your phone" "2" "Open Google Messages on your other devices or go to https://messages.google.com/web" "3" "On your other devices, sign in to the same Google Account" "P
+# Messages account-disc menu items (re-run 2: Messages force-stopped before each item)

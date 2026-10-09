@@ -1,0 +1,44 @@
+# Q3 on google/sdk_gphone64_arm64/emu64a:16/BE2A.250530.026.D1/13818094:user/release-keys 2026-10-09T00:00:17Z, fresh -wipe-data boot
+## QR path: is there a setup wizard to start QR provisioning from?
+$ settings get global device_provisioned = 1
+$ settings get secure user_setup_complete = 1
+$ pm list packages | grep -iE "setupwizard|provision"
+package:com.android.managedprovisioning
+package:com.android.managedprovisioning.auto_generated_rro_product__
+$ cmd package query-activities -a android.app.action.PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE
+1 activities found:
+  Activity #0:
+    priority=10 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true
+    com.android.managedprovisioning/.PreProvisioningActivityViaTrustedApp
+$ dumpsys package com.android.managedprovisioning | grep -A3 "TRUSTED_SOURCE" (permission on the activity)
+      android.app.action.PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE:
+        ade4958 com.android.managedprovisioning/.PreProvisioningActivityViaTrustedApp filter d0e3ab1
+          Action: "android.app.action.PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE"
+        ade4958 com.android.managedprovisioning/.PreProvisioningActivityViaTrustedApp filter d0e3ab1
+$ am start -a android.app.action.PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE (as shell)
+	at android.os.Binder.execTransactInternal(Binder.java:1426)
+	at android.os.Binder.execTransact(Binder.java:1365)
+## adb path
+$ dumpsys account | grep -c Account{ = 0
+$ adb install -t dpc-debug.apk
+Performing Streamed Install
+Success
+$ dpm set-device-owner com.plainphone.spike.emu/.AdminReceiver
+Success: Device owner set to package com.plainphone.spike.emu/.AdminReceiver
+Active admin set to component com.plainphone.spike.emu/.AdminReceiver
+$ dpm list-owners
+1 owner:
+User  0: admin=com.plainphone.spike.emu/.AdminReceiver,DeviceOwner,Affiliated
+top: com.google.android.apps.nexuslauncher/.NexusLauncherActivity
+texts: "At a glance" "Thu, Oct 8" "Thu, Oct 8" "Play Store" "Play Store" "Gmail" "Gmail" "Photos" "Photos" "YouTube" "YouTube" "Home" "Phone" "Phone" "Messages" "Messages" "Chrome" "Chrome" "Plainphone emu s
+$ logcat | grep -iE "blocked|protect your device|DevicePolicy"
+10-08 17:00:18.276   656   727 I DevicePolicyManager: Device owner set: ComponentInfo{com.plainphone.spike.emu/com.plainphone.spike.emu.AdminReceiver} on user 0
+Exception occurred while executing 'start':
+java.lang.SecurityException: Permission Denial: starting Intent { act=android.app.action.PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE flg=0x10000000 xflg=0x4 cmp=com.android.managedprovisioning/.PreProvisioningActivityViaTrustedApp } from null (pid=7025, uid=2000) requires android.permission.DISPATCH_PROVISIONING_MESSAGE
+## negative controls
+$ dpm set-device-owner com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity   (not a device admin)
+Exception occurred while executing 'set-device-owner':
+$ dpm set-device-owner com.plainphone.spike.emu/.AdminReceiver   (owner already set)
+Exception occurred while executing 'set-device-owner':
+java.lang.IllegalStateException: Trying to set the device owner (com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity), but device owner (com.plainphone.spike.emu/.AdminReceiver) is already set.
+java.lang.IllegalStateException: Trying to set the device owner (com.plainphone.spike.emu/.AdminReceiver), but device owner (com.plainphone.spike.emu/.AdminReceiver) is already set.

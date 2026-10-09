@@ -1,0 +1,29 @@
+# Dialer settings items via UI (Home > Phone > More options > Settings), flag ON, API 35
+Caller ID &amp; spam (from com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity) -> com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity
+    "Back" "Caller ID &amp; spam" "See caller and spam ID" "Identify business and spam numbers" "Google will attempt to show you useful information when you make or receive a call, such as a name for a number not in your contacts or a warning when an incoming call is suspected to be spam. Learn more abo
+Accessibility (from com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity) -> com.android.phone/.settings.AccessibilitySettingsActivity
+    "Navigate up" "Accessibility" "TTY mode" "TTY Off" 
+Assisted dialing (from com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity) -> com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity
+    "Back" "Assisted dialing" "Assisted dialing" "Default home country" "Automatically detected • United States (+1)" "Assisted dialing predicts and adds a country code when you call while traveling abroad. Learn more" 
+Blocked numbers (from com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity) -> android/com.android.internal.app.BlockedAppActivity
+    "App is not available" "Phone Calls is not available right now." "OK" 
+Calls (from com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity) -> com.android.phone/.CallFeaturesSetting
+    "Back" "Call settings" "Calling accounts" "Fixed Dialing Numbers" "Call forwarding" "Additional settings" 
+Display options (from com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity) -> com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity
+    "Back" "Display options" "Sort by" "First name" "Name format" "First name first" "Choose theme" "System default" 
+Quick responses (from com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity) -> android/com.android.internal.app.BlockedAppActivity
+    "App is not available" "Phone Calls is not available right now." "OK" 
+Sounds and vibration (from com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity) -> android/com.android.internal.app.BlockedAppActivity
+    "App is not available" "Settings is not available right now." "OK" 
+Voicemail (from com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity) -> com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity
+    "Back" "Voicemail" "Notifications" "Visual voicemail" "Activating voicemail" "Change PIN" "Visual voicemail is not activated yet, please try again later" "Advanced Settings" 
+# Learn-more links and notification settings
+NO NODE Learn more
+Assisted dialing > Learn more -> com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity
+Voicemail > Notifications -> android/com.android.internal.app.BlockedAppActivity
+Caller ID > Learn more -> com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity
+Caller ID > 'Learn more about spam protection' link -> android/com.android.internal.app.BlockedAppActivity
+10-08 15:40:06.207   929   974 V WindowManagerShell: Transition requested (#551): android.os.BinderProxy@8e2c36c TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=11 displayId=0 isRunning=true baseIntent=Intent { act=android.intent.ac
+10-08 15:40:06.207   553  1264 I ActivityTaskManager: START u0 {act=android.intent.action.VIEW dat=https://support.google.com/... cmp=com.android.chrome/com.google.android.apps.chrome.IntentDispatcher (has extras)} with LAUNCH_MULTIPLE from uid 10138 (BAL_ALLO
+10-08 15:40:06.227   553  1264 D CoreBackPreview: Window{80acb17 u0 android/com.android.internal.app.BlockedAppActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@10338ed, mPriority=0, mIsAnimat
+10-08 15:40:06.243   929   974 V WindowManagerShell: onTransitionReady (#551) android.os.BinderProxy@8e2c36c: {id=551 t=OPEN f=0x0 trk=0 opt={t=FROM_STYLE} r=[0@Point(0, 0)] c=[{null m=OPEN f=TRANSLUCENT|IN_TASK_WITH_EMBEDDED_ACTIVITY|FILLS_TASK leash=Surface(

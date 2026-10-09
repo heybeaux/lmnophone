@@ -1,0 +1,32 @@
+# Q1 phone controls, Wi-Fi, emergency screen. API 35, flag ON, lockTaskFeatures include GLOBAL_ACTIONS
+## power menu (long-press POWER)
+texts: "Plainphone emu spike (throwaway)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop lock task" "deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.serve
+## Plainphone Wi-Fi screen (WifiManager.addNetwork as Device Owner)
+top: com.plainphone.spike.emu/.WifiActivity
+$ cmd wifi-add PlainphoneTest secretpass1
+addNetwork(PlainphoneTest, psk) -> netId=1 enableNetwork -> true
+$ cmd wifi-list
+configured=[] current=<unknown ssid>/-1
+screen texts: "Wi-Fi (Plainphone)" "Network name" "Password (blank = open)" "Join" "configured=[] current=&lt;unknown ssid&gt;/-1" "Plainphone emu spike" 
+## negative control: system Wi-Fi settings stay blocked (matrix row wifi-settings) and a non-owner addNetwork
+$ cmd net
+wifi=false captive=false validated=false msg=null
+## emergency dialer screen, package pinned to the system-only floor (never place a call)
+top: com.android.phone/.EmergencyDialer
+## power menu follow-up
+$ settings get global power_button_long_press = null
+$ settings get global key_chord_power_volume_up = null
+## power + volume-up chord
+texts: "Emergency" "Power off" "Restart" 
+## diagnostic: power_button_long_press=1 (global actions), long-press POWER
+texts: "Emergency" "Power off" "Restart" 
+## Wi-Fi follow-up: DPC self-grants location (needed to read configured networks), then joins the real open network AndroidWifi
+setPermissionGrantState(com.plainphone.spike.emu,android.permission.ACCESS_FINE_LOCATION,granted) -> true; getPermissionGrantState=1 checkPermission=GRANTED
+$ cmd wifi-list
+configured=[0:"AndroidWifi", 0:"AndroidWifi", 1:"PlainphoneTest", 1:"PlainphoneTest"] current="AndroidWifi"/0
+$ cmd wifi-add AndroidWifi
+addNetwork(AndroidWifi, open) -> netId=0 enableNetwork -> true
+$ cmd wifi-list
+configured=[0:"AndroidWifi", 0:"AndroidWifi", 1:"PlainphoneTest", 1:"PlainphoneTest"] current="AndroidWifi"/0
+$ cmd net
+wifi=true captive=false validated=true msg=null

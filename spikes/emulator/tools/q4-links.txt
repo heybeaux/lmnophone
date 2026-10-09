@@ -1,0 +1,16 @@
+# Q4 link matrix. Launched from inside the locked task (the DPC home stands in for an approved app).
+https-general|data=https://example.com/page cat=android.intent.category.BROWSABLE
+http-general|data=http://example.com/page cat=android.intent.category.BROWSABLE
+applink-unverified|data=https://bank.plainphone-fx.example/login cat=android.intent.category.BROWSABLE
+applink-explicit-pkg|data=https://bank.plainphone-fx.example/login pkg=com.plainphone.fx.applinks
+custom-scheme|data=ppfx://open cat=android.intent.category.BROWSABLE
+intent-uri|data=intent://example.com/#Intent;scheme=https;package=com.android.chrome;end
+customtabs-https|data=https://example.com/ct ct=1 cat=android.intent.category.BROWSABLE
+customtabs-to-chrome|data=https://example.com/ct ct=1 pkg=com.android.chrome
+explicit-hidden-chrome|action=android.intent.action.MAIN comp=com.android.chrome/com.google.android.apps.chrome.Main
+explicit-hidden-fxbrowser|action=android.intent.action.MAIN comp=com.plainphone.fx.browser/com.plainphone.fx.common.FxActivity
+view-hidden-fxbrowser|data=https://example.com/ pkg=com.plainphone.fx.browser
+app-browser-category|action=android.intent.action.MAIN cat=android.intent.category.APP_BROWSER
+web-search|action=android.intent.action.WEB_SEARCH
+google-app|action=android.intent.action.MAIN comp=com.google.android.googlequicksearchbox/com.google.android.googlequicksearchbox.SearchActivity
+assist|action=android.intent.action.ASSIST

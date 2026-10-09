@@ -1,0 +1,31 @@
+# T1 floor trust, API 35, flag ON, fx-emergency (user-installed, declares EmergencyDialer.DIAL/CALL_EMERGENCY/DIAL_EMERGENCY at priority 1000) installed
+$ pm list packages -3
+package:com.plainphone.fx.httponly
+package:com.plainphone.spike.emu
+package:com.plainphone.fx.emergency
+package:com.plainphone.fx.applinks
+package:com.plainphone.fx.urlbar
+$ cmd floor-apply
+OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+$ launch action=com.android.phone.EmergencyDialer.DIAL newtask=1
+top: android/com.android.internal.app.BlockedAppActivity
+"App is not available" "Android System is not available right now." "OK" 
+10-08 16:37:19.099   553   569 I ActivityTaskManager: START u0 {act=com.android.phone.EmergencyDialer.DIAL flg=0x10000000 cmp=android/com.android.internal.app.ResolverActivity} with LAUNCH_MULTIPLE from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+10-08 16:37:19.099  6628  6628 I PPEMU   : launch [action=com.android.phone.EmergencyDialer.DIAL newtask=1] returned normally: Intent { act=com.android.phone.EmergencyDialer.DIAL flg=0x10000000 }
+$ launch action=com.android.phone.EmergencyDialer.DIAL pkg=com.android.phone newtask=1
+top: com.android.phone/.EmergencyDialer
+"Owner" "Emergency information" "backspace" "1," "1" "2,ABC" "2" "ABC" "3,DEF" "3" "DEF" "4,GHI" "4" "GHI" "5,JKL" "5" "JKL" "6,MNO" "6" "MNO" "7,PQRS" "7" "PQRS" "8,TUV" "8" "TUV" "9,WXYZ" "9" "WXYZ" "*" "*" "0,+" "0" "+" "#" "#" "dial" 
+10-08 16:37:24.336   553  1264 I ActivityTaskManager: START u0 {act=com.android.phone.EmergencyDialer.DIAL flg=0x10000000 pkg=com.android.phone cmp=com.android.phone/.EmergencyDialer} with LAUNCH_MULTIPLE from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+10-08 16:37:24.336  6628  6628 I PPEMU   : launch [action=com.android.phone.EmergencyDialer.DIAL pkg=com.android.phone newtask=1] returned normally: Intent { act=com.android.phone.EmergencyDialer.DIAL flg=0x10000000 pkg=com.android.phone }
+$ launch action=android.intent.action.MAIN comp=com.plainphone.fx.emergency/com.plainphone.fx.common.FxActivity newtask=1
+top: android/com.android.internal.app.BlockedAppActivity
+"App is not available" "FX fake emergency is not available right now." "OK" 
+10-08 16:37:29.556   553  1264 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN flg=0x10000000 cmp=com.plainphone.fx.emergency/com.plainphone.fx.common.FxActivity} with LAUNCH_MULTIPLE from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+10-08 16:37:29.556  6628  6628 I PPEMU   : launch [action=android.intent.action.MAIN comp=com.plainphone.fx.emergency/com.plainphone.fx.common.FxActivity newtask=1] returned normally: Intent { act=android.intent.action.MAIN flg=0x10000000 cmp=com.plainphone.fx.emergency/com.plainphone.fx.common.FxAc
+$ launch action=android.intent.action.DIAL_EMERGENCY newtask=1
+top: android/com.android.internal.app.BlockedAppActivity
+"App is not available" "Android System is not available right now." "OK" 
+10-08 16:37:34.764   553   569 I ActivityTaskManager: START u0 {act=android.intent.action.DIAL_EMERGENCY flg=0x10000000 cmp=android/com.android.internal.app.ResolverActivity} with LAUNCH_MULTIPLE from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+10-08 16:37:34.765  6628  6628 I PPEMU   : launch [action=android.intent.action.DIAL_EMERGENCY newtask=1] returned normally: Intent { act=android.intent.action.DIAL_EMERGENCY flg=0x10000000 }
+$ tap Plainphone home "Emergency" button (implicit EmergencyDialer.DIAL)
+tapt: bad math expression: operator expected at `614 1048 7...'

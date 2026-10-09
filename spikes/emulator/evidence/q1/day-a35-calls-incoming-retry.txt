@@ -1,0 +1,29 @@
+service state: mVoiceRegState=0(IN_SERVICE),  voice reg: mVoiceRegState=0(IN_SERVICE)
+$ adb emu gsm call 6505550100
+OK
+$ adb emu gsm list
+OK
+top: com.plainphone.spike.emu/.MainActivity
+texts: "Plainphone emu spike (throwaway)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "Stop lock task" "deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, co
+10-08 16:54:43.755 10505 10505 I DialerTelecomEventUiThreadBlockedTimer: com.android.incallui.TelecomEventUiThreadBlockedTimer.lambda$onEvent$0:58 InCallService.uiThreadBlockedByTelecomEvent.onCanAddCallChanged blocked UI thread for 0.26 ms
+10-08 16:54:43.772 10505 10505 I DialerCallScopesImpl: com.google.android.dialershared.incall.core.callscope.callscopes.impl.CallScopesImpl.add:283 add called for telecomCall: Call [id: TC@3, state: RINGING, details: [id: TC@3, state: RINGI
+10-08 16:54:43.783   553 21964 I Telecom : CallAudioManager: onCallEnteringRinging: mFeatureFlags.separatelyBindToBtIncallService() ? false: NCSSF.aC->ICFG.sF->ICFG.sF->ICFG.sF@Cf8
+10-08 16:54:43.783   553 21964 I Telecom : CallAudioManager: onCallEnteringRinging: mRingingCalls.getFirst().getBtIcsFuture() = null: NCSSF.aC->ICFG.sF->ICFG.sF->ICFG.sF@Cf8
+10-08 16:54:43.783   553 21964 I Telecom : CallAnomalyWatchdog: maybePostCleanupTask; callId=TC@3, state=RINGING, createConnComplete=true: NCSSF.aC->ICFG.sF->ICFG.sF->ICFG.sF@Cf8
+10-08 16:54:43.783   553  1233 I Telecom : CallAudioModeStateMachine: Message received: NEW_RINGING_CALL.: NCSSF.aC->ICFG.sF->ICFG.sF->ICFG.sF->CAMSM.pM_2002@Cf8
+10-08 16:54:43.784   553 21964 I Telecom : IncomingCallNotifier: updateIncomingCall: foundIncomingcall = null: NCSSF.aC->ICFG.sF->ICFG.sF->ICFG.sF@Cf8
+10-08 16:54:43.784   553 21966 I Telecom : InCallController: Sending updateCall [Call id=TC@3, state=RINGING, tpac=ComponentInfo{com.android.phone/com.android.services.telephony.TelephonyConnectionService}, 1, UserHandle{0}, cmgr=ComponentI
+## dialer notification
+importance=4
+flags=ONGOING_EVENT|ONLY_ALERT_ONCE|NO_CLEAR|FOREGROUND_SERVICE|HIGH_PRIORITY|NO_DISMISS
+category=call
+shade texts: "(650) 555-0100" "•" "Phone" "Incoming call" "⁦� ⁨Decline⁩⁩" "Decline" "⁦� ⁨Answer⁩⁩" "Answer" "Permission controller" "Expand" "3" "Phone has location access" "Your organization allows Phone to access your location" "Messages has location access" "Your organization allows Messages to access your lo
+NO NODE Answer
+top after Answer: com.google.android.dialer/com.android.dialer.incall.activity.ui.InCallActivity
+texts: "(650) 555-0100" "•" "Phone" "Incoming call" "⁦� ⁨Decline⁩⁩" "Decline" "⁦� ⁨Answer⁩⁩" "Answer" "Permission controller" "Expand" "3" "Phone has location access" "Your organization allows Phone to acces
+10-08 16:55:27.105  1110  1110 V Telephony: onStateChange triggered in Conf Controller : connection = [TelephonyConnection objId:96434141 telecomCallID:TC@3_1 type:gsm state:ACTIVE capabilities:[Capabilities: CAPABILITY_
+10-08 16:55:27.105  1110  1110 D Telephony: TelephonyConferenceController: recalc - 4 [TelephonyConnection objId:96434141 telecomCallID:TC@3_1 type:gsm state:ACTIVE capabilities:[Capabilities: CAPABILITY_SUPPORT_HOLD CAP
+10-08 16:55:27.117   553  1876 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN flg=0x10040000 cmp=com.google.android.dialer/com.android.dialer.incall.activity.ui.InCallActivity (has extras)} with LAUNCH_S
+$ adb emu gsm cancel 6505550100
+OK
+top after hangup: com.google.android.dialer/com.android.dialer.incall.activity.ui.InCallActivity
