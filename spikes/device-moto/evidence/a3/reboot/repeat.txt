@@ -1,3 +1,4 @@
+# PUBLIC COPY: device serial or local workstation path generalized; original preserved privately.
 # A3 reboot repeat, 2026-10-08T21:05:00Z
 $ dpm set-device-owner
 Success: Device owner set to package com.plainphone.spike.dpc/.AdminReceiver
@@ -10,7 +11,7 @@ pre-reboot: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.google.an
 mLockTaskModeState=LOCKED
 reboot issued at 21:05:06Z
 == after reboot 21:06:19Z ==
-adb: SPARE_DEVICE_SERIAL	device
+adb: the spare test device	device
 uptime:  14:06:19 up 1 min,  0 users,  load average: 29.94, 8.65, 2.97
 boot_count: 3
 mLockTaskModeState=LOCKED

@@ -2,7 +2,7 @@
 
 ## Why
 
-Beaux and the trusted person live in [town]. They want a calm phone that runs only the apps a trusted person has approved, like Wisephone, without a subscription and without trusting a closed vendor. Neither of them tinkers with phones, so it has to work for strangers.
+The two initial users live in Canada. They want a calm phone that runs only the apps a trusted person has approved, like Wisephone, without a subscription and without trusting a closed vendor. Neither of them tinkers with phones, so it has to work for strangers.
 
 The research suggests this can probably be built as one Android app on a certified stock phone. It is not proven. Two problems the original plan missed:
 - Google now blocks unapproved device-management apps during QR setup.

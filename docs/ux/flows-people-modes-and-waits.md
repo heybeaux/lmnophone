@@ -39,7 +39,7 @@ wording is in the screen named.
 
 | String | Where it shows | Source |
 |---|---|---|
-| Who are you? | PIN screen, two trusted people ([M1](#m1-who-are-you)) | C1 ("Who are you? Beaux / the trusted person"); TPC "up to two trusted people" |
+| Who are you? | PIN screen, two trusted people ([M1](#m1-who-are-you)) | C1 ("Who are you? First trusted person / Second trusted person"); TPC "up to two trusted people" |
 | You are equals. Either of you can approve apps, or turn Plainphone off. | Setup, second trusted person ([S2c](flows-setup.md#s2-whos-who-step-2-of-8)) | C1. **Flag 1** |
 | Plainphone will turn off after {time}. Tap to cancel. | Home notice line | CHS |
 | A change to trusted people is waiting. Tap to cancel. | Home notice line | CHS |

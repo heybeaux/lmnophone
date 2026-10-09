@@ -17,7 +17,7 @@
 
 ## Who this is for
 
-Beaux and the trusted person, in **[town], Canada**. Neither tinkers with phones. "Works for strangers" means three things:
+The two initial users, in **Canada**. Neither tinkers with phones. "Works for strangers" means three things:
 - calls, texts, 9-1-1 and their essential apps keep working;
 - recovery from mistakes doesn't need a developer;
 - the leftover risks are written down in plain words before they agree to anything.
@@ -45,7 +45,7 @@ We do not build a custom ROM. We do not ship a launcher-only version. The emulat
 | Google policy risk | DPC allowlist (Risk 1); developer verification (Risk 4). | Neither applies. | Neither applies. | Developer verification. |
 
 - **Why not C.** It costs the most, breaks banking apps, and puts us on a per-phone build treadmill. The closest commercial product does not do it either. Techless's own help center says Wisephone is "Samsung hardware with our WiseOS software and configurations" with "Samsung Knox" and "MDM security", and that unenrolling returns the phone "to a standard Android operating environment" (documented). That does not prove we can match Knox using only public APIs. C only gets better if essential controls turn out to need OS changes **and** Beaux accepts the cost of maintaining a ROM.
-- **Why not D.** It is friction, not a lock. It only wins if Beaux and the trusted person decide they want voluntary friction instead.
+- **Why not D.** It is friction, not a lock. It only wins if the two initial users decide they want voluntary friction instead.
   - *Note (2026-10-09, PLA-30, approved by Beaux 2026-10-08 21:57 PDT, card `a9a11371`):* Beaux asked for voluntary friction as a **choice per phone**, not instead of A. It is built as "self-managed mode" on the same Device Owner app. See "Notes: option D as a mode, and who can relax the lockdown" below.
 - **Why A before B.** For these two users, what matters most day to day is: the apps they need, texting with iPhone users, 9-1-1, and recovery that doesn't need a developer. A is expected to do better on all four, but none of that is proven until the spike and their real app list are tested (Q4). B gets better if privacy or independence from Google matters more to them **and** the same test list passes on B. B also needs a Pixel.
 
@@ -108,7 +108,7 @@ The escape threat list is in `research/evidence/webview-and-escape-threats.md` (
   - web pages inside approved apps;
   - Google account or help screens inside required system components, if testing finds any;
   - a recovery-mode wipe.
-- **Board decision on a found leak (Beaux, Telegram 4463, 2026-10-08).** Outlook 5.2639.2 (PLA-5 B-Q4): Privacy & Cookies opens Outlook's own WebView, which follows off-site links under lock task with BLOCK on, before sign-in and again after sign-out. Beaux **accepts** it. Outlook stays in the catalog for the trusted person, with a plain web-leak note in the catalog and setup guide.
+- **Board decision on a found leak (Beaux, Telegram 4463, 2026-10-08).** Outlook 5.2639.2 (PLA-5 B-Q4): Privacy & Cookies opens Outlook's own WebView, which follows off-site links under lock task with BLOCK on, before sign-in and again after sign-out. Beaux **accepts** it. Outlook stays in the catalog for the partner, with a plain web-leak note in the catalog and setup guide.
   - The decision covers Outlook only. If a later Outlook version makes the route easier (for example a visible browse button), it goes back to Beaux.
   - **Rule for later gate calls.** Beaux: "The overall goal is to cut down on distractions, not make the phone unusable." A small web leak that takes deliberate effort, inside an otherwise useful app, is weighed against usability. It is not a failure by itself. Leaks that are easy to reach, or that change what an app is for, still go to Beaux.
 
@@ -184,7 +184,7 @@ The candidate becomes the decision only if, on the emulator, and later on one ph
    - *If not:* a revised ADR. Hiding apps alone is **not** assumed safe; it needs its own escape review.
 2. **Approved apps update without the user reaching Play (Q2).**
    - *If not:* a revised ADR. A weekly supervised update window is **not** assumed acceptable.
-3. **Beaux and the trusted person's actual must-have apps work end to end (Q4):** sign-in, signing in again, password reset, payment approval, updates and notifications. All under the full policy, with no regular helper visits.
+3. **The two initial users' actual must-have apps work end to end (Q4):** sign-in, signing in again, password reset, payment approval, updates and notifications. All under the full policy, with no regular helper visits.
 4. **Recovery works:** turning Plainphone off (Q7) and reset protection (Q10) both behave as the specs say.
 5. **Leftover web access is limited to what the trusted person accepted in writing.**
 6. **Setup and support effort stays within the guide's limits.**

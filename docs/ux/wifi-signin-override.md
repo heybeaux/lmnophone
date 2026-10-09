@@ -233,7 +233,7 @@ Suggested starting values. The Lead can change any number; the copy uses `{n}` a
 │ ┌──────────────────────────┐ │
 │ │ Plainphone: a Wi-Fi      │ │
 │ │ sign-in page was opened  │ │
-│ │ on the trusted person's phone…       │ │
+│ │ on {user}'s phone…      │ │
 │ └──────────────────────────┘ │
 │ Not now ›                    │
 │ ┌──────────────────────────┐ │
@@ -381,7 +381,7 @@ For whichever variant is chosen. Listed so the Lead can size it; none is made he
    The W0 → start → page flow depends on which one works.
 3. **Will variant A push people to share the PIN?** In the alone case A has a dead end. A tired traveller who can
    phone {tp} may be told the PIN. That PIN also adds apps. The trip pass (WA5) is one answer for planned trips.
-4. **Network name in the text and the list.** Left out on purpose (it shows where {user} is). If Beaux and the trusted person
+4. **Network name in the text and the list.** Left out on purpose (it shows where {user} is). If the two initial users
    would rather see it, that is their choice, but U8 then needs to say "{tp} gets the Wi-Fi's name".
 5. **B's default.** On or off after setup? The copy assumes {tp} is asked at setup. Off by default makes B behave
    like A until {tp} turns it on.

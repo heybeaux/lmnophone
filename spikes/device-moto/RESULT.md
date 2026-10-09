@@ -1,5 +1,7 @@
 # PLA-5 device spike on the spare Motorola (THROWAWAY)
 
+**Public evidence note.** Personal names, device serials, workstation paths and account-derived identifiers have been generalized. Four raw screenshots containing private identifiers are excluded; see [evidence/PRIVACY.md](evidence/PRIVACY.md). These are publication edits to the recorded evidence, not new device tests. For command examples, explicitly set `SERIAL` to the device approved for your test; the helpers have no default device.
+
 > **Throwaway spike.** Not MVP code. The MVP proposal is not approved. Everything under
 > `spikes/device-moto/` exists only to answer feasibility questions Q1, Q2, Q3, Q5, Q6, Q7, Q13.
 
@@ -7,10 +9,10 @@
 > **lock-screen Emergency call is blocked**. Both are fixed by adding Personal Safety
 > (`com.google.android.apps.safetyhub`, the EMERGENCY role holder) to the lock-task list. See [9-1-1 routes](#9-1-1-routes-pla-40-q14-throwaway).
 
-- Device: moto g power 5G (2024), XT2415-1, adb serial `SPARE_DEVICE_SERIAL`, board-approved (TEAM-POLICY Gates §2).
+- Device: moto g power 5G (2024), XT2415-1, the spare test device, board-approved (TEAM-POLICY Gates §2).
 - Build fingerprint: `motorola/cancunn_g_sys/cancunn:15/V1UDS35H.26-14-6-2-11/27ec35b-72bc9:user/release-keys`
-- Driver: Android Platform Engineer only. Every adb command uses `-s SPARE_DEVICE_SERIAL` (the helper
-  `tools/pp.sh` defaults to it and refuses `emulator-5590` / `emulator-5604`).
+- Driver: Android Platform Engineer only. Every adb command uses `-s "$SERIAL"` (the helper
+  `tools/pp.sh` requires it explicitly and refuses emulator serials).
 - Spike code:
   - `dpc/app`: spike DPC `com.plainphone.spike.dpc`, built with `android:testOnly="true"`.
     Home screen, in-app **RELEASE** button (tap twice), and a DUMP-protected adb command hook (`Commands.kt`).
@@ -179,7 +181,7 @@ preview shell with sample data, so Beaux can see the screens on real hardware. E
   `aapt2 dump badging` shows `application-label:'Plainphone (preview)'`, package `org.plainphone`, `versionName` `0.1.0-dev`.
   The APK has no `HOME` intent filter, so it can't become the Home app. It makes no DevicePolicyManager calls. The D0 admin
   receiver is declared but never activated.
-- **Install:** `adb -s SPARE_DEVICE_SERIAL install -t plainphone-debug.apk` → `Success` (2026-10-09T17:24Z, Android 15 / API 35).
+- **Install:** `adb -s "$SERIAL" install -t plainphone-debug.apk` → `Success` (2026-10-09T17:24Z, Android 15 / API 35).
 - **Device Owner choice: keep the spike DPC as Device Owner, idle; don't add the preview to the lock-task list.**
   - The preview never starts lock task, and lock task is `NONE`. So the lock-task list doesn't matter for it.
   - The spike's policy is empty: no restrictions, nothing hidden or suspended, and HOME role = Moto launcher.
@@ -230,13 +232,13 @@ Recorded 2026-10-08T19:27Z, before any change. Raw files: `evidence/a0/`.
 
 Commands:
 ```sh
-adb -s SPARE_DEVICE_SERIAL shell getprop ro.build.fingerprint   # and the other props above
-adb -s SPARE_DEVICE_SERIAL shell pm list users
-adb -s SPARE_DEVICE_SERIAL shell dumpsys account | grep -E '^\s*Accounts:'
-adb -s SPARE_DEVICE_SERIAL shell dpm list-owners
-adb -s SPARE_DEVICE_SERIAL shell dumpsys lock_settings | grep CredentialType
-adb -s SPARE_DEVICE_SERIAL shell pm list packages -s -f
-adb -s SPARE_DEVICE_SERIAL shell cmd role get-role-holders android.app.role.HOME
+adb -s "$SERIAL" shell getprop ro.build.fingerprint   # and the other props above
+adb -s "$SERIAL" shell pm list users
+adb -s "$SERIAL" shell dumpsys account | grep -E '^\s*Accounts:'
+adb -s "$SERIAL" shell dpm list-owners
+adb -s "$SERIAL" shell dumpsys lock_settings | grep CredentialType
+adb -s "$SERIAL" shell pm list packages -s -f
+adb -s "$SERIAL" shell cmd role get-role-holders android.app.role.HOME
 ```
 
 Motorola packages from the evidence file that are present on this build (pre-reset):
@@ -307,7 +309,7 @@ arrives only after Wi-Fi joins.
 | `com.peoplefun.wordcross` | `com.dti.motorola` | 13:04:31 |
 
 (`evidence/a0-reset/post-reset-autoinstalls.txt`; command:
-`adb -s SPARE_DEVICE_SERIAL shell dumpsys package <pkg> | grep -E 'installerPackageName|firstInstallTime'`.)
+`adb -s "$SERIAL" shell dumpsys package <pkg> | grep -E 'installerPackageName|firstInstallTime'`.)
 `com.dti.motorola` is Digital Turbine Ignite, Motorola's carrier/OEM app-push service. Play also pushed Google apps
 (Play Auto Installs) with no account. For Plainphone, this means the DPC must hide or block installs **after**
 provisioning and cannot rely on a "clean" phone after setup. Relevant to A5 (Q13) and S7.
@@ -330,7 +332,7 @@ plus `dumpsys package <pkg>` installer and `firstInstallTime`) shows that pushes
 
 **Reconciled total (PLA-7 R8):** **14 pushed + 1 preload** within about 11 minutes of first boot, with no Google account:
 - **5** Digital Turbine games: the four above plus Candy Crush Soda Saga. This also matches the "Candy Crush Soda Saga
-  Installed" notification in `evidence/a3/locktask-block-off/shade-quicksettings.png`.
+  Installed" notification in the public observation summary in `evidence/PRIVACY.md`.
 - **9** Play pushes: Google One, Fit, Wallet, Google Home, Find My Device, TELUS CheckUp, TELUS Health, Perplexity, InMobi Weather.
   These are carrier/OEM Play Auto Installs, with TELUS branding on a `retca` build.
 - **1** preload: Facebook (installer `null`), plus the hidden-by-default `com.facebook.appmanager/system/services`.
@@ -354,12 +356,12 @@ Raw: `evidence/a1/a1-set-device-owner.txt`, `evidence/a1/a1-logcat.txt`. Run 202
 (0 accounts, 1 user, setup wizard finished).
 
 ```sh
-adb -s SPARE_DEVICE_SERIAL install -t dpc/app/build/outputs/apk/debug/app-debug.apk
+adb -s "$SERIAL" install -t dpc/app/build/outputs/apk/debug/app-debug.apk
 #   Success
-adb -s SPARE_DEVICE_SERIAL shell dpm set-device-owner com.plainphone.spike.dpc/.AdminReceiver
+adb -s "$SERIAL" shell dpm set-device-owner com.plainphone.spike.dpc/.AdminReceiver
 #   Success: Device owner set to package com.plainphone.spike.dpc/.AdminReceiver
 #   Active admin set to component com.plainphone.spike.dpc/.AdminReceiver
-adb -s SPARE_DEVICE_SERIAL shell dpm list-owners
+adb -s "$SERIAL" shell dpm list-owners
 #   User  0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
 ```
 Logcat: `I/DevicePolicyManager: Device owner set: ComponentInfo{com.plainphone.spike.dpc/...AdminReceiver} on user 0`.
@@ -375,7 +377,7 @@ Precondition seen in practice: the Digital Turbine and Play auto-installs (A0) d
 
 | Step | Command / action | Observed |
 |---|---|---|
-| 1 | `adb -s SPARE_DEVICE_SERIAL shell dpm remove-active-admin com.plainphone.spike.dpc/.AdminReceiver` | `Success: Admin removed …`; `dpm list-owners` → `no owners` |
+| 1 | `adb -s "$SERIAL" shell dpm remove-active-admin com.plainphone.spike.dpc/.AdminReceiver` | `Success: Admin removed …`; `dpm list-owners` → `no owners` |
 | 2 | `dpm set-device-owner …` | `Success: Device owner set …` |
 | 3 | spike: `hide com.block.juggle`, `restrict-add no_add_user` | `hide … -> true`, `OK added no_add_user` |
 | 4 | in-app **RELEASE** tapped twice within 3 s (`tools/release-tap.sh`) | `RELEASED deviceOwner=false; cleared no_add_user; unhid com.block.juggle`; `no owners`; `com.block.juggle` listed again; `no_add_user` gone from `dumpsys user` |
@@ -391,13 +393,13 @@ Hiccups (not device findings): the first in-app attempt did nothing because the 
 ### Tested "return to an unmanaged phone" procedure
 
 1. Over adb (spike DPC only, because it is testOnly):
-   `adb -s SPARE_DEVICE_SERIAL shell am broadcast -n com.plainphone.spike.dpc/.CommandReceiver -a com.plainphone.spike.CMD --es cmd release`
+   `adb -s "$SERIAL" shell am broadcast -n com.plainphone.spike.dpc/.CommandReceiver -a com.plainphone.spike.CMD --es cmd release`
    (clears restrictions, unhides apps, ends lock task, calls `clearDeviceOwnerApp()`), then
-   `adb -s SPARE_DEVICE_SERIAL shell dpm list-owners` → `no owners`.
-2. If that fails: `adb -s SPARE_DEVICE_SERIAL shell dpm remove-active-admin com.plainphone.spike.dpc/.AdminReceiver`.
+   `adb -s "$SERIAL" shell dpm list-owners` → `no owners`.
+2. If that fails: `adb -s "$SERIAL" shell dpm remove-active-admin com.plainphone.spike.dpc/.AdminReceiver`.
    Note this does **not** clear restrictions or unhide apps first, so prefer step 1.
 3. Without adb: open the spike app (it is the home screen while provisioned) and tap **RELEASE** twice within 3 s.
-4. Then `adb -s SPARE_DEVICE_SERIAL uninstall com.plainphone.spike.dpc`.
+4. Then `adb -s "$SERIAL" uninstall com.plainphone.spike.dpc`.
 5. Last resort only: Settings > System > Reset options > Erase all data. Never recovery mode.
 
 ## A3. Q1 on the device: lock task
@@ -463,7 +465,7 @@ Deeper paths are left for the Verifier.
 
 ### Reboot
 
-**Run 1 (20:32:26Z), key not always-allowed.** `adb -s SPARE_DEVICE_SERIAL reboot` with lock task on (BLOCK off,
+**Run 1 (20:32:26Z), key not always-allowed.** `adb -s "$SERIAL" reboot` with lock task on (BLOCK off,
 `com.android.phone` allowlisted). After boot adb showed `unauthorized`: the Mac's key had been allowed during setup
 without "Always allow from this computer".
 - Board observation from the phone (PLA-5 comment 4fe1cf66, Beaux via Scout): **lock task came back** after the
@@ -648,7 +650,7 @@ tap landed on "Start lock task". `tools/release-tap.sh` now arms, re-finds the b
 ## Phase B. Play sign-in (2026-10-08T22:47Z)
 
 **Phase B ran on a Google test account that the agent signed in to, not on Beaux's personal account.**
-Board comment `9a1887c6` (Beaux, Telegram 4453, relayed by Scout) authorized this for SPARE_DEVICE_SERIAL only,
+Board comment `9a1887c6` (Beaux, Telegram 4453, relayed by Scout) authorized this for the spare test device only,
 because Beaux was away. The account is a Google Workspace account on Beaux's own domain. Its address is not recorded here.
 
 - Path: `am start -a android.settings.ADD_ACCOUNT_SETTINGS --esa account_types com.google`, which opens GMS
@@ -877,7 +879,7 @@ So for Beaux, Spotify sign-in under BLOCK works only with email (and a code). Go
 | Launch → "Add account" | In-app `AddAccountActivity`: email field, ADD GOOGLE ACCOUNT, Help, PRIVACY AND TERMS, Scan QR code. |
 | **PRIVACY AND TERMS → Privacy & Cookies** | **Opens Outlook's own WebView** (`com.acompli.acompli.GenericWebViewActivity`) with the live Microsoft Privacy Statement (`04b_privacy_webview_loaded.png`). |
 | **…→ an off-site link in that page** ("U.S. Department of Commerce") | **Loads `dataprivacyframework.gov` inside the same WebView, still under lock task** (step 05). **Off-site browsing by following links works before sign-in.** I stopped there (no search engine tried). |
-| **ADD GOOGLE ACCOUNT** | `OAuthActivity` → `InteractiveAuthActivity` → `GOOGLE_SIGN_IN` → GMS `SignInActivity` → **blocked**. After OK, Outlook returns to its splash screen. **No web fallback**, so adding the trusted person's Gmail account to Outlook fails under BLOCK. It needs GMS allowlisted, or a supervised window. |
+| **ADD GOOGLE ACCOUNT** | `OAuthActivity` → `InteractiveAuthActivity` → `GOOGLE_SIGN_IN` → GMS `SignInActivity` → **blocked**. After OK, Outlook returns to its splash screen. **No web fallback**, so adding the partner's Gmail account to Outlook fails under BLOCK. It needs GMS allowlisted, or a supervised window. |
 | Help → Contact support | Asks to enable notifications (Cancel), then "Collect Diagnostics Data" consent (it would upload logs including account emails to Microsoft). **Cancelled; nothing sent.** |
 | Microsoft-account sign-in (email field) | Not submitted. |
 

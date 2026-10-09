@@ -1,3 +1,4 @@
+# PUBLIC COPY: device serial or local workstation path generalized; original preserved privately.
 # Evidence: hardware, OS, calling and messaging for Plainphone
 
 Researched 2026-10-08. Only primary sources are used: grapheneos.org, GrapheneOS GitHub and forum posts by project accounts, developer.android.com, developers.google.com, support.google.com, AOSP source, eCFR, and support.apple.com. Anything else is marked as a lead.
@@ -179,7 +180,7 @@ For two non-technical US users, stock Pixel is the safer MVP choice: banking app
 
 ## Errata (2026-10-08, after board correction and cross-model review PLA-3)
 
-- **The users are in Canada ([town]), not the US.** §5c (FCC), §6 (US RCS), §3e (verification timing) and §7 (Pixel recommendation) are replaced by `canada-and-motorola.md`, which covers CRTC/E-Comm, Canadian carriers, Canada in the 2027 wave, and Motorola support life.
+- **The initial deployment region is Canada, not the US.** §5c (FCC), §6 (US RCS), §3e (verification timing) and §7 (Pixel recommendation) are replaced by `canada-and-motorola.md`, which covers CRTC/E-Comm, Canadian carriers, Canada in the 2027 wave, and Motorola support life.
 - **§5d, ELS quote:** the Verifier found that https://developers.google.com/android/els/fundamentals does not contain the quoted "Google Play services" wording. Treat that attribution as **unverified**. That ELS is live in Canada is documented separately (Google Canada blog, May 2024; see `canada-and-motorola.md` §1d). That ELS is absent on GrapheneOS remains an inference.
 - **§5a, keyguard:** the `LOCK_TASK_FEATURE_KEYGUARD` exemption is a rule about launching screens. It is not proof that a call goes through, and not the only path to the dialer: an allowlisted dialer task also works (AOSP 15 LockTaskController L387–401, L452–474). Do not phrase it as "911 works only with KEYGUARD" or "KEYGUARD guarantees 911".
 - **§3e:** Google's verification page also lists a free limited-distribution option for up to 20 devices. It is a candidate to evaluate, not a decision.

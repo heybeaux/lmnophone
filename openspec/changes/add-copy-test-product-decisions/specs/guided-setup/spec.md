@@ -64,7 +64,7 @@ For **every** account on the list (each trusted person, the backup person, and i
 
 **New accounts.** An account under 72 hours old SHALL be entered, then re-tested after 72 hours. A matching readback is not proof that reset protection is ready. Q10 on the target phone gates handover.
 
-**Backup person.** If Beaux and the trusted person are each other's trusted person, the guide SHALL recommend adding a backup person.
+**Backup person.** If the two initial users are each other's trusted person, the guide SHALL recommend adding a backup person.
 
 **Self-managed mode.** The guide SHALL say plainly that, because the list names the user's own account, a recovery-mode wipe erases the phone and then lets the user set it up again without Plainphone. After a wipe, someone without a listed account's sign-in can't set the phone up (subject to Q10).
 
@@ -103,5 +103,5 @@ Plainphone SHALL NOT say "Ready" while any gating item fails. The one exception 
 - **THEN** Plainphone shows which item failed and what the helper should do, and does not say "Ready"
 
 #### Scenario: Second trusted person's text not confirmed
-- **WHEN** the test text reached Beaux but the trusted person hasn't confirmed hers
-- **THEN** the check shows the trusted person's text as failing, and Plainphone does not say "Ready"
+- **WHEN** the test text reached Beaux but the partner hasn't confirmed hers
+- **THEN** the check shows the partner's text as failing, and Plainphone does not say "Ready"

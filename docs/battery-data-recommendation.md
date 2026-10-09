@@ -20,7 +20,7 @@ Inputs:
    the hidden set already includes the usual phone-home and bloat packages: Glance lock screen, the three Facebook
    system packages, Digital Turbine (`com.dti.motorola`), Chrome and 14 Motorola extras (A5). This claim is sourced but **not yet measured**. Q15 measures it.
 2. **Don't add more Device Owner controls yet.** The remaining levers are weak or risky (table below). The apps that
-   still run are the ones Beaux and the trusted person chose, plus the never-hide list. Throttling those would make them less
+   still run are the ones the two initial users chose, plus the never-hide list. Throttling those would make them less
    useful, and the never-hide list keeps calls, texts and 9-1-1 working. Revisit only if Q15 shows an approved app,
    or a never-hide package, using a lot of battery or data while the phone is idle.
 3. **Measure before promising.** Q15 runs two 24-hour idle windows on the spare: the stock phone, then the same phone

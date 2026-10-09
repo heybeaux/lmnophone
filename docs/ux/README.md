@@ -26,15 +26,15 @@ There are three roles. The same real person can hold more than one.
 
 | Role | Who, for the first two phones | What they need from Plainphone |
 |---|---|---|
-| **The person using the phone** ("the user") | the trusted person on her phone; Beaux on his | A calm phone that does the basics without thinking. A clear way to ask for things. Never to feel watched. |
-| **The trusted person** (one or two per phone, as equals) | Beaux for the trusted person's phone; the trusted person for Beaux's | To say yes or no to apps, with the phone in their hands, and to know honestly what they can't control. |
+| **The person using the phone** ("the user") | the partner on her phone; Beaux on his | A calm phone that does the basics without thinking. A clear way to ask for things. Never to feel watched. |
+| **The trusted person** (one or two per phone, as equals) | Beaux for the partner's phone; the partner for Beaux's | To say yes or no to apps, with the phone in their hands, and to know honestly what they can't control. |
 | **The helper** | Beaux, for both phones | A guide they can follow without having written it, and a phone that says plainly when something is wrong. |
 
 A phone can also be **self-managed**: the user holds the PIN and is their own trusted person. Plainphone then adds
 waits and limits, and says plainly that it is friction, not a lock.
 
 **Design for strangers.** Assume the reader has never heard of Plainphone, has never opened Android settings,
-and is reading at the largest text size. Beaux and the trusted person are not technical; neither is anyone who might copy this.
+and is reading at the largest text size. The two initial users are not technical; neither is anyone who might copy this.
 
 **Support, not surveillance.** The trusted person approves apps. They do not watch. Plainphone sends no data
 anywhere except the few texts listed below, and the user can read exactly what those are on the phone
@@ -142,7 +142,7 @@ recommendation; none changes a promise.
    an app, reach Plainphone's own settings, and hand the phone to the trusted person. **Recommendation:** one
    last tile, "More", below the apps, styled like an app tile. Amend the scenario to "…and their other approved
    apps, then More". Also confirm that "one primary action" applies to task screens, not menu pages.
-2. **Helper and trusted person are the same person.** On the trusted person's phone, Beaux is both. guided-setup says the
+2. **Helper and trusted person are the same person.** On the partner's phone, Beaux is both. guided-setup says the
    helper confirms "the trusted person, and not the helper, has the recovery code". That can't be satisfied as
    written. **Recommendation:** when the two are the same person, the setup screen asks instead that the code is
    kept **away from the phone and away from the user** ([flows-setup.md](flows-setup.md#s3-pins-and-recovery-codes-step-3-of-8)).
@@ -163,7 +163,7 @@ recommendation; none changes a promise.
    web fallback. A Microsoft account isn't tested yet, and Plainphone also blocks account changes after setup
    (`DISALLOW_MODIFY_ACCOUNTS`). No supervised session lifts either ([starter-catalog.md](starter-catalog.md#outlook-microsoft)).
    Outlook's Privacy & Cookies web leak is a separate matter, already accepted by Beaux (ADR 0001 Risk 3).
-   **Recommendation:** ask Beaux which account the trusted person uses in Outlook. If it is her Gmail address, the Gmail app
+   **Recommendation:** ask Beaux which account the partner uses in Outlook. If it is her Gmail address, the Gmail app
    alone may cover her need, which is the calmest answer. If it is an Outlook.com or work address, wait for the
    signed-in B-Q4 result; if that fails too, the Lead decides between a new, narrow "add an account" session (a
    spec change, with its own tests) and leaving Outlook off.
@@ -192,6 +192,6 @@ Screen J (flat battery), "can't stop" item 11 (Google), and one "Check for updat
     "Updates available" list, which removes the three steps of directions on the monthly-check screen.
 11. **Turning Plainphone off as a way round.** "What if a kid has this phone and uses this as a bypass method?"
     Off needs the PIN or recovery code, so only someone who has those can do it. **Recommendation:** no change
-    for the MVP (Beaux and the trusted person are adults). For a child's phone, consider a waiting period or {helper}'s
+    for the MVP (the two initial users are adults). For a child's phone, consider a waiting period or {helper}'s
     confirmation, as a later spec change.
 
