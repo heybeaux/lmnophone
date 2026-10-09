@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2026 The Plainphone Authors
+  SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <string name="app_name">Plainphone</string>
+    <string name="admin_description">Keeps this phone calm: only approved apps open.</string>
+</resources>

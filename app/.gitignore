@@ -1,0 +1,9 @@
+# Copyright 2026 The Plainphone Authors
+# SPDX-License-Identifier: Apache-2.0
+
+.gradle/
+.kotlin/
+build/
+local.properties
+.idea/
+*.iml

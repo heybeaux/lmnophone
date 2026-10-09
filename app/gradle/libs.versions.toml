@@ -1,0 +1,31 @@
+# Copyright 2026 The Plainphone Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Toolchain matches docs/mvp/lanes.md: AGP 8.11.0, Kotlin 2.1.20, JDK 17, compileSdk 36, minSdk 30.
+
+[versions]
+agp = "8.11.0"
+kotlin = "2.1.20"
+jdk = "17"
+compileSdk = "36"
+targetSdk = "36"
+minSdk = "30"
+composeBom = "2025.06.01"
+activityCompose = "1.10.1"
+junit4 = "4.13.2"
+
+[libraries]
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+compose-runtime = { module = "androidx.compose.runtime:runtime" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-foundation = { module = "androidx.compose.foundation:foundation" }
+activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+junit4 = { module = "junit:junit", version.ref = "junit4" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
