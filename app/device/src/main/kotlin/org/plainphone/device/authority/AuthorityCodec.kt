@@ -96,19 +96,19 @@ class StoredFrictionReceipt(
 internal object AuthorityCodec {
     private const val MAX_ITEMS = 4096
 
-    fun encodeCredentials(s: CredentialState): ByteArray = write {
+    fun encodeCredentials(s: CredentialState): ByteArray? = write {
         writeUTF(s.mode.name); writeLong(s.revision); writeLong(s.structureGeneration)
-        list(s.people.entries) { (id, p) ->
+        list(s.people.entries.sortedBy { it.key.value }) { (id, p) ->
             writeUTF(id.value); credential(p)
         }
-        list(s.pendingNotices) { writeUTF(it.person.value); writeUTF(it.channel.name); writeLong(it.revision) }
+        list(s.pendingNotices.sortedWith(compareBy({ it.person.value }, { it.channel }, { it.revision }))) { writeUTF(it.person.value); writeUTF(it.channel.name); writeLong(it.revision) }
         optional(s.recoveryProfile) { profile ->
-            list(profile.holderUserIds.entries) { (id, user) -> writeUTF(id.value); writeUTF(user) }
+            list(profile.holderUserIds.entries.sortedBy { it.key.value }) { (id, user) -> writeUTF(id.value); writeUTF(user) }
             optional(profile.backupUserId) { writeUTF(it) }
             friction(profile.friction)
         }
         optional(s.appliedPeopleChange) { writeUTF(it.requestId); writeUTF(it.waitingGeneration); writeLong(it.structureGeneration) }
-    }!!
+    }
 
     fun decodeCredentials(bytes: ByteArray): CredentialState? = read(bytes) {
         val mode = Mode.valueOf(readUTF()); val revision = readLong(); val structure = readLong()
@@ -130,7 +130,7 @@ internal object AuthorityCodec {
         }
         list(s.recoveryReceipts) { r ->
             writeUTF(r.key); writeUTF(r.mode.name)
-            list(r.recipientGenerations.entries) { (id, g) -> writeUTF(id.value); writeLong(g) }
+            list(r.recipientGenerations.entries.sortedBy { it.key.value }) { (id, g) -> writeUTF(id.value); writeLong(g) }
             friction(r.friction); writeUTF(r.state.name)
         }
     }
@@ -215,12 +215,12 @@ internal object AuthorityCodec {
         AppApprovalState(revision, apps, pending, receipts, removed)
     }
 
-    fun encodeReceipts(receipts: List<StoredFrictionReceipt>): ByteArray = write {
+    fun encodeReceipts(receipts: List<StoredFrictionReceipt>): ByteArray? = write {
         list(receipts) { r ->
             writeUTF(r.key); writeUTF(r.actor.value); friction(r.source); friction(r.target)
             recipients(r.recipientGenerations, r.recipientContacts)
         }
-    }!!
+    }
 
     fun decodeReceipts(bytes: ByteArray): List<StoredFrictionReceipt>? = read(bytes) {
         list {
@@ -287,7 +287,7 @@ internal object AuthorityCodec {
     /** The original patch and pending enrollment; only verifiers are stored, never a recovery code. */
     private fun DataOutputStream.peoplePatch(p: TrustedPersonPatch) {
         writeUTF(p.kind.name); writeUTF(p.starter.value); writeLong(p.structureGeneration)
-        list(p.dependencyGenerations.entries) { (id, g) -> writeUTF(id.value); writeLong(g) }
+        list(p.dependencyGenerations.entries.sortedBy { it.key.value }) { (id, g) -> writeUTF(id.value); writeLong(g) }
         list(p.removedSlots.map { it.value }.sorted()) { writeUTF(it) }
         optional(p.incoming) { e ->
             writeUTF(e.person.value); credential(e.credential); writeUTF(e.resetProtectionUserId)
@@ -326,7 +326,7 @@ internal object AuthorityCodec {
     private fun DataInputStream.credential() = PersonCredential(verifier(), verifier(), counter(), counter(), readLong(), optional { contact() })
 
     private fun DataOutputStream.recipients(generations: Map<TrustedPersonId, Long>, contacts: Map<TrustedPersonId, PersonContact?>) {
-        list(generations.entries) { (id, g) -> writeUTF(id.value); writeLong(g); optional(contacts[id]) { contact(it) } }
+        list(generations.entries.sortedBy { it.key.value }) { (id, g) -> writeUTF(id.value); writeLong(g); optional(contacts[id]) { contact(it) } }
     }
 
     private fun DataInputStream.recipients(): Pair<Map<TrustedPersonId, Long>, Map<TrustedPersonId, PersonContact?>> {
@@ -411,7 +411,9 @@ internal object AuthorityCodec {
         require(flag == 0 || flag == 1)
         return if (flag == 1) block() else null
     }
+    /** The same limit as the decoder: anything it would reject is never encoded. */
     private fun <T> DataOutputStream.list(items: Collection<T>, block: DataOutputStream.(T) -> Unit) {
+        if (items.size > MAX_ITEMS) unsupported()
         writeInt(items.size); items.forEach { block(it) }
     }
     private fun DataInputStream.count(): Int = readInt().also { require(it in 0..MAX_ITEMS) }

@@ -40,7 +40,8 @@ import org.plainphone.policy.WaitingPhase
 import org.plainphone.policy.WaitingState
 
 internal enum class Section { CREDENTIALS, WAITING, ELEVATION, RECEIPTS, APPROVALS }
-internal enum class WritePoint { BEFORE_COPY_A, AFTER_COPY_A, AFTER_COPY_B, AFTER_FENCE }
+/** In write order: spare copy ("A"), first fence (the commit point), second fence, other copy ("B"). */
+internal enum class WritePoint { BEFORE_COPY_A, AFTER_COPY_A, AFTER_FENCE_A, AFTER_FENCE, AFTER_COPY_B }
 /** Test seam for crash and readback faults at fixed points of a transaction. */
 internal fun interface StorageFaults { fun at(point: WritePoint, dir: File) }
 
@@ -49,12 +50,17 @@ internal fun interface StorageFaults { fun at(point: WritePoint, dir: File) }
  * elevation record, the friction receipt outbox and the app approval state with its receipt outbox. Every transaction is a single replacement of
  * the whole record, so a crash exposes either the old or the new record and never a mix.
  *
- * The record is kept as two copies (`authority-a`, `authority-b`) plus a sequence fence written
- * after both. A read returns the highest-sequence valid copy whose sequence is not below the
- * fence. A copy older than an acknowledged write is never returned, even with a valid checksum;
- * if no current copy survives, every view reads null so the policy's repair paths take over.
+ * The record is kept as two copies (`authority-a`, `authority-b`) and two fences holding the
+ * committed sequence. A write goes to the spare copy first; renaming the first fence is the
+ * commit point; then the second fence and the other copy are refreshed. A read returns only a
+ * valid copy whose sequence equals the fence, so neither an uncommitted copy nor one older than
+ * an acknowledged write is ever served, even with a valid checksum. If no such copy survives,
+ * every view reads null so the policy's repair paths take over. Every result is taken from what
+ * is on disk afterwards: true means the new record is durable, false means the old one still is.
+ * A section that would not decode is never written.
  *
- * All views share one non-reentrant coordinator per directory. A call made from inside a running
+ * All views share one non-reentrant coordinator per directory, keyed by its canonical path so
+ * symlinked aliases share it too. A call made from inside a running
  * transaction is refused rather than allowed to interleave. Each section is preserved byte for
  * byte by writers that do not replace it.
  *
@@ -74,7 +80,7 @@ class JointAuthorityStore internal constructor(
     private val copyB = AtomicRecord(dir, "authority-b", SCHEMA)
     private val fenceA = AtomicRecord(dir, "fence-a", SCHEMA)
     private val fenceB = AtomicRecord(dir, "fence-b", SCHEMA)
-    private val coordinator = coordinators.computeIfAbsent(dir.absoluteFile.normalize().path) { Coordinator() }
+    private val coordinator = coordinators.computeIfAbsent(canonical(dir)) { Coordinator() }
 
     val credentials: CredentialStore = object : CredentialStore {
         override fun read(): CredentialState? = section(Section.CREDENTIALS)?.let(AuthorityCodec::decodeCredentials)
@@ -379,11 +385,14 @@ class JointAuthorityStore internal constructor(
     /** Enrollment-time creation of the first record. Refuses if any copy or fence already exists. */
     fun initialize(credentials: CredentialState, waiting: WaitingState, elevation: ElevationRecord,
         approvals: AppApprovalState = AppApprovalState()): Boolean = coordinator.run(false) {
-        if (listOf(copyA, copyB, fenceA, fenceB).any { it.exists() }) return@run false
-        val sections = listOf(AuthorityCodec.encodeCredentials(credentials), AuthorityCodec.encodeWaiting(waiting) ?: return@run false,
-            AuthorityCodec.encodeElevation(elevation) ?: return@run false, AuthorityCodec.encodeReceipts(emptyList()),
-            AuthorityCodec.encodeApprovals(approvals) ?: return@run false)
-        save(null, Snapshot(0, sections))
+        // Copies without any fence are a creation that never committed; they may be replaced.
+        if (fenceA.exists() || fenceB.exists() || load() != null) return@run false
+        val sections = listOf(AuthorityCodec.encodeCredentials(credentials) ?: return@run false,
+            AuthorityCodec.encodeWaiting(waiting) ?: return@run false, AuthorityCodec.encodeElevation(elevation) ?: return@run false,
+            AuthorityCodec.encodeReceipts(emptyList()) ?: return@run false, AuthorityCodec.encodeApprovals(approvals) ?: return@run false)
+        val genesis = Snapshot(0, sections)
+        if (!readable(genesis)) return@run false
+        save(null, genesis)
     }
 
     /** Routine friction receipts awaiting delivery, in commit order. Null when the record is unreadable. */
@@ -456,7 +465,8 @@ class JointAuthorityStore internal constructor(
 
     private class Snapshot(val sequence: Long, val sections: List<ByteArray>) {
         fun matches(section: Section, bytes: ByteArray?) = bytes != null && bytes.contentEquals(sections[section.ordinal])
-        fun with(section: Section, bytes: ByteArray) = Snapshot(sequence, sections.toMutableList().also { it[section.ordinal] = bytes })
+        /** Null (an encoder refusal) leaves an empty section, which no decoder accepts, so the commit is refused. */
+        fun with(section: Section, bytes: ByteArray?) = Snapshot(sequence, sections.toMutableList().also { it[section.ordinal] = bytes ?: ByteArray(0) })
         fun encode(): ByteArray {
             val out = ByteArrayOutputStream()
             DataOutputStream(out).use { data ->
@@ -484,41 +494,64 @@ class JointAuthorityStore internal constructor(
     private fun section(section: Section): ByteArray? =
         coordinator.view()?.sections?.get(section.ordinal) ?: coordinator.run(null) { load()?.sections?.get(section.ordinal) }
 
-    /** Highest valid copy at or above the fence; null if the fence or every current copy is gone. */
+    private fun fence(): Long? = listOfNotNull(fenceA.read(), fenceB.read())
+        .mapNotNull { b -> if (b.size == 8) ByteBuffer.wrap(b).long else null }.maxOrNull()
+
+    /** The valid copy at exactly the committed sequence; null if the fence or every committed copy is gone. */
     private fun load(): Snapshot? {
-        val fence = listOfNotNull(fenceA.read(), fenceB.read())
-            .mapNotNull { b -> if (b.size == 8) ByteBuffer.wrap(b).long else null }.maxOrNull() ?: return null
-        val copies = listOfNotNull(copyA.read(), copyB.read()).mapNotNull { b -> Snapshot.decode(b)?.let { it to b } }
-            .filter { it.first.sequence >= fence }
-        val newest = copies.maxByOrNull { it.first.sequence } ?: return null
-        // Two copies claiming the same sequence must agree exactly.
-        if (copies.any { it.first.sequence == newest.first.sequence && !it.second.contentEquals(newest.second) }) return null
-        return newest.first
+        val fence = fence() ?: return null
+        val committed = listOfNotNull(copyA.read(), copyB.read()).mapNotNull { b -> Snapshot.decode(b)?.let { it to b } }
+            .filter { it.first.sequence == fence }
+        val first = committed.firstOrNull() ?: return null
+        // Two copies claiming the committed sequence must agree exactly.
+        if (committed.any { !it.second.contentEquals(first.second) }) return null
+        return first.first
+    }
+
+    /** Every section of [s] decodes, so an acknowledged record always reads back. */
+    private fun readable(s: Snapshot): Boolean = Section.entries.all { readable(s, it) }
+
+    private fun readable(s: Snapshot, section: Section): Boolean {
+        val bytes = s.sections[section.ordinal]
+        return when (section) {
+            Section.CREDENTIALS -> AuthorityCodec.decodeCredentials(bytes) != null
+            Section.WAITING -> AuthorityCodec.decodeWaiting(bytes) != null
+            Section.ELEVATION -> AuthorityCodec.decodeElevation(bytes, matchingInventory) != null
+            Section.RECEIPTS -> AuthorityCodec.decodeReceipts(bytes) != null
+            Section.APPROVALS -> AuthorityCodec.decodeApprovals(bytes) != null
+        }
     }
 
     private fun commit(change: (Snapshot) -> Snapshot?): Boolean = coordinator.run(false) {
         val current = load() ?: return@run false
         if (current.sequence == Long.MAX_VALUE) return@run false
         val next = change(current) ?: return@run false
+        // Only sections this transaction replaced must decode; untouched ones are kept byte for byte.
+        val changed = Section.entries.filter { !next.sections[it.ordinal].contentEquals(current.sections[it.ordinal]) }
+        if (changed.any { !readable(next, it) }) return@run false
         save(current, Snapshot(current.sequence + 1, next.sections))
     }
 
     /**
-     * Copy A, then copy B, then both fences, each read back. A failure before the fence is
-     * written restores both copies to [previous]; the caller then sees false and the old record.
+     * Spare copy, then the first fence (the commit point), then the second fence and the other
+     * copy. Nothing before the first fence is visible to a read; nothing after it can undo the
+     * commit. The result is read from disk, so it is true exactly when [next] is what reads back.
      */
     private fun save(previous: Snapshot?, next: Snapshot): Boolean {
         val bytes = next.encode()
         val fence = ByteBuffer.allocate(8).putLong(next.sequence).array()
+        val old = previous?.encode()
+        // The spare is a copy that does not hold the committed record; with both current, use A.
+        val aCurrent = old != null && copyA.read()?.contentEquals(old) == true
+        val bCurrent = old != null && copyB.read()?.contentEquals(old) == true
+        val (spare, other) = if (aCurrent && !bCurrent) copyB to copyA else copyA to copyB
         faults.at(WritePoint.BEFORE_COPY_A, dir)
-        val copied = copyA.write(bytes) { faults.at(WritePoint.AFTER_COPY_A, dir) } &&
-            copyB.write(bytes) { faults.at(WritePoint.AFTER_COPY_B, dir) }
-        if (!copied) {
-            previous?.encode()?.let { old -> copyA.write(old) {}; copyB.write(old) {} }
-            return false
+        if (spare.write(bytes) { faults.at(WritePoint.AFTER_COPY_A, dir) } &&
+            fenceA.write(fence) { faults.at(WritePoint.AFTER_FENCE_A, dir) }) {
+            fenceB.write(fence) { faults.at(WritePoint.AFTER_FENCE, dir) }
+            other.write(bytes) { faults.at(WritePoint.AFTER_COPY_B, dir) }
         }
-        val fenced = fenceA.write(fence) {} && fenceB.write(fence) { faults.at(WritePoint.AFTER_FENCE, dir) }
-        return fenced && load()?.encode()?.contentEquals(bytes) == true
+        return load()?.encode()?.contentEquals(bytes) == true
     }
 
     private class Coordinator {
@@ -540,11 +573,17 @@ class JointAuthorityStore internal constructor(
     }
 
     private companion object {
-        /** 2 adds the app approval section; 3 stores people patches in waiting operations. */
-        const val SCHEMA = 3
+        /** 2 adds the app approval section; 3 stores people patches; 4 commits at the fence with canonical maps. */
+        const val SCHEMA = 4
         val BUSY = setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
         val TERMINAL = setOf(WaitingPhase.COMPLETED, WaitingPhase.CANCELLED)
         val coordinators = ConcurrentHashMap<String, Coordinator>()
+        /** Creates [dir] if needed so symlinks resolve; falls back to the normalized absolute path. */
+        fun canonical(dir: File): String = try {
+            dir.mkdirs(); dir.canonicalPath
+        } catch (_: IOException) {
+            dir.absoluteFile.normalize().path
+        }
     }
 }
 
