@@ -65,8 +65,8 @@ class MonthlyCheckTest {
             val notice = MonthlyCheck.notice(state, due.plusDays(8), Mode.TRUSTED)
             assertTrue(notice.visible)
             assertEquals(MonthlyNoticeAction.EXPLAIN, notice.tapAction)
-            assertEquals("Ask [trusted person] to do the monthly phone check", notice.text)
-            assertEquals("Time for your monthly phone check", MonthlyCheck.notice(state, due.plusDays(8), Mode.SELF_MANAGED).text)
+            assertEquals(MonthlyNoticeKind.SUPERVISED_OVERDUE, notice.kind)
+            assertEquals(MonthlyNoticeKind.SELF_MANAGED_OVERDUE, MonthlyCheck.notice(state, due.plusDays(8), Mode.SELF_MANAGED).kind)
         }
     }
 
