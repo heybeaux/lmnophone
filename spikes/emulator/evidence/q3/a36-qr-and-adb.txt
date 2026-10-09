@@ -35,3 +35,10 @@ $ logcat | grep -iE "blocked|protect your device|DevicePolicy"
 10-08 17:00:18.276   656   727 I DevicePolicyManager: Device owner set: ComponentInfo{com.plainphone.spike.emu/com.plainphone.spike.emu.AdminReceiver} on user 0
 Exception occurred while executing 'start':
 java.lang.SecurityException: Permission Denial: starting Intent { act=android.app.action.PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE flg=0x10000000 xflg=0x4 cmp=com.android.managedprovisioning/.PreProvisioningActivityViaTrustedApp } from null (pid=7025, uid=2000) requires android.permission.DISPATCH_PROVISIONING_MESSAGE
+## negative controls
+$ dpm set-device-owner com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity   (not a device admin)
+Exception occurred while executing 'set-device-owner':
+$ dpm set-device-owner com.plainphone.spike.emu/.AdminReceiver   (owner already set)
+Exception occurred while executing 'set-device-owner':
+java.lang.IllegalStateException: Trying to set the device owner (com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity), but device owner (com.plainphone.spike.emu/.AdminReceiver) is already set.
+java.lang.IllegalStateException: Trying to set the device owner (com.plainphone.spike.emu/.AdminReceiver), but device owner (com.plainphone.spike.emu/.AdminReceiver) is already set.

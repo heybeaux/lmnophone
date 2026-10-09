@@ -1,0 +1,134 @@
+# Q4 on google/sdk_gphone64_arm64/emu64a:16/BE2A.250530.026.D1/13818094:user/release-keys 2026-10-09T00:01:03Z
+$ A install -t -r apps/fx-applinks/build/outputs/apk/debug/fx-applinks-debug.apk
+Performing Streamed Install
+Success
+$ A install -t -r apps/fx-browser/build/outputs/apk/debug/fx-browser-debug.apk
+Performing Streamed Install
+Success
+$ A install -t -r apps/fx-emergency/build/outputs/apk/debug/fx-emergency-debug.apk
+Performing Streamed Install
+Success
+$ A install -t -r apps/fx-urlbar/build/outputs/apk/debug/fx-urlbar-debug.apk
+Performing Streamed Install
+Success
+$ A install -t -r apps/fx-httponly/build/outputs/apk/debug/fx-httponly-debug.apk
+Performing Streamed Install
+Success
+## browser role before classifying
+$ A shell cmd role get-role-holders android.app.role.BROWSER
+com.android.chrome
+## negative control: classifier without the identity checks (Plainphone first, never-hide first)
+$ cmd classify-noidentity
+probe http=[com.android.chrome, com.plainphone.fx.browser, com.plainphone.fx.httponly, com.plainphone.spike.emu] https=[com.android.chrome, com.plainphone.fx.browser, com.plainphone.spike.emu]
+com.android.chrome: GENERAL_BROWSER(heuristic)
+com.android.vending: NOT_BROWSER
+com.google.android.dialer: NOT_BROWSER
+com.google.android.gms: NOT_BROWSER
+com.google.android.googlequicksearchbox: NAMED_HIDE
+com.plainphone.fx.applinks: NOT_BROWSER
+com.plainphone.fx.browser: GENERAL_BROWSER(heuristic)
+com.plainphone.fx.emergency: NOT_BROWSER
+com.plainphone.fx.httponly: NOT_BROWSER(one scheme only)
+com.plainphone.fx.urlbar: FLAG_CATALOG_REVIEW
+com.plainphone.spike.emu: GENERAL_BROWSER(heuristic)
+
+## classifier dry run
+$ cmd classify-dry
+probe http=[com.android.chrome, com.plainphone.fx.browser, com.plainphone.fx.httponly, com.plainphone.spike.emu] https=[com.android.chrome, com.plainphone.fx.browser, com.plainphone.spike.emu]
+com.android.chrome: GENERAL_BROWSER(heuristic)
+com.android.vending: NEVER_HIDE
+com.google.android.dialer: NEVER_HIDE
+com.google.android.gms: NEVER_HIDE
+com.google.android.googlequicksearchbox: NAMED_HIDE
+com.plainphone.fx.applinks: NOT_BROWSER
+com.plainphone.fx.browser: GENERAL_BROWSER(heuristic)
+com.plainphone.fx.emergency: NOT_BROWSER
+com.plainphone.fx.httponly: NOT_BROWSER(one scheme only)
+com.plainphone.fx.urlbar: FLAG_CATALOG_REVIEW
+com.plainphone.spike.emu: SELF_SKIPPED
+
+## floor (system-only) and negative control floor-naive
+$ cmd floor
+Result(members={systemDialer=[com.google.android.dialer], defaultDialer=[com.google.android.dialer], emergencyDialer=[com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub], inCallUi=[com.google.android.dialer], sms=[com.google.android.apps.messaging], cellBroadcast=[com.google.android.cellbroadcastreceiver], webview=[com.google.android.webview], keyboards=[com.google.android.inputmethod.latin, com.google.android.tts], permissionController=[com.google.android.permissioncontroller]}, uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub], rejected={})
+$ cmd floor-naive
+Result(members={systemDialer=[com.google.android.dialer], defaultDialer=[com.google.android.dialer], emergencyDialer=[com.android.phone, com.plainphone.fx.emergency, com.android.server.telecom, com.google.android.apps.safetyhub], inCallUi=[android, com.google.android.as, com.google.android.bluetooth, com.google.android.dialer, com.google.android.gms], sms=[com.google.android.apps.messaging], cellBroadcast=[com.google.android.cellbroadcastreceiver], webview=[com.google.android.webview], keyboards=[com.google.android.inputmethod.latin, com.google.android.tts], permissionController=[com.google.android.permissioncontroller]}, uiSubset=[com.google.android.dialer, com.android.phone, com.plainphone.fx.emergency, com.android.server.telecom, com.google.android.apps.safetyhub, android, com.google.android.as, com.google.android.bluetooth, com.google.android.gms], rejected={})
+## resolve before hiding
+$ cmd resolve data=https://example.com/
+resolve[data=https://example.com/] default=com.android.chrome/com.google.android.apps.chrome.IntentDispatcher all=[com.android.chrome/com.google.android.apps.chrome.IntentDispatcher, com.plainphone.fx.browser/com.plainphone.fx.common.FxActivity, com.plainphone.spike.emu/com.plainphone.spike.emu.LinkActivity]
+$ cmd resolve data=http://example.com/
+resolve[data=http://example.com/] default=com.android.chrome/com.google.android.apps.chrome.IntentDispatcher all=[com.android.chrome/com.google.android.apps.chrome.IntentDispatcher, com.plainphone.fx.browser/com.plainphone.fx.common.FxActivity, com.plainphone.fx.httponly/com.plainphone.fx.common.FxActivity, com.plainphone.spike.emu/com.plainphone.spike.emu.LinkActivity]
+$ cmd resolve data=https://bank.plainphone-fx.example/x
+resolve[data=https://bank.plainphone-fx.example/x] default=com.android.chrome/com.google.android.apps.chrome.IntentDispatcher all=[com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity, com.android.chrome/com.google.android.apps.chrome.IntentDispatcher, com.plainphone.fx.browser/com.plainphone.fx.common.FxActivity, com.plainphone.spike.emu/com.plainphone.spike.emu.LinkActivity]
+$ cmd resolve data=ppfx://open
+resolve[data=ppfx://open] default=com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity all=[com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity]
+$ cmd resolve action=com.android.phone.EmergencyDialer.DIAL
+resolve[action=com.android.phone.EmergencyDialer.DIAL] default=android/com.android.internal.app.ResolverActivity all=[com.android.phone/com.android.phone.EmergencyDialer, com.plainphone.fx.emergency/com.plainphone.fx.common.FxActivity]
+$ cmd customtabs
+CustomTabsService providers=[com.android.chrome]
+## classifier apply (hides general browsers and named packages)
+$ cmd classify
+probe http=[com.android.chrome, com.plainphone.fx.browser, com.plainphone.fx.httponly, com.plainphone.spike.emu] https=[com.android.chrome, com.plainphone.fx.browser, com.plainphone.spike.emu]
+com.android.chrome: GENERAL_BROWSER(heuristic) hide->true
+com.android.vending: NEVER_HIDE
+com.google.android.dialer: NEVER_HIDE
+com.google.android.gms: NEVER_HIDE
+com.google.android.googlequicksearchbox: NAMED_HIDE hide->true
+com.plainphone.fx.applinks: NOT_BROWSER
+com.plainphone.fx.browser: GENERAL_BROWSER(heuristic) hide->true
+com.plainphone.fx.emergency: NOT_BROWSER
+com.plainphone.fx.httponly: NOT_BROWSER(one scheme only)
+com.plainphone.fx.urlbar: FLAG_CATALOG_REVIEW
+com.plainphone.spike.emu: SELF_SKIPPED
+
+$ cmd is-hidden com.android.chrome
+isApplicationHidden com.android.chrome -> true
+$ cmd is-hidden com.plainphone.fx.browser
+isApplicationHidden com.plainphone.fx.browser -> true
+$ cmd is-hidden com.google.android.googlequicksearchbox
+isApplicationHidden com.google.android.googlequicksearchbox -> true
+$ cmd is-hidden com.plainphone.fx.httponly
+isApplicationHidden com.plainphone.fx.httponly -> false
+$ cmd is-hidden com.plainphone.fx.urlbar
+isApplicationHidden com.plainphone.fx.urlbar -> false
+$ cmd is-hidden com.plainphone.fx.applinks
+isApplicationHidden com.plainphone.fx.applinks -> false
+$ cmd is-hidden com.plainphone.spike.emu
+isApplicationHidden com.plainphone.spike.emu -> false
+## browser role after hiding
+$ A shell cmd role get-role-holders android.app.role.BROWSER
+com.android.chrome
+## resolve after hiding
+$ cmd resolve data=https://example.com/
+resolve[data=https://example.com/] default=com.plainphone.spike.emu/com.plainphone.spike.emu.LinkActivity all=[com.plainphone.spike.emu/com.plainphone.spike.emu.LinkActivity]
+$ cmd resolve data=http://example.com/
+resolve[data=http://example.com/] default=android/com.android.internal.app.ResolverActivity all=[com.plainphone.fx.httponly/com.plainphone.fx.common.FxActivity, com.plainphone.spike.emu/com.plainphone.spike.emu.LinkActivity]
+$ cmd resolve data=https://bank.plainphone-fx.example/x
+resolve[data=https://bank.plainphone-fx.example/x] default=com.plainphone.spike.emu/com.plainphone.spike.emu.LinkActivity all=[com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity, com.plainphone.spike.emu/com.plainphone.spike.emu.LinkActivity]
+$ cmd resolve data=ppfx://open
+resolve[data=ppfx://open] default=com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity all=[com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity]
+$ cmd customtabs
+CustomTabsService providers=[]
+## app links verification state
+$ A shell pm get-app-links com.plainphone.fx.applinks
+  com.plainphone.fx.applinks:
+    ID: 881fc254-fbf3-45ae-93b6-d760eba0f4c2
+    Signatures: [99:ED:D5:A3:7E:76:BB:34:17:A0:47:44:32:8A:31:D1:74:44:17:78:69:73:34:E6:C4:E0:C2:38:3A:C8:11:BD]
+    Domain verification state:
+      bank.plainphone-fx.example: 1024
+## browser role: in-app request while locked (RoleManager.createRequestRoleIntent)
+$ top
+      topResumedActivity=ActivityRecord{174920365 u0 android/com.android.internal.app.BlockedAppActivity t8}
+  ResumedActivity: ActivityRecord{174920365 u0 android/com.android.internal.app.BlockedAppActivity t8}
+10-08 17:01:06.103   656   689 I ActivityManager: Start proc 7508:android:ui/1000 for next-activity {android/com.android.internal.app.BlockedAppActivity}
+10-08 17:01:06.160   656  1808 D CoreBackPreview: Window{ea0cbf u0 android/com.android.internal.app.BlockedAppActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@e6436d5, mPriority=-1, mIsAnimationCallback=false, mOverrideBehavior=0}
+10-08 17:01:06.173  1048  1187 V WindowManagerShell:         {m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{174920365 u0 android/com.android.internal.app.BlockedAppActivity)/@0x71c070c sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 1080, 2400) epz=Point(1080, 2400) d=-1->0 r=-1->0:-1 bc=ffeeedf4 component=android/com.android.internal.app.BlockedAppActivity opt={t=FROM_STYLE mUserId=0}}
+10-08 17:01:06.174  1048  1187 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=23 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{174920365 u0 android/com.android.internal.app.BlockedAppActivity)/@0x71c070c sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 1080, 2400) epz=Point(1080, 2400) d=-1->0 r=-1->0:-1 bc=ffeeedf4 component=android/com.android.internal.app.BlockedAppActivity opt={t=FROM_STYLE mUserId=0}}]}
+10-08 17:01:06.174  1048  1187 V WindowManagerShell: start default transition animation, info = {id=23 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{174920365 u0 android/com.android.internal.app.BlockedAppActivity)/@0x71c070c sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 1080, 2400) epz=Point(1080, 2400) d=-1->0 r=-1->0:-1 bc=ffeeedf4 component=android/com.android.internal.app.BlockedAppActivity opt={t=FROM_STYLE mUserId=0}}]}
+10-08 17:01:06.174   656   679 I ActivityTaskManager: Displayed android/com.android.internal.app.BlockedAppActivity for user 0: +76ms
+10-08 17:01:06.174   656   679 V WindowManager: Sent Transition (#23) createdAt=10-08 17:01:06.097 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=8 effectiveUid=10214 displayId=0 isRunning=true baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.plainphone.spike.emu/.MainActivity } baseActivity=ComponentInfo{com.plainphone.spike.emu/com.plainphone.spike.emu.MainActivity} topActivity=ComponentInfo{android/com.android.internal.app.BlockedAppActivity} origActivity=null realActivity=ComponentInfo{com.plainphone.spike.emu/com.plainphone.spike.emu.MainActivity} numActivities=2 lastActiveTime=784639 supportsMultiWindow=false resizeMode=0 isResizeable=false minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{cf681e1 Task{7ba6cfc #8 type=home A=10214:com.plainphone.spike.emu nonResizable}}} topActivityType=2 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 0 - 0, 0) topActivityInfo=ActivityInfo{4ad6b8d com.android.internal.app.BlockedAppActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=true isVisible=true isVisibleRequested=true isTopActivityNoDisplay=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=true isActivityStackTransparent=false lastNonFullscreenBounds=Rect(276, 692 - 804, 1772) capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=-9 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false eligibleForLetterboxEducation= false isLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(0, 0 - 1080, 2400) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null cameraCompatTaskInfo=CameraCompatTaskInfo { freeformCameraCompatMode=inactive}} topActivityMainWindowFrame=null}, pipChange = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 23 }
+10-08 17:01:06.174   656   679 V WindowManager:         {m=OPEN f=TRANSLUCENT|FILLS_TASK leash=Surface(name=ActivityRecord{174920365 u0 android/com.android.internal.app.BlockedAppActivity)/@0xdec8fb6 sb=Rect(0, 0 - 0, 0) eb=Rect(0, 0 - 1080, 2400) epz=Point(1080, 2400) d=-1->0 r=-1->0:-1 bc=ffeeedf4 component=android/com.android.internal.app.BlockedAppActivity opt={t=FROM_STYLE mUserId=0}}
+## texts on screen
+"App is not available" "Permission controller is not available right now." "OK" 
+$ A shell cmd role get-role-holders android.app.role.BROWSER
+com.android.chrome
+## link matrix (see evidence/q1/matrix-a36-q4-links.tsv)
