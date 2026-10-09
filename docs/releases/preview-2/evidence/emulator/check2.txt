@@ -1,0 +1,31 @@
+# Check 2 (emulator emulator-5742, API 35, build 44af8e5), 2026-10-09T22:34:33Z
+testOnly: TEST_ONLY
+Before: User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+lock task: mLockTaskModeState=LOCKED
+hidden before (13):
+  com.android.chrome
+  com.android.stk
+  com.google.android.apps.docs
+  com.google.android.apps.photos
+  com.google.android.apps.wellbeing
+  com.google.android.apps.youtube.music
+  com.google.android.calendar
+  com.google.android.contacts
+  com.google.android.documentsui
+  com.google.android.gm
+  com.google.android.googlequicksearchbox
+  com.google.android.projection.gearhead
+  com.google.android.youtube
+## dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver
+Success: Admin removed ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
+After: no owners
+lock task: mLockTaskModeState=NONE
+home: org.plainphone/.MainActivity
+hidden after (0):
+
+## Reading
+- Android 15 itself unhid all 13 apps on Device Owner removal. This corrects the A2 spike note ("does not ... unhide
+  apps first"), which predates this check. No Plainphone code ran for it.
+- Home still resolves to Plainphone (it stays installed, with lock task off and nothing hidden). `adb uninstall
+  org.plainphone` hands Home back to the stock launcher.
+mLockTaskModeState=LOCKED
