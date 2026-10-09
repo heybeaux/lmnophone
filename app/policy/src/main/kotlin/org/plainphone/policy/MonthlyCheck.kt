@@ -24,8 +24,8 @@ class MonthlyCheckState(
 data class MonthlyReminderStatus(val attemptedOn: LocalDate, val pending: Boolean, val delivered: Boolean) {
     init { require(!(pending && delivered)) }
 }
-/** Stable across retries and reboots. The durable SMS outbox must deduplicate this key. */
-data class MonthlyReminderKey(val cycleId: String, val recipient: TrustedPersonId)
+/** Stable for one attempt across replays/reboots; each new daily retry has a distinct key. */
+data class MonthlyReminderKey(val cycleId: String, val recipient: TrustedPersonId, val attemptDate: LocalDate)
 data class MonthlyReminderRequest(val state: MonthlyCheckState, val key: MonthlyReminderKey, val attemptDate: LocalDate)
 enum class MonthlyNoticeAction { EXPLAIN }
 data class MonthlyNotice(val visible: Boolean, val text: String, val tapAction: MonthlyNoticeAction = MonthlyNoticeAction.EXPLAIN)
@@ -41,7 +41,7 @@ object MonthlyCheck {
         if (days !in 0L..7L) return null // Due date plus at most seven daily retries; no catch-up burst.
         val before = state.reminders[person]
         if (before?.delivered == true) return null
-        val key = MonthlyReminderKey(state.cycleId, person)
+        val key = MonthlyReminderKey(state.cycleId, person, if (before?.pending == true) before.attemptedOn else today)
         if (before?.pending == true) return MonthlyReminderRequest(state, key, before.attemptedOn)
         if (before != null && !today.isAfter(before.attemptedOn)) return null
         return MonthlyReminderRequest(state.withReminder(person, MonthlyReminderStatus(today, true, false)), key, today)
@@ -51,7 +51,7 @@ object MonthlyCheck {
     fun reminderResult(state: MonthlyCheckState, request: MonthlyReminderRequest, delivered: Boolean): MonthlyCheckState {
         if (request.key.cycleId != state.cycleId) return state
         val current = state.reminders[request.key.recipient] ?: return state
-        if (!current.pending || current.attemptedOn != request.attemptDate) return state
+        if (!current.pending || current.attemptedOn != request.attemptDate || request.key.attemptDate != request.attemptDate) return state
         return state.withReminder(request.key.recipient, current.copy(pending = false, delivered = delivered))
     }
 
