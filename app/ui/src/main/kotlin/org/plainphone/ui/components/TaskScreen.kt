@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -31,15 +30,15 @@ internal fun TaskScreen(
     onPrimary: () -> Unit,
     primaryEnabled: Boolean = true,
     secondary: String? = null,
+    secondaryEnabled: Boolean = true,
     onSecondary: () -> Unit = {},
     back: String? = null,
     onBack: () -> Unit = {},
-    contentSpacing: Dp? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val largeText = LocalDensity.current.fontScale >= 2f
     // Tighten whitespace, never type, so the next body line peeks above the pinned action.
-    val spacing = contentSpacing ?: if (largeText) PlainphoneSpace.S2 else PlainphoneSpace.S4
+    val spacing = if (largeText) PlainphoneSpace.S2 else PlainphoneSpace.S4
     Column(Modifier.fillMaxSize().background(PlainphoneColors.Paper).imePadding()) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
             .padding(horizontal = PlainphoneSpace.S6).padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S6),
@@ -52,7 +51,7 @@ internal fun TaskScreen(
         Column(Modifier.fillMaxWidth().padding(horizontal = PlainphoneSpace.S6)
             .padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S2),
             verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
-            if (secondary != null) ScreenLink(secondary, onSecondary)
+            if (secondary != null) ScreenLink(secondary, onSecondary, enabled = secondaryEnabled)
             val shape = RoundedCornerShape(percent = 50)
             Box(Modifier.fillMaxWidth().background(
                 if (primaryEnabled) PlainphoneColors.Ink else PlainphoneColors.Fill2, shape)
@@ -68,11 +67,12 @@ internal fun TaskScreen(
 }
 
 @Composable
-internal fun ScreenLink(text: String, onClick: () -> Unit, centered: Boolean = true) {
-    Box(Modifier.fillMaxWidth().plainphoneAction(onClick = onClick).heightIn(min = 48.dp)
+internal fun ScreenLink(text: String, onClick: () -> Unit, centered: Boolean = true, enabled: Boolean = true) {
+    Box(Modifier.fillMaxWidth().plainphoneAction(enabled = enabled, onClick = onClick).heightIn(min = 48.dp)
         .padding(vertical = PlainphoneSpace.S2),
         contentAlignment = if (centered) Alignment.Center else Alignment.CenterStart) {
-        Text(text, style = PlainphoneType.Button.copy(textDecoration = TextDecoration.Underline),
+        Text(text, style = PlainphoneType.Button.copy(textDecoration = TextDecoration.Underline,
+            color = if (enabled) PlainphoneColors.Ink else PlainphoneColors.Line),
             textAlign = if (centered) TextAlign.Center else TextAlign.Start)
     }
 }
