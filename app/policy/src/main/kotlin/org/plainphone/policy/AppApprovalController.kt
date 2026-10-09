@@ -12,13 +12,27 @@ class AppApprovalRecord(val id: String, selection: PermissionSelection) {
     init { require(id.isNotBlank()) }
 }
 
-enum class AppApprovalPhase { PREPARING, COMMITTED }
-class AppApprovalReceipt(val id: String, val actor: TrustedPersonId, recipientGenerations: Map<TrustedPersonId, Long>) {
+enum class AppApprovalPhase { PREPARING, COMMITTED, WITHDRAWING }
+enum class AppApprovalReceiptKind { APPROVED, WITHDRAWN }
+class AppApprovalReceipt(val id: String, val actor: TrustedPersonId, recipientGenerations: Map<TrustedPersonId, Long>,
+    val kind: AppApprovalReceiptKind = AppApprovalReceiptKind.APPROVED, val approvalId: String = id,
+) {
     val recipientGenerations: Map<TrustedPersonId, Long> = Collections.unmodifiableMap(LinkedHashMap(recipientGenerations))
-    init { require(id.isNotBlank() && actor in this.recipientGenerations && this.recipientGenerations.values.all { it >= 0 }) }
+    init {
+        require(id.isNotBlank() && approvalId.isNotBlank() && actor in this.recipientGenerations && this.recipientGenerations.values.all { it >= 0 })
+        require(if (kind == AppApprovalReceiptKind.APPROVED) id == approvalId else id != approvalId)
+    }
 }
-class AppApprovalOperation(val record: AppApprovalRecord, val receipt: AppApprovalReceipt, val phase: AppApprovalPhase) {
-    init { require(record.id == receipt.id) }
+class AppApprovalOperation(val record: AppApprovalRecord, val receipt: AppApprovalReceipt, val phase: AppApprovalPhase,
+    val withdrawalReceipt: AppApprovalReceipt? = null,
+) {
+    init {
+        require(record.id == receipt.id && receipt.kind == AppApprovalReceiptKind.APPROVED)
+        if (phase == AppApprovalPhase.WITHDRAWING) {
+            require(withdrawalReceipt != null && withdrawalReceipt.kind == AppApprovalReceiptKind.WITHDRAWN &&
+                withdrawalReceipt.approvalId == record.id)
+        } else require(withdrawalReceipt == null)
+    }
 }
 class AppApprovalState(
     val revision: Long = 0,
@@ -42,7 +56,11 @@ class AppApprovalState(
                     existing.permissions.choices == pending.record.permissions.choices)
                 val receipt = this.receipts.singleOrNull { it.id == pending.receipt.id }
                 require(receipt != null && receipt.actor == pending.receipt.actor &&
-                    receipt.recipientGenerations == pending.receipt.recipientGenerations)
+                    receipt.recipientGenerations == pending.receipt.recipientGenerations &&
+                    receipt.kind == pending.receipt.kind && receipt.approvalId == pending.receipt.approvalId)
+                require(pending.withdrawalReceipt?.let { withdrawal ->
+                    this.receipts.none { it.id == withdrawal.id } && this.apps.values.none { it.id == withdrawal.id }
+                } != false)
             }
         }
     }
@@ -89,7 +107,18 @@ class AppApprovalRequest internal constructor(
 ) {
     val action: PrivilegedAction get() = PrivilegedAction("app:approve", record.id)
 }
-enum class AppApprovalOutcome { READY, APPROVED, REFUSED, BUSY, LOW_BATTERY, NOT_READY }
+/** Exact pending approval plus process-local, person-bound fresh authority for withdrawal. */
+class AppApprovalWithdrawalRequest internal constructor(
+    val approvalId: String,
+    internal val receiptId: String,
+    internal val person: TrustedPersonId,
+    internal val credentialGeneration: Long,
+    internal val structureGeneration: Long,
+    internal val preparedAt: BootTime,
+) {
+    val action: PrivilegedAction get() = PrivilegedAction("app:withdraw-pending", receiptId)
+}
+enum class AppApprovalOutcome { READY, APPROVED, WITHDRAWN, REFUSED, BUSY, LOW_BATTERY, NOT_READY }
 
 /**
  * Supervised new-app approval. One shared dispatcher owns this, SessionController, PinVault, facts and
@@ -110,10 +139,11 @@ class AppApprovalController(
 ) {
     private var initialized = false
     private val requests = mutableSetOf<AppApprovalRequest>()
+    private val withdrawals = mutableSetOf<AppApprovalWithdrawalRequest>()
 
     @Synchronized
     fun onStart(): AppApprovalOutcome {
-        initialized = false; requests.clear()
+        initialized = false; requests.clear(); withdrawals.clear()
         if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
         val state = store.read() ?: return AppApprovalOutcome.NOT_READY
         val op = state.pending
@@ -125,7 +155,7 @@ class AppApprovalController(
             if (state.revision == Long.MAX_VALUE || !store.compareAndSet(state, state.replacing(pending = null), null)) return AppApprovalOutcome.NOT_READY
         }
         initialized = true
-        return if (op?.phase == AppApprovalPhase.COMMITTED) resume() else AppApprovalOutcome.READY
+        return if (op != null && op.phase != AppApprovalPhase.PREPARING) resume() else AppApprovalOutcome.READY
     }
 
     @Synchronized
@@ -183,7 +213,9 @@ class AppApprovalController(
         if (!initialized) return AppApprovalOutcome.NOT_READY
         val state = store.read() ?: return AppApprovalOutcome.NOT_READY
         val op = state.pending ?: return AppApprovalOutcome.READY
-        if (op.phase != AppApprovalPhase.COMMITTED || state.revision == Long.MAX_VALUE) return AppApprovalOutcome.NOT_READY
+        if (state.revision == Long.MAX_VALUE) return AppApprovalOutcome.NOT_READY
+        if (op.phase == AppApprovalPhase.WITHDRAWING) return finishWithdrawal(state, op)
+        if (op.phase != AppApprovalPhase.COMMITTED) return AppApprovalOutcome.NOT_READY
         if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
         if (!permissionsMatch(op.record)) return AppApprovalOutcome.NOT_READY
         val plan = planFor(op.record, state) ?: return AppApprovalOutcome.NOT_READY
@@ -192,6 +224,79 @@ class AppApprovalController(
         if (!store.compareAndSet(state, state.replacing(pending = null), null)) return AppApprovalOutcome.NOT_READY
         return AppApprovalOutcome.APPROVED
     }
+
+    /** Review the exact stuck approval; no stale-manifest guess or old PIN can withdraw it. */
+    @Synchronized
+    fun prepareWithdrawal(person: TrustedPersonId): AppApprovalWithdrawalRequest? {
+        if (!initialized) return null
+        val state = store.read() ?: return null
+        val op = state.pending?.takeIf { it.phase == AppApprovalPhase.COMMITTED } ?: return null
+        if (state.revision > Long.MAX_VALUE - 2) return null
+        val current = credentials()?.takeIf { it.mode == Mode.TRUSTED } ?: return null
+        val credential = current.people[person] ?: return null
+        val id = ids.next()
+        if (id.isBlank() || state.apps.values.any { it.id == id } || state.receipts.any { it.id == id }) return null
+        val now = clock.checkpoint() ?: return null
+        return AppApprovalWithdrawalRequest(op.record.id, id, person, credential.generation,
+            current.structureGeneration, now.boot).also { withdrawals.add(it) }
+    }
+
+    @Synchronized
+    fun withdrawPending(request: AppApprovalWithdrawalRequest, confirmedApprovalId: String, fresh: FreshAuthority): AppApprovalOutcome {
+        if (!withdrawals.remove(request) || confirmedApprovalId != request.approvalId) return AppApprovalOutcome.REFUSED
+        if (!initialized) return AppApprovalOutcome.NOT_READY
+        val state = store.read() ?: return AppApprovalOutcome.NOT_READY
+        val op = state.pending ?: return AppApprovalOutcome.REFUSED
+        if (op.phase != AppApprovalPhase.COMMITTED || op.record.id != request.approvalId ||
+            state.revision > Long.MAX_VALUE - 2 || state.receipts.any { it.id == request.receiptId } ||
+            state.apps.values.any { it.id == request.receiptId }) return AppApprovalOutcome.REFUSED
+        if (matchingCredentials(request) == null || !sameBoot(request.preparedAt)) return AppApprovalOutcome.REFUSED
+        if (!authority.consumeFor(fresh, request.action, request.person)) return AppApprovalOutcome.REFUSED
+        if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
+        val current = matchingCredentials(request) ?: return AppApprovalOutcome.NOT_READY
+        if (!sameBoot(request.preparedAt)) return AppApprovalOutcome.NOT_READY
+        val receipt = AppApprovalReceipt(request.receiptId, request.person, current.people.mapValues { it.value.generation },
+            AppApprovalReceiptKind.WITHDRAWN, request.approvalId)
+        val withdrawing = state.replacing(pending = AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.WITHDRAWING, receipt))
+        if (!store.compareAndSet(state, withdrawing, current)) return AppApprovalOutcome.NOT_READY
+        return resume()
+    }
+
+    private fun finishWithdrawal(state: AppApprovalState, op: AppApprovalOperation): AppApprovalOutcome {
+        val checked = withdrawalPlan(state, op) ?: return AppApprovalOutcome.NOT_READY
+        if (!effects.applyPolicy(checked.plan) || !effects.readBackPolicy(checked.plan)) return AppApprovalOutcome.NOT_READY
+        // Facts can change even when the resulting policy sets are identical.
+        if (withdrawalPlan(state, op) != checked) return AppApprovalOutcome.NOT_READY
+        val finished = state.replacing(apps = state.apps - op.record.identity.packageName, pending = null,
+            receipts = state.receipts + checkNotNull(op.withdrawalReceipt))
+        if (!store.compareAndSet(state, finished, null)) return AppApprovalOutcome.NOT_READY
+        return AppApprovalOutcome.WITHDRAWN
+    }
+
+    private data class WithdrawalPlan(val plan: PolicyPlan, val installed: InstalledPackage?,
+        val signers: List<ApprovalBinding>, val model: String, val fingerprint: String)
+
+    private fun withdrawalPlan(state: AppApprovalState, op: AppApprovalOperation): WithdrawalPlan? {
+        val input = policyInput() ?: return null
+        if (input.lockedBoot || input.waitingOperation?.phase in setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK) ||
+            !EmergencyFloor.compute(input.installed, input.identities).hasSystemDialer) return null
+        val name = op.record.identity.packageName
+        val installed = input.installed.filter { it.name == name }
+        if (installed.size > 1) return null
+        val plan = PolicyEngine.decide(input.copy(approvalState = state, sessionAccess = null))
+        if (name in plan.neverHide || name in plan.unhide || name in plan.lockTaskPackages ||
+            (installed.isNotEmpty() && name !in plan.hidden)) return null
+        return WithdrawalPlan(plan, installed.singleOrNull(),
+            immutableList(input.installedIdentities.filter { it.packageName == name }), input.model, input.fingerprint)
+    }
+
+    private fun matchingCredentials(request: AppApprovalWithdrawalRequest): CredentialState? = credentials()?.takeIf {
+        it.mode == Mode.TRUSTED && it.structureGeneration == request.structureGeneration &&
+            it.people[request.person]?.generation == request.credentialGeneration
+    }
+    private fun sameBoot(preparedAt: BootTime): Boolean = clock.checkpoint()?.boot?.let {
+        it.bootId == preparedAt.bootId && it.elapsedMillis >= preparedAt.elapsedMillis
+    } == true
 
     private fun matchingCredentials(request: AppApprovalRequest): CredentialState? = credentials()?.takeIf {
         it.mode == Mode.TRUSTED && it.structureGeneration == request.structureGeneration &&
