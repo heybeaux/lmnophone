@@ -1,0 +1,6 @@
+Sign In
+Use Messages without an account
+Pair with other devices using your Google Account
+How it works
+resumed: com.google.android.apps.messaging/.gaia.expresssignin.BugleExpressSignInActivity 
+top: com.google.android.apps.messaging/.gaia.expresssignin.BugleExpressSignInActivity

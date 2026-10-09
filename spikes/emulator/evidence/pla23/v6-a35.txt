@@ -1,0 +1,30 @@
+# 2026-10-09T02:16:39Z start policy: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[no_add_managed_profile, no_add_user, no_config_cell_broadcasts, no_config_date_time, no_config_vpn, no_create_windows, no_factory_reset, no_install_apps, no_install_unknown_sources_globally, no_modify_accounts, no_network_reset, no_safe_boot, no_system_error_dialogs, no_usb_file_transfer, no_user_switch]
+## WPA2 availability
+    BSSID              Frequency      RSSI           Age(sec)     SSID                                 Flags
+  02:15:b2:00:00:01       2437        -50              0.263    AndroidWifi                       [ESS]
+saved: configured=[0:"AndroidWifi", 0:"AndroidWifi"] current="AndroidWifi"/0
+## sign-in network (fake portal returns 302)
+mobile data off, so the sign-in Wi-Fi is the default network (as in PLA-11)
+net: wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+home texts: "Plainphone emu spike (throwaway)" "This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi." "Forget this network" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android
+### incoming call while on the sign-in network
+telecom: state=RINGING, state=RINGING, 
+### Emergency button while on the sign-in network
+signin-emergency-button	resumed=com.android.phone/.EmergencyDialer 	status=lockTaskModeState=1
+### sign-in notification, final policy (CaptivePortalLogin hidden)
+shade: "Phone" "•" "now" "Alerted" "Expand" "2" "(650) 555-0100" "Missed call" "(650) 555-0100" "Missed call" "Permission controller" "Expand" "4" "Plainphone emu spike has location access" "Your organization allows Plainphone emu spike to access your location" "Phone has location access" "Your organizatio
+notif-hidden	resumed=	status=lockTaskModeState=1
+### control: CaptivePortalLogin unhidden and on the lock-task list (PLA-18 Q3b setup)
+unhide com.google.android.captiveportallogin -> true / OK approved=[com.google.android.dialer, com.google.android.apps.messaging, com.android.camera2, com.android.phone, com.google.android.captiveportallogin] / OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.google.android.captiveportallogin, com.android.phone]
+notif-control	resumed=com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity 	status=lockTaskModeState=1
+top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+restore: hide com.google.android.captiveportallogin -> true / OK approved=[com.google.android.dialer, com.google.android.apps.messaging, com.android.camera2, com.android.phone] / OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+### Forget this network (home button), with read-back
+before: configured=[0:"AndroidWifi", 0:"AndroidWifi"] current="AndroidWifi"/0 net: wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+forget-button	resumed=	status=lockTaskModeState=1
+after: configured=[] current=<unknown ssid>/-1 net: wifi=false captive=false validated=false msg=null
+No networks
+## restore ordinary Wi-Fi
+addNetwork(AndroidWifi, open) -> netId=1 enableNetwork -> true
+net: wifi=true captive=false validated=true msg=null saved: configured=[1:"AndroidWifi", 1:"AndroidWifi"] current="AndroidWifi"/1
+# end policy: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[no_add_managed_profile, no_add_user, no_config_cell_broadcasts, no_config_date_time, no_config_vpn, no_create_windows, no_factory_reset, no_install_apps, no_install_unknown_sources_globally, no_modify_accounts, no_network_reset, no_safe_boot, no_system_error_dialogs, no_usb_file_transfer, no_user_switch]

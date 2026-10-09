@@ -1,0 +1,8 @@
+Navigate up
+Spam &amp; blocked
+More options
+Conversation list
+Spam &amp; blocked conversations appear here
+Spam &amp; blocked conversations appear here
+resumed: com.google.android.apps.messaging/.home.SpamFolderActivity 
+top: com.google.android.apps.messaging/.home.SpamFolderActivity

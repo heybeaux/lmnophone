@@ -1,0 +1,38 @@
+127.0.0.1 - - [08/Oct/2026 19:16:49] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 19:16:49] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+captive /generate_204 -> 302
+127.0.0.1 - - [08/Oct/2026 19:16:50] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+127.0.0.1 - - [08/Oct/2026 19:16:50] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+127.0.0.1 - - [08/Oct/2026 19:16:50] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+127.0.0.1 - - [08/Oct/2026 19:16:50] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+127.0.0.1 - - [08/Oct/2026 19:17:39] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 19:17:39] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+captive /generate_204 -> 302
+127.0.0.1 - - [08/Oct/2026 19:17:39] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+127.0.0.1 - - [08/Oct/2026 19:17:39] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+127.0.0.1 - - [08/Oct/2026 19:17:40] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+127.0.0.1 - - [08/Oct/2026 19:17:40] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+127.0.0.1 - - [08/Oct/2026 19:17:55] "GET /login HTTP/1.1" 200 -
+captive /login -> 302
+127.0.0.1 - - [08/Oct/2026 19:17:56] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 19:17:56] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+captive /generate_204 -> 302
+127.0.0.1 - - [08/Oct/2026 19:17:56] "GET /favicon.ico HTTP/1.1" 302 -
+captive /favicon.ico -> 302
+127.0.0.1 - - [08/Oct/2026 19:17:56] "GET /login HTTP/1.1" 200 -
+captive /login -> 302
+127.0.0.1 - - [08/Oct/2026 19:17:56] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 19:17:56] "GET /generate_204 HTTP/1.1" 302 -
+captive /generate_204 -> 302
+captive /generate_204 -> 302

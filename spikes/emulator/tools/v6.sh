@@ -22,6 +22,7 @@ A shell cmd wifi list-scan-results
 echo "saved: $(cmd wifi-list)"
 echo "## sign-in network (fake portal returns 302)"
 for k in http https fallback other_fallback; do v=http://10.0.2.2:8123/generate_204; [ $k = other_fallback ] && A shell settings put global captive_portal_other_fallback_urls $v || A shell settings put global captive_portal_${k}_url $v; done
+echo "mobile data off, so the sign-in Wi-Fi is the default network (as in PLA-11)"; A shell svc data disable
 echo captive > $MODEF; reconnect 15
 echo "net: $(cmd net)"
 A shell input keyevent KEYCODE_HOME; sleep 1.5; shot $D/signin-home.png
@@ -58,5 +59,6 @@ echo "## restore ordinary Wi-Fi"
 echo open > $MODEF
 for k in captive_portal_http_url captive_portal_https_url captive_portal_fallback_url captive_portal_other_fallback_urls; do A shell settings delete global $k >/dev/null; done
 echo "$(cmd wifi-add AndroidWifi)"; sleep 12
+A shell svc data enable; sleep 3
 echo "net: $(cmd net) saved: $(cmd wifi-list)"
 echo "# end policy: $(pol)"

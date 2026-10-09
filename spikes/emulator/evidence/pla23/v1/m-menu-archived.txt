@@ -1,0 +1,8 @@
+Navigate up
+Archived
+More options
+Conversation list
+Archived conversations appear here
+Archived conversations appear here
+resumed: com.google.android.apps.messaging/.home.ArchivedActivity 
+top: com.google.android.apps.messaging/.home.ArchivedActivity

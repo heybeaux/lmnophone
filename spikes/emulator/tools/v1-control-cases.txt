@@ -1,0 +1,10 @@
+# PLA-23 V1 control set: the direct launches the a36 walk found denied, rerun with protection off (matrix2.sh control)
+net-operator|action=android.settings.NETWORK_OPERATOR_SETTINGS
+get-content|action=android.intent.action.GET_CONTENT type=image/*
+open-document|action=android.intent.action.OPEN_DOCUMENT type=*/* cat=android.intent.category.OPENABLE
+pick-images|action=android.provider.action.PICK_IMAGES
+add-account|action=android.settings.ADD_ACCOUNT_SETTINGS
+sib-stk-main|action=android.intent.action.MAIN comp=com.android.stk/.StkMain
+sib-settings|action=android.intent.action.MAIN comp=com.android.settings/.Settings
+sib-settings-wifi|action=android.intent.action.MAIN comp=com.android.settings/.Settings$WifiSettingsActivity
+sib-keychain|action=android.intent.action.MAIN comp=com.android.keychain/.KeyChainActivity

@@ -1,0 +1,20 @@
+Navigate up
+Settings
+RCS chats
+Notifications
+Bubbles
+Hear outgoing and incoming message sounds
+Pinch to zoom conversation text
+Show expressive animations
+Choose theme
+System default
+Message organization
+Your current country
+Automatically detected (United States)
+Gemini in Messages
+Suggestions
+Smart Reply, suggested actions &amp; more
+Automatic previews
+Show only web link previews
+resumed: com.google.android.apps.messaging/.ui.appsettings.ApplicationSettingsActivity com.google.android.apps.messaging/.ui.appsettings.SettingsActivity 
+top: com.google.android.apps.messaging/.ui.appsettings.ApplicationSettingsActivity
