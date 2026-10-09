@@ -823,13 +823,64 @@ contact snapshots, including an explicit unavailable contact for a self-managed
 holder without an SMS contact; do not send a pending incoming person a receipt
 by looking up their enrollment as if it were active.
 
-**Product mode-switch actions remain unavailable.** This slice stops at durable
-COMMITTING. Neither `TurnOffController` nor `PeopleChangeController` executes a
-mode patch, and `PolicyEngine` retains normal lockdown for it. The internal
-`replacementForCommit` calculation is not authorization or a persistence API.
-The next reviewed slice must extend the forward/rollback contract with target
-reset-protection list plus backup, broadcast and readback, old-session/grant
-revocation, atomic mode/holder/structure/applied-marker swap, preserved elevation
-debits, stop eligibility, crash replay and lost-record reconciliation. Android
-integration must implement those contracts before exposing the action; JVM fake
-stores and effects do not prove Android persistence or reset-protection behavior.
+**Product mode-switch actions remain unavailable until lane D integration is verified.**
+The executor is the existing `PeopleChangeController`, extended only when its
+committer implements `ModeSwitchCommitter` and its effects implement
+`ModeSwitchEffects`. Older people-only adapters continue to ignore mode patches.
+`TurnOffController` always ignores them; `PolicyEngine` retains normal lockdown.
+
+### Mode-switch completion and rollback adapter contract
+
+Use one non-reentrant serialized coordinator and the **same** `ElevationStore`
+instance for supervised sessions, elevations and `ModeSwitchCommitter`. The
+shared journal includes both supervised package access and elevation authority.
+Never construct a new ledger for a switch. Missing/corrupt ledger data holds the
+operation until conservative elevation startup repair succeeds.
+
+A forward pass checks request, storage generation, direction, mode and structure:
+
+1. Latch revocation for both live controllers. Durably clear the shared journal,
+   countdown, grant and person binding in one elevation CAS, preserving every
+   debit exactly. Read back the cleared record. Pending waits never do this.
+2. Revoke physical temporary access and local session/Play/approval/update
+   authority, then read back the protected policy. These effects must not mutate
+   credential, waiting or elevation records or reenter another controller.
+3. Set the target reset-protection list (incoming account plus existing backup),
+   broadcast and read back the exact list. Recheck direction/credentials around
+   every effect.
+4. `applyModePatch` atomically compares credential, waiting and cleared elevation
+   revisions, then writes mode, holders, recovery profile, structure generation
+   and `AppliedPeopleChange` together. It leaves the exact elevation ledger
+   untouched and the waiting record COMMITTING. Never use people-only applyPatch.
+5. Read back the marker. A later pass rechecks/revokes temporary authority, then
+   `finishMode` writes COMPLETED plus fixed-contact receipts, comparing all three
+   records again. Only terminal success releases the local revocation latch.
+
+The marker's historical name covers both people and mode patches. Preserve it
+through every PIN/recovery/counter write. Replay recognizes request ID, waiting
+storage generation, target mode/holder and the single raised structure generation;
+it never restores the incoming setup PIN. Old shared session/grant authority is
+cleared and physically read back before the swap; old fresh PIN tokens fail
+against the new credential structure. The adapter must maintain this ordering
+across processes and prohibit concurrent/reentrant privileged work.
+
+Before the swap, a current holder's fresh PIN may request Stop, including the
+self-managed user. Stop binds process, request, waiting generation, holder and
+structure. It first writes ROLLING_BACK plus receipt. Rollback clears temporary
+authority, restores/broadcasts/reads back the current credential store's account
+list, then uses `finishMode` for CANCELLED. No PIN-free Cancel is offered once
+committing; Stop is unavailable after the applied marker. Failures stay in their
+durable direction. PIN replacement after commit does not stop the patch.
+
+Lost waiting records use `WaitingReconciler` and current credentials as truth.
+Revoke temporary authority without refunding debits; reapply/read back active
+policy, reset protection and friction; fence pre-loss replicas before releasing
+the slot. Report recovered mode/holders, never infer cancellation or replay
+pending enrollment. Acknowledgements must survive loss of the newest journal
+copy, not merely checksum validation.
+
+Tests cover both directions, forward/rollback crashes, post-swap recovery,
+terminal races, lost-record reconciliation, live controller authority, and
+immediate new self-managed elevation with an exhausted preserved ledger. Fakes
+prove ordering and policy behavior only. Lane D must independently prove Android
+atomicity, persistent fencing, physical closure and readback before enablement.
