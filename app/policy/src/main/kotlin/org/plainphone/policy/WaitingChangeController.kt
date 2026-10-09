@@ -24,7 +24,7 @@ class WaitingText(val key: String, val event: WaitingEvent, val operation: Waiti
     val recipientContacts: Map<TrustedPersonId, PersonContact?> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientContacts))
     init { require(recipientContacts.keys == recipientGenerations.keys) }
 }
-/** Immutable turn-off or people operation. A people patch never authorizes turn-off effects. */
+/** Immutable waiting inputs. People and mode patches never authorize turn-off effects. */
 class WaitingOperation(
     val identity: WaitingIdentity, val starter: TrustedPersonId, val generation: Long,
     val structureGeneration: Long, val mode: Mode, val startedAt: RunningTime, val phase: WaitingPhase,
@@ -36,9 +36,14 @@ class WaitingOperation(
     recipientContacts: Map<TrustedPersonId, PersonContact?> = recipientGenerations.keys.associateWith { null },
     val stopper: TrustedPersonId? = null,
     val stopperGeneration: Long? = null,
+    val modePatch: ModeSwitchPatch? = null,
 ) {
     init {
         require(generation >= 0 && structureGeneration >= 0)
+        require(peoplePatch == null || modePatch == null)
+        require(modePatch == null || (restoredSteps == 0 && modePatch.sourceMode == mode &&
+            modePatch.starter == starter && modePatch.structureGeneration == structureGeneration &&
+            modePatch.dependencyGenerations[starter] == generation))
         require((skipper == null) == (skipperGeneration == null))
         require(skipperGeneration == null || (skipperGeneration >= 1 && mode == Mode.TRUSTED &&
             phase in setOf(WaitingPhase.COMMITTING, WaitingPhase.COMPLETED, WaitingPhase.ROLLING_BACK, WaitingPhase.CANCELLED)))
@@ -56,14 +61,14 @@ class WaitingOperation(
     /** Start-time fallback retained independently of acknowledged outbox texts. */
     val recipientGenerations: Map<TrustedPersonId, Long> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientGenerations))
     val recipientContacts: Map<TrustedPersonId, PersonContact?> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientContacts))
-    val kind: WaitingChangeKind get() = peoplePatch?.kind ?: WaitingChangeKind.TURN_OFF
+    val kind: WaitingChangeKind get() = peoplePatch?.kind ?: if (modePatch != null) WaitingChangeKind.SWITCH_MODE else WaitingChangeKind.TURN_OFF
     val authorityPerson: TrustedPersonId get() = skipper ?: starter
     val authorityGeneration: Long get() = skipperGeneration ?: generation
     /** A skipper replaces starter authority, but never drops a slot the patch removes/replaces. */
     val dependencyGenerations: Map<TrustedPersonId, Long> get() {
-        val dependencies = (peoplePatch?.dependencyGenerations ?: mapOf(starter to generation)).toMutableMap()
+        val dependencies = (peoplePatch?.dependencyGenerations ?: modePatch?.dependencyGenerations ?: mapOf(starter to generation)).toMutableMap()
         if (skipper != null) {
-            if (starter !in peoplePatch?.removedSlots.orEmpty()) dependencies.remove(starter)
+            if (starter !in (peoplePatch?.removedSlots.orEmpty() + modePatch?.removedSlots.orEmpty())) dependencies.remove(starter)
             dependencies[skipper] = skipperGeneration!!
         }
         return java.util.Collections.unmodifiableMap(dependencies)
@@ -71,14 +76,15 @@ class WaitingOperation(
     internal fun dependenciesMatch(current: CredentialState): Boolean = current.mode == mode &&
         current.structureGeneration == structureGeneration &&
         dependencyGenerations.all { (person, generation) -> current.people[person]?.generation == generation } &&
-        (peoplePatch == null || current.recoveryProfile != null)
+        (peoplePatch == null || current.recoveryProfile != null) &&
+        (modePatch?.structureMatches(current) != false)
     internal fun withSkipper(person: TrustedPersonId, generation: Long) = WaitingOperation(identity, starter, this.generation,
-        structureGeneration, mode, startedAt, WaitingPhase.COMMITTING, recipientGenerations, 0, person, generation, peoplePatch, recipientContacts, stopper, stopperGeneration)
-    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, restoredSteps, skipper, skipperGeneration, peoplePatch, recipientContacts, stopper, stopperGeneration)
-    internal fun withRestoredSteps(count: Int) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, count, skipper, skipperGeneration, peoplePatch, recipientContacts, stopper, stopperGeneration)
+        structureGeneration, mode, startedAt, WaitingPhase.COMMITTING, recipientGenerations, 0, person, generation, peoplePatch, recipientContacts, stopper, stopperGeneration, modePatch)
+    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, restoredSteps, skipper, skipperGeneration, peoplePatch, recipientContacts, stopper, stopperGeneration, modePatch)
+    internal fun withRestoredSteps(count: Int) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, count, skipper, skipperGeneration, peoplePatch, recipientContacts, stopper, stopperGeneration, modePatch)
     internal fun withRollback(person: TrustedPersonId, generation: Long) = WaitingOperation(identity, starter, this.generation,
         structureGeneration, mode, startedAt, WaitingPhase.ROLLING_BACK, recipientGenerations, restoredSteps,
-        skipper, skipperGeneration, peoplePatch, recipientContacts, person, generation)
+        skipper, skipperGeneration, peoplePatch, recipientContacts, person, generation, modePatch)
 }
 class WaitingState(val revision: Long = 0, val operation: WaitingOperation? = null, texts: List<WaitingText> = emptyList(),
     val storageGeneration: String = "initial", recoveryReceipts: List<RecoveryReceipt> = emptyList()) {
@@ -118,9 +124,10 @@ interface CancelIntentStore {
 /** Opaque, process-local preparation. Never deserialize it or treat it as authority. */
 class WaitingStart internal constructor(internal val identity: WaitingIdentity, internal val starter: TrustedPersonId,
     internal val generation: Long, internal val structureGeneration: Long, internal val mode: Mode,
-    internal val peoplePatch: TrustedPersonPatch? = null, internal val owner: Any? = null) {
+    internal val peoplePatch: TrustedPersonPatch? = null, internal val owner: Any? = null,
+    internal val modePatch: ModeSwitchPatch? = null) {
     val requestId: String get() = identity.requestId
-    val action = PrivilegedAction(peoplePatch?.let { "waiting:${it.kind.name}" } ?: "waiting:turn-off",
+    val action = PrivilegedAction(peoplePatch?.let { "waiting:${it.kind.name}" } ?: modePatch?.let { "waiting:mode:${it.targetMode.name}" } ?: "waiting:turn-off",
         "${identity.requestId.length}:${identity.requestId}${starter.value.length}:${starter.value}")
     internal var used = false
 }
@@ -128,7 +135,7 @@ enum class WaitingOutcome { PENDING, COMMITTING, CANCELLED, REFUSED, BUSY, NOT_R
 
 /**
  * The common serialized dispatcher owns this controller, PinVault and all credential/operation writes.
- * This controller starts turn-off/people waits and skips through explicitly wired recovery transactions.
+ * This controller starts turn-off/people/mode waits and skips through explicitly wired recovery transactions.
  * It never restores settings, clears Device Owner, applies people/mode patches or reports Off.
  * Damaged state remains held until WaitingReconciler completes.
  */
@@ -164,18 +171,36 @@ class WaitingChangeController(
     fun prepareRemove(starter: TrustedPersonId, removed: TrustedPersonId): WaitingStart? =
         credentials()?.let { TrustedPersonPatch.remove(it, starter, removed) }?.let(::preparePeople)
 
+    @Synchronized
+    fun prepareSelfManaged(starter: TrustedPersonId, incoming: IncomingSelfManagedEnrollment): WaitingStart? =
+        credentials()?.let { ModeSwitchPatch.toSelfManaged(it, starter, incoming) }?.let(::prepareMode)
+
+    @Synchronized
+    fun prepareSupervised(starter: TrustedPersonId, incoming: IncomingPersonEnrollment): WaitingStart? =
+        credentials()?.let { ModeSwitchPatch.toSupervised(it, starter, incoming) }?.let(::prepareMode)
+
+    private fun prepareMode(patch: ModeSwitchPatch) = WaitingStart(identities.reserve(), patch.starter,
+        patch.dependencyGenerations.getValue(patch.starter), patch.structureGeneration, patch.sourceMode,
+        owner = preparationOwner, modePatch = patch)
+
+    @Synchronized
+    fun startModeSwitch(request: WaitingStart, freshAuthority: FreshAuthority, confirmed: Boolean): WaitingOutcome {
+        if (!confirmed || request.modePatch == null || request.peoplePatch != null) return WaitingOutcome.REFUSED
+        return start(request, freshAuthority)
+    }
+
     private fun preparePeople(patch: TrustedPersonPatch) = WaitingStart(identities.reserve(), patch.starter,
         patch.dependencyGenerations.getValue(patch.starter), patch.structureGeneration, Mode.TRUSTED, patch, preparationOwner)
 
     @Synchronized
     fun startTurnOff(request: WaitingStart, freshAuthority: FreshAuthority, firstConfirmation: Boolean, secondConfirmation: Boolean): WaitingOutcome {
-        if (!firstConfirmation || !secondConfirmation || request.peoplePatch != null) return WaitingOutcome.REFUSED
+        if (!firstConfirmation || !secondConfirmation || request.peoplePatch != null || request.modePatch != null) return WaitingOutcome.REFUSED
         return start(request, freshAuthority)
     }
 
     @Synchronized
     fun startPeopleChange(request: WaitingStart, freshAuthority: FreshAuthority, confirmed: Boolean): WaitingOutcome {
-        if (!confirmed || request.peoplePatch == null) return WaitingOutcome.REFUSED
+        if (!confirmed || request.peoplePatch == null || request.modePatch != null) return WaitingOutcome.REFUSED
         return start(request, freshAuthority)
     }
 
@@ -192,14 +217,14 @@ class WaitingChangeController(
         if (!cancelIntents.initialize(request.requestId)) return WaitingOutcome.NOT_READY
         val operation = WaitingOperation(request.identity, request.starter, request.generation,
             request.structureGeneration, request.mode, now.proven, WaitingPhase.PENDING, current.people.mapValues { it.value.generation },
-            peoplePatch = request.peoplePatch, recipientContacts = current.contacts())
+            peoplePatch = request.peoplePatch, recipientContacts = current.contacts(), modePatch = request.modePatch)
         return if (write(before, operation, WaitingEvent.STARTED, current.people.mapValues { it.value.generation }, current.contacts())) WaitingOutcome.PENDING else WaitingOutcome.NOT_READY
     }
 
     private fun startDependenciesMatch(request: WaitingStart, current: CredentialState): Boolean =
         current.mode == request.mode && current.structureGeneration == request.structureGeneration &&
             current.people[request.starter]?.generation == request.generation &&
-            (request.peoplePatch?.dependenciesMatch(current) != false)
+            (request.peoplePatch?.dependenciesMatch(current) != false) && (request.modePatch?.dependenciesMatch(current) != false)
 
     /**
      * Explicit outgoing-code alternative: the screen names this exact handover and confirms both
