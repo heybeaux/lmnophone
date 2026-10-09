@@ -1015,3 +1015,120 @@ both-mode initial ledger provisioning. Settings stay unavailable until reviewed
 policy **and** adapter integration; mode switching, Update and web/Wi-Fi retain
 their existing gates. JVM fakes verify pure logic and ordering, not Android
 atomicity or physical containment.
+
+## Generic TimeWindowQuota (PLA-106)
+
+This slice is an **immutable proposal model**, not a stateful controller or device
+adapter. It neither grants physical access nor creates `SessionAccess` and is not
+an input to `PolicyEngine`. `TimeWindowTransition.STARTED`/`EXTENDED` describe
+candidate records, never durable or physical success. Existing elevation and
+session rules are unchanged; in particular elevation deadlines cannot extend.
+
+### Generic accounting contract
+
+Configuration is explicit and fixed for each ledger: positive capacity, rolling
+period in proven milliseconds, positive window length in boot milliseconds, and
+whether extensions are allowed. There are no calendar-day resets or wall-clock
+inputs. Each start costs one unit. An extension costs its positive integer number
+of units, each adding one configured window length to the **old fixed deadline**.
+All extension units are charged at the extension checkpoint. It cannot be partly
+accepted when allowance is insufficient. Ordinary ticks never move the deadline.
+This is a generic unit-based choice, not an approved web/Wi-Fi product decision.
+Period and duration are independent; a configuration may allow charges to age
+while a long window remains open. Product approval must explicitly consider that
+choice and any maximum total session duration before adopting a configuration.
+
+One window occupies the ledger at a time. A new start while any window is recorded
+is BUSY, even past its deadline; cleanup and actual revocation must precede another
+start. A window expires at `now >= deadline`, on boot change or elapsed time below
+its start. Extension cannot revive an expired window. Early close, effect failure,
+expiry and restart keep all debits. Only a later charged proposal prunes debits
+that have fully aged; merely closing never refunds them.
+
+The model reuses `RunningTime.since` and `ClockReading` from the shared clock. A
+debit ages out at exactly its period of proven running time. Foreign epochs count
+from current epoch zero; same-epoch future readings keep their full delay, with
+remaining-time overflow saturated. Deadline/multiplication overflow is refused.
+Clock repair cannot extend a boot deadline. An unavailable checkpoint yields
+NOT_READY, never new access; adapters must stop publishing authority and revoke
+existing access while retrying cleanup if time cannot be established. Restrictive
+close/restart needs no clock. Revision exhaustion yields NOT_READY and requires
+conservative generation recovery, never wraparound.
+
+`provision` is explicitly first setup only. The caller must prove the ledger has
+never been provisioned, with a durable setup marker. Null/missing/corrupt history
+in ordinary startup is **not** first setup: `recover` proposes a full-capacity debit
+from the current persisted clock under a new durably reserved generation. Failed
+clock or repair persistence leaves requests unavailable. `restore` validates typed
+records and copies the history; malformed decoding must use conservative recovery.
+It does not check physical storage integrity or grant startup authority.
+
+Every mutating command carries an expected generation/revision; close and extension
+also carry the original window ID. Accepted changes raise the revision. Startup
+raises it even with no recorded window, invalidating commands from the old process.
+Window IDs are start revisions within never-reused storage generations. Old starts
+remain stale after their debits expire. The version check alone cannot arbitrate
+two copies of a snapshot: both can produce proposals, and **only one durable CAS
+may win**. Retry the original command with its original expected version, never
+silently substitute the newest revision for a duplicate UI callback.
+
+### Mandatory adapter obligations before any consumer is enabled
+
+Lane D must implement a reviewed coordinator/store/effect boundary before product
+wiring. There are intentionally no pretend durable stores or effect executors in
+this immutable slice. The integration must provide all of the following:
+
+1. Use the existing proven clock and non-reentrant shared privileged coordinator.
+   Checkpoint durably before transitions/debits. Serialize all controllers and
+   processes, immutable config, record/schema/checksum and storage generation.
+   Authenticate and bind any eventual consumer separately. UI flags and decoded
+   `TimeWindow` records are never authority.
+2. Atomically compare the complete expected generation/revision/config and save
+   debit(s), fixed deadline and exact access journal together **before** relaxing
+   access. Read back the exact acknowledged record, recheck its deadline and
+   current ownership, then apply/read back the effect. Failed or uncertain write,
+   readback or effect never publishes success. An acknowledged debit remains even
+   if access never opens. Keep cleanup intent until physical closure reads back.
+3. Fence all synchronous effects and callbacks against the current owner, process,
+   generation, revision and window ID. A stale callback must neither reopen nor
+   close a newer window. Commit an extension's extra debits/deadline atomically;
+   if commit/readback fails, no extended authority may be published. Never retry
+   an old proposal after a newer close/start. A mutex on this model is insufficient.
+4. On every startup, hold the authority gate, load recorded temporary access,
+   revoke it and read back protected policy before acknowledging a cleared window
+   and publishing any authority. If storage is lost, reconcile all possible
+   temporary access from active policy. Startup must not merely drop the journal
+   and forget its physical effects. Keep debits through cleanup; failure holds the
+   gate and retries. No deserialized window resumes a session.
+5. Persist rollback-resistant acknowledgement fences: losing the newest copy must
+   not resurrect a pre-debit, pre-extension, pre-close or pre-recovery record.
+   Uncertain history uses full recovery, never an empty ledger. Provision markers
+   and generation reservation need the same durability. Config changes cannot
+   reset history; they require a separately reviewed migration preserving charges.
+6. Before enabling any approved consumer, inject crashes before/after clock
+   checkpoints, atomic debit/journal writes, readbacks, open/extend/revoke effects,
+   cleanup writes, recovery and generation reservation. Cover stale surviving
+   replicas, reentrant/concurrent starts, callbacks after close/restart, missing
+   journal, failed writes/readbacks and exhausted quota. Verify actual access and
+   ledger recovery, not just returned objects.
+
+The JVM tests prove deterministic accounting, fake-clock reboot/epoch boundaries,
+immutable snapshots, command fences and a single-winner CAS example. They **do not
+prove device durability or the effect/crash matrix above**. A separately assigned
+lane D follow-up PLA-107 owns the adapter contract and crash acceptance checklist;
+its implementation must wait for a named approved consumer, a Lead assignment and
+the existing integration gates.
+
+### Disabled consumers
+
+`DisabledTimeWindows` hard-codes both product flags OFF and returns DISABLED
+without proposing a debit or window. It exposes only the disabled illustrative web
+configuration (five units, five minutes each, extendable, rolling 24 proven hours)
+and the Wi-Fi quota metadata (three per 24 proven hours). Wi-Fi duration is
+unspecified, so no Wi-Fi window configuration is constructed. The web interpretation
+of "day", extension charging, maximum session length, Wi-Fi duration and approval
+flow remain product decisions for the unapproved change. There are no Android
+browser/portal effects, product entry points or conversions to policy authority.
+Tests retain browser/portal hiding and exclusion from unhide/lock-task plans on a
+supported inventory, normal/baseline health and locked boot. Existing unknown-build
+and emergency-floor exceptions continue unchanged.
