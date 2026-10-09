@@ -97,7 +97,7 @@ Use these numbers for layout checks; the build confirms them on the phone.
 | `clock` | 64 / 72 | 68 / 75 | 400, tabular | `ink` | Time on the home screen |
 | `date` | 18 / 24 | 30 / 36 | 400 | `ink-2` | Date under the clock. At 200% it shortens to "Thu 8 Oct" |
 | `app` | 32 / 40 | 40 / 47 | 500 | `ink` | App names on the home screen |
-| `title` | 28 / 36 | 37 / 43 | 500 | `ink` | Screen titles. At most 2 lines at 200% |
+| `title` | 28 / 36 | 37 / 43 | 500 | `ink` | Screen titles. Written to fit 2 lines at 200% on a 360 dp screen. A long name may push one to 3 lines; that is allowed. Never cut a title or shrink it |
 | `row` | 22 / 28 | 35 / 37 | 500 | `ink` | Menu rows (More, Plainphone settings, the trusted-person menu) |
 | `body` | 18 / 26 | 30 / 37 | 400 | `ink` | Body text on every screen |
 | `button` | 18 / 24 | 30 / 36 | 500 | `paper` on `ink` | Primary button labels |

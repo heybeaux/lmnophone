@@ -61,7 +61,7 @@ Android 14 and later scale text up to 200%. Every screen in these files was writ
 
 | Element | Limit at normal size | Behaviour at 200% |
 |---|---|---|
-| Screen title | 6 words | Wraps to at most 2 lines |
+| Screen title | 6 words | Fits 2 lines; a long name may make it 3. Never cut |
 | Body text | 3 short sentences per block, 2 blocks | Scrolls vertically; never horizontally |
 | Button label | 3 words | Wraps inside the button; the button grows taller, never wider than the screen |
 | List row (app, setting) | 1–3 words, no icon | Label wraps; the row grows taller, at least 56dp |
@@ -106,6 +106,10 @@ a value belong in the app's string resources, so they can be checked against the
   like the home clock) and the day, and add the day word: "21:15 tomorrow" for the next day; "21:15 Saturday" for 2 to
   6 days ahead; "21:15 Thu 15 Oct" for 7 days or more (the wait only counts time while the phone is on). A 24-hour wait
   can't end the same day; if a time is ever for today, show the clock time alone.
+- **Keeping things together on one line:** a screen may use a non-breaking hyphen (U+2011) or non-breaking space
+  where a line break would split something that must be read whole: "9‑1‑1", a PIN or cancel code, "{n} min".
+  This doesn't count as changing the copy. TalkBack must still read it as written ("nine one one"); if it reads the
+  character oddly, set the spoken text to the plain version.
 
 ## Texts Plainphone sends
 

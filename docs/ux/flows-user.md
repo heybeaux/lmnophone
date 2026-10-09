@@ -301,13 +301,20 @@ Opens when the user taps a web link that doesn't belong to an added app, from Me
 
 ### U6b. Confirm sending
 
-- **Title:** Send this link to {tp}, to look at together?
+- **Title:** Look at this link with {tp}?
 - **Body:** {tp} will get this text: then the exact SMS text from the [texts table](README.md#texts-plainphone-sends),
   shown in a grey box, including `{host}{path}` with the userinfo, query and fragment already removed.
 - **Primary:** Send
 - **Secondary:** Don't send
 - **After sending:** "Sent to {tp}." with **OK**. If it fails: "This didn't send. The phone may have no signal."
   with **OK**. (No retry queue: the link is not saved, to keep this screen isolated.)
+- **Title change (PLA-47 review, 2026-10-09):** the first title, "Send this link to {tp}, to look at together?",
+  took 3 lines at 200% on the smallest screen. The new one keeps the "together" wording the copy test asked for
+  ([copy-test.md](copy-test.md): "Send to Sam" felt like reporting), and matches the button that opens it
+  ("Look at it with {tp}"). The body already says it goes as a text.
+- **Two trusted people:** on U6 and U6b, `{tp}` is `{everyone}` ("Sam and Jo"), because the text goes to both.
+  "Look at this link with Sam and Jo?" may take 3 lines at 200%; that's allowed (see `title` in
+  [design-tokens.md](design-tokens.md#type-scale)).
 
 ## U7. Phone settings (Plainphone's own)
 
