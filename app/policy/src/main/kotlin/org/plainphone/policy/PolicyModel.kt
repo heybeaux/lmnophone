@@ -36,6 +36,7 @@ data class PolicyInput(
     val installed: List<InstalledPackage>,
     val identities: List<FloorIdentity>,
     val inventory: BuildInventory? = null,
+    /** Legacy package-only data is ignored. Use approvalState plus fresh installedIdentities. */
     val approved: Set<PackageName> = emptySet(),
     val classifiedBrowsers: Set<PackageName> = emptySet(),
     val health: PolicyHealth = PolicyHealth.VALID,
@@ -49,6 +50,8 @@ data class PolicyInput(
     val currentBoot: BootTime? = null,
     /** Fresh highest-valid-revision operation read on the serialized dispatcher, never a cached UI flag. */
     val waitingOperation: WaitingOperation? = null,
+    val approvalState: AppApprovalState? = null,
+    val installedIdentities: List<ApprovalBinding> = emptyList(),
 )
 
 /** Null fields are outside this plan: neither write nor assert their values during readback. */

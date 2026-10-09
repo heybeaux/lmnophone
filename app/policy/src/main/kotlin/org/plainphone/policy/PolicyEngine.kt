@@ -29,7 +29,11 @@ object PolicyEngine {
         val neverHide = immutableSet(floor.neverHide + inventory?.neverHide?.packages.orEmpty() + input.plainphone + input.messages)
         val conflicts = immutableSet(input.classifiedBrowsers.intersect(neverHide))
         val sessionOnly = setOf(PLAY_PACKAGE) + inventory?.settingsSessionPackages.orEmpty()
-        val approved = if (baseline) emptySet() else input.approved - input.classifiedBrowsers - sessionOnly
+        val approved = if (baseline) emptySet() else input.approvalState?.approvedPackages(input.installed, input.installedIdentities).orEmpty() - input.classifiedBrowsers - sessionOnly
+        // System installation and inherited UI membership are not approval authority.
+        // Prune discretionary UI independently of the sweep: unknown-build system apps stay unhidden.
+        val invalidApprovals = (input.approvalState?.apps?.keys.orEmpty() + input.approved +
+            input.installed.map { it.name }) - approved - sessionOnly
         val session = input.sessionAccess?.takeIf { access ->
             !baseline && !input.lockedBoot && input.currentBoot?.let { access.isLive(it) } == true &&
                 access.packages == sessionPackages(access.kind, inventory)
@@ -50,12 +54,14 @@ object PolicyEngine {
             SweepMode.USER_APPS_ONLY -> (input.previousHidden + sweepCandidates) - neverHide - accessible
             SweepMode.NONE -> input.previousHidden - neverHide
         })
+        // The last stored minimum UI may retain inherited membership after an OTA.
+        // It does not add entries on an unknown build or enable stale inventory effects.
         val ui = immutableSet(when {
             input.lockedBoot -> input.previousLockTask + floor.emergencyUi
             baseline -> setOf(input.plainphone, input.messages) + floor.emergencyUi + inventory?.minimumUi.orEmpty()
             unknown -> input.previousLockTask + floor.emergencyUi
             else -> setOf(input.plainphone) + approved + floor.emergencyUi + inventory.minimumUi
-        }.plus(input.plainphone).plus(session) - hidden)
+        }.plus(input.plainphone).plus(session) - hidden - (invalidApprovals - floor.emergencyUi - input.inventory?.minimumUi.orEmpty() - input.plainphone - input.messages))
         val unhidden = immutableSet(neverHide + if (input.lockedBoot) emptySet() else accessible - hidden)
         val restrictions = immutableSet(Restriction.entries)
         val features = immutableSet(LockTaskFeature.entries)
