@@ -162,8 +162,8 @@ class LegacyMigrationTest {
     @Test fun oldRecordIsNeverOverwrittenByInitialize() {
         val dir = fixture(1)
         val before = recFiles(dir)
-        assertFalse(open(dir).initialize(CredentialState(org.plainphone.core.Mode.SELF_MANAGED, emptyMap()),
-            WaitingState(storageGeneration = "fresh"), ElevationRecord()))
+        val credentials = AuthorityCodec.decodeCredentials(LegacyAuthority.load(dir)!!.sections[Section.CREDENTIALS.ordinal])!!
+        assertFalse(open(dir).initialize(credentials, WaitingState(storageGeneration = "fresh"), ElevationRecord()))
         before.forEach { (name, b) -> assertArrayEquals(name, b, File(dir, name).readBytes()) }
     }
 
