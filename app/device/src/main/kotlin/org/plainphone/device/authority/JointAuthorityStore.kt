@@ -192,19 +192,27 @@ class JointAuthorityStore internal constructor(
 
     /**
      * Cancel intents, kept apart from the joint record so a request survives even when that record is
-     * unreadable. Each request has a CLEAR entry and, once asked, a separate REQUESTED marker. The marker
-     * is never removed, and its presence alone (even damaged) reads as REQUESTED, so it is monotonic.
-     * A missing or damaged CLEAR entry with no marker reads as UNKNOWN. Same coordinator as every write.
+     * unreadable. Each request has an entry and, once asked, a separate REQUESTED marker. A request
+     * writes the marker and then overwrites the entry with REQUESTED, so losing either file still reads
+     * REQUESTED (PLA-128 F1). The marker's presence alone (even damaged) reads REQUESTED. CLEAR needs an
+     * intact CLEAR entry and no marker; anything else is UNKNOWN. Initialize never overwrites an existing
+     * file, so a damaged entry is never guessed back to CLEAR. Same coordinator as every write.
      */
     val cancelIntents: CancelIntentStore = object : CancelIntentStore {
         override fun initialize(requestId: String): Boolean = coordinator.run(false) {
-            val (clear, requested) = intentRecords(requestId)
-            if (requested.exists()) false
-            else clear.read()?.contentEquals(requestId.toByteArray()) == true || clear.write(requestId.toByteArray()) {}
+            val (entry, marker) = intentRecords(requestId)
+            when {
+                marker.exists() || entry.exists() -> intent(requestId) == CancelIntent.CLEAR
+                else -> entry.write(intentPayload(CLEAR_TAG, requestId)) {}
+            }
         }
         override fun request(requestId: String): Boolean = coordinator.run(false) {
-            val requested = intentRecords(requestId).second
-            requested.read()?.contentEquals(requestId.toByteArray()) == true || requested.write(requestId.toByteArray()) {}
+            val (entry, marker) = intentRecords(requestId)
+            val requested = intentPayload(REQUESTED_TAG, requestId)
+            // Both writes are attempted even if the first fails; true only when both are durable.
+            val markerSaved = marker.read()?.contentEquals(requested) == true || marker.write(requested) {}
+            val entrySaved = entry.read()?.contentEquals(requested) == true || entry.write(requested) {}
+            markerSaved && entrySaved
         }
         override fun read(requestId: String): CancelIntent = coordinator.run(CancelIntent.UNKNOWN) { intent(requestId) }
     }
@@ -389,17 +397,21 @@ class JointAuthorityStore internal constructor(
         startedAt, phase, recipientGenerations, restoredSteps, skipper, skipperGeneration, peoplePatch, recipientContacts,
         stopper, stopperGeneration, modePatch, frictionPatch)
 
+    /** The entry keeps its original `intent-clear-` file name although it can also hold REQUESTED. */
     private fun intentRecords(requestId: String): Pair<AtomicRecord, AtomicRecord> {
         val hash = MessageDigest.getInstance("SHA-256").digest(requestId.toByteArray()).joinToString("") { "%02x".format(it) }
         return AtomicRecord(dir, "intent-clear-$hash", SCHEMA) to AtomicRecord(dir, "intent-requested-$hash", SCHEMA)
     }
 
+    private fun intentPayload(tag: Byte, requestId: String) = byteArrayOf(tag) + requestId.toByteArray()
+
     /** Callers hold the coordinator. */
     private fun intent(requestId: String): CancelIntent {
-        val (clear, requested) = intentRecords(requestId)
+        val (entry, marker) = intentRecords(requestId)
+        val stored = entry.read()
         return when {
-            requested.exists() -> CancelIntent.REQUESTED
-            clear.read()?.contentEquals(requestId.toByteArray()) == true -> CancelIntent.CLEAR
+            marker.exists() || stored?.contentEquals(intentPayload(REQUESTED_TAG, requestId)) == true -> CancelIntent.REQUESTED
+            stored?.contentEquals(intentPayload(CLEAR_TAG, requestId)) == true -> CancelIntent.CLEAR
             else -> CancelIntent.UNKNOWN
         }
     }
@@ -630,6 +642,8 @@ class JointAuthorityStore internal constructor(
         const val SCHEMA = 4
         val BUSY = setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
         val TERMINAL = setOf(WaitingPhase.COMPLETED, WaitingPhase.CANCELLED)
+        const val CLEAR_TAG: Byte = 'C'.code.toByte()
+        const val REQUESTED_TAG: Byte = 'R'.code.toByte()
         val coordinators = ConcurrentHashMap<String, Coordinator>()
         /** Creates [dir] if needed so symlinks resolve; falls back to the normalized absolute path. */
         fun canonical(dir: File): String = try {
