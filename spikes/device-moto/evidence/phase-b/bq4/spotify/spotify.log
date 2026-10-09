@@ -1,0 +1,92 @@
+### 01 launch under BLOCK  (2026-10-09T00:16:36Z)
+top: u0 com.spotify.music/com.spotify.login.loginflowimpl.LoginActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:16:29.581 {flg=0x30000000 cmp=com.plainphone.spike.dpc/.MainActivity (has extras)}
+  17:16:29.633 {act=android.intent.action.VIEW flg=0x10000000 xflg=0x1 cmp=com.spotify.music/.MainActivity}
+  17:16:30.797 {flg=0x10008000 cmp=com.spotify.music/com.spotify.login.loginflowimpl.LoginActivity (has extras)}
+text:
+  content-desc="Spotify"
+  text="Log in"
+  text="Millions of songs.&#10;Free on Spotify."
+  text="Sign up free"
+### 02 Log in  (2026-10-09T00:16:51Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:16:48.244 {act=dcf030d3-9adb-4c94-9509-8139bea5016e cmp=com.android.credentialmanager/.CredentialSelectorActivity (has extras)}
+text:
+  text="App is not available"
+  text="Credential Manager is not available right now."
+  text="OK"
+### 03 after OK on Credential Manager block  (2026-10-09T00:17:05Z)
+top: u0 com.spotify.music/com.spotify.login.loginflowimpl.LoginActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  content-desc="Back"
+  text="Continue"
+  text="Don't have an account?"
+  text="Email"
+  text="Facebook"
+  text="Google"
+  text="Log in to Spotify"
+  text="Or log in with"
+  text="Sign up"
+### 04 Facebook login  (2026-10-09T00:17:21Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:17:16.817 {act=NATIVE_WITH_FALLBACK cmp=com.spotify.music/com.facebook.FacebookActivity (has extras)}
+  17:17:16.834 {flg=0x10000000 cmp=com.android.credentialmanager/.CredentialSelectorActivity (has extras)}
+  17:17:17.023 {cmp=com.spotify.music/com.facebook.CustomTabMainActivity (has extras)}
+  17:17:17.075 {act=android.intent.action.VIEW dat=https://m.facebook.com/... pkg=com.android.chrome cmp=com.android.chrome/com.google.android.apps.chrome.IntentDispatcher (has extras)}
+text:
+  text="App is not available"
+  text="Chrome is not available right now."
+  text="OK"
+### 05 Google login  (2026-10-09T00:17:41Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:17:36.922 {act=com.google.android.gms.auth.GOOGLE_SIGN_IN pkg=com.spotify.music cmp=com.spotify.music/com.google.android.gms.auth.api.signin.internal.SignInHubActivity (has extras)}
+  17:17:37.009 {act=com.google.android.gms.auth.GOOGLE_SIGN_IN pkg=com.google.android.gms cmp=com.google.android.gms/.auth.api.signin.ui.SignInActivity (has extras)}
+text:
+  text="App is not available"
+  text="Google Play services is not available right now."
+  text="OK"
+### 06 Email login screen  (2026-10-09T00:18:01Z)
+top: u0 com.spotify.music/com.spotify.login.loginflowimpl.LoginActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  text="OK"
+  text="Something went wrong. Try again."
+### 07 Email login screen retry  (2026-10-09T00:18:18Z)
+top: u0 com.spotify.music/com.spotify.login.loginflowimpl.LoginActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  content-desc="Back"
+  text="Continue"
+  text="Don't have an account?"
+  text="Email"
+  text="Facebook"
+  text="Google"
+  text="Log in to Spotify"
+  text="Or log in with"
+  text="Sign up"
+### 08 Sign up  (2026-10-09T00:18:32Z)
+top: u0 com.spotify.music/com.spotify.login.loginflowimpl.LoginActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  content-desc="Back"
+  text="Already have an account?"
+  text="Continue"
+  text="Create account"
+  text="Google"
+  text="Log in"
+  text="Or sign up with"
+  text="What's your email?"
+  text="You'll need to confirm this email later."

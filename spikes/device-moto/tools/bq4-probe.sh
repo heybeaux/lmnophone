@@ -13,6 +13,6 @@ a() { adb -s "$SERIAL" "$@"; }
   echo "lock: $(a shell dumpsys activity activities | grep -m1 -oE 'mLockTaskModeState=[A-Z]+')"
   echo "starts:"; a logcat -d -v time | grep -E 'START u0 \{' | sed -E 's/^[0-9-]+ ([0-9:.]+).*START u0 \{([^}]*)\}.*/  \1 {\2}/' | sed -E 's/dat=([a-z]+:\/\/[^/ ]*)[^ ]*/dat=\1\/.../' | cut -c1-220 || true
   if [ $notext = 0 ]; then echo "text:"; a shell uiautomator dump /sdcard/pp-ui.xml >/dev/null; a shell cat /sdcard/pp-ui.xml | tr '>' '\n' | grep -oE '(text|content-desc)="[^"]+"' | sort -u | sed 's/^/  /' | head -40; a shell rm -f /sdcard/pp-ui.xml; fi
-} | tee -a "$d/$app.log"
+} | sed -E "s/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/<email redacted>/g" | tee -a "$d/$app.log"
 [ $noshot = 0 ] && a exec-out screencap -p > "$d/$(echo "$step" | tr -c 'A-Za-z0-9-' '_' | cut -c1-40).png"
 a logcat -c

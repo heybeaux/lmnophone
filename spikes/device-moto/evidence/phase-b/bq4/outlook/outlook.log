@@ -1,0 +1,140 @@
+### 01 launch under BLOCK  (2026-10-09T00:18:50Z)
+top: u0 com.microsoft.office.outlook/.ui.onboarding.splash.SplashActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:18:42.456 {flg=0x30000000 cmp=com.plainphone.spike.dpc/.MainActivity (has extras)}
+  17:18:42.473 {act=android.intent.action.VIEW flg=0x10000000 xflg=0x1 cmp=com.microsoft.office.outlook/.MainActivity}
+  17:18:43.446 {cmp=com.microsoft.office.outlook/.ui.onboarding.splash.SplashActivity (has extras)}
+text:
+  content-desc="Add account"
+  content-desc="Create new account"
+  content-desc="Page 2 of 4, One calendar for &#10;everything"
+  text="Add account"
+  text="Create new account"
+  text="One calendar for &#10;everything"
+  text="Stay organised with your work and personal calendars in one place."
+### 02 Add account  (2026-10-09T00:19:04Z)
+top: u0 com.microsoft.office.outlook/.ui.onboarding.login.AddAccountActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:19:00.114 {cmp=com.microsoft.office.outlook/.ui.onboarding.login.AddAccountActivity (has extras)}
+text:
+  content-desc="Back"
+  content-desc="Continue"
+  content-desc="Help"
+  content-desc="Scan QR code"
+  text="ADD GOOGLE ACCOUNT"
+  text="Add account"
+  text="Continue"
+  text="Enter your email"
+  text="PRIVACY AND TERMS"
+### 03 PRIVACY AND TERMS  (2026-10-09T00:19:26Z)
+top: u0 com.microsoft.office.outlook/.ui.onboarding.login.AddAccountActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  text="Licence terms"
+  text="Privacy &amp; Cookies"
+  text="View"
+### 04 Privacy and Cookies link  (2026-10-09T00:19:40Z)
+top: u0 com.microsoft.office.outlook/com.acompli.acompli.GenericWebViewActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:19:35.268 {cmp=com.microsoft.office.outlook/com.acompli.acompli.GenericWebViewActivity (has extras)}
+text:
+  content-desc="Navigate up"
+  text="Privacy &amp; Cookies"
+### 05 off-site link inside WebView  (2026-10-09T00:20:08Z)
+top: u0 com.microsoft.office.outlook/com.acompli.acompli.GenericWebViewActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  content-desc="About"
+  content-desc="Audiences"
+  content-desc="Contact"
+  content-desc="Data Privacy Framework List"
+  content-desc="Data Privacy Framework Logo - Link to Homepage"
+  content-desc="Data Protection Authorities Data Protection Authorities"
+  content-desc="Data Protection Authorities"
+  content-desc="Disclaimer"
+  content-desc="European Businesses European Businesses"
+  content-desc="European Businesses"
+  content-desc="European Individuals European Individuals"
+  content-desc="European Individuals"
+  content-desc="FOIA"
+  content-desc="Framework Text"
+  content-desc="Home"
+  content-desc="Inactive Participants"
+  content-desc="International Trade Administration"
+  content-desc="LEARN MORE"
+  content-desc="Navigate up"
+  content-desc="News &amp; Events"
+  content-desc="PDF Reader"
+  content-desc="Privacy Policy"
+  content-desc="Privacy Program"
+  content-desc="Program Overview"
+  content-desc="Search"
+  content-desc="Self-Certify"
+  content-desc="Skip to content"
+  content-desc="The International Trade Administration Logo"
+  content-desc="U.S. Businesses U.S. Businesses"
+  content-desc="U.S. Businesses"
+  content-desc="U.S. Department of Commerce"
+  content-desc="USA.gov"
+  content-desc="Website Feedback"
+  text=" is available from Adobe Systems Incorporated."
+  text=" manages this site to facilitate the Data Privacy Framework program in the United States. External links to other Internet sites should not be construed as an endorsement of the views or privacy policies contained therein. This site contains PDF documents. A "
+  text=" |"
+  text="&#10;"
+  text="(ITA), "
+  text="About"
+  text="Audiences"
+### 06 ADD GOOGLE ACCOUNT  (2026-10-09T00:20:32Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:20:26.328 {flg=0x2000000 cmp=com.microsoft.office.outlook/.ui.onboarding.oauth.OAuthActivity (has extras)}
+  17:20:26.492 {cmp=com.microsoft.office.outlook/.ui.InteractiveAuthActivity (has extras)}
+  17:20:26.651 {act=com.google.android.gms.auth.GOOGLE_SIGN_IN pkg=com.microsoft.office.outlook cmp=com.microsoft.office.outlook/com.google.android.gms.auth.api.signin.internal.SignInHubActivity (has extras)}
+  17:20:26.687 {act=com.google.android.gms.auth.GOOGLE_SIGN_IN pkg=com.google.android.gms cmp=com.google.android.gms/.auth.api.signin.ui.SignInActivity (has extras)}
+text:
+  text="App is not available"
+  text="Google Play services is not available right now."
+  text="OK"
+### 07 after OK on GMS block  (2026-10-09T00:20:46Z)
+top: u0 com.microsoft.office.outlook/.ui.onboarding.splash.SplashActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  content-desc="Add account"
+  content-desc="Create new account"
+  content-desc="Page 4 of 4, Add your email &#10;accounts"
+  text="Add account"
+  text="Add your email &#10;accounts"
+  text="Choose from Microsoft 365, Gmail, Yahoo, or other personal, work, and school accounts."
+  text="Create new account"
+### 08 Help  (2026-10-09T00:21:08Z)
+top: u0 com.microsoft.office.outlook/.ui.onboarding.login.AddAccountActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  text="Contact support"
+  text="Get diagnostics"
+### 09 Contact support  (2026-10-09T00:21:24Z)
+top: u0 com.microsoft.office.outlook/.ui.onboarding.login.AddAccountActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  text="Cancel"
+  text="Enable Notifications"
+  text="Ok"
+  text="Please allow notifcations to receive support updates"
+### 10 Contact support after Cancel  (2026-10-09T00:21:41Z)
+top: u0 com.microsoft.office.outlook/.ui.onboarding.login.AddAccountActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  text="Cancel"
+  text="Collect Diagnostics Data"
+  text="Continue"
+  text="This feature collects support data to diagnose and resolve problems. By pressing continue, you allow Microsoft to collect Outlook logs containing email addresses of configured accounts and device, connectivity, and client configuration data. Do not provide any sensitive data."
