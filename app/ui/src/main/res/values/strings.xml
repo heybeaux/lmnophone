@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Plainphone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <string name="home_phone">Phone</string>
+    <string name="home_messages">Messages</string>
+    <string name="home_more">More</string>
+    <string name="home_more_description">Ask for an app, settings, help</string>
+    <string name="notice_attention">Plainphone needs attention</string>
+    <string name="notice_turn_off">Plainphone will turn off after %1$s. Tap to cancel.</string>
+    <string name="notice_people">A change to trusted people is waiting. Tap to cancel.</string>
+    <string name="notice_mode">A change to how this phone is set up is waiting. Tap to cancel.</string>
+    <string name="notice_opening">Opening up in %1$d minutes</string>
+    <string name="notice_ready">Ready – tap to start</string>
+    <string name="notice_monthly">Ask %1$s to do the monthly phone check</string>
+    <string name="notice_monthly_self">Time for your monthly phone check</string>
+    <string name="notice_in_progress">Already in progress</string>
+    <string name="lexend_notice">Lexend – SIL Open Font License 1.1</string>
+</resources>
