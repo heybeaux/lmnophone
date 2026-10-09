@@ -1,0 +1,61 @@
+# PLA-24 end state restore 2026-10-09T17:14:30Z
+OK relayed lt-stop to MainActivity (result in logcat PPSPIKE)
+OK home cleared
+OK lockTaskPackages=[com.plainphone.spike.dpc]
+adb_wifi_enabled=0
+host_utc=2026-10-09T17:14:35Z device_time=2026-10-09T10:14:36-0700
+deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[] suspended=[] locked=false debugLiftAt=0
+mLockTaskModeState=LOCKED
+topResumedActivity=ActivityRecord{7fb8336 u0 com.plainphone.spike.dpc/.MainActivity t198}
+boot_count=5 stay_on=2 screen_off_timeout=60000
+uptime:  10:14:37 up 17:53,  0 users,  load average: 11.43, 11.14, 11.10
+mWakefulness=Awake
+mHoldingDisplaySuspendBlocker=true
+AC powered: false USB powered: true status: 5 level: 100 com.plainphone.spike.dpc
+## relay lt-stop did not unlock: mLockTaskModeTasks root #172 (background), spike HOME instance in home task #199
+mLockTaskModeTasks=
+#0 Task{ba637aa #172 type=standard A=10438:com.plainphone.spike.dpc}
+#1 Task{a3e7efd #199 type=undefined A=10438:com.plainphone.spike.dpc}
+mLockTaskPackages (userId:packages)=
+u0:[com.plainphone.spike.dpc]
+## am task lock stop  (2026-10-09T17:15:39Z)
+Activity manager is in lockTaskMode
+    mLockTaskModeState=LOCKED
+com.plainphone.spike.dpc
+topResumedActivity=ActivityRecord{9d07ea7 u0 com.plainphone.spike.dpc/.MainActivity t199}
+## am start -n spike MainActivity (expect singleTask to resume root task #172)  2026-10-09T17:16:12Z
+Starting: Intent { cmp=com.plainphone.spike.dpc/.MainActivity }
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+topResumedActivity=ActivityRecord{9d07ea7 u0 com.plainphone.spike.dpc/.MainActivity t199}
+## tap in-app 'Stop lock task'
+tapped 540,1321
+    mLockTaskModeState=LOCKED
+## am start --task 172 (launch into the lock-task root)  2026-10-09T17:16:41Z
+Starting: Intent { cmp=com.plainphone.spike.dpc/.MainActivity }
+Warning: Activity not started, its current task has been brought to the front
+topResumedActivity=ActivityRecord{93bfc20 u0 com.plainphone.spike.dpc/.MainActivity t172}
+## in task #172: tap 'Stop lock task'  2026-10-09T17:16:58Z
+tapped 540,1321
+    mLockTaskModeState=NONE
+mLockTaskModeTasks=
+mLockTaskPackages (userId:packages)=
+u0:[com.plainphone.spike.dpc]
+
+## HOME role -> Moto launcher  2026-10-09T17:17:27Z
+com.motorola.launcher3
+## final readback
+host_utc=2026-10-09T17:17:30Z device_time=2026-10-09T10:17:30-0700
+deviceOwner=true lockTaskModeState=0 lockTaskPackages=[com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[] suspended=[] locked=false debugLiftAt=0
+mLockTaskModeState=NONE
+ResumedActivity: ActivityRecord{93bfc20 u0 com.plainphone.spike.dpc/.MainActivity t172}
+boot_count=5 stay_on=2 screen_off_timeout=60000
+uptime:  10:17:31 up 17:56,  0 users,  load average: 12.12, 11.51, 11.24
+mWakefulness=Awake
+mHoldingDisplaySuspendBlocker=true
+AC powered: false USB powered: true status: 5 level: 100 
+Wi-Fi is enabled
+ResumedActivity: ActivityRecord{93bfc20 u0 com.plainphone.spike.dpc/.MainActivity t172}
+com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher
+Warning: Activity not started, its current task has been brought to the front
+ResumedActivity: ActivityRecord{c4d94f9 u0 com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher t130}
+  mCurrentFocus=Window{cbc92c2 u0 NotificationShade}

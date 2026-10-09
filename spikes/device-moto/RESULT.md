@@ -39,7 +39,7 @@
 | B-Q1 lock task follow-ups (BLOCK on) | **yes** | Pre-grant works for camera, mic and location; Camera → Photos is closed; the emergency dialer screen opens; the image attaches through Messages' own picker; lock task comes back after a reboot. |
 | B-Q4 must-have apps | **partly**: before sign-in done; signed-in checks in PLA-20 | All 5 apps probed under BLOCK before sign-in. **Outlook's in-app WebView browses off-site from its Privacy link.** Google sign-in in Spotify and Outlook goes to GMS → blocked; Slack's Google sign-in fails even with lock task off (not traced). Telegram loops until pre-granted. Signed-in checks wait for Beaux. |
 | 9-1-1 routes (PLA-40) | **SOS: no, unless Personal Safety is allowlisted** | Power ×5 under lock task + BLOCK: "Personal Safety is not available right now". With `com.google.android.apps.safetyhub` on the lock-task list, the SOS screen opens. Phone route works from home and from inside Messages. Lock-screen Emergency (emulator) goes to Personal Safety too and is blocked without it. No call placed. |
-| Q2 unattended (72 h) | **running** | Test window 2026-10-09T06:33Z → 2026-10-12T06:33Z with the intended policy; then a 72 h comparison window without lock task. See § Q2 unattended. |
+| Q2 unattended | **partial: yes for apps; GMS not shown** | Intended policy (lock task LOCKED, BLOCK on, Play outside). With no forcing, Play's daily run updated all 5 rolled-back apps, the pending Phone app and Telegram/Spotify about 8 h in. Cut short at 10 h 40 min, with no comparison (Lead, Telegram 4509); the full 72 h run moves to the MVP build (PLA-118). 1055 not reproduced. |
 | S7 install race | **partly** | DPC hid a newly installed app 4.6 s after `firstInstallTime`. Deep links failed for ~4 s (package frozen), but the app's **process started ~0.35 s before the hide**. App code execution not instrumented; no `Displayed` log line. One measured race, lock task off (R3). |
 
 ## R1–R5 corrections (PLA-24)
@@ -83,8 +83,13 @@ review of exported components.
 
 ## Q2 unattended (72 h) (PLA-24, THROWAWAY)
 
-**Status: test window running. Result pending; readback due 2026-10-12T06:33Z.** Evidence: `evidence/pla24/`.
-Scripts: `tools/q2-setup.sh` (rollback and policy), `tools/q2-state.sh` (read-only versions and state).
+**Result: partial, but positive. Under the intended policy, Play updated every rolled-back app with nobody touching or forcing
+anything**, including the approved Messages, Gmail and Phone. This happened in Play's first daily auto-update run,
+about 8 h into the window. **The window was cut short at 10 h 40 min**, not 72 h, and **no comparison window ran**:
+the Lead ended it early on Beaux's direction (comment `30a34d62`, Telegram 4509). The full 72 h run, with its comparison,
+is now a handover condition on the MVP test build ([PLA-118](/PLA/issues/PLA-118), task 6.3). **GMS: not shown**
+(no GMS update was offered in the window).
+Evidence: `evidence/pla24/`. Scripts: `tools/q2-setup.sh` (rollback and policy), `tools/q2-state.sh` (read-only versions and state).
 
 **Question:** with Plainphone's intended policy, do Play updates arrive with **nobody touching or forcing anything**?
 Only this kind of run counts as automatic updating (`docs/feasibility-questions.md` Q2); S4 was a forced diagnostic.
@@ -105,20 +110,64 @@ Only this kind of run counts as automatic updating (`docs/feasibility-questions.
   (sync off since Phase B), `stay_on_while_plugged_in` set to 0 so the screen goes off (it was dozing at t0), `boot_count` 5.
   No reboot is planned.
 - **Start state:** `q2-test-t0.txt` (2026-10-09T06:33:01Z). GMS 26.37.37 (263737035), Play 53.4.34-34.
-- **Hands off from 06:33Z.** No taps, no `cmd jobscheduler`, no Play screens, no adb commands to the phone. One exception:
+- **Hands off from 06:33Z to 17:13Z.** No taps, no `cmd jobscheduler`, no Play screens, no adb commands to the phone. One exception:
   a **read-only** `adb logcat` stream runs on the Mac for the whole window, filtered to Play and package-manager lines
   (`q2-test-logcat.txt`), to catch the Phone app's install error if Play retries it. It sends no input.
 
-### Comparison window (planned, after the test window)
+### Readback (2026-10-09T17:13Z, `q2-test-partial.txt`; Play log `q2-test-finsky.txt`)
 
-One phone can't run both at once, so the comparison runs **after** the test window: the same five packages rolled back
-again, the same account, Wi-Fi and charging, but **no lock task, no HOME pin and no restrictions** (`MODE=compare tools/q2-setup.sh`), for 72 h.
-If the comparison updates and the test window doesn't, the policy is the cause. If neither updates, the result is **inconclusive**.
+Lock task was still `LOCKED` with the spike on top, `boot_count` still 5 (no reboot), restrictions `[]`, nothing hidden.
+
+| Package | Approved? | t0 (after rollback) | Readback | Installed by Play (UTC) |
+|---|---|---|---|---|
+| Messages `com.google.android.apps.messaging` | yes | 20240806 (242498063) | 20261002 (324451063) | 14:32:09 |
+| Gmail `com.google.android.gm` | yes | 2024.08.18 (64750200) | 2026.09.28 (66071966) | 14:34:14 |
+| **Phone** `com.google.android.dialer` | yes | 141.0.666893082 (17410828), pending since S4 | **241.0.991235506 (20129558)** | 14:33:23 |
+| Clock `com.google.android.deskclock` | no | 7.9.1 (76005460) | 9.1 (76112330) | 14:29:41 |
+| Photos `com.google.android.apps.photos` | no | 7.11 (49438018) | 7.96.0.996044120 (52514897) | 14:30:49 |
+| Calculator `com.google.android.calculator` | no | 8.6.1 (85005519) | 9.3 (85022643) | 14:33:27 |
+| Telegram `org.telegram.messenger` | yes | 12.10.6 (71122) | 13.0.0 (71581) | 14:32:16 |
+| Spotify `com.spotify.music` | yes | 9.1.88.2204 | 9.1.90.2270 | 14:31:36 |
+| Slack, Outlook | yes | unchanged | unchanged | (no update offered) |
+| **GMS** `com.google.android.gms` | n/a | 26.37.37 (263737035) | **unchanged** | none |
+| Play `com.android.vending` | n/a | 53.4.34-34 | unchanged | none |
+
+- **How it ran:** nothing happened until **14:00Z (07:00 local)**, when Play's daily auto-update ran. It found the updates
+  and scheduled them with the constraints `REQ_CHARGING, REQ_DEVICE_IDLE, NETWORK=UNMETERED`. Installs ran from 14:27 to 14:34Z,
+  all `reason=auto_update`. The managed auto-update policy read `AUTO_UPDATE_POLICY_UNSPECIFIED` (the DPC sets none).
+  Also updated: Chrome, ARCore, and three Moto apps. **Zero `INSTALL_ERROR`s** in the window (status codes 192/200 are
+  download progress, not errors).
+- **Mainline:** Play downloaded `com.google.mainline.telemetry` and left it `STAGED_READY`. It applies at the next reboot,
+  and none was done. That's evidence that staging works, not that the module installed.
+- **GMS:** Play logged `No target version, skip Gmscore recovery` and made no GMS install request. GMS updating is
+  therefore **not shown**: no update was offered, which makes it inconclusive, not a failure.
+- **What this doesn't show:** behaviour past one daily cycle; behaviour without charging, idle or Wi-Fi; a comparison
+  without lock task (so it can't say the policy made **no** difference, only that it didn't stop these updates); GMS; and
+  whether nobody touched the phone (screen off and on the desk, so no direct proof, but `boot_count` and the lock state were unchanged).
 
 ### Phone app 1055
 
-The S4 record shows only `DOWNLOAD_PENDING` → `INSTALL_ERROR 1055` (`evidence/phase-b/s4/s4-locktask.log`), and that run's
-logcat is gone. Not yet explained; the window's logcat capture is the next evidence.
+**Not reproduced.** In this window, the same Phone update (to versionCode 20129558) installed with status 0. Lock task was
+`LOCKED`, and the Phone app itself was on the lock-task list. So neither lock task nor allowlisting causes 1055 every time.
+The S4 record shows only `DOWNLOAD_PENDING` → `INSTALL_ERROR 1055` straight after forced jobs, and that run's logcat is
+gone, so the S4 cause is **still unknown**. Re-check on the MVP build if it recurs.
+
+### Harness finding at the end: two lock-task tasks
+
+At readback, `mLockTaskModeTasks` held **two** spike tasks: the original `#172` (standard) and a HOME-type `#199` that
+the system had started while the spike was HOME. The relayed `lt-stop` ran in `#199` and did **nothing** (still `LOCKED`).
+`am task lock stop` doesn't apply either: it only ends screen pinning. Bringing `#172` to the front
+(`am start --task 172`) and tapping the in-app "Stop lock task" button ended lock task at once (`end-state.txt`).
+**For Plainphone (spike-level):** if the home activity can be started again as HOME while lock task is on, any exit or
+servicing path must stop lock task from the root task, or check `mLockTaskModeTasks` afterwards.
+
+### End state (2026-10-09T17:17Z, `end-state.txt`)
+
+Spike DPC is Device Owner (`testOnlyAdmin`). Lock task `NONE`, lock-task packages = spike only, features 87.
+`restrictions=[] hidden=[] suspended=[]`. Persistent HOME cleared, HOME role = `com.motorola.launcher3`, Moto launcher on top.
+`stay_on_while_plugged_in=2`, `adb_wifi_enabled=0`, `boot_count` 5. Accounts: the Phase B test account and Meet's local account.
+The rolled-back apps are all back at current Play versions; mainline telemetry is staged for the next reboot. The R5 DPC build is installed.
+The host logcat capture is stopped; the raw capture wasn't committed (4.6 MB, one account address).
 
 ## A0. Baseline
 
