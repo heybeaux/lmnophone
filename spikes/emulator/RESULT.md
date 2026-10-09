@@ -413,7 +413,7 @@ Spec implications for the Lead:
 3. The never-hide/browser conflict breaks link-catching for every web link, so it needs a decision (for example a persistent preferred activity for `VIEW http/https`), not just a report.
 4. The WebView leak in approved apps is real and app-controlled, as the spec already says.
 
-**Running total for the batch run.** In the batch run (`v345-a35.txt`), the Custom Tabs "fallback to WebView" case was recorded as `LINK_CAUGHT`. The isolated re-run (`v345-a35-ctclient-webview-rerun.txt`) shows the WebView fallback working. I did not find the cause of the difference, so treat that one batch row as unreliable.
+**Note on one batch row.** In the batch run (`v345-a35.txt`), the Custom Tabs "fallback to WebView" case was recorded as `LINK_CAUGHT`. The isolated re-run (`v345-a35-ctclient-webview-rerun.txt`) shows the WebView fallback working. I did not find the cause of the difference, so treat that one batch row as unreliable.
 
 ### V4: floor replaces the list, and the Emergency button (a35)
 
