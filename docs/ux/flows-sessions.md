@@ -22,15 +22,19 @@ The idea the copy must get across, in this order:
 |---|---|---|
 | **Title** | Open the Play Store for 10 minutes | Open full phone settings for 5 minutes |
 | **Body, block 1** | Stay with the phone until you tap Done. | Stay with the phone until you tap Done. |
+| **Body, block 1b** (right under it) | Keep the phone in your hands. Don't give it to {user} while the Play Store is open: it can show web pages, so the phone isn't simple for these minutes. | Keep the phone in your hands. Don't give it to {user} while settings are open: they can show web pages and undo Plainphone's settings. |
 | **Body, block 2** | Search for the app, tap **Install**, and wait until it says **Open**. Then go back to the home screen (swipe up from the bottom of the screen). Plainphone checks the phone, then shows **Done**. | Make the change, then go back to the home screen (swipe up from the bottom of the screen). Plainphone checks the phone, then shows **Done**. |
 | **Body, block 2b** | The Play Store also closes if the screen turns off, a call comes in, or after 10 minutes. | Settings also closes if the screen turns off, a call comes in, or after 5 minutes. |
-| **Body, block 3** | Play Store help and account pages can show web pages. Don't hand the phone over while it's open. | Settings help and account pages can show web pages. Don't hand the phone over while it's open. |
 | **Body, block 4** (only for Settings) | — | Some changes get put back afterwards, such as the texting app or the keyboard. Ordinary changes, like ringtone or Wi-Fi, are kept. |
 | **Primary** | Open the Play Store | Open settings |
 | **Then** | PIN (fresh) | PIN (fresh) |
 
 "Stay with the phone until you tap Done." is the exact sentence from the spec. It is block 1, on its own line, in
-bold.
+bold. Block 1b says what that means and why, straight after it.
+
+**Copy-test change (pilot):** asked "While the Play Store is open, what must you do and not do?", the pilot reader
+said "I don't know." The rule was there, but the reason was at the bottom, after the steps. The do and don't are
+now right under the rule, and the old block 3 is merged into it.
 
 For the monthly check, P1's Play Store version is replaced by [P3b](#p3b-start-the-check).
 
@@ -38,7 +42,8 @@ For the monthly check, P1's Play Store version is replaced by [P3b](#p3b-start-t
 
 Plainphone cannot draw over the Play Store or Settings, so it uses one ongoing notification:
 
-- **Notification:** "Play Store open · {n} min left · Tap here to finish" (or "Settings open · …"). The first draft
+- **Notification:** "Play Store open · Keep the phone with you · {n} min left · Tap here to finish" (or
+  "Settings open · …"). The first draft
   said "when you're finished", and the cold reader couldn't tell whether that or "Done" was the step that counted.
 - At 2 minutes left, the same notification updates to: "Play Store closes in 2 minutes".
 - Tapping it, or pressing Home, ends the session and goes to P4.
