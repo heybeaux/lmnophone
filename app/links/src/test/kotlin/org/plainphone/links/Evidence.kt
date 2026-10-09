@@ -18,3 +18,7 @@ internal const val EMU_RESULT = "spikes/emulator/RESULT.md"
 internal const val PLA13_REVIEW = "docs/reviews/PLA-13-emulator-spike-review.md"
 internal const val MOTO_RESULT = "spikes/device-moto/RESULT.md"
 internal const val WEB_SPEC = "openspec/changes/add-plainphone-spike-and-mvp/specs/web-containment/spec.md"
+
+/** Android's own source for `Intent.parseUri`, used where no emulator run exists yet. */
+internal const val AOSP_INTENT = "AOSP frameworks/base/core/java/android/content/Intent.java parseUri"
+internal const val SELECTOR_RULE = "the SEL; selector is attached only when the outer intent has no package"

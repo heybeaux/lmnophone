@@ -42,6 +42,7 @@ class LinkDeciderTest {
     private fun q4(case: String) = Evidence.Cited(EMU_RESULT, "Q4 link matrix: $case")
     private fun v3(case: String) = Evidence.Cited(EMU_RESULT, "PLA-23 V3: $case")
     private fun q1(case: String) = Evidence.Cited(EMU_RESULT, "Q1 blocked launches: $case")
+    private fun aosp(rule: String) = Evidence.Unverified("$AOSP_INTENT: $rule; not run")
     private fun t1(case: String) = Evidence.Cited(EMU_RESULT, "Q4 floor trust (T1) and PLA-23 V4: $case")
 
     private val rows = listOf(
@@ -112,7 +113,17 @@ class LinkDeciderTest {
         Row("parseUri raw to the approved ppfx: app", IntentFacts(data = "intent://open#Intent;scheme=ppfx;package=com.plainphone.fx.applinks;end", intentUri = RAW, resolvers = listOf(any(fxApplinks))), withApplinks, OpenIn(fxApplinks), Evidence.Unverified("control opens fx-applinks; approved case not run")),
         Row("parseUri raw, browser_fallback_url is never followed", IntentFacts(data = "intent://nothing#Intent;scheme=nosuchscheme;S.browser_fallback_url=https%3A%2F%2Fexample.com;end", intentUri = RAW), baseApproved, NoHandler(NO_RESOLVER), Evidence.Cited(EMU_RESULT, "PLA-23 V2: parse-raw-fallback-url")),
         Row("parseUri sanitised, verified App Link of an approved app", IntentFacts(data = "intent://bank.plainphone-fx.example/#Intent;scheme=https;end", intentUri = SANITISED, resolvers = listOf(verified(fxApplinks))), withApplinks, OpenIn(fxApplinks), Evidence.Unverified("not run")),
-        Row("parseUri raw, selector package wins over the outer package", IntentFacts(data = "intent:#Intent;package=com.plainphone.fx.applinks;SEL;scheme=https;package=com.android.chrome;end", intentUri = RAW), withApplinks, NoHandler(TARGET_NOT_RESOLVABLE), Evidence.Unverified("selector not run")),
+        Row("parseUri raw, outer package drops the selector; outer target not offered", IntentFacts(data = "intent:#Intent;package=com.plainphone.fx.applinks;SEL;scheme=https;package=com.android.chrome;end", intentUri = RAW), withApplinks, NoHandler(TARGET_NOT_RESOLVABLE), aosp(SELECTOR_RULE)),
+        Row("parseUri raw, outer package of an approved app drops the selector to hidden Chrome", IntentFacts(data = "intent:#Intent;package=com.plainphone.fx.applinks;SEL;scheme=https;package=com.android.chrome;end", intentUri = RAW, resolvers = listOf(any(fxApplinks))), withApplinks, OpenIn(fxApplinks), aosp(SELECTOR_RULE)),
+        Row("parseUri raw, no outer package: the selector's approved package is used", IntentFacts(data = "intent:#Intent;SEL;scheme=ppfx;package=com.plainphone.fx.applinks;end", intentUri = RAW, resolvers = listOf(any(fxApplinks))), withApplinks, OpenIn(fxApplinks), aosp(SELECTOR_RULE)),
+        Row("parseUri raw, no outer package: the selector's hidden Chrome is not resolvable", IntentFacts(data = "intent:#Intent;SEL;scheme=https;package=com.android.chrome;end", intentUri = RAW), withApplinks, NoHandler(TARGET_NOT_RESOLVABLE), aosp(SELECTOR_RULE)),
+        Row("parseUri raw, outer component wins over the selector", IntentFacts(data = "intent:#Intent;component=com.android.settings/.Settings;SEL;scheme=ppfx;package=com.plainphone.fx.applinks;end", intentUri = RAW, resolvers = listOf(any(settings))), withApplinks, BlockedScreen(NOT_APPROVED),
+            aosp("an explicit component resolves before the selector (PackageManager queryIntentActivities)")),
+        Row("parseUri raw, no '#': plain VIEW of the intent: data, nothing handles it", IntentFacts(data = "intent://example.com/path", intentUri = RAW), baseApproved, NoHandler(NO_RESOLVER), aosp("parseUri with no '#' returns VIEW with the raw data")),
+        Row("parseUri raw, old-format component to Settings", IntentFacts(data = "intent:x#action(android.settings.SETTINGS)component(com.android.settings!com.android.settings.Settings)", intentUri = RAW, resolvers = listOf(any(settings))), baseApproved, BlockedScreen(NOT_APPROVED),
+            aosp("a '#' without '#Intent;' takes getIntentOld, which can set a component")),
+        Row("parseUri sanitised, old-format component dropped", IntentFacts(data = "intent:x#component(com.android.settings!com.android.settings.Settings)", intentUri = SANITISED), baseApproved, NoHandler(NO_RESOLVER), aosp("getIntentOld; Chrome drops the component")),
+        Row("parseUri raw, unknown key is malformed", IntentFacts(data = "intent://example.com/#Intent;scheme=https;foo=bar;end", intentUri = RAW), baseApproved, NoHandler(MALFORMED_INTENT_URI), aosp("parseUri throws 'unknown EXTRA type'")),
         Row("parseUri sanitised drops the selector", IntentFacts(data = "intent://open#Intent;scheme=ppfx;package=com.plainphone.fx.applinks;SEL;package=com.android.chrome;end", intentUri = SANITISED, resolvers = listOf(any(fxApplinks))), withApplinks, OpenIn(fxApplinks), Evidence.Unverified("selector not run")),
         Row("malformed intent: URI", IntentFacts(data = "intent://example.com#Intent;scheme=https", intentUri = RAW), baseApproved, NoHandler(MALFORMED_INTENT_URI), Evidence.Unverified("parseUri throws URISyntaxException; not run")),
 
