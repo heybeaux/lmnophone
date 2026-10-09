@@ -13,7 +13,8 @@ spec is silent, the gap is listed under [Open questions](#open-questions-for-the
 | [flows-trusted-person.md](flows-trusted-person.md) | Trusted-person mode: PIN and recovery code, the mode's front page, requests, adding an app and choosing its permissions, removing an app |
 | [flows-sessions.md](flows-sessions.md) | Supervised sessions ("Stay with the phone until you tap Done"), the monthly check, Plainphone updates from the helper's computer |
 | [flows-limits-and-off.md](flows-limits-and-off.md) | "What Plainphone can't stop", "Phone software changed – review pending", "Plainphone needs attention", turning Plainphone off |
-| [flows-setup.md](flows-setup.md) | On-phone setup (steps 1–7) and the handover check |
+| [flows-setup.md](flows-setup.md) | On-phone setup (steps 1–8: mode, people, PINs, connect and privacy steps, reset protection, apps, limits, unplug) and the handover check |
+| [flows-people-modes-and-waits.md](flows-people-modes-and-waits.md) | Two trusted people ("Who are you?"), changes that wait 24 hours (start, cancel, skip, stuck, recovered), switching mode, self-managed mode, History, every text, and the exact-strings index with flags ([PLA-42](/PLA/issues/PLA-42)) |
 | [starter-catalog.md](starter-catalog.md) | Web-leak notes for Slack, Spotify, Telegram, Phone, Messages and Camera, each with the version reviewed |
 | [design-tokens.md](design-tokens.md) | The look: Lexend, black and white only, sizes, spacing, components; mockups in [mockups/](mockups/plainphone-screens.html) ([PLA-36](/PLA/issues/PLA-36)) |
 | [copy-test.md](copy-test.md) | How the copy was tested on people who had never seen it, and what they said |
@@ -26,8 +27,11 @@ There are three roles. The same real person can hold more than one.
 | Role | Who, for the first two phones | What they need from Plainphone |
 |---|---|---|
 | **The person using the phone** ("the user") | the trusted person on her phone; Beaux on his | A calm phone that does the basics without thinking. A clear way to ask for things. Never to feel watched. |
-| **The trusted person** | Beaux for the trusted person's phone; the trusted person for Beaux's | To say yes or no to apps, with the phone in their hands, and to know honestly what they can't control. |
+| **The trusted person** (one or two per phone, as equals) | Beaux for the trusted person's phone; the trusted person for Beaux's | To say yes or no to apps, with the phone in their hands, and to know honestly what they can't control. |
 | **The helper** | Beaux, for both phones | A guide they can follow without having written it, and a phone that says plainly when something is wrong. |
+
+A phone can also be **self-managed**: the user holds the PIN and is their own trusted person. Plainphone then adds
+waits and limits, and says plainly that it is friction, not a lock.
 
 **Design for strangers.** Assume the reader has never heard of Plainphone, has never opened Android settings,
 and is reading at the largest text size. Beaux and the trusted person are not technical; neither is anyone who might copy this.
@@ -94,15 +98,18 @@ the helper's first name, `{app}` the app's name as Android reports it.
 ## Texts Plainphone sends
 
 These are the only messages Plainphone sends. All go from the user's phone, by SMS, to fixed numbers entered at
-setup. The user can read this list on the phone ("About this phone").
+setup. The user can read this list on the phone ("About this phone"). **"{tp}" in this table means every trusted
+person**, one or two. The texts for changes that wait 24 hours, for every use of a PIN (receipts), and for stuck
+and recovered changes are in [M9](flows-people-modes-and-waits.md#m9-texts). A self-managed phone sends only the
+texts addressed to {helper}.
 
 | When | To | Text | Spec |
 |---|---|---|---|
-| The user asks for an app | {tp} | `Plainphone: {user} asked for an app: "{request}". To add it, you need to be with {user} and the phone. On the phone: More, then "For {tp}".` | trusted-person-controls, app requests |
+| The user asks for an app | {tp} | `Plainphone: {user} asked for an app: "{request}". To add it, you need to be with {user} and the phone. On the phone: More, then "For {tp}".` With two trusted people: `…To add it, one of you needs to be with {user} and the phone. On the phone: More, then "For Sam and Jo".` | trusted-person-controls, app requests |
 | The user forwards a blocked link | {tp} | `Plainphone: {user} would like to look at this link with you: {host}{path}` | web-containment, isolated screen |
 | Monthly check is due (retried daily up to 7 days if sending fails; never duplicated) | {tp} | `Plainphone: time for {user}'s monthly phone check. It takes about 10 minutes, with {user}'s phone in your hands. On the phone: More, then "For {tp}", then "Monthly check".` | approved-apps, monthly check |
 | Google Play services unchanged for 30 days | {tp} | `Plainphone: Google Play services on {user}'s phone hasn't updated in 30 days. This is often fine. Please look at it during the next monthly check.` | approved-apps; design D3 |
-| 10 wrong PIN entries | {tp} | `Plainphone: the PIN on {user}'s phone was entered wrong 10 times. If that wasn't you, have a look together when you can.` | trusted-person-controls, lockout |
+| 10 wrong PIN entries | {tp} | `Plainphone: the PIN on {user}'s phone was entered wrong 10 times. If that wasn't you, have a look together when you can.` With two trusted people, the per-person version in [M9](flows-people-modes-and-waits.md#m9-texts). | trusted-person-controls, lockout |
 | A phone software update is pending | {tp} and {helper} | `A phone software update is coming. Plainphone needs a review.` (exact text required by spec) | device-lockdown, system updates |
 | The phone is on software Plainphone hasn't reviewed | {tp} and {helper} | `Plainphone: {user}'s phone has new phone software that hasn't been reviewed yet. Calls, texts and Emergency work. The helper needs to install a reviewed Plainphone update.` | device-lockdown, unknown build |
 | Both policy copies broken on unknown software | {tp} and {helper} | `Plainphone: {user}'s phone needs the helper. Calls, texts and Emergency work. Please don't wait more than a few days.` | device-lockdown, policy storage |
@@ -150,6 +157,10 @@ product decisions, not wording. The copy doesn't promise any of them. **Status:*
 [PLA-14 product-questions document](/PLA/issues/PLA-14#document-product-questions), and Beaux is choosing there.
 The trusted-person and web-window flows wait for his choices. Copy already changed from the Lead's answers:
 Screen J (flat battery), "can't stop" item 11 (Google), and one "Check for updates" path.
+
+*Questions 8 and 11 are answered: Beaux chose two trusted people, a self-managed mode and a 24-hour wait (card
+`c60170d6`), and approved the change in PLA-30. The copy is in
+[flows-people-modes-and-waits.md](flows-people-modes-and-waits.md). They stay below as a record.*
 
 8. **Changing the trusted person, or more than one.** Beaux asked "Can I change this person? Can I have
    multiple people in Sam's role?" The MVP has one trusted person, and no screen to change who it is.

@@ -6,8 +6,14 @@ Words, rules and placeholders are in [README.md](README.md). The trusted person 
 **Tone.** `{tp}` is looking after a phone for someone they care about. The words are about helping `{user}`,
 never about watching them. The mode's own name on screen is **"Looking after {user}'s phone"**.
 
+**Two trusted people, and self-managed mode.** A phone can have one or two trusted people, who are equals, or be
+self-managed. The screens for that (Who are you?, trusted people, 24-hour waits, the stuck-change and recovered
+screens, self-managed settings and History) are in [flows-people-modes-and-waits.md](flows-people-modes-and-waits.md).
+With two people, `{tp}` below is the person who chose their name on "Who are you?".
+
 **Fresh PIN.** trusted-person-controls requires a fresh PIN (or recovery code) for each of: adding an app,
-removing an app, starting any session, installing a Plainphone update, turning Plainphone off. Entering the mode
+removing an app, starting any session, installing a Plainphone update, turning Plainphone off, starting or skipping
+any waiting change, and changing self-managed waits and limits. Entering the mode
 also needs the PIN. The first time a second PIN is asked for, one line explains why:
 "Plainphone asks for your PIN for each change, so nobody else can make one if the phone is put down."
 
@@ -15,7 +21,12 @@ also needs the PIN. The first time a second PIN is asked for, one line explains 
 
 ## T1. PIN entry
 
-**Spec:** trusted-person-controls (PIN lockout schedule; recovery code; fresh authority).
+**Spec:** trusted-person-controls (PIN lockout schedule; recovery code; fresh authority; two trusted people).
+
+With two trusted people, every PIN entry starts with **Who are you?**
+([M1](flows-people-modes-and-waits.md#m1-who-are-you)). Each person's lockout and recovery code are their own
+([M1b](flows-people-modes-and-waits.md#m1b-one-person-is-waiting-after-too-many-tries),
+[M1c](flows-people-modes-and-waits.md#m1c-recovery-code-with-two-people)).
 
 ### T1a. Enter PIN
 
@@ -63,6 +74,10 @@ A menu page. At the top, a short **"Needs you"** list, only when something is wa
 
 | Item text | When | Opens |
 |---|---|---|
+| **Waiting: {change}** | A change is waiting 24 hours, or being made | [M3d](flows-people-modes-and-waits.md#m3d-the-change-on-the-trusted-person-side) |
+| **Reset protection not updated – call the helper** | A change of people or mode is stuck | [M4](flows-people-modes-and-waits.md#m4-a-change-is-stuck) |
+| **Plainphone needs repair** | Plainphone can't read who is in charge | [M4, Repair](flows-people-modes-and-waits.md#repair-credential-store-damaged) |
+| **Plainphone recovered from an interrupted change** | Once, after a lost change record | [M5](flows-people-modes-and-waits.md#m5-after-an-interrupted-change) |
 | **Not ready to hand back – call the helper** | A protection check failed after a session or update | [P5](flows-sessions.md#p5-not-ready-to-hand-back) |
 | **Plainphone needs attention** | Same conditions as the home line | [L3](flows-limits-and-off.md#l3-plainphone-needs-attention-trusted-person-view) |
 | **Phone software changed – review pending** | The phone is on software Plainphone hasn't reviewed | [L2](flows-limits-and-off.md#l2-phone-software-changed--review-pending) |
@@ -82,13 +97,17 @@ A menu page. At the top, a short **"Needs you"** list, only when something is wa
 | **Check for updates** | Last done: {date} | [P3](flows-sessions.md#p3-monthly-check) |
 | **Open full phone settings** | For 5 minutes, for things Phone settings doesn't have, like the screen lock | [P1](flows-sessions.md#p1-before-a-session) (Settings) |
 | **What Plainphone can't stop** | Read this before adding apps | [L1](flows-limits-and-off.md#l1-what-plainphone-cant-stop) |
+| **Trusted people** | {everyone} | [M2](flows-people-modes-and-waits.md#m2-trusted-people) |
+| **History** | Changes on this phone, last 90 days | [M8](flows-people-modes-and-waits.md#m8-history) |
 | **Install a Plainphone update** | Only with {helper}, when {helper} asks | [P6](flows-sessions.md#p6-install-a-plainphone-update) |
 | **Change PIN** | (none) | T1-style: old PIN, new PIN twice |
-| **Turn Plainphone off** | Makes this an ordinary phone | [L4](flows-limits-and-off.md#l4-turning-plainphone-off) |
+| **Turn Plainphone off** | Makes this an ordinary phone, after 24 hours | [L4](flows-limits-and-off.md#l4-turning-plainphone-off) |
 
 Under the title, one line, always shown: "This is for adding apps and keeping the phone working. You can't see
 {user}'s messages, photos, or what {user} does in apps." (Cold readers in both roles said the trusted-person side
 felt like surveillance without it; see [copy-test.md](copy-test.md).)
+
+In self-managed mode this page is **Your settings** ([M7a](flows-people-modes-and-waits.md#m7a-your-settings)).
 
 A **Done** button is pinned at the bottom: "Done – back to {user}'s home screen". It is the only primary action.
 
