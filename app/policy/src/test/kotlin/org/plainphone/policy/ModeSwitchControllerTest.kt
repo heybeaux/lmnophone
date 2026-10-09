@@ -67,7 +67,7 @@ class ModeSwitchControllerTest {
                 override fun read(requestId: String) = CancelIntent.CLEAR
             })
         var elevation: ElevationRecord? = ElevationRecord()
-        val elevationStore = object : ElevationStore() {
+        val elevationStore = object : ElevationStore(store) {
             override fun read() = if (fail == "elevation-read") null else elevation
             override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord,
                 expectedCredentials: CredentialState?): Boolean = edge("clear-authority") {
@@ -470,7 +470,7 @@ class ModeSwitchControllerTest {
             listOf(FloorIdentity(dialer, FloorRole.SYSTEM_DIALER, IdentitySource.OS_MANAGED)),
             BuildInventory("model", "build", 1, NeverHideList(setOf(sms)), setOf(sms), emptySet()), waitingOperation = f.waiting?.operation)
     }
-    private fun elevationController(f: F): ElevationController = ElevationController(f.elevationStore, { f.credentials }, f.vault,
+    private fun elevationController(f: F, store: ElevationStore = f.elevationStore): ElevationController = ElevationController(store, { f.credentials }, f.vault,
         RunningClock { f.now }, { ElevationLimits() }, { policy(f) }, { BatteryState(50, false) }, object : SessionEffects {
             override fun revokeAllRelaxations(): Boolean { f.physicallyOpen = false; return true }
             override fun open(access: SessionAccess): Boolean { f.physicallyOpen = true; return true }
@@ -696,6 +696,96 @@ class ModeSwitchControllerTest {
                 f.tick(if (rollback) WaitingPhase.ROLLING_BACK else WaitingPhase.COMMITTING))
             assertFalse(f.elevationStore.revocationPending)
             assertEquals(SessionOutcome.OPENED, startPlay(f, session, "after-terminal"))
+        }
+    }
+
+    private fun restartedStore(f: F) = object : ElevationStore(f.store) {
+        override fun read() = f.elevation
+        override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord,
+            expectedCredentials: CredentialState?): Boolean {
+            if (f.elevation !== expected || (expectedCredentials != null && f.credentials !== expectedCredentials)) return false
+            f.elevation = replacement
+            return true
+        }
+    }
+
+    @Test fun `startup restores mode gate before executor runs in either mode or active direction`() {
+        for (mode in Mode.entries) for (phase in listOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)) {
+            val f = F(mode)
+            f.waiting = f.waiting!!.replacing(f.waiting!!.revision + 1, f.waiting!!.operation!!.withPhase(phase))
+            val ledger = f.elevation!!.state.ledger
+            val restored = restartedStore(f) // No executor pass initializes this new process's shared store.
+            val session = sessions(f, restored)
+            val elevation = elevationController(f, restored)
+            assertTrue(restored.revocationPending)
+            assertTrue(session.onStart())
+            assertEquals(ElevationOutcome.IDLE, elevation.onStart())
+            session.tick(); elevation.tick()
+            assertTrue(restored.revocationPending)
+            if (mode == Mode.TRUSTED) assertEquals(SessionOutcome.NOT_READY, startPlay(f, session, "boot-blocked"))
+            assertNull(session.access())
+            assertNull(elevation.prepare(f.a, ElevationTarget.Play))
+            assertSame(ledger, f.elevation!!.state.ledger)
+            assertFalse(f.physicallyOpen)
+        }
+    }
+
+    @Test fun `startup after applied swap and lost waiting record stays closed through ordinary cleanup`() {
+        for (missing in listOf(false, true)) {
+            val f = F(Mode.SELF_MANAGED)
+            outcome(PeopleChangeOutcome.APPLIED, f.tick())
+            if (missing) f.waiting = null
+            val restored = restartedStore(f)
+            val session = sessions(f, restored)
+            assertTrue(session.onStart())
+            assertEquals(ElevationOutcome.IDLE, elevationController(f, restored).onStart())
+            assertTrue(restored.revocationPending)
+            assertEquals(SessionOutcome.NOT_READY, startPlay(f, session, "post-swap-startup"))
+            assertFalse(f.physicallyOpen)
+        }
+    }
+
+    @Test fun `shared gate permits pending mode waits and only durable terminal success releases active mode gate`() {
+        for (phase in listOf(WaitingPhase.PENDING, WaitingPhase.CANCELLED, WaitingPhase.COMPLETED)) {
+            val f = F()
+            f.waiting = f.waiting!!.replacing(f.waiting!!.revision + 1, f.waiting!!.operation!!.withPhase(phase))
+            val restored = restartedStore(f)
+            val session = sessions(f, restored)
+            assertTrue(session.onStart())
+            assertFalse(restored.revocationPending)
+            assertEquals(SessionOutcome.OPENED, startPlay(f, session, "allowed-$phase"))
+        }
+        val f = F()
+        val restored = restartedStore(f)
+        restored.revocationPending = false // An ordinary writer never owns the waiting-operation gate.
+        assertTrue(restored.revocationPending)
+        f.fail = "journal"
+        restored.revocationPending = false
+        assertTrue(restored.revocationPending)
+        f.fail = null
+        assertTrue(restored.revocationPending)
+    }
+
+    @Test fun `mode executor requires elevation gate bound to its exact waiting store`() {
+        for (wrongStore in listOf(false, true)) {
+            val f = F()
+            val otherWaiting = object : WaitingChangeStore {
+                override fun read() = WaitingState()
+                override fun compareAndSet(expected: WaitingState, replacement: WaitingState) = false
+            }
+            val unbound = object : ElevationStore(if (wrongStore) otherWaiting else null) {
+                override fun read() = f.elevation
+                override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord,
+                    expectedCredentials: CredentialState?) = error("incorrectly wired store must not execute")
+            }
+            val transaction = object : ModeSwitchCommitter by f.transaction {
+                override val elevationStore = unbound
+            }
+            val executor = PeopleChangeController(f.store, f.credentialStore, transaction, f.effects, RunningClock { f.now }, f.vault)
+            outcome(PeopleChangeOutcome.IGNORED, executor.tick(f.id, WaitingPhase.COMMITTING))
+            assertNull(executor.prepareStop(f.id, f.a))
+            assertEquals(0, f.patchWrites)
+            assertTrue(f.events.isEmpty())
         }
     }
 
