@@ -1,0 +1,82 @@
+// Copyright 2026 Plainphone contributors
+// SPDX-License-Identifier: Apache-2.0
+package org.plainphone.device.facts
+
+import java.security.MessageDigest
+import org.plainphone.core.CertDigest
+import org.plainphone.core.PackageName
+import org.plainphone.device.PackageFactsSource
+import org.plainphone.links.PackageFacts
+import org.plainphone.policy.ApprovalBinding
+import org.plainphone.policy.InstalledPackage
+
+object CertDigests {
+    /** SHA-256 of one DER-encoded certificate: the digest `apksigner verify --print-certs` prints. */
+    fun sha256(der: ByteArray): CertDigest =
+        CertDigest(MessageDigest.getInstance("SHA-256").digest(der).joinToString("") { "%02x".format(it) })
+}
+
+/**
+ * One pass's package facts, in the shapes each module takes.
+ * @property facts one [PackageFacts] per package, for `:links`.
+ * @property installed for `:policy`; a package whose facts changed between the two reads appears once per variant.
+ * @property identities for `PolicyInput.installedIdentities`; conflicting signer sets appear once each.
+ */
+data class LivePackages(
+    val facts: List<PackageFacts>,
+    val installed: List<InstalledPackage>,
+    val identities: List<ApprovalBinding>,
+)
+
+/**
+ * Reads package facts from the live OS, hidden packages included. Nothing here is cached: a digest
+ * is a fact for this pass only and never grants access by itself (PLA-46).
+ *
+ * The package list is read twice, before and after the other queries of the pass. A package whose
+ * system flag, version or signers differ between the reads is reported once per variant. `:policy`
+ * fails closed on such duplicates, so contradicting facts confer neither system identity nor an
+ * approval match. Its [PackageFacts] is not system and has no signers.
+ */
+class LivePackageReader(private val port: PackageSystemPort) : PackageFactsSource {
+    override fun installedPackages(): List<PackageFacts> = read().facts
+
+    fun read(between: () -> Unit = {}): LivePackages {
+        val first = port.packages().map(::fact)
+        val http = port.browsableHandlers(PROBE_HTTP)
+        val https = port.browsableHandlers(PROBE_HTTPS)
+        between()
+        val second = port.packages().map(::fact)
+
+        val byName = LinkedHashMap<String, MutableList<Fact>>()
+        for (f in first + second) byName.getOrPut(f.name) { mutableListOf() }.let { if (f !in it) it += f }
+
+        val facts = mutableListOf<PackageFacts>()
+        val installed = mutableListOf<InstalledPackage>()
+        val identities = mutableListOf<ApprovalBinding>()
+        for ((name, variants) in byName) {
+            val pkg = PackageName(name)
+            val agreed = variants.map { it.system to it.signers }.distinct().singleOrNull()
+            facts += PackageFacts(
+                packageName = pkg,
+                signingCerts = agreed?.second.orEmpty(),
+                isSystem = agreed?.first == true,
+                handlesProbeHttp = name in http,
+                handlesProbeHttps = name in https,
+            )
+            variants.map { InstalledPackage(pkg, it.system, it.versionCode) }.distinct().forEach { installed += it }
+            val signerSets = variants.map { it.signers }.distinct()
+            if (signerSets.none { it.isEmpty() }) signerSets.forEach { identities += ApprovalBinding(pkg, it) }
+        }
+        return LivePackages(facts, installed, identities)
+    }
+
+    private data class Fact(val name: String, val system: Boolean, val versionCode: Long, val signers: Set<CertDigest>)
+
+    private fun fact(raw: RawPackage) =
+        Fact(raw.name, raw.system, raw.versionCode, raw.signers.orEmpty().map(CertDigests::sha256).toSet())
+
+    companion object {
+        const val PROBE_HTTP = "http://${PackageFacts.PROBE_HOST}/"
+        const val PROBE_HTTPS = "https://${PackageFacts.PROBE_HOST}/"
+    }
+}
