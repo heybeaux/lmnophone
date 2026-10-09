@@ -364,4 +364,45 @@ class ElevationControllerTest {
         }
     }
 
+    @Test fun `terminal Done cannot be weakened by a later retaining event after failed cleanup`() {
+        for (point in listOf("save-CLOSING", "revoke", "protected", "readback", "save-clear")) {
+            val f = ElevationControllerTest(); f.setup(); val r = f.request(); f.advance(600_000); f.start(r)
+            assertTrue(f.controller.installed(r.id, f.app)); f.failure = point
+            assertEquals(ElevationOutcome.NOT_READY, f.controller.done(r.id), point)
+            assertNull(f.controller.access()); assertNull(f.controller.candidate(f.app))
+            f.failure = null
+            assertEquals(ElevationOutcome.ENDED, f.controller.endPackageAccess(r.id, SessionEnd.SCREEN_OFF), point)
+            assertNull(f.record!!.state.grant, point); assertNull(f.controller.candidate(f.app), point)
+            assertEquals(ElevationOutcome.IDLE, f.controller.tick(), point)
+            assertEquals(1, f.record!!.state.ledger.debits.size, point); assertFalse(f.physicallyOpen, point)
+        }
+    }
+    @Test fun `Done strengthens a failed retaining close and retries stay terminal`() {
+        setup(); val r = request(); advance(600_000); start(r); failure = "revoke"
+        assertEquals(ElevationOutcome.NOT_READY, controller.endPackageAccess(r.id, SessionEnd.LEFT_PACKAGES))
+        assertEquals(ElevationOutcome.NOT_READY, controller.done(r.id)); failure = null
+        assertEquals(ElevationOutcome.ENDED, controller.tick()); assertNull(record!!.state.grant)
+        assertEquals(1, record!!.state.ledger.debits.size)
+    }
+    @Test fun `damaged record cleanup keeps retrying through tick after revoke or repair failures`() {
+        for (point in listOf("revoke", "protected", "readback", "save-clear")) {
+            val f = ElevationControllerTest(); f.setup(); val r = f.request(); f.advance(600_000); f.start(r)
+            f.record = null; f.failure = point
+            assertEquals(ElevationOutcome.NOT_READY, f.controller.tick(), point); assertNull(f.controller.access())
+            if (point == "revoke") assertTrue(f.physicallyOpen)
+            f.failure = null; f.events.clear()
+            assertEquals(ElevationOutcome.IDLE, f.controller.tick(), point)
+            assertEquals("revoke", f.events.first(), point); assertFalse(f.physicallyOpen, point)
+            assertNotNull(f.record, point); assertEquals(3, f.record!!.state.ledger.debits.size, point)
+            assertNull(f.record!!.state.grant); assertEquals(SessionJournal.Empty, f.record!!.journal)
+        }
+    }
+    @Test fun `explicit startup failures also retain tick recovery without granting early access`() {
+        setup(); val r = request(); advance(600_000); start(r); failure = "revoke"
+        assertEquals(ElevationOutcome.NOT_READY, controller.onStart()); assertNull(controller.access())
+        assertEquals(ElevationOutcome.NOT_READY, controller.tick()); assertNull(controller.prepare(person, ElevationTarget.Play))
+        failure = null; assertEquals(ElevationOutcome.IDLE, controller.tick())
+        assertFalse(physicallyOpen); assertNull(record!!.state.grant); assertEquals(1, record!!.state.ledger.debits.size)
+    }
+
 }
