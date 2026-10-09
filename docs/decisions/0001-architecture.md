@@ -191,23 +191,24 @@ The candidate becomes the decision only if, on the emulator, and later on one ph
 
 ## Notes: option D as a mode, and who can relax the lockdown (PLA-30)
 
-*Added 2026-10-09 by the Lead. Pending Beaux's approval of the OpenSpec change `add-copy-test-product-decisions`. The architecture (option A) does not change.*
+*Added 2026-10-09 by the Lead; revised after cross-model review PLA-31. Pending Beaux's approval of the OpenSpec change `add-copy-test-product-decisions`. The architecture (option A) does not change.*
 
 Beaux's copy-test answers (card `c60170d6`, Telegram 4481) touch two promises in this ADR.
 
 **1. Option D comes back as a mode, not as the architecture.**
 - A phone is **supervised** (one or two trusted people) or **self-managed** (the user is their own trusted person).
 - Self-managed mode keeps everything in option A: Device Owner, hidden apps, lock task with in-task launches blocked, restrictions, emergency floor, web containment. Only who can relax it changes.
-- **It is friction, not a lock**, and Plainphone says so in those words. The user holds the PIN. Opening up needs a 10-minute wait, is limited to 2 times a day, closes at the session deadline, and can never be made permanent. Making it stricter is instant; making it looser waits 24 hours.
+- **It is friction, not a lock**, and Plainphone says so in those words. The user holds the PIN. Opening up needs a 10-minute countdown, is limited to 2 times a day, closes at its deadline, and no setting can make it permanent. Making it stricter is instant; making it looser waits 24 hours. *Exception, disclosed:* if Plainphone can't run while an elevation is open, it stays open until a helper fixes the phone (the custody limit), with nobody watching. The user can always get full control back by waiting 24 hours, or by wiping the phone.
 - Keeping the Device Owner is what makes this better than option D alone: the friction can't be skipped through safe mode, adb or a launcher change.
 - Reset protection names the user's own account in this mode, so a recovery-mode wipe gives the user a plain phone. That matches the friction promise and is disclosed.
 
 **2. Who can relax the lockdown.** "A supervised session is the only way the lockdown is relaxed" still holds, with these changes:
 - **Two trusted people, as equals.** Either can approve apps and open sessions alone. Each has their own PIN, lockout, recovery code and reset-protection ID. Both get texts.
 - **The user**, in self-managed mode only, through an elevation: a supervised session with friction, under the same journal, deadline, revoke-on-every-start and protected-state rules.
-- **Changes that can't be undone afterwards wait 24 hours:** turning off, changing who the trusted people are, and switching to self-managed. Texts go out at once, and either trusted person (or anyone holding the phone) can cancel. In supervised mode, a trusted person's recovery code skips the wait. In self-managed mode, nothing does.
+- **Changes that can't be put back wait 24 hours:** turning off, changing who the trusted people are, and switching mode in either direction. Only one can be pending at a time, and it is re-checked before it happens (cancelled if the starting PIN was replaced, or the people or mode changed). Texts go out at once, and either trusted person (or anyone holding the phone) can cancel. In supervised mode, a trusted person's recovery code skips the wait, on a screen naming the change. In self-managed mode, nothing in Plainphone does.
+- **A PIN proves knowledge, not identity.** The waits, receipts to both people and re-checks exist because a PIN can be seen. New credentials take effect only after the new reset-protection list reads back.
 - **The user alone can never change who the trusted people are.**
-- **PLA-22 mitigation B** becomes step 3 of the session contract, with a low-battery guard.
+- **PLA-22 mitigation B** is applied at every unhide, with a low-battery guard for discretionary unhides. It narrows the boot-loop window but doesn't close it: a power loss between the unhide and the save can still loop. That is disclosed.
 - The PLA-17 web and Wi-Fi sign-in windows would be a further relaxation path. They are a separate change.
 
 **What this does not change:** go/no-go conditions 1–7, the emergency promises, the custody limit Beaux accepted (it now also applies, unwatched, to self-managed elevations, and that is disclosed), and the device approval rules.

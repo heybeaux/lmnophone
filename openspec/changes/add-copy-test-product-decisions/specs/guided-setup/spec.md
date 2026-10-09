@@ -3,9 +3,9 @@
 ### Requirement: Setup asks which mode the phone uses
 Before any PIN is set, on-phone setup SHALL ask whether the phone is **supervised** (one or two trusted people) or **self-managed** (the user is their own trusted person). It SHALL explain each in plain words:
 - supervised: a trusted person approves apps and changes, and turning off waits 24 hours;
-- self-managed: the user holds the PIN, and Plainphone adds waits and limits so that distraction takes effort. It can't stop the user.
+- self-managed: the user holds the PIN, and Plainphone adds waits and limits so that distraction takes effort. It can't stop the user, who can always remove it by waiting 24 hours or by wiping the phone.
 
-In supervised mode, setup SHALL offer to add a second trusted person, and SHALL tell both that they are equals. In self-managed mode, setup SHALL show the friction defaults (10-minute wait, 2 elevations a day) and let the user make them stricter.
+In supervised mode, setup SHALL offer to add a second trusted person, and SHALL tell both that they are equals. In self-managed mode, setup SHALL show the friction defaults (10-minute countdown, 2 elevations a day) and let the user make them stricter.
 
 During setup (helper custody, before handover), adding trusted people SHALL NOT be a waiting change.
 
@@ -58,7 +58,7 @@ The guide SHALL walk each account holder through these steps, on **their own** d
 
 Plainphone SHALL show the digits back for confirmation. No email, token, password or other account data SHALL be collected or logged.
 
-For each trusted person and backup person, the helper SHALL record that they confirmed both of these:
+For **every** account on the list (each trusted person, the backup person, and in self-managed mode the user), the helper SHALL record that its holder confirmed both of these:
 - they can sign in to that account from a device other than either Plainphone phone;
 - their second factor is not only on a Plainphone phone.
 
@@ -66,7 +66,7 @@ For each trusted person and backup person, the helper SHALL record that they con
 
 **Backup person.** If Beaux and the trusted person are each other's trusted person, the guide SHALL recommend adding a backup person.
 
-**Self-managed mode.** The guide SHALL say plainly that, because the list names the user's own account, a recovery-mode wipe lets the user set the phone up again without Plainphone. It still stops a stranger.
+**Self-managed mode.** The guide SHALL say plainly that, because the list names the user's own account, a recovery-mode wipe erases the phone and then lets the user set it up again without Plainphone. After a wipe, someone without a listed account's sign-in can't set the phone up (subject to Q10).
 
 The guide SHALL be dry-run, before release, by someone who did not write it, on a computer signed in to several accounts with the same display name.
 
