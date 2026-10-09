@@ -126,6 +126,92 @@ class ElevatedAppApprovalTest {
         assertTrue(controller.onStart() in setOf(AppApprovalOutcome.READY, AppApprovalOutcome.APPROVED))
     }
 
+    @Test fun `self managed removal keeps debit and data then reapproval needs a new exact elevation`() {
+        setup(ElevationTarget.Approve(a))
+        assertEquals(AppApprovalOutcome.APPROVED, controller.approveElevated(request()))
+        val installed = policy.installed
+        val removal = assertNotNull(controller.prepareRemoval(a.packageName, person))
+        val authority = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, removal.action)).authority
+        assertEquals(AppApprovalOutcome.REMOVED, controller.removeApproved(removal, removal.approvalId, authority))
+        assertEquals(1, elevation.state.ledger.debits.size)
+        assertEquals(a, approvals.removedApps[a.packageName])
+        restart()
+        val selection = PermissionSelection(manifest(a), mapOf(camera to PermissionChoice.ALLOW))
+        assertNull(controller.prepareReapproval(a.packageName, person, selection))
+        assertNull(controller.prepareElevated(a.packageName, selection))
+        val next = assertNotNull(elevations.prepare(person, ElevationTarget.Approve(a)))
+        val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, next.action)).authority
+        assertEquals(ElevationOutcome.COUNTING, elevations.request(next, fresh))
+        advance(600_000)
+        assertEquals(ElevationOutcome.STARTED, elevations.start(next.id, ElevationTarget.Approve(a)))
+        assertEquals(AppApprovalOutcome.APPROVED, controller.approveElevated(request()))
+        assertEquals(2, elevation.state.ledger.debits.size)
+        assertFalse(a.packageName in approvals.removedApps)
+        assertEquals(installed, policy.installed)
+    }
+
+    @Test fun `self managed holder withdraws stuck elevated approval without a new turn`() {
+        setup(ElevationTarget.Approve(a))
+        failure = "apply"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.approveElevated(request()))
+        assertNull(elevation.state.grant)
+        val withdrawal = assertNotNull(controller.prepareWithdrawal(person))
+        val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, withdrawal.action)).authority
+        failure = null
+        assertEquals(AppApprovalOutcome.WITHDRAWN, controller.withdrawPending(withdrawal, withdrawal.approvalId, fresh))
+        assertNull(approvals.pending)
+        assertFalse(a.packageName in approvals.apps)
+        assertEquals(1, elevation.state.ledger.debits.size)
+    }
+
+    @Test fun `self managed removal and withdrawal reject changed mode action boot credentials and replay`() {
+        for (withdraw in listOf(false, true)) for (bad in listOf("mode", "action", "boot", "generation", "structure", "expiry", "confirmation")) {
+            now = ClockReading(RunningTime("epoch", 0), BootTime("boot", 0))
+            elevation = ElevationRecord(); approvals = AppApprovalState()
+            elevations = elevations(); controller = controller(); failure = null
+            setup(ElevationTarget.Approve(a))
+            failure = if (withdraw) "apply" else null
+            assertEquals(if (withdraw) AppApprovalOutcome.NOT_READY else AppApprovalOutcome.APPROVED,
+                controller.approveElevated(request()))
+            failure = null
+            val removal = if (withdraw) null else assertNotNull(controller.prepareRemoval(a.packageName, person))
+            val withdrawal = if (withdraw) assertNotNull(controller.prepareWithdrawal(person)) else null
+            val action = withdrawal?.action ?: removal!!.action
+            val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin,
+                if (bad == "action") PrivilegedAction("other", "other") else action)).authority
+            when (bad) {
+                "mode" -> credentials = CredentialState(Mode.TRUSTED, credentials!!.people)
+                "boot" -> now = now.copy(boot = BootTime("other", 0))
+                "generation" -> credentials = credentials!!.replacing(person, credentials!!.people.getValue(person).copy(generation = 1))
+                "structure" -> credentials = CredentialState(Mode.SELF_MANAGED, credentials!!.people, structureGeneration = 1)
+                "expiry" -> advance(120_000)
+            }
+            val before = approvals
+            val outcome = if (withdrawal != null) controller.withdrawPending(withdrawal,
+                if (bad == "confirmation") "wrong" else withdrawal.approvalId, fresh)
+                else controller.removeApproved(removal!!, if (bad == "confirmation") "wrong" else removal.approvalId, fresh)
+            assertEquals(AppApprovalOutcome.REFUSED, outcome, "$withdraw $bad")
+            assertSame(before, approvals)
+        }
+    }
+
+    @Test fun `self managed removal crash resumes restrictive direction with one receipt and no refund`() {
+        setup(ElevationTarget.Approve(a))
+        assertEquals(AppApprovalOutcome.APPROVED, controller.approveElevated(request()))
+        val removal = assertNotNull(controller.prepareRemoval(a.packageName, person))
+        val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, removal.action)).authority
+        crash = "after-REMOVING"
+        assertFailsWith<IllegalStateException> { controller.removeApproved(removal, removal.approvalId, fresh) }
+        crash = null
+        elevations = elevations(); controller = controller()
+        assertEquals(ElevationOutcome.IDLE, elevations.onStart())
+        assertEquals(AppApprovalOutcome.REMOVED, controller.onStart())
+        assertEquals(AppApprovalOutcome.READY, controller.resume())
+        assertEquals(1, approvals.receipts.count { it.kind == AppApprovalReceiptKind.REMOVED })
+        assertEquals(1, elevation.state.ledger.debits.size)
+        assertEquals(AppApprovalOutcome.REFUSED, controller.removeApproved(removal, removal.approvalId, fresh))
+    }
+
     @Test fun `one Play grant approves two observed apps and closes access without restarting elevation`() {
         val grant = setup(); val deadline = elevation.state.grant!!.deadline
         val first = request(); val second = request(b)
