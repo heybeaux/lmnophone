@@ -48,3 +48,25 @@ Consequences for the protocol:
 - G3 (bytes mutable until commit) cannot be closed with `setChecksums`. It stays a code-structure rule: no write after the final `openRead` hash.
 - Once `commit()` returns, the install no longer depends on our process. After a restart, classify by the installed version and never commit again.
 - The G1 window is the time between the durable use-up and the `commit()` call (here, about a millisecond plus the store write). A crash there spends the turn and nothing installs, because the next start abandons the open session.
+
+## Abandoning a committed session (PLA-140 X6), 2026-10-09
+
+Question from the Lead (PLA-140): does abandoning an own session that is already committed and
+still installing cancel the install? If so, startup abandonment would stop late-install recovery.
+`run-x6.sh` (phases 1 and 2) uses 40 MB APKs so the install takes about 100 ms. Emulator
+`pla140-a35` (API 35, google_apis arm64); full output in `evidence/abandon-committed-api35.txt`.
+
+| # | Action after `commit()` returns | Observed |
+|---|---|---|
+| X6a/g | Nothing (baseline) | Installs about 100-120 ms after `commit()`. `isCommitted()` reads **false for about 15-16 ms** first (3/3) |
+| X6b | Abandon at once (0 ms), all sessions | **Cancelled**: `INSTALL_FAILED_ABORTED: Session was abandoned`, version unchanged (2/2). The session read `committed=false` |
+| X6d | Abandon at once, only `isCommitted() == false` | **Cancelled** too (1/1): the filter does not cover the first ~16 ms |
+| X6h | Wait until `isCommitted() == true`, then abandon all | **Cancelled**: `INSTALL_FAILED_ABORTED` at progress 0.9, version unchanged (2/2) |
+| X6i | Wait until `isCommitted() == true`, then abandon only uncommitted | Committed session kept; **install completes** (2/2) |
+| X6c | Abandon after 150 ms | Install already finished; the old process was gone |
+| X6e/f | Process killed right after `commit()`, new process started at once | The new process only started after the install (package frozen); it saw no sessions (2/2) |
+
+Consequence for the adapter: abandoning a committed session cancels it, so startup abandons only
+sessions with `isCommitted() == false`, and never a session this process has itself committed
+(that covers the ~16 ms before `isCommitted()` turns true, for an in-process `UpdateProtocol.onStart`
+rerun). Committed sessions are left to finish; startup readback then classifies them.

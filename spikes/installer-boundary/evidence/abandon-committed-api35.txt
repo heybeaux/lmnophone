@@ -1,0 +1,166 @@
+device: 15 API 35 pla140-a35
+Success: Device owner set to package org.plainphone.spike.updater/.Admin
+Active admin set to component org.plainphone.spike.updater/.Admin
+out/upd-v6.apk: 1 file pushed, 0 skipped. 804.3 MB/s (40018308 bytes in 0.047s)
+out/upd-v7.apk: 1 file pushed, 0 skipped. 1010.4 MB/s (40018308 bytes in 0.038s)
+out/upd-v8.apk: 1 file pushed, 0 skipped. 1058.7 MB/s (40018316 bytes in 0.036s)
+out/upd-v9.apk: 1 file pushed, 0 skipped. 825.8 MB/s (40018308 bytes in 0.046s)
+out/upd-v10.apk: 1 file pushed, 0 skipped. 750.0 MB/s (40018308 bytes in 0.051s)
+out/upd-v11.apk: 1 file pushed, 0 skipped. 903.3 MB/s (40018308 bytes in 0.042s)
+apk size 40018308 bytes (40 MB incompressible asset)
+
+== X6a baseline: commit v6, no abandon (install duration)
+installed versionCode=6
+
+== X6b commit v7, then abandon ALL own sessions at once
+installed versionCode=6
+
+== X6c commit v8, then abandon ALL own sessions after 150 ms
+installed versionCode=8
+
+== X6d commit v9, then abandon only UNCOMMITTED sessions at once
+installed versionCode=8
+
+== X6e kill after commit (v10); a new process at once abandons ALL
+installed versionCode=10
+
+== X6f kill after commit (v11); a new process at once abandons only UNCOMMITTED
+installed versionCode=11
+
+== app log (survives process replacement)
+1791587655364 pid=4314 vc=1 process start; my sessions=[]
+1791587656953 pid=4314 vc=1 session 1111488955 written; readback sha256=dcedf2b54db37053cb32e18ae5411733bf08ee8edb7f5d35770050b1cb78af72
+1791587656955 pid=4314 vc=1 commit() call
+1791587656956 pid=4314 vc=1 commit() returned
+1791587656957 pid=4314 vc=1 write after commit refused: SecurityException
+1791587657076 pid=4395 vc=6 process start; my sessions=[]
+1791587657079 pid=4395 vc=6 MY_PACKAGE_REPLACED
+1791587657081 pid=4395 vc=6 status session=1111488955 status=0 message=INSTALL_SUCCEEDED: Session installed
+1791587672169 pid=4395 vc=6 session 1905957239 written; readback sha256=2567d66bea894d36d7cea94ef5925ee3402c5c11d9fda4c062b8e97a1b119ad5
+1791587672170 pid=4395 vc=6 commit() call
+1791587672171 pid=4395 vc=6 commit() returned
+1791587672171 pid=4395 vc=6 X6 abandon-all after 0 ms
+1791587672173 pid=4395 vc=6 abandoned session=1905957239 committed=false active=true progress=0.0
+1791587672177 pid=4395 vc=6 status session=1905957239 status=3 message=INSTALL_FAILED_ABORTED: Session was abandoned
+1791587672178 pid=4395 vc=6 status session=1905957239 status=4 message=INSTALL_FAILED_INVALID_APK: Session: 1905957239. No packages staged in /data/app/vmdl1905957239.tmp
+1791587687334 pid=4395 vc=6 session 2030208399 written; readback sha256=615c8523ec355d39823f4c8c8261f550667c80509ed1813a951487185d32b70d
+1791587687334 pid=4395 vc=6 commit() call
+1791587687335 pid=4395 vc=6 commit() returned
+1791587687432 pid=4480 vc=8 process start; my sessions=[]
+1791587687434 pid=4480 vc=8 MY_PACKAGE_REPLACED
+1791587687435 pid=4480 vc=8 status session=2030208399 status=0 message=INSTALL_SUCCEEDED: Session installed
+1791587702565 pid=4480 vc=8 session 2131795867 written; readback sha256=59aaf95b46967ccc60f97e4f3b7ecac120e54c3e280835aba137d8da4af6a9c2
+1791587702565 pid=4480 vc=8 commit() call
+1791587702568 pid=4480 vc=8 commit() returned
+1791587702569 pid=4480 vc=8 X6 abandon-uncommitted after 0 ms
+1791587702571 pid=4480 vc=8 abandoned session=2131795867 committed=false active=true progress=0.0
+1791587702572 pid=4480 vc=8 status session=2131795867 status=3 message=INSTALL_FAILED_ABORTED: Session was abandoned
+1791587702573 pid=4480 vc=8 status session=2131795867 status=4 message=INSTALL_FAILED_INVALID_APK: Session: 2131795867. No packages staged in /data/app/vmdl2131795867.tmp
+1791587717733 pid=4480 vc=8 session 343782315 written; readback sha256=768f0be1cd6b0b0993ec13caf51b48c616732beb12327d3351a17beded125dfe
+1791587717734 pid=4480 vc=8 commit() call
+1791587717734 pid=4480 vc=8 commit() returned
+1791587717734 pid=4480 vc=8 killing right after commit returned
+1791587717843 pid=4603 vc=10 process start; my sessions=[]
+1791587717845 pid=4603 vc=10 MY_PACKAGE_REPLACED
+1791587717846 pid=4603 vc=10 status session=343782315 status=0 message=INSTALL_SUCCEEDED: Session installed
+1791587732941 pid=4603 vc=10 session 1764510814 written; readback sha256=738b6b15feefaf121cf805685e9cf31bf3b87fb479d40d75c61d8046a5966a4d
+1791587732942 pid=4603 vc=10 commit() call
+1791587732942 pid=4603 vc=10 commit() returned
+1791587732943 pid=4603 vc=10 killing right after commit returned
+1791587733029 pid=4674 vc=11 process start; my sessions=[]
+1791587733031 pid=4674 vc=11 MY_PACKAGE_REPLACED
+1791587733033 pid=4674 vc=11 status session=1764510814 status=0 message=INSTALL_SUCCEEDED: Session installed
+
+== cleanup
+no owners
+Success
+
+
+##### phase 2 (same AVD, rebuilt with the isCommitted() poll) #####
+
+device: 15 API 35 pla140-a35
+Success: Device owner set to package org.plainphone.spike.updater/.Admin
+Active admin set to component org.plainphone.spike.updater/.Admin
+out/upd-v6.apk: 1 file pushed, 0 skipped. 850.2 MB/s (40019060 bytes in 0.045s)
+out/upd-v7.apk: 1 file pushed, 0 skipped. 1160.5 MB/s (40019060 bytes in 0.033s)
+out/upd-v8.apk: 1 file pushed, 0 skipped. 1083.3 MB/s (40019068 bytes in 0.035s)
+out/upd-v9.apk: 1 file pushed, 0 skipped. 901.7 MB/s (40019060 bytes in 0.042s)
+out/upd-v10.apk: 1 file pushed, 0 skipped. 977.5 MB/s (40019060 bytes in 0.039s)
+out/upd-v11.apk: 1 file pushed, 0 skipped. 868.4 MB/s (40019060 bytes in 0.044s)
+apk size 40019060 bytes (40 MB incompressible asset)
+
+== X6g commit v6; poll until isCommitted() is true (no abandon)
+installed versionCode=6
+
+== X6h commit v7; once isCommitted() is true, abandon ALL own sessions
+installed versionCode=6
+
+== X6i commit v8; once isCommitted() is true, abandon only UNCOMMITTED sessions
+installed versionCode=8
+
+== X6h repeat with v9
+installed versionCode=8
+
+== X6b repeat with v10: abandon ALL at once after commit() returns
+installed versionCode=8
+
+== X6i repeat with v11
+installed versionCode=11
+
+== app log (survives process replacement)
+1791587946216 pid=4846 vc=1 process start; my sessions=[]
+1791587947802 pid=4846 vc=1 session 1316057139 written; readback sha256=148fd806d1412796bf060fe25bc695c9b2ac7744451b1e060ea2f377f76610d6
+1791587947803 pid=4846 vc=1 commit() call
+1791587947804 pid=4846 vc=1 commit() returned
+1791587947821 pid=4846 vc=1 X6 session 1316057139 committed=true after 16312 us
+1791587947914 pid=4953 vc=6 process start; my sessions=[]
+1791587947917 pid=4953 vc=6 MY_PACKAGE_REPLACED
+1791587947919 pid=4953 vc=6 status session=1316057139 status=0 message=INSTALL_SUCCEEDED: Session installed
+1791587962975 pid=4953 vc=6 session 1509935057 written; readback sha256=43bb36b86dfd0cb1acf9a8b4c3017cb22617d5e5091329fb5aff8076c1f3d81f
+1791587962976 pid=4953 vc=6 commit() call
+1791587962977 pid=4953 vc=6 commit() returned
+1791587962994 pid=4953 vc=6 X6 session 1509935057 committed=true after 15163 us
+1791587962994 pid=4953 vc=6 X6 abandon-all after 0 ms
+1791587962995 pid=4953 vc=6 abandoned session=1509935057 committed=true active=true progress=0.90000004
+1791587962995 pid=4953 vc=6 still mine session=1509935057 committed=true active=true progress=0.90000004
+1791587962998 pid=4953 vc=6 status session=1509935057 status=3 message=INSTALL_FAILED_ABORTED: Session was abandoned
+1791587978190 pid=4953 vc=6 session 21331891 written; readback sha256=3b481bc48130cd6c5d52b3875149d50625b287695e6387190516622b4b317fb9
+1791587978191 pid=4953 vc=6 commit() call
+1791587978191 pid=4953 vc=6 commit() returned
+1791587978208 pid=4953 vc=6 X6 session 21331891 committed=true after 16257 us
+1791587978208 pid=4953 vc=6 X6 abandon-uncommitted after 0 ms
+1791587978208 pid=4953 vc=6 kept committed session=21331891 committed=true active=true progress=0.90000004
+1791587978209 pid=4953 vc=6 still mine session=21331891 committed=true active=true progress=0.90000004
+1791587978326 pid=5038 vc=8 process start; my sessions=[]
+1791587978328 pid=5038 vc=8 MY_PACKAGE_REPLACED
+1791587978329 pid=5038 vc=8 status session=21331891 status=0 message=INSTALL_SUCCEEDED: Session installed
+1791587993419 pid=5038 vc=8 session 930295656 written; readback sha256=95eb080853ed115a0f5170b1150b9f868cdf74666a4c69b5badcdb07ecd0689c
+1791587993421 pid=5038 vc=8 commit() call
+1791587993423 pid=5038 vc=8 commit() returned
+1791587993439 pid=5038 vc=8 X6 session 930295656 committed=true after 15999 us
+1791587993439 pid=5038 vc=8 X6 abandon-all after 0 ms
+1791587993440 pid=5038 vc=8 abandoned session=930295656 committed=true active=true progress=0.90000004
+1791587993441 pid=5038 vc=8 still mine session=930295656 committed=true active=true progress=0.90000004
+1791587993444 pid=5038 vc=8 status session=930295656 status=3 message=INSTALL_FAILED_ABORTED: Session was abandoned
+1791588008602 pid=5038 vc=8 session 424398779 written; readback sha256=7a78647d763a9c3184c51b00140ce86ed953caac390c0af388c259c0dd3e4c25
+1791588008602 pid=5038 vc=8 commit() call
+1791588008604 pid=5038 vc=8 commit() returned
+1791588008604 pid=5038 vc=8 X6 abandon-all after 0 ms
+1791588008606 pid=5038 vc=8 abandoned session=424398779 committed=false active=true progress=0.0
+1791588008606 pid=5038 vc=8 still mine session=424398779 committed=false active=true progress=0.0
+1791588008607 pid=5038 vc=8 status session=424398779 status=3 message=INSTALL_FAILED_ABORTED: Session was abandoned
+1791588008609 pid=5038 vc=8 status session=424398779 status=4 message=INSTALL_FAILED_INVALID_APK: Session: 424398779. No packages staged in /data/app/vmdl424398779.tmp
+1791588023771 pid=5038 vc=8 session 136489664 written; readback sha256=5a840235bf4c63d673e94b18d2461381161972a8bf89446403ffdd8cc6f3ba89
+1791588023772 pid=5038 vc=8 commit() call
+1791588023773 pid=5038 vc=8 commit() returned
+1791588023789 pid=5038 vc=8 X6 session 136489664 committed=true after 16089 us
+1791588023789 pid=5038 vc=8 X6 abandon-uncommitted after 0 ms
+1791588023790 pid=5038 vc=8 kept committed session=136489664 committed=true active=true progress=0.90000004
+1791588023790 pid=5038 vc=8 still mine session=136489664 committed=true active=true progress=0.90000004
+1791588023882 pid=5143 vc=11 process start; my sessions=[]
+1791588023884 pid=5143 vc=11 MY_PACKAGE_REPLACED
+1791588023886 pid=5143 vc=11 status session=136489664 status=0 message=INSTALL_SUCCEEDED: Session installed
+
+== cleanup
+no owners
+Success
