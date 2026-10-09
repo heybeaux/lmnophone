@@ -75,6 +75,11 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 - the SMS sender;
 - view-models mapping engine output to `XUiState`.
 
+**What the `:ui` screens leave to lane D** (from the lane B slice 2 reviews, PLA-109 and PLA-110). Each one needs a test in lane D's integration work:
+- **Send and retry may arrive twice.** A greyed-out button doesn't stop two taps that land before the screen redraws: the Verifier showed both `BlockedLinkEvent.Send` and the request `Retry` events can fire twice. The SMS sender must ignore a repeat of a send that is already under way, for link confirmations, app requests and retries.
+- **Names are cleaned when saved.** Trusted-person names reject or strip bidi controls (U+202A–202E, U+2066–2069, U+200E, U+200F, U+061C), zero-width characters and line separators when saved. `:ui` also strips bidi controls when it shows a name, but that only backs this up.
+- **Hosts that aren't plain ASCII show as punycode, with the unusual-letters warning.** `pay​pal.com` (with a zero-width space) must not reach the screen as "paypal.com".
+
 ## Branches, worktrees, merges
 
 | Lane | Engineer | Worktree | Branch |
