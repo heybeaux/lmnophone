@@ -56,8 +56,8 @@ class ElevationRequest internal constructor(val id: String, val target: Elevatio
 
 /**
  * Serialized, non-reentrant coordinator shared with PinVault, session, waiting, approval and updater writes.
- * This slice opens Play/Settings only. Approve/Update and approval consumption remain unavailable until
- * their final transactions are integrated. Candidate data is not an approval capability.
+ * Play/Approve consumption requires the optional combined approval store. Update remains unavailable
+ * until the installer boundary is integrated. Candidate data is not an approval capability.
  */
 class ElevationController(
     private val store: ElevationStore,
@@ -69,6 +69,7 @@ class ElevationController(
     private val battery: () -> BatteryState,
     private val effects: SessionEffects,
     private val ids: AppApprovalIdSource,
+    private val approvalStore: ElevationApprovalStore? = null,
 ) {
     private var initialized = false
     private var recoveryRequired = false
@@ -146,6 +147,10 @@ class ElevationController(
             return proposal.outcome
         }
         val grant = proposal.state.grant!!
+        if (confirmedTarget is ElevationTarget.Approve) {
+            if (!save(before, proposal.state, SessionJournal.Empty, before.person, current)) return ElevationOutcome.NOT_READY
+            return ElevationOutcome.STARTED
+        }
         val kind = if (confirmedTarget == ElevationTarget.Play) WindowKind.PLAY else WindowKind.SETTINGS
         val access = SessionAccess(id, kind, packages, grant.deadline)
         val opening = SessionJournal.Active(access, SessionPhase.OPENING)
@@ -233,27 +238,107 @@ class ElevationController(
         return candidate.takeIf { it == installedIdentity(packageName) }
     }
 
+    /** No caller-supplied grant, person, session history or candidate ID enters this path. */
+    @Synchronized internal fun prepareApproval(identity: ApprovalBinding, approvals: AppApprovalStore): ApprovalElevation? {
+        if (approvals !== approvalStore || approvalStore.elevationStore !== store ||
+            !initialized || closing != null || store.revocationPending) return null
+        val before = store.read() ?: return null
+        if (!live(before) || !approvalMatches(before, identity)) return null
+        return ApprovalElevation(before.state.grant!!.id, identity, before.person!!)
+    }
+
+    @Synchronized internal fun closeForApproval(binding: ApprovalElevation): Boolean {
+        if (!initialized || closing != null || store.revocationPending) return false
+        val before = store.read() ?: return false
+        if (!matchesApproval(before, binding) || !live(before)) return false
+        if (before.state.grant!!.packageAccessOpen &&
+            endPackageAccess(binding.grantId, SessionEnd.LEFT_PACKAGES) != ElevationOutcome.ACCESS_CLOSED) return false
+        val closed = store.read() ?: return false
+        return closed.journal == SessionJournal.Empty && matchesApproval(closed, binding) && live(closed)
+    }
+
+    /** Called only by AppApprovalController after its permission transaction is PREPARING. */
+    @Synchronized internal fun commitApproval(binding: ApprovalElevation, approvals: AppApprovalStore,
+        preparing: AppApprovalState, committed: AppApprovalState, current: CredentialState,
+        finalChecks: () -> Boolean): Boolean {
+        val port = approvalStore ?: return false
+        if (port !== approvals || port.elevationStore !== store || !initialized || closing != null || store.revocationPending) return false
+        val before = store.read() ?: return false
+        if (before.revision == Long.MAX_VALUE || before.journal != SessionJournal.Empty ||
+            before.state.grant?.packageAccessOpen != false || !matchesApproval(before, binding) ||
+            !live(before, preparing) || !binding.person.matches(current)) return false
+        val proposal = ElevationMachine.consume(before.state, binding.grantId,
+            ElevationAction.Approve(binding.identity, binding.grantId), clock.checkpoint())
+        if (proposal.outcome != ElevationOutcome.CONSUMED) return false
+        val next = before.replacing(proposal.state, person = before.person.takeIf { proposal.state.grant != null })
+        var checked = false
+        return port.commitElevationApproval(preparing, committed, before, next, current) {
+            // Adapter invokes inside its serialized transaction, immediately before the joint write.
+            if (checked) false else {
+                checked = true
+                finalChecks() && !store.revocationPending && closing == null &&
+                    matchesApproval(before, binding) && live(before, preparing)
+            }
+        } && checked
+    }
+
+    private fun matchesApproval(record: ElevationRecord, binding: ApprovalElevation): Boolean =
+        record.state.grant?.id == binding.grantId && record.person == binding.person && approvalMatches(record, binding.identity)
+
+    private fun approvalMatches(record: ElevationRecord, identity: ApprovalBinding): Boolean {
+        val grant = record.state.grant ?: return false
+        if (identity != installedIdentity(identity.packageName)) return false
+        return when (val target = grant.target) {
+            ElevationTarget.Play -> play?.takeIf { it.access.id == grant.id }?.let {
+                PlaySessionMachine.candidate(it, identity.packageName) == identity &&
+                    grant.approved.none { approved -> approved.packageName == identity.packageName }
+            } == true
+            is ElevationTarget.Approve -> target.identity == identity
+            else -> false
+        }
+    }
+
     private fun installedIdentity(packageName: PackageName): ApprovalBinding? {
         val input = policyInput() ?: return null
         if (input.installed.count { it.name == packageName } != 1) return null
         return input.installedIdentities?.filter { it.packageName == packageName }?.singleOrNull()
     }
-    private fun supported(target: ElevationTarget) = target == ElevationTarget.Play || target == ElevationTarget.Settings
-    private fun packages(target: ElevationTarget): Set<PackageName>? {
+    private fun supported(target: ElevationTarget) = target == ElevationTarget.Play || target == ElevationTarget.Settings ||
+        (target is ElevationTarget.Approve && approvalStore?.elevationStore === store)
+    private fun packages(target: ElevationTarget, preparing: AppApprovalState? = null): Set<PackageName>? {
         if (!supported(target)) return null
         val input = policyInput() ?: return null
-        if (input.lockedBoot || input.health != PolicyHealth.VALID || input.approvalState?.pending != null || input.waitingOperation?.phase in setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)) return null
+        if (input.lockedBoot || input.health != PolicyHealth.VALID ||
+            (input.approvalState?.pending != null && !ownedPreparing(input.approvalState, preparing)) ||
+            input.waitingOperation?.phase in setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)) return null
         val inventory = input.inventory?.takeIf { it.model == input.model && it.fingerprint == input.fingerprint } ?: return null
         if (!EmergencyFloor.compute(input.installed, input.identities).hasSystemDialer) return null
+        if (target is ElevationTarget.Approve) {
+            if (installedIdentity(target.identity.packageName) != target.identity) return null
+            val plan = PolicyEngine.decide(input.copy(sessionAccess = null))
+            return emptySet<PackageName>().takeIf { target.identity.packageName in plan.hidden &&
+                target.identity.packageName !in plan.neverHide }
+        }
         return sessionPackages(if (target == ElevationTarget.Play) WindowKind.PLAY else WindowKind.SETTINGS, inventory)
     }
-    private fun live(record: ElevationRecord): Boolean {
+    private fun ownedPreparing(actual: AppApprovalState, expected: AppApprovalState?): Boolean {
+        val op = actual.pending ?: return false
+        val own = expected?.pending ?: return false
+        return actual.revision == expected.revision && op.phase == AppApprovalPhase.PREPARING &&
+            own.phase == AppApprovalPhase.PREPARING && op.record.id == own.record.id &&
+            op.record.permissions.manifest.sameFacts(own.record.permissions.manifest) &&
+            op.record.permissions.choices == own.record.permissions.choices && op.receipt?.id == own.receipt?.id &&
+            op.receipt?.actor == own.receipt?.actor && op.receipt?.recipientGenerations == own.receipt?.recipientGenerations
+    }
+    private fun live(record: ElevationRecord, preparing: AppApprovalState? = null): Boolean {
         val grant = record.state.grant ?: return false
         if (ownedId != grant.id || record.person?.matches(credentials()) != true) return false
-        val now = clock.checkpoint() ?: return false
-        if (!grant.live(now.boot) || packages(grant.target) == null) return false
+        val packages = packages(grant.target, preparing) ?: return false
         val journal = record.journal as? SessionJournal.Active
-        return !grant.packageAccessOpen || (journal != null && journal.access.packages == packages(grant.target) && battery().allowsDiscretionaryUnhide)
+        if (grant.packageAccessOpen && (journal == null || journal.access.packages != packages || !battery().allowsDiscretionaryUnhide)) return false
+        // Read the deadline clock after any package/battery sources that can delay this check.
+        val now = clock.checkpoint() ?: return false
+        return grant.live(now.boot)
     }
     private fun failStart(id: String): ElevationOutcome {
         close(Close(id, false, ElevationOutcome.ENDED))
