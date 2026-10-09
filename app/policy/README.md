@@ -103,3 +103,8 @@ Tests cover all 16 priority combinations, first look, all waiting kinds, hidden 
 `cancel(requestId)` needs no authority, latches pending cancellation before attempting its atomic state/receipt write, and reports cancellation only after success. Within the running controller, failed writes prevent a later timer from committing and are retried. A process interruption before any cancellation write cannot produce a durable success acknowledgement; startup uses the last valid durable state. Restrictive cancellation remains possible if clock checkpointing fails. Calls/emergency must never depend on this gate, its storage, receipt dispatch or future restore effects. Use the same serialized dispatcher as PinVault, credential writes and the eventual restore controller; session startup revocation still runs first.
 
 Tests are written first for person-bound authority, atomic start/receipts (including interruption before/after write), single-slot protection, fake proven-clock reboot/restart/epoch behavior, exact maturity, low battery, dependency cancellation, failed cancel/commit writes, stale callbacks, invalid storage/credentials, and receipt preservation/acknowledgement. These tests prove the bounded gate, not the unfinished turn-off sequence or Android durability.
+
+Cancellation read failures retain the request IDs in the running controller until a valid operation
+record can reconcile them. A matching pending cancellation is retried before maturity; stale IDs
+cannot replace that intent or reverse a committing/rolling-back operation. This memory guard is
+not durable acknowledgement: success still requires the atomic cancelled-state and receipt write.

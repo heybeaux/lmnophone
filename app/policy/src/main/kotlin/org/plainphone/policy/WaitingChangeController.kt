@@ -60,7 +60,7 @@ class WaitingChangeController(
     private val authority: PersonAuthorityConsumer,
     private val identities: WaitingIdentitySource,
 ) {
-    private var cancellationRequested: String? = null
+    private val cancellationRequests = mutableSetOf<String>()
 
     @Synchronized
     fun prepareTurnOff(starter: TrustedPersonId): WaitingStart? {
@@ -73,6 +73,7 @@ class WaitingChangeController(
     fun startTurnOff(request: WaitingStart, freshAuthority: FreshAuthority, firstConfirmation: Boolean, secondConfirmation: Boolean): WaitingOutcome {
         if (!firstConfirmation || !secondConfirmation || request.used) return WaitingOutcome.REFUSED
         val before = store.read() ?: return WaitingOutcome.NOT_READY
+        reconcileCancellations(before)
         if (before.operation?.phase in setOf(WaitingPhase.PENDING, WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)) return WaitingOutcome.BUSY
         val current = credentials() ?: return WaitingOutcome.NOT_READY
         if (current.mode != request.mode || current.structureGeneration != request.structureGeneration ||
@@ -87,21 +88,24 @@ class WaitingChangeController(
 
     @Synchronized
     fun cancel(requestId: String): WaitingOutcome {
+        // Keep each intent until a valid record can identify the pending request.
+        cancellationRequests.add(requestId)
         val before = store.read() ?: return WaitingOutcome.NOT_READY
+        reconcileCancellations(before)
         val operation = before.operation ?: return WaitingOutcome.IGNORED
         if (operation.identity.requestId != requestId) return WaitingOutcome.IGNORED
         if (operation.phase != WaitingPhase.PENDING) return phaseResult(operation.phase)
-        cancellationRequested = requestId // Deny commit even if cancellation's atomic write fails.
         return cancelPending(before, operation, WaitingEvent.CANCELLED_ON_PHONE)
     }
 
     @Synchronized
     fun tick(requestId: String, battery: BatteryState): WaitingOutcome {
         val before = store.read() ?: return WaitingOutcome.NOT_READY
+        reconcileCancellations(before)
         val operation = before.operation ?: return WaitingOutcome.IGNORED
         if (operation.identity.requestId != requestId) return WaitingOutcome.IGNORED
         if (operation.phase != WaitingPhase.PENDING) return phaseResult(operation.phase)
-        if (cancellationRequested == requestId) return cancelPending(before, operation, WaitingEvent.CANCELLED_ON_PHONE)
+        if (requestId in cancellationRequests) return cancelPending(before, operation, WaitingEvent.CANCELLED_ON_PHONE)
         val current = credentials() ?: return WaitingOutcome.NOT_READY
         if (current.mode != operation.mode || current.structureGeneration != operation.structureGeneration ||
             current.people[operation.starter]?.generation != operation.generation) {
@@ -127,8 +131,14 @@ class WaitingChangeController(
         val current = credentials() ?: return WaitingOutcome.NOT_READY
         clock.checkpoint() // A failed clock cannot prevent a restrictive cancellation.
         if (!write(before, operation.withPhase(WaitingPhase.CANCELLED), event, current.people.mapValues { it.value.generation })) return WaitingOutcome.NOT_READY
-        if (cancellationRequested == operation.identity.requestId) cancellationRequested = null
+        cancellationRequests.remove(operation.identity.requestId)
         return WaitingOutcome.CANCELLED
+    }
+
+    private fun reconcileCancellations(state: WaitingState) {
+        val pendingId = state.operation?.takeIf { it.phase == WaitingPhase.PENDING }?.identity?.requestId
+        // Discard stale/terminal intents only after a successful read; never replace a matching intent.
+        cancellationRequests.retainAll(setOfNotNull(pendingId))
     }
 
     private fun phaseResult(phase: WaitingPhase) = when (phase) {
