@@ -1,0 +1,10 @@
+## t17-mitB-unhideflush-settings-2s-adb: unhideflush com.android.settings, reboot=adb after 2s (18:32:48)
+boot_id before: 8df1743f-d107-4874-b9fa-382df3f36c3a
+state com.android.settings hidden=true suspended=false
+unhide com.android.settings -> true; flushed in 1 ms
+booted 3s
+ 18:33:08 up 0 min,  0 users,  load average: 4.64, 0.96, 0.31
+reboot,shell
+state com.android.settings hidden=false suspended=false
+system_server crashes in crash buffer: 0
+RESULT: BOOTED

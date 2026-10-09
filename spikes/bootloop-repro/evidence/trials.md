@@ -15,3 +15,11 @@
 | t13-unhide-userapp-2s-adb | unhide | com.plainphone.spike.emu | 2s | adb | LOOP | 19 |
 | t14-unhide-captive-8s-adb | unhide | com.google.android.captiveportallogin | 8s | adb | BOOTED | 0 |
 | t15-unhide-captive-12s-adb | unhide | com.google.android.captiveportallogin | 12s | adb | BOOTED | 0 |
+| t16-mitB-unhideflush-captive-2s-adb | unhideflush | com.google.android.captiveportallogin | 2s | adb | BOOTED | 0 |
+| t17-mitB-unhideflush-settings-2s-adb | unhideflush | com.android.settings | 2s | adb | BOOTED | 0 |
+| t18-mitA-unsuspend-captive-2s-adb | unsuspend | com.google.android.captiveportallogin | 2s | adb | BOOTED | 0 |
+| t19-mitA-suspend-captive-2s-adb | suspend | com.google.android.captiveportallogin | 2s | adb | BOOTED | 0 |
+| t20-mitB-unhideflush-captive-0s-adb | unhideflush | com.google.android.captiveportallogin | 0s | adb | BOOTED | 0 |
+OK: killing emulator, bye bye
+OK
+| t21-unhide-captive-2s-kill | unhide | com.google.android.captiveportallogin | 2s | kill | LOOP | 31 |

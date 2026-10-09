@@ -1,0 +1,10 @@
+## t16-mitB-unhideflush-captive-2s-adb: unhideflush com.google.android.captiveportallogin, reboot=adb after 2s (18:32:12)
+boot_id before: 8df1743f-d107-4874-b9fa-382df3f36c3a
+state com.google.android.captiveportallogin hidden=true suspended=false
+unhide com.google.android.captiveportallogin -> true; flushed in 1 ms
+booted 0s
+ 18:32:28 up 0 min,  0 users,  load average: 0.08, 0.02, 0.01
+reboot,shell
+state com.google.android.captiveportallogin hidden=false suspended=false
+system_server crashes in crash buffer: 0
+RESULT: BOOTED
