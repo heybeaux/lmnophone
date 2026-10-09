@@ -13,6 +13,7 @@ import java.util.concurrent.locks.ReentrantLock
 import org.plainphone.core.BuildInventory
 import org.plainphone.core.Mode
 import org.plainphone.core.TrustedPersonId
+import org.plainphone.policy.AppApprovalOperation
 import org.plainphone.policy.AppApprovalPhase
 import org.plainphone.policy.AppApprovalState
 import org.plainphone.policy.AppliedPeopleChange
@@ -21,8 +22,11 @@ import org.plainphone.policy.CancelIntentStore
 import org.plainphone.policy.CredentialState
 import org.plainphone.policy.CredentialStore
 import org.plainphone.policy.ElevationApprovalStore
+import org.plainphone.policy.ElevationGrant
 import org.plainphone.policy.ElevationRecord
+import org.plainphone.policy.ElevationState
 import org.plainphone.policy.ElevationStore
+import org.plainphone.policy.ElevationTarget
 import org.plainphone.policy.FrictionSettingsReceipt
 import org.plainphone.policy.SessionJournal
 import org.plainphone.policy.FrictionWaitingStore
@@ -146,26 +150,44 @@ class JointAuthorityStore internal constructor(
     }
 
     /**
-     * The only shape the joint write accepts: PREPARING becomes COMMITTED with its receipt, and the
-     * grant is used up in place. Revisions advance by one; debits, grant start, deadline, target and
-     * person never change; no session is open before or after.
+     * The only replacement pair the joint write accepts, rebuilt here from the expected pair and
+     * compared byte for byte. The approval moves PREPARING -> COMMITTED exactly as the controller
+     * builds it, with every unrelated field kept. The grant is used up as the policy defines it:
+     * a Play grant gains exactly this package (once), a matching Approve grant is removed. Debits,
+     * grant start, deadline, target and person never change; no session is open before or after.
      */
     private fun joinable(expected: AppApprovalState, replacement: AppApprovalState,
         expectedElevation: ElevationRecord, replacementElevation: ElevationRecord): Boolean {
-        val before = expected.pending ?: return false
-        val after = replacement.pending ?: return false
-        if (before.phase != AppApprovalPhase.PREPARING || after.phase != AppApprovalPhase.COMMITTED ||
-            after.record.id != before.record.id || replacement.receipts.none { it.id == before.record.id } ||
-            replacement.revision != expected.revision + 1) return false
+        val op = expected.pending?.takeIf { it.phase == AppApprovalPhase.PREPARING } ?: return false
+        val receipt = op.receipt ?: return false
+        val identity = op.record.identity
+        if (expected.revision == Long.MAX_VALUE || expectedElevation.revision == Long.MAX_VALUE) return false
+        val approval = try {
+            AppApprovalState(expected.revision + 1, expected.apps + (identity.packageName to op.record),
+                AppApprovalOperation(op.record, receipt, AppApprovalPhase.COMMITTED), expected.receipts + receipt,
+                expected.removedApps - identity.packageName)
+        } catch (_: IllegalArgumentException) {
+            return false
+        }
         val grant = expectedElevation.state.grant ?: return false
-        val used = replacementElevation.state.grant
-        return replacementElevation.revision == expectedElevation.revision + 1 &&
-            replacementElevation.state.ledger.debits == expectedElevation.state.ledger.debits &&
-            expectedElevation.journal == SessionJournal.Empty && replacementElevation.journal == SessionJournal.Empty &&
-            !grant.packageAccessOpen && replacementElevation.state.countdown == null &&
-            (used == null || (used.id == grant.id && used.target == grant.target && used.startedAt == grant.startedAt &&
-                used.deadline == grant.deadline && !used.packageAccessOpen && used.approved.containsAll(grant.approved) &&
-                replacementElevation.person == expectedElevation.person))
+        if (grant.packageAccessOpen || expectedElevation.journal != SessionJournal.Empty) return false
+        val used = when (val target = grant.target) {
+            ElevationTarget.Play -> {
+                if (grant.approved.any { it.packageName == identity.packageName }) return false
+                ElevationRecord(expectedElevation.revision + 1, ElevationState(expectedElevation.state.ledger,
+                    grant = ElevationGrant.restore(grant.id, grant.target, grant.startedAt, grant.deadline, false,
+                        grant.approved + identity) ?: return false), SessionJournal.Empty, expectedElevation.person)
+            }
+            is ElevationTarget.Approve -> {
+                if (target.identity != identity) return false
+                ElevationRecord(expectedElevation.revision + 1, ElevationState(expectedElevation.state.ledger))
+            }
+            else -> return false
+        }
+        val wantedApproval = AuthorityCodec.encodeApprovals(approval) ?: return false
+        val wantedElevation = AuthorityCodec.encodeElevation(used) ?: return false
+        return wantedApproval.contentEquals(AuthorityCodec.encodeApprovals(replacement)) &&
+            wantedElevation.contentEquals(AuthorityCodec.encodeElevation(replacementElevation))
     }
 
     /**
