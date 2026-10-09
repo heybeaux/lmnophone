@@ -50,8 +50,8 @@ import org.plainphone.policy.WaitingPhase
 import org.plainphone.policy.WaitingState
 
 internal enum class Section { CREDENTIALS, WAITING, ELEVATION, RECEIPTS, APPROVALS }
-/** In write order: first copy ("A"), its fence, second copy ("B"), its fence. */
-internal enum class WritePoint { BEFORE_COPY_A, AFTER_COPY_A, AFTER_FENCE_A, AFTER_COPY_B, AFTER_FENCE }
+/** In write order: copy A, copy B (both agreeing is the commit point), fence A, fence B. */
+internal enum class WritePoint { BEFORE_COPY_A, AFTER_COPY_A, AFTER_COPY_B, AFTER_FENCE_A, AFTER_FENCE }
 /** Storage could not durably reserve a new identity; the caller shows "not ready" and retries later. */
 class IdentityUnavailable : IllegalStateException("identity reservation unavailable")
 
@@ -63,14 +63,16 @@ internal fun interface StorageFaults { fun at(point: WritePoint, dir: File) }
  * elevation record, the friction receipt outbox and the app approval state with its receipt outbox. Every transaction is a single replacement of
  * the whole record, so a crash exposes either the old or the new record and never a mix.
  *
- * The record is kept as two sides, each a copy (`authority-a`, `authority-b`) and a fence holding
- * its sequence. A write repairs both sides to the current record, then writes copy A, fence A,
- * copy B and fence B, and is acknowledged only when all four hold the new record. Any failure
- * restores every touched file to the previous record and returns false. So after an
- * acknowledgement no older record remains anywhere, and any later loss or corruption of files
- * reads the acknowledged record or nothing. A read takes the copy at the lower valid fence, else
- * the copy at the higher one (a write interrupted after copy B), and never a copy at neither. A
- * section that would not decode is never written.
+ * The record is kept as two copies (`authority-a`, `authority-b`) and two fences holding the
+ * last committed sequence. A write first repairs every file to the current record, then writes
+ * copy A, then copy B, then both fences. Both copies agreeing is the commit point. A read returns
+ * the two copies when they agree at or above the fence, else the single copy at exactly the
+ * fence, else null. So an interrupted write reads old until copy B lands and new after; a lone
+ * copy above the fence (a refused or unfinished write) never surfaces, even after the other copy
+ * is lost; and a copy below the fence (a stale or replayed replica) is never served. Every
+ * result is what reads back afterwards: true exactly when the new record does. After true, no
+ * older record remains, so any later loss reads that record or nothing. A section that would not
+ * decode is never written.
  *
  * All views share one non-reentrant coordinator per directory, keyed by its canonical path so
  * symlinked aliases share it too. A call made from inside a running
@@ -507,8 +509,10 @@ class JointAuthorityStore internal constructor(
      * left untouched and refused.
      */
     fun migrate(): Boolean = coordinator.run(false) {
-        if (fenceA.read() != null || fenceB.read() != null) {
-            val current = load() ?: return@run false
+        // Both new copies may already agree before any new fence is written; that record is current.
+        val loaded = load()
+        if (loaded != null || fenceA.read() != null || fenceB.read() != null) {
+            val current = loaded ?: return@run false
             if (listOf(copyA, copyB, fenceA, fenceB).all { it.read() != null }) return@run true
             // Finish an interrupted migration, so no old fence or copy is left beside one current fence.
             if (current.sequence == Long.MAX_VALUE) return@run false
@@ -636,20 +640,18 @@ class JointAuthorityStore internal constructor(
     private fun fenceBytes(sequence: Long): ByteArray = ByteBuffer.allocate(8).putLong(sequence).array()
 
     /**
-     * The copy at the lower valid fence, else the copy at the higher one; copies at the same
-     * sequence must agree. A copy at neither fence (an interrupted or restored write) is ignored.
-     * Null when no fence or no matching copy survives.
+     * Both copies when they agree at or above the higher valid fence (or with no fence left); else
+     * the copy at exactly that fence; else null.
      */
     private fun load(): Snapshot? {
-        val fences = listOfNotNull(fenceValue(fenceA), fenceValue(fenceB))
-        if (fences.isEmpty()) return null
+        val fence = listOfNotNull(fenceValue(fenceA), fenceValue(fenceB)).maxOrNull()
         val copies = listOfNotNull(copyA.read(), copyB.read()).mapNotNull { bytes -> Snapshot.decode(bytes)?.let { it to bytes } }
-        for (sequence in listOf(fences.min(), fences.max())) {
-            val matching = copies.filter { it.first.sequence == sequence }
-            val first = matching.firstOrNull() ?: continue
-            return if (matching.all { it.second.contentEquals(first.second) }) first.first else null
-        }
-        return null
+        if (copies.size == 2 && copies[0].second.contentEquals(copies[1].second) &&
+            (fence == null || copies[0].first.sequence >= fence)) return copies[0].first
+        if (fence == null) return null
+        val atFence = copies.filter { it.first.sequence == fence }
+        val first = atFence.firstOrNull() ?: return null
+        return if (atFence.all { it.second.contentEquals(first.second) }) first.first else null
     }
 
     /** Every section of [s] decodes, so an acknowledged record always reads back. */
@@ -677,44 +679,38 @@ class JointAuthorityStore internal constructor(
     }
 
     /**
-     * Repair both sides to [current] before a new write. A failed repair aborts the write; any
-     * file it touched already held or now holds [current], so [current] still reads.
+     * Repair every file to [current] before a new write, copies first. A failed repair aborts the
+     * write; any file it touched holds [current] or is unreadable, so [current] still reads.
      */
     private fun heal(current: Snapshot): Boolean {
         val bytes = current.encode(); val fence = fenceBytes(current.sequence)
-        for ((record, payload) in listOf(copyA to bytes, fenceA to fence, copyB to bytes, fenceB to fence))
+        for ((record, payload) in listOf(copyA to bytes, copyB to bytes, fenceA to fence, fenceB to fence))
             if (record.read()?.contentEquals(payload) != true && !record.write(payload) {}) return false
         return true
     }
 
     /**
-     * Repair, then copy A, fence A, copy B, fence B. True only when all four hold [next]. On any
-     * failure every touched file is put back to [previous], fences first; a fence that cannot be
-     * put back is deleted, so the new record cannot become the committed one. A first record or a
-     * migration has no previous record to restore; it reports what reads back.
+     * Repair, then copy A, copy B, fence A, fence B. If a copy write fails, both copies are put back
+     * to [previous] where possible; a lone new copy above the fence is never served either way. The
+     * result is read from disk: true exactly when [next] reads back. A migration names the copy
+     * that holds no old record, so the old one survives until both new copies are written.
      */
     private fun save(previous: Snapshot?, next: Snapshot, spare: AtomicRecord? = null): Boolean {
         if (previous != null && !heal(previous)) return false
         val bytes = next.encode()
         val fence = fenceBytes(next.sequence)
-        // A migration names the copy that holds no old record, so the old one survives until committed.
         val (first, other) = if (spare === copyB) copyB to copyA else copyA to copyB
-        val (firstFence, otherFence) = if (spare === copyB) fenceB to fenceA else fenceA to fenceB
-        val steps = listOf(Triple(first, bytes, WritePoint.AFTER_COPY_A), Triple(firstFence, fence, WritePoint.AFTER_FENCE_A),
-            Triple(other, bytes, WritePoint.AFTER_COPY_B), Triple(otherFence, fence, WritePoint.AFTER_FENCE))
         faults.at(WritePoint.BEFORE_COPY_A, dir)
-        var touched = 0
-        for ((record, payload, point) in steps) {
-            touched++
-            if (!record.write(payload) { faults.at(point, dir) }) break
-            if (touched == steps.size && steps.all { it.first.read()?.contentEquals(it.second) == true }) return true
+        val copied = first.write(bytes) { faults.at(WritePoint.AFTER_COPY_A, dir) } &&
+            other.write(bytes) { faults.at(WritePoint.AFTER_COPY_B, dir) }
+        if (copied) {
+            fenceA.write(fence) { faults.at(WritePoint.AFTER_FENCE_A, dir) }
+            fenceB.write(fence) { faults.at(WritePoint.AFTER_FENCE, dir) }
+        } else if (previous != null && load()?.encode()?.contentEquals(bytes) != true) {
+            val old = previous.encode()
+            other.write(old) {}; first.write(old) {}
         }
-        if (previous == null) return load()?.encode()?.contentEquals(bytes) == true && steps.all { it.first.read()?.contentEquals(it.second) == true }
-        val old = previous.encode(); val oldFence = fenceBytes(previous.sequence)
-        val restore = steps.take(touched).map { (record, payload, _) -> record to (if (payload === fence) oldFence else old) }
-        for ((record, payload) in restore.sortedBy { if (it.first === fenceA || it.first === fenceB) 0 else 1 })
-            if (!record.write(payload) {}) record.delete()
-        return false
+        return load()?.encode()?.contentEquals(bytes) == true
     }
 
     private class Coordinator {
