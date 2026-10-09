@@ -1,0 +1,10 @@
+Back
+Display options
+Sort by
+First name
+Name format
+First name first
+Choose theme
+System default
+resumed: 
+top: com.google.android.dialer/com.android.dialer.multibindingsettings.impl.DialerSettingsActivity

@@ -1,0 +1,6 @@
+10-08 19:09:56.817  9937  9937 I PPEMU   : launch [action=android.intent.action.MAIN comp=com.plainphone.fx.urlbar/.CtClientActivity text=https://example.com/ct-client es.fallback=webview newtask=1] returned normally: Intent { act=android.intent.action.MAIN flg=0x10000000 cmp=com.plainphone.fx.urlbar/.CtClientActivity (has extras) }
+10-08 19:09:56.850 13038 13038 I PPFX    : PPFX ctclient provider=null url=https://example.com/ct-client fallback=webview
+10-08 19:09:56.853 13038 13038 I PPFX    : PPFX ctclient launch returned normally
+10-08 19:09:56.862 13038 13038 I PPFX    : PPFX opened pkg=com.plainphone.fx.urlbar urlbar
+10-08 19:09:57.447 13038 13038 I PPFX    : PPFX webview started https://example.com/ct-client
+10-08 19:09:57.449 13038 13038 I PPFX    : PPFX webview finished https://example.com/ct-client title=Example Domain

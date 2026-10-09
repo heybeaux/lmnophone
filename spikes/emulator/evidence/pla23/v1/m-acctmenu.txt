@@ -1,0 +1,12 @@
+Close
+Sign In
+Archived
+Spam &amp; blocked
+Mark all as read
+Device pairing
+Messages settings
+Help &amp; feedback
+Privacy Policy
+Terms of Service
+resumed: 
+top: com.google.android.apps.messaging/.ui.ConversationListActivity

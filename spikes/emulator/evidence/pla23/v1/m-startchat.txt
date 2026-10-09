@@ -1,0 +1,9 @@
+Back
+New conversation
+To:
+Type names, phone numbers, or emails
+Create group
+Gemini
+Write, plan, learn, and more with Google AI
+resumed: 
+top: com.google.android.apps.messaging/.ui.ConversationListActivity

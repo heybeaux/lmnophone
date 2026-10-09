@@ -1,0 +1,7 @@
+Service
+Your carrier
+Setup
+Navigate up
+Voicemail
+resumed: com.android.phone/.settings.VoicemailSettingsActivity 
+top: com.android.phone/.settings.VoicemailSettingsActivity

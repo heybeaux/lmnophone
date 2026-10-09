@@ -1,0 +1,8 @@
+Settings
+Make &amp; receive calls
+Make calls with
+T-Mobile
+Navigate up
+Calling accounts
+resumed: com.android.phone/.settings.PhoneAccountSettingsActivity 
+top: com.android.phone/.settings.PhoneAccountSettingsActivity

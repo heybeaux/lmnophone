@@ -1,0 +1,95 @@
+# 2026-10-09T02:05:18Z start policy: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[no_add_managed_profile, no_add_user, no_config_cell_broadcasts, no_config_date_time, no_config_vpn, no_create_windows, no_factory_reset, no_install_apps, no_install_unknown_sources_globally, no_modify_accounts, no_network_reset, no_safe_boot, no_system_error_dialogs, no_usb_file_transfer, no_user_switch]
+
+## V5 harness boundary
+cat: /sdcard/ui.xml: No such file or directory
+home texts: 
+cat: /sdcard/ui.xml: No such file or directory
+home has a 'Stop lock task' node: 0
+exported MainActivity op=lt-stop without token:  9937  9937 I PPEMU   : REJECTED op=lt-stop without the command-hook token ; lockTaskModeState=1
+cat: /sdcard/ui.xml: No such file or directory
+v5-shade-settings-gear	TEST_FAILED	NO NODE Open settings
+
+## V4 floor-apply replaces the list
+seed stale entry via adb hook: OK lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.plainphone.fx.emergency, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+v4-stale-before-floor	TARGET_OPENED	com.plainphone.fx.emergency/com.plainphone.fx.common.FxActivity	com.plainphone.fx.emergency/com.plainphone.fx.common.FxActivity 	returned normally
+floor-apply: OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+v4-stale-after-floor	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally
+clean-list control: OK lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] / OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+v4-clean-after-floor	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally
+
+## V4 Emergency button (fx-emergency installed, declares the same filters at priority 1000)
+emergencyPackage=com.android.phone
+cat: /sdcard/ui.xml: No such file or directory
+v4-home-emergency-button	TEST_FAILED	NO NODE Emergency
+cat: /sdcard/ui.xml: No such file or directory
+emergency screen texts: 
+v4-control-implicit-emergency	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally
+v4-control-pinned-emergency	TARGET_OPENED	com.android.phone/.EmergencyDialer	com.android.phone/.EmergencyDialer 	returned normally
+
+## V3 real Custom Tabs client (fx.urlbar approved)
+OK approved=[com.google.android.dialer, com.google.android.apps.messaging, com.android.camera2, com.android.phone, com.plainphone.fx.urlbar] / OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.plainphone.fx.urlbar, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+CustomTabsService providers=[]
+v3-ctclient-fallback-view	LINK_CAUGHT	LinkActivity	com.plainphone.fx.urlbar/.CtClientActivity com.plainphone.spike.emu/.LinkActivity 	returned normally
+ 9937  9937 I PPEMU   : launch [action=android.intent.action.MAIN comp=com.plainphone.fx.urlbar/.CtClientActivity text=https://example.com/ct-client newtask=1] returned normally: Intent { act=android.intent.action.MAIN flg=0x10000000 cmp=com.plainphone.fx.urlbar/.CtClientActivity (has extras) }
+13038 13038 I PPFX    : PPFX ctclient provider=null url=https://example.com/ct-client fallback=null
+13038 13038 I PPFX    : PPFX ctclient launch returned normally
+v3-ctclient-fallback-webview	LINK_CAUGHT	LinkActivity	com.plainphone.spike.emu/.LinkActivity 	returned normally
+ 9937  9937 I PPEMU   : cmd [launch action=android.intent.action.MAIN comp=com.plainphone.fx.urlbar/.CtClientActivity text=https://example.com/ct-client es.fallback=webview newtask=1] -> OK relayed launch (result in logcat PPEMU)
+ 9937  9937 I PPEMU   : launch [action=android.intent.action.MAIN comp=com.plainphone.fx.urlbar/.CtClientActivity text=https://example.com/ct-client es.fallback=webview newtask=1] returned normally: Intent { act=android.intent.action.MAIN flg=0x10000000 cmp=com.plainphone.fx.urlbar/.CtClientActivity (has extras) }
+
+## V3 WebView inside an approved fixture (expected, disclosed leak)
+v3-webview-load	TARGET_OPENED	com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity	com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity 	returned normally
+13038 13038 I PPFX    : PPFX opened pkg=com.plainphone.fx.urlbar urlbar
+13038 13038 I PPFX    : PPFX webview started https://example.com/
+13038 13038 I PPFX    : PPFX webview finished https://example.com/ title=Example Domain
+cat: /sdcard/ui.xml: No such file or directory
+NO NODE ~Learn more
+cat: /sdcard/ui.xml: No such file or directory
+NO NODE ~More information
+after tapping the page link:  status=lockTaskModeState=1 top=com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity
+v3-webview-noclient-load	TARGET_OPENED	com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity	com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity 	returned normally
+cat: /sdcard/ui.xml: No such file or directory
+NO NODE ~Learn more
+cat: /sdcard/ui.xml: No such file or directory
+NO NODE ~More information
+no-WebViewClient link tap -> resumed:  top=com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity
+control: fx.urlbar not approved: OK approved=[com.google.android.dialer, com.google.android.apps.messaging, com.android.camera2, com.android.phone] / OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+v3-webview-unapproved	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally
+
+## V3 verified App Link (verification state set with pm set-app-links: simulated, no assetlinks fetch)
+  com.plainphone.fx.applinks:
+    ID: 0b38255f-0aa3-4e4f-a1b8-19419a7dc266
+    Signatures: [99:ED:D5:A3:7E:76:BB:34:17:A0:47:44:32:8A:31:D1:74:44:17:78:69:73:34:E6:C4:E0:C2:38:3A:C8:11:BD]
+    Domain verification state:
+      bank.plainphone-fx.example: approved
+approved: OK approved=[com.google.android.dialer, com.google.android.apps.messaging, com.android.camera2, com.android.phone, com.plainphone.fx.applinks] / OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.fx.applinks, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+v3-verified-applink-approved	TARGET_OPENED	com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity	com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity 	returned normally
+unapproved, still visible: OK approved=[com.google.android.dialer, com.google.android.apps.messaging, com.android.camera2, com.android.phone] / OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+v3-verified-applink-unapproved-visible	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally
+unapproved and hidden: hide com.plainphone.fx.applinks -> true
+v3-verified-applink-unapproved-hidden	LINK_CAUGHT	LinkActivity	com.plainphone.spike.emu/.LinkActivity 	returned normally
+unhide com.plainphone.fx.applinks -> true
+control, lock task off: OK relayed lt-stop (result in logcat PPEMU)
+v3-verified-applink-control-ltoff	TARGET_OPENED	com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity	com.plainphone.fx.applinks/com.plainphone.fx.common.FxActivity 	returned normally
+
+## V3 essential package that matches the browser heuristic (never-hide conflict)
+unhide com.plainphone.fx.browser -> true
+classify with fx.browser marked essential:
+probe http=[com.plainphone.fx.browser, com.plainphone.fx.httponly, com.plainphone.spike.emu] https=[com.plainphone.fx.browser, com.plainphone.spike.emu]
+com.android.vending: NEVER_HIDE
+com.google.android.dialer: NEVER_HIDE
+com.google.android.gms: NEVER_HIDE
+com.plainphone.fx.applinks: NOT_BROWSER
+com.plainphone.fx.browser: NEVER_HIDE_CONFLICT_REPORTED
+com.plainphone.fx.emergency: NOT_BROWSER
+com.plainphone.fx.httponly: NOT_BROWSER(one scheme only)
+com.plainphone.fx.urlbar: FLAG_CATALOG_REVIEW
+com.plainphone.spike.emu: SELF_SKIPPED
+
+isApplicationHidden com.plainphone.fx.browser -> false
+v3-conflict-https-link	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally
+restore normal classify:
+probe http=[com.plainphone.fx.browser, com.plainphone.fx.httponly, com.plainphone.spike.emu] https=[com.plainphone.fx.browser, com.plainphone.spike.emu]
+com.plainphone.fx.browser: GENERAL_BROWSER(heuristic) hide->true
+
+# end policy: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[no_add_managed_profile, no_add_user, no_config_cell_broadcasts, no_config_date_time, no_config_vpn, no_create_windows, no_factory_reset, no_install_apps, no_install_unknown_sources_globally, no_modify_accounts, no_network_reset, no_safe_boot, no_system_error_dialogs, no_usb_file_transfer, no_user_switch]

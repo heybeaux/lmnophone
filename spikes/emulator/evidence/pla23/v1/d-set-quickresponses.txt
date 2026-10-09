@@ -1,0 +1,8 @@
+Can't talk now. What's up?
+I'll call you right back.
+I'll call you later.
+Can't talk now. Call me later?
+Back
+Edit quick responses
+resumed: com.android.server.telecom/.RespondViaSmsSettings 
+top: com.android.server.telecom/.RespondViaSmsSettings

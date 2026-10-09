@@ -1,0 +1,3 @@
+com.google.android.apps.safetyhub/.LauncherActivity
+com.google.android.apps.safetyhub/.home.HomePageAppInfoEntry
+com.google.android.apps.safetyhub/.setupflow.suw.SafetyGatewayActivity

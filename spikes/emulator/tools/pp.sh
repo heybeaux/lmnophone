@@ -7,7 +7,7 @@ A() { adb -s "$S" "$@" < /dev/null; }
 cmd() { A shell am broadcast -a com.plainphone.spike.emu.CMD -n com.plainphone.spike.emu/.CommandReceiver --es cmd "'$*'" | perl -0ne 'if (/data="(.*)"\s*$/s) { print "$1\n" } elsif (/result=0\s*$/) { print "(no data)\n" }'; }
 shot() { A exec-out screencap -p > "$1"; }
 top() { A shell dumpsys activity activities | grep -E "topResumedActivity|ResumedActivity:" | head -2; }
-ui() { A shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; A shell cat /sdcard/ui.xml; }
+ui() { A shell uiautomator dump /data/local/tmp/ui.xml >/dev/null 2>&1; A shell cat /data/local/tmp/ui.xml; }  # PLA-23: /sdcard is unreadable to shell under the full restriction set
 # tap the first node whose text matches exactly
 tapt() { local b; b=$(ui | tr '>' '\n' | grep -m1 "text=\"$1\"" | grep -o 'bounds="[^"]*"' | grep -oE '[0-9]+' | head -4 | tr '\n' ' '); [ -z "$b" ] && { echo "NO NODE $1"; return 1; }; set -- $b; A shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 )); }
 toppkg() { A shell dumpsys activity activities | grep -m1 topResumedActivity | sed -E 's/.* u0 ([^ ]+) t[0-9]+.*/\1/'; }

@@ -1,0 +1,10 @@
+m-menu-signin	Messages > o:Use Messages without an account d:Sign in t:Sign In	POLICY_DENIED	BlockedAppActivity | res=android/com.android.internal.app.BlockedAppActivity  top=android/com.android.internal.app.BlockedAppActivity	App is not available|OK|Settings is not available right now.|		evidence/pla23/v1/m-menu-signin.png
+m-menu-archived	Messages > o:Use Messages without an account d:Sign in t:Archived	TEST_FAILED	NO NODE Sign in	android/com.android.internal.app.BlockedAppActivity		evidence/pla23/v1/m-menu-archived.png
+m-menu-spamampblocked	Messages > o:Use Messages without an account d:Sign in t:Spam &amp; blocked	TEST_FAILED	NO NODE Sign in	android/com.android.internal.app.BlockedAppActivity		evidence/pla23/v1/m-menu-spamampblocked.png
+m-menu-devicepairing	Messages > o:Use Messages without an account d:Sign in t:Device pairing	TEST_FAILED	NO NODE Sign in	android/com.android.internal.app.BlockedAppActivity		evidence/pla23/v1/m-menu-devicepairing.png
+m-menu-messagessettings	Messages > o:Use Messages without an account d:Sign in t:Messages settings	TEST_FAILED	NO NODE Sign in	android/com.android.internal.app.BlockedAppActivity		evidence/pla23/v1/m-menu-messagessettings.png
+m-menu-helpampfeedback	Messages > o:Use Messages without an account d:Sign in t:Help &amp; feedback	TEST_FAILED	NO NODE Sign in	android/com.android.internal.app.BlockedAppActivity		evidence/pla23/v1/m-menu-helpampfeedback.png
+m-menu-privacypolicy	Messages > o:Use Messages without an account d:Sign in t:Privacy Policy	TEST_FAILED	NO NODE Sign in	android/com.android.internal.app.BlockedAppActivity		evidence/pla23/v1/m-menu-privacypolicy.png
+m-menu-termsofservice	Messages > o:Use Messages without an account d:Sign in t:Terms of Service	TEST_FAILED	NO NODE Sign in	android/com.android.internal.app.BlockedAppActivity		evidence/pla23/v1/m-menu-termsofservice.png
+m-kbd	Messages > o:Use Messages without an account o:OK t:Start chat t:Type names, phone numbers, or emails	TEST_FAILED	NO NODE Start chat	com.plainphone.spike.emu/.MainActivity		evidence/pla23/v1/m-kbd.png
+cat: evidence/pla23/v1/m-kbd.txt: No such file or directory

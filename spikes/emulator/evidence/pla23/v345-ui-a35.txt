@@ -1,0 +1,42 @@
+# 2026-10-09T02:08:13Z start policy: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[no_add_managed_profile, no_add_user, no_config_cell_broadcasts, no_config_date_time, no_config_vpn, no_create_windows, no_factory_reset, no_install_apps, no_install_unknown_sources_globally, no_modify_accounts, no_network_reset, no_safe_boot, no_system_error_dialogs, no_usb_file_transfer, no_user_switch]
+
+## V5 harness boundary
+home texts: "Plainphone emu spike (throwaway)" "Phone" "Messages" "Camera" "Emergency" "Wi-Fi" "Start lock task" "deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOB
+home has a 'Stop lock task' node: 0
+exported MainActivity op=lt-stop without token:  9937  9937 I PPEMU   : REJECTED op=lt-stop without the command-hook token ; lockTaskModeState=1
+v5-shade-settings-gear	TEST_FAILED	NO NODE Open settings
+
+## V4 Emergency button (fx-emergency installed, declares the same filters at priority 1000)
+emergencyPackage=com.android.phone
+v4-home-emergency-button	resumed=com.android.phone/.EmergencyDialer 	status=lockTaskModeState=1
+emergency screen texts: "Owner" "Emergency information" "backspace" "1," "1" "2,ABC" "2" "ABC" "3,DEF" "3" "DEF" "4,GHI" "4" "GHI" "5,JKL" "5" "JKL" "6,MNO" "6" "MNO" "7,PQRS" "7" "PQRS" "8,TUV" "8" "TUV" "9,WXYZ" "9" "WXYZ" "*" "*" "0,+" "0" "+" "#" "#" "dial" 
+v4-control-implicit-emergency	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally
+v4-control-pinned-emergency	TARGET_OPENED	com.android.phone/.EmergencyDialer	com.android.phone/.EmergencyDialer 	returned normally
+
+## V3 real Custom Tabs client (fx.urlbar approved)
+OK approved=[com.google.android.dialer, com.google.android.apps.messaging, com.android.camera2, com.android.phone, com.plainphone.fx.urlbar] / OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.plainphone.fx.urlbar, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+CustomTabsService providers=[]
+v3-ctclient-fallback-view	LINK_CAUGHT	LinkActivity	com.plainphone.fx.urlbar/.CtClientActivity com.plainphone.spike.emu/.LinkActivity 	returned normally
+ 9937  9937 I PPEMU   : launch [action=android.intent.action.MAIN comp=com.plainphone.fx.urlbar/.CtClientActivity text=https://example.com/ct-client newtask=1] returned normally: Intent { act=android.intent.action.MAIN flg=0x10000000 cmp=com.plainphone.fx.urlbar/.CtClientActivity (has extras) }
+13038 13038 I PPFX    : PPFX ctclient provider=null url=https://example.com/ct-client fallback=null
+13038 13038 I PPFX    : PPFX ctclient launch returned normally
+v3-ctclient-fallback-webview	LINK_CAUGHT	LinkActivity	com.plainphone.spike.emu/.LinkActivity 	returned normally
+ 9937  9937 I PPEMU   : cmd [launch action=android.intent.action.MAIN comp=com.plainphone.fx.urlbar/.CtClientActivity text=https://example.com/ct-client es.fallback=webview newtask=1] -> OK relayed launch (result in logcat PPEMU)
+ 9937  9937 I PPEMU   : launch [action=android.intent.action.MAIN comp=com.plainphone.fx.urlbar/.CtClientActivity text=https://example.com/ct-client es.fallback=webview newtask=1] returned normally: Intent { act=android.intent.action.MAIN flg=0x10000000 cmp=com.plainphone.fx.urlbar/.CtClientActivity (has extras) }
+
+## V3 WebView inside an approved fixture (expected, disclosed leak)
+v3-webview-load	TARGET_OPENED	com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity	com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity 	returned normally
+13038 13038 I PPFX    : PPFX opened pkg=com.plainphone.fx.urlbar urlbar
+13038 13038 I PPFX    : PPFX webview started https://example.com/
+13038 13038 I PPFX    : PPFX webview finished https://example.com/ title=Example Domain
+NO NODE ~Learn more
+NO NODE ~More information
+after tapping the page link:  status=lockTaskModeState=1 top=com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity
+v3-webview-noclient-load	TARGET_OPENED	com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity	com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity 	returned normally
+NO NODE ~Learn more
+NO NODE ~More information
+no-WebViewClient link tap -> resumed:  top=com.plainphone.fx.urlbar/com.plainphone.fx.common.UrlBarActivity
+control: fx.urlbar not approved: OK approved=[com.google.android.dialer, com.google.android.apps.messaging, com.android.camera2, com.android.phone] / OK floor uiSubset=[com.google.android.dialer, com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub] lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone]
+v3-webview-unapproved	POLICY_DENIED	BlockedAppActivity	android/com.android.internal.app.BlockedAppActivity 	returned normally
+
+# end policy: deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[no_add_managed_profile, no_add_user, no_config_cell_broadcasts, no_config_date_time, no_config_vpn, no_create_windows, no_factory_reset, no_install_apps, no_install_unknown_sources_globally, no_modify_accounts, no_network_reset, no_safe_boot, no_system_error_dialogs, no_usb_file_transfer, no_user_switch]

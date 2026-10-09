@@ -1,0 +1,11 @@
+Messages
+Search messages
+Sign in
+Conversation list
+Once you start a new conversation, you’ll see it listed here
+Once you start a new conversation, you’ll see it listed here
+Gemini
+Start chat
+Start chat
+resumed: com.google.android.apps.messaging/.ui.ConversationListActivity 
+top: com.google.android.apps.messaging/.ui.ConversationListActivity

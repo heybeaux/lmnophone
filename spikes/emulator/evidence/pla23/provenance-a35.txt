@@ -115,3 +115,6 @@ com.google.android.permissioncontroller versionName=frc_350820360 package:/apex/
 com.google.android.documentsui versionName=15 package:/system/priv-app/DocumentsUIGoogle/DocumentsUIGoogle.apk
 com.google.android.providers.media.module versionName=15 package:/apex/com.android.mediaprovider/priv-app/MediaProviderGoogle@350820300/MediaProviderGoogle.apk
 com.android.settings versionName=15 package:/system_ext/priv-app/SettingsGoogle/SettingsGoogle.apk
+65b4c7934f3b9ec01c21c27567eec06f8b778954406e8946307602ea65d58fd4 dpc v4 -> Success
+deviceOwner=true lockTaskModeState=1 lockTaskPackages=[com.android.camera2, com.google.android.dialer, com.plainphone.spike.emu, com.google.android.apps.safetyhub, com.android.server.telecom, com.google.android.apps.messaging, com.android.phone] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK restrictions=[no_add_managed_profile, no_add_user, no_config_cell_broadcasts, no_config_date_time, no_config_vpn, no_create_windows, no_factory_reset, no_install_apps, no_install_unknown_sources_globally, no_modify_accounts, no_network_reset, no_safe_boot, no_system_error_dialogs, no_usb_file_transfer, no_user_switch] locked=true
+    versionName=emu-4-pla23
