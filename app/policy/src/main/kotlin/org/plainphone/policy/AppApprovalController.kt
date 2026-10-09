@@ -132,6 +132,7 @@ class AppApprovalWithdrawalRequest internal constructor(
     internal val credentialGeneration: Long,
     internal val structureGeneration: Long,
     internal val preparedAt: BootTime,
+    internal val mode: Mode,
 ) {
     val action: PrivilegedAction get() = PrivilegedAction("app:withdraw-pending", receiptId)
 }
@@ -142,6 +143,7 @@ class AppRemovalRequest internal constructor(
     internal val credentialGeneration: Long,
     internal val structureGeneration: Long,
     internal val preparedAt: BootTime,
+    internal val mode: Mode,
 ) {
     val approvalId: String get() = record.id
     val packageName: PackageName get() = record.identity.packageName
@@ -321,13 +323,13 @@ class AppApprovalController(
         val state = store.read() ?: return null
         val op = state.pending?.takeIf { it.phase in setOf(AppApprovalPhase.COMMITTED, AppApprovalPhase.EDITING) } ?: return null
         if (state.revision > Long.MAX_VALUE - 2) return null
-        val current = credentials()?.takeIf { it.mode == Mode.TRUSTED } ?: return null
+        val current = credentials() ?: return null
         val credential = current.people[person] ?: return null
         val id = ids.next()
         if (id.isBlank() || state.apps.values.any { it.id == id } || state.receipts.any { it.id == id }) return null
         val now = clock.checkpoint() ?: return null
         return AppApprovalWithdrawalRequest(op.record.id, id, person, credential.generation,
-            current.structureGeneration, now.boot).also { withdrawals.add(it) }
+            current.structureGeneration, now.boot, current.mode).also { withdrawals.add(it) }
     }
 
     @Synchronized
@@ -421,12 +423,12 @@ class AppApprovalController(
         val state = store.read() ?: return null
         if (state.pending != null || state.revision > Long.MAX_VALUE - 2) return null
         val record = state.apps[packageName] ?: return null
-        val current = credentials()?.takeIf { it.mode == Mode.TRUSTED } ?: return null
+        val current = credentials() ?: return null
         val credential = current.people[person] ?: return null
         val id = ids.next()
         if (id.isBlank() || state.apps.values.any { it.id == id } || state.receipts.any { it.id == id }) return null
         val now = clock.checkpoint() ?: return null
-        return AppRemovalRequest(record, id, person, credential.generation, current.structureGeneration, now.boot).also { removals.add(it) }
+        return AppRemovalRequest(record, id, person, credential.generation, current.structureGeneration, now.boot, current.mode).also { removals.add(it) }
     }
 
     @Synchronized
@@ -453,7 +455,7 @@ class AppApprovalController(
     }
 
     private fun matchingCredentials(request: AppRemovalRequest): CredentialState? = credentials()?.takeIf {
-        it.mode == Mode.TRUSTED && it.structureGeneration == request.structureGeneration &&
+        it.mode == request.mode && it.structureGeneration == request.structureGeneration &&
             it.people[request.person]?.generation == request.credentialGeneration
     }
 
@@ -488,7 +490,7 @@ class AppApprovalController(
     }
 
     private fun matchingCredentials(request: AppApprovalWithdrawalRequest): CredentialState? = credentials()?.takeIf {
-        it.mode == Mode.TRUSTED && it.structureGeneration == request.structureGeneration &&
+        it.mode == request.mode && it.structureGeneration == request.structureGeneration &&
             it.people[request.person]?.generation == request.credentialGeneration
     }
     private fun sameBoot(preparedAt: BootTime): Boolean = clock.checkpoint()?.boot?.let {

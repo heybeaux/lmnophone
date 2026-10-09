@@ -486,6 +486,42 @@ class AppApprovalControllerTest {
     private fun removalAuth(r: AppRemovalRequest, who: TrustedPersonId = person) =
         assertIs<PinResult.Authorized>(vault.authenticate(who, pin, r.action)).authority
 
+    @Test fun `self managed holder removes active app immediately with fresh PIN and no elevation`() {
+        activeApproval(true)
+        credentials = CredentialState(Mode.SELF_MANAGED,
+            mapOf(person to credentials!!.people.getValue(person)), structureGeneration = 1)
+        controller = controller()
+        assertEquals(AppApprovalOutcome.READY, controller.onStart())
+        val ledger = combined.state.ledger
+        val installed = policy.installed
+        val request = assertNotNull(controller.prepareRemoval(app, person),
+            "Copy-change self-managed removal must be available without an elevation")
+        battery = BatteryState(1, false)
+        assertEquals(AppApprovalOutcome.REMOVED,
+            controller.removeApproved(request, request.approvalId, removalAuth(request)))
+        assertNull(state!!.pending)
+        assertFalse(app in state!!.apps)
+        assertEquals(binding, state!!.removedApps[app])
+        assertEquals(installed, policy.installed)
+        assertEquals(ledger.debits, combined.state.ledger.debits)
+        assertNull(combined.state.grant)
+        assertTrue(app in PolicyEngine.decide(policy.copy(approvalState = state)).hidden)
+    }
+
+    @Test fun `audit characterizes self managed direct permission edit and PIN reapproval as unavailable`() {
+        activeApproval(true)
+        credentials = CredentialState(Mode.SELF_MANAGED,
+            mapOf(person to credentials!!.people.getValue(person)), structureGeneration = 1)
+        controller = controller()
+        assertEquals(AppApprovalOutcome.READY, controller.onStart())
+        val selection = PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.DENY))
+        assertNull(controller.preparePermissionEdit(app, person, selection))
+        state = state!!.replacing(apps = emptyMap(), removedApps = mapOf(app to binding))
+        assertNull(controller.prepareReapproval(app, person, selection))
+        // This records current entry points, not approval of a new self-managed permission rule.
+        // A hidden app's reapproval is required to use the existing Approve elevation path.
+    }
+
     @Test fun `other holder removes active app and reapproves after restart without reinstall`() {
         for (ack in listOf(false, true)) {
             now = ClockReading(RunningTime("epoch", 0), BootTime("boot", 0))
