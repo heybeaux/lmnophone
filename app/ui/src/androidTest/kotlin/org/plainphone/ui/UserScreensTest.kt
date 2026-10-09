@@ -153,6 +153,11 @@ class UserScreensTest {
         compose.onNodeWithText("Your settings").performScrollTo().performClick()
         assertEquals(listOf(MoreEvent.Back, MoreEvent.OpenPhoneSettings, MoreEvent.AddApp, MoreEvent.OpenSelfManagedSettings), events)
     }
+    @Test fun emergencySpeechUsesPlainHyphens() {
+        show { MoreScreen(MoreUiState(MoreMode.SelfManaged(10)), {}) }
+        compose.onNodeWithContentDescription("Emergency 9-1-1", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Emergency 9‑1‑1").assertIsDisplayed()
+    }
     @Test fun requestBackEvent() {
         val events = mutableListOf<AskForAppEvent>()
         show { AskForAppScreen(AskForAppUiState("Sam"), events::add) }
