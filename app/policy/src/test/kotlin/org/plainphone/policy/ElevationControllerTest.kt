@@ -225,4 +225,63 @@ class ElevationControllerTest {
             assertFalse(f.physicallyOpen); assertEquals(1, f.record!!.state.ledger.debits.size)
         }
     }
+    @Test fun `credential change during the OPEN write revokes before reporting Start success`() {
+        setup(); val r = request(); advance(600_000)
+        hook = { if (it == "after-save-OPEN") credentials = credentials!!.replacing(person,
+            credentials!!.people.getValue(person).copy(generation = 1)) }
+        assertEquals(ElevationOutcome.NOT_READY, start(r))
+        assertFalse(physicallyOpen); assertNull(controller.access()); assertEquals(1, record!!.state.ledger.debits.size)
+    }
+    @Test fun `changed session package scope prevents Start`() {
+        setup(); val r = request(ElevationTarget.Settings); advance(600_000)
+        policy = policy!!.copy(inventory = BuildInventory("model", "build", 1, NeverHideList(setOf(sms)), setOf(sms), emptySet()))
+        assertEquals(ElevationOutcome.REFUSED, start(r)); assertFalse(physicallyOpen)
+    }
+    @Test fun `Start credential compare failure has no debit and no effects`() {
+        setup(); val r = request(); advance(600_000)
+        hook = { if (it == "save-OPENING") credentials = credentials!!.replacing(person, credentials!!.people.getValue(person)) }
+        assertEquals(ElevationOutcome.NOT_READY, start(r)); hook = null
+        assertFalse(physicallyOpen); assertTrue(record!!.state.ledger.debits.isEmpty())
+        assertEquals(ElevationOutcome.STARTED, start(r)); assertEquals(1, record!!.state.ledger.debits.size)
+    }
+    @Test fun `closing readback failure keeps access denied and retries the same direction`() {
+        for (point in listOf("revoke", "protected", "readback", "save-clear")) {
+            val f = ElevationControllerTest(); f.setup(); val r = f.request(); f.advance(600_000); f.start(r); f.failure = point
+            assertEquals(ElevationOutcome.NOT_READY, f.controller.endPackageAccess(r.id, SessionEnd.LEFT_PACKAGES))
+            assertNull(f.controller.access()); assertNull(f.controller.prepare(f.person, ElevationTarget.Settings))
+            f.failure = null; assertEquals(ElevationOutcome.ACCESS_CLOSED, f.controller.tick())
+            assertFalse(f.physicallyOpen); assertNotNull(f.record!!.state.grant); assertEquals(1, f.record!!.state.ledger.debits.size)
+        }
+    }
+    @Test fun `reboot drops countdown or active grant with debit preserved and no wall clock input`() {
+        for (active in listOf(false, true)) {
+            val f = ElevationControllerTest(); f.setup(); val r = f.request()
+            if (active) { f.advance(600_000); f.start(r) }
+            f.now = ClockReading(RunningTime("epoch", 600_100), BootTime("new-boot", 100))
+            assertNull(f.controller.access()); assertEquals(ElevationOutcome.LAPSED, f.controller.tick())
+            assertNull(f.record!!.state.grant); assertNull(f.record!!.state.countdown)
+            assertFalse(f.physicallyOpen); assertEquals(if (active) 1 else 0, f.record!!.state.ledger.debits.size)
+        }
+    }
+    @Test fun `startup failures expose no authority and retries revoke before clearing the journal`() {
+        for (point in listOf("revoke", "protected", "readback", "save-clear")) {
+            val f = ElevationControllerTest(); f.setup(); val r = f.request(); f.advance(600_000); f.start(r)
+            f.controller = f.controller(); f.failure = point
+            assertEquals(ElevationOutcome.NOT_READY, f.controller.onStart()); assertNull(f.controller.access())
+            assertNull(f.controller.prepare(f.person, ElevationTarget.Play)); assertEquals(1, f.record!!.state.ledger.debits.size)
+            f.failure = null; f.events.clear(); assertEquals(ElevationOutcome.IDLE, f.controller.onStart())
+            assertEquals("revoke", f.events.first()); assertFalse(f.physicallyOpen)
+        }
+    }
+    @Test fun `record rejects mismatched active binding journal and missing debit`() {
+        setup(); val r = request(); advance(600_000); start(r); val good = record!!
+        assertFailsWith<IllegalArgumentException> { ElevationRecord(state = good.state, journal = good.journal) }
+        assertFailsWith<IllegalArgumentException> { ElevationRecord(state = good.state, person = good.person) }
+        assertFailsWith<IllegalArgumentException> { ElevationRecord(journal = SessionJournal.Damaged) }
+        val active = good.journal as SessionJournal.Active
+        val wrong = SessionJournal.Active(SessionAccess("other", active.access.kind, active.access.packages, active.access.deadline), SessionPhase.OPEN)
+        assertFailsWith<IllegalArgumentException> { ElevationRecord(state = good.state, journal = wrong, person = good.person) }
+        assertFailsWith<IllegalArgumentException> { ElevationState(grant = good.state.grant) }
+    }
+
 }
