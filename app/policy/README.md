@@ -425,3 +425,79 @@ Required controller work after this model review:
 - Revoke first on every restart, discard all temporary authority, preserve durable debits, and test crashes at all combined-record/effect boundaries.
 
 The fourteen JVM tests cover timing boundaries, restart/reboot/epoch behavior, bounds/overflow, lower limits and damaged-ledger proposals, two Play approvals, single-use Approve/Update decisions and immutable proposals. They do not prove crash-atomic controller/storage behavior or Android containment. Generic web/Wi-Fi quotas are still unimplemented and their product flags remain off.
+
+## Durable elevation lifecycle (Play and Settings)
+
+`ElevationController` now owns the self-managed Play/Settings countdown and session lifecycle.
+`prepare` creates an opaque process-local request naming a globally unique countdown ID, target,
+current person, credential generation, structure generation and boot. Authenticate with its `action`;
+`request` consumes that exact person's fresh PIN capability once and saves the countdown with a
+credential-revision CAS. The countdown starts at the checkpoint **after** authority consumption.
+Start does not require another PIN, but rechecks the saved person/generations, self-managed mode,
+clock, current limits, matching build inventory, unlocked valid policy, system dialer, battery and
+absence of a committing/rolling-back waiting operation or pending app operation. Ordinary pending
+waits do not block the countdown. IDs must never be reused, including after cancellation or restart.
+
+`ElevationStore` is a combined device-protected record containing the ledger, temporary state,
+person binding and **the same session journal** used by the other policy controllers. Start writes
+the debit, fixed grant and OPENING session journal in **one durable credential-checked CAS** before
+calling `SessionEffects.open`. That effect retains its existing unhide/flush/readback contract.
+Only after readback, live checks and the OPEN write can `access()` return a `SessionAccess` for
+`PolicyInput`. Start is serialized; a second tap cannot debit or open again. Failed effects revoke
+and close without refund. A failed CAS must leave storage unchanged, never acknowledge a partial
+write, and every writer must preserve the combined record. An unrelated credential-counter revision
+can cause CAS refusal without invalidating the saved countdown; a credential-generation or structural
+change invalidates its authority.
+
+D must implement this as a versioned combined schema with validated identities, enum values, timing,
+debit membership, grant/journal ID, kind, scope and deadline agreement, and phase/access consistency.
+Decode each active session scope through `SessionJournal.restore` against matching live inventory;
+invalid scope or invalid combined data returns null. Validate all fields before constructing a record.
+Only initial enrollment may use an empty ledger. Null or unreadable combined storage is conservatively
+replaced by three fresh debits, after revocation and a proven clock checkpoint; failed repair blocks
+all starts. `compareAndSet(null, ...)` must fence the exact damaged/missing observation and must never
+overwrite a concurrent valid writer. A schema migration must retain valid debit history; it must not
+silently create an empty ledger for a missing new field.
+
+All involved controllers, vaults, sources, store writers, callbacks and effect completions must run
+on **one non-reentrant serialized coordinator**. Method synchronization is not cross-controller
+serialization. Use this controller for self-managed session starts; the old supervised
+`SessionController.start` is not an alternative entry point for self-managed users. Its `JournalStore`
+and this store must not maintain independent journal copies. Route session end events here while an
+elevation owns the session, and route every application/process/Direct-Boot start through
+`ElevationController.onStart` before publishing authority. Startup revokes first, then checks/readbacks
+and clears temporary state while retaining debits; it does not read credential storage. Do not call
+`onStart` to represent an ordinary return from Play: that would intentionally end the whole grant.
+
+Done and deadline end the grant. Screen-off, incoming-call and leaving-package events close package
+access, save CLOSING before effects, revoke, check/read back, then clear the journal. A local closing
+latch suppresses authority even if saving CLOSING fails; `tick` retries the restrictive direction.
+Returning from Play can retain the grant and candidate history up to its original deadline. The
+controller never reopens that package access. Call `tick` at deadlines and after failed cleanup or
+changed clock/credentials/policy; a null `access()` alone is not physical revocation. Calls and alerts
+must stay independent of successful cleanup. A closed grant confers no session access.
+
+The controller owns its `PlaySessionMachine` state, created only from its successfully opened Play
+session. `installed(eventSessionId, package)` is an adapter-only actual package-added event, not a UI
+command. It reads unique current package/signing facts from the trusted complete snapshot and
+validates the event against the live session; no candidate identity or prebuilt history comes from
+callers. Duplicate or missing identity facts refuse intake. `candidate(package)` is **review data
+only**, retained after package access closes but requiring the same live grant and current signer.
+It cannot authorize approval, and becomes unavailable at grant expiry, restart or signer change.
+The Android adapter still owes proof of event/snapshot completeness and installed-during-session
+provenance; these JVM tests do not establish Android package observation or containment.
+
+**Remaining action integration:** Approve and Update requests currently return null. There is no
+public grant-consumption API and no approval/update writer accepts this controller's state or
+candidate data as authority. Existing `AppApprovalController` remains supervised-only. The next
+slice must connect its final approval write to this controller's live owned Play history and atomically
+save consumption with the approval intent, preserving the grant for other observed Play packages.
+Approve must consume its exact bound app once; Update must serialize its exact staged bytes/version
+consumption with PackageInstaller commit. No caller-supplied ID, stale record or returned candidate
+may stand in for that final check. This lifecycle slice is not a complete self-managed workflow.
+
+The fake-effect tests cover fresh authority, atomic Start and credential races, explicit Start and
+limits, damaged repair, scope/battery/mode/clock changes, owned candidate intake, fixed deadlines,
+reboot and startup without credentials, and crashes on both sides of every Start/close write and
+effect boundary. Android storage atomicity, startup intervals, background containment, hidden-package
+permission operations and delivery still require lane D validation. Web/Wi-Fi features remain off.
