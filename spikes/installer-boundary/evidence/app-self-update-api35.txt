@@ -1,0 +1,59 @@
+device: 15 API 35
+Success: Device owner set to package org.plainphone.spike.updater/.Admin
+Active admin set to component org.plainphone.spike.updater/.Admin
+
+== X1 wrong installer SHA-256 checksum (v2)
+installed versionCode=2
+
+== X2 right checksum, silent self-update v1 -> v2
+installed versionCode=2
+
+== X3 process killed after write, before commit (v3)
+installed versionCode=2
+
+== X4 process killed right after commit() returns (v4)
+installed versionCode=4
+
+== X5 normal self-update v4 -> v5
+installed versionCode=5
+
+== app log (survives process replacement)
+1791575140651 pid=6699 vc=1 process start; my sessions=[]
+1791575141762 pid=6699 vc=1 setChecksums wrong
+1791575141766 pid=6699 vc=1 session 1099679715 written; readback sha256=c1d003efae387f8207888d1143331f64f2bdf288c50ec5bf7be79c2aebae9a73
+1791575141766 pid=6699 vc=1 commit() call
+1791575141767 pid=6699 vc=1 commit() returned
+1791575141769 pid=6699 vc=1 write after commit refused: SecurityException
+1791575141845 pid=6773 vc=2 process start; my sessions=[]
+1791575141849 pid=6773 vc=2 MY_PACKAGE_REPLACED
+1791575141850 pid=6773 vc=2 status session=1099679715 status=0 message=INSTALL_SUCCEEDED: Session installed
+1791575147875 pid=6773 vc=2 setChecksums right
+1791575147883 pid=6773 vc=2 session 1173541948 written; readback sha256=c1d003efae387f8207888d1143331f64f2bdf288c50ec5bf7be79c2aebae9a73
+1791575147885 pid=6773 vc=2 commit() call
+1791575147888 pid=6773 vc=2 commit() returned
+1791575147894 pid=6773 vc=2 write after commit refused: SecurityException
+1791575148015 pid=6824 vc=2 process start; my sessions=[]
+1791575148018 pid=6824 vc=2 MY_PACKAGE_REPLACED
+1791575148020 pid=6824 vc=2 status session=1173541948 status=0 message=INSTALL_SUCCEEDED: Session installed
+1791575155988 pid=6824 vc=2 session 507158630 written; readback sha256=511fa9e587ea05431935b4b2852252aa9bdc534fddfb5d3e4c0416fadb5f3a10
+1791575155989 pid=6824 vc=2 killing before commit
+1791575159107 pid=6899 vc=2 process start; my sessions=[507158630:open]
+1791575159110 pid=6899 vc=2 abandoned 507158630
+1791575161182 pid=6899 vc=2 session 426233539 written; readback sha256=678a5bf6fee20b12de7b9dbeff84685751bd248572ada7c54f737c96404b77b2
+1791575161183 pid=6899 vc=2 commit() call
+1791575161184 pid=6899 vc=2 commit() returned
+1791575161184 pid=6899 vc=2 killing right after commit returned
+1791575161258 pid=6919 vc=4 process start; my sessions=[]
+1791575161260 pid=6919 vc=4 MY_PACKAGE_REPLACED
+1791575161262 pid=6919 vc=4 status session=426233539 status=0 message=INSTALL_SUCCEEDED: Session installed
+1791575169268 pid=6919 vc=4 session 1007922175 written; readback sha256=34d05ae82c6f39c4f5c45a8efbcb80417088fe260bbcc181a646eb3356ac8d3e
+1791575169268 pid=6919 vc=4 commit() call
+1791575169269 pid=6919 vc=4 commit() returned
+1791575169270 pid=6919 vc=4 write after commit refused: SecurityException
+1791575169346 pid=6986 vc=5 process start; my sessions=[]
+1791575169348 pid=6986 vc=5 MY_PACKAGE_REPLACED
+1791575169350 pid=6986 vc=5 status session=1007922175 status=0 message=INSTALL_SUCCEEDED: Session installed
+
+== cleanup
+no owners
+Success

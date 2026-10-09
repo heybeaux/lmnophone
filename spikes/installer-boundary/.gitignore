@@ -1,1 +1,3 @@
 out/
+app/build/
+app/.gradle/
