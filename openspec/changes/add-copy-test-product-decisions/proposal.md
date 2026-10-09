@@ -1,4 +1,4 @@
-**Status:** revision 4. Cross-model reviews: PLA-31 (F1–F11) and PLA-34 (N1–N6) requested changes; PLA-35 **approved with changes** (R1–R4), applied here. Responses in `design.md`. Next: Beaux's approval. Nothing here is built until Beaux approves it.
+**Status:** revision 4. Cross-model reviews: PLA-31 (F1–F11) and PLA-34 (N1–N6) requested changes; PLA-35 **approved with changes** (R1–R4), applied here. Responses in `design.md`. PLA-39 wording pass: apps are text labels with no icons, and exact text for the mode-change and self-managed monthly-check notice lines. Next: Beaux's approval. Nothing here is built until Beaux approves it.
 
 ## Why
 

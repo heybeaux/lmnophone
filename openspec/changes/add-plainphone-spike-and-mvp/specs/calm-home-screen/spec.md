@@ -5,7 +5,7 @@ The home screen SHALL show:
 - the time and date
 - an Emergency button
 - Phone and Messages
-- the other approved apps, with large labels and icons, in an order the trusted person chooses
+- the other approved apps, with large text labels and no icons, in an order the trusted person chooses
 
 It SHALL NOT show a search bar, feed, widgets, badges or suggestions.
 

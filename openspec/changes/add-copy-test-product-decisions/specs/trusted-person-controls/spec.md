@@ -238,7 +238,7 @@ Setup and "What Plainphone can't stop" SHALL say, in plain words, that in self-m
 
 **App requests.** There SHALL be no request flow. "Add an app" SHALL start a Play elevation.
 
-**Monthly check.** The monthly-check line SHALL ask the user. The check SHALL use a Play elevation.
+**Monthly check.** The monthly-check line SHALL ask the user: "Time for your monthly phone check" (calm-home-screen). The check SHALL use a Play elevation.
 
 **Recovery code.** The recovery code SHALL reset the user's PIN only. It SHALL NOT skip a countdown, the daily limit or a waiting change.
 

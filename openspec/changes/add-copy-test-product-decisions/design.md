@@ -279,9 +279,9 @@ The existing off switch keeps everything it has (fresh authority, two plain conf
 
 The home screen shows at most **one** notice line. When several apply, the most urgent wins:
 1. "Plainphone needs attention" (device-lockdown);
-2. the pending waiting change: "Plainphone will turn off after {time}. Tap to cancel." or "A change to trusted people is waiting. Tap to cancel.";
+2. the pending waiting change: "Plainphone will turn off after {time}. Tap to cancel.", "A change to trusted people is waiting. Tap to cancel." or "A change to how this phone is set up is waiting. Tap to cancel." (a mode switch, or a self-managed shorter countdown or higher daily limit);
 3. "Opening up in {n} minutes" / "Ready – tap to start" (C4);
-4. the monthly-check line (approved-apps).
+4. the monthly-check line (approved-apps); in self-managed mode, "Time for your monthly phone check".
 
 When line 1 hides line 2, the pending change and its Cancel are on the "needs attention" screen and on Plainphone's settings screen (C2). As today, no line pushes Emergency, Phone or Messages off-screen at the largest font size.
 

@@ -5,15 +5,18 @@ The home screen SHALL show:
 - the time and date
 - an Emergency button
 - Phone and Messages
-- the other approved apps, with large labels and icons, in an order the trusted person (or, in self-managed mode, the user) chooses
+- the other approved apps, with large text labels and no icons, in an order the trusted person (or, in self-managed mode, the user) chooses
 
 It SHALL NOT show a search bar, feed, widgets, badges or suggestions.
 
 The one exception is a single **notice line**. The home screen SHALL show at most one notice line at a time. When several apply, it SHALL show the first that applies in this order:
 1. "Plainphone needs attention" (device-lockdown);
-2. the pending waiting change (trusted-person-controls), for example "Plainphone will turn off after {time}. Tap to cancel." or "A change to trusted people is waiting. Tap to cancel.";
+2. the pending waiting change (trusted-person-controls), as one of these lines:
+   - turning off: "Plainphone will turn off after {time}. Tap to cancel.";
+   - adding, handing over or removing a trusted person: "A change to trusted people is waiting. Tap to cancel.";
+   - switching mode, or in self-managed mode shortening the countdown or raising the daily limit: "A change to how this phone is set up is waiting. Tap to cancel.";
 3. in self-managed mode, an elevation countdown: "Opening up in {n} minutes" or "Ready – tap to start";
-4. the monthly-check line, "Ask [trusted person] to do the monthly phone check" (approved-apps). In self-managed mode it asks the user.
+4. the monthly-check line, "Ask [trusted person] to do the monthly phone check" (approved-apps). In self-managed mode it asks the user: "Time for your monthly phone check".
 
 Tapping a pending-change line SHALL let anyone holding the phone cancel that change, without a PIN. When the pending-change line is hidden by "Plainphone needs attention", the pending change and its Cancel SHALL be on the needs-attention screen and on Plainphone's own settings screen.
 
@@ -34,6 +37,10 @@ The notice line SHALL NOT push Emergency, Phone or Messages off-screen at the la
 #### Scenario: Turn-off pending and monthly check overdue
 - **WHEN** a turn-off is waiting and the monthly check is overdue
 - **THEN** only the turn-off line shows
+
+#### Scenario: Mode switch waiting
+- **WHEN** a switch from supervised to self-managed mode is waiting and nothing else outranks it
+- **THEN** the notice line reads "A change to how this phone is set up is waiting. Tap to cancel."
 
 #### Scenario: User cancels a pending turn-off
 - **WHEN** the user taps "Plainphone will turn off after {time}. Tap to cancel." and confirms
