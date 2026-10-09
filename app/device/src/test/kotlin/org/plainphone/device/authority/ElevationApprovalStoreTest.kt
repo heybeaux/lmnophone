@@ -96,10 +96,10 @@ class ElevationApprovalStoreTest {
             from.state.grant!!.deadline, false, from.state.grant!!.approved + a)), SessionJournal.Empty, from.person)
 
     /** A store holding a PREPARING approval and a live closed Play grant, as the controller leaves it. */
-    private fun prepared(): JointAuthorityStore {
+    private fun prepared(grant: ElevationRecord = grantRecord()): JointAuthorityStore {
         val store = open()
         assertTrue(store.initialize(credentials(), WaitingState(storageGeneration = "live"), idle()))
-        assertTrue(store.elevationStore.compareAndSet(idle(), grantRecord(), null))
+        assertTrue(store.elevationStore.compareAndSet(idle(), grant, null))
         assertTrue(store.approvals.compareAndSet(AppApprovalState(), preparing(), store.credentials.read()))
         return store
     }
@@ -271,6 +271,130 @@ class ElevationApprovalStoreTest {
         assertFalse(commit(store, { calls++; true }, replacement = AppApprovalState(5, preparing().apps, preparing().pending)))
         assertEquals(0, calls)
         assertOriginalPair(open())
+    }
+
+    // --- exact consumption shape (PLA-127 P2) ---
+
+    private fun refusedWithoutCheck(store: JointAuthorityStore, approval: AppApprovalState = preparing(),
+        elevation: ElevationRecord = grantRecord(), replacement: AppApprovalState = committed(approval),
+        replacementElevation: ElevationRecord) {
+        var calls = 0
+        assertFalse(commit(store, { calls++; true }, approval, elevation, replacement, replacementElevation))
+        assertEquals(0, calls)
+    }
+
+    @Test fun playCommitMustAddExactlyTheApprovedPackage() {
+        val store = prepared()
+        val before = grantRecord()
+        val g = before.state.grant!!
+        fun withApproved(set: Set<ApprovalBinding>) = ElevationRecord(2, ElevationState(before.state.ledger,
+            grant = ElevationGrant.restore(g.id, g.target, g.startedAt, g.deadline, false, set)), person = person)
+        // Only the revision advanced: COMMITTED would land while the grant shows nothing used.
+        refusedWithoutCheck(store, replacementElevation = withApproved(emptySet()))
+        refusedWithoutCheck(store, replacementElevation = withApproved(setOf(b)))
+        refusedWithoutCheck(store, replacementElevation = withApproved(setOf(a, b)))
+        refusedWithoutCheck(store, replacementElevation = ElevationRecord(2, ElevationState(before.state.ledger)))
+        refusedWithoutCheck(store, replacementElevation = ElevationRecord(2, withApproved(setOf(a)).state, person = ElevationPersonBinding(self, 1, 0)))
+        assertOriginalPair(open())
+        assertTrue(commit(store))
+        assertReplacementPair(open())
+    }
+
+    @Test fun playGrantThatAlreadyApprovedThePackageCannotApproveItAgain() {
+        val already = grantRecord(approved = setOf(a))
+        val store = prepared(already)
+        refusedWithoutCheck(store, elevation = already, replacementElevation = ElevationRecord(2, already.state, person = person))
+        assertEquals(setOf(a), open().elevationStore.read()!!.state.grant!!.approved)
+        assertEquals(AppApprovalPhase.PREPARING, open().approvals.read()!!.pending!!.phase)
+    }
+
+    @Test fun approveCommitMustRemoveTheMatchingGrant() {
+        val exact = grantRecord(target = ElevationTarget.Approve(a))
+        val store = prepared(exact)
+        refusedWithoutCheck(store, elevation = exact, replacementElevation = ElevationRecord(2, exact.state, person = person))
+        assertTrue(commit(store, elevation = exact, replacementElevation = ElevationRecord(2, ElevationState(exact.state.ledger))))
+        val after = open()
+        assertNull(after.elevationStore.read()!!.state.grant)
+        assertNull(after.elevationStore.read()!!.person)
+        assertEquals(exact.state.ledger.debits, after.elevationStore.read()!!.state.ledger.debits)
+        assertEquals(AppApprovalPhase.COMMITTED, after.approvals.read()!!.pending!!.phase)
+    }
+
+    @Test fun grantForAnotherAppOrAnotherTargetCannotCommitThisApproval() {
+        for (target in listOf(ElevationTarget.Approve(b), ElevationTarget.Settings,
+            ElevationTarget.Update(StagedUpdateBinding("0f".repeat(32), 12)))) {
+            dir.deleteRecursively()
+            val other = grantRecord(target = target)
+            val store = prepared(other)
+            refusedWithoutCheck(store, elevation = other, replacementElevation = ElevationRecord(2, ElevationState(other.state.ledger)))
+            assertEquals(target, open().elevationStore.read()!!.state.grant!!.target)
+        }
+    }
+
+    @Test fun unrelatedApprovalFieldsMustBeKept() {
+        val base = AppApprovalState(1, mapOf(b.packageName to record("r-b", b)),
+            AppApprovalOperation(record("r-a", a), receipt("r-a"), AppApprovalPhase.PREPARING), listOf(receipt("r-b")),
+            mapOf(PackageName("test.gone") to ApprovalBinding(PackageName("test.gone"), setOf(CertDigest("01".repeat(32))))))
+        val store = open()
+        assertTrue(store.initialize(credentials(), WaitingState(storageGeneration = "live"), idle()))
+        assertTrue(store.elevationStore.compareAndSet(idle(), grantRecord(), null))
+        assertTrue(store.approvals.compareAndSet(AppApprovalState(), base, null))
+        val op = AppApprovalOperation(record("r-a", a), receipt("r-a"), AppApprovalPhase.COMMITTED)
+        val good = AppApprovalState(2, base.apps + (a.packageName to record("r-a", a)), op, base.receipts + receipt("r-a"), base.removedApps)
+        val droppedApp = AppApprovalState(2, mapOf(a.packageName to record("r-a", a)), op, base.receipts + receipt("r-a"), base.removedApps)
+        val droppedReceipt = AppApprovalState(2, good.apps, op, listOf(receipt("r-a")), base.removedApps)
+        val droppedRemoval = AppApprovalState(2, good.apps, op, good.receipts, emptyMap())
+        val extraReceipt = AppApprovalState(2, good.apps, op, good.receipts + receipt("r-x"), base.removedApps)
+        for (bad in listOf(droppedApp, droppedReceipt, droppedRemoval, extraReceipt)) {
+            refusedWithoutCheck(store, approval = base, replacement = bad, replacementElevation = consumed(grantRecord()))
+        }
+        assertTrue(commit(store, approval = base, replacement = good))
+        assertEquals(setOf(a.packageName, b.packageName), open().approvals.read()!!.apps.keys)
+    }
+
+    // --- decode limits (PLA-127 P2) ---
+
+    @Test fun commitPastTheReceiptLimitIsRefusedWithBothOriginalsIntact() {
+        val full = AppApprovalState(1, pending = AppApprovalOperation(record("r-a", a), receipt("r-a"), AppApprovalPhase.PREPARING),
+            receipts = (1..4096).map { receipt("old-$it") })
+        val store = open()
+        assertTrue(store.initialize(credentials(), WaitingState(storageGeneration = "live"), idle()))
+        assertTrue(store.elevationStore.compareAndSet(idle(), grantRecord(), null))
+        assertTrue(store.approvals.compareAndSet(AppApprovalState(), full, null))
+        val next = AppApprovalState(2, mapOf(a.packageName to record("r-a", a)),
+            AppApprovalOperation(record("r-a", a), receipt("r-a"), AppApprovalPhase.COMMITTED), full.receipts + receipt("r-a"))
+        assertFalse(commit(store, approval = full, replacement = next))
+        val reopened = open()
+        assertEquals(4096, reopened.approvals.read()!!.receipts.size)
+        assertEquals(AppApprovalPhase.PREPARING, reopened.approvals.read()!!.pending!!.phase)
+        assertEquals(emptySet<ApprovalBinding>(), reopened.elevationStore.read()!!.state.grant!!.approved)
+    }
+
+    @Test fun everyNewCollectionPastTheDecodeLimitIsRefusedNotStoredUnreadable() {
+        val store = open()
+        assertTrue(store.initialize(credentials(), WaitingState(storageGeneration = "live"), idle()))
+        val many = (0..4096).map { ApprovalBinding(PackageName("test.p$it"), setOf(CertDigest("ab".repeat(32)))) }
+        val manyCerts = ApprovalBinding(a.packageName, (0..4096).map { CertDigest("%064x".format(it)) }.toSet())
+        val bigManifest = AppApprovalRecord("r-big", PermissionSelection(PermissionManifest(a, 1, "build",
+            (0..4096).map { RuntimePermission(PermissionName("p.n$it"), "L", emptyList(), PermissionGrantCapability.SUPPORTED) }),
+            (0..4096).associate { PermissionName("p.n$it") to PermissionChoice.DENY }))
+        val manyFeatures = AppApprovalRecord("r-feat", PermissionSelection(PermissionManifest(a, 1, "build",
+            listOf(RuntimePermission(camera, "Camera", (0..4096).map { "f$it" }, PermissionGrantCapability.SUPPORTED))),
+            mapOf(camera to PermissionChoice.ALLOW)))
+        val approvals = listOf(
+            AppApprovalState(1, many.associate { it.packageName to record("r-${it.packageName}", it) }),
+            AppApprovalState(1, removedApps = many.associateBy { it.packageName }),
+            AppApprovalState(1, mapOf(a.packageName to record("r-a", manyCerts))),
+            AppApprovalState(1, mapOf(a.packageName to bigManifest)),
+            AppApprovalState(1, mapOf(a.packageName to manyFeatures)))
+        for (bad in approvals) assertFalse(store.approvals.compareAndSet(AppApprovalState(), bad, null))
+        val g = grantRecord().state.grant!!
+        val wide = ElevationRecord(1, ElevationState(grantRecord().state.ledger,
+            grant = ElevationGrant.restore(g.id, g.target, g.startedAt, g.deadline, false, many.toSet())), person = person)
+        assertFalse(store.elevationStore.compareAndSet(idle(), wide, null))
+        val reopened = open()
+        assertEquals(0L, reopened.approvals.read()!!.revision)
+        assertEquals(0L, reopened.elevationStore.read()!!.revision)
     }
 
     @Test fun crashAtEveryWritePointExposesTheOriginalOrTheCompleteReplacementPair() {
