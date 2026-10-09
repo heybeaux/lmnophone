@@ -26,6 +26,7 @@ import org.plainphone.policy.CredentialState
 import org.plainphone.policy.CredentialStore
 import org.plainphone.policy.ElevationApprovalStore
 import org.plainphone.policy.ElevationGrant
+import org.plainphone.policy.ElevationLimits
 import org.plainphone.policy.ElevationRecord
 import org.plainphone.policy.ElevationState
 import org.plainphone.policy.ElevationStore
@@ -521,6 +522,17 @@ class JointAuthorityStore internal constructor(
         save(null, next, spare = if (keepB) copyA else copyB)
     }
 
+    /**
+     * The elevation limits every consumer must use: the ACTIVE friction in the credential section,
+     * read on this store's coordinator. Pending looser targets and UI caches never count. When the
+     * credentials or their recovery profile cannot be read, no turn is available and the countdown
+     * is the longest allowed.
+     */
+    fun activeLimits(): ElevationLimits {
+        val friction = credentials.read()?.recoveryProfile?.friction ?: return FAIL_CLOSED_LIMITS
+        return ElevationLimits(friction.countdownMillis, friction.dailyLimit)
+    }
+
     /** Routine friction receipts awaiting delivery, in commit order. Null when the record is unreadable. */
     fun frictionReceipts(): List<StoredFrictionReceipt>? = section(Section.RECEIPTS)?.let(AuthorityCodec::decodeReceipts)
 
@@ -726,6 +738,7 @@ class JointAuthorityStore internal constructor(
         /** 2 adds the app approval section; 3 stores people patches; 4 commits at the fence with canonical maps. */
         const val SCHEMA = 4
         val BUSY = setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
+        val FAIL_CLOSED_LIMITS = ElevationLimits(86_400_000L, 0)
         val TERMINAL = setOf(WaitingPhase.COMPLETED, WaitingPhase.CANCELLED)
         const val ATTEMPTS = 16
         const val CLEAR_TAG: Byte = 'C'.code.toByte()
