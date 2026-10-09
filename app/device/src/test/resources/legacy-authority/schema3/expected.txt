@@ -1,0 +1,6 @@
+approvals=1 test.a r-a
+credentials=4 SELF_MANAGED 1800000 0 self
+elevation=4 turn-old-epoch,turn-1
+receipts=1 friction:7:edit-50
+second=wait-51
+waiting=3 live wait-51 PENDING 600000 3
