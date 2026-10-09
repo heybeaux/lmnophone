@@ -1,0 +1,5 @@
+## a) no session, sign-in app hidden: tap the system notification
+active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=102 wifiCaptive=true wifiValidated=false
+shade: "555-1234" "•" "Phone" "On hold" "Collapse" "⁦� ⁨Hang Up⁩⁩" "Hang Up" "⁦� ⁨Speaker⁩⁩" "Speaker" "⁦� ⁨Mute⁩⁩" "Mute" "Silent" "Clear all silent notifications" "Sign in to Wi-Fi network" "AndroidWifi" "Expand" "Manage" "Manage" "Clear all" "Clear all notifications." 
+top after tap: com.plainphone.spike.emu/.MainActivity
+active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=102 wifiCaptive=true wifiValidated=false

@@ -95,6 +95,8 @@ object Signin {
             }
             // Public: ask the system to re-check; re-posts the "Sign in" notification.
             "recheck" -> { cm.reportNetworkConnectivity(net, false); "reportNetworkConnectivity(wifi,false) called" }
+            // ConnectivityService ignores a report that matches the last validation result, so "true" forces a re-probe.
+            "recheck-true" -> { cm.reportNetworkConnectivity(net, true); "reportNetworkConnectivity(wifi,true) called" }
             else -> "UNKNOWN open mode $how"
         }
     }

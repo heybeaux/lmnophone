@@ -1,0 +1,23 @@
+## b) session started (unhidden + lock-task allowlist): tap the system notification
+OK session started; active=true secondsLeft=299 hidden=false inLockTask=true lockTaskState=1 wifiNet=105 wifiCaptive=true wifiValidated=false
+shade: "Silent" "Clear all silent notifications" "Android System" "Collapse" "Sign in to Wi-Fi network" "AndroidWifi" "Manage" "Manage" "Clear all" "Clear all notifications." 
+top after tap: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+active=true secondsLeft=291 hidden=false inLockTask=true lockTaskState=1 wifiNet=105 wifiCaptive=true wifiValidated=false
+  * Task{9c9c626 #62 type=standard A=10115:com.google.android.captiveportallogin U=0 visible=true visibleRequested=true mode=fullscreen translucent=false sz=1}
+    topResumedActivity=ActivityRecord{76db581 u0 com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity t62}
+  * Task{777a53e #22 type=home U=0 visible=false visibleRequested=false mode=fullscreen translucent=true sz=1}
+    * Task{6ac7631 #61 type=home A=10207:com.plainphone.spike.emu U=0 rootTaskId=22 visible=false visibleRequested=false mode=fullscreen translucent=true sz=1}
+  * Task{44ff0b5 #2 type=undefined U=0 visible=false visibleRequested=false mode=fullscreen translucent=true sz=2}
+    * Task{6998e38 #4 type=undefined U=0 rootTaskId=2 visible=false visibleRequested=false mode=multi-window translucent=true sz=0}
+10-08 17:39:49.391   555  3551 D CoreBackPreview: Window{9649993 u0 com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@5c3a80b, mPriority=0, mIsAnimationCallback=false}
+10-08 17:39:49.421   555   598 I ActivityTaskManager: Displayed com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity for user 0: +262ms
+10-08 17:39:49.960  4565  4565 W tiveportallogin: type=1400 audit(0.0:62): avc:  denied  { read } for  name="u:object_r:userdebug_or_eng_prop:s0" dev="tmpfs" ino=336 scontext=u:r:untrusted_app:s0:c115,c256,c512,c768 tcontext=u:object_r:userdebug_or_eng_prop:s0 tclass=file permissive=0 app=com.google.android.captiveportallogin
+10-08 17:39:50.094   555  3551 W InputManager-JNI: Input channel object 'c51f75f Splash Screen com.google.android.captiveportallogin (client)' was disposed without first being removed with the input manager!
+10-08 17:39:50.094   555  3555 D CoreBackPreview: Window{c51f75f u0 Splash Screen com.google.android.captiveportallogin EXITING}: Setting back callback null
+10-08 17:39:50.208   555   689 I ImeTracker: com.google.android.captiveportallogin:b1a12d9d: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+10-08 17:39:50.208   555   689 I ImeTracker: com.google.android.captiveportallogin:b1a12d9d: onCancelled at PHASE_SERVER_SHOULD_HIDE
+10-08 17:39:50.209  1254  1254 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1986 onStartInput(EditorInfo{EditorInfo{packageName=com.google.android.captiveportallogin, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=12000000, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, false)
+10-08 17:39:50.210   555  3555 W PackageConfigPersister: App-specific configuration not found for packageName: com.google.android.captiveportallogin and userId: 0
+10-08 17:39:50.339  4297  4337 I PPEMU   : wifi-cb net=105 captive=true validated=false uptime=2474877ms
+10-08 17:39:50.341  4297  4337 I PPEMU   : net wifi=true captive=true validated=false msg=This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.
+10-08 17:39:52.221   555   598 I ActivityManager: Broadcast completed: result=0, data="active=true secondsLeft=291 hidden=false inLockTask=true lockTaskState=1 wifiNet=105 wifiCaptive=true wifiValidated=false"
