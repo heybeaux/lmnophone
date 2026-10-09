@@ -48,6 +48,7 @@ class AppApprovalControllerTest {
             val stage = when {
                 replacement.pending?.phase == AppApprovalPhase.PREPARING -> "save-preparing"
                 replacement.pending?.phase == AppApprovalPhase.COMMITTED -> "save-committed"
+                replacement.pending?.phase == AppApprovalPhase.WITHDRAWING -> "save-withdrawing"
                 else -> "save-finished"
             }
             if (!event(stage) || state !== expected || (expectedCredentials != null && credentials !== expectedCredentials)) return false
@@ -284,6 +285,190 @@ class AppApprovalControllerTest {
         failure = null
         assertEquals(AppApprovalOutcome.APPROVED, controller.resume())
         assertTrue(app in PolicyEngine.decide(policy.copy(approvalState = state)).lockTaskPackages)
+    }
+
+    private fun stuckApproval() {
+        state = AppApprovalState(); failure = null; crash = null; beforeSave = null; atEvent = null
+        controller = controller(); setup()
+        val r = request(); failure = "unhide"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.approve(r, auth(r)))
+        failure = null; events.clear()
+    }
+    private fun withdrawalAuth(r: AppApprovalWithdrawalRequest, who: TrustedPersonId = person) =
+        assertIs<PinResult.Authorized>(vault.authenticate(who, pin, r.action)).authority
+
+    @Test fun `fresh PIN withdrawal releases stale committed approval without approving changed facts`() {
+        val originalManifest = manifest!!; val originalPolicy = policy
+        for (change in listOf("version", "signer", "missing manifest", "uninstalled", "unknown build")) {
+            manifest = originalManifest; policy = originalPolicy; stuckApproval()
+            when (change) {
+                "version" -> manifest = PermissionManifest(binding, 2, "build", originalManifest.permissions)
+                "signer" -> {
+                    val changed = ApprovalBinding(app, setOf(CertDigest("cd".repeat(32))))
+                    manifest = PermissionManifest(changed, 1, "build", originalManifest.permissions)
+                    policy = policy.copy(installedIdentities = listOf(changed))
+                }
+                "missing manifest" -> manifest = null
+                "uninstalled" -> { manifest = null; policy = policy.copy(installed = policy.installed.filterNot { it.name == app }, installedIdentities = emptyList()) }
+                "unknown build" -> policy = policy.copy(fingerprint = "ota-build")
+            }
+            val r = assertNotNull(controller.prepareWithdrawal(other))
+            val a = withdrawalAuth(r, other)
+            assertEquals(AppApprovalOutcome.WITHDRAWN, controller.withdrawPending(r, r.approvalId, a), change)
+            assertNull(state!!.pending); assertFalse(app in state!!.apps)
+            assertEquals(listOf(AppApprovalReceiptKind.APPROVED, AppApprovalReceiptKind.WITHDRAWN), state!!.receipts.map { it.kind })
+            val receipt = state!!.receipts.last()
+            assertEquals(r.approvalId, receipt.approvalId); assertEquals(other, receipt.actor)
+            assertEquals(setOf(person, other), receipt.recipientGenerations.keys)
+            assertEquals("revoke", events.first()); assertFalse("unhide" in events)
+            assertFalse("permission" in events); assertFalse("permissions-readback" in events)
+            assertEquals(AppApprovalOutcome.READY, controller.resume())
+            assertEquals(2, state!!.receipts.size)
+        }
+    }
+
+    @Test fun `withdrawal requires exact confirmation and fresh person action generation and boot`() {
+        val initialClock = now
+        for (bad in listOf("confirmation", "person", "action", "expiry", "generation", "structure", "reboot")) {
+            now = initialClock; stuckApproval()
+            val r = assertNotNull(controller.prepareWithdrawal(person))
+            val a = when (bad) {
+                "person" -> withdrawalAuth(r, other)
+                "action" -> assertIs<PinResult.Authorized>(vault.authenticate(person, pin, PrivilegedAction("other", "x"))).authority
+                else -> withdrawalAuth(r)
+            }
+            when (bad) {
+                "expiry" -> now = ClockReading(RunningTime("epoch", 120_000), BootTime("boot", 120_000))
+                "generation" -> credentials = credentials!!.replacing(person, credentials!!.people.getValue(person).copy(generation = 1))
+                "structure" -> credentials = CredentialState(Mode.TRUSTED, credentials!!.people, structureGeneration = 1)
+                "reboot" -> now = ClockReading(RunningTime("epoch", 1), BootTime("next-boot", 0))
+            }
+            assertEquals(AppApprovalOutcome.REFUSED, controller.withdrawPending(r,
+                if (bad == "confirmation") "another-approval" else r.approvalId, a), bad)
+            assertEquals(AppApprovalPhase.COMMITTED, state!!.pending!!.phase)
+            assertEquals(1, state!!.receipts.size); assertTrue(events.isEmpty())
+        }
+    }
+
+    @Test fun `withdrawal is limited to current pending committed record and is single use`() {
+        setup(); assertNull(controller.prepareWithdrawal(person))
+        val approval = request(); failure = "permission"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.approve(approval, auth(approval)))
+        assertNull(controller.prepareWithdrawal(person))
+        stuckApproval(); val r = assertNotNull(controller.prepareWithdrawal(person)); val a = withdrawalAuth(r)
+        assertEquals(AppApprovalOutcome.WITHDRAWN, controller.withdrawPending(r, r.approvalId, a))
+        assertEquals(AppApprovalOutcome.REFUSED, controller.withdrawPending(r, r.approvalId, a))
+        assertNull(controller.prepareWithdrawal(person))
+        // Existing candidate data still needs a newly reviewed request and fresh PIN after withdrawal.
+        val freshRequest = request()
+        assertEquals(AppApprovalOutcome.APPROVED, controller.approve(freshRequest, auth(freshRequest)))
+        assertEquals(3, state!!.receipts.size)
+    }
+
+    @Test fun `withdrawal intent and completion crashes replay removal and preserve receipts`() {
+        val originalManifest = manifest!!
+        for (point in listOf("revoke", "protected", "session-readback", "save-withdrawing", "after-save-withdrawing",
+            "restore-policy", "policy-readback", "save-finished", "after-save-finished")) {
+            manifest = originalManifest; stuckApproval()
+            manifest = PermissionManifest(binding, 2, "build", originalManifest.permissions)
+            val r = assertNotNull(controller.prepareWithdrawal(person)); val a = withdrawalAuth(r)
+            crash = point
+            assertFailsWith<IllegalStateException>(point) { controller.withdrawPending(r, r.approvalId, a) }
+            val saved = state!!.pending?.phase == AppApprovalPhase.WITHDRAWING || state!!.pending == null
+            crash = null; events.clear(); controller = controller()
+            val result = controller.onStart()
+            assertEquals("revoke", events.first())
+            assertFalse("unhide" in events)
+            if (saved) {
+                assertTrue(result in setOf(AppApprovalOutcome.READY, AppApprovalOutcome.WITHDRAWN))
+                assertNull(state!!.pending); assertFalse(app in state!!.apps); assertEquals(2, state!!.receipts.size)
+            } else {
+                assertEquals(AppApprovalOutcome.NOT_READY, result)
+                assertEquals(AppApprovalPhase.COMMITTED, state!!.pending!!.phase); assertEquals(1, state!!.receipts.size)
+            }
+            assertEquals(AppApprovalOutcome.REFUSED, controller.withdrawPending(r, r.approvalId, a))
+        }
+    }
+
+    @Test fun `failed withdrawal effects or save never release slot and retry queues one receipt`() {
+        for (point in listOf("restore-policy", "policy-readback", "save-finished")) {
+            stuckApproval(); val r = assertNotNull(controller.prepareWithdrawal(person)); failure = point
+            assertEquals(AppApprovalOutcome.NOT_READY, controller.withdrawPending(r, r.approvalId, withdrawalAuth(r)))
+            assertEquals(AppApprovalPhase.WITHDRAWING, state!!.pending!!.phase); assertEquals(1, state!!.receipts.size)
+            assertFalse(app in PolicyEngine.decide(policy.copy(approvalState = state)).lockTaskPackages)
+            failure = null; battery = BatteryState(1, false)
+            assertEquals(AppApprovalOutcome.WITHDRAWN, controller.resume())
+            assertEquals(2, state!!.receipts.size)
+            battery = BatteryState(50, false)
+        }
+    }
+
+    @Test fun `withdrawal credential CAS race fails before durable authority and visibility`() {
+        stuckApproval(); val r = assertNotNull(controller.prepareWithdrawal(person)); val a = withdrawalAuth(r)
+        beforeSave = { credentials = credentials!!.replacing(person, credentials!!.people.getValue(person).copy(generation = 1)) }
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.withdrawPending(r, r.approvalId, a))
+        assertEquals(AppApprovalPhase.COMMITTED, state!!.pending!!.phase)
+        assertFalse("restore-policy" in events); assertEquals(1, state!!.receipts.size)
+    }
+
+    @Test fun `unsafe cleanup facts keep withdrawal journal until complete safe readback`() {
+        val originalPolicy = policy
+        for (bad in listOf("locked", "floor", "unknown system", "changed during readback")) {
+            policy = originalPolicy; stuckApproval(); val r = assertNotNull(controller.prepareWithdrawal(person))
+            when (bad) {
+                "locked" -> policy = policy.copy(lockedBoot = true)
+                "floor" -> policy = policy.copy(identities = policy.identities + FloorIdentity(app, FloorRole.IN_CALL_UI, IdentitySource.OS_MANAGED),
+                    installed = policy.installed.map { if (it.name == app) it.copy(isSystem = true) else it })
+                "unknown system" -> policy = policy.copy(fingerprint = "ota-build", installed = policy.installed.map { if (it.name == app) it.copy(isSystem = true) else it })
+                "changed during readback" -> atEvent = { if (it == "policy-readback") policy = policy.copy(lockedBoot = true) }
+            }
+            assertEquals(AppApprovalOutcome.NOT_READY, controller.withdrawPending(r, r.approvalId, withdrawalAuth(r)), bad)
+            assertEquals(AppApprovalPhase.WITHDRAWING, state!!.pending!!.phase)
+            assertTrue(app in state!!.apps); assertFalse("unhide" in events)
+            atEvent = null; policy = originalPolicy
+            assertEquals(AppApprovalOutcome.WITHDRAWN, controller.resume())
+        }
+    }
+
+    @Test fun `package replacement during cleanup invalidates readback even with identical policy sets`() {
+        for (change in listOf("version", "signer")) {
+            stuckApproval(); val r = assertNotNull(controller.prepareWithdrawal(person))
+            atEvent = { if (it == "policy-readback") {
+                policy = if (change == "version") policy.copy(installed = policy.installed.map {
+                    if (it.name == app) it.copy(versionCode = it.versionCode + 1) else it
+                }) else policy.copy(installedIdentities = listOf(ApprovalBinding(app, setOf(CertDigest("cd".repeat(32))))))
+            } }
+            assertEquals(AppApprovalOutcome.NOT_READY, controller.withdrawPending(r, r.approvalId, withdrawalAuth(r)))
+            assertEquals(AppApprovalPhase.WITHDRAWING, state!!.pending!!.phase)
+            atEvent = null
+            assertEquals(AppApprovalOutcome.WITHDRAWN, controller.resume())
+            policy = policy.copy(installed = policy.installed.map { if (it.name == app) it.copy(versionCode = 1) else it },
+                installedIdentities = listOf(binding))
+        }
+    }
+
+    @Test fun `saved withdrawal survives credential replacement and retains its original receipt recipients`() {
+        stuckApproval(); val r = assertNotNull(controller.prepareWithdrawal(person)); failure = "restore-policy"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.withdrawPending(r, r.approvalId, withdrawalAuth(r)))
+        credentials = CredentialState(Mode.SELF_MANAGED, mapOf(other to credentials!!.people.getValue(other).copy(generation = 9)), structureGeneration = 1)
+        failure = null; now = ClockReading(RunningTime("new-epoch", 0), BootTime("reboot", 0))
+        controller = controller()
+        assertEquals(AppApprovalOutcome.WITHDRAWN, controller.onStart())
+        assertEquals(mapOf(person to 0L, other to 0L), state!!.receipts.last().recipientGenerations)
+        assertEquals(person, state!!.receipts.last().actor)
+    }
+
+    @Test fun `invalid withdrawal journals and mismatched receipt types are rejected`() {
+        stuckApproval(); val op = state!!.pending!!
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.WITHDRAWING) }
+        val wrong = AppApprovalReceipt("withdrawal", person, mapOf(person to 0L), AppApprovalReceiptKind.WITHDRAWN, "another-approval")
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.WITHDRAWING, wrong) }
+        val valid = AppApprovalReceipt("withdrawal", person, mapOf(person to 0L), AppApprovalReceiptKind.WITHDRAWN, op.record.id)
+        assertFailsWith<IllegalArgumentException> { AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.COMMITTED, valid) }
+        assertFailsWith<IllegalArgumentException> {
+            AppApprovalState(apps = state!!.apps, pending = AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.WITHDRAWING, valid),
+                receipts = state!!.receipts + valid)
+        }
     }
 
 }
