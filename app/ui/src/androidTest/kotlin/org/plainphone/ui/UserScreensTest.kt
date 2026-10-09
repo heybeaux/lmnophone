@@ -73,6 +73,26 @@ class UserScreensTest {
         compose.onNodeWithText("Sam's phone got it ✓").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("OK").assertIsDisplayed()
     }
+    @Test fun unusualWarningIsFullyVisibleWithoutScrolling() {
+        show { BlockedLinkScreen(BlockedLinkUiState.Blocked("xn--e1afmkfd.invalid", true, "Sam"), {}) }
+        val warning = compose.onNodeWithText("This address uses unusual letters. It may not be what it looks like.")
+        warning.assertIsDisplayed()
+        val full = warning.fetchSemanticsNode().layoutInfo.coordinates.size.height
+        val visible = warning.fetchSemanticsNode().boundsInRoot.height
+        org.junit.Assert.assertTrue("Entire warning must be visible", visible >= full - 1)
+    }
+    @Test fun hostStripsBidiOverridesBeforeDisplay() {
+        show { BlockedLinkScreen(BlockedLinkUiState.Blocked("safe\u202E.invalid"), {}) }
+        compose.onNodeWithText("safe.invalid").assertIsDisplayed()
+        compose.onNodeWithText("safe\u202E.invalid").assertDoesNotExist()
+    }
+    @Test fun previewStripsBidiControlsFromHostAndPath() {
+        show { BlockedLinkScreen(BlockedLinkUiState.Confirm("Sam and Jo",
+            "Plainphone: Margaret would like to look at this link with you: safe\u202E.invalid/\u2066bus"), {}) }
+        compose.onNodeWithText("Look at this link with Sam and Jo?").assertIsDisplayed()
+        compose.onNodeWithText("Plainphone: Margaret would like to look at this link with you: safe.invalid/bus")
+            .assertExists()
+    }
     @Test fun overlongLinkOffersNoSend() {
         val events = mutableListOf<BlockedLinkEvent>()
         show { BlockedLinkScreen(BlockedLinkUiState.TooLong, events::add) }
