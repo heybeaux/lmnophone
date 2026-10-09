@@ -25,7 +25,7 @@ trial() {
     kill) A emu kill; sleep 3; nohup ~/Library/Android/sdk/emulator/emulator -avd pp11-a35 -port 5620 -no-snapshot-load -no-boot-anim -no-window >> "$PAPERCLIP_RUN_SCRATCH_DIR/emu35.log" 2>&1 & sleep 5; A wait-for-device ;;
   esac
   waitnewboot "$old" >> $out
-  if waitboot ${BOOTLIM:-150} >> $out; then r=BOOTED; { cmd state $pkg; } >> $out; else r=LOOP; fi
+  if waitboot ${BOOTLIM:-150} >> $out; then r=BOOTED; { A shell uptime; A shell getprop sys.boot.reason; cmd state $pkg; } >> $out; else r=LOOP; fi
   echo "system_server crashes in crash buffer: $(crashes)" >> $out
   A logcat -d -b crash 2>/dev/null | grep -m3 -E 'Caused by|onBootPhase|IllegalState' >> $out
   echo "RESULT: $r" >> $out
