@@ -24,3 +24,4 @@ internal const val AOSP_INTENT = "AOSP frameworks/base/core/java/android/content
 internal const val SELECTOR_RULE = "the SEL; selector is attached only when the outer intent has no package"
 internal const val AOSP_RESOLVE = "AOSP frameworks/base/services/core/java/com/android/server/pm/ResolveIntentHelper.java chooseBestActivity"
 internal const val AOSP_QUERY = "AOSP frameworks/base/services/core/java/com/android/server/pm/ComputerEngine.java queryIntentActivitiesInternal"
+internal const val CHROME_SANITISER = "https://chromium.googlesource.com/chromium/src/+/refs/tags/138.0.7204.50/components/external_intents/android/java/src/org/chromium/components/external_intents/ExternalNavigationHandler.java#1843"

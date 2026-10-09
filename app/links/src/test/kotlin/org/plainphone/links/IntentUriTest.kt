@@ -1,12 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.links
 
-import org.plainphone.core.PackageName
 import kotlin.test.*
 
 /** Mirrors `Intent.parseUri(uri, URI_INTENT_SCHEME)` for the fields the link decision needs. */
 class IntentUriTest {
-    private data class Row(val uri: String, val data: String?, val pkg: String?, val component: String?, val action: String?, val fallback: String? = null)
+    private data class Row(
+        val uri: String,
+        val data: String?,
+        val pkg: String?,
+        val component: String?,
+        val action: String?,
+        val fallback: String? = null,
+        val evidence: Evidence = Evidence.Cited("spikes/emulator/tools/q4-links-v3.txt", "PLA-23 V3 parseUri fixture"),
+    )
 
     private val rows = listOf(
         // Cases from spikes/emulator/tools/q4-links-v3.txt (PLA-23 V3).
@@ -17,16 +24,20 @@ class IntentUriTest {
         Row("intent://open#Intent;scheme=ppfx;package=com.plainphone.fx.applinks;end", "ppfx://open", "com.plainphone.fx.applinks", null, "android.intent.action.VIEW"),
         Row("intent://nothing#Intent;scheme=nosuchscheme;S.browser_fallback_url=https%3A%2F%2Fexample.com;end", "nosuchscheme://nothing", null, null, "android.intent.action.VIEW", "https://example.com"),
         // Percent-decoded values, last '#' wins, no scheme keeps the bare remainder.
-        Row("intent://a.example/p#x#Intent;scheme=https;action=a%2Eb;end", "https://a.example/p#x", null, null, "a.b"),
-        Row("intent:foo#Intent;end", "foo", null, null, "android.intent.action.VIEW"),
+        Row("intent://a.example/p#x#Intent;scheme=https;action=a%2Eb;end", "https://a.example/p#x", null, null, "a.b", evidence = Evidence.Unverified("$AOSP_INTENT: last hash and Uri.decode; not run")),
+        Row("intent:foo#Intent;end", "foo", null, null, "android.intent.action.VIEW", evidence = Evidence.Unverified("$AOSP_INTENT: no scheme leaves the remainder; not run")),
+        Row("intent://example.com/#Intent;scheme=https;package=bad..pkg;end", "https://example.com/", "bad..pkg", null, ACTION_VIEW, evidence = Evidence.Unverified("$AOSP_INTENT: package text is not validated; not run")),
+        Row("intent://example.com/#Intent;scheme=https;component=bad..pkg/.Main;end", "https://example.com/", null, "bad..pkg", ACTION_VIEW, evidence = Evidence.Unverified("$AOSP_INTENT: ComponentName keeps raw package text; not run")),
+        Row("intent:#Intent;package=;end", null, "", null, ACTION_VIEW, evidence = Evidence.Unverified("$AOSP_INTENT: an empty package is set, not null; not run")),
+        Row("intent:x#component(bad..pkg!Main)", "intent:x", null, "bad..pkg", ACTION_VIEW, evidence = Evidence.Unverified("$AOSP_INTENT: legacy ComponentName keeps raw package text; not run")),
     )
 
     @Test fun `parse table`() {
         rows.forEach { row ->
             val parsed = assertNotNull(IntentUri.parse(row.uri), row.uri)
             assertEquals(row.data, parsed.data, row.uri)
-            assertEquals(row.pkg?.let(::PackageName), parsed.packageName, row.uri)
-            assertEquals(row.component?.let(::PackageName), parsed.componentPackage, row.uri)
+            assertEquals(row.pkg, parsed.packageName?.toString(), "${row.uri}: ${row.evidence}")
+            assertEquals(row.component, parsed.componentPackage?.toString(), "${row.uri}: ${row.evidence}")
             assertEquals(row.action, parsed.action, row.uri)
             assertEquals(row.fallback, parsed.browserFallbackUrl, row.uri)
         }
@@ -35,22 +46,22 @@ class IntentUriTest {
     /** AOSP `parseUriInternal`: `if (baseIntent.mPackage == null) baseIntent.setSelector(intent)`. */
     @Test fun `the selector is dropped when the outer intent has a package`() {
         val parsed = assertNotNull(IntentUri.parse("intent:#Intent;package=org.example.outer;SEL;scheme=https;package=org.example.sel;end"))
-        assertEquals(PackageName("org.example.outer"), parsed.packageName)
+        assertEquals("org.example.outer", parsed.packageName?.toString())
         assertNull(parsed.selector)
     }
 
     @Test fun `the selector is kept when the outer intent has no package`() {
         val parsed = assertNotNull(IntentUri.parse("intent:#Intent;SEL;scheme=https;package=org.example.sel;end"))
         val selector = assertNotNull(parsed.selector)
-        assertEquals(PackageName("org.example.sel"), selector.packageName)
+        assertEquals("org.example.sel", selector.packageName?.toString())
         assertEquals("https:", selector.data)
         assertNull(parsed.packageName)
     }
 
     @Test fun `the selector is kept next to an outer component`() {
         val parsed = assertNotNull(IntentUri.parse("intent:#Intent;component=org.example.outer/.Main;SEL;package=org.example.sel;end"))
-        assertEquals(PackageName("org.example.outer"), parsed.componentPackage)
-        assertEquals(PackageName("org.example.sel"), assertNotNull(parsed.selector).packageName)
+        assertEquals("org.example.outer", parsed.componentPackage?.toString())
+        assertEquals("org.example.sel", assertNotNull(parsed.selector).packageName?.toString())
     }
 
     /** AOSP: with no '#', `parseUri` does not throw; it returns `VIEW` with the whole `intent:` string as data. */
@@ -66,7 +77,7 @@ class IntentUriTest {
     @Test fun `old format fragments`() {
         val settings = assertNotNull(IntentUri.parse("intent:x#action(android.settings.SETTINGS)component(com.android.settings!com.android.settings.Settings)"))
         assertEquals("android.settings.SETTINGS", settings.action)
-        assertEquals(PackageName("com.android.settings"), settings.componentPackage)
+        assertEquals("com.android.settings", settings.componentPackage?.toString())
         assertEquals("intent:x", settings.data)
 
         val plain = assertNotNull(IntentUri.parse("intent://example.com/#frag"))
@@ -85,7 +96,7 @@ class IntentUriTest {
     /** AOSP: `android-app://pkg[/scheme[/authority[/path]]]`; the package is set after the selector is attached. */
     @Test fun `android-app URIs`() {
         val web = assertNotNull(IntentUri.parse("android-app://com.plainphone.app/https/example.com/a?b=c"))
-        assertEquals(PackageName("com.plainphone.app"), web.packageName)
+        assertEquals("com.plainphone.app", web.packageName?.toString())
         assertEquals("https://example.com/a?b=c", web.data)
         assertEquals(ACTION_VIEW, web.action)
 
@@ -98,8 +109,8 @@ class IntentUriTest {
         assertNull(IntentUri.parse("android-app:org.example.app").let { it?.packageName })
 
         val withSelector = assertNotNull(IntentUri.parse("android-app://org.example.app/https/e.example/#Intent;SEL;package=org.example.sel;end"))
-        assertEquals(PackageName("org.example.app"), withSelector.packageName)
-        assertEquals(PackageName("org.example.sel"), assertNotNull(withSelector.selector).packageName)
+        assertEquals("org.example.app", withSelector.packageName?.toString())
+        assertEquals("org.example.sel", assertNotNull(withSelector.selector).packageName?.toString())
         assertNull(IntentUri.parse("android-app:/"))
     }
 
@@ -125,7 +136,6 @@ class IntentUriTest {
         listOf(
             "https://example.com",
             "intent://example.com#Intent;scheme=https",
-            "intent://example.com#Intent;scheme=https;package=bad..pkg;end",
             "intent://example.com/#Intent;scheme=https;foo=bar;end",
             "intent:#Intent;package;end",
             "intent:#Intent;i.n=abc;end",
