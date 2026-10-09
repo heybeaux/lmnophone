@@ -22,3 +22,5 @@ internal const val WEB_SPEC = "openspec/changes/add-plainphone-spike-and-mvp/spe
 /** Android's own source for `Intent.parseUri`, used where no emulator run exists yet. */
 internal const val AOSP_INTENT = "AOSP frameworks/base/core/java/android/content/Intent.java parseUri"
 internal const val SELECTOR_RULE = "the SEL; selector is attached only when the outer intent has no package"
+internal const val AOSP_RESOLVE = "AOSP frameworks/base/services/core/java/com/android/server/pm/ResolveIntentHelper.java chooseBestActivity"
+internal const val AOSP_QUERY = "AOSP frameworks/base/services/core/java/com/android/server/pm/ComputerEngine.java queryIntentActivitiesInternal"

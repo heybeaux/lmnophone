@@ -82,6 +82,31 @@ class IntentUriTest {
         assertEquals("https://example.com", fallback.browserFallbackUrl)
     }
 
+    /** AOSP: `android-app://pkg[/scheme[/authority[/path]]]`; the package is set after the selector is attached. */
+    @Test fun `android-app URIs`() {
+        val web = assertNotNull(IntentUri.parse("android-app://com.plainphone.app/https/example.com/a?b=c"))
+        assertEquals(PackageName("com.plainphone.app"), web.packageName)
+        assertEquals("https://example.com/a?b=c", web.data)
+        assertEquals(ACTION_VIEW, web.action)
+
+        val pkgOnly = assertNotNull(IntentUri.parse("android-app://org.example.app"))
+        assertEquals("android.intent.action.MAIN", pkgOnly.action)
+        assertNull(pkgOnly.data)
+
+        assertEquals("ppfx:", assertNotNull(IntentUri.parse("android-app://org.example.app/ppfx")).data)
+        assertEquals(ACTION_VIEW, assertNotNull(IntentUri.parse("android-app://org.example.app/#Intent;action=android.intent.action.VIEW;end")).action)
+        assertNull(IntentUri.parse("android-app:org.example.app").let { it?.packageName })
+
+        val withSelector = assertNotNull(IntentUri.parse("android-app://org.example.app/https/e.example/#Intent;SEL;package=org.example.sel;end"))
+        assertEquals(PackageName("org.example.app"), withSelector.packageName)
+        assertEquals(PackageName("org.example.sel"), assertNotNull(withSelector.selector).packageName)
+        assertNull(IntentUri.parse("android-app:/"))
+    }
+
+    @Test fun `a later malformed component clears the earlier one`() {
+        assertNull(assertNotNull(IntentUri.parse("intent:#Intent;component=com.android.chrome/.Main;component=noslash;end")).componentPackage)
+    }
+
     /** AOSP stops at the first item that starts with "end", even "endpoint=". */
     @Test fun `an item starting with end ends the list`() {
         val parsed = assertNotNull(IntentUri.parse("intent://x/#Intent;scheme=https;endpoint=1;package=com.android.chrome;end"))
