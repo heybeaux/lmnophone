@@ -1,0 +1,39 @@
+# PLA-20 step 1: state at wake (2026-10-09T01:40:30Z)
+## device owner
+Device Owner Type: 0
+Device Owner: 
+admin=ComponentInfo{com.plainphone.spike.dpc/com.plainphone.spike.dpc.AdminReceiver}
+testOnlyAdmin=true
+## restrictions (DPC)
+## lock task
+mLockTaskModeState=NONE
+## HOME
+com.motorola.launcher3
+## accounts
+    Account {name=<redacted>, type=com.google}
+    Account {name=<redacted>, type=com.google.android.apps.tachyon}
+## hidden
+## suspended
+head: illegal line count -- 0
+0
+## apps
+org.telegram.messenger versionName=12.10.6
+com.Slack versionName=26.09.50.0
+com.spotify.music versionName=9.1.88.2204
+com.microsoft.office.outlook versionName=5.2639.2
+com.google.android.gm versionName=2026.09.21.992487546.Release
+com.plainphone.spike.dpc versionName=spike-1
+## settings
+adb_wifi_enabled=0
+stay_on_while_plugged_in=2
+boot_count=5
+## battery
+  AC powered: false
+  USB powered: true
+  level: 100
+## wifi
+Wifi is enabled
+Wifi scanning is only available when wifi is enabled
+==== Primary ClientModeManager instance ====
+## top
+topResumedActivity=ActivityRecord{c4d94f9 u0 com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher t130}

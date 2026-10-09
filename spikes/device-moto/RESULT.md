@@ -735,6 +735,24 @@ Inbox screens were never dumped or screenshotted. `tools/gm-nav.sh` lists only a
   notifications and links for Telegram, Slack, Spotify and Outlook; Telegram's in-app browser; links in Gmail HTML mail
   and the Chat tab (absent on this account).
 
+## B-Q4 signed in (PLA-20, THROWAWAY)
+
+**Status: waiting for Beaux to sign in.** Evidence: `evidence/phase-b/bq4s/`.
+
+### Step 1. Phone state at wake (2026-10-09T01:40Z, `evidence/phase-b/bq4s/state-at-wake.txt`)
+
+Matches the end state the Verifier left at [PLA-6](/PLA/issues/PLA-6) close:
+- Spike DPC `com.plainphone.spike.dpc` is Device Owner, `testOnlyAdmin=true` (removable). DPC `status`:
+  `restrictions=[] hidden=[] suspended=[]`, lock task `NONE`, lock-task packages = the spike only, features 87.
+- HOME = `com.motorola.launcher3`. Accounts: the Google account from Phase B + Meet's local `tachyon` account.
+- Installed, not signed in: Telegram 12.10.6, Slack 26.09.50.0, Spotify 9.1.88.2204, Outlook 5.2639.2; Gmail 2026.09.21.
+- `adb_wifi_enabled=0`, `stay_on_while_plugged_in=2`, `boot_count=5`. adb over USB works.
+
+### Step 2. Ready for sign-in
+
+Nothing changed: lock task is already off and no restrictions are set, so Beaux can sign in with the normal phone
+(Google sign-in through GMS, browsers and the permission controller all reachable). The sign-in card on PLA-20 asks him to confirm.
+
 ## Final end state at PLA-5 close (2026-10-09T00:37Z, checked again)
 
 PLA-5 is closed; the Verifier ([PLA-6](/PLA/issues/PLA-6)) drives the phone next, then PLA-20.
