@@ -100,7 +100,7 @@ class TurnOffController(
 
     private fun checkpoint(before: WaitingState, operation: WaitingOperation): Boolean {
         val revision = nextRevision(before) ?: return false
-        return store.compareAndSet(before, WaitingState(revision, operation, before.texts))
+        return store.compareAndSet(before, before.replacing(revision, operation))
     }
 
     private fun complete(before: WaitingState?, requestId: String): TurnOffResult {
@@ -112,7 +112,7 @@ class TurnOffController(
         val completed = operation.withPhase(WaitingPhase.COMPLETED)
         val recipients = credentials()?.people?.mapValues { it.value.generation } ?: operation.recipientGenerations
         val receipt = WaitingText("${requestId.length}:$requestId:$revision", WaitingEvent.COMPLETED, completed, recipients)
-        val saved = store.compareAndSet(before, WaitingState(revision, completed, before.texts + receipt))
+        val saved = store.compareAndSet(before, before.replacing(revision, completed, before.texts + receipt))
         return TurnOffResult(TurnOffOutcome.OFF, journalPending = !saved)
     }
 

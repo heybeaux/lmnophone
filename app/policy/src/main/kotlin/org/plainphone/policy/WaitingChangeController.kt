@@ -39,14 +39,19 @@ class WaitingOperation(
     internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, restoredSteps)
     internal fun withRestoredSteps(count: Int) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, count)
 }
-class WaitingState(val revision: Long = 0, val operation: WaitingOperation? = null, texts: List<WaitingText> = emptyList()) {
-    init { require(revision >= 0) }
+class WaitingState(val revision: Long = 0, val operation: WaitingOperation? = null, texts: List<WaitingText> = emptyList(),
+    val storageGeneration: String = "initial", recoveryReceipts: List<RecoveryReceipt> = emptyList()) {
+    init { require(revision >= 0 && storageGeneration.isNotBlank()) }
     val texts = immutableList(texts)
+    val recoveryReceipts = immutableList(recoveryReceipts)
+    internal fun replacing(revision: Long, operation: WaitingOperation? = this.operation,
+        texts: List<WaitingText> = this.texts, recoveryReceipts: List<RecoveryReceipt> = this.recoveryReceipts) =
+        WaitingState(revision, operation, texts, storageGeneration, recoveryReceipts)
 }
 interface WaitingChangeStore {
-    /** Highest-revision valid checksum copy from two durable copies. null means damaged, not vacant. */
+    /** Highest-revision valid checksum copy in the current storage generation. null means damaged, not vacant. */
     fun read(): WaitingState?
-    /** Atomically persist operation + texts; compare durable revision, increase it on every write. */
+    /** Atomically persist operation + texts; compare storage generation AND durable revision; preserve generation and increase revision on every write. */
     fun compareAndSet(expected: WaitingState, replacement: WaitingState): Boolean
 }
 /** UNKNOWN includes missing, corrupt or temporarily unreadable data; it never authorizes commit. */
@@ -76,7 +81,7 @@ enum class WaitingOutcome { PENDING, COMMITTING, CANCELLED, REFUSED, BUSY, NOT_R
 /**
  * The common serialized dispatcher owns this controller, PinVault and all credential/operation writes.
  * This slice starts only turn-off waits. It never restores settings, clears Device Owner, skips a wait,
- * applies a credential patch, or reports Off. Damaged state remains held for later explicit reconcile.
+ * applies a credential patch, or reports Off. Damaged state remains held until WaitingReconciler completes.
  */
 class WaitingChangeController(
     private val store: WaitingChangeStore,
@@ -159,7 +164,17 @@ class WaitingChangeController(
         val before = store.read() ?: return false
         if (before.texts.none { it.key == key }) return true
         val revision = nextRevision(before) ?: return false
-        return store.compareAndSet(before, WaitingState(revision, before.operation, before.texts.filterNot { it.key == key }))
+        return store.compareAndSet(before, before.replacing(revision, texts = before.texts.filterNot { it.key == key }))
+    }
+
+    /** Delivery acknowledgement removes only this recovery outbox item, never the durable audit entry. */
+    @Synchronized
+    fun acknowledgeRecovery(key: String): Boolean {
+        val before = store.read() ?: return false
+        if (before.recoveryReceipts.none { it.key == key }) return true
+        val revision = nextRevision(before) ?: return false
+        return store.compareAndSet(before, before.replacing(revision,
+            recoveryReceipts = before.recoveryReceipts.filterNot { it.key == key }))
     }
 
     private fun cancelPending(before: WaitingState, operation: WaitingOperation, event: WaitingEvent): WaitingOutcome {
@@ -185,6 +200,6 @@ class WaitingChangeController(
         val revision = nextRevision(before) ?: return false
         val id = operation.identity.requestId
         val text = WaitingText("${id.length}:$id:$revision", event, operation, recipients)
-        return store.compareAndSet(before, WaitingState(revision, operation, before.texts + text))
+        return store.compareAndSet(before, before.replacing(revision, operation, before.texts + text))
     }
 }
