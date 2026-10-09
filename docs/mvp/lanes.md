@@ -49,9 +49,17 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 - `TimeWindowQuota`: the generic "open for a few minutes" quota. The **web window** (5×/day × 5 min, extendable) and **Wi-Fi sign-in** (3 per 24 h) are built behind a flag that stays off. Their OpenSpec change isn't approved yet; Wi-Fi sign-in comes after the MVP core.
 
 **`:links` (lane C) exports:**
-- `BrowserClassifier.classify(facts: List<PackageFacts>, catalog: BrowserCatalog, neverHide: NeverHideList): Classification`
-- `LinkDecider.decide(intent: IntentFacts, approved: Set<PackageName>): LinkDecision`. Possible results: `OpenIn(pkg)`, `BlockedScreen`, `NoHandler`.
+- `BrowserClassifier(self: PlainphoneIdentity).classify(facts: List<PackageFacts>, catalog: BrowserCatalog, neverHide: NeverHideList, inventoryKnown: Boolean): Classification`.
+  - `PlainphoneIdentity` is the exact package name plus the exact set of signing-certificate digests (`CertDigest`).
+  - `inventoryKnown = false` leaves system matches unhidden (`KEEP_SYSTEM_NO_INVENTORY`), but they still can't be approved.
+- `LinkDecider(linkCatcher: PackageName).decide(intent: IntentFacts, approved: Set<PackageName>): LinkDecision`.
+  - Possible results: `OpenIn(pkg)`, `BlockedScreen(WEB_LINK | NOT_APPROVED | CHOOSER)`, `NoHandler(...)`.
+  - `approved` includes the lock-task UI exceptions.
 - `PackageFacts` and `IntentFacts` are plain data that lane D fills from PackageManager. Lane C never calls Android.
+  - `IntentFacts.resolvers` is what `queryIntentActivities` returns for the intent as dispatched. Each `Resolver` carries `verifiedForHost`.
+  - `IntentFacts.intentUri` says how the sender handled an `intent:` URI.
+  - `IntentFacts.linkCatcherPreferred` is true once lane D has set the persistent preferred activity for `VIEW http/https`.
+  - Details: `app/links/README.md`. Lead accepted these refinements on PLA-49.
 
 **`:ui` (lane B) exports:** one `@Composable` per screen, with this shape:
 - `XScreen(state: XUiState, onEvent: (XEvent) -> Unit)`.
