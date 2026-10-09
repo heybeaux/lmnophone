@@ -5,7 +5,7 @@ package org.plainphone.ui
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.plainphone.ui.user.withoutBidiControls
+import org.plainphone.ui.components.withoutBidiControls
 
 class BidiDisplayTest {
     @Test fun removesEveryDirectionalControlFromHostPathAndPreview() {

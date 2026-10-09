@@ -41,7 +41,7 @@ fun MoreScreen(state: MoreUiState, onEvent: (MoreEvent) -> Unit) {
         }
         when (val mode = state.mode) {
             is MoreMode.Trusted -> {
-                MenuRow(stringResource(R.string.more_ask), stringResource(R.string.more_ask_note, mode.requestRecipient)) {
+                MenuRow(stringResource(R.string.more_ask), stringResource(R.string.more_ask_note, mode.requestRecipient.withoutBidiControls())) {
                     onEvent(MoreEvent.AskForApp)
                 }
                 val everyone = trustedPeopleText(mode.people, everyone = true)

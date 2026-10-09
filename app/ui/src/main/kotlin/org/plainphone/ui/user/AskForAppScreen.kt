@@ -28,10 +28,10 @@ import org.plainphone.ui.theme.*
 
 @Composable
 fun AskForAppScreen(state: AskForAppUiState, onEvent: (AskForAppEvent) -> Unit) {
-    TaskScreen(stringResource(R.string.more_ask), stringResource(R.string.ask_send, state.recipientName),
+    TaskScreen(stringResource(R.string.more_ask), stringResource(R.string.ask_send, state.recipientName.withoutBidiControls()),
         { onEvent(AskForAppEvent.Send) }, primaryEnabled = state.canSend,
         back = stringResource(R.string.back_more), onBack = { onEvent(AskForAppEvent.Back) }) {
-        Text(stringResource(R.string.ask_body, state.recipientName), style = PlainphoneType.Body)
+        Text(stringResource(R.string.ask_body, state.recipientName.withoutBidiControls()), style = PlainphoneType.Body)
         val label = stringResource(R.string.ask_label)
         Column(verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
             Text(label, style = PlainphoneType.Small.copy(color = PlainphoneColors.Ink, fontWeight = FontWeight.Medium))
@@ -82,7 +82,7 @@ private fun RequestHistory(requests: List<AppRequestRow>, onRetry: (String) -> U
 private fun requestStatusText(status: AppRequestStatus): String = when (status) {
     AppRequestStatus.Sending -> stringResource(R.string.ask_sending)
     AppRequestStatus.Sent -> stringResource(R.string.ask_sent)
-    is AppRequestStatus.Delivered -> stringResource(R.string.ask_delivered, status.recipientName)
+    is AppRequestStatus.Delivered -> stringResource(R.string.ask_delivered, status.recipientName.withoutBidiControls())
     AppRequestStatus.Failed -> stringResource(R.string.ask_failed)
     AppRequestStatus.Added -> stringResource(R.string.ask_added)
     AppRequestStatus.NotAdded -> stringResource(R.string.ask_not_added)
@@ -91,7 +91,7 @@ private fun requestStatusText(status: AppRequestStatus): String = when (status) 
 @Composable
 fun AppRequestResultScreen(state: AppRequestResultUiState, onEvent: (AppRequestResultEvent) -> Unit) {
     val title = when (state.result) {
-        AppRequestResult.Sent -> stringResource(R.string.ask_sent_title, state.recipientName)
+        AppRequestResult.Sent -> stringResource(R.string.ask_sent_title, state.recipientName.withoutBidiControls())
         AppRequestResult.Failed -> stringResource(R.string.ask_failed_title)
         AppRequestResult.DailyLimit -> stringResource(R.string.ask_limit_title)
     }
@@ -105,7 +105,7 @@ fun AppRequestResultScreen(state: AppRequestResultUiState, onEvent: (AppRequestR
             AppRequestResult.Sent -> R.string.ask_sent_body
             AppRequestResult.Failed -> R.string.ask_failed_body
             AppRequestResult.DailyLimit -> R.string.ask_limit_body
-        }, state.recipientName), style = PlainphoneType.Body)
+        }, state.recipientName.withoutBidiControls()), style = PlainphoneType.Body)
         if (state.result == AppRequestResult.Sent) {
             RequestHistory(state.requests) { onEvent(AppRequestResultEvent.RetryRequest(it)) }
         }

@@ -16,9 +16,9 @@ import org.plainphone.ui.home.HomeNoticeDay
 internal fun trustedPeopleText(names: List<String>, everyone: Boolean = false): String? =
     when (names.size) {
         0 -> null
-        1 -> names.first()
+        1 -> names.first().withoutBidiControls()
         else -> stringResource(if (everyone) R.string.names_and else R.string.names_or,
-            names.first(), names.drop(1).let { trustedPeopleText(it, everyone) }.orEmpty())
+            names.first().withoutBidiControls(), names.drop(1).let { trustedPeopleText(it, everyone) }.orEmpty())
     }
 
 /** Presentation only: the host supplies the date and relative offset; no timers or clock reads. */
@@ -34,4 +34,10 @@ internal fun waitingTimeText(time: String, day: HomeNoticeDay): String {
                 stringResource(R.string.notice_short_date_format), locale)))
         else -> time
     }
+}
+
+/** Shared presentation defence for hosts, previews and names. The host owns parsing and saved-data sanitization. */
+internal fun String.withoutBidiControls(): String = filterNot {
+    it in '\u202A'..'\u202E' || it in '\u2066'..'\u2069' ||
+        it == '\u200E' || it == '\u200F' || it == '\u061C'
 }

@@ -62,6 +62,7 @@ sealed interface AppRequestResultEvent {
 sealed interface BlockedLinkUiState {
     data class Blocked(val host: String, val unusualLetters: Boolean = false, val shareWith: String? = null) : BlockedLinkUiState
     data object TooLong : BlockedLinkUiState
+    /** Host sets sending before starting work and also rejects duplicate commands. */
     data class Confirm(val recipientName: String, val sanitizedSmsPreview: String, val sending: Boolean = false) : BlockedLinkUiState
     data class Sent(val recipientName: String) : BlockedLinkUiState
     data object Failed : BlockedLinkUiState

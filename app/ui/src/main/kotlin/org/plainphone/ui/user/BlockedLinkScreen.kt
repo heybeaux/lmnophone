@@ -19,7 +19,7 @@ fun BlockedLinkScreen(state: BlockedLinkUiState, onEvent: (BlockedLinkEvent) -> 
         is BlockedLinkUiState.Blocked -> TaskScreen(
             stringResource(R.string.link_title), stringResource(R.string.link_back),
             { onEvent(BlockedLinkEvent.GoBack) },
-            secondary = state.shareWith?.let { stringResource(R.string.link_share, it) },
+            secondary = state.shareWith?.let { stringResource(R.string.link_share, it.withoutBidiControls()) },
             onSecondary = { onEvent(BlockedLinkEvent.ReviewSharing) },
         ) {
             if (state.unusualLetters) Text(stringResource(R.string.link_unusual), style = PlainphoneType.Body)
@@ -34,17 +34,17 @@ fun BlockedLinkScreen(state: BlockedLinkUiState, onEvent: (BlockedLinkEvent) -> 
             { onEvent(BlockedLinkEvent.GoBack) },
         ) { Text(stringResource(R.string.link_too_long), style = PlainphoneType.Body) }
         is BlockedLinkUiState.Confirm -> TaskScreen(
-            stringResource(R.string.link_confirm_title, state.recipientName), stringResource(R.string.user_send),
+            stringResource(R.string.link_confirm_title, state.recipientName.withoutBidiControls()), stringResource(R.string.user_send),
             { onEvent(BlockedLinkEvent.Send) }, primaryEnabled = !state.sending,
             secondary = stringResource(R.string.link_dont_send), secondaryEnabled = !state.sending,
             onSecondary = { onEvent(BlockedLinkEvent.DontSend) },
         ) {
-            Text(stringResource(R.string.link_confirm_body, state.recipientName), style = PlainphoneType.Body)
+            Text(stringResource(R.string.link_confirm_body, state.recipientName.withoutBidiControls()), style = PlainphoneType.Body)
             ScreenBox { Text(state.sanitizedSmsPreview.withoutBidiControls(),
                 style = PlainphoneType.Body.copy(textDirection = TextDirection.Ltr)) }
         }
         is BlockedLinkUiState.Sent -> TaskScreen(
-            stringResource(R.string.link_sent, state.recipientName), stringResource(R.string.user_ok),
+            stringResource(R.string.link_sent, state.recipientName.withoutBidiControls()), stringResource(R.string.user_ok),
             { onEvent(BlockedLinkEvent.Ok) }, content = {},
         )
         BlockedLinkUiState.Failed -> TaskScreen(
@@ -53,10 +53,4 @@ fun BlockedLinkScreen(state: BlockedLinkUiState, onEvent: (BlockedLinkEvent) -> 
         ) { Text(stringResource(R.string.link_failed_body), style = PlainphoneType.Body) }
 
     }
-}
-
-/** Presentation defence only; URL parsing and SMS sanitization remain the host's responsibility. */
-internal fun String.withoutBidiControls(): String = filterNot {
-    it in '\u202A'..'\u202E' || it in '\u2066'..'\u2069' ||
-        it == '\u200E' || it == '\u200F' || it == '\u061C'
 }
