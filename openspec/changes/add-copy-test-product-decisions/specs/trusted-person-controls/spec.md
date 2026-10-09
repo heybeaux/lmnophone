@@ -505,7 +505,7 @@ Trusted-person mode SHALL include a "What Plainphone can't stop" screen, written
 - **THEN** it says plainly that Plainphone is friction, not a lock, in this mode
 
 ### Requirement: Turning Plainphone off restores everything it changed
-Turning Plainphone off SHALL be a waiting change. Starting it SHALL require a fresh PIN or recovery-code entry and two plain confirmations. When the wait matures and passes its re-check (or a trusted person's recovery code skips it, in supervised mode), Plainphone SHALL commit, and the turn-off journal SHALL be its operation journal: it records progress and resumes after a restart. If the battery is below 5% and not charging at that moment, the commit SHALL wait until the phone is charging or above 5%.
+Turning Plainphone off SHALL be a waiting change. Starting it SHALL require a fresh PIN or recovery-code entry and two plain confirmations. When the wait matures and passes its re-check (or a trusted person's recovery code skips it, in supervised mode), Plainphone SHALL commit. The forward steps SHALL be the restore steps below, recorded in the operation record and resumed after a restart. A turn-off SHALL NOT roll back; if its operation record is lost, Plainphone SHALL re-apply the full lockdown policy. If the battery is below 5% and not charging at that moment, the commit SHALL wait until the phone is charging or above 5%.
 
 Plainphone SHALL restore every change it recorded, and read each one back:
 - user restrictions

@@ -241,7 +241,7 @@ The honest summary for self-managed users: whatever route they take (turn off, o
 
 ### C6. Turning off waits 24 hours
 
-The existing off switch keeps everything it has (fresh authority, two plain confirmations, the full restore list read back, the successor home app and dialer check, journaled and resumable, never a silent wipe) and gains the waiting-change rules from C2 in front of it. Its operation journal is the existing turn-off journal.
+The existing off switch keeps everything it has (fresh authority, two plain confirmations, the full restore list read back, the successor home app and dialer check, journaled and resumable, never a silent wipe) and gains the waiting-change rules from C2 in front of it. Its forward steps (in the operation record's committing state) are the existing turn-off steps, each read back. A turn-off is never rolled back; if its record is lost, the normal policy pass re-applies the lockdown (C2).
 
 - **Supervised:** a trusted person's PIN starts the wait; anyone can cancel; a trusted person's recovery code skips it.
 - **Self-managed:** the user's PIN starts the wait; the user can cancel; nothing skips it.
@@ -313,7 +313,7 @@ During on-phone setup, straight after the user signs in to Google, the guide and
 - **[A PIN proves knowledge, not identity]** → the waits, receipts and generation checks exist because of this. A self-managed user can enrol a second identity as "trusted person"; that is now a 24-hour waiting change like everything else.
 - **[Self-managed mode doesn't stop a determined user]** → by design, and said openly. The Device Owner keeps the friction from being skipped by safe mode, adb or a launcher change. A wipe is always a way out.
 - **[More texts]** → receipts to both people for every action. UX may batch routine receipts daily; waiting-change texts go at once.
-- **[One pending change at a time; denial of progress]** → someone with a PIN can keep starting decoy changes, and anyone holding the phone can keep cancelling. Neither gains anything, but either can delay a legitimate change. A supervised trusted person can skip with their recovery code; a self-managed user has no escape from someone who keeps their phone. Disclosed.
+- **[One change in progress at a time; denial of progress]** → someone with a PIN can keep starting decoy changes, and anyone holding the phone can keep cancelling. Neither gains anything, but either can delay a legitimate change. A supervised trusted person can skip with their recovery code; a self-managed user has no escape from someone who keeps their phone. Disclosed.
 - **[Cancel by text can be forged]** → it can only cancel, and only the request whose cancel code it quotes. A trusted person whose turn-off is blocked by forged cancels can use their recovery code to skip.
 - **[Time while the phone is off doesn't count]** → a wait can last longer than 24 hours. Disclosed. Never shorter.
 - **[A stuck handover]** → if reset protection can't be updated, the change stays in progress with the old people in charge, until it works or a trusted person stops it (rollback, C3). While the write is uncertain, Plainphone doesn't claim which account a wipe would ask for.
@@ -341,6 +341,8 @@ These are the Lead's additions, beyond the literal answers on card `c60170d6`. B
 8. **History list kept 90 days on the phone.** Default: yes.
 
 ## Review response (PLA-31, revision 1 → 2)
+
+*Superseded in part by revision 3: the "wait record" and "operation journal" became one operation record, and CANCEL replies now carry a per-request code. See the PLA-34 table below.*
 
 | Finding | Where addressed |
 |---|---|
