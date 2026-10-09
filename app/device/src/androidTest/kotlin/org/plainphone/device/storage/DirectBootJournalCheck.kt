@@ -31,6 +31,9 @@ import org.plainphone.policy.SessionPhase
  *   a start revokes and clears it, compare-and-set works, and a flipped byte reads Damaged and is
  *   repaired by the next start. Credential-encrypted storage is tried as a control.
  *
+ * `-e phase apply` runs the PLA-117 policy applier check instead ([org.plainphone.device.apply.DpmPortCheck]);
+ * it needs this APK as Device Owner.
+ *
  * Plain [Instrumentation] so no test library has to load before unlock. Lines go to logcat (tag
  * PLA113) and to the `am instrument` output; the run fails on the first unmet expectation.
  */
@@ -49,6 +52,7 @@ class DirectBootJournalCheck : Instrumentation() {
             when (phase) {
                 "seed" -> seed()
                 "locked" -> locked()
+                "apply" -> org.plainphone.device.apply.DpmPortCheck(targetContext, ::note).check()
                 else -> fail("unknown phase $phase")
             }
             note("RESULT PASS phase=$phase")
