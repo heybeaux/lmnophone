@@ -44,6 +44,8 @@ data class PersonCredential(
     val pinCounter: FailureCounter = FailureCounter(),
     val recoveryCounter: FailureCounter = FailureCounter(),
     val generation: Long = 0,
+    /** Absent only for older records; pending enrollment never populates an active slot. */
+    val contact: PersonContact? = null,
 ) {
     init { require(generation >= 0) }
 }

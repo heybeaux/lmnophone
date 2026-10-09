@@ -642,3 +642,37 @@ The Android Platform Engineer owns the remaining integration under the D1 gate. 
 `UpdateCommitPolicyTest` tests the pure facts/deadline/credential/one-use proposals. It does not test an
 installer or prove process ownership. `ElevationController.prepare(Update)` still returns null, including
 when the approval port is present. Do not expose an Update UI action based on this seam alone.
+
+## Trusted-person enrollment and patch model (first people-change slice)
+
+`IncomingPersonEnrollment.confirm` captures the incoming holder's contact, PIN/recovery verifiers,
+reset-protection ID, all nine enrollment confirmations and the account-check witness. Use
+`PinVault.prepareCredential` for the incoming person's own PIN and show its generated recovery code
+once before confirmation. The pending model retains no plaintext PIN/code and never writes an active
+credential slot. The adapter must allocate a new, durably reserved, never-reused `TrustedPersonId`.
+Names, numbers and account IDs are sensitive persisted data; model diagnostics redact them.
+Confirmations are local-flow attestations, not proof of SMS delivery or Google account correctness.
+
+`TrustedPersonPatch.add`, `handOver` and `remove` calculate immutable inputs for the future waiting
+operation. All require supervised mode and an active recovery profile. Add enforces the two-holder
+limit; removal cannot delete the last holder; handover always names the outgoing holder as starter.
+A helper or a current holder records account checks. No factory authenticates a caller or starts a wait.
+
+The patch records the structure generation and exactly the starter/removed-slot credential generations.
+`dependenciesMatch` is the pending-state guard; counter changes and an unrelated holder's recovery do
+not invalidate it. The internal `replacementForCommit` calculates a candidate using the latest active
+record. It alters only the named slots and associated reset-protection IDs, keeps unrelated credentials,
+counters, contacts, pending notices, backup and friction, and increments revision/structure once.
+Credential recovery now preserves the selected holder's contact alongside replacing their secrets.
+
+This slice does not enable a people-change action. The next reviewed slice must integrate this model
+with the existing single waiting slot, fresh authority, 24-hour proven time, cancellation and skip
+transaction. The committing controller must persist direction, set/read back the candidate's full
+reset-protection list including backup, then atomically apply the patch; rollback must persist intent
+before restoring the current active list. It must recognize an already-applied patch on restart rather
+than retrying calculation to reinstall the enrollment PIN. Fixed-recipient receipts and platform effects
+still need the narrow controller/adapter contract and crash tests. Until that exists, no caller may treat
+this model or a calculated candidate as permission to update the active credential store.
+
+`TrustedPersonPatchTest` covers this model boundary with synthetic contacts/accounts and a fake hash
+port. It does not establish Android persistence, readback, account validity or completion behavior.
