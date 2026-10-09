@@ -19,7 +19,7 @@ class PolicyEngineTest {
     private val keyboard = PackageName("test.keyboard")
     private val oem = PackageName("test.oem")
     private val approvalSigner = CertDigest("ab".repeat(32))
-    private fun approvedState(vararg names: PackageName) = AppApprovalState(apps = names.associateWith { name ->
+    private fun approvedState(name: PackageName) = AppApprovalState(apps = listOf(name).associateWith { name ->
         AppApprovalRecord(name.value, PermissionSelection(PermissionManifest(ApprovalBinding(name, setOf(approvalSigner)),
             1, "build", emptyList()), emptyMap()))
     })

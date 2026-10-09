@@ -34,8 +34,10 @@ class AppApprovalControllerTest {
     private var crash: String? = null
     private var failure: String? = null
     private var beforeSave: (() -> Unit)? = null
+    private var atEvent: ((String) -> Unit)? = null
     private fun event(name: String): Boolean {
         events += name
+        atEvent?.invoke(name)
         if (crash == name) error("simulated process death")
         return failure != name
     }
@@ -83,9 +85,10 @@ class AppApprovalControllerTest {
             event("permissions-readback"); return permissionReadback
         }
         override fun applyPolicy(plan: PolicyPlan): Boolean {
-            assertNotNull(state!!.apps[app], "unhide before persistent approval")
-            assertTrue(app in plan.unhide && app in plan.lockTaskPackages)
             assertFalse(PLAY_PACKAGE in plan.lockTaskPackages)
+            if (app !in plan.unhide) return event("restore-policy")
+            assertNotNull(state!!.apps[app], "unhide before persistent approval")
+            assertTrue(app in plan.lockTaskPackages)
             return event("unhide")
         }
         override fun readBackPolicy(plan: PolicyPlan) = event("policy-readback")
@@ -254,4 +257,33 @@ class AppApprovalControllerTest {
         assertFailsWith<UnsupportedOperationException> { (state!!.receipts.single().recipientGenerations as MutableMap).clear() }
         assertEquals(AppApprovalOutcome.REFUSED, controller.approve(r, auth(r)))
     }
+    @Test fun `manifest or classification changed after permission writes prevents irreversible approval`() {
+        for (change in listOf("manifest", "classifier", "clock", "battery")) {
+            state = AppApprovalState(); setup(); val r = request(); val a = auth(r)
+            val originalManifest = manifest; val originalPolicy = policy; val originalClock = now
+            atEvent = { step -> if (step == "permissions-readback") {
+                when (change) {
+                    "manifest" -> manifest = PermissionManifest(binding, 2, "build", manifest!!.permissions)
+                    "classifier" -> policy = policy.copy(classifiedBrowsers = setOf(app))
+                    "clock" -> now = null
+                    "battery" -> battery = BatteryState(4, false)
+                }
+            } }
+            assertEquals(AppApprovalOutcome.NOT_READY, controller.approve(r, a))
+            assertTrue(state!!.apps.isEmpty()); assertFalse("unhide" in events)
+            atEvent = null; manifest = originalManifest; policy = originalPolicy; now = originalClock; battery = BatteryState(50, false)
+            assertEquals(AppApprovalOutcome.READY, controller.onStart())
+        }
+    }
+
+    @Test fun `durable approval cannot be published by ordinary policy while activation is incomplete`() {
+        setup(); val r = request(); failure = "unhide"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.approve(r, auth(r)))
+        val normal = PolicyEngine.decide(policy.copy(approvalState = state))
+        assertFalse(app in normal.unhide); assertFalse(app in normal.lockTaskPackages)
+        failure = null
+        assertEquals(AppApprovalOutcome.APPROVED, controller.resume())
+        assertTrue(app in PolicyEngine.decide(policy.copy(approvalState = state)).lockTaskPackages)
+    }
+
 }

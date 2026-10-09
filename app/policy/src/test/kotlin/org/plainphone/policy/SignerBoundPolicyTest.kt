@@ -43,4 +43,33 @@ class SignerBoundPolicyTest {
         val plan = PolicyEngine.decide(input().copy(approvalState = AppApprovalState()))
         assertTrue(app in plan.hidden)
     }
+    @Test fun `committed activation journal is excluded from all ordinary policy passes until completed`() {
+        val person = TrustedPersonId("holder")
+        val receipt = AppApprovalReceipt(record.id, person, mapOf(person to 0L))
+        val pending = AppApprovalState(apps = mapOf(app to record), pending = AppApprovalOperation(record, receipt, AppApprovalPhase.COMMITTED), receipts = listOf(receipt))
+        for (locked in listOf(true, false)) for (known in listOf(true, false)) {
+            val plan = PolicyEngine.decide(input().copy(approvalState = pending, lockedBoot = locked,
+                inventory = if (known) input().inventory else null, previousLockTask = setOf(app)))
+            assertFalse(app in plan.unhide)
+            assertFalse(app in plan.lockTaskPackages)
+        }
+    }
+
+    @Test fun `persisted committed journal must match both approval payload and receipt`() {
+        val person = TrustedPersonId("holder")
+        val receipt = AppApprovalReceipt(record.id, person, mapOf(person to 0L))
+        val changed = AppApprovalRecord(record.id, PermissionSelection(PermissionManifest(
+            ApprovalBinding(app, setOf(CertDigest("cd".repeat(32)))), 1, "build", emptyList()), emptyMap()))
+        assertFailsWith<IllegalArgumentException> {
+            AppApprovalState(apps = mapOf(app to changed), pending = AppApprovalOperation(record, receipt, AppApprovalPhase.COMMITTED), receipts = listOf(receipt))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AppApprovalState(apps = mapOf(app to record), pending = AppApprovalOperation(record, receipt, AppApprovalPhase.COMMITTED))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AppApprovalState(apps = mapOf(app to record), pending = AppApprovalOperation(record, receipt, AppApprovalPhase.COMMITTED),
+                receipts = listOf(AppApprovalReceipt(record.id, person, mapOf(person to 9L))))
+        }
+    }
+
 }
