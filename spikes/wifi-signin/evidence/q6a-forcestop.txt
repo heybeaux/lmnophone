@@ -1,0 +1,9 @@
+## Q6a: force-stop Plainphone mid-session
+after force-stop: top=com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity hidden=false     mLockTaskModeState=LOCKED dpcProc=6604
+recents: top=android/com.android.internal.app.BlockedAppActivity | "Sign in to AndroidWifi" "10.0.2.2" "More options" 
+quick settings: "No notifications" 
+top before HOME: android/com.android.internal.app.BlockedAppActivity
+after HOME: top=com.plainphone.spike.emu/.MainActivity hidden=true     mLockTaskModeState=LOCKED
+10-08 17:50:23.109  6604  6604 I PPEMU   : signin end reason=left-to-home uptime=3107646ms hide=true hiddenNow=true
+10-08 17:50:23.109  6604  6604 I PPEMU   : signin left-to-home -> OK session ended (left-to-home) hide=true; active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=109 wifiCaptive=true wifiValida
+10-08 17:50:23.109  6604  6604 I PPEMU   : lock(): state=1 permitted=true

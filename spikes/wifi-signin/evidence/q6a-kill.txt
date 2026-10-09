@@ -1,0 +1,14 @@
+start: OK session started; active=true secondsLeft=899 hidden=false inLockTask=true lockTaskState=1 wifiNet=110 wifiCaptive=true wifiValidated=false
+top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+## Q6a: am force-stop is refused for the Device Owner ("Ignoring request to force stop protected package"); kill -9 via run-as instead
+t+1s: dpcProc= top=com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity hidden=false     mLockTaskModeState=LOCKED
+t+5s: dpcProc= top=com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity hidden=false     mLockTaskModeState=LOCKED
+10-08 17:51:11.620   555  1081 I ActivityManager: Process com.plainphone.spike.emu (pid 6604) has died: home HOME
+t+25s still dead: dpcProc= top=com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity hidden=false
+after HOME: dpcProc=8931 top=com.plainphone.spike.emu/.MainActivity hidden=true     mLockTaskModeState=LOCKED
+10-08 17:51:45.964   555   610 I ActivityManager: Start proc 8931:com.plainphone.spike.emu/u0a207 for next-activity {com.plainphone.spike.emu/com.plainphone.spike.emu.MainActivity}
+10-08 17:51:46.019   555   634 I ActivityManager: Force stopping com.google.android.captiveportallogin appid=10115 user=0: pkg removed
+10-08 17:51:46.032   555   609 I ActivityManager: Force stopping com.google.android.captiveportallogin appid=10115 user=0: hiding pkg
+10-08 17:51:46.067  8931  8931 I PPEMU   : signin end reason=revoke:app-start uptime=3190602ms hide=true hiddenNow=true
+10-08 17:51:46.068  8931  8931 I PPEMU   : signin revoke-on-start where=app-start uptime=3190556ms -> OK session ended (revoke:app-start) hide=true; active=false secondsLeft=0 hidden=true inLockTask=false lockTaskState=1 wifiNet=n
+10-08 17:51:46.148  8931  8931 I PPEMU   : lock(): state=1 permitted=true
