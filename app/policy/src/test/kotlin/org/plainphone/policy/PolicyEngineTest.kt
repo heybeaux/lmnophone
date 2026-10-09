@@ -18,6 +18,11 @@ class PolicyEngineTest {
     private val newSystem = PackageName("test.newsystem")
     private val keyboard = PackageName("test.keyboard")
     private val oem = PackageName("test.oem")
+    private val approvalSigner = CertDigest("ab".repeat(32))
+    private fun approvedState(vararg names: PackageName) = AppApprovalState(apps = names.associateWith { name ->
+        AppApprovalRecord(name.value, PermissionSelection(PermissionManifest(ApprovalBinding(name, setOf(approvalSigner)),
+            1, "build", emptyList()), emptyMap()))
+    })
     private fun input() = PolicyInput(
         model = "model", fingerprint = "build", plainphone = home, messages = sms,
         inventory = BuildInventory("model", "build", 1, NeverHideList(setOf(sms, play, oem)), setOf(sms), setOf(PackageName("test.settings"))),
@@ -30,7 +35,7 @@ class PolicyEngineTest {
             FloorIdentity(webview, FloorRole.WEBVIEW, IdentitySource.OS_MANAGED),
             FloorIdentity(keyboard, FloorRole.KEYBOARD, IdentitySource.OS_MANAGED),
         ),
-        approved = setOf(approved), classifiedBrowsers = setOf(browser),
+        approvalState = approvedState(approved), installedIdentities = listOf(ApprovalBinding(approved, setOf(approvalSigner))), classifiedBrowsers = setOf(browser),
     )
 
     @Test fun `supported build sweeps unapproved installs but preserves inventory and floor`() {
@@ -207,7 +212,7 @@ class PolicyEngineTest {
     }
 
     @Test fun `ordinary approval cannot open Play without a live session`() {
-        val plan = PolicyEngine.decide(input().copy(approved = setOf(play)))
+        val plan = PolicyEngine.decide(input().copy(approvalState = approvedState(play), installedIdentities = listOf(ApprovalBinding(play, setOf(approvalSigner)))))
         assertFalse(play in plan.lockTaskPackages)
         assertFalse(play in plan.hidden) // Keep Play's inventory dependency unhidden.
     }
@@ -217,7 +222,7 @@ class PolicyEngineTest {
         val sibling = PackageName("test.settings.sibling")
         val inventory = BuildInventory("model", "build", 1, input().inventory!!.neverHide, setOf(sms), setOf(settings, sibling))
         for (target in setOf(settings, sibling)) {
-            val plan = PolicyEngine.decide(input().copy(inventory = inventory, approved = setOf(target),
+            val plan = PolicyEngine.decide(input().copy(inventory = inventory, approvalState = approvedState(target), installedIdentities = listOf(ApprovalBinding(target, setOf(approvalSigner))),
                 installed = input().installed + InstalledPackage(target, true, 1)))
             assertFalse(target in plan.lockTaskPackages)
             assertTrue(target in plan.hidden)
@@ -227,7 +232,7 @@ class PolicyEngineTest {
 
     @Test fun `session-only approval exclusion still preserves emergency precedence`() {
         val inventory = BuildInventory("model", "build", 1, input().inventory!!.neverHide, setOf(sms), setOf(dialer))
-        val plan = PolicyEngine.decide(input().copy(inventory = inventory, approved = setOf(dialer)))
+        val plan = PolicyEngine.decide(input().copy(inventory = inventory, approvalState = approvedState(dialer), installedIdentities = listOf(ApprovalBinding(dialer, setOf(approvalSigner)))))
         assertTrue(dialer in plan.lockTaskPackages)
         assertFalse(dialer in plan.hidden)
     }
