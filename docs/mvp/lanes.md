@@ -56,9 +56,12 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
   - Possible results: `OpenIn(pkg)`, `BlockedScreen(WEB_LINK | NOT_APPROVED | CHOOSER)`, `NoHandler(...)`.
   - `approved` includes the lock-task UI exceptions.
 - `PackageFacts` and `IntentFacts` are plain data that lane D fills from PackageManager. Lane C never calls Android.
-  - `IntentFacts.resolvers` is what `queryIntentActivities` returns for the intent as dispatched. Each `Resolver` carries `verifiedForHost`.
+  - `IntentFacts.resolvers` is what `queryIntentActivities` returns for the intent as dispatched: one `Resolver` per activity, with no package deduplication. Each `Resolver` carries `verifiedForHost`.
+  - `IntentFacts.explicitComponent` is true when the sender named a component, as opposed to only `setPackage`.
+  - `IntentFacts.resolved` (`Resolution.Activity | Chooser | None`) is what Android reported it would launch, including saved defaults and priorities.
   - `IntentFacts.intentUri` says how the sender handled an `intent:` URI.
   - `IntentFacts.linkCatcherPreferred` is true once lane D has set the persistent preferred activity for `VIEW http/https`.
+  - Facts that contradict each other give `NoHandler(INCONSISTENT_FACTS)`.
   - Details: `app/links/README.md`. Lead accepted these refinements on PLA-49.
 
 **`:ui` (lane B) exports:** one `@Composable` per screen, with this shape:
@@ -71,6 +74,11 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 - `PackageFactsSource`;
 - the SMS sender;
 - view-models mapping engine output to `XUiState`.
+
+**What the `:ui` screens leave to lane D** (from the lane B slice 2 reviews, PLA-109 and PLA-110). Each one needs a test in lane D's integration work:
+- **Send and retry may arrive twice.** A greyed-out button doesn't stop two taps that land before the screen redraws: the Verifier showed both `BlockedLinkEvent.Send` and the request `Retry` events can fire twice. The SMS sender must ignore a repeat of a send that is already under way, for link confirmations, app requests and retries.
+- **Names are cleaned when saved.** Trusted-person names reject or strip bidi controls (U+202A–202E, U+2066–2069, U+200E, U+200F, U+061C), zero-width characters and line separators when saved. `:ui` also strips bidi controls when it shows a name, but that only backs this up.
+- **Hosts that aren't plain ASCII show as punycode, with the unusual-letters warning.** `pay​pal.com` (with a zero-width space) must not reach the screen as "paypal.com".
 
 ## Branches, worktrees, merges
 
