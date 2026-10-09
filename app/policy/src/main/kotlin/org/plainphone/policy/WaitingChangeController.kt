@@ -14,26 +14,30 @@ class WaitingIdentity(val requestId: String, val cancelCode: String) {
 /** Reserve IDs and cancel codes durably; neither may ever be reused, including after abandoned preparation. */
 fun interface WaitingIdentitySource { fun reserve(): WaitingIdentity }
 
-enum class WaitingEvent { STARTED, CANCELLED_ON_PHONE, DEPENDENCY_CHANGED, COMMITTING }
+enum class WaitingEvent { STARTED, CANCELLED_ON_PHONE, DEPENDENCY_CHANGED, COMMITTING, COMPLETED }
 class WaitingText(val key: String, val event: WaitingEvent, val operation: WaitingOperation,
     recipientGenerations: Map<TrustedPersonId, Long>) {
     val recipientGenerations: Map<TrustedPersonId, Long> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientGenerations))
     val recipients = immutableSet(recipientGenerations.keys)
 }
-/** Immutable turn-off gate record. The forward restore journal is a subsequent controller slice. */
+/** Immutable turn-off operation, including forward restore/readback progress. */
 class WaitingOperation(
     val identity: WaitingIdentity, val starter: TrustedPersonId, val generation: Long,
     val structureGeneration: Long, val mode: Mode, val startedAt: RunningTime, val phase: WaitingPhase,
     recipientGenerations: Map<TrustedPersonId, Long>,
+    val restoredSteps: Int = 0,
 ) {
     init {
         require(generation >= 0 && structureGeneration >= 0)
+        require(restoredSteps in 0..TurnOffStep.entries.size)
+        require(restoredSteps == 0 || phase == WaitingPhase.COMMITTING || phase == WaitingPhase.COMPLETED)
         require(recipientGenerations.isNotEmpty() && recipientGenerations.values.all { it >= 0 })
     }
     /** Start-time fallback retained independently of acknowledged outbox texts. */
     val recipientGenerations: Map<TrustedPersonId, Long> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientGenerations))
     val kind = WaitingChangeKind.TURN_OFF
-    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations)
+    internal fun withPhase(phase: WaitingPhase) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, restoredSteps)
+    internal fun withRestoredSteps(count: Int) = WaitingOperation(identity, starter, generation, structureGeneration, mode, startedAt, phase, recipientGenerations, count)
 }
 class WaitingState(val revision: Long = 0, val operation: WaitingOperation? = null, texts: List<WaitingText> = emptyList()) {
     init { require(revision >= 0) }
@@ -136,12 +140,12 @@ class WaitingChangeController(
             cancelIntents.request(requestId)
             return cancelPending(before, operation, WaitingEvent.CANCELLED_ON_PHONE)
         }
-        if (intent == CancelIntent.UNKNOWN) return WaitingOutcome.NOT_READY
         val current = credentials() ?: return WaitingOutcome.NOT_READY
         if (current.mode != operation.mode || current.structureGeneration != operation.structureGeneration ||
             current.people[operation.starter]?.generation != operation.generation) {
             return cancelPending(before, operation, WaitingEvent.DEPENDENCY_CHANGED)
         }
+        if (intent == CancelIntent.UNKNOWN) return WaitingOutcome.NOT_READY
         val now = clock.checkpoint() ?: return WaitingOutcome.NOT_READY
         if (now.proven.since(operation.startedAt) < 86_400_000L) return WaitingOutcome.PENDING
         if (!battery.allowsDiscretionaryUnhide) return WaitingOutcome.LOW_BATTERY

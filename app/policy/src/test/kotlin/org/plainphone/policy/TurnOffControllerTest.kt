@@ -17,7 +17,7 @@ class TurnOffControllerTest {
 
     @Test fun `all recorded changes restore in order and off requires observed owner absence`() {
         restoreAll()
-        assertEquals(TurnOffStep.entries, effects.applied)
+        assertEquals(TurnOffStep.entries.toList(), effects.applied)
         assertEquals(TurnOffStep.entries.size, store.state!!.operation!!.restoredSteps)
         assertTrue(effects.owner == true)
         val result = tick()
