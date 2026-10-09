@@ -67,6 +67,12 @@ class UserScreensTest {
         compose.onNodeWithText("Go back").assertIsDisplayed().performClick()
         assertEquals(listOf(BlockedLinkEvent.ReviewSharing, BlockedLinkEvent.GoBack), events)
     }
+    @Test fun sentResultIncludesThePromisedHistory() {
+        show { AppRequestResultScreen(AppRequestResultUiState("Sam", AppRequestResult.Sent,
+            requests = listOf(AppRequestRow("one", "Bus times", "Thu", AppRequestStatus.Delivered("Sam")))), {}) }
+        compose.onNodeWithText("Sam's phone got it ✓").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("OK").assertIsDisplayed()
+    }
     @Test fun overlongLinkOffersNoSend() {
         val events = mutableListOf<BlockedLinkEvent>()
         show { BlockedLinkScreen(BlockedLinkUiState.TooLong, events::add) }
