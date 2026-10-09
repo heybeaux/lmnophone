@@ -10,7 +10,7 @@ class PinVault(
     private val derivation: KeyDerivation,
     private val entropy: SecretEntropy,
     private val clock: RunningClock,
-) : AuthorityConsumer {
+) : AuthorityConsumer, PersonAuthorityConsumer {
     private data class Grant(val person: TrustedPersonId, val generation: Long, val action: PrivilegedAction, val issuedAt: BootTime)
     private val grants = mutableMapOf<FreshAuthority, Grant>()
 
@@ -55,6 +55,12 @@ class PinVault(
             now.boot.elapsedMillis >= grant.issuedAt.elapsedMillis &&
             now.boot.elapsedMillis - grant.issuedAt.elapsedMillis < 120_000L &&
             credential.generation == grant.generation
+    }
+
+    @Synchronized
+    override fun consumeFor(authority: FreshAuthority, action: PrivilegedAction, person: TrustedPersonId): Boolean {
+        if (grants[authority]?.person != person) return false
+        return consume(authority, action)
     }
 
     /** Resets only the selected holder. Never grants action authority and never skips a waiting change. */
