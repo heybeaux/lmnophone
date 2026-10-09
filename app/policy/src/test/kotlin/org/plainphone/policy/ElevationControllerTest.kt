@@ -14,7 +14,8 @@ class ElevationControllerTest {
     private val identity = ApprovalBinding(app, setOf(CertDigest("ab".repeat(32))))
     private val pin get() = CharArray(6) { '1' }
     private var now: ClockReading? = ClockReading(RunningTime("epoch", 0), BootTime("boot", 0))
-    private val clock = RunningClock { now }
+    private var checkpointHook: (() -> Unit)? = null
+    private val clock = RunningClock { checkpointHook?.invoke(); now }
     private var credentials: CredentialState? = null
     private val credentialStore = object : CredentialStore {
         override fun read() = credentials
@@ -282,6 +283,15 @@ class ElevationControllerTest {
         val wrong = SessionJournal.Active(SessionAccess("other", active.access.kind, active.access.packages, active.access.deadline), SessionPhase.OPEN)
         assertFailsWith<IllegalArgumentException> { ElevationRecord(state = good.state, journal = wrong, person = good.person) }
         assertFailsWith<IllegalArgumentException> { ElevationState(grant = good.state.grant) }
+    }
+
+    @Test fun `countdown starts at the checkpoint after authority consumption`() {
+        setup(); val r = prepare(); val a = auth(r); var calls = 0
+        checkpointHook = { if (++calls == 3) advance(600_000) }
+        assertEquals(ElevationOutcome.COUNTING, controller.request(r, a)); checkpointHook = null
+        assertEquals(now!!.boot, record!!.state.countdown!!.startedAt)
+        assertEquals(ElevationOutcome.REFUSED, start(r)); advance(600_000)
+        assertEquals(ElevationOutcome.STARTED, start(r))
     }
 
 }
