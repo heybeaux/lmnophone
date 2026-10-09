@@ -17,7 +17,8 @@ data class ParsedIntentUri(
 )
 
 /**
- * Pure-Kotlin port of `Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)` for `intent:` URIs, reduced to the fields
+ * Pure-Kotlin port of `Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)` for `intent:` and `android-app:` URIs, reduced
+ * to the fields
  * the link decision needs. Source: AOSP `frameworks/base/core/java/android/content/Intent.java`
  * (`parseUriInternal`, `getIntentOld`), `ComponentName.unflattenFromString` and `Uri.decode` (`UriCodec.decode`).
  *
@@ -26,9 +27,14 @@ data class ParsedIntentUri(
  * - `intent:<rest>` with no `#`: not an error. A plain `VIEW` with the whole `intent:` string as data.
  * - `intent:<rest>#<fragment>` without `#Intent;`: the old format (`action(...)categories(...)type(...)
  *   launchFlags(...)component(pkg!cls)extras(...)`), which can name a component.
+ * - `android-app://pkg[/scheme[/authority[/path]]][#Intent;...;end]`: targets `pkg`; with no scheme it is `MAIN` on
+ *   the package. The package is set after the selector check, so such an intent can carry both. Percent signs in the
+ *   path parts are decoded (`Uri.decodeIfNeeded` on builds with the `encodeAppIntent` flag).
  */
 object IntentUri {
     private const val PREFIX = "intent:"
+    private const val APP_PREFIX = "android-app:"
+    private const val ACTION_MAIN = "android.intent.action.MAIN"
     private const val MARKER = "#Intent;"
     private const val INVALID_INPUT_CHARACTER = '\ufffd'
 
@@ -45,15 +51,17 @@ object IntentUri {
     /**
      * Returns null where `parseUri` throws (`URISyntaxException`, or the `NumberFormatException` it lets through for
      * bad launch flags), and, as a stricter rule of this module, where a package value cannot be a real package name.
-     * Input that is not an `intent:` URI is not reconstructed here and also gives null.
+     * Input that is neither an `intent:` nor an `android-app:` URI is not reconstructed here and also gives null.
      */
     fun parse(uri: String): ParsedIntentUri? {
-        if (!uri.startsWith(PREFIX)) return null
+        val androidApp = uri.startsWith(APP_PREFIX)
+        if (!uri.startsWith(PREFIX) && !androidApp) return null
         return try {
             val hash = uri.lastIndexOf('#')
             when {
-                hash < 0 -> finish(Draft(ACTION_VIEW).apply { data = uri }, null)
-                !uri.startsWith(MARKER, hash) -> parseOld(uri, hash)
+                hash < 0 && !androidApp -> finish(Draft(ACTION_VIEW).apply { data = uri }, null)
+                hash < 0 -> parseNew(uri, -1)
+                !uri.startsWith(MARKER, hash) -> if (androidApp) parseNew(uri, -1) else parseOld(uri, hash)
                 else -> parseNew(uri, hash)
             }
         } catch (_: Malformed) {
@@ -65,14 +73,17 @@ object IntentUri {
         }
     }
 
+    /** `hash` is the index of `#Intent;`, or -1 for an `android-app:` URI without one. */
     private fun parseNew(uri: String, hash: Int): ParsedIntentUri {
         val base = Draft(ACTION_VIEW)
         var current = base
         var inSelector = false
+        var explicitAction = false
         var scheme: String? = null
-        var i = hash + MARKER.length
+        var data = if (hash >= 0) uri.substring(0, hash) else uri
+        var i = if (hash >= 0) hash + MARKER.length else -1
 
-        while (!uri.startsWith("end", i)) {
+        while (i >= 0 && !uri.startsWith("end", i)) {
             var eq = uri.indexOf('=', i)
             if (eq < 0) eq = i - 1
             val semi = uri.indexOf(';', i)
@@ -80,7 +91,10 @@ object IntentUri {
             val value = if (eq < semi) decode(uri.substring(eq + 1, semi)) else ""
 
             when {
-                uri.startsWith("action=", i) -> current.action = value
+                uri.startsWith("action=", i) -> {
+                    current.action = value
+                    if (!inSelector) explicitAction = true
+                }
                 uri.startsWith("category=", i) -> current.categories += value
                 uri.startsWith("type=", i) || uri.startsWith("identifier=", i) || uri.startsWith("sourceBounds=", i) -> Unit
                 uri.startsWith("launchFlags=", i) || uri.startsWith("extendedLaunchFlags=", i) -> decodeInteger(value)
@@ -111,11 +125,55 @@ object IntentUri {
         }
 
         val selector = if (inSelector && base.packageName == null) current else null
-        val rest = uri.substring(PREFIX.length, hash)
-        val data = if (scheme != null) "$scheme:$rest" else rest
+
+        if (data.startsWith(PREFIX)) {
+            data = data.substring(PREFIX.length)
+            if (scheme != null) data = "$scheme:$data"
+        } else if (data.startsWith(APP_PREFIX)) {
+            data = androidAppData(data, base, scheme, explicitAction)
+        }
         if (data.isNotEmpty()) base.data = data
         return finish(base, selector?.let { finish(it, null) })
     }
+
+    /** The `android-app:` branch of `parseUriInternal`: sets the package (and `MAIN`) and returns the new data. */
+    private fun androidAppData(data: String, base: Draft, keyScheme: String?, explicitAction: Boolean): String {
+        if (data[12] != '/' || data[13] != '/') return ""
+        val end = data.indexOf('/', 14)
+        if (end < 0) {
+            base.packageName = decodeIfNeeded(data.substring(14))
+            if (!explicitAction) base.action = ACTION_MAIN
+            return ""
+        }
+        base.packageName = decodeIfNeeded(data.substring(14, end))
+        var scheme = keyScheme
+        var authority: String? = null
+        var last = end
+        if (last + 1 < data.length) {
+            var next = data.indexOf('/', last + 1)
+            if (next >= 0) {
+                scheme = decodeIfNeeded(data.substring(last + 1, next))
+                last = next
+                next = data.indexOf('/', last + 1)
+                if (last < data.length && next >= 0) {
+                    authority = decodeIfNeeded(data.substring(last + 1, next))
+                    last = next
+                }
+            } else {
+                scheme = decodeIfNeeded(data.substring(last + 1))
+            }
+        }
+        return when {
+            scheme == null -> {
+                if (!explicitAction) base.action = ACTION_MAIN
+                ""
+            }
+            authority == null -> "$scheme:"
+            else -> "$scheme://$authority${data.substring(last)}"
+        }
+    }
+
+    private fun decodeIfNeeded(value: String): String = if ('%' in value) decode(value) else value
 
     private fun parseOld(uri: String, hash: Int): ParsedIntentUri {
         var i = hash + 1

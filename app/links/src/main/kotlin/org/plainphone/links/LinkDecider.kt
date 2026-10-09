@@ -30,8 +30,11 @@ enum class NoHandlerReason {
     /** The intent names a package that is hidden, missing or does not handle it. */
     TARGET_NOT_RESOLVABLE,
 
-    /** The `intent:` URI cannot be reconstructed. */
+    /** The `intent:` or `android-app:` URI cannot be reconstructed. */
     MALFORMED_INTENT_URI,
+
+    /** The facts contradict each other, so no decision is safe. Fails closed: nothing opens. */
+    INCONSISTENT_FACTS,
 }
 
 /**
@@ -53,69 +56,92 @@ sealed interface LinkDecision {
  * @param linkCatcher Plainphone's package (it holds the link-catcher activity).
  */
 class LinkDecider(private val linkCatcher: PackageName) {
+    private data class Dispatch(val target: PackageName?, val explicit: Boolean, val action: String?, val data: String?)
+
+    private sealed interface Pick {
+        data class Activity(val packageName: PackageName) : Pick
+        data object Chooser : Pick
+    }
+
     /**
      * @param approved every package lock task allows: approved apps plus the lock-task UI exceptions.
      */
     fun decide(intent: IntentFacts, approved: Set<PackageName>): LinkDecision {
         if (intent.viaChooser) return LinkDecision.BlockedScreen(BlockReason.CHOOSER)
+        if (intent.explicitComponent && intent.targetPackage == null) return inconsistent()
 
-        var target = intent.targetPackage?.takeUnless { it == linkCatcher }
-        var data = intent.data
-        if (intent.intentUri != IntentUriHandling.NOT_PARSED && data != null && data.startsWith("intent:")) {
-            val parsed = IntentUri.parse(data) ?: return LinkDecision.NoHandler(NoHandlerReason.MALFORMED_INTENT_URI)
-            val selector = parsed.selector
-            when {
-                intent.intentUri == IntentUriHandling.SANITISED -> {
-                    target = parsed.packageName
-                    data = parsed.data
-                }
-                parsed.componentPackage != null -> {
-                    target = parsed.componentPackage
-                    data = parsed.data
-                }
-                selector != null -> {
-                    target = selector.componentPackage ?: selector.packageName
-                    data = selector.data
-                }
-                else -> {
-                    target = parsed.packageName
-                    data = parsed.data
-                }
+        val dispatch = dispatched(intent) ?: return LinkDecision.NoHandler(NoHandlerReason.MALFORMED_INTENT_URI)
+        if (intent.targetPackage != null &&
+            (intent.targetPackage != dispatch.target || intent.explicitComponent != dispatch.explicit)
+        ) return inconsistent()
+
+        val candidates = intent.resolvers
+        val target = dispatch.target
+        if (target != null && candidates.any { it.packageName != target }) return inconsistent()
+        val empty = if (target != null) NoHandlerReason.TARGET_NOT_RESOLVABLE else NoHandlerReason.NO_RESOLVER
+
+        val pick = when (val resolved = intent.resolved) {
+            is Resolution.Activity ->
+                if (candidates.none { it.packageName == resolved.packageName }) return inconsistent()
+                else Pick.Activity(resolved.packageName)
+            Resolution.Chooser -> if (dispatch.explicit || candidates.size < 2) return inconsistent() else Pick.Chooser
+            Resolution.None -> return if (candidates.isNotEmpty()) inconsistent() else LinkDecision.NoHandler(empty)
+            null -> infer(dispatch, candidates, intent.linkCatcherPreferred) ?: return LinkDecision.NoHandler(empty)
+        }
+
+        return when (pick) {
+            Pick.Chooser -> LinkDecision.BlockedScreen(BlockReason.CHOOSER)
+            is Pick.Activity -> when (pick.packageName) {
+                linkCatcher -> LinkDecision.BlockedScreen(BlockReason.WEB_LINK)
+                in approved -> LinkDecision.OpenIn(pick.packageName)
+                else -> LinkDecision.BlockedScreen(BlockReason.NOT_APPROVED)
             }
-            target = target?.takeUnless { it == linkCatcher }
-        }
-
-        val offered = intent.resolvers.filter { it.packageName != linkCatcher }.distinctBy { it.packageName to it.verifiedForHost }
-
-        if (target != null) {
-            if (offered.none { it.packageName == target }) return LinkDecision.NoHandler(NoHandlerReason.TARGET_NOT_RESOLVABLE)
-            return if (target in approved) LinkDecision.OpenIn(target) else LinkDecision.BlockedScreen(BlockReason.NOT_APPROVED)
-        }
-
-        return if (isWeb(data)) decideWeb(offered, approved, intent.linkCatcherPreferred) else decideOther(offered, approved)
-    }
-
-    private fun decideWeb(offered: List<Resolver>, approved: Set<PackageName>, catcherPreferred: Boolean): LinkDecision {
-        val verified = offered.filter { it.verifiedForHost }.map { it.packageName }.distinct()
-        if (verified.size > 1) return LinkDecision.BlockedScreen(BlockReason.CHOOSER)
-        verified.singleOrNull()?.let {
-            return if (it in approved) LinkDecision.OpenIn(it) else LinkDecision.BlockedScreen(BlockReason.NOT_APPROVED)
-        }
-        if (offered.isNotEmpty() && !catcherPreferred) return LinkDecision.BlockedScreen(BlockReason.CHOOSER)
-        return LinkDecision.BlockedScreen(BlockReason.WEB_LINK)
-    }
-
-    private fun decideOther(offered: List<Resolver>, approved: Set<PackageName>): LinkDecision {
-        val packages = offered.map { it.packageName }.distinct()
-        return when (packages.size) {
-            0 -> LinkDecision.NoHandler(NoHandlerReason.NO_RESOLVER)
-            1 -> if (packages[0] in approved) LinkDecision.OpenIn(packages[0]) else LinkDecision.BlockedScreen(BlockReason.NOT_APPROVED)
-            else -> LinkDecision.BlockedScreen(BlockReason.CHOOSER)
         }
     }
 
-    private fun isWeb(data: String?): Boolean {
-        val scheme = data?.substringBefore(':', missingDelimiterValue = "")?.lowercase() ?: return false
+    /**
+     * The intent Android resolves. An `intent:`/`android-app:` URI is reconstructed: raw, an explicit component wins,
+     * then the selector's component, then the selector's intent restricted only by the outer package (AOSP
+     * `ComputerEngine.queryIntentActivitiesInternal` reads the package before swapping in the selector); sanitised
+     * Chrome-style, the component and selector are dropped.
+     */
+    private fun dispatched(intent: IntentFacts): Dispatch? {
+        val data = intent.data
+        val reconstruct = intent.intentUri != IntentUriHandling.NOT_PARSED && data != null &&
+            (data.startsWith("intent:") || data.startsWith("android-app:"))
+        if (!reconstruct) return Dispatch(intent.targetPackage, intent.explicitComponent, intent.action, data)
+
+        val parsed = IntentUri.parse(data!!) ?: return null
+        val selector = parsed.selector
+        return when {
+            intent.intentUri == IntentUriHandling.SANITISED -> Dispatch(parsed.packageName, false, parsed.action, parsed.data)
+            parsed.componentPackage != null -> Dispatch(parsed.componentPackage, true, parsed.action, parsed.data)
+            selector?.componentPackage != null -> Dispatch(selector.componentPackage, true, selector.action, selector.data)
+            selector != null -> Dispatch(parsed.packageName, false, selector.action, selector.data)
+            else -> Dispatch(parsed.packageName, false, parsed.action, parsed.data)
+        }
+    }
+
+    /** Android's choice when lane D did not report it: one candidate opens, more are a chooser. */
+    private fun infer(dispatch: Dispatch, candidates: List<Resolver>, catcherPreferred: Boolean): Pick? {
+        if (candidates.isEmpty()) return null
+        dispatch.target?.takeIf { dispatch.explicit }?.let { return Pick.Activity(it) }
+
+        val web = dispatch.target == null && isWebIntent(dispatch.action, dispatch.data)
+        val pool = candidates.filter { it.verifiedForHost }.takeIf { web && it.isNotEmpty() } ?: candidates
+        return when {
+            pool.size == 1 -> Pick.Activity(pool[0].packageName)
+            web && catcherPreferred && pool.any { it.packageName == linkCatcher } -> Pick.Activity(linkCatcher)
+            else -> Pick.Chooser
+        }
+    }
+
+    private fun inconsistent() = LinkDecision.NoHandler(NoHandlerReason.INCONSISTENT_FACTS)
+
+    /** `Intent.isWebIntent`: `ACTION_VIEW` and a scheme exactly `http` or `https` (filters match schemes case-sensitively). */
+    private fun isWebIntent(action: String?, data: String?): Boolean {
+        if (action != ACTION_VIEW || data == null || ':' !in data) return false
+        val scheme = data.substringBefore(':')
         return scheme == "http" || scheme == "https"
     }
 }
