@@ -90,6 +90,46 @@ class WaitingReconcilerTest {
         assertEquals(ReconcileOutcome.RECOVERED, controller().reconcile().outcome)
     }
 
+    @Test fun `classifier conflict recovers with diagnostics and emergency floor preserved`() {
+        val webview = PackageName("system.webview")
+        input = input.copy(installed = input.installed + InstalledPackage(webview, true, 1),
+            identities = input.identities + FloorIdentity(webview, FloorRole.WEBVIEW, IdentitySource.OS_MANAGED),
+            classifiedBrowsers = setOf(webview))
+        assertEquals(ReconcileOutcome.RECOVERED, controller().reconcile().outcome)
+        val plan = effects.plan!!
+        assertTrue(plan.needsAttention)
+        assertEquals(setOf(webview), plan.classifierConflicts)
+        assertTrue(webview in plan.unhide)
+        assertFalse(webview in plan.hidden)
+        assertTrue(listOf("read-policy", "read-reset", "read-friction").all { it in events })
+        assertNull(store.state!!.operation)
+        assertEquals(RecoveredState.ACTIVE, store.state!!.recoveryReceipts.single().state)
+    }
+
+    @Test fun `refused destructive requests remain refused but do not hold recovered slot`() {
+        val dialer = input.installed.single().name
+        val requests = DestructiveKind.entries.map { DestructiveRequest(dialer, it) }
+        input = input.copy(requestedDestruction = requests)
+        assertEquals(ReconcileOutcome.RECOVERED, controller().reconcile().outcome)
+        assertTrue(effects.plan!!.needsAttention)
+        assertEquals(requests, effects.plan!!.refusedDestruction)
+        assertTrue(effects.plan!!.allowedDestruction.isEmpty())
+        assertTrue(dialer in effects.plan!!.unhide)
+        assertNull(store.state!!.operation)
+        assertEquals(1, store.state!!.recoveryReceipts.size)
+    }
+
+    @Test fun `nonblocking attention never bypasses required policy readback`() {
+        input = input.copy(classifiedBrowsers = setOf(input.installed.single().name))
+        effects.failure = "read-policy"
+        assertEquals(ReconcileFailure.POLICY_READBACK, controller().reconcile().failure)
+        assertNull(store.state)
+        assertEquals(0, store.saves)
+        effects.failure = null
+        assertEquals(ReconcileOutcome.RECOVERED, controller().reconcile().outcome)
+        assertTrue(effects.plan!!.needsAttention)
+    }
+
     @Test fun `invalid policy or missing emergency dialer never claims recovery`() {
         input = input.copy(health = PolicyHealth.BOTH_INVALID)
         assertEquals(ReconcileFailure.POLICY_INPUT, controller().reconcile().failure)
