@@ -3,6 +3,10 @@
 > **Throwaway spike.** Not MVP code. The MVP proposal is not approved. Everything under
 > `spikes/device-moto/` exists only to answer feasibility questions Q1, Q2, Q3, Q5, Q6, Q7, Q13.
 
+> **9-1-1 routes (PLA-40, Q14):** with Plainphone's planned lock-task list, **power-button SOS does not work** and the
+> **lock-screen Emergency call is blocked**. Both are fixed by adding Personal Safety
+> (`com.google.android.apps.safetyhub`, the EMERGENCY role holder) to the lock-task list. See [9-1-1 routes](#9-1-1-routes-pla-40-q14-throwaway).
+
 - Device: moto g power 5G (2024), XT2415-1, adb serial `SPARE_DEVICE_SERIAL`, board-approved (TEAM-POLICY Gates §2).
 - Build fingerprint: `motorola/cancunn_g_sys/cancunn:15/V1UDS35H.26-14-6-2-11/27ec35b-72bc9:user/release-keys`
 - Driver: Android Platform Engineer only. Every adb command uses `-s SPARE_DEVICE_SERIAL` (the helper
@@ -33,6 +37,7 @@
 | S4 hidden Play vs lock task | **lock task: yes; hidden: no** | Hidden Play: its jobs can't start, so nothing updates. Lock task with Play unhidden: `market://` is blocked, and **23 apps updated in the background within 6 min**. |
 | B-Q1 lock task follow-ups (BLOCK on) | **yes** | Pre-grant works for camera, mic and location; Camera → Photos is closed; the emergency dialer screen opens; the image attaches through Messages' own picker; lock task comes back after a reboot. |
 | B-Q4 must-have apps | **partly**: before sign-in done; signed-in checks in PLA-20 | All 5 apps probed under BLOCK before sign-in. **Outlook's in-app WebView browses off-site from its Privacy link.** Google sign-in in Slack/Spotify/Outlook needs GMS → blocked. Telegram loops until pre-granted. Signed-in checks wait for Beaux. |
+| 9-1-1 routes (PLA-40) | **SOS: no, unless Personal Safety is allowlisted** | Power ×5 under lock task + BLOCK: "Personal Safety is not available right now". With `com.google.android.apps.safetyhub` on the lock-task list, the SOS screen opens. Phone route works from home and from inside Messages. Lock-screen Emergency (emulator) goes to Personal Safety too and is blocked without it. No call placed. |
 | S7 install race | **partly** | DPC hid a newly installed app 4.6 s after `firstInstallTime`. Deep links failed for ~4 s (package frozen), but the app's **process started ~0.35 s before the hide**; no window was displayed. |
 
 ## A0. Baseline
@@ -788,6 +793,102 @@ Unchanged from step 1:
 - HOME = Moto launcher. Accounts: the Phase B Google account and Meet's local `tachyon` account.
 - No app signed in. Telegram, Slack, Spotify and Outlook are still installed.
 - USB adb works. `adb_wifi_enabled=0`.
+
+## 9-1-1 routes (PLA-40, Q14, THROWAWAY)
+
+**Top line: with Plainphone's planned lock-task list, power-button SOS does NOT work under lock task.** Pressing
+power 5 times shows "Personal Safety is not available right now." It works once Personal Safety
+(`com.google.android.apps.safetyhub`) is on the lock-task list. The lock-screen "Emergency" button has the same
+dependency (measured on the emulator). The Phone route works.
+
+Run 2026-10-08, 22:08–22:21 phone local time, same build fingerprint. Evidence: `evidence/pla40/` (phone) and
+`evidence/pla40/emulator/`. **No call was placed at any point**; Telecom's `mCalls` was empty after every step.
+Account address redacted in `lt-5-account-select.png` and `lt-6-privacy-link.png`.
+
+### Emergency SOS settings on the XT2415 (read first, `sos-settings-*.png`)
+
+| Setting | Value |
+|---|---|
+| Handler | Personal Safety `com.google.android.apps.safetyhub` (holds `android.app.role.EMERGENCY`, has `CALL_PRIVILEGED`). Gesture intent `com.android.systemui.action.LAUNCH_EMERGENCY` → `.emergencysos.ui.EmergencySosActivity`. |
+| Enabled | yes (`emergency_gesture_enabled=1`) |
+| Start mode | **"Touch & hold to start actions"**: after 5 presses, someone must hold the circle for 3 s. The other mode, "Start actions automatically", runs a 5-second countdown and then calls. |
+| Alarm sound | on (`emergency_gesture_sound_enabled=1`) |
+| Actions | Without sign-in, only "Call emergency services" (911). Sharing and video need a Google sign-in. |
+| Can the call be turned off? | **Not on its own.** Turning it off also turns Emergency SOS off (no other action is left). |
+| Can the number be changed? | **Yes**: "911. Tap to change." → "Other". |
+| SIM / radio | No SIM (`gsm.sim.state=ABSENT`), radio up (`OUT_OF_SERVICE`), so a 911 call could still go out. Emergency list `ril.ecclist=112,911`. |
+
+**How the test was made safe:** Touch & hold mode kept; SOS number changed to **5550100** for the test (not on the
+emergency list, and with no SIM a normal call can't go out); the SOS screen was never touched except the Cancel
+slider at the bottom, far from the circle. After the test the number went back to 911 (`sos-number-restored.png`).
+
+### Power-button SOS
+
+`input keyevent 26` is enough: injected presses go through `GestureLauncherService`, the same path as the button.
+They must be spaced: 5 presses in 23 ms or 159 ms are rejected ("Emergency gesture detected but it's too fast"); a
+device-side loop with `sleep 0.1` (about 630 ms in total) triggers it. So **no real-button press is needed** to
+answer this; nothing was queued for Beaux. (`adb shell "for i in 1 2 3 4 5; do input keyevent 26; sleep 0.1; done"`)
+
+| Case | Result |
+|---|---|
+| Lock task **off** (`off-3-sos-screen.png`) | SOS screen opens: "Your phone will: Call 5550100", "Touch & hold for 3 seconds to start", Cancel slider. **Back does not close it.** Sliding Cancel closes it at once (`off-4-after-cancel.png`). No call. |
+| Lock task **on**, BLOCK on, Plainphone-style list (Phone, Messages, Camera, `com.android.phone`, spike) (`lt-1-*`) | **Blocked.** `BlockedAppActivity`: "Personal Safety is not available right now." The gesture fires (`Emergency gesture detected, launching.`), but the SOS activity is a new task from a package not on the list. |
+| Same, plus `com.google.android.apps.safetyhub` on the lock-task list (`lt-2-*`) | **Works.** SOS screen opens inside lock task (still `LOCKED`); Cancel slider closes it. No call. |
+
+Side effects seen on the way:
+- The 2nd press fires the **double-press Camera** gesture (`camera_double_tap_power_gesture_disabled=0`), so Camera
+  opens under the SOS screen. Camera was on the list here; not tested with Camera off the list.
+- With Personal Safety allowlisted, the SOS screen's **gear** opens the full Emergency SOS settings inside lock task
+  (`lt-3-sos-gear.png`). A user could turn SOS off or change the number there. From there, "Sign in" opens the
+  Personal Safety home and an account picker (`lt-4`, `lt-5`). Its Privacy Policy link tries Chrome, which is
+  blocked (`lt-6`). Not probed: the Features and Your info tabs, "Try a demo", emergency info. Lead for the Verifier.
+
+### Phone route (BLOCK on, Plainphone-style list without Personal Safety)
+
+| Route | Result |
+|---|---|
+| System dialer | `com.google.android.dialer`: DIALER role, `telecom get-system-dialer`, and the only `ACTION_DIAL` resolver (`dialer-resolution.txt`). |
+| **From home**: spike sends `ACTION_DIAL` with `setPackage(com.google.android.dialer)` (`phone-a-*`) | Dialer opens in lock task; 9-1-1 typed on its keypad (`phone-a-home-911.png`). Call not pressed. |
+| **Inside an approved app**: Messages → Home → Phone (`phone-b-*`) | Home returns to the spike; Phone opens; 9-1-1 typed (`phone-b-inapp-911.png`). Call not pressed. |
+| Pinned `ACTION_DIAL tel:911`, `pkg=com.google.android.dialer` (`phone-c-*`) | Dialer opens with **911 already filled in**. Call not pressed. |
+| Pinned `com.android.phone.EmergencyDialer.DIAL`, `pkg=com.android.phone` | `com.android.phone/.EmergencyDialer` opens (`phone-d-emergency-dialer.png`). |
+
+Tooling note: `input keyevent KEYCODE_9/KEYCODE_1` types nothing in this dialer; keypad taps are needed.
+
+### Lock-screen "Emergency" (own emulator only)
+
+Emulator `pp-spike-pla5-api35` (`emulator-5660`), API 35, `google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.036`.
+Spike DPC as Device Owner, PIN set with `locksettings set-pin`, lock task with BLOCK. Evidence `evidence/pla40/emulator/`.
+
+| Case | Result |
+|---|---|
+| Features with **KEYGUARD** (as in the design), list = Dialer, Messages, `com.android.phone`, spike | Lock screen and PIN screen show; "Emergency" button present. Tapping it sends `DIAL_EMERGENCY` with `pkg=com.google.android.apps.safetyhub` → **blocked** (`BlockedAppActivity`). |
+| Same, plus Personal Safety on the list | "Emergency" opens Personal Safety's emergency dial pad over the lock screen (`a4-emergency-dialer-allowed.png`); lock task stays `LOCKED`. Not dialed. |
+| Features **without KEYGUARD** | After sleep and wake, **no lock screen at all**, even with a PIN. So no lock-screen route, and no PIN either. |
+
+On the XT2415, `DIAL_EMERGENCY` resolves to the same two activities and Personal Safety holds the EMERGENCY role
+(`emergency-dialer-resolution.txt`), so the same block is **expected but not measured** there (a PIN on the spare
+needs a separate OK). The PIN screen screenshots came out black (secure window), so the logs are the evidence.
+
+### What this means for Plainphone (spike-level, for the Lead)
+
+- **Put the EMERGENCY role holder on the lock-task list and the never-hide list.** Read it live
+  (`RoleManager`, `android.app.role.EMERGENCY`; system apps only). The design's "emergency UI subset" (system dialer,
+  emergency-dialer package, in-call UI) misses it if the emergency-dialer package comes from `EmergencyDialer.DIAL`
+  only, which resolves to `com.android.phone` alone. Without it, both SOS and the lock-screen Emergency button fail.
+- Allowlisting Personal Safety also opens its settings and home screen inside lock task (above). Chrome stays blocked.
+  Whether that's acceptable, and whether to pin SOS settings, is for the Verifier and the board.
+- **Product question for Beaux:** Touch & hold (3-second hold, no call by accident, but one more step in an emergency)
+  or Start automatically (5-second countdown, then a call). This phone ships with Touch & hold.
+- Keep `KEYGUARD` in the features (the design already says so): without it a PIN does nothing under lock task.
+- The emergency Phone entry should keep `setPackage(<system dialer>)`; it works with 911 pre-filled.
+
+### End state at PLA-40 close
+
+Phone: spike DPC is Device Owner (`testOnlyAdmin`), lock task `NONE`, lock-task packages = spike only, features 87,
+`restrictions=[] hidden=[] suspended=[]`, persistent HOME cleared, HOME = Moto launcher. Emergency SOS on, number
+back to **911**, Touch & hold, alarm on. Nothing hidden or unhidden, no reboot. Emulator `pp-spike-pla5-api35`:
+lock task stopped, PIN cleared, spike still Device Owner.
 
 ## Final end state at PLA-5 close (2026-10-09T00:37Z, checked again)
 

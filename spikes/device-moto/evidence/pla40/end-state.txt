@@ -1,0 +1,9 @@
+motorola/cancunn_g_sys/cancunn:15/V1UDS35H.26-14-6-2-11/27ec35b-72bc9:user/release-keys
+deviceOwner=true lockTaskModeState=0 lockTaskPackages=[com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[] suspended=[] locked=false debugLiftAt=0
+1
+1
+com.motorola.launcher3
+
+      testOnlyAdmin=true
+  mCalls: 
+  mCallAudioManager:
