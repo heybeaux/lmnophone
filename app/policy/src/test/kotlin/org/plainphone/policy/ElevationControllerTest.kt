@@ -100,6 +100,36 @@ class ElevationControllerTest {
     }
     private fun start(r: ElevationRequest): ElevationOutcome = controller.start(r.id, r.target)
 
+    @Test fun `decoded grant and countdown do not restore controller ownership`() {
+        setup(); val r = request(); advance(600_000)
+        val pending = record!!
+        val c = pending.state.countdown!!
+        val decodedCountdown = assertNotNull(ElevationCountdown.restore(c.id, c.target, c.startedAt, c.durationMillis))
+        val savedCountdown = ElevationRecord(pending.revision, ElevationState(pending.state.ledger, decodedCountdown),
+            pending.journal, pending.person)
+        assertEquals(ElevationOutcome.STARTED, start(r))
+        val active = record!!
+        val g = active.state.grant!!
+        val decodedGrant = assertNotNull(ElevationGrant.restore(g.id, g.target, g.startedAt, g.deadline, g.packageAccessOpen, g.approved))
+        val savedGrant = ElevationRecord(active.revision, ElevationState(active.state.ledger, grant = decodedGrant),
+            active.journal, active.person)
+        controller = controller()
+        record = savedGrant
+        assertNull(controller.access())
+        events.clear()
+        assertEquals(ElevationOutcome.IDLE, controller.onStart())
+        assertEquals("revoke", events.first())
+        assertEquals(active.state.ledger.debits, record!!.state.ledger.debits)
+        assertFalse(physicallyOpen)
+        // Even an initialized controller cannot acquire an injected decoded record's ownership.
+        record = savedGrant
+        assertNull(controller.access())
+        record = savedCountdown
+        assertEquals(ElevationOutcome.REFUSED, start(r))
+        assertEquals(ElevationOutcome.LAPSED, controller.tick())
+        assertNull(record!!.state.countdown)
+    }
+
     @Test fun `PIN is consumed for the exact countdown at request and no PIN is needed at Start`() {
         setup(); val r = prepare(); val a = auth(r)
         assertEquals(ElevationOutcome.COUNTING, controller.request(r, a))
