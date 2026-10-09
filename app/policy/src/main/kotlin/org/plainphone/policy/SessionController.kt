@@ -8,9 +8,19 @@ data class BatteryState(val percent: Int, val charging: Boolean) {
     val allowsDiscretionaryUnhide: Boolean get() = charging || percent >= 5
 }
 
+internal val PLAY_PACKAGE = PackageName("com.android.vending")
+internal fun sessionPackages(kind: WindowKind, matchingInventory: BuildInventory?): Set<PackageName>? = when (kind) {
+    WindowKind.PLAY -> setOf(PLAY_PACKAGE)
+    WindowKind.SETTINGS -> matchingInventory?.settingsSessionPackages?.takeIf { it.isNotEmpty() }
+    else -> null
+}
+
 class SessionAccess internal constructor(val id: String, val kind: WindowKind, packages: Set<PackageName>, val deadline: BootTime) {
     val packages: Set<PackageName> = immutableSet(packages)
     fun isLive(now: BootTime): Boolean = now.bootId == deadline.bootId && now.elapsedMillis < deadline.elapsedMillis
+    override fun equals(other: Any?): Boolean = other is SessionAccess &&
+        id == other.id && kind == other.kind && packages == other.packages && deadline == other.deadline
+    override fun hashCode(): Int = listOf(id, kind, packages, deadline).hashCode()
 }
 
 enum class SessionPhase { OPENING, OPEN, CLOSING }
@@ -18,6 +28,22 @@ sealed interface SessionJournal {
     data object Empty : SessionJournal
     data object Damaged : SessionJournal
     data class Active(val access: SessionAccess, val phase: SessionPhase) : SessionJournal
+
+    companion object {
+        /**
+         * Public adapter boundary after schema/checksum and scalar decoding. Pass only an inventory
+         * matching the live model/fingerprint. Invalid scope becomes Damaged for full revocation.
+         * Restoring data does not restore authority: the controller must run onStart before access.
+         */
+        fun restore(
+            id: String, kind: WindowKind, packages: Set<PackageName>, deadline: BootTime,
+            phase: SessionPhase, matchingInventory: BuildInventory?,
+        ): SessionJournal {
+            val expectedPackages = sessionPackages(kind, matchingInventory)
+            if (id.isBlank() || expectedPackages == null || packages != expectedPackages) return Damaged
+            return Active(SessionAccess(id, kind, packages, deadline), phase)
+        }
+    }
 }
 interface JournalStore {
     /** Device-protected only. Invalid/missing checksum on an entry returns Damaged. */
@@ -51,16 +77,18 @@ class SessionController(
     var handbackReady: Boolean = false
         private set
     private var initialized = false
+    // An end event remains restrictive even when its durable closing write fails.
+    private var closingRequested = false
 
     /** Invoke before any other Plainphone work, including Direct Boot. No credential storage is needed. */
     @Synchronized
     fun onStart(): Boolean {
-        initialized = false; handbackReady = false
+        initialized = false; handbackReady = false; closingRequested = true
         val before = store.read()
         if (!effects.revokeAllRelaxations()) return false
         if (!effects.protectedStateCheck() || !effects.readBackPolicy()) return false
         if (!store.compareAndSet(before, SessionJournal.Empty)) return false
-        initialized = true; handbackReady = true
+        initialized = true; handbackReady = true; closingRequested = false
         return true
     }
 
@@ -71,11 +99,7 @@ class SessionController(
         if (before != SessionJournal.Empty) return SessionOutcome.BUSY
         if (!handbackReady) return SessionOutcome.NOT_READY
         if (id.isBlank()) return SessionOutcome.REFUSED
-        val packages = when (kind) {
-            WindowKind.PLAY -> setOf(PackageName("com.android.vending"))
-            WindowKind.SETTINGS -> inventory?.settingsSessionPackages?.takeIf { it.isNotEmpty() } ?: return SessionOutcome.REFUSED
-            else -> return SessionOutcome.REFUSED
-        }
+        val packages = sessionPackages(kind, inventory) ?: return SessionOutcome.REFUSED
         if (!battery.allowsDiscretionaryUnhide) return SessionOutcome.LOW_BATTERY
         val now = clock.checkpoint() ?: return SessionOutcome.NOT_READY
         if (!authority.consume(freshAuthority, PrivilegedAction("session:${kind.name}", id))) return SessionOutcome.REFUSED
@@ -99,7 +123,7 @@ class SessionController(
 
     @Synchronized
     fun access(): SessionAccess? {
-        if (!initialized) return null
+        if (!initialized || closingRequested) return null
         val active = store.read() as? SessionJournal.Active ?: return null
         if (active.phase != SessionPhase.OPEN) return null
         val now = clock.checkpoint() ?: return null
@@ -108,6 +132,7 @@ class SessionController(
 
     @Synchronized
     fun tick(): SessionOutcome {
+        if (closingRequested) return if (onStart()) SessionOutcome.CLOSED else SessionOutcome.NOT_READY
         val record = store.read()
         if (record == SessionJournal.Damaged || (record == SessionJournal.Empty && !handbackReady)) {
             return if (onStart()) SessionOutcome.CLOSED else SessionOutcome.NOT_READY
@@ -126,6 +151,7 @@ class SessionController(
     }
 
     private fun close(before: SessionJournal.Active): SessionOutcome {
+        closingRequested = true
         handbackReady = false
         val closing = before.copy(phase = SessionPhase.CLOSING)
         if (!store.compareAndSet(before, closing)) {
@@ -134,7 +160,7 @@ class SessionController(
         }
         if (!effects.revokeAllRelaxations() || !effects.protectedStateCheck() || !effects.readBackPolicy()) return SessionOutcome.NOT_READY
         if (!store.compareAndSet(closing, SessionJournal.Empty)) return SessionOutcome.NOT_READY
-        handbackReady = true
+        handbackReady = true; closingRequested = false
         return SessionOutcome.CLOSED
     }
 }

@@ -11,7 +11,7 @@ class PinVault(
     private val entropy: SecretEntropy,
     private val clock: RunningClock,
 ) : AuthorityConsumer {
-    private data class Grant(val person: TrustedPersonId, val generation: Long, val action: PrivilegedAction, val bootId: String)
+    private data class Grant(val person: TrustedPersonId, val generation: Long, val action: PrivilegedAction, val issuedAt: BootTime)
     private val grants = mutableMapOf<FreshAuthority, Grant>()
 
     fun prepareCredential(pin: CharArray): PreparedCredential {
@@ -39,7 +39,7 @@ class PinVault(
         val authority = FreshAuthority()
         // A fresh entry replaces any unspent authority from this credential.
         grants.entries.removeAll { it.value.person == person }
-        grants[authority] = Grant(person, credential.generation, action, now.boot.bootId)
+        grants[authority] = Grant(person, credential.generation, action, now.boot)
         return PinResult.Authorized(authority)
     }
 
@@ -51,7 +51,10 @@ class PinVault(
         grants.remove(authority)
         val now = clock.checkpoint() ?: return false
         val credential = store.read()?.people?.get(grant.person) ?: return false
-        return now.boot.bootId == grant.bootId && credential.generation == grant.generation
+        return now.boot.bootId == grant.issuedAt.bootId &&
+            now.boot.elapsedMillis >= grant.issuedAt.elapsedMillis &&
+            now.boot.elapsedMillis - grant.issuedAt.elapsedMillis < 120_000L &&
+            credential.generation == grant.generation
     }
 
     /** Resets only the selected holder. Never grants action authority and never skips a waiting change. */
@@ -66,7 +69,7 @@ class PinVault(
             if (!store.compareAndSet(state, state.replacing(person, credential.copy(recoveryCounter = counter)))) return RecoveryResult.Unavailable
             return RecoveryResult.Delayed(counter.remainingMillis)
         }
-        if (!verify(code, credential.recovery)) {
+        if (!verifyRecovery(code, credential.recovery)) {
             val next = counter.failed(now.proven)
             if (!store.compareAndSet(state, state.replacing(person, credential.copy(recoveryCounter = next), if (next.failures == 10) CredentialChannel.RECOVERY else null))) return RecoveryResult.Unavailable
             return RecoveryResult.Wrong(next.remainingMillis, next.failures == 10)
@@ -76,6 +79,13 @@ class PinVault(
         if (!store.compareAndSet(state, state.replacing(person, replacement))) return RecoveryResult.Unavailable
         grants.entries.removeAll { it.value.person == person }
         return RecoveryResult.Replaced(prepared.recoveryCode)
+    }
+
+    private fun verifyRecovery(code: CharArray, verifier: SecretVerifier): Boolean {
+        val normalized = code.filterNot { it == ' ' || it == '-' }.map { it.lowercaseChar() }.toCharArray()
+        return try {
+            normalized.size == 32 && normalized.all { it in '0'..'9' || it in 'a'..'f' } && verify(normalized, verifier)
+        } finally { normalized.fill('\u0000') }
     }
 
     private fun validatePin(pin: CharArray) { require(pin.size >= 6 && pin.all { it in '0'..'9' }) }

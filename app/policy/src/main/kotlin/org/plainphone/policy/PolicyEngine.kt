@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.policy
 
-import org.plainphone.core.PackageName
-import org.plainphone.core.WindowKind
-
 object PolicyEngine {
     fun decide(input: PolicyInput): PolicyPlan {
         val floor = EmergencyFloor.compute(input.installed, input.identities)
@@ -12,14 +9,11 @@ object PolicyEngine {
         val unknown = inventory == null
         val neverHide = immutableSet(floor.neverHide + inventory?.neverHide?.packages.orEmpty() + input.plainphone + input.messages)
         val conflicts = immutableSet(input.classifiedBrowsers.intersect(neverHide))
-        val approved = if (baseline) emptySet() else input.approved - input.classifiedBrowsers
+        val sessionOnly = setOf(PLAY_PACKAGE) + inventory?.settingsSessionPackages.orEmpty()
+        val approved = if (baseline) emptySet() else input.approved - input.classifiedBrowsers - sessionOnly
         val session = input.sessionAccess?.takeIf { access ->
             !baseline && !input.lockedBoot && input.currentBoot?.let { access.isLive(it) } == true &&
-                when (access.kind) {
-                    WindowKind.PLAY -> access.packages == setOf(PackageName("com.android.vending"))
-                    WindowKind.SETTINGS -> inventory != null && access.packages.isNotEmpty() && access.packages == inventory.settingsSessionPackages
-                    else -> false
-                }
+                access.packages == sessionPackages(access.kind, inventory)
         }?.packages.orEmpty()
         val accessible = approved + session
         val sweep = when {
@@ -42,7 +36,7 @@ object PolicyEngine {
             baseline -> setOf(input.plainphone, input.messages) + floor.emergencyUi + inventory?.minimumUi.orEmpty()
             unknown -> input.previousLockTask + floor.emergencyUi
             else -> setOf(input.plainphone) + approved + floor.emergencyUi + inventory.minimumUi
-        }.plus(session) - hidden)
+        }.plus(input.plainphone).plus(session) - hidden)
         val unhidden = immutableSet(neverHide + if (input.lockedBoot) emptySet() else accessible - hidden)
         val restrictions = immutableSet(Restriction.entries)
         val features = immutableSet(LockTaskFeature.entries)
