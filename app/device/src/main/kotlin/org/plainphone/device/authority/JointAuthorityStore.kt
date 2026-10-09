@@ -620,14 +620,21 @@ class JointAuthorityStore internal constructor(
     private fun section(section: Section): ByteArray? =
         coordinator.view()?.sections?.get(section.ordinal) ?: coordinator.run(null) { load()?.sections?.get(section.ordinal) }
 
-    private fun fence(): Long? = listOfNotNull(fenceA.read(), fenceB.read())
-        .mapNotNull { b -> if (b.size == 8) ByteBuffer.wrap(b).long else null }.maxOrNull()
+    private fun fenceValue(record: AtomicRecord): Long? = record.read()?.takeIf { it.size == 8 }?.let { ByteBuffer.wrap(it).long }
+    private fun fenceBytes(sequence: Long): ByteArray = ByteBuffer.allocate(8).putLong(sequence).array()
 
-    /** The valid copy at exactly the committed sequence; null if the fence or every committed copy is gone. */
+    /**
+     * The valid copy at exactly the committed sequence (the higher fence); null if no fence or no
+     * committed copy survives. A valid copy above that sequence is ignored only while both fences
+     * are intact and agree: then it is a write that never reached the commit point. Otherwise it may
+     * prove that a newer fence was lost, so the read fails closed rather than serve an older record.
+     */
     private fun load(): Snapshot? {
-        val fence = fence() ?: return null
-        val committed = listOfNotNull(copyA.read(), copyB.read()).mapNotNull { b -> Snapshot.decode(b)?.let { it to b } }
-            .filter { it.first.sequence == fence }
+        val a = fenceValue(fenceA); val b = fenceValue(fenceB)
+        val fence = listOfNotNull(a, b).maxOrNull() ?: return null
+        val copies = listOfNotNull(copyA.read(), copyB.read()).mapNotNull { bytes -> Snapshot.decode(bytes)?.let { it to bytes } }
+        if (copies.any { it.first.sequence > fence } && !(a != null && a == b)) return null
+        val committed = copies.filter { it.first.sequence == fence }
         val first = committed.firstOrNull() ?: return null
         // Two copies claiming the committed sequence must agree exactly.
         if (committed.any { !it.second.contentEquals(first.second) }) return null
@@ -659,28 +666,40 @@ class JointAuthorityStore internal constructor(
     }
 
     /**
-     * Spare copy, then the first fence (the commit point), then the second fence and the other
-     * copy. Nothing before the first fence is visible to a read; nothing after it can undo the
-     * commit. The result is read from disk, so it is true exactly when [next] is what reads back.
+     * Repair redundancy before a new write: both copies, then both fences, back to [current]. Copies
+     * go first, so an uncommitted copy above the fence is replaced before any fence is touched. A
+     * failed repair aborts the write; [current] still reads from the copy and fence that held it.
+     */
+    private fun heal(current: Snapshot): Boolean {
+        val bytes = current.encode(); val fence = fenceBytes(current.sequence)
+        for (record in listOf(copyA, copyB)) if (record.read()?.contentEquals(bytes) != true && !record.write(bytes) {}) return false
+        for (record in listOf(fenceA, fenceB)) if (record.read()?.contentEquals(fence) != true && !record.write(fence) {}) return false
+        return true
+    }
+
+    /**
+     * Repair, then the spare copy, then the first fence (the commit point), then the second fence
+     * and the other copy. A failure before the commit point puts the spare and the first fence back,
+     * so false leaves the acknowledged record exactly as it was. After the commit point the result
+     * is true; a missing tail write leaves a degraded state that the next write repairs and that any
+     * further loss turns unreadable, never older. Every result is read from disk.
      */
     private fun save(previous: Snapshot?, next: Snapshot, spare: AtomicRecord? = null): Boolean {
+        if (previous != null && !heal(previous)) return false
         val bytes = next.encode()
-        val fence = ByteBuffer.allocate(8).putLong(next.sequence).array()
-        val old = previous?.encode()
-        // The spare is a copy that does not hold the committed record; with both current, use A.
-        val aCurrent = old != null && copyA.read()?.contentEquals(old) == true
-        val bCurrent = old != null && copyB.read()?.contentEquals(old) == true
-        val (first, other) = when {
-            spare === copyA -> copyA to copyB
-            spare === copyB -> copyB to copyA
-            aCurrent && !bCurrent -> copyB to copyA
-            else -> copyA to copyB
-        }
+        val fence = fenceBytes(next.sequence)
+        // After repair both copies hold [previous]; a migration names the copy that holds no old record.
+        val (first, other) = if (spare === copyB) copyB to copyA else copyA to copyB
         faults.at(WritePoint.BEFORE_COPY_A, dir)
-        if (first.write(bytes) { faults.at(WritePoint.AFTER_COPY_A, dir) } &&
-            fenceA.write(fence) { faults.at(WritePoint.AFTER_FENCE_A, dir) }) {
+        val committed = first.write(bytes) { faults.at(WritePoint.AFTER_COPY_A, dir) } &&
+            fenceA.write(fence) { faults.at(WritePoint.AFTER_FENCE_A, dir) }
+        if (committed) {
             fenceB.write(fence) { faults.at(WritePoint.AFTER_FENCE, dir) }
             other.write(bytes) { faults.at(WritePoint.AFTER_COPY_B, dir) }
+        } else if (previous != null && load()?.encode()?.contentEquals(bytes) != true) {
+            val old = previous.encode()
+            if (!first.write(old) {}) first.delete()
+            fenceA.write(fenceBytes(previous.sequence)) {}
         }
         return load()?.encode()?.contentEquals(bytes) == true
     }
@@ -726,6 +745,7 @@ internal class AtomicRecord(private val dir: File, name: String, private val sch
     private val file = File(dir, "$name.rec")
 
     fun exists() = file.exists()
+    fun delete(): Boolean = !file.exists() || file.delete()
 
     fun read(): ByteArray? = try {
         if (file.isFile) org.plainphone.device.storage.RecordCodec.decode(file.readBytes(), schema) else null
