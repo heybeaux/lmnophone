@@ -3,7 +3,11 @@
 **For the helper.** For the first two phones that's Beaux. Write as if for anyone: you don't need to know Android,
 but you do need a computer and about two hours the first time.
 
-> **Draft status.** Written by the Product & UX Designer for [PLA-12](/PLA/issues/PLA-12) (task 5.3). Every step
+> **Draft status.** Written by the Product & UX Designer for [PLA-12](/PLA/issues/PLA-12) (task 5.3), with the
+> mode choice, two trusted people, the account-number steps for each account holder and the privacy steps added
+> for [PLA-42](/PLA/issues/PLA-42) (task 3.2 of `add-copy-test-product-decisions`). Paths marked **[to confirm in
+> the dry run]** haven't been checked on a phone; the Android Platform Engineer confirms them during the MVP dry
+> run ([PLA-15](/PLA/issues/PLA-15)). Every step
 > that uses the setup script is marked **[PLACEHOLDER]** until the MVP issue provides the real script. The guide
 > must be dry-run by someone who didn't write it (task 5.3) before anyone relies on it.
 >
@@ -17,10 +21,13 @@ but you do need a computer and about two hours the first time.
 - A USB cable that carries data (not a charge-only cable).
 - The Plainphone files: the app and the setup script **[PLACEHOLDER: where to get them]**.
 - The home Wi-Fi name and password.
-- The person who'll use the phone (the **user**), for their Google password at step G3 and the talk-through at the
-  end.
-- The **trusted person**, for about 20 minutes: their PIN, their recovery code, their Google account number
-  (Part H), and the test text. They need their **own** phone or computer, not this one.
+- The person who'll use the phone (the **user**), for their Google password at step G4, the privacy steps, and the
+  talk-through at the end.
+- **Supervised phone:** each **trusted person** (one or two), for about 20 minutes each: their PIN, their recovery
+  code, their Google account number (Part H), and the test text. They need their **own** phone or computer, not
+  this one.
+- **Self-managed phone:** the user, for the whole of Part G, with a computer or another phone of their own for
+  Part H.
 - A pen and the [setup record](#setup-record) at the end of this guide.
 
 ## The order, at a glance
@@ -33,8 +40,8 @@ but you do need a computer and about two hours the first time.
 | D | First-boot setup, offline | **no** | 10 min |
 | E | Turn on USB debugging | no | 5 min |
 | F | Run the setup script **[PLACEHOLDER]** | no | 5 min |
-| G | Finish setup on the phone | from step G3 | 20 min |
-| H | The trusted person gets their Google account number | (their device) | 5 min |
+| G | Finish setup on the phone, including the mode choice and the privacy steps | from step G4 | 30 min |
+| H | Each account holder gets their Google account number | (their device) | 5 min each |
 | I | Handover checks | yes | 30 min |
 
 Time Parts F to G yourself: from the first script command to the green handover check should be **30 minutes or
@@ -88,12 +95,12 @@ Do the branch that matches the phone.
 1. Turn the phone off.
 2. Push the SIM tool into the small hole in the SIM tray, pull the tray out, remove the card, and put the empty
    tray back.
-3. Turn the phone on. Keep the SIM card safe; it goes back in at step G3.
+3. Turn the phone on. Keep the SIM card safe; it goes back in at step G4.
 
 **eSIM (a SIM built into the phone)**
 1. **Settings → Network & internet → SIMs.** Tap the eSIM.
 2. Turn **Use SIM** off. Confirm.
-3. Do **not** delete or erase the eSIM. You'll turn it back on at step G3.
+3. Do **not** delete or erase the eSIM. You'll turn it back on at step G4.
 
 **Both** (some phones have a card and an eSIM): do both branches.
 
@@ -187,20 +194,66 @@ USB debugging lets the computer install Plainphone. Plainphone turns it off agai
 
 ## G. Finish setup on the phone
 
-The screens are described in [docs/ux/flows-setup.md](ux/flows-setup.md). In short:
+The screens are described in [docs/ux/flows-setup.md](ux/flows-setup.md). Before you start, decide the mode (G0).
+
+### G0. Choose how the phone is looked after
+
+The first screen asks this. Decide it with the user before setup.
+
+| | **Someone looks after it** (supervised) | **The user looks after it** (self-managed) |
+|---|---|---|
+| Who holds a PIN | One or two trusted people. The user has none. | The user. |
+| Adding an app | A trusted person, with the phone in their hands | The user, after a 10-minute wait; at most 2 times a day |
+| Turning Plainphone off | A trusted person's PIN, then 24 hours; anyone can cancel. A trusted person's recovery code skips the wait. | The user's PIN, then 24 hours. Nothing skips it. |
+| After a wipe from the phone's buttons | Google asks for a trusted person's (or the backup person's) account | Google asks for the user's own (or the backup person's) account, so the user can set the phone up without Plainphone |
+| In one line | Support from someone you trust | **Friction, not a lock**: it slows the user down, but can't stop them |
+
+Pick **self-managed** for someone who wants calm for themselves and has nobody to look after their phone, or doesn't
+want anyone to. Say plainly to them that it's friction, not a lock. Either can be changed later; that takes 24
+hours.
+
+**Two trusted people.** They are equals: either can add apps or turn Plainphone off alone, and both get a text
+whenever either PIN is used. Both need to be there for G3 and Part H, or come back to finish before "Ready".
+
+### G1–G8. The steps
 
 | Step | On the phone | Who |
 |---|---|---|
 | Tidy-up | Plainphone hides the apps that came with the phone. Offline. | Helper |
-| G1. Who's who | Names and numbers: the user, the trusted person, the helper | Helper |
-| G2. PIN and recovery code | **Hand the phone to the trusted person.** They choose a PIN and write down the recovery code. The recovery code must end up with the trusted person, not the helper; if the helper *is* the trusted person, it must be kept away from the phone and the user. | Trusted person |
-| G3. Connect | **Now** put the SIM back (C2 in reverse) or turn the eSIM back on (Settings → Network & internet → SIMs → Use SIM, or Plainphone's own screen). Join Wi-Fi. The user signs in to **their own** Google account. Turn on automatic app updates in the Play Store. Send the test text; the trusted person confirms it arrived. | Helper, user, trusted person |
-| G4. Reset protection | Enter the trusted person's Google account number (Part H). Optionally a backup person's. | Helper and trusted person |
-| G5. Apps | Install and add the user's apps. Read each app's note. Choose what each app can use. See the [starter catalog](ux/starter-catalog.md) for sign-in tips. | Trusted person |
-| G6. Limits | The trusted person reads "What Plainphone can't stop". | Trusted person |
-| G7. Unplug | Unplug the cable. Plainphone turns off USB debugging and runs the handover check. | Helper |
+| G1. Mode | Supervised or self-managed (G0). Self-managed: read "Friction, not a lock" with the user, and optionally make the waits stricter. | Helper and user |
+| G2. Who's who | Names and numbers: the user, each trusted person (one or two), the helper. Self-managed: no trusted people; the helper is optional. With two trusted people, both read "You are equals". | Helper |
+| G3. PINs and recovery codes | **Hand the phone to each trusted person in turn** (self-managed: to the user). Each chooses a PIN and writes down their own recovery code. A trusted person's code must end up with that person, not the helper; if the helper *is* the trusted person, it must be kept away from the phone and the user. | Each trusted person, or the user |
+| G4. Connect and privacy | **Now** put the SIM back (C2 in reverse) or turn the eSIM back on (Settings → Network & internet → SIMs → Use SIM, or Plainphone's own screen). Join Wi-Fi. The user signs in to **their own** Google account. Turn on automatic app updates in the Play Store. Send the test text to each trusted person; each confirms it arrived. Then the four [privacy steps](#g4b-privacy-steps), ticking each as done or skipped. | Helper, user, trusted people |
+| G5. Reset protection | Enter each listed account number (Part H): each trusted person's, or in self-managed mode the user's own. Optionally a backup person's. | Helper and each account holder |
+| G6. Apps | Install and add the user's apps. Read each app's note. Choose what each app can use. See the [starter catalog](ux/starter-catalog.md) for sign-in tips. | Trusted person, or the user |
+| G7. Limits | Read "What Plainphone can't stop" (the version for this mode). | Trusted people, or the user |
+| G8. Unplug | Unplug the cable. Plainphone turns off USB debugging and runs the handover check. | Helper |
 
-**Outlook (G5).** Outlook has a known way onto the web, and Beaux has accepted it (ADR 0001 Risk 3; tested on
+### G4b. Privacy steps
+
+These reduce what Google collects. Plainphone can't change or check them: it only stores the tick you give it
+(done or skipped), and reads nothing from the Google account. Do them straight after the user signs in at G4, while
+the phone's own settings can still be opened (the setup screen has **Open the phone's settings**). Each one is the
+user's choice; "skip" is fine. Write the answers in the setup record.
+
+**Turning a setting off may ask whether to delete what's already saved.** That's the user's choice too. Deleting
+doesn't affect Plainphone.
+
+The paths below are from Google's help pages (October 2026). **None has been checked on a Plainphone phone yet.**
+Google account pages need a signed-in account, which agents never use, so they can't be checked on an emulator by the
+team. **[to confirm in the dry run]** on every row: write the real path in the setup record if it differs, and the
+Android Platform Engineer updates this table.
+
+| Step | Where (stock Android 15 and 16 with Google Play; Motorola moto g power 5G 2024, Android 15) | What to choose |
+|---|---|---|
+| 1. Web & App Activity | Phone **Settings → Google → Manage your Google Account → Data & privacy**, then under "History settings", **Web & App Activity**. [Source](https://support.google.com/accounts/answer/54068?co=GENIE.Platform%3DAndroid) **[to confirm in the dry run]** | **Turn off** (older pages say **Pause**). Then **Turn off** or **Turn off and delete activity**. |
+| 2. Timeline (location history) | Google's help says Timeline is turned off in the **Google Maps** app: profile picture → **Your Timeline** → **More** → **Location & privacy settings** → **Timeline is on** → **Turn off**. [Source](https://support.google.com/maps/answer/6258979?co=GENIE.Platform%3DAndroid) If Maps isn't on the phone or is hidden: phone **Settings → Google → Manage your Google Account → Data & privacy**, then under "History settings", **Timeline**, if it's listed there. **[to confirm in the dry run]**: whether Maps can be opened at this point in setup, and whether the account page offers the switch. On a new account, Timeline is often already off; then tick "done" once you've seen it's off. | **Turn off** |
+| 3. Ad personalisation | Phone **Settings → Google → Manage your Google Account → Data & privacy → My Ad Center** (or **Personalized ads**). [Source](https://support.google.com/My-Ad-Center-Help/answer/12155656?co=GENIE.Platform%3DAndroid) **[to confirm in the dry run]** | Set **Personalized ads** to **Off**, and confirm. |
+| 4. Advertising ID | Phone **Settings → Google → All services**, then under "Privacy & security", **Ads → Delete advertising ID**. Older builds: **Settings → Privacy → Ads**, or **Settings → Security & privacy → More privacy settings → Ads**. If none matches, search the phone's settings for "Ads". [Source](https://support.google.com/googleplay/android-developer/answer/6048248) **[to confirm in the dry run]** | **Delete advertising ID**, then confirm. Apps then get only zeros instead of an ID. |
+
+**If a page asks for the user's password**, the user types it. Never write it down, and never type it for them.
+
+**Outlook (G6).** Outlook has a known way onto the web, and Beaux has accepted it (ADR 0001 Risk 3; tested on
 Outlook 5.2639.2 in PLA-5 B-Q4). On Outlook's sign-in screen, **Privacy and terms → Privacy & Cookies** opens
 Microsoft's privacy page inside Outlook, and links on it lead to other websites. It works before sign-in and after
 sign-out. When adding Outlook:
@@ -215,10 +268,10 @@ When a later Outlook update shows "Reviewed for an older version", check the Pri
 new version. If it has become easier (for example a browse button, an address bar or a search box), tell Beaux
 before anything else changes.
 
-**If the phone restarts during setup** after G2, it asks for the trusted person's PIN before carrying on. That's
-expected.
+**If the phone restarts during setup** after G3, it asks for a PIN set in G3 before carrying on (with two trusted
+people, "Who are you?" first). That's expected.
 
-**Texting notes for G3.** Chat features (RCS) work over Wi-Fi or mobile data. Picture messages (MMS) need mobile
+**Texting notes for G4.** Chat features (RCS) work over Wi-Fi or mobile data. Picture messages (MMS) need mobile
 data on most carriers. A plan with data is recommended, so group texts and photos work away from Wi-Fi.
 
 **Wi-Fi with a sign-in page** (hotels, hospitals, ferries) doesn't work with Plainphone. Use home Wi-Fi or mobile
@@ -227,12 +280,23 @@ data.
 When every handover check is green, the phone says **Ready**. Write the time in the setup record ("Ready").
 "Ready" means setup is done. It does **not** mean the phone can be handed over yet: do Part I.
 
-## H. Get the trusted person's Google account number
+## H. Get each account holder's Google account number
 
-Plainphone uses this number so that, if the phone is ever wiped, Google asks for the trusted person's account
-before the phone can be used again. Nobody gives Plainphone a password, email address or code: only this number.
+Plainphone uses this number so that, if the phone is ever wiped, Google asks for a listed account before the phone
+can be used again. Nobody gives Plainphone a password, email address or code: only this number.
 
-**The trusted person does this on their own phone or computer, not the Plainphone phone.** A computer is easier.
+**Who does it.** Every person whose account goes on the list, one after the other:
+
+| Mode | Account holders |
+|---|---|
+| Supervised, one trusted person | the trusted person, and the backup person if any |
+| Supervised, two trusted people | each trusted person, and the backup person if any (up to 3 numbers) |
+| Self-managed | the user (their own account), and the backup person if any |
+| Later: adding a trusted person, or handing over | the new person, on the day, before the 24-hour wait starts |
+
+**Each person does this on their own phone or computer, not the Plainphone phone.** A computer is easier. In
+self-managed mode the user uses a computer or another phone: browsers are hidden on the Plainphone phone. Each person
+picks **their own** account at step 6; the helper never signs in for them.
 
 1. Open this page: **https://developers.google.com/people/api/rest/v1/people/get**
 2. Find the **Try this method** panel (on a computer it's on the right; on a phone, tap **Try it!**).
@@ -250,17 +314,21 @@ before the phone can be used again. Nobody gives Plainphone a password, email ad
    text**: paste them into a note or a text to the helper. Don't retype them from memory, and don't send a
    screenshot: one wrong digit and reset protection won't work.
 10. Don't copy or share anything else from that page.
-11. On the Plainphone phone (step G4), the helper types or pastes the digits. Plainphone shows them back in groups
+11. On the Plainphone phone (step G5), the helper types or pastes the digits. Plainphone shows them back in groups
     of three. **Read them out together** and check every group matches.
-12. Afterwards, the trusted person can remove the page's access: **myaccount.google.com → Security → Your
+12. Afterwards, the account holder can remove the page's access: **myaccount.google.com → Security → Your
     connections to third-party apps & services**, find "Google APIs Explorer" if it's listed, and remove it.
 
-**Two checks the helper records** (G4 asks for them too):
-- The trusted person can sign in to this Google account on a device that isn't either Plainphone phone.
+**Two checks the helper records, for every account on the list** (G5 asks for them too), including the user's own
+in self-managed mode:
+- The account holder can sign in to this Google account on a device that isn't either Plainphone phone.
 - Their 2-step verification (codes or prompts) isn't only on a Plainphone phone.
 
+When a trusted person is added or handed over later, a current trusted person (or the helper) also confirms the new
+account is **at least 3 days old**. Plainphone won't start the 24-hour wait without it.
+
 **New accounts: the 72-hour note.** If the Google account is less than 72 hours (3 days) old, still enter it at
-G4. Then, after 72 hours, repeat steps 1–9 and check the digits still match the number in the setup record.
+G5. Then, after 72 hours, repeat steps 1–9 and check the digits still match the number in the setup record.
 Even a matching number doesn't prove reset protection works: only the reset-protection test on the target phone
 model (Q10) does, and handover waits for it.
 
@@ -268,6 +336,10 @@ model (Q10) does, and handover waits for it.
 too (repeat this part with their account). Note from the approval packet: on Beaux's own phone, a backup account
 that Beaux controls means Beaux could get past reset protection on his own phone. Beaux is to confirm he's fine
 with that.
+
+**Self-managed mode: say this plainly.** Because the list names the user's own account, wiping the phone from its
+buttons erases it and then lets the user set it up again **without Plainphone**. Someone who can't sign in to a
+listed account can't. That's part of this mode: friction, not a lock. It doesn't wait 24 hours.
 
 ## I. Handover checks
 
@@ -331,6 +403,11 @@ Sit with the user for ten minutes. Show them:
 - what happens when a web link doesn't open, and that "Send to {trusted person}" is there;
 - the monthly check line, and that it doesn't mean anything is wrong;
 - **More → About this phone**: the trusted person can't read their messages or see where they are;
+- with two trusted people: that both get a text whenever either one's PIN is used;
+- that big changes (turning Plainphone off, changing who looks after the phone) show a line on the home screen for
+  24 hours, and **anyone holding the phone can tap it to cancel**, no PIN needed;
+- **self-managed:** **More → Your settings**, how opening up works (PIN, a 10-minute wait, then Start; 2 a day),
+  and **Waits and limits**;
 - who to call: the helper's and trusted person's numbers.
 
 ### I5. Record and hand over
@@ -354,8 +431,9 @@ Fill in the setup record. Hand the phone over only with Beaux's OK for this phon
 This erases the phone. **It needs Beaux's OK for that phone. Never on the spare Motorola.**
 1. The helper wipes the phone from its recovery menu (button combination for the model:
    **[PLACEHOLDER: per supported model]**).
-2. When the phone restarts, Google's reset protection asks for the trusted person's (or backup person's) Google
-   account. They sign in on the phone.
+2. When the phone restarts, Google's reset protection asks for a listed Google account: a trusted person's (or the
+   backup person's), or in self-managed mode the user's own (or the backup person's). That person signs in on the
+   phone.
 3. The phone comes back **without Plainphone**. Do this whole guide again from Part D.
 4. Anything not backed up is lost.
 
@@ -365,18 +443,20 @@ Copy this into a note for each phone. It contains no passwords, PINs or recovery
 them.
 
 ```
-Phone user:                 Trusted person:            Helper:
+Mode: supervised / self-managed
+Phone user:                 Trusted person(s):         Helper:
 Model:                      Android version / build:
 Date:                       Supported list version:   [PLACEHOLDER]
 Part D choices (Google services, location):
 Script start (time):        Ready (time):             Minutes (F→Ready):
 Total helper time incl. backup, reset, wizard:
-Trusted person's account number (digits):
-  Account < 72 h old?  Y/N   Re-check due:            Re-checked (date, matches?):
-Backup person's account number (digits):
-Trusted person can sign in elsewhere:  Y/N   2-step not only on a Plainphone phone: Y/N
-Recovery code held by trusted person (not helper / away from user): Y/N
-Test text received:  Y/N
+Account numbers (digits), one line each (trusted person 1, trusted person 2, or the user; backup):
+  ________  < 72 h old? Y/N  Re-check due:  Re-checked (date, matches?):  Signs in elsewhere Y/N  2-step not only on a Plainphone phone Y/N
+Recovery code held by its owner (not the helper / away from the user), each person: Y/N
+Test text received, each trusted person:  Y/N
+Privacy steps (done / skipped): Web & App Activity __  Timeline __  Ad personalisation __  Advertising ID __
+  Paths that differed from G4b (for the dry run):
+Self-managed: waits and limits set at setup (wait ___ min, ___ a day):
 Apps added (name, version, note read with trusted person Y/N):
   Outlook (if added): version ______   Privacy & Cookies route same as 5.2639.2?  Y/N
 I1 emergency states:  all ticked? Y/N    I2 calls/texts: Y/N    I3 alert seen (date / method) or exception:
