@@ -36,7 +36,7 @@
 | Spotify | `com.spotify.music` | 9.1.90.2270 (8 Oct 2026) | A few account pages | Add |
 | Telegram | `org.telegram.messenger` | 13.0.0, build 7158 (8 Oct 2026) | **Yes: a full web browser.** *To confirm in PLA-5 B-Q4* | Don't add until Beaux has seen the B-Q4 result |
 | Gmail | `com.google.android.gm` | 2026.09.28.992490113.Release (8 Oct 2026) | **Maybe.** How links open is *to confirm in PLA-5 B-Q4*; interactive emails; Google account pages | Add after B-Q4, with Chat and Meet tabs off. Preinstalled. |
-| Outlook | `com.microsoft.office.outlook` | 5.2637.3 (30 Sep 2026) | **Maybe.** How links open is *to confirm in PLA-5 B-Q4*; ads; Copilot | Don't add until B-Q4 shows sign-in works (see the account warning) |
+| Outlook | `com.microsoft.office.outlook` | **5.2639.2 (device, PLA-5 B-Q4)** | **Yes:** Privacy & Cookies opens a web view that follows links to other sites. **Accepted by Beaux** (Telegram 4463) | Add. Read the note. Re-check on each new version. Google sign-in in Outlook fails under lockdown |
 
 ---
 
@@ -247,46 +247,53 @@ nothing to download.
 
 ## Outlook (Microsoft)
 
-the trusted person's must-have.
+the trusted person's must-have. **It has a known way onto the web, and Beaux has accepted it** (Telegram 4463, 2026-10-08;
+ADR 0001 Risk 3, commit `8e61a21`). Outlook stays in the catalog.
 
-- **Package:** `com.microsoft.office.outlook` · **Reviewed against:** 5.2637.3, 30 Sep 2026
-  ([Uptodown version list](https://microsoft-outlook.en.uptodown.com/android/versions)).
-- **Status: how links open is to confirm in PLA-5 B-Q4.** Sign-in may not work at all (see the warning below).
-- **Note on screen (provisional):**
-  > Outlook shows emails, and emails can contain links and pictures. Where a tapped link goes is still being
-  > tested *(to confirm in PLA-5 B-Q4)*. Free Outlook accounts show adverts in the inbox. Outlook may suggest
-  > installing Microsoft Edge; Edge is a web browser, so Plainphone keeps it hidden.
+- **Package:** `com.microsoft.office.outlook` · **Reviewed against:** **5.2639.2** (versionCode 72639116), tested
+  on the XT2415 under lock task with BLOCK on, before sign-in (PLA-5 B-Q4, 2026-10-09;
+  `spikes/device-moto/RESULT.md` § B-Q4, `evidence/phase-b/bq4/`). The earlier desk review was against 5.2637.3
+  (30 Sep 2026, [Uptodown](https://microsoft-outlook.en.uptodown.com/android/versions)).
+- **Note on screen:**
+  > Outlook has a way onto the web. On Outlook's sign-in screen, "Privacy and terms" → "Privacy & Cookies" opens
+  > Microsoft's privacy page inside Outlook. Links on that page open other websites, still inside Outlook, and
+  > each new page has more links. It takes some effort, but {user} could use it to read other websites. It works
+  > before signing in and after signing out. Plainphone can't block it. {tp} agreed to this when adding Outlook.
+- **Check again on every new Outlook version.** When Outlook updates, Plainphone shows "Reviewed for an older
+  version" next to this note. Repeat the route check below on the new version and record it here.
+  - Same route, same effort, or harder: update the version and keep the note.
+  - **Easier** (for example a visible browse button, an address bar, a search box, or a web link on a main
+    screen): **it goes back to Beaux** before the note is updated. His acceptance covers 5.2639.2 as tested, and
+    Outlook only.
 - **Routes:**
-  - **Links in emails.** Outlook's "Open links" setting chooses between Microsoft Edge and the phone's default
-    browser. Without Edge installed, links go to the default browser, and Outlook from time to time offers to
-    install Edge ([Microsoft notice MC859848](https://mc.merill.net/message/MC859848);
-    [Ablebits](https://www.ablebits.com/office-addins-blog/change-outlook-default-browser/)). On Plainphone, the
-    "default browser" should be Plainphone itself, so links should reach the "can't open" screen. Whether Outlook
-    also has its own web view for some links is unknown. *(To confirm in PLA-5 B-Q4.)*
-  - **Edge prompts.** If someone installs Edge through the prompt (only possible in a Play session), the browser
-    classifier should hide it. *(By design; to confirm.)*
-  - **Adverts.** Free Outlook.com accounts show ads in the inbox, marked "Ad". Turning on Focused Inbox keeps them
-    in the "Other" tab; a Microsoft 365 subscription removes them
+  - **Privacy & Cookies web view (found, accepted).** Add account screen → PRIVACY AND TERMS → Privacy & Cookies
+    opens Outlook's own web view (`com.acompli.acompli.GenericWebViewActivity`) with the live Microsoft Privacy
+    Statement. Tapping an off-site link on it ("U.S. Department of Commerce") loaded `dataprivacyframework.gov` in
+    the same web view, still under lock task (B-Q4 steps 04b–05). Plainphone can't see inside another app's web
+    view, so the block flag doesn't stop it. A search engine wasn't tried; whether one is a few links away is
+    untested. Whether the same link exists in Outlook's settings once signed in is *to confirm after sign-in*.
+  - **Help → Contact support** asks to turn on notifications, then asks to send diagnostic logs (which include
+    account email addresses) to Microsoft. Choose **Cancel**. Nothing was sent in testing.
+  - **Links in emails.** Outlook's "Open links" setting chooses between Microsoft Edge and the default browser
+    ([Microsoft notice MC859848](https://mc.merill.net/message/MC859848)). With no Edge, links should go to
+    Plainphone's "can't open" screen. *(To confirm in PLA-5 B-Q4 after sign-in.)*
+  - **Edge prompts.** Outlook may offer to install Edge. Edge is a web browser, so Plainphone hides it.
+    *(By design; to confirm.)*
+  - **Adverts** in free Outlook.com accounts, marked "Ad"; Focused Inbox keeps them in the "Other" tab
     ([Microsoft support](https://support.microsoft.com/office/ads-in-outlook-mobile-b172e506-ef2c-458d-9c2d-265445ba82e5)).
-    Tapping an ad should go to the "can't open" screen. *(To confirm.)*
-  - **Copilot** is in Outlook for Android for Microsoft 365 Personal or Family subscribers, as long as "Connected
-    experiences" is on ([Microsoft support](https://support.microsoft.com/en-us/office/sharing-copilot-in-outlook-cf2656c0-57f9-4962-97d7-ba0c7b74858a)).
-    We found no proof that it searches the web from Outlook. *(To confirm, only if the trusted person has a subscription.)*
-  - **Help, privacy and Microsoft account pages** inside Outlook settings probably open as web pages.
-    *(Inference; to confirm in B-Q4.)*
-- **⚠ Sign-in may not work on Plainphone. To confirm in PLA-5 B-Q4 before anyone adds Outlook.**
-  1. **No browser.** Signing in to a Microsoft account, or adding a Google account to Outlook, may open a web
-     sign-in page. Google blocks its sign-in inside apps' own web views, so Outlook likely needs a browser for a
-     Google account ([Microsoft support](https://support.microsoft.com/office/how-do-i-add-a-google-apps-account-490b1025-e74f-440c-853d-8cdec5fa7bc8)
-     describes the steps but not the window). With every browser hidden, that page may fail.
-  2. **Accounts are locked.** Outlook normally adds its accounts to Android's account list so contacts and
-     calendars can sync. Plainphone blocks changes to that list after setup (`DISALLOW_MODIFY_ACCOUNTS`,
-     device-lockdown spec), and no supervised session lifts it. Outlook may then refuse to sign in, or sign in
-     without contact and calendar sync. *(Inference; to confirm.)*
-
-  If either one fails, Outlook can't be offered as written. That needs a decision from the Lead (open question 7
-  in [README.md](README.md#open-questions-for-the-lead)). **Which account the trusted person uses in Outlook** (an
-  Outlook.com address, a work address, or her Gmail) is also unknown, and it changes which sign-in is tested.
+    Where a tapped ad goes is *to confirm after sign-in*.
+  - **Copilot** is in Outlook for Microsoft 365 Personal or Family subscribers
+    ([Microsoft support](https://support.microsoft.com/en-us/office/sharing-copilot-in-outlook-cf2656c0-57f9-4962-97d7-ba0c7b74858a)).
+    *(To confirm, only if the trusted person has a subscription.)*
+- **Sign-in:**
+  - **Adding a Google account to Outlook doesn't work under lockdown.** "ADD GOOGLE ACCOUNT" hands off to Google
+    Play services, which is blocked; Outlook goes back to its start screen, with no web fallback (B-Q4). If the trusted person
+    reads her Gmail in Outlook, that account can only be added in a supervised window, which the MVP doesn't have
+    yet ([README.md](README.md#open-questions-for-the-lead), question 7).
+  - **A Microsoft account** (Outlook.com, Hotmail, work) signs in through Outlook's own screens. Not yet tested.
+    *(To confirm in PLA-5 B-Q4 after sign-in.)*
+  - **Adding accounts is blocked after setup** (`DISALLOW_MODIFY_ACCOUNTS`). Whether that stops Outlook's sign-in
+    or only its contact and calendar sync is *to confirm*.
 - **Settings inside the app (setup step 5):** turn on Focused Inbox, to keep ads out of the main view;
   "Open links": default browser, not Edge.
 - **Permissions to suggest at T4c:** Notifications (Allow, "Tell you about new email"), Contacts and Calendar
@@ -315,6 +322,8 @@ For each app above, record on the XT2415 with the in-task block flag on:
 7. For Gmail: with "Open web links in Gmail" on and off, where does a link in an email go (Custom Tab, a view
    inside Gmail, or the "can't open" screen)? Does an interactive (AMP) email open anything beyond itself? Where do
    "Manage your Google Account" and Help & feedback go? With the Chat and Meet tabs hidden, where does a Meet link go?
-8. For Outlook: can the trusted person's account sign in with every browser hidden and adding accounts blocked? If it signs in,
-   do contacts and calendar sync? Where does a link in an email go, and where does an ad go? Which account type
-   does the trusted person use (ask Beaux)?
+8. For Outlook: **before sign-in done** (5.2639.2: Privacy & Cookies web view found and accepted; Google sign-in
+   blocked). After sign-in: can a Microsoft account sign in with adding accounts blocked, and do contacts and
+   calendar sync? Is Privacy & Cookies (or another web view) reachable from Settings once signed in? Where do a
+   link in an email and an ad go? Which account type does the trusted person use (ask Beaux)? On every new Outlook version,
+   repeat the Privacy & Cookies check; anything easier goes back to Beaux.
