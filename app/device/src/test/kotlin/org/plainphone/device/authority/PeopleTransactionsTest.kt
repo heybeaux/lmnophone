@@ -260,6 +260,31 @@ class PeopleTransactionsTest {
         }
     }
 
+    /** "After set" is "before broadcast", "after broadcast" is "before readback"; after readback is the patch write point. */
+    @Test fun crashAroundEveryResetEffectResumesInTheSameDirection() {
+        for (rollback in listOf(false, true)) for (step in listOf("set", "broadcast", "readback")) {
+            val rig = Rig()
+            val id = rig.startAdd(); rig.mature(id)
+            if (rollback) {
+                val stop = checkNotNull(rig.people.prepareStop(id, anna))
+                assertEquals(PeopleChangeOutcome.ROLLING_BACK, rig.people.stop(stop, rig.auth(anna, stop.action)).outcome)
+            }
+            val direction = if (rollback) WaitingPhase.ROLLING_BACK else WaitingPhase.COMMITTING
+            rig.effects.onCall = { if (it == step) throw SimulatedCrash() }
+            runCatching { rig.people.tick(id, direction) }
+            rig.effects.onCall = null
+            rig.wire()
+            assertEquals("$rollback $step", setOf(anna), rig.credentials().people.keys)
+            assertEquals("$rollback $step", direction, rig.journal().operation!!.phase)
+            // A stale callback in the other direction does nothing.
+            val other = if (rollback) WaitingPhase.COMMITTING else WaitingPhase.ROLLING_BACK
+            assertEquals("$rollback $step", PeopleChangeOutcome.IGNORED, rig.people.tick(id, other).outcome)
+            val expected = if (rollback) PeopleChangeOutcome.CANCELLED else PeopleChangeOutcome.APPLIED
+            assertEquals("$rollback $step", expected, rig.people.tick(id, direction).outcome)
+            assertEquals("$rollback $step", if (rollback) setOf(anna) else setOf(anna, cleo), rig.credentials().people.keys)
+        }
+    }
+
     @Test fun crashAtEveryPatchWritePointLeavesOldOrNewHoldersNeverNeither() {
         for (point in WritePoint.entries) {
             val rig = Rig()
