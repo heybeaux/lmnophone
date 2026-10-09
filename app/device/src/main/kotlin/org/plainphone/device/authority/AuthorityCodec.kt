@@ -7,28 +7,52 @@ import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.IOException
+import org.plainphone.core.BootTime
+import org.plainphone.core.BuildInventory
+import org.plainphone.core.CertDigest
 import org.plainphone.core.Mode
+import org.plainphone.core.PackageName
 import org.plainphone.core.RunningTime
 import org.plainphone.core.TrustedPersonId
+import org.plainphone.core.WindowKind
+import org.plainphone.policy.AppApprovalOperation
+import org.plainphone.policy.AppApprovalPhase
+import org.plainphone.policy.AppApprovalReceipt
+import org.plainphone.policy.AppApprovalReceiptKind
+import org.plainphone.policy.AppApprovalRecord
+import org.plainphone.policy.AppApprovalState
 import org.plainphone.policy.AppliedPeopleChange
+import org.plainphone.policy.ApprovalBinding
 import org.plainphone.policy.CredentialChannel
 import org.plainphone.policy.CredentialState
+import org.plainphone.policy.ElevationCountdown
 import org.plainphone.policy.ElevationDebit
+import org.plainphone.policy.ElevationGrant
 import org.plainphone.policy.ElevationLedger
+import org.plainphone.policy.ElevationPersonBinding
 import org.plainphone.policy.ElevationRecord
 import org.plainphone.policy.ElevationState
+import org.plainphone.policy.ElevationTarget
 import org.plainphone.policy.FailureCounter
 import org.plainphone.policy.FrictionSettings
 import org.plainphone.policy.FrictionSettingsPatch
 import org.plainphone.policy.FrictionSettingsReceipt
 import org.plainphone.policy.LockoutNotice
+import org.plainphone.policy.PermissionChoice
+import org.plainphone.policy.PermissionGrantCapability
+import org.plainphone.policy.PermissionManifest
+import org.plainphone.policy.PermissionName
+import org.plainphone.policy.PermissionSelection
 import org.plainphone.policy.PersonContact
 import org.plainphone.policy.PersonCredential
 import org.plainphone.policy.RecoveredState
 import org.plainphone.policy.RecoveryProfile
 import org.plainphone.policy.RecoveryReceipt
+import org.plainphone.policy.RuntimePermission
 import org.plainphone.policy.SecretVerifier
 import org.plainphone.policy.SessionJournal
+import org.plainphone.policy.SessionPhase
+import org.plainphone.policy.StagedUpdateBinding
 import org.plainphone.policy.WaitingEvent
 import org.plainphone.policy.WaitingIdentity
 import org.plainphone.policy.WaitingOperation
@@ -58,9 +82,10 @@ class StoredFrictionReceipt(
  * Strict binary encoding for each section of the joint authority record. Every decoder rejects
  * truncated, padded or invalid data by returning null; it never builds an empty or default state.
  *
- * Encoders return null for data this adapter cannot yet read back: live elevation countdowns and
- * grants, active session journals, and people or mode-switch patches. Their public decoders are
- * pending in policy (PLA-114), so storing them would leave an undecodable record.
+ * Encoders return null for data this adapter cannot yet read back: people and mode-switch patches.
+ * Live countdowns, grants and session journals decode through the policy's restore functions, which
+ * restore data only. The controllers still revoke on startup; nothing here restores authority.
+ * Sets and maps whose order carries no meaning are written sorted, so equal states encode equally.
  */
 internal object AuthorityCodec {
     private const val MAX_ITEMS = 4096
@@ -121,14 +146,65 @@ internal object AuthorityCodec {
     }
 
     fun encodeElevation(r: ElevationRecord): ByteArray? = write {
-        if (r.state.countdown != null || r.state.grant != null || r.person != null || r.journal != SessionJournal.Empty) unsupported()
         writeLong(r.revision)
         list(r.state.ledger.debits) { writeUTF(it.id); time(it.at) }
+        optional(r.state.countdown) { c -> writeUTF(c.id); target(c.target); boot(c.startedAt); writeLong(c.durationMillis) }
+        optional(r.state.grant) { g ->
+            writeUTF(g.id); target(g.target); boot(g.startedAt); boot(g.deadline); writeBoolean(g.packageAccessOpen)
+            list(g.approved.sortedBy { it.packageName.value }) { binding(it) }
+        }
+        when (val journal = r.journal) {
+            SessionJournal.Empty -> writeByte(0)
+            is SessionJournal.Active -> {
+                writeByte(1); writeUTF(journal.access.id); writeUTF(journal.access.kind.name)
+                list(journal.access.packages.map { it.value }.sorted()) { writeUTF(it) }
+                boot(journal.access.deadline); writeUTF(journal.phase.name)
+            }
+            SessionJournal.Damaged -> unsupported()
+        }
+        optional(r.person) { writeUTF(it.person.value); writeLong(it.generation); writeLong(it.structureGeneration) }
     }
 
-    fun decodeElevation(bytes: ByteArray): ElevationRecord? = read(bytes) {
+    /** An active journal decodes only against the inventory of this exact build; otherwise null. */
+    fun decodeElevation(bytes: ByteArray, matchingInventory: BuildInventory? = null): ElevationRecord? = read(bytes) {
         val revision = readLong()
-        ElevationRecord(revision, ElevationState(ElevationLedger(list { ElevationDebit(readUTF(), time()) })))
+        val ledger = ElevationLedger(list { ElevationDebit(readUTF(), time()) })
+        val countdown = optional { requireNotNull(ElevationCountdown.restore(readUTF(), target(), boot(), readLong())) }
+        val grant = optional {
+            requireNotNull(ElevationGrant.restore(readUTF(), target(), boot(), boot(), flag(), set { binding() }))
+        }
+        val journal = when (readByte().toInt()) {
+            0 -> SessionJournal.Empty
+            1 -> SessionJournal.restore(readUTF(), WindowKind.valueOf(readUTF()), set { PackageName(readUTF()) }, boot(),
+                SessionPhase.valueOf(readUTF()), matchingInventory)
+            else -> throw IllegalArgumentException()
+        }
+        val person = optional { ElevationPersonBinding(TrustedPersonId(readUTF()), readLong(), readLong()) }
+        // A Damaged journal fails the record's own validation, so the whole record reads as null.
+        ElevationRecord(revision, ElevationState(ledger, countdown, grant), journal, person)
+    }
+
+    fun encodeApprovals(s: AppApprovalState): ByteArray? = write {
+        writeLong(s.revision)
+        list(s.apps.values.sortedBy { it.identity.packageName.value }) { approvalRecord(it) }
+        optional(s.pending) { op ->
+            approvalRecord(op.record); optional(op.receipt) { approvalReceipt(it) }; writeUTF(op.phase.name)
+            optional(op.withdrawalReceipt) { approvalReceipt(it) }
+        }
+        list(s.receipts) { approvalReceipt(it) }
+        list(s.removedApps.values.sortedBy { it.packageName.value }) { binding(it) }
+    }
+
+    fun decodeApprovals(bytes: ByteArray): AppApprovalState? = read(bytes) {
+        val revision = readLong()
+        val apps = map { approvalRecord().let { it.identity.packageName to it } }
+        val pending = optional {
+            AppApprovalOperation(approvalRecord(), optional { approvalReceipt() }, AppApprovalPhase.valueOf(readUTF()),
+                optional { approvalReceipt() })
+        }
+        val receipts = list { approvalReceipt() }
+        val removed = map { binding().let { it.packageName to it } }
+        AppApprovalState(revision, apps, pending, receipts, removed)
     }
 
     fun encodeReceipts(receipts: List<StoredFrictionReceipt>): ByteArray = write {
@@ -211,6 +287,51 @@ internal object AuthorityCodec {
         }
         return generations to contacts
     }
+
+    private fun DataOutputStream.target(t: ElevationTarget) = when (t) {
+        ElevationTarget.Play -> writeByte(0)
+        ElevationTarget.Settings -> writeByte(1)
+        is ElevationTarget.Approve -> { writeByte(2); binding(t.identity) }
+        is ElevationTarget.Update -> { writeByte(3); writeUTF(t.staged.sha256); writeLong(t.staged.versionCode) }
+    }
+    private fun DataInputStream.target(): ElevationTarget = when (readByte().toInt()) {
+        0 -> ElevationTarget.Play
+        1 -> ElevationTarget.Settings
+        2 -> ElevationTarget.Approve(binding())
+        3 -> ElevationTarget.Update(StagedUpdateBinding(readUTF(), readLong()))
+        else -> throw IllegalArgumentException()
+    }
+    private fun DataOutputStream.binding(b: ApprovalBinding) {
+        writeUTF(b.packageName.value); list(b.signingCerts.map { it.value }.sorted()) { writeUTF(it) }
+    }
+    private fun DataInputStream.binding() = ApprovalBinding(PackageName(readUTF()), set { CertDigest(readUTF()) })
+    private fun DataOutputStream.approvalRecord(r: AppApprovalRecord) {
+        val manifest = r.permissions.manifest
+        writeUTF(r.id); binding(manifest.identity); writeLong(manifest.versionCode); writeUTF(manifest.buildFingerprint)
+        list(manifest.permissions) { p ->
+            writeUTF(p.name.value); writeUTF(p.label); list(p.features) { writeUTF(it) }; writeUTF(p.grantCapability.name)
+        }
+        list(r.permissions.choices.entries.sortedBy { it.key.value }) { (name, choice) -> writeUTF(name.value); writeUTF(choice.name) }
+    }
+    private fun DataInputStream.approvalRecord(): AppApprovalRecord {
+        val id = readUTF()
+        val manifest = PermissionManifest(binding(), readLong(), readUTF(), list {
+            RuntimePermission(PermissionName(readUTF()), readUTF(), list { readUTF() }, PermissionGrantCapability.valueOf(readUTF()))
+        })
+        return AppApprovalRecord(id, PermissionSelection(manifest, map { PermissionName(readUTF()) to PermissionChoice.valueOf(readUTF()) }))
+    }
+    private fun DataOutputStream.approvalReceipt(r: AppApprovalReceipt) {
+        writeUTF(r.id); writeUTF(r.actor.value)
+        list(r.recipientGenerations.entries.sortedBy { it.key.value }) { (id, g) -> writeUTF(id.value); writeLong(g) }
+        writeUTF(r.kind.name); writeUTF(r.approvalId)
+    }
+    private fun DataInputStream.approvalReceipt() = AppApprovalReceipt(readUTF(), TrustedPersonId(readUTF()),
+        map { TrustedPersonId(readUTF()) to readLong() }, AppApprovalReceiptKind.valueOf(readUTF()), readUTF())
+    private fun DataOutputStream.boot(t: BootTime) { writeUTF(t.bootId); writeLong(t.elapsedMillis) }
+    private fun DataInputStream.boot() = BootTime(readUTF(), readLong())
+    private fun DataInputStream.flag(): Boolean = when (readByte().toInt()) { 0 -> false; 1 -> true; else -> throw IllegalArgumentException() }
+    private fun <T> DataInputStream.set(block: DataInputStream.() -> T): Set<T> =
+        list(block).let { items -> items.toSet().also { require(it.size == items.size) } }
 
     private fun DataOutputStream.verifier(v: SecretVerifier) { bytes(v.salt); bytes(v.hash); writeInt(v.iterations) }
     private fun DataInputStream.verifier() = SecretVerifier(bytes(), bytes(), readInt())

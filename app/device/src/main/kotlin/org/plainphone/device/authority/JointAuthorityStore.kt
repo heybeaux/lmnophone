@@ -9,25 +9,30 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
+import org.plainphone.core.BuildInventory
+import org.plainphone.policy.AppApprovalPhase
+import org.plainphone.policy.AppApprovalState
 import org.plainphone.policy.CredentialState
 import org.plainphone.policy.CredentialStore
+import org.plainphone.policy.ElevationApprovalStore
 import org.plainphone.policy.ElevationRecord
 import org.plainphone.policy.ElevationStore
 import org.plainphone.policy.FrictionSettingsReceipt
+import org.plainphone.policy.SessionJournal
 import org.plainphone.policy.FrictionWaitingStore
 import org.plainphone.policy.WaitingChangeStore
 import org.plainphone.policy.WaitingEvent
 import org.plainphone.policy.WaitingPhase
 import org.plainphone.policy.WaitingState
 
-internal enum class Section { CREDENTIALS, WAITING, ELEVATION, RECEIPTS }
+internal enum class Section { CREDENTIALS, WAITING, ELEVATION, RECEIPTS, APPROVALS }
 internal enum class WritePoint { BEFORE_COPY_A, AFTER_COPY_A, AFTER_COPY_B, AFTER_FENCE }
 /** Test seam for crash and readback faults at fixed points of a transaction. */
 internal fun interface StorageFaults { fun at(point: WritePoint, dir: File) }
 
 /**
  * One device-protected record joining credentials, the waiting operation and its texts, the
- * elevation record and the friction receipt outbox. Every transaction is a single replacement of
+ * elevation record, the friction receipt outbox and the app approval state with its receipt outbox. Every transaction is a single replacement of
  * the whole record, so a crash exposes either the old or the new record and never a mix.
  *
  * The record is kept as two copies (`authority-a`, `authority-b`) plus a sequence fence written
@@ -38,9 +43,18 @@ internal fun interface StorageFaults { fun at(point: WritePoint, dir: File) }
  * All views share one non-reentrant coordinator per directory. A call made from inside a running
  * transaction is refused rather than allowed to interleave. Each section is preserved byte for
  * byte by writers that do not replace it.
+ *
+ * An active session journal reads back only against [matchingInventory], the inventory of this
+ * exact build. Without it, a record holding an active session reads as null (damaged).
  */
-class JointAuthorityStore internal constructor(private val dir: File, private val faults: StorageFaults) : FrictionWaitingStore {
-    constructor(dir: File) : this(dir, StorageFaults { _, _ -> })
+class JointAuthorityStore internal constructor(
+    private val dir: File,
+    private val faults: StorageFaults,
+    private val matchingInventory: BuildInventory?,
+) : FrictionWaitingStore {
+    constructor(dir: File) : this(dir, StorageFaults { _, _ -> }, null)
+    constructor(dir: File, matchingInventory: BuildInventory?) : this(dir, StorageFaults { _, _ -> }, matchingInventory)
+    internal constructor(dir: File, faults: StorageFaults) : this(dir, faults, null)
 
     private val copyA = AtomicRecord(dir, "authority-a", SCHEMA)
     private val copyB = AtomicRecord(dir, "authority-b", SCHEMA)
@@ -66,22 +80,81 @@ class JointAuthorityStore internal constructor(private val dir: File, private va
     }
 
     override val elevationStore: ElevationStore = object : ElevationStore(waitingStore) {
-        override fun read(): ElevationRecord? = section(Section.ELEVATION)?.let(AuthorityCodec::decodeElevation)
+        override fun read(): ElevationRecord? = section(Section.ELEVATION)?.let { AuthorityCodec.decodeElevation(it, matchingInventory) }
         override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean = commit { s ->
             val current = s.sections[Section.ELEVATION.ordinal]
             // A null expectation repairs only the exact damaged observation, never a readable record.
-            val matches = if (expected == null) AuthorityCodec.decodeElevation(current) == null
+            val matches = if (expected == null) AuthorityCodec.decodeElevation(current, matchingInventory) == null
                 else s.matches(Section.ELEVATION, AuthorityCodec.encodeElevation(expected))
             if (!matches || (expectedCredentials != null && !s.matches(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(expectedCredentials)))) null
             else s.with(Section.ELEVATION, AuthorityCodec.encodeElevation(replacement) ?: return@commit null)
         }
     }
 
+    /**
+     * App approvals on the same coordinator. [ElevationApprovalStore.elevationStore] is this store's
+     * own [elevationStore] instance, so both controllers fence on one record.
+     */
+    val approvals: ElevationApprovalStore = object : ElevationApprovalStore {
+        override val elevationStore: ElevationStore get() = this@JointAuthorityStore.elevationStore
+
+        override fun read(): AppApprovalState? = section(Section.APPROVALS)?.let(AuthorityCodec::decodeApprovals)
+
+        override fun compareAndSet(expected: AppApprovalState, replacement: AppApprovalState, expectedCredentials: CredentialState?): Boolean = commit { s ->
+            if (replacement.revision != expected.revision + 1 || !s.matches(Section.APPROVALS, AuthorityCodec.encodeApprovals(expected)) ||
+                (expectedCredentials != null && !s.matches(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(expectedCredentials)))) null
+            else s.with(Section.APPROVALS, AuthorityCodec.encodeApprovals(replacement) ?: return@commit null)
+        }
+
+        override fun commitElevationApproval(expected: AppApprovalState, replacement: AppApprovalState,
+            expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
+            expectedCredentials: CredentialState, finalCheck: () -> Boolean): Boolean = commit { s ->
+            if (!joinable(expected, replacement, expectedElevation, replacementElevation)) return@commit null
+            val approvalBytes = AuthorityCodec.encodeApprovals(replacement) ?: return@commit null
+            val elevationBytes = AuthorityCodec.encodeElevation(replacementElevation) ?: return@commit null
+            fun current(of: Snapshot) = of.matches(Section.APPROVALS, AuthorityCodec.encodeApprovals(expected)) &&
+                of.matches(Section.ELEVATION, AuthorityCodec.encodeElevation(expectedElevation)) &&
+                of.matches(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(expectedCredentials))
+            if (!current(s)) return@commit null
+            // Once, after all blocking work. The check may read this record; any write it tries is refused.
+            if (!coordinator.viewing(s, finalCheck)) return@commit null
+            // Compare again against storage before the single write of both sections.
+            val again = load() ?: return@commit null
+            if (again.sequence != s.sequence || !current(again)) return@commit null
+            s.with(Section.APPROVALS, approvalBytes).with(Section.ELEVATION, elevationBytes)
+        }
+    }
+
+    /**
+     * The only shape the joint write accepts: PREPARING becomes COMMITTED with its receipt, and the
+     * grant is used up in place. Revisions advance by one; debits, grant start, deadline, target and
+     * person never change; no session is open before or after.
+     */
+    private fun joinable(expected: AppApprovalState, replacement: AppApprovalState,
+        expectedElevation: ElevationRecord, replacementElevation: ElevationRecord): Boolean {
+        val before = expected.pending ?: return false
+        val after = replacement.pending ?: return false
+        if (before.phase != AppApprovalPhase.PREPARING || after.phase != AppApprovalPhase.COMMITTED ||
+            after.record.id != before.record.id || replacement.receipts.none { it.id == before.record.id } ||
+            replacement.revision != expected.revision + 1) return false
+        val grant = expectedElevation.state.grant ?: return false
+        val used = replacementElevation.state.grant
+        return replacementElevation.revision == expectedElevation.revision + 1 &&
+            replacementElevation.state.ledger.debits == expectedElevation.state.ledger.debits &&
+            expectedElevation.journal == SessionJournal.Empty && replacementElevation.journal == SessionJournal.Empty &&
+            !grant.packageAccessOpen && replacementElevation.state.countdown == null &&
+            (used == null || (used.id == grant.id && used.target == grant.target && used.startedAt == grant.startedAt &&
+                used.deadline == grant.deadline && !used.packageAccessOpen && used.approved.containsAll(grant.approved) &&
+                replacementElevation.person == expectedElevation.person))
+    }
+
     /** Enrollment-time creation of the first record. Refuses if any copy or fence already exists. */
-    fun initialize(credentials: CredentialState, waiting: WaitingState, elevation: ElevationRecord): Boolean = coordinator.run(false) {
+    fun initialize(credentials: CredentialState, waiting: WaitingState, elevation: ElevationRecord,
+        approvals: AppApprovalState = AppApprovalState()): Boolean = coordinator.run(false) {
         if (listOf(copyA, copyB, fenceA, fenceB).any { it.exists() }) return@run false
         val sections = listOf(AuthorityCodec.encodeCredentials(credentials), AuthorityCodec.encodeWaiting(waiting) ?: return@run false,
-            AuthorityCodec.encodeElevation(elevation) ?: return@run false, AuthorityCodec.encodeReceipts(emptyList()))
+            AuthorityCodec.encodeElevation(elevation) ?: return@run false, AuthorityCodec.encodeReceipts(emptyList()),
+            AuthorityCodec.encodeApprovals(approvals) ?: return@run false)
         save(null, Snapshot(0, sections))
     }
 
@@ -180,7 +253,8 @@ class JointAuthorityStore internal constructor(private val dir: File, private va
         }
     }
 
-    private fun section(section: Section): ByteArray? = coordinator.run(null) { load()?.sections?.get(section.ordinal) }
+    private fun section(section: Section): ByteArray? =
+        coordinator.view()?.sections?.get(section.ordinal) ?: coordinator.run(null) { load()?.sections?.get(section.ordinal) }
 
     /** Highest valid copy at or above the fence; null if the fence or every current copy is gone. */
     private fun load(): Snapshot? {
@@ -221,16 +295,25 @@ class JointAuthorityStore internal constructor(private val dir: File, private va
 
     private class Coordinator {
         private val lock = ReentrantLock()
+        private var viewed: Snapshot? = null
         /** Non-reentrant: a nested call from the thread already inside a transaction is refused. */
         fun <T> run(refused: T, block: () -> T): T {
             if (lock.isHeldByCurrentThread) return refused
             lock.lock()
             try { return block() } finally { lock.unlock() }
         }
+        /** Inside a transaction only: lets [block] read [snapshot]. Writes from it are still refused. */
+        fun viewing(snapshot: Snapshot, block: () -> Boolean): Boolean {
+            check(lock.isHeldByCurrentThread)
+            viewed = snapshot
+            try { return block() } finally { viewed = null }
+        }
+        fun view(): Snapshot? = if (lock.isHeldByCurrentThread) viewed else null
     }
 
     private companion object {
-        const val SCHEMA = 1
+        /** 2 adds the app approval section. */
+        const val SCHEMA = 2
         val BUSY = setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
         val coordinators = ConcurrentHashMap<String, Coordinator>()
     }
