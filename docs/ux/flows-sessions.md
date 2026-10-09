@@ -32,7 +32,7 @@ The idea the copy must get across, in this order:
 "Stay with the phone until you tap Done." is the exact sentence from the spec. It is block 1, on its own line, in
 bold. Block 1b says what that means and why, straight after it.
 
-**Copy-test change (pilot):** asked "While the Play Store is open, what must you do and not do?", the pilot reader
+**Copy-test change (round 3, Beaux):** asked "While the Play Store is open, what must you do and not do?", Beaux
 said "I don't know." The rule was there, but the reason was at the bottom, after the steps. The do and don't are
 now right under the rule, and the old block 3 is merged into it.
 
@@ -59,12 +59,18 @@ design D3.
 ### P3a. What starts it
 
 - The text on the due date ([texts table](README.md#texts-plainphone-sends)).
-- "Monthly check due" in "Needs you" on the front page (T2), from the due date.
-- After 7 days overdue, the user's home line "Ask {tp} to do the monthly phone check".
+- "Check for updates – due" in "Needs you" on the front page (T2), from the due date.
+- The user's home line "Ask {tp} to do the monthly phone check", shown only when the check is due (see
+  [U1](flows-user.md#the-two-notice-lines)).
+
+**One path for {tp}.** On {tp}'s screens this is always called **Check for updates**: the "Needs you" item and the
+menu row open the same screen. "Monthly check" stays the internal name (and the spec's wording on the user's home
+line). The Lead may make the check event-driven if the 72-hour update test ([PLA-24](/PLA/issues/PLA-24)) shows
+updates arrive on their own; the screens then keep this one path.
 
 ### P3b. Start the check
 
-- **Title:** Monthly check
+- **Title:** Check for updates
 - **Body:**
   You'll open the Play Store's list of updates and update anything that's waiting. Afterwards, Plainphone asks
   which apps didn't update. About 10 minutes. Updates carry on even after the Play Store closes.
@@ -96,14 +102,14 @@ design D3.
 
 ### P3e. Confirm the check
 
-- **Title:** Confirm the monthly check
+- **Title:** Confirm the update check
 - **Body:** Enter your PIN to confirm you looked at the Play Store's update list. The next check will be due on
   {date}.
 - **Primary:** Confirm
 - **Then:** PIN (fresh). The check counts as done only now (approved-apps, "Completion"). The home line goes
   away. Then P4.
 - **If the session ended before this** (screen off, time ran out, a call): the check is **not** recorded.
-  P4 runs as usual, then: "The monthly check isn't finished. You can start it again from the front page."
+  P4 runs as usual, then: "The update check isn't finished. You can start it again from the front page."
 
 ## P4. Closing: checking the phone
 

@@ -19,8 +19,8 @@ Each screen is written as:
 1. **Time and date**, one line each. At 200% the date may shorten to "Thu 8 Oct".
 2. **Emergency 9-1-1**: full-width, red, the only red on the screen. Taps open the system dialer with 911
    already typed (`ACTION_DIAL`, not a call). The user still presses the green call button.
-   - **A bump never calls.** Small grey line inside the button, under "9-1-1": **"Opens the dialer"**. Beaux's
-     copy-test pilot worried about bumping it by accident; the dialer is already the confirm step, so no extra
+   - **A bump never calls.** Small grey line inside the button, under "9-1-1": **"Opens the dialer"**. Beaux, in his
+     copy test, worried about bumping it by accident; the dialer is already the confirm step, so no extra
      confirm screen is added (it would slow a real emergency).
    - **Spacing:** at least 16 dp of empty space between Emergency and Phone, more than between any other two
      tiles, so a thumb reaching for Phone doesn't land on Emergency. No long-press or swipe actions on it.
@@ -28,7 +28,7 @@ Each screen is written as:
 4. **Notice line** (only when one applies, see below). Never above items 2 and 3.
 5. **The other added apps**, one per row, in the order {tp} chose. Large icon, name beside it.
 6. **More**: last row, same style as an app, with a small line under the name: **"Ask for an app, settings,
-   help"**. In the pilot, the reader looked for a way to ask for an app and found it only after a while. See
+   help"**. In his copy test, Beaux looked for a way to ask for an app and found it only after a while. See
    [Open question 1](README.md#open-questions-for-the-lead).
 
 Nothing else: no search bar, no widgets, no badges, no dots, no suggestions, no feeds, no swipe-up drawer.
@@ -97,15 +97,16 @@ Only one shows at a time. If both apply, "Plainphone needs attention" wins.
 
 | Line (exact text) | When | Tapping it opens |
 |---|---|---|
-| **Ask {tp} to do the monthly phone check** | The monthly check is more than 7 days overdue (approved-apps) | U2 |
+| **Ask {tp} to do the monthly phone check** | Only when the check is due (see the note below) | U2 |
 | **Plainphone needs attention** | Anything device-lockdown or approved-apps says shows it: a hide that failed, the safe fallback in use, a failed post-update check, and (recommended) unknown phone software | U3 |
 
 The spec text for the monthly line is "Ask [trusted person] to do the monthly phone check"; `{tp}` is that name.
 No full stop on either line: they are labels, not sentences.
 
-**The monthly line is rare.** It shows only when the check is more than 7 days late, which means {tp} has
-already had texts about it and hasn't done it yet. Most months the user never sees it. The copy-test packet
-showed it without saying so, and the pilot reader asked why something monthly takes space on the main screen.
+**The monthly line is rare.** It shows only when the check is due. Today's spec (approved-apps) says "more
+than 7 days past its due date"; the Lead is making the check event-driven if [PLA-24](/PLA/issues/PLA-24) shows
+updates arrive on their own, and the copy then still holds. Most of the time the user never sees it. The copy-test packet
+showed it without saying so, and Beaux asked why something monthly takes space on the main screen.
 The packet now says when it appears.
 
 ## U2. "About the monthly check" (from the notice line)
@@ -140,7 +141,7 @@ The packet now says when it appears.
   → "Show this screen to {tp} or {helper} next time you see them. You don't need to do anything else."
 - **Notes:** Never show error codes here. The detail is in trusted-person mode (T2) and in the helper details.
   If `{helper}` and `{tp}` are the same person, say the name once.
-- **Copy-test change (pilot):** the earlier body said "It isn't a virus". The pilot reader then thought it *was*
+- **Copy-test change (round 3, Beaux):** the earlier body said "It isn't a virus". Beaux then thought it *was*
   a virus: naming the fear planted it. The word is gone, and the screen now says what is wrong in plain terms.
 
 ## U4. More
@@ -180,7 +181,7 @@ A menu page: three large rows, then a plain text link. No primary button.
 
 ### U5e. Your requests (below the box on U5a)
 
-The pilot reader asked: "I don't know if he got it or not." So each saved request shows its status:
+Beaux asked: "I don't know if he got it or not." So each saved request shows its status:
 
 | Status | When |
 |---|---|
@@ -295,7 +296,7 @@ Each opens one simple screen. Android Settings never appears.
 4. One line: "Forget this network stops the phone trying to join this Wi-Fi."
 5. Primary **Forget this network**, secondary **OK**.
 
-**Copy-test change (pilot):** the earlier screen led with the sign-in page and put calls last. The pilot reader
+**Copy-test change (round 3, Beaux):** the earlier screen led with the sign-in page and put calls last. Beaux
 came away thinking "I don't think I'll be able to make calls from it." Calls now come first, and the mobile-data
 explanation was dropped to keep it short. (We still don't promise more: no phone can call with neither a mobile
 signal nor working Wi-Fi.)

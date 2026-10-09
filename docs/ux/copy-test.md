@@ -9,16 +9,18 @@ said, and what changed.
 |---|---|---|
 | 1 | Two **AI cold readers** (fresh Claude Sonnet agents with no project context), one per role | Done 2026-10-08. 25+ problems found; most fixed |
 | 2 | Two **new** AI cold readers, same questions, revised copy | Done 2026-10-08. Fixes confirmed; a few more fixed |
-| 3 | **Beaux** (pilot; knows the project), both roles, interactive mockups of the packet | Done 2026-10-08, relayed by Scout (Telegram 4473/4474). 9 wording fixes made; 4 product questions to the Lead |
-| 4 | **A real person** who has never seen Plainphone | **Not done yet.** Beaux will try to arrange it; packet (with round-3 fixes) in [copy-test-packet.md](copy-test-packet.md) |
+| 3 | **Beaux**, both roles, interactive mockups of the packet. **This is the human copy test for this stage** (board directive, Telegram 4477) | Done 2026-10-08, relayed by Scout (Telegram 4473/4474). Wording fixes applied; product questions answered by the Lead on PLA-14 |
+| Next | **Beaux using the real build** on the spare Motorola | When the MVP build is ready. Outside testers only later, and only if Beaux asks |
 
 **Be clear about the limits of rounds 1 and 2.** AI readers are not people. They were told to role-play a
 non-technical reader, answer only from the screens, and be blunt, and they had never seen the documents. But they
 are the same model family as the author (Anthropic), so they may share blind spots. We tried cross-model readers
 first: the local Codex CLI (OpenAI) returned `401 Unauthorized` and the Gemini CLI returned "Invalid auth method
-selected", so neither ran, and no credentials were touched. Round 3 was a real person, but not a new one: Beaux
-knows the project and is a confident phone user (5/5). **The test with someone new, in round 4, is still needed
-before the copy can be called tested.**
+selected", so neither ran, and no credentials were touched. Round 3 replaced
+the planned test with someone new. Beaux decided (Telegram 4477): *"Get it in front of me before I feel
+comfortable asking other people."* His pass counts as the human copy test for this stage. He knows the project
+and is a confident phone user (5/5), so it can't show what a stranger would misread; the next check is Beaux on
+the real build, and outside testers come later only at his call (tasks.md, task 5.1).
 
 ## Method
 
@@ -99,20 +101,20 @@ still work, which calms me down"), and could still call at a hotel.
 | The limits list is long and doesn't say which items matter most | The spec requires every item. The trusted person reads it once at setup, with the helper there to explain. |
 | Holding the phone every time an app is added "could make her feel supervised like a child" | The approved design requires custody. The copy now says "choose together" and states what the trusted person can't see. |
 
-## Round 3: Beaux's pilot
+## Round 3: Beaux (the human copy test for this stage)
 
 - **Who:** Beaux (board), age 30–44, phone comfort 5/5. He ran it himself on 2026-10-08, using an interactive
   version of [copy-test-packet.md](copy-test-packet.md) (same screens and questions, with tappable mockups).
   Answers relayed by Scout on [PLA-12](/PLA/issues/PLA-12) (Telegram 4473/4474).
-- **Caveat:** he knows the project, so this is board feedback plus a pilot of the test, not a naive reading. It
-  still found real failures: Screens 3, 7, C and H were misread.
+- **Status:** counts as the human copy test for this stage (Beaux, Telegram 4477; Lead on PLA-12). It found
+  real failures even from someone who knows the project: Screens 3, 7, C and H were misread.
 
 ### Phone user (Margaret)
 
 | What he said | Change |
 |---|---|
 | Q1: "I was confused by 'Ask Sam to do the monthly phone check'. … 'Request App/Access' could be an alternative. Oh, it was under More." | The More tile gets a small line: "Ask for an app, settings, help" ([U1](flows-user.md#u1-home-screen)). |
-| Q2: "I'm not sure why it's on the main screen if it's used so infrequently." | It already shows only when the check is over a week late (approved-apps), but the packet didn't say so. U1 and the packet now say when it appears. The exact wording is spec-fixed; see "Heard, not changed". |
+| Q2: "I'm not sure why it's on the main screen if it's used so infrequently." | It shows only when the check is due; U1 and the packet now say so. The Lead may make the check event-driven (PLA-24). For {tp}, it is now one path, "Check for updates". The home line's wording is spec-fixed; see "Heard, not changed". |
 | Q3: "This could get very restrictive… I would perhaps prefer the ability to turn web browsing on for 2-5 minutes." | Product question for the Lead ([README](README.md#open-questions-for-the-lead), question 9). |
 | Q4: "It looks like it sends Sam a message. I don't know if he got it or not." | New list of requests under the box, with "Sam's phone got it ✓" when the network confirms delivery ([U5e](flows-user.md#u5e-your-requests-below-the-box-on-u5a)). It never claims Sam has read it. |
 | Q5 (hotel Wi-Fi): "I don't think I'll be able to make calls from it." **The screen failed its main job.** | Title is now "Calls and texts still work", first; the spec sentence follows; the mobile-data definition is gone ([U7](flows-user.md#wi-fi-messages-exact-text-from-web-containment)). |
@@ -130,10 +132,10 @@ still work, which calms me down"), and could still call at a hotel.
 | Q2 (what to do while the Play Store is open): "I don't know." | The do and don't now sit right under "Stay with the phone until you tap Done", with the reason; the notification adds "Keep the phone with you" ([P1](flows-sessions.md#p1-before-a-session)). |
 | Q4: "I'm not sure who is meant to be reviewing and how I can request a review." | "Not reviewed yet" gets a line: the Plainphone team checks apps; to ask for a check, tell Alex ([T4a, T4b](flows-trusted-person.md#t4a-add-app)). |
 | Q5: "It seems like Margaret can't change permissions later, and if she does, she'll need to physically bring the phone to me." | That is how it works, so the screen now says it plainly, with the path ([T4c](flows-trusted-person.md#t4c-what-can-app-use)). |
-| Q6: "I'm most worried about Google (due to tracking etc) and full settings access." | New "can't stop" item 11, "What Google and apps collect" ([L1](flows-limits-and-off.md#l1-what-plainphone-cant-stop)). Full settings is item 3 already. |
+| Q6: "I'm most worried about Google (due to tracking etc) and full settings access." | New "can't stop" item 11, in the Lead's words: "Plainphone itself sends nothing anywhere. But the phone still runs Google's services, which collect data…" ([L1](flows-limits-and-off.md#l1-what-plainphone-cant-stop)). Full settings is item 3 already. |
 | Q7 (software changed): "It sounds like Margaret will have elevated permissions, maybe." | Rewritten: "Nothing has changed for Margaret"; the risk is now "a gap" ([L2b](flows-limits-and-off.md#l2b-the-page)). |
-| Q8: "Can we not automate this? Or make it simpler for me to navigate to?" | Product question for the Lead (question 10). |
-| Q9: "What if her phone goes flat? What if a kid has this phone and uses this as a bypass method?" | Turn-off screen now says a flat battery, restart or update doesn't turn it off ([L4a](flows-limits-and-off.md#l4a-what-happens)). The bypass worry is product question 11. |
+| Q8: "Can we not automate this? Or make it simpler for me to navigate to?" | One "Check for updates" path for {tp}: the "Needs you" item and the menu row open the same screen. Automating it is product question 10. |
+| Q9: "What if her phone goes flat? What if a kid has this phone and uses this as a bypass method?" | Turn-off screen now says "A flat battery doesn't turn it off: when the phone starts again, Plainphone is back" (Lead, from PLA-5 A6) ([L4a](flows-limits-and-off.md#l4a-what-happens)). The bypass worry is product question 11; any waiting period waits for Beaux's answer. |
 | Q10: "'Apps on this phone' feels a little invasive, but if we have the right type of relationship, it wouldn't be an issue." | Noted. The page only lists apps {tp} added, with no usage data. No change. |
 | Q11 (rewordings): "I don't know." | — |
 
@@ -144,10 +146,9 @@ still work, which calms me down"), and could still call at a hotel.
 | The monthly line's wording confused him (Q1, Q2), as it did the AI readers in rounds 1 and 2 | Exact text required by approved-apps and calm-home-screen. **For the Lead, again:** "Monthly phone check due – Sam will help" tested better in every round. |
 | "Not reviewed yet – this app may open web pages inside it" | Exact text from web-containment. Explained by the new line under it. |
 
-## Round 4: someone new (pending)
+## What's next
 
-- **Who:** Beaux will try to arrange it. Someone who has never seen Plainphone and is not technical. Ideally one
-  person per role.
-- **What:** [copy-test-packet.md](copy-test-packet.md), about 30 minutes, with no explanation given first.
-- **Record here:** first name or initials (or "anonymous"), age range, phone comfort (1–5), date, who ran it,
-  their answers, and the changes made.
+- **Beaux on the real build**, on the spare Motorola, when the MVP is ready. Record what he says here, in the
+  same format.
+- **Outside testers:** only if Beaux asks for them, once he's comfortable with the product. The packet
+  ([copy-test-packet.md](copy-test-packet.md)) is kept up to date for that.
