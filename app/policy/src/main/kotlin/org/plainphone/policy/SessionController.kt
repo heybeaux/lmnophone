@@ -49,6 +49,8 @@ interface JournalStore {
     /** Shared stores latch restrictive intent before effects or a possibly failing journal write. */
     fun beginRevocation() {}
     fun revocationPending(): Boolean = false
+    /** Ownership data only; never grants access. Combined stores override on the same coordinator. */
+    fun ownedByElevation(): Boolean = false
     /** Device-protected only. Invalid/missing checksum on an entry returns Damaged. */
     fun read(): SessionJournal
     /** Durable compare-and-set; never acknowledge before the checksum-protected write completes. */
@@ -86,11 +88,13 @@ class SessionController(
     private val inventory: BuildInventory?,
     private val authority: AuthorityConsumer,
     private val supervisedMode: () -> Boolean = { true },
+    private val selfManagedMode: () -> Boolean = { false },
 ) {
     /** Combined-store entry: policy owns the journal projection and checks current supervised mode. */
     constructor(store: ElevationStore, effects: SessionEffects, clock: RunningClock,
         inventory: BuildInventory?, authority: AuthorityConsumer, mode: () -> Mode?) :
-        this(ElevationSessionJournal(store), effects, clock, inventory, authority, { mode() == Mode.TRUSTED })
+        this(ElevationSessionJournal(store), effects, clock, inventory, authority,
+            { mode() == Mode.TRUSTED }, { mode() == Mode.SELF_MANAGED })
     var handbackReady: Boolean = false
         private set
     private var initialized = false
@@ -158,6 +162,11 @@ class SessionController(
             return if (onStart()) SessionOutcome.CLOSED else SessionOutcome.NOT_READY
         }
         val active = record as? SessionJournal.Active ?: return SessionOutcome.IGNORED
+        // The elevation controller owns its periodic liveness/deadline checks. Do not mistake the
+        // non-granting foreign projection for a request to close a healthy self-managed session.
+        // Existing local/shared revocation and unknown modes still take the restrictive path.
+        if (initialized && !store.revocationPending() && selfManagedMode() && store.ownedByElevation())
+            return SessionOutcome.IGNORED
         if (access() != null) return SessionOutcome.IGNORED
         return close(active)
     }
