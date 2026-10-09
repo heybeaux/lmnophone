@@ -214,6 +214,7 @@ nobody would find it in an emergency.
 - **Primary:** Send to {tp}
 - **Notes:** 280-character limit (enforced, with the counter). The button is disabled until there is at least
   one letter. The keyboard must not cover the button: the screen scrolls so both are visible.
+- **While sending:** the button is disabled and reads "Sending…" (as in U5e), so one tap sends one text.
 
 ### U5b. Sent
 
@@ -247,6 +248,8 @@ Beaux asked: "I don't know if he got it or not." So each saved request shows its
 - **Body:** The phone may have no signal right now. Your request is saved, and {tp} will see it on this phone.
 - **Primary:** Try again
 - **Secondary:** OK, leave it saved
+- **While sending:** "Try again" is disabled and reads "Sending…". "OK, leave it saved" stays enabled: leaving
+  undoes nothing.
 
 ### U5d. Five requests today
 
@@ -296,6 +299,25 @@ Opens when the user taps a web link that doesn't belong to an added app, from Me
   - If the host contains letters from more than one alphabet, look-alike characters, or right-to-left marks,
     show the host as plain ASCII (punycode) and add one line: "This address uses unusual letters. It may not be
     what it looks like."
+  - **Where that line goes:** directly under the title, above "It goes to:", at every text size and with one or
+    two trusted people. "It goes to:" stays a visible line. Placed there, the line is visible without scrolling
+    whatever the host length, the number of trusted people or the text size, and the person reads the caution
+    before the address it is about. (PLA-109 review, 2026-10-09: under the host box, it was cut off at 180%,
+    with "Sam and Jo", and with long hosts.)
+
+    ```
+    ┌──────────────────────────────┐
+    │ This link can't open here    │
+    │ This address uses unusual    │
+    │ letters. It may not be what  │
+    │ it looks like.               │
+    │ It goes to:                  │
+    │ ┌──────────────────────────┐ │
+    │ │ xn--pypal-4ve.com        │ │
+    │ └──────────────────────────┘ │
+    │ This phone is set up …       │
+    └──────────────────────────────┘
+    ```
   - Input over 2,000 characters: replace the body with "This link is too long to show." and remove "Send".
   - The screen has no route into trusted-person mode, More or settings.
 
@@ -308,6 +330,9 @@ Opens when the user taps a web link that doesn't belong to an added app, from Me
 - **Secondary:** Don't send
 - **After sending:** "Sent to {tp}." with **OK**. If it fails: "This didn't send. The phone may have no signal."
   with **OK**. (No retry queue: the link is not saved, to keep this screen isolated.)
+- **While sending:** once Send is tapped, **both** buttons are disabled until the phone reports sent or failed.
+  "Don't send" can't be honoured once the text is on its way, so it must not be offered. The disabled Send
+  button reads **"Sending…"** (already approved: U5e), so a greyed-out button doesn't look broken.
 - **Title change (PLA-47 review, 2026-10-09):** the first title, "Send this link to {tp}, to look at together?",
   took 3 lines at 200% on the smallest screen. The new one keeps the "together" wording the copy test asked for
   ([copy-test.md](copy-test.md): "Send to Sam" felt like reporting), and matches the button that opens it
