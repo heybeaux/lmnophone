@@ -1,0 +1,438 @@
+127.0.0.1 - - [08/Oct/2026 17:36:16] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=curl/8.7.1
+127.0.0.1 - - [08/Oct/2026 17:36:51] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:36:51] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:36:52] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:36:52] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:36:52] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:36:52] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:37:05] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:37:05] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:37:08] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:37:08] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:39:14] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:39:14] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:39:35] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:39:35] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:39:36] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:39:36] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:39:36] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:39:36] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:39:49] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:39:50] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:39:50] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:39:50] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:39:50] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:39:50] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:39:50] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:40:46] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:40:46] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:40:46] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:40:46] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:40:59] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:40:59] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:40:59] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:40:59] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:40:59] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:40:59] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:06] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:41:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:07] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:07] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:13] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:41:13] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:13] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:13] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:41:13] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:13] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:20] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:20] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:20] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:20] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:22] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:41:22] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:27] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:41:27] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:27] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:27] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:41:42] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:41:42] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:43] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:43] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:51] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:41:51] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:41:51] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:51] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:51] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:41:51] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:09] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:42:09] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:09] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:09] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:42:09] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:18] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:42:18] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:18] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:18] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:42:18] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:18] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:24] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:42:24] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:24] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:24] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:24] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:33] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:42:33] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:33] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:33] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:42:33] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:42:33] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:43:15] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:43:15] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:44:04] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:44:04] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:44:05] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:44:05] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:44:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:44:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:44:20] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:44:21] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:44:21] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:44:21] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:44:21] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:44:21] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:44:21] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:45:53] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:45:53] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:45:54] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:45:54] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:45:55] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:45:55] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:46:09] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:46:10] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:46:10] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:46:10] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:46:10] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:46:10] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:46:10] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:46:13] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:47:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:47:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:47:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:47:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:47:07] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:47:07] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:47:21] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:47:22] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:47:22] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:47:22] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:47:22] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:47:22] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:47:22] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:47:25] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:47:27] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:48:05] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:05] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:06] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:48:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:06] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:48:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:06] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:14] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:48:14] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:14] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:14] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:48:14] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:14] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:19] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:19] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:20] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:20] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:28] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:48:28] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:28] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:28] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:48:28] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:28] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:47] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:48:47] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:47] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:47] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:48:47] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:47] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:56] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:48:56] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:48:56] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:56] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:56] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:48:56] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:48:56] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:49:00] "GET /download.pdf HTTP/1.1" 200 -
+captive GET /download.pdf ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:49:01] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:49:01] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:49:20] "GET /accept HTTP/1.1" 200 -
+captive GET /accept ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:49:20] "GET /favicon.ico HTTP/1.1" 204 -
+open GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:49:20] "GET /generate_204 HTTP/1.1" 204 -
+127.0.0.1 - - [08/Oct/2026 17:49:20] "GET /generate_204 HTTP/1.1" 204 -
+open GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+open GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:49:20] "GET /generate_204 HTTP/1.1" 204 -
+open GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:49:20] "GET /generate_204 HTTP/1.1" 204 -
+open GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:49:21] "GET /generate_204 HTTP/1.1" 204 -
+open GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:49:50] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:49:50] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:49:50] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:49:50] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:49:50] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:49:50] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:50:06] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:50:11] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:50:11] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:50:11] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:50:11] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:50:11] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:50:11] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:50:51] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:50:51] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:50:52] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:50:52] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:51:07] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:51:08] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:51:08] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:51:08] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:51:11] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:51:11] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:51:11] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:51:13] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:52:11] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:52:11] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:52:11] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:52:11] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:52:12] "GET /generate_204 HTTP/1.1" 302 -
+127.0.0.1 - - [08/Oct/2026 17:52:12] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:52:26] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:52:27] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:52:27] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:52:27] "GET /favicon.ico HTTP/1.1" 302 -
+captive GET /favicon.ico ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3
+127.0.0.1 - - [08/Oct/2026 17:52:27] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:52:27] "GET /generate_204 HTTP/1.1" 302 -
+captive GET /generate_204 ua=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, l
+127.0.0.1 - - [08/Oct/2026 17:52:27] "GET /login HTTP/1.1" 200 -
+captive GET /login ua=Mozilla/5.0 (Linux; Android 15; sdk_gphone64_arm64 Build/AE3

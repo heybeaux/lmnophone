@@ -1,0 +1,13 @@
+start: OK session started; active=true secondsLeft=899 hidden=false inLockTask=true lockTaskState=1 wifiNet=111 wifiCaptive=true wifiValidated=false
+top: com.google.android.captiveportallogin/com.android.captiveportallogin.CaptivePortalLoginActivity
+## Q6b: adb reboot mid-session
+Can't find service: activity
+Can't find service: package
+Can't find service: activity
+after boot: top=  
+10-08 17:54:44.117  7095  7095 V AconfigFlags: Read Aconfig default flag value com.android.server.am.fgs_boot_completed = true
+10-08 17:54:44.494  7095  7146 E ActivityManager: Attempt to launch receivers of broadcast intent Intent { act=android.intent.action.LOCKED_BOOT_COMPLETED pkg=com.google.android.captiveportallogin (has extras) } before boot comple
+10-08 17:54:49.158  7362  7362 V AconfigFlags: Read Aconfig default flag value com.android.server.am.fgs_boot_completed = true
+10-08 17:54:49.514  7362  7413 E ActivityManager: Attempt to launch receivers of broadcast intent Intent { act=android.intent.action.LOCKED_BOOT_COMPLETED pkg=com.google.android.captiveportallogin (has extras) } before boot comple
+Can't find service: notification
+0

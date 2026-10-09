@@ -1,0 +1,45 @@
+# Q6b: adb reboot about 5 s after the session unhid com.google.android.captiveportallogin. system_server boot loop.
+# crash count in logcat so far: 56
+# sys.boot_completed= uptime:  17:57:44 up 5 min,  0 users,  load average: 0.00, 0.00, 0.00
+10-08 17:52:45.316   557   557 E AndroidRuntime: *** FATAL EXCEPTION IN SYSTEM PROCESS: main
+10-08 17:52:45.316   557   557 E AndroidRuntime: java.lang.RuntimeException: Failed to boot service com.android.server.devicepolicy.DevicePolicyManagerService$Lifecycle: onBootPhase threw an exception during phase 500
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.SystemServiceManager.startBootPhase(SystemServiceManager.java:321)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.SystemServer.startOtherServices(SystemServer.java:2866)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.SystemServer.run(SystemServer.java:936)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.SystemServer.main(SystemServer.java:657)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:864)
+10-08 17:52:45.316   557   557 E AndroidRuntime: Caused by: java.lang.IllegalStateException: Cannot broadcast before boot completed
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.am.ActivityManagerService.verifyBroadcastLocked(ActivityManagerService.java:16263)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.am.ActivityManagerService.broadcastIntentWithFeature(ActivityManagerService.java:16311)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at android.app.ContextImpl.sendBroadcastAsUser(ContextImpl.java:1484)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.pm.BroadcastHelper.sendSessionCommitBroadcast(BroadcastHelper.java:368)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.pm.BroadcastHelper.sendPackageAddedForUser(BroadcastHelper.java:715)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.setApplicationHiddenSettingAsUser(PackageManagerService.java:5917)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.devicepolicy.PolicyEnforcerCallbacks.lambda$setApplicationHidden$8(PolicyEnforcerCallbacks.java:351)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.devicepolicy.PolicyEnforcerCallbacks.$r8$lambda$MppQhuLLFeOmfqJt6XiiV4ygTy0(PolicyEnforcerCallbacks.java:0)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.devicepolicy.PolicyEnforcerCallbacks$$ExternalSyntheticLambda3.getOrThrow(R8$$SyntheticClass:0)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at android.os.Binder.withCleanCallingIdentity(Binder.java:574)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.devicepolicy.PolicyEnforcerCallbacks.setApplicationHidden(PolicyEnforcerCallbacks.java:343)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.devicepolicy.PolicyDefinition$$ExternalSyntheticLambda2.apply(R8$$SyntheticClass:0)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.devicepolicy.PolicyDefinition.enforcePolicy(PolicyDefinition.java:630)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.devicepolicy.DevicePolicyEngine.enforcePolicy(DevicePolicyEngine.java:1046)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.devicepolicy.DevicePolicyEngine.reapplyAllPoliciesOnBootLocked(DevicePolicyEngine.java:1815)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.devicepolicy.DevicePolicyManagerService.systemReady(DevicePolicyManagerService.java:3349)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.devicepolicy.DevicePolicyManagerService$Lifecycle.onBootPhase(DevicePolicyManagerService.java:1095)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	at com.android.server.SystemServiceManager.startBootPhase(SystemServiceManager.java:318)
+10-08 17:52:45.316   557   557 E AndroidRuntime: 	... 6 more
+10-08 17:52:45.316   557   636 E AndroidRuntime: *** FATAL EXCEPTION IN SYSTEM PROCESS: PackageManager
+10-08 17:52:45.316   557   636 E AndroidRuntime: java.lang.IllegalStateException: Cannot broadcast before boot completed
+10-08 17:52:45.316   557   636 E AndroidRuntime: 	at com.android.server.am.ActivityManagerService.verifyBroadcastLocked(ActivityManagerService.java:16263)
+10-08 17:52:45.316   557   636 E AndroidRuntime: 	at com.android.server.am.ActivityManagerService.broadcastIntentWithFeature(ActivityManagerService.java:16311)
+10-08 17:52:45.316   557   636 E AndroidRuntime: 	at com.android.server.pm.BroadcastHelper.sendBootCompletedBroadcastToSystemApp(BroadcastHelper.java:264)
+10-08 17:52:45.316   557   636 E AndroidRuntime: 	at com.android.server.pm.BroadcastHelper.lambda$sendPackageAddedForNewUsers$3(BroadcastHelper.java:656)
+10-08 17:52:45.316   557   636 E AndroidRuntime: 	at com.android.server.pm.BroadcastHelper.$r8$lambda$Oug9dEN74-YzL_S_zLOLodG8ONM(BroadcastHelper.java:0)
+10-08 17:52:45.316   557   636 E AndroidRuntime: 	at com.android.server.pm.BroadcastHelper$$ExternalSyntheticLambda2.run(R8$$SyntheticClass:0)
+10-08 17:52:45.316   557   636 E AndroidRuntime: 	at android.os.Handler.handleCallback(Handler.java:959)
+10-08 17:52:45.316   557   636 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+10-08 17:52:45.316   557   636 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:232)
+10-08 17:52:45.316   557   636 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:317)
+--
