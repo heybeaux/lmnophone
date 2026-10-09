@@ -54,12 +54,21 @@ interface JournalStore {
 
 /** Lane D implements the effects and their readbacks. Calls/emergency must never depend on these returning true. */
 interface SessionEffects {
-    /** Remove every possible session relaxation, including for missing/damaged journals. Do not hide emergency dependencies. */
+    /**
+     * Invalidate every session relaxation, including missing/damaged journals. During a COMMITTING
+     * turn-off, invalidate temporary authority without reinstating restored lockdown settings;
+     * physical policy changes must follow PolicyEngine's fresh operation-aware plan.
+     */
     fun revokeAllRelaxations(): Boolean
     /** Only these packages may open. Every unhide is followed by the synchronous flush and readback. No restriction is lifted. */
     fun open(access: SessionAccess): Boolean
-    /** Repair only the spec's protected invariants; preserve ordinary settings. False prevents handback. */
+    /**
+     * Repair only invariants emitted by PolicyEngine.decide with a fresh waiting-operation read.
+     * A COMMITTING turn-off permits emergency-floor repair only. Never re-assert full lockdown
+     * independently here, including during onStart. Preserve ordinary settings; false prevents handback.
+     */
     fun protectedStateCheck(): Boolean
+    /** Check only non-null expectations of that same operation-aware plan. */
     fun readBackPolicy(): Boolean
 }
 fun interface AuthorityConsumer { fun consume(authority: FreshAuthority, action: PrivilegedAction): Boolean }

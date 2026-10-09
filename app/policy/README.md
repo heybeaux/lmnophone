@@ -179,3 +179,35 @@ Recovery-code skip, lost-record reconciliation and Android execution remain sepa
 The waiting gate now checks credential dependencies before the UNKNOWN intent maturity guard.
 An unreadable intent store therefore cannot postpone restrictive dependency cancellation and its
 texts, while UNKNOWN still prevents forward commit.
+
+## Policy re-apply during turn-off
+
+Every periodic (15-minute), package-event, locked/unlocked boot and post-action policy pass must
+read the current highest-valid-revision waiting operation on the shared serialized dispatcher and
+pass it as `PolicyInput.waitingOperation`. Do not derive this input from UI state, an old timer payload
+or a cached committing flag. Re-read immediately before applying; do not apply an old full-lockdown
+plan after a turn-off transitions to COMMITTING.
+
+For a valid COMMITTING turn-off, `PolicyEngine.decide` emits only `EMERGENCY_FLOOR`: repair the live
+trusted OS floor by unhiding/enabling/unsuspending it and reading that back. It emits no restrictions,
+hides, lock-task changes, Home assignment or other lockdown stages. Ordinary approvals, inventory-only
+exceptions and session grants add no actions. Caller-requested destructive operations are refused.
+The empty plan collections do NOT mean to set an empty lock-task list or clear restrictions: execute
+only emitted stages. `ExpectedPolicyState` now uses nullable fields: null means outside this plan,
+so neither write nor assert that value. Only the floor readback sets are populated in this mode.
+
+Pending, cancelled, completed, rolling-back and missing/invalid operation records do not select this
+exception. They follow normal policy computation; a missing record still requires the separate
+lost-record reconciliation workflow. After observed Device Owner removal, stop scheduling Device Owner
+policy writes and process any pending completion receipt instead.
+
+`SessionController.onStart` must still revoke temporary authority first. Its adapter's
+`revokeAllRelaxations`, `protectedStateCheck` and `readBackPolicy` must use the same fresh operation-aware
+rule: a committing turn-off must not be re-locked by session revocation or protected-state repair.
+All other protected-state checks follow this rule too. These are mandatory Lane D wiring requirements;
+the pure JVM tests cover plan selection and simulated re-apply between sequencer steps, not Android
+integration. Lane D should immediately re-tick the sequencer on PROGRESS instead of waiting 15 minutes.
+
+Completion SMS remains a queued effect. Lane D must verify SEND_SMS remains usable after Device Owner
+removal before claiming delivery. If it does not, the receipt protocol needs an explicitly reviewed
+pre-removal notification state; do not silently label a pre-removal message as completed turn-off.
