@@ -32,7 +32,7 @@
 | S3 suspend Play | **no** | `setPackagesSuspended([com.android.vending])` is refused: Play is the required package verifier. |
 | S4 hidden Play vs lock task | **lock task: yes; hidden: no** | Hidden Play: its jobs can't start, so nothing updates. Lock task with Play unhidden: `market://` is blocked, and **23 apps updated in the background within 6 min**. |
 | B-Q1 lock task follow-ups (BLOCK on) | **yes** | Pre-grant works for camera, mic and location; Camera → Photos is closed; the emergency dialer screen opens; the image attaches through Messages' own picker; lock task comes back after a reboot. |
-| B-Q4 must-have apps | **partly** | Telegram before sign-in: **a permission-prompt loop under BLOCK until its phone permissions are pre-granted**. Slack, Spotify, Outlook and Gmail wait on a board decision. |
+| B-Q4 must-have apps | **partly** (before sign-in done) | All 5 apps probed under BLOCK before sign-in. **Outlook's in-app WebView browses off-site from its Privacy link.** Google sign-in in Slack/Spotify/Outlook needs GMS → blocked. Telegram loops until pre-granted. Signed-in checks wait for Beaux. |
 | S7 install race | **partly** | DPC hid a newly installed app 4.6 s after `firstInstallTime`. Deep links failed for ~4 s (package frozen), but the app's **process started ~0.35 s before the hide**; no window was displayed. |
 
 ## A0. Baseline
@@ -650,15 +650,98 @@ Evidence: `evidence/phase-b/bq4/`.
   notifications, links, and **whether Telegram's in-app browser can reach arbitrary sites**. All of these need a
   signed-in Telegram.
 
-### Not started: needs a board decision (card on PLA-5)
+### Board answer (card `16e9a46e`, 2026-10-09)
 
-- **Slack, Spotify, Outlook:** not installed. The board's rule for the test account covers "Play sign-in and S1–S4, S7".
-  Telegram was installed as part of S7. Installing three more apps would use the account outside that scope, so I'm asking first.
-- **Gmail** (preinstalled, `com.google.android.gm`; Play updated it during S4): opening it would open the test account's
-  mailbox, and the board said not to open mail. Not opened.
-- **App sign-ins** for every app are Beaux's to do at the phone.
+Install Slack, Spotify and Outlook from Play with the test account: **yes**. Open Gmail without opening any email: **yes**.
+App sign-ins: **Beaux will do them later and say when.** Run 2026-10-09 00:10–00:29Z. Same setup as Telegram: lock task
+with BLOCK on, every app allowlisted (`HOME|GLOBAL_ACTIONS|NOTIFICATIONS|SYSTEM_INFO|BLOCK`), launched from the spike.
+Per-step logs and screenshots: `evidence/phase-b/bq4/<app>/` (`tools/bq4-probe.sh`; emails redacted by the script).
 
-## Current state (2026-10-08T23:26Z, after Phase B)
+| App | Version (Play) | Installed (local) |
+|---|---|---|
+| Slack `com.Slack` | 26.09.50.0 (90016232) | 17:11:12 |
+| Spotify `com.spotify.music` | 9.1.88.2204 (146816068) | 17:11:36 |
+| Outlook `com.microsoft.office.outlook` | 5.2639.2 (72639116) | 17:12:11 |
+| Gmail `com.google.android.gm` (system, updated by Play in S4) | 2026.09.21.992487546.Release (66054195) | preinstalled |
+
+### Slack 26.09.50.0 (before sign-in)
+
+| Route | Result under BLOCK |
+|---|---|
+| Launch → "Sign in" | In-app `AuthOptionsActivity`: email, Google, workspace URL, GovSlack, QR code. |
+| **Google** | "There was a problem authenticating with Google." No activity start. **Same error with lock task off** (control, step 11), so lock task isn't the cause; it fails on this managed phone either way. Not traced. |
+| Enter a workspace URL | In-app `SignInActivity`. Not submitted (needs a real workspace; SSO workspaces may open a browser, which is untested). |
+| Email | Not submitted: Slack would email a code to the account. |
+| **QR code** | First: `REQUEST_PERMISSIONS` → "Permission controller is not available". After pre-granting `CAMERA`, Slack still showed its own "go to device settings" dialog (it remembered the denial). After going back and re-entering, **the QR scanner opens**. Pre-grant before first launch. |
+| GovSlack | In-app sheet (slack-gov.com / slack.mil); no web route. |
+| Web routes found before sign-in | **None** reachable. |
+
+### Spotify 9.1.88.2204 (before sign-in)
+
+| Route | Result under BLOCK |
+|---|---|
+| Launch | In-app `LoginActivity` ("Sign up free", "Log in"). |
+| "Log in" | First opens **Credential Manager** (`com.android.credentialmanager/.CredentialSelectorActivity`) → blocked. After OK, Spotify falls back to its own login screen (email, Facebook, Google). No loop. |
+| **Facebook** | Facebook SDK → `CustomTabMainActivity` → **Chrome Custom Tab** `https://m.facebook.com/…` → **blocked** ("Chrome is not available right now"). |
+| **Google** | `GOOGLE_SIGN_IN` → `com.google.android.gms/.auth.api.signin.ui.SignInActivity` → **blocked** ("Google Play services is not available"). |
+| Email / Sign up | In-app. Not submitted (Spotify would email a code or create an account). |
+| Web routes found before sign-in | **None** reachable (the only one, Facebook's Custom Tab, is blocked). |
+
+So for Beaux, Spotify sign-in under BLOCK works only with email (and a code). Google and Facebook sign-in need
+`com.google.android.gms`, or a browser, during a supervised window.
+
+### Outlook 5.2639.2 (before sign-in)
+
+| Route | Result under BLOCK |
+|---|---|
+| Launch → "Add account" | In-app `AddAccountActivity`: email field, ADD GOOGLE ACCOUNT, Help, PRIVACY AND TERMS, Scan QR code. |
+| **PRIVACY AND TERMS → Privacy & Cookies** | **Opens Outlook's own WebView** (`com.acompli.acompli.GenericWebViewActivity`) with the live Microsoft Privacy Statement (`04b_privacy_webview_loaded.png`). |
+| **…→ an off-site link in that page** ("U.S. Department of Commerce") | **Loads `dataprivacyframework.gov` inside the same WebView, still under lock task** (step 05). **Off-site browsing by following links works before sign-in.** I stopped there (no search engine tried). |
+| **ADD GOOGLE ACCOUNT** | `OAuthActivity` → `InteractiveAuthActivity` → `GOOGLE_SIGN_IN` → GMS `SignInActivity` → **blocked**. After OK, Outlook returns to its splash screen. **No web fallback**, so adding the trusted person's Gmail account to Outlook fails under BLOCK. It needs GMS allowlisted, or a supervised window. |
+| Help → Contact support | Asks to enable notifications (Cancel), then "Collect Diagnostics Data" consent (it would upload logs including account emails to Microsoft). **Cancelled; nothing sent.** |
+| Microsoft-account sign-in (email field) | Not submitted. |
+
+### Gmail 2026.09.21 (test account; no email opened)
+
+Inbox screens were never dumped or screenshotted. `tools/gm-nav.sh` lists only a fixed set of navigation labels.
+
+| Route | Result under BLOCK |
+|---|---|
+| First launch | In-app welcome tour → "Set up addresses" → **"Learn more"** → GMS `googlehelp.HelpActivity` → **blocked**. |
+| Entering the inbox | `REQUEST_PERMISSIONS` (notifications) → **blocked** ("Permission controller is not available"). Pre-granting `POST_NOTIFICATIONS` lets the inbox open. |
+| Tabs | **Mail and Meet only; no Chat tab** on this Workspace account. |
+| **Meet tab** | In-app Meet (`…conference.ui.largescreen.HomeActivity`): asks for phone-state permission in-app (Cancel), then "Join a meeting" by code. A **video-call surface inside Gmail**, not a web route. Not joined. |
+| Account menu → Manage your Google Account / Privacy Policy / Terms of Service | All go to GMS `accountsettings…SettingsLoaderActivity` → **blocked**. |
+| Account menu → **Add another account → Outlook, Hotmail, and Live** | **Microsoft's live web sign-in page loads in a WebView inside Gmail** (`.setup.AccountSetupFinalGmail`, step 18). Its "Privacy and cookies" link is handed to **Chrome → blocked**. Whether the login page's own in-page links ("Forgot your username?", "Create an account") keep browsing inside the WebView wasn't tested. |
+| Drawer → Help & feedback | GMS `HelpActivity` → **blocked**. |
+| Drawer → Settings | In-app `Gmail2PreferenceActivity` (General settings, Add account). |
+| **Links in HTML mail** | **Not tested**: it needs opening an email, which the board ruled out for the test account. Needs a known test message in Beaux's own account. |
+
+### B-Q4 summary so far
+
+- **Pattern:** every app's Google sign-in goes through GMS (`SignInActivity`), and every Help and Account link goes
+  through GMS too. BLOCK stops all of these. Allowing `com.google.android.gms` would open the account sign-in UI,
+  but also GMS Help and the account web pages: that is a large web surface. Plainphone should do Google sign-ins
+  during a supervised setup window, not by allowlisting GMS.
+- **Credential Manager and the permission controller** are blocked under BLOCK. Telegram loops on them, while Spotify and Slack recover.
+  **Pre-grant first-run permissions** (Telegram phone permissions, Slack camera, Gmail notifications).
+- **Web leaks found:**
+  1. **Outlook's in-app WebView** (Privacy link before sign-in) follows off-site links. **This is a real escape**, so
+     Outlook needs a mitigation, or the board needs to accept the risk.
+  2. **Gmail's add-account flow** loads Microsoft's login page in a WebView. Off-page links go to Chrome (blocked);
+     the page's own links are untested.
+  3. Facebook (Spotify) and Help links use Custom Tabs or GMS, which are blocked.
+- **Still to do once Beaux signs in** (the board said he'll say when): sign-in, signing in again, password reset,
+  notifications and links for Telegram, Slack, Spotify and Outlook; Telegram's in-app browser; links in Gmail HTML mail
+  and the Chat tab (absent on this account).
+
+## Current state (2026-10-09T00:29Z, after B-Q4 probes)
+
+Same as below, plus Slack, Spotify and Outlook installed (not signed in), Gmail opened once on the test account (no email opened),
+and `POST_NOTIFICATIONS` / `CAMERA` pre-granted to Gmail / Slack. Lock task off, HOME = Moto launcher, no restrictions
+(`evidence/phase-b/end-state-2.txt`).
+
+## State at 2026-10-08T23:26Z (after S1–S7, B-Q1)
 
 `evidence/phase-b/end-state.txt`:
 - Spike DPC is Device Owner (`testOnlyAdmin=true`, removable with `dpm remove-active-admin`). **No DPC restrictions**,

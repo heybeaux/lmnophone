@@ -1,0 +1,11 @@
+## End state 2026-10-09T00:29:05Z
+deviceOwner=true lockTaskModeState=0 lockTaskPackages=[com.plainphone.spike.dpc] lockTaskFeatures=SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|BLOCK restrictions=[] hidden=[] suspended=[] locked=false debugLiftAt=0
+lock: mLockTaskModeState=NONE  HOME: com.motorola.launcher3
+accounts (names withheld): type=com.google type=com.google.android.apps.tachyon 
+com.Slack versionName=26.09.50.0
+com.spotify.music versionName=9.1.88.2204
+com.microsoft.office.outlook versionName=5.2639.2
+org.telegram.messenger versionName=12.10.6
+com.google.android.gm versionName=2026.09.21.992487546.Release
+sync: calendar and contacts adapters still enabled=false (dumpsys content); Gmail sync switch left off from sign-in
+adb_wifi: 0 stay_on: 2

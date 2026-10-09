@@ -1,0 +1,205 @@
+### 01 launch under BLOCK (no text/shot: may show inbox)  (2026-10-09T00:22:24Z)
+top: u0 com.google.android.gm/.welcome.WelcomeTourActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:22:17.160 {flg=0x30000000 cmp=com.plainphone.spike.dpc/.MainActivity (has extras)}
+  17:22:17.182 {act=android.intent.action.VIEW flg=0x10000000 xflg=0x1 cmp=com.google.android.gm/.ConversationListActivityGmail}
+  17:22:17.454 {flg=0x4000000 pkg=com.google.android.gm cmp=com.google.android.gm/.welcome.WelcomeTourActivity (has extras)}
+### 02 welcome tour text  (2026-10-09T00:22:37Z)
+top: u0 com.google.android.gm/.welcome.WelcomeTourActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  text="All the features you love with a fresh new look"
+  text="GOT IT"
+  text="New in Gmail"
+### 03 after GOT IT  (2026-10-09T00:22:52Z)
+top: u0 com.google.android.gm/.welcome.SetupAddressesActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:22:47.178 {cmp=com.google.android.gm/.welcome.SetupAddressesActivity}
+### 04 SetupAddresses text (emails redacted)  (2026-10-09T00:22:58Z)
+top: u0 com.google.android.gm/.welcome.SetupAddressesActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  text="Add another email address"
+  text="TAKE ME TO GMAIL"
+  text="You can use this app with all your email addresses. Learn more"
+  text="<email redacted>"
+### 05 Learn more link  (2026-10-09T00:23:34Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:23:28.633 {act=com.google.android.gms.googlehelp.HELP pkg=com.google.android.gms cmp=com.google.android.gms/.googlehelp.helpactivities.HelpActivity (has extras)}
+text:
+  text="App is not available"
+  text="Google Play services is not available right now."
+  text="OK"
+### 06 TAKE ME TO GMAIL (inbox: no text/shot)  (2026-10-09T00:23:55Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:23:48.732 {act=android.intent.action.VIEW cmp=com.google.android.gm/.ConversationListActivityGmail (has extras)}
+  17:23:49.428 {act=android.content.pm.action.REQUEST_PERMISSIONS pkg=com.google.android.permissioncontroller cmp=com.google.android.permissioncontroller/com.android.permissioncontroller.permission.ui.GrantPermissionsAct
+App is not available @ 540,1058
+OK @ 540,1339
+Permission controller is not available right now. @ 540,1152
+grant com.google.android.gm android.permission.POST_NOTIFICATIONS -> true state=1 granted=true
+### 07 after notifications pre-grant (no text/shot)  (2026-10-09T00:24:10Z)
+top: u0 com.google.android.gm/.ConversationListActivityGmail
+lock: mLockTaskModeState=LOCKED
+starts:
+Close @ 950,1196
+Got it @ 904,2025
+Mail @ 329,2220
+Meet @ 750,2220
+### 08 Meet tab  (2026-10-09T00:24:24Z)
+top: u0 com.google.android.gm/com.google.android.libraries.communications.conference.ui.permissions.notification.RingingReadPhoneStatePermissionActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:24:19.913 {flg=0x30000 cmp=com.google.android.gm/com.google.android.libraries.communications.conference.ui.largescreen.HomeActivity (has extras)}
+  17:24:20.384 {flg=0x10000000 cmp=com.google.android.gm/com.google.android.libraries.communications.conference.ui.permissions.notification.RingingReadPhoneStatePermissionActivity (has extras)}
+### 09 Meet permission screen  (2026-10-09T00:24:31Z)
+top: u0 com.google.android.gm/com.google.android.libraries.communications.conference.ui.permissions.notification.RingingReadPhoneStatePermissionActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  text="Cancel"
+  text="Grant permission"
+  text="Let Gmail access phone status"
+  text="To prevent Gmail from ringing you during a phone call, give it permission to know when you're on a call"
+### 10 Meet home (text, emails redacted)  (2026-10-09T00:24:44Z)
+top: u0 com.google.android.gm/com.google.android.libraries.communications.conference.ui.largescreen.HomeActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  content-desc="Mail"
+  content-desc="Meet"
+  content-desc="Navigation menu"
+  content-desc="Signed in as <email redacted>&#10;Account and settings."
+  text="Join a meeting"
+  text="Meet"
+  text="No one can join a meeting unless invited or admitted by the host"
+  text="Your meeting is safe"
+### 11 Account and settings menu  (2026-10-09T00:24:59Z)
+top: u0 com.google.android.gm/com.google.android.libraries.communications.conference.ui.largescreen.HomeActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  content-desc="Close"
+  content-desc="Edit my info"
+  content-desc="Signed in as <email redacted>&#10;Account list expanded.&#10;Collapse account list."
+  text="Add another account"
+  text="Manage accounts on this device"
+  text="Manage your Google Account"
+  text="Privacy Policy"
+  text="Terms of Service"
+  text="<email redacted>"
+### 12 Manage your Google Account  (2026-10-09T00:25:20Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:25:15.695 {act=com.google.android.gms.accountsettings.action.VIEW_SETTINGS pkg=com.google.android.gms cmp=com.google.android.gms/.accountsettings.ui.SettingsLoaderActivity (has extras)}
+text:
+  text="App is not available"
+  text="Google Play services is not available right now."
+  text="OK"
+### 13 Privacy Policy  (2026-10-09T00:25:43Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:25:38.726 {act=com.google.android.gms.accountsettings.action.VIEW_SETTINGS pkg=com.google.android.gms cmp=com.google.android.gms/.accountsettings.ui.SettingsLoaderActivity (has extras)}
+text:
+  text="App is not available"
+  text="Google Play services is not available right now."
+  text="OK"
+### 14 Terms of Service  (2026-10-09T00:26:06Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:26:01.788 {act=com.google.android.gms.accountsettings.action.VIEW_SETTINGS pkg=com.google.android.gms cmp=com.google.android.gms/.accountsettings.ui.SettingsLoaderActivity (has extras)}
+text:
+  text="App is not available"
+  text="Google Play services is not available right now."
+  text="OK"
+### 15 Add another account  (2026-10-09T00:26:29Z)
+top: u0 com.google.android.gm/.setup.AccountSetupFinalGmail
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:26:24.743 {act=com.google.android.gm.email.CREATE_NEW_ACCOUNT flg=0x30008000 pkg=com.google.android.gm cmp=com.google.android.gm/.setup.AccountSetupFinalGmail (has extras)}
+text:
+  text="Exchange and Office 365"
+  text="Google"
+  text="Other"
+  text="Outlook, Hotmail, and Live"
+  text="Set up email"
+  text="Yahoo"
+### 16 Manage accounts on this device  (2026-10-09T00:26:47Z)
+top: u0 com.google.android.gm/.setup.AccountSetupFinalGmail
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  text="Exchange and Office 365"
+  text="Google"
+  text="Other"
+  text="Outlook, Hotmail, and Live"
+  text="Set up email"
+  text="Yahoo"
+### 17 Add account - Outlook Hotmail Live  (2026-10-09T00:27:10Z)
+top: u0 com.google.android.gm/.setup.AccountSetupFinalGmail
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+### 18 Outlook route after wait  (2026-10-09T00:27:21Z)
+top: u0 com.google.android.gm/.setup.AccountSetupFinalGmail
+lock: mLockTaskModeState=LOCKED
+starts:
+text:
+  content-desc="Learn more"
+  content-desc="Microsoft"
+  content-desc="Privacy and cookies"
+  content-desc="Terms of use"
+  text="Create an account"
+  text="Email or phone number"
+  text="Forgot your username?"
+  text="Help and feedback"
+  text="Learn more"
+  text="New to Microsoft? "
+  text="Next"
+  text="Privacy and cookies"
+  text="Sign in"
+  text="Terms of use"
+  text="Use private browsing if this is not your device. "
+  text="Use your Microsoft account."
+### 19 Microsoft page - Privacy and cookies link  (2026-10-09T00:27:42Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:27:34.740 {act=android.intent.action.VIEW dat=https://privacy.microsoft.com/... flg=0x80000 cmp=com.android.chrome/com.google.android.apps.chrome.IntentDispatcher (has extras)}
+text:
+  text="App is not available"
+  text="Chrome is not available right now."
+  text="OK"
+### 20 Drawer - Help and feedback  (2026-10-09T00:28:26Z)
+top: u0 android/com.android.internal.app.BlockedAppActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:28:22.499 {act=android.intent.action.VIEW flg=0x10000000 cmp=com.google.android.gm/.ui.MailActivityGmail (has extras)}
+  17:28:22.580 {act=com.google.android.gms.googlehelp.HELP pkg=com.google.android.gms cmp=com.google.android.gms/.googlehelp.helpactivities.HelpActivity (has extras)}
+text:
+  text="App is not available"
+  text="Google Play services is not available right now."
+  text="OK"
+### 21 Drawer - Settings  (2026-10-09T00:28:42Z)
+top: u0 com.google.android.gm/.Gmail2PreferenceActivity
+lock: mLockTaskModeState=LOCKED
+starts:
+  17:28:39.261 {act=android.intent.action.EDIT dat=setting://gmail/... flg=0x10000000 pkg=com.google.android.gm cmp=com.google.android.gm/.Gmail2PreferenceActivity}
+text:
+  content-desc="More options"
+  content-desc="Navigate up"
+  text="Add account"
+  text="General settings"
+  text="Settings"
+  text="<email redacted>"
