@@ -32,7 +32,7 @@ Each privileged action, each waiting-change start, cancel, skip and completion, 
 
 Each text SHALL have its own delivery status (waiting, sent, gave up), shown in trusted-person mode. A failed or late text SHALL NOT change what is enforced.
 
-Plainphone SHALL have no server, analytics or account. The only data it sends SHALL be these texts, through the carrier.
+Plainphone SHALL have no Plainphone-run server, no analytics or telemetry, and no account. It SHALL send data only as these texts, through the carrier, and over local Wi-Fi to the helper's computer when updating itself.
 
 Trusted-person mode SHALL keep a 90-day history list of privileged actions and waiting changes: which credential, what, when, and text status. It SHALL NOT hold app content, URLs or message text. It SHALL be kept in device-protected storage.
 
@@ -45,16 +45,17 @@ Trusted-person mode SHALL keep a 90-day history list of privileged actions and w
 - **THEN** the action still takes effect, and her text shows "waiting" and later "sent" or "gave up"
 
 ### Requirement: Waits, countdowns and daily counts use one proven running-time clock
-Plainphone SHALL keep a **proven running time** counter, P, in device-protected storage, as one atomic record holding: the total proven so far, the boot id, and the `SystemClock.elapsedRealtime()` reading at the last checkpoint.
+Plainphone SHALL keep a **proven running time** counter, P, in device-protected storage, as one atomic record holding: the **epoch**, the total proven so far in that epoch, the boot id, and the `SystemClock.elapsedRealtime()` reading at the last checkpoint.
 
 - **Same boot:** a checkpoint SHALL add the time since the last checkpoint and store the new reading, in one atomic write. No interval SHALL be counted twice.
 - **New boot:** time between the last checkpoint and the reboot SHALL NOT be counted. The first checkpoint after boot SHALL add the time since this boot started and store the new boot id.
-- Checkpoints SHALL happen at least every 5 minutes, and at every waiting-change start, cancel and commit, and every elevation debit.
-- Waiting changes and daily-limit debits SHALL record P when they start. Their age SHALL be P now minus that reading.
-- Countdowns, Start windows and deadlines SHALL use `elapsedRealtime()` within one boot. A reboot SHALL end them.
+- Checkpoints SHALL happen at least every 5 minutes, at every operation state change, and at every elevation debit.
+- Every record that stores a P reading SHALL also store the epoch. A reading from any epoch other than the current one SHALL count as taken at the start of the current epoch.
+- A waiting change SHALL mature, and a debit SHALL expire, when P has grown by at least 24 hours since its reading.
+- Countdowns, Start windows and grant deadlines SHALL use `elapsedRealtime()` within one boot. A reboot SHALL end them. A clock repair SHALL NOT change them.
 - Wall-clock and time-zone changes SHALL have no effect on any of these.
 
-**Damaged P.** Plainphone SHALL write a fresh P starting at zero and re-stamp every pending waiting change and every debit at zero. Nothing SHALL mature early and no debit SHALL be refunded. If that write fails, no waiting change SHALL mature and no elevation SHALL start until it succeeds, and "Plainphone needs attention" SHALL show.
+**Damaged, missing or inconsistent P** (a bad checksum, an unreadable boot id, or an `elapsedRealtime()` lower than the stored reading within the same boot): Plainphone SHALL write a new epoch with total 0, anchored at the current boot id and the current `elapsedRealtime()`. Nothing SHALL mature early and no debit SHALL be refunded. If that write fails, no waiting change SHALL mature and no elevation SHALL start until it succeeds, and "Plainphone needs attention" SHALL show.
 
 The screens SHALL say that time while the phone is off doesn't count.
 
@@ -70,60 +71,81 @@ The screens SHALL say that time while the phone is off doesn't count.
 - **WHEN** someone moves the clock or time zone forward by a day during a wait
 - **THEN** the wait does not end early
 
-#### Scenario: Damaged counter
-- **WHEN** P fails its checksum while a turn-off is pending and two debits are counted
-- **THEN** the turn-off restarts its 24 hours, both debits count as just used, and nothing matures or is refunded
+#### Scenario: Counter damaged late in a long boot
+- **WHEN** the phone has been up for 30 hours, P is found damaged, and a turn-off and two debits exist
+- **THEN** the new epoch starts at the current moment, the turn-off and both debits need a fresh 24 hours of proven running time from then, and the boot's earlier 30 hours are not credited
 
-### Requirement: Waiting changes take 24 hours, one at a time, and are re-checked before they happen
+#### Scenario: Interrupted repair
+- **WHEN** Plainphone writes a new epoch and is killed before anything else
+- **THEN** every record with the old epoch counts as taken at the start of the new epoch, so nothing matures early
+
+### Requirement: Waiting changes take 24 hours, one at a time, and are recoverable
 These SHALL be **waiting changes**:
 1. turning Plainphone off;
 2. adding a trusted person, handing a trusted-person role over, or removing a trusted person;
 3. switching mode, in either direction;
 4. in self-managed mode, shortening the elevation countdown or raising the daily limit.
 
-**One at a time.** At most one waiting change SHALL be pending, of any kind. Trying to start another SHALL show the pending one, with Cancel.
+**Credential store.** The mode, each PIN holder's slot (including a credential generation, raised whenever that slot's PIN or recovery code is replaced) and a structure generation (raised whenever the set of people or the mode changes) SHALL be one atomic record in device-protected storage.
 
-**Generations.** Plainphone SHALL keep a credential generation for each PIN holder, raised whenever that person's PIN or recovery code is replaced, and a structure generation, raised whenever the set of trusted people or the mode changes.
+**Operation record.** Each waiting change SHALL have one operation record, written atomically with a revision number that rises on every write, kept in two copies in device-protected storage. Plainphone SHALL use the valid copy with the highest revision. It SHALL hold: the request id; the kind; the immutable inputs, including the credential patch for changes of people or mode; the dependencies (each slot it starts from, removes or replaces, with its credential generation, and the structure generation); the starting credential; a cancel code; the P reading and epoch; the state; and the texts owed for that state, with recipients fixed when queued.
 
-**Start.** A waiting change SHALL start only after a fresh PIN entry (a trusted person's in supervised mode, the user's in self-managed mode) and the confirmations that action already needs. Plainphone SHALL then write, in **one** atomic write to device-protected storage:
-- the wait record: request id, kind, pending details, which credential started it, the starter's credential generation, the structure generation, and P;
-- the text queue entries for the start notice, with the recipient list fixed at that moment.
+**States:** pending, committing, rolling back, completed, cancelled. Completed and cancelled are terminal.
 
-Only after that write succeeds SHALL Plainphone show the change as waiting or send any text. If the write fails, the change SHALL NOT start. On every start, Plainphone SHALL send any queued text not yet marked sent.
+**One at a time.** An operation SHALL hold the single change slot from creation until a terminal state. No other waiting change SHALL start meanwhile; trying SHALL show the one in progress.
 
-**Texts.** The start text SHALL say what will happen, that it happens after 24 hours of the phone being on, and how to cancel. It SHALL mention replying only if Q15 passed.
+**One write per state change.** Each state change and the texts that go with it SHALL be one atomic write. Plainphone SHALL show a new state only after that write succeeds, and SHALL send any queued text not yet marked sent on every start. Delivery SHALL NOT be a condition for anything.
 
-**Cancel.** The pending change SHALL be cancelled by any of these:
+**Idempotent, directed steps.** Committing and rolling back SHALL run steps that are safe to repeat and are read back. Every retry, timer and policy pass SHALL re-read the operation record and act only if the request id and direction match what it was scheduled for. A restart SHALL NOT turn a rollback into a forward run.
+
+**Start.** A waiting change SHALL start only after a fresh PIN entry (a trusted person's in supervised mode, the user's in self-managed mode) and the confirmations that action already needs, by creating its record in state pending with the start texts queued. If the write fails, the change SHALL NOT start.
+
+**Texts.** The start text SHALL say what will happen, that it happens after at least 24 hours of the phone being on, and how to cancel. If Q15 passed, it SHALL include the reply `CANCEL` with that request's cancel code.
+
+**Dependencies.** Before commit, if a dependency changes (a slot it depends on gets a new PIN or code, or the structure generation changes), the operation SHALL be cancelled at once and texted to every trusted person. A credential change in a slot it doesn't depend on SHALL NOT affect it.
+
+**Cancel, while pending.** The pending change SHALL be cancelled by any of these:
 - a trusted person's PIN, on the phone;
 - anyone holding the phone, without a PIN;
 - in self-managed mode, the user;
-- a reply of `CANCEL` from a trusted person's number on record, **only if** feasibility question Q15 passes. It SHALL cancel the one pending change. A reply when nothing is pending, or after the change committed, SHALL do nothing and SHALL be logged. A reply SHALL NOT start, skip or shorten anything.
+- a reply of `CANCEL` and that request's cancel code from a trusted person's number on record, **only if** feasibility question Q15 passes. A reply whose code doesn't match the pending request SHALL do nothing and SHALL be logged. A reply SHALL NOT start, skip, approve or shorten anything.
 
-Plainphone SHALL write a **cancelled** state on the request durably before it shows "Cancelled". Every scheduled callback SHALL check the request's id and state before acting. If the cancel write fails, Plainphone SHALL NOT show "Cancelled", SHALL retry, and SHALL NOT commit the change while the cancel is unresolved. The cancel SHALL be texted to every trusted person, with who cancelled.
+The cancelled state and its texts SHALL be written before Plainphone shows "Cancelled". If that write fails, Plainphone SHALL NOT show "Cancelled", SHALL retry, and SHALL NOT commit while the cancel is unresolved.
 
-**Where Cancel is reachable.** A pending change and its PIN-free Cancel SHALL be shown on the home-screen notice line when it is the line shown, on the "Plainphone needs attention" screen, and on Plainphone's own settings screen.
+**Where Cancel is reachable.** A pending change and its PIN-free Cancel SHALL be on the home-screen notice line when that line is shown, on the "Plainphone needs attention" screen, and on Plainphone's own settings screen.
 
-**Skip.** In supervised mode, a trusted person's recovery code SHALL skip the wait, only through a screen that names the exact pending change and asks the person to confirm skipping it. Entering a recovery code to reset a forgotten PIN SHALL NOT skip anything. In self-managed mode, nothing SHALL skip the wait.
+**Skip.** In supervised mode, a trusted person SHALL be able to skip the wait with their recovery code, only through a screen that names the exact pending change. After they confirm and set a new PIN, one atomic write of the credential store and the operation record SHALL replace their PIN and code, raise their credential generation, record them as the skipper, and move the operation to committing. The skipper's authority replaces the starter's; the other dependencies SHALL still be checked. Entering a recovery code only to reset a forgotten PIN SHALL NOT skip anything. In self-managed mode, nothing SHALL skip the wait.
 
-**Re-check.** When the wait matures (or is skipped), Plainphone SHALL check that the starter's credential generation (or, for a skip, the generation it was confirmed under) and the structure generation are unchanged, and that the starter's credential still exists. If any check fails, the change SHALL be cancelled and texted to every trusted person.
+**Commit.** When the wait matures, Plainphone SHALL re-check the dependencies and the mode against the credential store, then move the operation to committing in one write, or cancel it. From committing on, the PIN-free Cancel SHALL NOT be offered, and screens SHALL say "Already in progress". After commit, a credential change SHALL NOT stop the operation.
 
-**Commit.** If the re-check passes, Plainphone SHALL write the request's state as **committing** in one atomic write, and start that change's **operation journal**. From then on, Cancel SHALL NOT be offered, and screens SHALL say "Already in progress". The operation journal SHALL resume after any restart, reading each step back, until **completed**; then Plainphone SHALL text every trusted person. The operation journal SHALL be kept in two copies. If both are damaged, Plainphone SHALL keep whichever credential set and policy are valid on disk, show "Plainphone needs attention", text every trusted person, and refuse new waiting changes until a helper has looked at it.
+**Lost operation record.** If no valid copy can be read, Plainphone SHALL reconcile, treating the credential store as the truth:
+- for a change of people or mode, set the reset-protection list to match the people in the credential store and read it back;
+- for a turn-off, re-apply the full lockdown policy;
+- then free the slot, text every trusted person that the change didn't finish, and log it.
 
-**Missing or damaged wait record.** No record means nothing is pending. A damaged record while pending SHALL cancel that change, leave the phone as it was, and text everyone on the last known list. A damaged record while committing SHALL resume from the operation journal.
+If the reconcile can't read back, the slot SHALL stay held, "Plainphone needs attention" SHALL show, and a trusted person (or the self-managed user) SHALL be able to run Repair with their PIN, which retries the reconcile and shows what failed.
 
-During the wait, the lockdown SHALL stay fully in place.
+No part of this SHALL gate calls, Emergency or alerts. During the wait, the lockdown SHALL stay fully in place.
 
-#### Scenario: Crash before the start text is queued
+#### Scenario: Crash before the start is written
 - **WHEN** Plainphone is killed right after a turn-off is confirmed
-- **THEN** either nothing was written and no change is pending, or the wait record and its queued texts were both written and the texts are sent after restart
+- **THEN** either no record exists and nothing is pending, or the pending record and its queued texts both exist and the texts are sent after restart
 
 #### Scenario: Owner replaces a seen PIN
 - **WHEN** a child starts a handover with the trusted person's PIN, and the trusted person then resets her PIN with her recovery code
-- **THEN** the PIN reset does not skip the handover, and when the wait matures the re-check finds the trusted person's credential generation changed and cancels it
+- **THEN** the PIN reset does not skip anything, and the handover is cancelled at once because a slot it depends on changed
 
-#### Scenario: Turn-off started, then mode changed
-- **WHEN** a turn-off is pending and someone tries to start a mode switch
-- **THEN** the switch can't start until the turn-off is cancelled
+#### Scenario: Other person's PIN change
+- **WHEN** Beaux starts handing his role over, and the trusted person replaces her PIN during the wait
+- **THEN** the handover is not cancelled, and when it completes the trusted person's new PIN still works
+
+#### Scenario: Skip with the other person's code
+- **WHEN** Beaux started a turn-off, and the trusted person skips the wait with her recovery code
+- **THEN** one write replaces the trusted person's PIN and code, records her as the skipper and starts committing; a crash leaves either none or all of that done
+
+#### Scenario: Second change while one is committing
+- **WHEN** a handover is committing and stuck, and someone tries to start a turn-off
+- **THEN** the turn-off can't start until the handover reaches completed or cancelled
 
 #### Scenario: Cancelled by the user
 - **WHEN** a child who saw a PIN starts a turn-off, and the user taps Cancel on the home screen
@@ -133,17 +155,17 @@ During the wait, the lockdown SHALL stay fully in place.
 - **WHEN** a turn-off is cancelled and a timer scheduled before the cancel fires later
 - **THEN** the timer finds the request cancelled and does nothing
 
-#### Scenario: Cancel hidden behind "needs attention"
-- **WHEN** a turn-off is pending and "Plainphone needs attention" is the line on the home screen
-- **THEN** the pending turn-off and its Cancel are on the needs-attention screen and in Plainphone's settings
+#### Scenario: Delayed reply cancels the wrong request
+- **WHEN** Q15 passed, the trusted person replied `CANCEL` with request A's code, A was cancelled on the phone, request B was started, and then the trusted person's reply arrives
+- **THEN** B is not cancelled, because the code doesn't match, and the reply is logged
 
-#### Scenario: Damaged wait record
-- **WHEN** the wait record for a pending trusted-person change fails its checksum after a reboot
-- **THEN** the change is cancelled, the current trusted people keep their roles, and both are texted
+#### Scenario: Copies disagree
+- **WHEN** one copy of the operation record says committing at revision 7 and the other says rolling back at revision 8
+- **THEN** Plainphone continues rolling back
 
-#### Scenario: Late cancel text
-- **WHEN** Q15 passed, and a `CANCEL` reply arrives after a turn-off has committed
-- **THEN** turning off continues, and the reply is logged
+#### Scenario: Both copies lost during a handover
+- **WHEN** both copies of a committing handover's record are unreadable after a restart
+- **THEN** Plainphone sets reset protection to match the people in the credential store, reads it back, frees the slot and texts everyone
 
 ### Requirement: Changing who the trusted people are needs a current trusted person
 Adding a trusted person, handing a role over and removing a trusted person SHALL each need a current trusted person's PIN, and SHALL be waiting changes. The user alone SHALL NOT be able to change who the trusted people are.
@@ -155,23 +177,27 @@ Adding a trusted person, handing a role over and removing a trusted person SHALL
 - enter their reset-protection `userId` using the guide's People API steps on their own device;
 - confirm a test text from Plainphone.
 
-A current trusted person or the helper SHALL record that the incoming person's account can be signed in to from another device, that its second factor is not only on a Plainphone phone, and that it is at least 72 hours old. These details SHALL be stored in the wait record and SHALL grant nothing until the change completes.
+A current trusted person or the helper SHALL record that the incoming person's account can be signed in to from another device, that its second factor is not only on a Plainphone phone, and that it is at least 72 hours old. These details SHALL be stored in the operation record and SHALL grant nothing until the change completes.
 
 **Handing over** SHALL need the outgoing person's own PIN or recovery code.
 
 **Removing.** Plainphone SHALL NOT remove the last trusted person. That is a switch to self-managed mode or turning off.
 
-**Completing.** The operation journal SHALL run, each step read back:
-1. set the reset-protection list to the new set of `userId` values and send the broadcast (device-lockdown);
-2. only when step 1 reads back correctly, replace the credential set in one atomic write and raise the structure generation;
-3. clear the outgoing person's data, mark the change completed, and text every trusted person.
+**Patch.** The operation SHALL store a patch that names only the slots it adds, removes or replaces. Applying it SHALL NOT change any other slot.
 
-If step 1 does not read back correctly, the change SHALL stay committing, the old trusted people SHALL stay in charge with their old credentials, Plainphone SHALL retry step 1 on every policy pass, and trusted-person mode SHALL show "Reset protection not updated – call the helper". Plainphone SHALL NOT report the change as done. A trusted person MAY cancel a stuck change with their PIN; Plainphone SHALL then restore the old reset-protection list, read it back, and only then mark it cancelled.
+**Completing.** The forward steps SHALL be, each read back:
+1. set the reset-protection list to the `userId` values the credential store will hold after the patch, and send the broadcast (device-lockdown);
+2. only when step 1 reads back correctly, apply the patch to the credential store in one atomic write and raise the structure generation;
+3. move to completed, with texts to every trusted person.
 
-After an interruption, either the old set or the new set SHALL work, never neither.
+If step 1 does not read back correctly, the operation SHALL stay committing and retry on every policy pass, the people in charge SHALL keep their current credentials, trusted-person mode SHALL show "Reset protection not updated – call the helper", and Plainphone SHALL NOT report the change as done or claim which account a wipe would ask for.
+
+**Stopping a stuck change.** While step 1 is failing and step 2 has not happened, any current trusted person SHALL be able to stop the change with their PIN from the needs-attention screen. Plainphone SHALL first write the rolling-back state, then set the reset-protection list back to the people in the credential store and read it back, then move to cancelled. If that readback fails, the operation SHALL stay rolling back and retry. Once step 2 has happened, stopping SHALL NOT be offered.
+
+After an interruption, either the old people or the new people SHALL be in charge, never neither.
 
 #### Scenario: Handover
-- **WHEN** Beaux hands his role to his sister with his PIN, she sets up her PIN, code and ID, and 24 hours pass without a cancel
+- **WHEN** Beaux hands his role to his sister with his PIN, she sets up her PIN, code and ID, and 24 hours of proven running time pass without a cancel
 - **THEN** the reset-protection list names her and not him, then she becomes a trusted person, and Beaux's PIN and code no longer work
 
 #### Scenario: Someone who saw a PIN adds themselves
@@ -180,7 +206,11 @@ After an interruption, either the old set or the new set SHALL work, never neith
 
 #### Scenario: Reset protection can't be updated
 - **WHEN** a handover matures and the new reset-protection list does not read back
-- **THEN** Beaux stays a trusted person with his old PIN, his sister's PIN grants nothing, the change is not reported as done, and the helper is asked to look
+- **THEN** Beaux stays a trusted person with his current PIN, his sister's PIN grants nothing, the change is not reported as done, and the helper is asked to look
+
+#### Scenario: Stopping a stuck handover, interrupted
+- **WHEN** the trusted person stops a stuck handover, Plainphone restores the old reset-protection list, and the phone restarts before the change is marked cancelled
+- **THEN** Plainphone continues rolling back and does not resume the handover
 
 #### Scenario: Restart while completing
 - **WHEN** the phone restarts in the middle of completing a handover
@@ -191,7 +221,7 @@ A phone SHALL be in **supervised mode** (one or two trusted people) or **self-ma
 
 The lockdown at rest SHALL be the same in both modes: Device Owner, hidden apps, lock task, restrictions, the emergency floor and web containment. General browsers SHALL stay hidden in both modes.
 
-Setup and "What Plainphone can't stop" SHALL say, in plain words, that in self-managed mode Plainphone adds waits and limits, that it can't stop the user because the user holds the PIN, and that the user can always remove it by waiting 24 hours or by wiping the phone.
+Setup and "What Plainphone can't stop" SHALL say, in plain words, that in self-managed mode Plainphone adds waits and limits, that it can't stop the user because the user holds the PIN, and that the user can remove it by waiting at least 24 hours of the phone being on (longer if the change is cancelled or interrupted) or by wiping the phone.
 
 **Stricter at once, looser with friction.** In self-managed mode:
 - removing an app, lengthening the elevation countdown, and lowering the daily limit SHALL take effect at once, with the PIN. A longer countdown SHALL also apply to a countdown already running;
@@ -210,39 +240,49 @@ Setup and "What Plainphone can't stop" SHALL say, in plain words, that in self-m
 
 #### Scenario: Recovery code in self-managed mode
 - **WHEN** the user enters their recovery code while a turn-off is waiting
-- **THEN** they can set a new PIN, and the turn-off still waits
+- **THEN** they can set a new PIN, the turn-off is cancelled at once because the PIN that started it was replaced, and nothing is skipped
 
-### Requirement: Elevation in self-managed mode is a single-use grant under the session contract
-An **elevation** SHALL be a single-use grant with an id, one kind and a deadline:
+### Requirement: Elevation in self-managed mode is a single-use grant, separate from the package access it opens
+An **elevation** SHALL be a **grant** with an id, one kind, a deadline and a binding:
 
-| Kind | Allows | Deadline |
-|---|---|---|
-| Play | a Play session, and approving apps installed during it before the deadline | 10 minutes |
-| Settings | a Settings session | 5 minutes |
-| Approve | approving one installed hidden app; no packages added to lock task | 5 minutes |
-| Update | one Plainphone update, under the existing updater requirement unchanged | 10 minutes |
+| Kind | Package access | Allows | Bound to | Deadline |
+|---|---|---|---|---|
+| Play | a Play session | installing in Play, then approving apps installed during that session | each approval to the installed package and signer | 10 minutes |
+| Settings | a Settings session | changing settings | – | 5 minutes |
+| Approve | none | approving one installed hidden app | the chosen package and signer; used up by that approval | 5 minutes |
+| Update | none | one Plainphone update, under the existing updater requirement unchanged | the verified staged bytes and version; used up by that install | 10 minutes |
 
-1. **Countdown.** After the PIN and the choice of kind, Plainphone SHALL count down (default 10 minutes). The phone SHALL work normally during it. The user SHALL be able to cancel at any time.
+1. **Countdown.** After the PIN and the choice of kind, Plainphone SHALL count down (default 10 minutes). This PIN entry SHALL be the fresh authority for the grant. The phone SHALL work normally during the countdown, and the user SHALL be able to cancel it.
 2. **Start.** When the countdown ends, the user SHALL tap Start and confirm the kind within 5 minutes, or the elevation lapses without a debit.
-3. **Debit and journal.** On Start, Plainphone SHALL write the debit and the grant's session journal entry in one atomic write before anything is relaxed. Starts SHALL be serialized so a double tap can't get two.
-4. **Use.** The grant SHALL allow only its kind until its deadline, and SHALL follow every step of the session contract.
-5. **End.** The grant SHALL be used up at its deadline, on Done, or on any Plainphone restart. An action confirmed after the deadline SHALL NOT complete.
+3. **Debit.** On Start, Plainphone SHALL write the debit and the grant (with the session journal entry, for Play and Settings) in one atomic write before anything is relaxed. Starts SHALL be serialized so a double tap can't get two.
+4. **Package access** SHALL end on the session contract's triggers. For a Play grant, returning to Plainphone to approve SHALL end Play access but SHALL keep the grant until its deadline.
+5. **The grant** SHALL end at its deadline, on Done, or on any Plainphone restart. Nothing SHALL extend or restore it.
+6. **Last check.** Immediately before the irreversible step (the approval write, or the PackageInstaller commit), Plainphone SHALL check that the grant is live, of the right kind, not used up, and that the binding matches, and SHALL use it up in the same step. If the check fails, nothing SHALL happen. An install committed before the deadline MAY finish after it; no rollback is promised.
+7. **Updates.** The updater's closing of open sessions SHALL end package access only, not the Update grant.
 
 At most one countdown or grant SHALL exist at a time.
 
 **Daily limit.** At most a set number of debits (default 2) SHALL exist within 24 hours of proven running time. A debit SHALL NOT be cleared by a crash, a reboot or a failed write. A damaged debit list SHALL be replaced, durably, by one counting as no turns left from now; if that write fails, no elevation SHALL start.
 
-**Never permanent.** No setting SHALL remove the countdown or the limit, or lengthen a deadline. The countdown SHALL be settable from 10 minutes to 24 hours, and the limit from 0 to 3 a day. The custody limit (a grant stays open if Plainphone can't run) SHALL be disclosed as the one exception, with nobody watching.
+**Never permanent.** No setting SHALL remove the countdown or the limit, or lengthen a deadline. The countdown SHALL be settable from 10 minutes to 24 hours, and the limit from 0 to 3 a day. The custody limit (package access stays open if Plainphone can't run) SHALL be disclosed as the one exception, with nobody watching.
 
-Changes made during an elevation SHALL persist, as they would for a trusted person.
+Changes made with a grant SHALL persist, as they would for a trusted person.
 
 #### Scenario: Elevation to add an app
-- **WHEN** the user enters their PIN to add an app, waits 10 minutes, taps Start, installs the app and approves it before the deadline
-- **THEN** a turn is counted, the Play session lasts at most 10 minutes, and the approved app stays approved after it closes
+- **WHEN** the user enters their PIN to add an app, waits 10 minutes, taps Start, installs the app, returns to Plainphone and approves it before the deadline
+- **THEN** a turn is counted, Play access ended when they left Play, the approval completes, and the app stays approved
 
 #### Scenario: Approval after the deadline
-- **WHEN** the user installs an app in a Play elevation and opens the approval screen after the 10 minutes
-- **THEN** the approval can't complete, and the app stays hidden until another elevation
+- **WHEN** the user installs an app in a Play elevation and confirms the approval after the 10 minutes
+- **THEN** the approval doesn't happen, and the app stays hidden until another elevation
+
+#### Scenario: One Approve grant, two apps
+- **WHEN** the user approves one hidden app with an Approve grant and then tries a second
+- **THEN** the second approval doesn't happen, because the grant was used up
+
+#### Scenario: Update delayed past the deadline
+- **WHEN** an Update grant's download and checks finish after its 10 minutes
+- **THEN** the install is not committed
 
 #### Scenario: Daily limit reached
 - **WHEN** the user has 2 debits within the last 24 hours of proven running time and tries a third
@@ -268,7 +308,7 @@ Changes made during an elevation SHALL persist, as they would for a trusted pers
 
 #### Scenario: User enrols a second identity as trusted person
 - **WHEN** a self-managed user with no turns left starts a switch to supervised, enrolling an account and number they control
-- **THEN** the switch waits 24 hours of proven running time, the new PIN and recovery code grant nothing until it completes, and no elevation is available meanwhile
+- **THEN** the switch waits 24 hours of proven running time, the new PIN and recovery code grant nothing until it completes, and no elevation is available through the pending credentials; the user's own daily limit keeps ageing as normal
 
 #### Scenario: User on a supervised phone wants self-managed
 - **WHEN** the user of a supervised phone looks for a way to switch to self-managed
@@ -436,8 +476,10 @@ The setup guide and the disclosure screen SHALL describe the last-resort path, s
 
 The guide SHALL say that this path only works if the listed account can be signed in to without this phone (setup checks this for every listed account, including the user's own in self-managed mode).
 
+This requirement covers failures of Plainphone itself on a running Android system. It does not cover a system that can't start, such as the PLA-22 boot loop, where there is no working dialer until a recovery wipe.
+
 #### Scenario: Plainphone crash loop
-- **WHEN** Plainphone cannot start at all
+- **WHEN** Plainphone cannot start at all, while Android itself starts normally
 - **THEN** calls and 9-1-1 still work from the lock screen and the system dialer, and the guide's recovery steps return the phone to a usable state
 
 ### Requirement: Plain disclosure of leftover risk
@@ -445,13 +487,14 @@ Trusted-person mode SHALL include a "What Plainphone can't stop" screen, written
 - web pages inside approved apps;
 - Google account or help screens that testing found reachable;
 - that a supervised session gives open access, and so needs custody;
+- that someone who knows a PIN can keep starting changes, and anyone holding the phone can keep cancelling them, which can delay a legitimate change;
 - that a session stays open if Plainphone cannot run;
 - that an unapproved app may run in the background, with no time limit, if hiding it fails;
 - a hardware-button wipe, and what reset protection does about it;
 - that losing power in the moment right after Plainphone unhides an app can still stop the phone from starting, and that recovery then needs a wipe;
 - that Plainphone has no server, analytics or account, sends texts only to the trusted people through the carrier, and keeps its history on the phone; but the phone runs Google's Android with a Google account, and Google collects some data that Plainphone can't stop; the setup privacy steps reduce it;
 - with two trusted people: that either can approve apps, open sessions, or turn Plainphone off, and that the 24-hour wait protects against someone who saw a PIN, not against the other trusted person;
-- in self-managed mode: that Plainphone adds waits and limits but can't stop the user, who holds the PIN; that getting full control back takes at least 24 hours of the phone being on, or a wipe; that a recovery-mode wipe erases the phone and then asks for the user's own account; and that if Plainphone can't run during an elevation, it stays open with nobody watching.
+- in self-managed mode: that Plainphone adds waits and limits but can't stop the user, who holds the PIN; that getting full control back takes at least 24 hours of the phone being on (longer if the change is cancelled or interrupted), or a wipe; that a recovery-mode wipe erases the phone and then asks for the user's own account; and that if Plainphone can't run during an elevation, it stays open with nobody watching.
 
 #### Scenario: Trusted person reads the limits
 - **WHEN** the trusted person opens "What Plainphone can't stop"
