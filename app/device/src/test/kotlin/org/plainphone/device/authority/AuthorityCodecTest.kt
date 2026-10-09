@@ -56,9 +56,9 @@ class AuthorityCodecTest {
     @Test fun credentialsRoundTripEveryField() {
         for (contact in listOf(PersonContact("synthetic-self", "synthetic-contact"), null)) {
             val original = credentials(contact)
-            val bytes = AuthorityCodec.encodeCredentials(original)
+            val bytes = AuthorityCodec.encodeCredentials(original)!!
             val decoded = checkNotNull(AuthorityCodec.decodeCredentials(bytes))
-            assertArrayEquals(bytes, AuthorityCodec.encodeCredentials(decoded))
+            assertArrayEquals(bytes, AuthorityCodec.encodeCredentials(decoded)!!)
             assertEquals(original.revision, decoded.revision)
             assertEquals(original.pendingNotices, decoded.pendingNotices)
             assertEquals(original.appliedPeopleChange, decoded.appliedPeopleChange)
@@ -102,7 +102,7 @@ class AuthorityCodecTest {
     }
 
     @Test fun malformedBytesDecodeAsNullNeverAsEmptyState() {
-        val bytes = AuthorityCodec.encodeCredentials(credentials())
+        val bytes = AuthorityCodec.encodeCredentials(credentials())!!
         for (length in 0 until bytes.size) assertNull(AuthorityCodec.decodeCredentials(bytes.copyOf(length)))
         assertNull(AuthorityCodec.decodeCredentials(bytes + 0))
         val elevation = AuthorityCodec.encodeElevation(ElevationRecord())!!

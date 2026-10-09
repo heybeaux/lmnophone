@@ -545,5 +545,5 @@ class PeopleTransactionsTest {
     private fun Rig.startRemove(): String = start(waiting.prepareRemove(anna, ben))
 
     private fun holderBytes(state: CredentialState, person: TrustedPersonId): ByteArray =
-        AuthorityCodec.encodeCredentials(CredentialState(Mode.TRUSTED, mapOf(person to state.people.getValue(person))))
+        AuthorityCodec.encodeCredentials(CredentialState(Mode.TRUSTED, mapOf(person to state.people.getValue(person))))!!
 }

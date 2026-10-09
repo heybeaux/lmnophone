@@ -138,8 +138,8 @@ class StoreCommitProtocolTest {
             order.associateWith { if (it == self) person(1) else person(2) }, revision = revision,
             pendingNotices = order.map { LockoutNotice(it, CredentialChannel.PIN, 0) }.toSet(),
             recoveryProfile = RecoveryProfile(order.associateWith { "synthetic-${it.value}" }, null, FrictionSettings(1_200_000, 1)))
-        assertArrayEquals(AuthorityCodec.encodeCredentials(trusted(listOf(self, other))),
-            AuthorityCodec.encodeCredentials(trusted(listOf(other, self))))
+        assertArrayEquals(AuthorityCodec.encodeCredentials(trusted(listOf(self, other)))!!,
+            AuthorityCodec.encodeCredentials(trusted(listOf(other, self)))!!)
         val store = open(tmp.newFolder())
         assertTrue(store.initialize(trusted(listOf(self, other)), WaitingState(storageGeneration = "live"), ElevationRecord()))
         assertTrue(store.credentials.compareAndSet(trusted(listOf(other, self)), trusted(listOf(other, self), 1)))
