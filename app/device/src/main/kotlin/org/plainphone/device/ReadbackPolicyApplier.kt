@@ -44,6 +44,28 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
         return run.result(applied, null)
     }
 
+    /**
+     * Emergency repair when the ordinary apply could not run or stopped (device-lockdown, Locked-boot
+     * path: repair does not depend on the session revoke). Runs only restrictions, the floor (with its
+     * lock-task membership and fixed features) and the never-hide guard, each written and read back on
+     * its own, so one failed stage does not stop the others. Hides, lock-task list and Home never run.
+     */
+    fun repairEmergency(plan: PolicyPlan): ApplyResult {
+        val run = Run(plan)
+        val applied = mutableListOf<ApplyStage>()
+        var failed: ApplyStage? = null
+        for (stage in EMERGENCY_STAGES) {
+            val ok = try {
+                run.write(stage)
+                run.readBack(stage)
+            } catch (e: Exception) {
+                false
+            }
+            if (ok) applied += stage else if (failed == null) failed = stage
+        }
+        return run.result(applied, failed)
+    }
+
     /** Reads every readback step of [plan] against Android now and writes nothing. A throwing read is false. */
     fun readBack(plan: PolicyPlan): Boolean {
         val run = Run(plan)
@@ -161,5 +183,9 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
         }
 
         private fun flushState(): Boolean? = runCatching { port.flushComponentEnabled() }.getOrNull()
+    }
+
+    companion object {
+        val EMERGENCY_STAGES = listOf(ApplyStage.RESTRICTIONS, ApplyStage.EMERGENCY_FLOOR, ApplyStage.NEVER_HIDE_GUARD)
     }
 }

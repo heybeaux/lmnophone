@@ -16,7 +16,7 @@ import org.plainphone.policy.SessionEffects
 /**
  * What one re-apply achieved.
  * @property ready every step was written and read back and the journal is clear. Home may show only then.
- * @property apply the plan's apply, or null when no plan could be built or the revoke failed first.
+ * @property apply the plan's apply; after a failed run, the emergency repair's result. Null when no plan could be built.
  * @property withheld restrictions the build's [RestrictionFilter] left out.
  */
 data class BootOutcome(val ready: Boolean, val locked: Boolean, val apply: ApplyResult?, val withheld: Set<Restriction>)
@@ -31,6 +31,9 @@ data class BootOutcome(val ready: Boolean, val locked: Boolean, val apply: Apply
  *   only restrictions, the emergency floor (with the emergency UI's lock-task membership) and the
  *   never-hide guard. The journal store must be in device-protected storage.
  * - Unlocked start: the full plan, ending with lock task and Home.
+ *
+ * If the run is not ready and the ordinary apply did not complete restrictions, the floor and the
+ * guard (a failed revoke, a failed stage), [ReadbackPolicyApplier.repairEmergency] still runs them.
  *
  * Revoking a relaxation takes the package out of lock task and hides it, unless the plan's never-hide
  * list names it. With no plan the packages still leave lock task, and the run is not ready.
@@ -58,6 +61,12 @@ class BootReapply(
             null
         }
         val ready = sessions.onStart()
+        // Emergency repair does not depend on the revoke or on an earlier stage. The journal stays
+        // revoke-pending and the run stays not ready, so nothing is handed back.
+        val current = plan
+        if (!ready && current != null && applied?.applied?.containsAll(ReadbackPolicyApplier.EMERGENCY_STAGES) != true) {
+            attempt { applier.repairEmergency(current) }?.let { applied = it }
+        }
         return BootOutcome(ready, locked, applied, filter.withheld)
     }
 
