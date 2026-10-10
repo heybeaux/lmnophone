@@ -10,7 +10,7 @@ The **never-hide list** SHALL be the build inventory's never-hide dependencies (
 
 The policy engine SHALL refuse any policy that would hide, suspend, disable or uninstall a package on this list, or disable any of its components.
 
-The system dialer SHALL always be on the lock-task UI list. `LOCK_TASK_FEATURE_KEYGUARD` and `LOCK_TASK_FEATURE_HOME` SHALL always be set.
+The system dialer and the cell broadcast alert display SHALL always be on the lock-task UI list. `LOCK_TASK_FEATURE_KEYGUARD` and `LOCK_TASK_FEATURE_HOME` SHALL always be set.
 
 **Invariant: 9-1-1 is always reachable, and never from an accidental tap on the home screen** (Beaux, Telegram 4487). The routes are:
 - **Phone:** the system dialer, reached from Phone on the home screen. From inside an approved app, the user presses Home, then Phone. Dialling 9-1-1 there SHALL work under lock task with in-task launches blocked.
@@ -51,6 +51,7 @@ Results SHALL be recorded honestly. Where the image cannot inject an alert, the 
 The gate SHALL **fail** for each of these negative-control builds:
 - Emergency resolves to nothing;
 - the dialer is removed from the lock-task UI list;
+- the alert display is removed from the lock-task UI list;
 - the alert-display component is disabled.
 
 A failing gate SHALL block release. If Beaux records a build-scoped exception for unverified alert display, that exception SHALL name whether the disabled-alert negative control was also unverified. The exception releases only that build, and only for alerts. Emulator results SHALL NOT be presented as proof that a real 9-1-1 call gets through.

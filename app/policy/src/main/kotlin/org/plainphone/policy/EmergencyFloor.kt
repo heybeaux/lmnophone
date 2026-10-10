@@ -13,7 +13,7 @@ enum class FloorRole(val source: IdentitySource, val hasEmergencyUi: Boolean = f
     IN_CALL_UI(IdentitySource.OS_MANAGED, true),
     SMS(IdentitySource.OS_MANAGED),
     CELL_BROADCAST_RECEIVER(IdentitySource.SYSTEM_ONLY_QUERY),
-    CELL_BROADCAST_DISPLAY(IdentitySource.SYSTEM_ONLY_QUERY),
+    CELL_BROADCAST_DISPLAY(IdentitySource.SYSTEM_ONLY_QUERY, true),
     WEBVIEW(IdentitySource.OS_MANAGED),
     KEYBOARD(IdentitySource.OS_MANAGED),
     PERMISSION_CONTROLLER(IdentitySource.SYSTEM_ONLY_QUERY),
