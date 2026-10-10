@@ -52,6 +52,14 @@ data class PolicyInput(
     val waitingOperation: WaitingOperation? = null,
     val approvalState: AppApprovalState? = null,
     val installedIdentities: List<ApprovalBinding> = emptyList(),
+    /**
+     * Fresh, positively verified absence for the managed user, supplied by the trusted adapter.
+     * An omitted installed fact, null UID, failed query, hidden/disabled package or unavailable
+     * user is not proof of absence. Default unknown means retain UI membership. Installed facts
+     * win contradictions. This only prunes minimum/inherited UI, never never-hide protection.
+     * Recollect on every policy pass; do not persist/reuse absence as install authority.
+     */
+    val confirmedAbsentPackages: Set<PackageName> = emptySet(),
 )
 
 /** Null fields are outside this plan: neither write nor assert their values during readback. */
