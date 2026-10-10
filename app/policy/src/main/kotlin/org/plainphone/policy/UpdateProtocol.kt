@@ -57,7 +57,9 @@ interface UpdateUseStore {
      * authority; do not invent an elevation/debit. Preserve original deadlines and every debit.
      * Every session/journal/credential/mode writer uses this same coordinator. Reject reentrant
      * controller mutations, but allow finalCheck's reads and PinVault.consumeFor on this thread.
-     * The caller invokes installer commit immediately on success, with no intervening adapter work.
+     * The caller reads the boot clock on success before installer commit. A passed deadline spends
+     * the turn without installing; a result-only CAS records FAILED and preserves the receipt/outbox.
+     * There is no intervening adapter work on the successful install path.
      */
     fun commitUpdateUse(expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
         expectedCredentials: CredentialState, expectedUpdate: UpdateRecord, submission: UpdateSubmission,
@@ -65,7 +67,11 @@ interface UpdateUseStore {
 }
 
 interface UpdateInstaller {
-    /** Abandon EVERY own PackageInstaller session before calling ElevationController.onStart. */
+    /**
+     * Abandon only UNCOMMITTED own sessions before ElevationController.onStart. Keep committed
+     * sessions (X6); reconciliation tracks them until installed or confirmed gone. Any memory of
+     * commit attempts belongs to one adapter instance, not the entire process.
+     */
     fun abandonOwnSessions(): Boolean
     /**
      * Fresh facts from adapter-owned staging, never UI/intent data. Hash Session.openRead after the
@@ -78,6 +84,8 @@ interface UpdateInstaller {
     fun finalFacts(): UpdateFinalFacts?
     /** Submit this session once. Never retry, including if this call throws. */
     fun commit(sessionId: Int)
+    /** Read-only: true while the committed session exists, false when gone, null if unknown. */
+    fun committedSessionPending(sessionId: Int): Boolean?
     fun installedVersionCode(): Long?
     /** Idempotent handover self-check. Installation success alone does not prove app health. */
     fun postUpdateSelfCheck(): Boolean
@@ -96,7 +104,9 @@ class SupervisedUpdateRequest internal constructor(val id: String, val staged: S
  * disabled in production until policy AND device adapter pass the Lead's cross-model review.
  * The JVM tests exercise the protocol through this seam; it is not a user preference or runtime flag.
  */
-internal class UpdateProtocol(val store: UpdateUseStore, val installer: UpdateInstaller, val pinnedSelf: ApprovalBinding) {
+internal class UpdateProtocol(val store: UpdateUseStore, val installer: UpdateInstaller, val pinnedSelf: ApprovalBinding,
+    /** Pure monotonic boot-clock read: no persistence, checkpoint, staging or other adapter work. */
+    private val bootTime: () -> BootTime?) {
     var ready = false
         private set
     fun invalidate() { ready = false }
@@ -120,23 +130,36 @@ internal class UpdateProtocol(val store: UpdateUseStore, val installer: UpdateIn
         facts.staged.signatureValid && facts.staged.identity == pinnedSelf && facts.staged.binding == binding &&
         facts.staged.binding.versionCode > facts.installedVersionCode
 
-    /** No durable write or checkpoint between the successful joint use and the one installer call. */
-    fun commit(submission: UpdateSubmission): UpdateOutcome = try {
-        installer.commit(submission.sessionId)
-        UpdateOutcome.SUBMITTED
-    } catch (_: Exception) {
-        // Even a thrown call may have reached the platform. Startup/result readback decides later.
-        UpdateOutcome.COMMIT_UNCERTAIN
+    /** Read time once after durable use-up; a late use stays spent but never reaches the installer. */
+    fun commit(submission: UpdateSubmission): UpdateOutcome {
+        submission.elevationDeadline?.let { deadline ->
+            val now = bootTime()
+            if (now == null || now.bootId != deadline.bootId || now.elapsedMillis > deadline.elapsedMillis) {
+                val before = store.readUpdate() ?: return UpdateOutcome.NOT_READY
+                val saved = before.submission ?: return UpdateOutcome.NOT_READY
+                if (saved.sessionId != submission.sessionId || saved.receipt.id != submission.receipt.id ||
+                    saved.phase != UpdatePhase.SUBMITTED || before.revision == Long.MAX_VALUE) return UpdateOutcome.NOT_READY
+                return if (store.compareAndSetUpdate(before, before.replacing(saved.copy(phase = UpdatePhase.FAILED))))
+                    UpdateOutcome.FAILED else UpdateOutcome.NOT_READY
+            }
+        }
+        return try {
+            installer.commit(submission.sessionId)
+            UpdateOutcome.SUBMITTED
+        } catch (_: Exception) {
+            // Even a thrown call may have reached the platform. Startup/result readback decides later.
+            UpdateOutcome.COMMIT_UNCERTAIN
+        }
     }
 
     /** Adapter-only result routing. Status callbacks never authorize/retry installation. */
+    @Suppress("UNUSED_PARAMETER") // Both terminal statuses require live platform readback.
     fun onResult(sessionId: Int, success: Boolean): UpdateOutcome {
         if (!ready) return UpdateOutcome.NOT_READY
         val before = store.readUpdate() ?: return UpdateOutcome.NOT_READY
         val submission = before.submission ?: return UpdateOutcome.REFUSED
-        if (submission.sessionId != sessionId || submission.phase == UpdatePhase.INSTALLED ||
-            (submission.phase == UpdatePhase.FAILED && !success)) return UpdateOutcome.REFUSED
-        return if (success) readBack(before) else classify(before, false)
+        if (submission.sessionId != sessionId || submission.phase == UpdatePhase.INSTALLED) return UpdateOutcome.REFUSED
+        return readBack(before)
     }
 
     private fun reconcile(): UpdateOutcome {
@@ -153,15 +176,32 @@ internal class UpdateProtocol(val store: UpdateUseStore, val installer: UpdateIn
     } == true
 
     private fun readBack(before: UpdateRecord): UpdateOutcome {
+        // Read session presence first: completion between these reads must not combine an old
+        // installed version with a now-gone session and prematurely allow journal replacement.
+        val pending = installer.committedSessionPending(before.submission!!.sessionId)
         val installed = installer.installedVersionCode() ?: return UpdateOutcome.NOT_READY
-        return classify(before, installed == before.submission!!.versionCode)
+        return classify(before, installed == before.submission.versionCode, pending)
     }
-    private fun classify(before: UpdateRecord, installed: Boolean): UpdateOutcome {
-        if (!installed && before.submission!!.phase == UpdatePhase.FAILED) return UpdateOutcome.FAILED
-        if (before.revision == Long.MAX_VALUE) return UpdateOutcome.NOT_READY
-        val next = before.replacing(before.submission!!.copy(phase = if (installed) UpdatePhase.INSTALLED else UpdatePhase.FAILED))
-        if (!store.compareAndSetUpdate(before, next)) return UpdateOutcome.NOT_READY
-        return if (installed) selfCheck(next) else UpdateOutcome.FAILED
+    private fun classify(before: UpdateRecord, installed: Boolean, pending: Boolean?): UpdateOutcome {
+        val submission = before.submission!!
+        val phase = if (installed) UpdatePhase.INSTALLED else {
+            when (pending) {
+                true -> UpdatePhase.SUBMITTED
+                false -> UpdatePhase.FAILED
+                null -> return UpdateOutcome.NOT_READY
+            }
+        }
+        val next = if (submission.phase == phase) before else {
+            if (before.revision == Long.MAX_VALUE) return UpdateOutcome.NOT_READY
+            before.replacing(submission.copy(phase = phase)).also {
+                if (!store.compareAndSetUpdate(before, it)) return UpdateOutcome.NOT_READY
+            }
+        }
+        return when (phase) {
+            UpdatePhase.INSTALLED -> selfCheck(next)
+            UpdatePhase.SUBMITTED -> UpdateOutcome.SUBMITTED
+            UpdatePhase.FAILED -> UpdateOutcome.FAILED
+        }
     }
     private fun selfCheck(before: UpdateRecord): UpdateOutcome {
         val submission = before.submission!!

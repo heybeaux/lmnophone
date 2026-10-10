@@ -39,6 +39,15 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
   - lock-task features and user restrictions;
   - the apply order.
   The never-hide guard refuses any plan that touches the never-hide list (essential-calling).
+- `UpdateInstaller.committedSessionPending(sessionId: Int): Boolean?`: lane D supplies read-only
+  committed-session presence (true pending, false confirmed gone, null unknown). Pending submissions
+  block replacement until version readback confirms installation or the session disappears. Startup
+  abandons only uncommitted own sessions; commit memory belongs to one adapter instance. The internal
+  `UpdateProtocol` constructor now also requires `bootTime: () -> BootTime?`, a pure monotonic read
+  without storage/checkpoint work. After durable use-up, a deadline-bearing submission past its
+  deadline is marked FAILED by result-only CAS without install or refund; its receipt is retained.
+  Supervised submissions have no deadline. Update remains disabled; lane D implements these seams
+  before any separately reviewed production wiring.
 - `SessionController`: the supervised-session and elevation contract (start, end, revoke-on-start from the journal). Journal and policy persistence go through interfaces that lane D implements: `JournalStore`, `PolicyStore`.
 - `PinVault`: PIN and recovery-code logic.
   - Separate counters and the exact lockout schedule.
