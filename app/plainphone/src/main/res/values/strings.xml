@@ -6,4 +6,9 @@
 <resources>
     <string name="app_name">Plainphone</string>
     <string name="admin_description">Keeps this phone calm: only approved apps open.</string>
+    <!-- Shown until the policy re-apply reads back. %1$s is the app name. -->
+    <string name="checking_title">%1$s is checking the phone</string>
+    <string name="checking_body">This takes a moment. You can still make calls.</string>
+    <string name="checking_phone">Phone</string>
+    <string name="checking_emergency">Emergency call</string>
 </resources>

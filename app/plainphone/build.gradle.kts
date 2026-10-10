@@ -51,6 +51,7 @@ dependencies {
     implementation(project(":ui"))
     implementation(project(":device"))
     implementation(platform(libs.compose.bom))
+    implementation(libs.compose.foundation)
     implementation(libs.activity.compose)
     testImplementation(libs.junit4)
 }
