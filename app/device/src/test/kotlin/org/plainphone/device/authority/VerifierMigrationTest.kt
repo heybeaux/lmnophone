@@ -93,9 +93,9 @@ class VerifierMigrationTest {
         val dir = fixture(3)
         val store = JointAuthorityStore(dir)
         assertTrue(store.migrate())
-        val current = LegacyAuthority.decode(payload(dir, "authority-a", 5)!!, Section.entries.size)!!
+        val current = LegacyAuthority.decode(payload(dir, "authority-a", 6)!!, Section.entries.size)!!
         val sections = current.second.toMutableList().also { it[Section.CREDENTIALS.ordinal] = byteArrayOf(1) }
-        val bad = RecordCodec.encode(5, LegacyAuthority.encode(current.first, sections))
+        val bad = RecordCodec.encode(6, LegacyAuthority.encode(current.first, sections))
         listOf("authority-a", "authority-b").forEach { File(dir, "$it.rec").writeBytes(bad) }
         assertNull(store.credentials.read())
         assertFalse("migrate claims true means readable current record", store.migrate())

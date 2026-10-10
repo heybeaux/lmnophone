@@ -181,5 +181,5 @@ class LegacyMigrationTest {
         assertNull(open(dir).credentials.read())
     }
 
-    private companion object { const val CURRENT = 5 }
+    private companion object { const val CURRENT = 6 }
 }
