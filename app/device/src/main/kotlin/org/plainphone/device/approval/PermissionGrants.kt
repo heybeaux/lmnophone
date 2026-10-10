@@ -35,9 +35,12 @@ interface PermissionGrantPort {
     fun setUninstallBlocked(name: PackageName, blocked: Boolean): Boolean
 }
 
-/** What [PermissionGrants.write] did. Only [DONE] means the grant is in place for the identity. */
+/**
+ * What [PermissionGrants.write] did. Only [DONE] means the grant was in place for the identity, and only
+ * as of the last signer read; see "What DONE means" on [PermissionGrants].
+ */
 enum class GrantWrite {
-    /** Written and read back for the same exact identity. */
+    /** Written and read back for the exact identity, which was still installed at the last signer read. */
     DONE,
     /** Not done for the identity; the installed app is still that identity, or no write was tried. */
     NOT_DONE,
@@ -72,13 +75,31 @@ enum class GrantWrite {
  *    that write, the block stays and the app cannot be uninstalled until it is cleared.
  *
  * A key-rotation update (APK Signature Scheme v3) is a normal update, so the block does not stop it
- * and the permission state carries over. The binding pins the exact signer set, so the rotated app
- * is another identity: if it lands during a write, step 3 fixes its grant DENIED and it needs a fresh
- * approval. A change after [write] returns is outside this boundary; the hidden readback before
- * commit reads UNKNOWN for it.
+ * and the permission state carries over (`pla182` evidence: "rotated update installs while uninstall
+ * is blocked", "the rotated app kept CAMERA GRANTED"). The binding pins the exact signer set, so the
+ * rotated app is another identity. If it lands before the last signer read (step 3), its grant is
+ * fixed DENIED and the result is [GrantWrite.REPLACED_CONTAINED].
  *
- * [set] is true only for [GrantWrite.DONE]. False means "not done", also when a side effect on a
- * replacement was contained.
+ * What DONE means. [GrantWrite.DONE] says: the grant was written and read back for the exact approved
+ * identity, and that identity was still installed at the last signer read (step 3), while the uninstall
+ * block was held. It is a verified snapshot, not a guarantee for the whole call. Nothing is checked from
+ * the last signer read, through putting back the block (step 4), to the return. Only a same-lineage v3
+ * rotation can land in that window: the block refuses uninstall, and Android refuses an update signed
+ * by an unrelated key (`pla182` evidence: DELETE_FAILED_OWNER_BLOCKED and
+ * INSTALL_FAILED_UPDATE_INCOMPATIBLE, hidden and visible). A rotation needs the app developer's own
+ * signing lineage. If one lands there, [write] still returns DONE and the rotated app keeps the grant;
+ * no containment runs. Another signer check would only move the window. The `pla182` emulator check
+ * injects its rotation before the first grant write; host tests cover the late window.
+ *
+ * Callers' duty. Before relying on a grant, or committing an approval, re-read it with [read] by the
+ * exact identity. [read] gives UNKNOWN for an identity that is no longer installed, so a rotated app
+ * fails that check (`:policy` re-reads after its writes and again in its commit check). The rotated app
+ * may still hold the grant while it is hidden and unapproved. Plainphone clears it only at the next
+ * approval for that package, which writes and reads back every requested permission; withdrawal and
+ * removal keep the app hidden and do not rewrite its grants.
+ *
+ * [set] is true only for [GrantWrite.DONE], with the same meaning. False means "not done", also when a
+ * side effect on a replacement was contained.
  */
 class PermissionGrants(private val port: PermissionGrantPort) {
     fun set(identity: ApprovalBinding, write: PermissionWrite): Boolean = write(identity, write) == GrantWrite.DONE
