@@ -100,9 +100,10 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
             ApplyStage.EMERGENCY_FLOOR ->
                 shown(floorPackages) && floorLockTask.let { it == null || port.lockTaskPackages().containsAll(it) }
             ApplyStage.NEVER_HIDE_GUARD -> guardHolds() && shown(plan.neverHide)
+            // Every expected visible or unsuspended package, not only the ones this plan wrote.
             ApplyStage.HIDES ->
                 expected.hidden.let { it == null || it.all { name -> port.packageState(name)?.hidden != false } } &&
-                    shown(plan.unhide - plan.neverHide)
+                    shown(expected.unhiddenAndEnabled + expected.unsuspended)
             ApplyStage.LOCK_TASK ->
                 expected.lockTaskPackages.let { it == null || port.lockTaskPackages() == it } &&
                     expected.features.let { it == null || port.lockTaskFeatures() == it }
@@ -134,10 +135,13 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
                 (name !in expected.unsuspended || !now.suspended)
         }
 
-        /** One real state change of the flush component, read back, retried once. Never a same-state call. */
+        /**
+         * One real state change of the flush component, read back, retried once. Never a same-state call:
+         * an unreadable state is read once more, and if it is still unknown the flip fails without a call.
+         */
         private fun flush(unhidden: PackageName) {
             repeat(2) {
-                val before = runCatching { port.flushComponentEnabled() }.getOrNull() ?: run {
+                val before = flushState() ?: flushState() ?: run {
                     flipFailures += unhidden
                     return
                 }
@@ -149,5 +153,7 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
             }
             flipFailures += unhidden
         }
+
+        private fun flushState(): Boolean? = runCatching { port.flushComponentEnabled() }.getOrNull()
     }
 }
