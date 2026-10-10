@@ -26,14 +26,14 @@ Inputs:
    exception to two current rules:
    - D2 rule 1: a fresh trusted-person PIN is needed to relax the lockdown;
    - web-containment: no sign-in pages.
-2. **How it opens: a small sign-in window that Plainphone ships**, not Android's sign-in app. It is bound to that
+2. **How it opens: a small sign-in window that LMNOPhone ships**, not Android's sign-in app. It is bound to that
    Wi-Fi network. No app is unhidden, so it avoids the boot-loop race that PLA-22 observed when an app is unhidden.
    It needs no Android notification or pull-down gesture.
 3. **Who starts it: the user, with limits** (UX variant B). The trusted person switches the option on with a fresh
    PIN, and it is off by default. The PIN-only choice (variant A, with an optional trip pass) is a legitimate,
    lower-access alternative. Beaux chooses.
 4. **The leak, said plainly:** *a Wi-Fi hotspot can offer access to other websites for the whole window
-   (5-minute target), including search and social sites.* Real sign-in networks usually block most sites until sign-in, but Plainphone
+   (5-minute target), including search and social sites.* Real sign-in networks usually block most sites until sign-in, but LMNOPhone
    can't tell a real one from a hostile one.
 5. **When:** a follow-up change after the MVP's core works. First, an emulator spike must pass the acceptance tests
    below. Nothing is approved for building until then.
@@ -42,11 +42,11 @@ Inputs:
 
 | Finding | Source | What it means |
 |---|---|---|
-| Plainphone can tell when the connected Wi-Fi needs sign-in (`NET_CAPABILITY_CAPTIVE_PORTAL` on a Wi-Fi `NetworkCallback`), with mobile data on or off | PLA-18 Q7 (emulator) | It can be offered only then. That is a trigger, not proof the network is honest |
+| LMNOPhone can tell when the connected Wi-Fi needs sign-in (`NET_CAPABILITY_CAPTIVE_PORTAL` on a Wi-Fi `NetworkCallback`), with mobile data on or off | PLA-18 Q7 (emulator) | It can be offered only then. That is a trigger, not proof the network is honest |
 | Android's sign-in app is a general-purpose browser while open: outside links, JS redirects, `target=_blank`, `window.open` and Google Search all load | PLA-18 Q4 (emulator; the fixture leaves the internet reachable behind the portal) | A hotspot can give full web access for the whole window. The time limit is the real limit |
 | In Android's app, `VALIDATED` arrived about 1 s after Accept, and the probe's session closed 73 ms later. "Use this network as is" and "Continue anyway" also set `VALIDATED` | PLA-18 Q5 (emulator, Android's app, HTTP-only probe fixture) | Close-on-validated works there. The timing is **not** yet measured for our window |
 | A Device Owner can't open Android's sign-in app with its sign-in state (`startCaptivePortalApp` is hidden; `CaptivePortal` has no public constructor). A dismissed notification only comes back after a Wi-Fi reconnect | PLA-18 Q3 (emulator; `javap` on android-36 `android.jar`) | Android's app means relying on its notification (UX path L2) |
-| If Plainphone's process dies mid-session, Android's sign-in app stays reachable until Home is pressed | PLA-18 Q6a (emulator) | Android's app inherits the D2 custody limit |
+| If LMNOPhone's process dies mid-session, Android's sign-in app stays reachable until Home is pressed | PLA-18 Q6a (emulator) | Android's app inherits the D2 custody limit |
 | Unhiding an app followed by sudden power loss can leave system_server crashing on every boot, until a recovery wipe (which triggers FRP). It is a race: looped 8 of 9 at 2–5 s, booted 6 of 6 at 8 s or more. No boot loop was observed in the tested hiding cases. Mitigation B booted 3 of 3 | PLA-22 (emulator, API 35 and 36; AOSP `WRITE_SETTINGS_DELAY = 10*1000`) | Every session that unhides an app is exposed to this race. A user-started kind would be exposed more often, with nobody technical nearby |
 | Android's own sign-in app binds its process to the Wi-Fi network, then inflates a WebView: `initializeWebView()` calls `mCm.bindProcessToNetwork(mNetwork)` before `setContentView` | AOSP `packages/modules/CaptivePortalLogin`, `CaptivePortalLoginActivity.java` (main), around L548–551 (code-confirmed) | A normal app can use the same public API (`bindProcessToNetwork`, API 23). Untested for our window, hence the spike |
 | `LinkProperties.getCaptivePortalData()` is `@hide` / `@SystemApi` and absent from the API 35 and 36 public SDKs | PLA-28 F4 (`javap`; AOSP LinkProperties) | Our window can't learn the portal URL from Android. It starts from a plain HTTP URL instead |
@@ -56,7 +56,7 @@ Inputs:
 
 ## Options
 
-| | Unhide Android's sign-in app | Plainphone's own sign-in window |
+| | Unhide Android's sign-in app | LMNOPhone's own sign-in window |
 |---|---|---|
 | **Trusted person's PIN each time (A)** | A1. Exposed to the unhide race at every start (needs mitigation B). Notification launch path (L2). Fails the ferry case | A2. Not exposed to the unhide race. Fails the ferry case unless a trip pass was set up |
 | **User starts it, with limits (B)** | B1. As A1, more often, alone. **Also needs an explicit waiver of D2's PIN rule for an unhide** | **B2. Recommended** |
@@ -69,13 +69,13 @@ the own window is better for either A or B.
 
 ### 1. The sign-in window
 
-**What it is.** A second, tiny app in the Plainphone build, "Plainphone Wi-Fi sign-in":
-- A separate package, signed with Plainphone's key, with **no admin rights**. It runs under its own app ID.
+**What it is.** A second, tiny app in the LMNOPhone build, "LMNOPhone Wi-Fi sign-in":
+- A separate package, signed with LMNOPhone's key, with **no admin rights**. It runs under its own app ID.
 - It is never hidden, from first setup on, and stays in the lock-task list permanently. Provisioning and updates
   never hide or unhide it.
-- It is on Plainphone's self-exemption list (exact package and certificate). It declares no http(s) intent filters,
+- It is on LMNOPhone's self-exemption list (exact package and certificate). It declares no http(s) intent filters,
   so the D4 classifier doesn't count it as a browser.
-- **Permissions:** `INTERNET`, `ACCESS_NETWORK_STATE`, and the one signature permission it needs to call Plainphone's
+- **Permissions:** `INTERNET`, `ACCESS_NETWORK_STATE`, and the one signature permission it needs to call LMNOPhone's
   claim service.
 
 **Entry points (F2).**
@@ -85,17 +85,17 @@ the own window is better for either A or B.
   signed with the same key, and permanent lock-task membership removes the lock-task barrier. So:
   - The activity takes **no URL, deadline or session data from its intent**. On its first create it claims the live
     session once; on later resume, new intent or restore it checks that it is still the same live instance. It asks
-    Plainphone for the live session, over one Plainphone service protected by a signature
-    permission. Plainphone checks that the caller's UID belongs to the companion package and certificate.
+    LMNOPhone for the live session, over one LMNOPhone service protected by a signature
+    permission. LMNOPhone checks that the caller's UID belongs to the companion package and certificate.
   - That service offers only two calls, "claim the session" and "report closed". It exposes no admin operation.
     The companion gains no Device Owner powers through it.
-  - If Plainphone doesn't answer, or the session is missing, already claimed, expired or from a previous boot, the
+  - If LMNOPhone doesn't answer, or the session is missing, already claimed, expired or from a previous boot, the
     companion shows no web content and closes.
 - `excludeFromRecents`, and `finishAndRemoveTask()` on every close.
 
 **Session contract (F1).**
 - Only one session at a time.
-- Before anything opens, Plainphone durably writes the session record:
+- Before anything opens, LMNOPhone durably writes the session record:
   - a session id;
   - a boot id;
   - a deadline on the elapsed-time clock, capped in code at 5 minutes;
@@ -105,16 +105,16 @@ the own window is better for either A or B.
   claimed" and closes. After a process death, a still-valid session can't be resumed: a new try needs a new tap.
 - The companion validates the session **before** it creates a WebView. It keeps the deadline in memory once claimed
   and enforces it itself, with a timer on a thread separate from the UI thread. That way the deadline still holds
-  while Plainphone is dead.
-- On close, the companion reports to Plainphone. Plainphone writes "ended" before any cleanup, and an ended
+  while LMNOPhone is dead.
+- On close, the companion reports to LMNOPhone. LMNOPhone writes "ended" before any cleanup, and an ended
   session can't be claimed again.
-- Plainphone also enforces the deadline from its side while it runs. As the home app, it brings itself to the front
+- LMNOPhone also enforces the deadline from its side while it runs. As the home app, it brings itself to the front
   at the deadline and asks the companion to close.
-- On every Plainphone start, any session record left over is marked ended, and any companion task still on screen
+- On every LMNOPhone start, any session record left over is marked ended, and any companion task still on screen
   is closed.
 - **What "fails closed" means now:**
   - if the companion crashes, the page is gone;
-  - if Plainphone crashes, the companion still closes the page at its own deadline, without needing Plainphone
+  - if LMNOPhone crashes, the companion still closes the page at its own deadline, without needing LMNOPhone
     to record "ended" first;
   - after a reboot, an old session can never reopen.
   - The 5 minutes is a **target**. The spike measures the actual close delay under tested conditions, including a
@@ -152,7 +152,7 @@ the own window is better for either A or B.
   - autofill is off for the view.
   - The keyboard is whatever the protected-state rules allow; its settings must not open from here.
 - **Clean profile each try:** cookies, web storage, cache and form data are cleared before every try. They are also
-  cleared at Plainphone's next start after a crash, so a sign-in never carries over to make later browsing easier.
+  cleared at LMNOPhone's next start after a crash, so a sign-in never carries over to make later browsing easier.
 - **Close triggers:** screen off, Home, an incoming call, `onStop`, or the activity losing focus to another task.
 - **Unsupported, and the spec says so:** portals that need Google sign-in, a bank or payment app, or another app.
   No user-agent spoofing. The failure path is the W5 screen: mobile data, another Wi-Fi, or forget the network.
@@ -170,8 +170,8 @@ boot-loop causes.
   - A try is debited durably **before** any web content loads. Starts are serialized, so a double tap can't get two.
   - A debit is never cleared by a crash, a reboot, a network change, a failed text or damaged storage. Damaged
     storage counts as "no tries left" until the trusted person resets it with the PIN.
-  - Ageing across reboots is conservative. Each debit records the boot id and elapsed time. Plainphone saves its
-    elapsed time every few minutes. A debit's age is the **lowest** elapsed time Plainphone can prove. After a
+  - Ageing across reboots is conservative. Each debit records the boot id and elapsed time. LMNOPhone saves its
+    elapsed time every few minutes. A debit's age is the **lowest** elapsed time LMNOPhone can prove. After a
     reboot, a debit may count for longer than 24 hours, and the screens disclose that. Wall-clock and time-zone
     changes never shorten it.
   - That is a target of about 15 minutes in 24 hours for **user-started** tries, plus the measured close delay. The trusted person can open extra tries with the
@@ -182,7 +182,7 @@ boot-loop causes.
   - Delivery status (waiting, sent, gave up) is shown on both people's lists. A text can arrive late, or not at
     all after 7 days. In a rare crash right after sending, it could arrive twice.
   - **The text is a notice, not a control.** It never stops the page.
-  - Wording that stays true when late: "Plainphone: a Wi-Fi sign-in page was opened on {user}'s phone. This notice
+  - Wording that stays true when late: "LMNOPhone: a Wi-Fi sign-in page was opened on {user}'s phone. This notice
     may be delayed." No count in the text: a late text can't say truthfully how many tries were recent. The count
     is on the lists. (The UX Designer finalizes it.)
   - The text **doesn't send the Wi-Fi name or location**. Its arrival time shows when the notice was delivered,
@@ -212,7 +212,7 @@ only.
 | Design D4 | Replace "Wi-Fi sign-in pages are unsupported (N5)" with the window rules. Add the companion to the self-exemption list. CaptivePortalLogin **stays hidden** |
 | web-containment spec | Replace the "unsupported" requirement: trigger, session contract, network rules, WebView rules, unsupported portal kinds, new exact strings (W0) |
 | trusted-person-controls spec | The switch, its setup question, the front-page row, extra tries with the PIN, the quota reset with the PIN, the text and its delivery status |
-| UX README and flows | WB2 text row, the U8 sentence, the notice line, "What Plainphone can't stop" (PLA-19 change table), and the wording changes above |
+| UX README and flows | WB2 text row, the U8 sentence, the notice line, "What LMNOPhone can't stop" (PLA-19 change table), and the wording changes above |
 | Decision log | Beaux's answers |
 | tasks.md | Spike task, then build tasks in a follow-up OpenSpec change |
 
@@ -234,11 +234,11 @@ only.
    - from the PLA-29 re-review:
      - a normal launch makes exactly one claim and one debit across its first create, start and resume.
        Duplicates, recreation, restore and replay get no fresh deadline and no content back;
-     - the page closes at expiry with Plainphone killed, the companion's UI thread stalled, or a JavaScript dialog
+     - the page closes at expiry with LMNOPhone killed, the companion's UI thread stalled, or a JavaScript dialog
        open. Measure when interaction and traffic actually stop;
      - mixed-content and JavaScript-dialog policy recorded. Profile clearing finishes before the first load,
        including after a crash, and no sign-in marker survives;
-     - the merged manifests and all of Plainphone's IPC audited. The companion's permissions are `INTERNET`,
+     - the merged manifests and all of LMNOPhone's IPC audited. The companion's permissions are `INTERNET`,
        `ACCESS_NETWORK_STATE` and the one signature permission for the claim service. Unauthorized callers can
        neither mint sessions nor reach admin operations;
      - text queue with no SIM, two SIMs, a changed recipient, and a crash right after sending. Uncertain delivery
@@ -258,7 +258,7 @@ are **not** equally ready:
   - B is re-tested on the device;
   - the launch path works without the pull-down gesture (UX L1), or Beaux confirms L2 works for him on the real build;
   - Beaux accepts the D2 custody limit again for this kind. Android's sign-in app, which is an open browser, stays
-    reachable if Plainphone dies mid-session.
+    reachable if LMNOPhone dies mid-session.
 - **B1 (user-started)** needs all of A1's conditions **plus** Beaux's explicit waiver of D2's fresh-PIN rule for an
   unhide.
 
@@ -271,7 +271,7 @@ app automatically. Any fallback comes back to Beaux before it is built.
    can make this full web access. Bounded and disclosed, not prevented.
 2. **Some portals won't work:** Google-account sign-in, bank-app payment, other-app hand-offs, and RFC 8908-only
    portals.
-3. **Hostile page content runs in a Plainphone-signed app** with no admin rights, a separate app ID and WebView's
+3. **Hostile page content runs in an LMNOPhone-signed app** with no admin rights, a separate app ID and WebView's
    sandboxed renderer. A WebView bug could still give an attacker that app's small rights. WebView updates come
    through Play (the D3 monthly check).
 4. **`VALIDATED` doesn't prove sign-in.** It only ends the window early. W4 covers "closed but no internet".
@@ -279,7 +279,7 @@ app automatically. Any fallback comes back to Beaux before it is built.
 6. **After a reboot, a used try can count for longer than 24 hours** (conservative ageing).
 7. **Not yet tested:** our window at all, real portals and real phones.
 8. **Calls without signal.** Without your carrier's signal or working Wi-Fi, ordinary calls and texts fail.
-   - 9-1-1 can still go through another carrier's network if one is in range. Plainphone never blocks the Emergency
+   - 9-1-1 can still go through another carrier's network if one is in range. LMNOPhone never blocks the Emergency
      button, whatever happens with a sign-in page.
    - This feature helps with Wi-Fi calling only after the sign-in is done.
    - Whether either initial user rely on Wi-Fi calling is still unanswered.

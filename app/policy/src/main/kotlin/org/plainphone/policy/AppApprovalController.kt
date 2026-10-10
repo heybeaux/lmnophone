@@ -124,6 +124,24 @@ interface AppApprovalEffects {
     /** Apply only this plan; every discretionary unhide needs the synchronous flush and live readback. */
     fun applyPolicy(plan: PolicyPlan): Boolean
     fun readBackPolicy(plan: PolicyPlan): Boolean
+    /**
+     * Idempotently remove these discretionary packages from lock task and Home, hide them, and read
+     * all three exclusions back. Return true only when containment is verified for every target;
+     * false or an exception means containment is unverified, never permission to hand back the phone.
+     * Policy supplies an immutable (plan.unhide intersect plan.lockTaskPackages) minus plan.neverHide
+     * and plan.emergencyUi, including other discretionary apps the activation could expose. Enforce
+     * the live never-hide/emergency-floor guard too: never hide or remove access from a protected
+     * package, even if facts changed since the plan. Preserve all access outside the target set.
+     *
+     * Called after every unsuccessful final approval/edit activation attempt, including apply failure.
+     * finishPermissionEdit commits its choices and delegates activation to resume, so shares this
+     * contract. finishWithdrawal and onStart's PREPARING drop do not use this port: their plans exclude
+     * the pending app and remove its access, rather than activate it. They retain their pending journal
+     * on failed readback/CAS and retry the restrictive plan; containing its other already-approved apps
+     * would not repair a failed removal of the pending app. applyPolicy must contain its own partial
+     * failure, and readBackPolicy remains read-only.
+     */
+    fun containFailedActivation(packages: Set<PackageName>): Boolean
 }
 fun interface AppApprovalIdSource { /** Unique across restart, approvals and receipts. */ fun next(): String }
 class AppApprovalRequest internal constructor(
@@ -328,11 +346,28 @@ class AppApprovalController(
         if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
         if (!permissionsMatch(op.record)) return AppApprovalOutcome.NOT_READY
         val plan = planFor(op.record, state) ?: return AppApprovalOutcome.NOT_READY
-        if (!effects.applyPolicy(plan) || !effects.readBackPolicy(plan)) return AppApprovalOutcome.NOT_READY
-        if (planFor(op.record, state) == null || !permissionsMatch(op.record)) return AppApprovalOutcome.NOT_READY
-        if (!store.compareAndSet(state, state.replacing(pending = null), null)) return AppApprovalOutcome.NOT_READY
-        return if (op.receipt?.kind == AppApprovalReceiptKind.PERMISSIONS_CHANGED)
-            AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.APPROVED
+        val discretionary = immutableSet(plan.unhide.intersect(plan.lockTaskPackages) - plan.neverHide - plan.emergencyUi)
+        var activated = false
+        try {
+            if (!effects.applyPolicy(plan) || !effects.readBackPolicy(plan)) return AppApprovalOutcome.NOT_READY
+            if (planFor(op.record, state) == null || !permissionsMatch(op.record)) return AppApprovalOutcome.NOT_READY
+            if (!store.compareAndSet(state, state.replacing(pending = null), null)) return AppApprovalOutcome.NOT_READY
+            activated = true
+            return if (op.receipt?.kind == AppApprovalReceiptKind.PERMISSIONS_CHANGED)
+                AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.APPROVED
+        } catch (_: Exception) {
+            return AppApprovalOutcome.NOT_READY
+        } finally {
+            if (!activated) {
+                try {
+                    // Neither a true result nor an unverified attempt completes the pending operation.
+                    // Retain COMMITTED so resume retries the full activation, with no new receipt.
+                    effects.containFailedActivation(discretionary)
+                } catch (_: Exception) {
+                    // Containment is unverified. The outcome remains NOT_READY.
+                }
+            }
+        }
     }
 
     /** Review the exact stuck approval/edit; no stale-manifest guess or old PIN can withdraw it. */

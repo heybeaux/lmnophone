@@ -4,7 +4,7 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-    <string name="app_name">Plainphone</string>
+    <string name="app_name">LMNOPhone</string>
     <string name="admin_description">Keeps this phone calm: only approved apps open.</string>
     <!-- Shown until the policy re-apply reads back. %1$s is the app name. -->
     <string name="checking_title">%1$s is checking the phone</string>

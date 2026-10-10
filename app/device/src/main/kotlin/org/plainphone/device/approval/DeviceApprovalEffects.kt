@@ -165,6 +165,9 @@ class DeviceApprovalEffects(
 
     override fun readBackPolicy(plan: PolicyPlan): Boolean = attempt { applier.readBack(plan) } == true
 
+    /** Compile stub for the merge of the PLA-234 port (PLA-237); no side effects. */
+    override fun containFailedActivation(packages: Set<PackageName>): Boolean = false
+
     private fun hide(name: PackageName): Boolean {
         if (!mayHide(name)) return false
         return attempt {

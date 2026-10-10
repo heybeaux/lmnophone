@@ -1,10 +1,10 @@
-# Plainphone: what we're asking Beaux to approve
+# LMNOPhone: what we're asking Beaux to approve
 
-Revision 4, 2026-10-08. Updated with Beaux's answers to the decisions card. Prepared by the Plainphone Lead (Claude). Cross-model review by the Verifier & Escape Artist (OpenAI model) across PLA-3, PLA-4, PLA-7, PLA-8, PLA-9 and PLA-10. Final verdict: **approve with changes**; the changes are applied here, and none needed re-review.
+Revision 4, 2026-10-08. Updated with Beaux's answers to the decisions card. Prepared by the LMNOPhone Lead (Claude). Cross-model review by the Verifier & Escape Artist (OpenAI model) across PLA-3, PLA-4, PLA-7, PLA-8, PLA-9 and PLA-10. Final verdict: **approve with changes**; the changes are applied here, and none needed re-review.
 
 ## The short version
 
-We want to build Plainphone as **one Android app** on a normal, Google-certified phone. The app is two things at once:
+We want to build LMNOPhone as **one Android app** on a normal, Google-certified phone. The app is two things at once:
 - the phone's **Device Owner**, Android's built-in "this phone is managed" mode. Wisephone uses the same kind of control on Samsung.
 - the phone's **home screen**.
 
@@ -12,7 +12,7 @@ A trusted person decides which apps the phone can open.
 
 **What we design for:**
 - **Apps.** Apps that aren't approved can't be opened. That includes apps installed without approval.
-- **Emergencies and calls.** Plainphone is designed never to get in the way of 9-1-1, calls, texts or emergency alerts.
+- **Emergencies and calls.** LMNOPhone is designed never to get in the way of 9-1-1, calls, texts or emergency alerts.
 
 These are requirements we test against. They are **not yet proven** on the phone you'll use. That needs your chosen model and build, and your carrier.
 
@@ -37,8 +37,8 @@ These are requirements we test against. They are **not yet proven** on the phone
 ## What we know so far (spare Motorola, Android 15, test-only build)
 
 - **Setup by cable works.** Our test app took over as Device Owner using a USB cable. Google's new block on unapproved management apps did not stop that method on this phone. The QR-code method was not tried, and each new phone model has to be checked again.
-- **It can be removed without a wipe.** This was the throwaway test version. Whether the real "turn Plainphone off" restores everything is still to be tested.
-- **Fresh phones install apps by themselves.** Within minutes of joining Wi-Fi, a fresh phone installed 7 apps on its own (4 games and 3 Google apps), with Facebook preloaded. So Plainphone does its clean-up before the phone connects to anything.
+- **It can be removed without a wipe.** This was the throwaway test version. Whether the real "turn LMNOPhone off" restores everything is still to be tested.
+- **Fresh phones install apps by themselves.** Within minutes of joining Wi-Fi, a fresh phone installed 7 apps on its own (4 games and 3 Google apps), with Facebook preloaded. So LMNOPhone does its clean-up before the phone connects to anything.
 - **One Android setting is essential.** It stops other screens opening inside an approved app.
   - Without it, an approved app could open the App info screen (and from there, permission settings), the share menu, and Google Photos.
   - With it on, App info and the share menu were blocked. The Photos route hasn't been re-tested with it on yet.
@@ -69,16 +69,16 @@ These are requirements we test against. They are **not yet proven** on the phone
   - When an app changes a lot, they re-read its "web leak" note.
 - **Helper and our team, after every Android update.** Each Android update produces a new phone build. For each one:
   - we prepare and review that build's list of protected system apps;
-  - we send it as a signed Plainphone update;
+  - we send it as a signed LMNOPhone update;
   - the helper installs it from a laptop on your Wi-Fi;
   - before normal support resumes, we run the handover self-check and re-run the emergency and alert checks on that build.
 
   Android lets us **postpone** an update by up to 30 days, but some security updates may install anyway. So not every update can wait for our review. This lasts as long as the phones are in use.
-- **Helper, occasionally.** Install Plainphone's own updates, and help with recovery.
+- **Helper, occasionally.** Install LMNOPhone's own updates, and help with recovery.
 
 ## Limits we need you to accept (or reject)
 
-These are things Plainphone **can't** fully stop or promise. We'd rather say so now.
+These are things LMNOPhone **can't** fully stop or promise. We'd rather say so now.
 
 - **Web pages inside apps and some system screens.** Some screens can still show web pages:
   - approved apps with their own built-in pages (help pages, articles, sign-in screens);
@@ -86,17 +86,17 @@ These are things Plainphone **can't** fully stop or promise. We'd rather say so 
 
   Each app gets a plain "web leak" note so the trusted person can decide.
 - **Wi-Fi that needs a sign-in page** (hotels, hospitals, ferries, some workplaces) won't work. Mobile data and normal Wi-Fi are fine. Calling 9-1-1 doesn't depend on Wi-Fi. But no phone can call without either a cell signal or working Wi-Fi. If either of you relies on sign-in Wi-Fi, or on Wi-Fi calling where there's no cell signal, tell us.
-- **The custody limit.** The trusted person can unlock the Play Store or Settings for a few minutes, and must stay with the phone while it's unlocked. During that time, Play Store and Settings help and account pages can show web content. If Plainphone stops working while unlocked, the unlock stays open until a helper repairs the phone. That could be from a crash, a bad update, or a storage fault. The phone is never handed back until everything checks out. If you don't accept this, we have to find a different mechanism first, and that becomes a go/no-go question.
+- **The custody limit.** The trusted person can unlock the Play Store or Settings for a few minutes, and must stay with the phone while it's unlocked. During that time, Play Store and Settings help and account pages can show web content. If LMNOPhone stops working while unlocked, the unlock stays open until a helper repairs the phone. That could be from a crash, a bad update, or a storage fault. The phone is never handed back until everything checks out. If you don't accept this, we have to find a different mechanism first, and that becomes a go/no-go question.
 - **Background activity.** An app installed without approval can't be **opened**. But if hiding it fails, it may run in the background **without a guaranteed time limit**.
-- **After an Android update, before our review.** Plainphone keeps the phone in locked mode and is designed to preserve emergency access; that build still needs the checks above. It doesn't hide newly appeared system apps until we've reviewed them. Two gaps remain until the review is done:
+- **After an Android update, before our review.** LMNOPhone keeps the phone in locked mode and is designed to preserve emergency access; that build still needs the checks above. It doesn't hide newly appeared system apps until we've reviewed them. Two gaps remain until the review is done:
   - an update could add a new route inside an app that is already allowed;
   - an update could add an app that Android groups with an allowed one (they share an identity).
 
   We accept that temporary risk only with your agreement.
 - **A hardware-button wipe.** Anyone holding the phone can wipe it from the recovery menu.
   - Reset protection should then require the trusted person's (or backup person's) Google account. That isn't proven until we test it on your phone model, which needs its own OK.
-  - Plainphone has to be set up again afterwards, and anything not backed up is lost.
-- **A broken Plainphone update.** There is no promised rollback. A signed update that fails badly may need the recovery-menu wipe above.
+  - LMNOPhone has to be set up again afterwards, and anything not backed up is lost.
+- **A broken LMNOPhone update.** There is no promised rollback. A signed update that fails badly may need the recovery-menu wipe above.
 - **Emergency alerts (Alert Ready).** Before handing a phone over, we check that an alert actually appears on that phone's exact software build. If we can't see one, either:
   - the phone stays with us; or
   - you separately accept a narrower promise for **that build only**.

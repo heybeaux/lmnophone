@@ -250,6 +250,9 @@ class PermissionWindowCheck(private val ctx: Context, private val args: Bundle?,
         }
         override fun applyPolicy(plan: PolicyPlan) = e.applyPolicy(plan).also { note("effect applyPolicy=$it -> ${androidState()} at ${wall()}") }
         override fun readBackPolicy(plan: PolicyPlan) = e.readBackPolicy(plan).also { note("effect readBackPolicy=$it") }
+        override fun containFailedActivation(packages: Set<PackageName>) = e.containFailedActivation(packages).also {
+            note("effect containFailedActivation=$it -> ${androidState()} at ${wall()}")
+        }
     }
 
     /** Every package broadcast for the target, on its own thread so delivery does not wait for the dispatcher. */

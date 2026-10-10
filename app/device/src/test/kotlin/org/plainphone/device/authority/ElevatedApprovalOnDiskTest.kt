@@ -115,6 +115,7 @@ class ElevatedApprovalOnDiskTest {
             mapOf(camera to PermissionReadback.GRANTED).also { event("permissions-readback") }
         override fun applyPolicy(plan: PolicyPlan) = event("apply")
         override fun readBackPolicy(plan: PolicyPlan) = event("policy-readback")
+        override fun containFailedActivation(packages: Set<PackageName>) = event("contain")
     }
     private var id = 0
     private val ids = AppApprovalIdSource { "id-${++id}" }

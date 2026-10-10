@@ -3,7 +3,7 @@
 **Spec:** web-containment ("Web-leak notes are tied to an app version"). Each entry has:
 - the **note** the trusted person sees before adding the app (T4a in
   [flows-trusted-person.md](flows-trusted-person.md#t4a-add-app)), in 2–4 plain lines;
-- the **version it was reviewed against**, so Plainphone can show "Reviewed for an older version" when the app
+- the **version it was reviewed against**, so LMNOPhone can show "Reviewed for an older version" when the app
   moves on;
 - the routes behind the note, with sources, for reviewers;
 - suggested settings inside the app, and sign-in advice (with no web browser on the phone, browser-based sign-in
@@ -14,7 +14,7 @@
 - **Desk review only, 2026-10-08.** Sources: each app's own release notes or release channel, help pages,
   Telegram's open-source Android code, and download sites that list versions. Google Play's own pages and
   APKMirror couldn't be read by our research tool, so versions come from the sources named in each entry.
-- **No app here has been tested under Plainphone yet.** The device test is PLA-5 Phase B, question Q4
+- **No app here has been tested under LMNOPhone yet.** The device test is PLA-5 Phase B, question Q4
   ("B-Q4": must-have apps, link matrix, reachable system screens). Every route below marked *(to confirm)* waits
   for that result. Device facts already recorded are cited from `spikes/device-moto/RESULT.md` and
   `spikes/device-moto/evidence/` (XT2415, build `V1UDS35H.26-14-6-2-11`).
@@ -66,7 +66,7 @@
   then.
 - **Note on screen:**
   > Messages can show web pages in one case: chats from businesses can open a page inside Messages. Messages also
-  > has Gemini, Google's AI chat, which can answer any question. Links people send you go to Plainphone's
+  > has Gemini, Google's AI chat, which can answer any question. Links people send you go to LMNOPhone's
   > "can't open" screen.
 - **Routes:**
   - **Business chats (RCS Business Messaging)** can open a URL in a web view inside Messages, full or part screen
@@ -98,12 +98,12 @@
   ([Uptodown](https://moto-camera-3.en.uptodown.com/android/versions)). This listing is not specific to the
   XT2415; B-Q4 records the version on the phone.
 - **Note on screen:**
-  > Camera doesn't show web pages itself. Scanning a QR code with a web link goes to Plainphone's "can't open"
+  > Camera doesn't show web pages itself. Scanning a QR code with a web link goes to LMNOPhone's "can't open"
   > screen. To look at photos afterwards, you'll need to add a photos app too, and that app has its own note.
 - **Routes:**
   - **Google Lens** is built into Moto Camera on this phone family
     ([moto g 5G 2024 spec sheet](https://webcdn.cox.com/content/dam/cox/residential/support/Mobile/Print_Media/motog_5G_2024_Spec_Sheet.pdf)).
-    Lens comes from the Google app, which Plainphone hides, so the Lens button probably fails. *(To confirm.)*
+    Lens comes from the Google app, which LMNOPhone hides, so the Lens button probably fails. *(To confirm.)*
   - **QR codes:** the camera reads them and offers to open the link
     ([HowardForums](https://www.howardforums.com/threads/qr-code-reader-but-which-one-is-it-two-diff-devices.1932153/)).
     A web link then goes to the blocked-link screen. *(By design; to confirm.)*
@@ -127,15 +127,15 @@
   - **"Open web pages in app"** (You → Preferences → Advanced) is on by default
     ([Atlassian guide](https://support.atlassian.com/jira-cloud-android/docs/open-jira-directly-from-slack-deep-links)).
     When on, any link posted in any chat opens inside Slack, and from there the web is open. When off, links go to
-    a Custom Tab; Plainphone provides none, so they should reach the blocked-link screen. *(To confirm in B-Q4.)*
-  - The setting is inside Slack, so the user can switch it back on. Plainphone can't lock it.
+    a Custom Tab; LMNOPhone provides none, so they should reach the blocked-link screen. *(To confirm in B-Q4.)*
+  - The setting is inside Slack, so the user can switch it back on. LMNOPhone can't lock it.
   - "View in browser" for images, and links inside canvases
     ([release notes](https://slack.com/release-notes/android)) follow the same setting. *(Likely.)*
   - Slackbot can act as an AI assistant connected to other apps; we found no proof it searches the web.
 - **Sign-in:** use the **emailed confirmation code**. Single sign-on (SSO) needs a web browser and will fail.
   "Continue with Google" may work through the phone's Google account; unverified
   ([Slack help](https://slack.com/help/articles/212681477-Sign-in-to-Slack)). A workspace admin can force a
-  specific browser for sign-in; if so, Slack can't be signed in on Plainphone.
+  specific browser for sign-in; if so, Slack can't be signed in on LMNOPhone.
 - **Permissions to suggest:** Notifications (Allow), Microphone (for huddles and voice clips), Camera (for
   photos), Photos and videos (to share pictures), Contacts (Don't allow).
 
@@ -145,7 +145,7 @@
   ([Uptodown](https://spotify.en.uptodown.com/android/versions)).
 - **Note on screen:**
   > Spotify mostly doesn't show web pages. Some account and plan pages open as web pages inside it, and links
-  > in podcast descriptions and concert listings go to Plainphone's "can't open" screen. Podcasts and videos
+  > in podcast descriptions and concert listings go to LMNOPhone's "can't open" screen. Podcasts and videos
   > in Spotify are open to anyone who publishes them.
 - **Routes:**
   - Some plan changes show a web page inside the app
@@ -172,7 +172,7 @@
   Source code now supports it strongly, but nothing has been tested on the phone, so the note stays provisional.
 - **Note on screen (provisional):**
   > Telegram has its own web browser inside it *(to confirm in PLA-5 B-Q4)*. It looks like it lets anyone type a
-  > web address or search Google, which would get around Plainphone. "Mini apps" inside Telegram are web pages
+  > web address or search Google, which would get around LMNOPhone. "Mini apps" inside Telegram are web pages
   > too, and Telegram has no setting that fully turns these off.
 - **Routes:**
   - **In-app browser with an address bar and web search.** Telegram's Android code includes an address bar with
@@ -182,7 +182,7 @@
     Tabs, history and bookmarks arrived with the browser overhaul of 31 Jul 2024
     ([Telegram blog](https://telegram.org/blog/w3-browser-mini-app-store)). *(To confirm in PLA-5 B-Q4.)*
   - **The setting** is Settings → Chat Settings → In-App Browser. When off, links go to a Custom Tab or the
-    default browser, which on Plainphone should mean the blocked-link screen. But:
+    default browser, which on LMNOPhone should mean the blocked-link screen. But:
     - it has "Always open in" exceptions;
     - it appears to be stored with the account and may sync from another device;
     - a 2026 bug report says some links still opened in the in-app browser with the setting off
@@ -199,7 +199,7 @@
 
 ## Gmail
 
-The partner's must-have. **Preinstalled on the Motorola**, so "adding" it means Plainphone stops hiding it; there is
+The partner's must-have. **Preinstalled on the Motorola**, so "adding" it means LMNOPhone stops hiding it; there is
 nothing to download.
 
 - **Package:** `com.google.android.gm` · **Reviewed against:** 2026.09.28.992490113.Release, 8 Oct 2026
@@ -216,7 +216,7 @@ nothing to download.
     Tab from the phone's browser ([SamMobile, 2024](https://www.sammobile.com/?p=15057589);
     [tt-rss report](https://community.tt-rss.org/t/dont-hardcode-chrome-when-opening-custom-tabs/319)) or Gmail's
     own web view ([droidwin](https://droidwin.com/?p=46137)). With every browser hidden, a Custom Tab has nothing
-    to open in, so the link should fall through to Plainphone's "can't open" screen. If Gmail uses its own web
+    to open in, so the link should fall through to LMNOPhone's "can't open" screen. If Gmail uses its own web
     view, the page opens inside Gmail and the web is reachable from there. *(To confirm in PLA-5 B-Q4, with the
     setting on and off.)*
   - **Interactive emails (AMP "dynamic email").** On by default in the Android app since 2019. A sender's email
@@ -237,7 +237,7 @@ nothing to download.
     so the in-task block flag should stop it. *(Inference; to confirm in B-Q4.)* **Help & feedback** is the
     same.
   - **Adding another mail account inside Gmail** (for example the partner's Outlook address) goes through Android's
-    accounts, which Plainphone blocks after setup. This is expected to fail. *(Inference from the device-lockdown
+    accounts, which LMNOPhone blocks after setup. This is expected to fail. *(Inference from the device-lockdown
     spec; to confirm.)*
 - **Sign-in:** none needed. Gmail uses the Google account signed in at setup (step 3).
 - **Settings inside the app (setup step 5):** hide the Meet tab and the Chat tab unless {user} uses them; turn
@@ -258,8 +258,8 @@ ADR 0001 Risk 3, commit `8e61a21`). Outlook stays in the catalog.
   > Outlook has a way onto the web. On Outlook's sign-in screen, "Privacy and terms" → "Privacy & Cookies" opens
   > Microsoft's privacy page inside Outlook. Links on that page open other websites, still inside Outlook, and
   > each new page has more links. It takes some effort, but {user} could use it to read other websites. It works
-  > before signing in and after signing out. Plainphone can't block it. {tp} agreed to this when adding Outlook.
-- **Check again on every new Outlook version.** When Outlook updates, Plainphone shows "Reviewed for an older
+  > before signing in and after signing out. LMNOPhone can't block it. {tp} agreed to this when adding Outlook.
+- **Check again on every new Outlook version.** When Outlook updates, LMNOPhone shows "Reviewed for an older
   version" next to this note. Repeat the route check below on the new version and record it here.
   - Same route, same effort, or harder: update the version and keep the note.
   - **Easier** (for example a visible browse button, an address bar, a search box, or a web link on a main
@@ -269,15 +269,15 @@ ADR 0001 Risk 3, commit `8e61a21`). Outlook stays in the catalog.
   - **Privacy & Cookies web view (found, accepted).** Add account screen → PRIVACY AND TERMS → Privacy & Cookies
     opens Outlook's own web view (`com.acompli.acompli.GenericWebViewActivity`) with the live Microsoft Privacy
     Statement. Tapping an off-site link on it ("U.S. Department of Commerce") loaded `dataprivacyframework.gov` in
-    the same web view, still under lock task (B-Q4 steps 04b–05). Plainphone can't see inside another app's web
+    the same web view, still under lock task (B-Q4 steps 04b–05). LMNOPhone can't see inside another app's web
     view, so the block flag doesn't stop it. A search engine wasn't tried; whether one is a few links away is
     untested. Whether the same link exists in Outlook's settings once signed in is *to confirm after sign-in*.
   - **Help → Contact support** asks to turn on notifications, then asks to send diagnostic logs (which include
     account email addresses) to Microsoft. Choose **Cancel**. Nothing was sent in testing.
   - **Links in emails.** Outlook's "Open links" setting chooses between Microsoft Edge and the default browser
     ([Microsoft notice MC859848](https://mc.merill.net/message/MC859848)). With no Edge, links should go to
-    Plainphone's "can't open" screen. *(To confirm in PLA-5 B-Q4 after sign-in.)*
-  - **Edge prompts.** Outlook may offer to install Edge. Edge is a web browser, so Plainphone hides it.
+    LMNOPhone's "can't open" screen. *(To confirm in PLA-5 B-Q4 after sign-in.)*
+  - **Edge prompts.** Outlook may offer to install Edge. Edge is a web browser, so LMNOPhone hides it.
     *(By design; to confirm.)*
   - **Adverts** in free Outlook.com accounts, marked "Ad"; Focused Inbox keeps them in the "Other" tab
     ([Microsoft support](https://support.microsoft.com/office/ads-in-outlook-mobile-b172e506-ef2c-458d-9c2d-265445ba82e5)).
@@ -307,7 +307,7 @@ ADR 0001 Risk 3, commit `8e61a21`). Outlook stays in the catalog.
 Gboard is the system keyboard and can't be removed (it is part of the emergency floor). Its GIF and sticker
 search shows Tenor pictures, not web pages; its built-in Google Search was removed in 2020
 ([9to5Google](https://9to5google.com/2020/06/24/gboard-removes-google-search/)). It is open-ended picture search,
-so it belongs in "What Plainphone can't stop" item 2 if B-Q4 finds it reachable.
+so it belongs in "What LMNOPhone can't stop" item 2 if B-Q4 finds it reachable.
 
 ## For B-Q4 (handed to the AE)
 
