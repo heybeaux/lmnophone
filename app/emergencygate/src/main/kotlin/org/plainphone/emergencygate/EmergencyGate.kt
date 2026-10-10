@@ -241,6 +241,8 @@ class EmergencyGate : Instrumentation() {
             seen = top()
             seen?.packageName in accepted || seen?.className == GateJudge.BLOCKED_APP
         }
+        // Close lock task's blocked screen, or it stays behind as a locked task of its own.
+        if (seen?.className == GateJudge.BLOCKED_APP) shell("input keyevent KEYCODE_BACK")
         return GateJudge.dialerInFront(check, seen, accepted)
     }
 
