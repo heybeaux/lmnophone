@@ -444,8 +444,9 @@ the debit, fixed grant and OPENING session journal in **one durable credential-c
 calling `SessionEffects.open`. That effect retains its existing unhide/flush/readback contract.
 Only after readback, live checks and the OPEN write can `access()` return a `SessionAccess` for
 `PolicyInput`. Start is serialized; a second tap cannot debit or open again. Failed effects revoke
-and close without refund. A failed CAS must leave storage unchanged, never acknowledge a partial
-write, and every writer must preserve the combined record. An unrelated credential-counter revision
+and close without refund. A CAS never acknowledges a partial write, and every writer must preserve
+the combined record. A false CAS is not acknowledged: storage may hold the old or the new record, so
+the caller reads again and reports NOT_READY (see "Store write results" below). An unrelated credential-counter revision
 can cause CAS refusal without invalidating the saved countdown; a credential-generation or structural
 change invalidates its authority.
 
@@ -641,7 +642,9 @@ in a durable outbox when a later submission replaces the record; result/self-che
 the original receipt. A receipt describes submission/use-up, not confirmed installation. Delivery
 does not authorize installation or gate policy progress.
 
-A false check/CAS changes neither record. A crash exposes the original pair or the complete pair.
+A false check refuses before any write. A false after a passing check is not acknowledged: the pair
+may have landed, so the controller reports NOT_READY, keeps no retry path, and startup reads what
+landed. A crash exposes the original pair or the complete pair.
 The supervised path uses the same transaction, preserving the elevation record unchanged and using
 the exact request's fresh person-bound PIN authority inside `finalCheck`, after the final hash read.
 Requests are process-local and cannot be restored. Supervised preparation refuses any OPENING, OPEN
@@ -1034,7 +1037,8 @@ list. A running countdown retains its already-established duration; a shorter
 setting applies to future countdowns. Grant deadlines never move. A raised limit
 uses the preserved debits and may allow additional starts only after completion.
 
-False means nothing changed. A crash reveals old settings + COMMITTING or target
+False is not acknowledged: the completion may have landed, so the executor returns
+NOT_READY and the retry reads the journal. A crash reveals old settings + COMMITTING or target
 settings + COMPLETED + receipt, never half activation. The terminal operation is
 the replay marker; no separate credential-only applied marker is needed. Retry
 recognizes COMPLETED without reapplying the target, even after a subsequent
@@ -1071,6 +1075,18 @@ patch or infer that an unknown operation cancelled/completed. Revoke temporary
 access without refunding debits, apply/read back the active complete policy,
 backup-inclusive reset protection and active friction, then atomically replace the
 lost journal under a new storage generation with a recovered-state receipt.
+
+### Store write results (PLA-160)
+
+Every Boolean store write (`compareAndSet`, `commit*`, `move`, `applyPatch`, the friction
+transactions, `initialize` and `migrate`) has one meaning. **True** is acknowledged: the new
+record reads back. **False** is not acknowledged: the store may hold the previous record or the
+new one. A writer that cannot read its own directory after the commit point cannot tell which,
+and no protocol can. So a caller never treats false as "unchanged", "not saved" or a definite
+refusal, never retries with the expected value it sent, and takes no permissive action. It reports
+Unavailable, NOT_READY or NEEDS_ATTENTION (fail closed) and reads fresh on the next action. A store
+still tries to resolve inside the write, never acknowledges a rollback, and never serves a lone copy
+above the fence. `migrate()` is the startup readiness gate: nothing runs until it returns true.
 
 Lane D follow-up PLA-100 owns settings transaction persistence/coordinator,
 receipt delivery and product integration, including real storage failure,

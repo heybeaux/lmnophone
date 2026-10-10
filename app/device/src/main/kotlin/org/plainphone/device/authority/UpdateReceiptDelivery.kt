@@ -21,7 +21,7 @@ fun interface UpdateNoticeSender {
  * the same dedup ID again. Delivery never authorizes or retries an installation.
  */
 class UpdateReceiptDelivery(private val store: JointAuthorityStore, private val sender: UpdateNoticeSender) {
-    /** True when nothing is left pending; false when the outbox is unreadable or any notice is still owed. */
+    /** True when nothing is left pending; false when the outbox is unreadable or a notice may still be owed. */
     fun deliverPending(): Boolean {
         val outbox = store.updateReceipts() ?: return false
         var done = true

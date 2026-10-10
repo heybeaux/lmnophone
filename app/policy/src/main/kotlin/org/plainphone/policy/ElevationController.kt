@@ -64,6 +64,7 @@ abstract class ElevationStore(internal val waitingChanges: WaitingChangeStore? =
      * Compare the whole record revision and, when supplied, credential revision in the same transaction.
      * Null expected is a repair CAS against the exact missing/damaged observation, never unconditional overwrite.
      * All JournalStore/credential/operation writers share this coordinator and preserve each other's fields.
+     * False is not acknowledged (see [CredentialStore.compareAndSet]).
      */
     abstract fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean
 }
@@ -271,13 +272,23 @@ class ElevationController(
         return ApprovalElevation(before.state.grant!!.id, identity, before.person!!)
     }
 
-    @Synchronized internal fun closeForApproval(binding: ApprovalElevation): Boolean {
-        if (!initialized || closing != null || store.revocationPending) return false
-        val before = store.read() ?: return false
+    /**
+     * True when package access is closed and the grant still matches. False refuses: the grant no
+     * longer matches or is not live. Null is not ready: the close was not acknowledged (its write may
+     * have landed, PLA-160) or the record could not be read, so the caller reads again next time.
+     */
+    @Synchronized internal fun closeForApproval(binding: ApprovalElevation): Boolean? {
+        if (!initialized || closing != null || store.revocationPending) return null
+        val before = store.read() ?: return null
         if (!matchesApproval(before, binding) || !live(before)) return false
-        if (before.state.grant!!.packageAccessOpen &&
-            endPackageAccess(binding.grantId, SessionEnd.LEFT_PACKAGES) != ElevationOutcome.ACCESS_CLOSED) return false
-        val closed = store.read() ?: return false
+        if (before.state.grant!!.packageAccessOpen) {
+            when (endPackageAccess(binding.grantId, SessionEnd.LEFT_PACKAGES)) {
+                ElevationOutcome.ACCESS_CLOSED -> Unit
+                ElevationOutcome.NOT_READY -> return null
+                else -> return false
+            }
+        }
+        val closed = store.read() ?: return null
         return closed.journal == SessionJournal.Empty && matchesApproval(closed, binding) && live(closed)
     }
 
@@ -344,6 +355,12 @@ class ElevationController(
                     passed
                 }
             }
+            if (!committed && checks == 1 && passed) {
+                // Not acknowledged after a passing final check: SUBMITTED may have landed (PLA-160).
+                // Same as an ambiguous storage failure: no retry path; startup reads what landed.
+                ownedId = null; protocol.invalidate()
+                return UpdateOutcome.NOT_READY
+            }
             if (!committed || checks != 1 || !passed) return UpdateOutcome.REFUSED
             ownedId = null // Process-local invalidation only; no adapter work between joint use and commit.
             return protocol.commit(submission)
@@ -396,6 +413,11 @@ class ElevationController(
                         supervisedUpdateLive(request, before, credentials())
                     passed
                 }
+            }
+            if (!committed && checks == 1 && passed) {
+                // Not acknowledged after the PIN was used: SUBMITTED may have landed (PLA-160).
+                protocol.invalidate(); supervisedUpdates.clear()
+                return UpdateOutcome.NOT_READY
             }
             if (!committed || checks != 1 || !passed) return UpdateOutcome.REFUSED
             supervisedUpdates.clear()

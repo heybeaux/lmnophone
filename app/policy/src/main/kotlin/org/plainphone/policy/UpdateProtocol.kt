@@ -42,7 +42,7 @@ interface UpdateUseStore {
     val elevationStore: ElevationStore
     /** Null means missing/damaged. Only enrollment may create an empty record. */
     fun readUpdate(): UpdateRecord?
-    /** Result-only CAS. Preserve all elevation, credential and unrelated fields. */
+    /** Result-only CAS. Preserve all elevation, credential and unrelated fields. False is not acknowledged (see [CredentialStore.compareAndSet]). */
     fun compareAndSetUpdate(expected: UpdateRecord, replacement: UpdateRecord): Boolean
     /**
      * ONE durable transaction, never consume-then-act exposed as two public controller operations.
@@ -51,7 +51,9 @@ interface UpdateUseStore {
      * SUBMITTED record (including its actor/receipt) at expectedUpdate.revision + 1, without yielding.
      * Capture immutable recipient delivery destinations in this transaction too; preserve undelivered
      * receipts in the durable outbox before replacing any prior submission. Never enqueue after commit.
-     * A false check/CAS changes nothing; a crash exposes either the original pair or complete pair.
+     * A false check refuses before any write. A false after a passing check is not acknowledged (see
+     * [CredentialStore.compareAndSet]): SUBMITTED may have landed, so the caller reports NOT_READY and
+     * startup reads what landed. A crash exposes either the original pair or complete pair.
      * Reject an outstanding SUBMITTED record or pending installed self-check. For supervised use,
      * replacementElevation is the exact unchanged expectedElevation and finalCheck uses fresh PIN
      * authority; do not invent an elevation/debit. Preserve original deadlines and every debit.

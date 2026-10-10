@@ -108,14 +108,18 @@ interface WaitingChangeStore {
      * Null means damaged/unreadable, not vacant. A checksum alone cannot prove a sole replica current.
      */
     fun read(): WaitingState?
-    /** Atomically persist operation + texts; compare storage generation AND durable revision; preserve generation and increase revision on every write. */
+    /**
+     * Atomically persist operation + texts; compare storage generation AND durable revision; preserve generation and increase revision on every write.
+     * False is not acknowledged (see [CredentialStore.compareAndSet]): the operation may have moved, so read again.
+     */
     fun compareAndSet(expected: WaitingState, replacement: WaitingState): Boolean
 }
 /** UNKNOWN includes missing, corrupt or temporarily unreadable data; it never authorizes commit. */
 enum class CancelIntent { CLEAR, REQUESTED, UNKNOWN }
 /**
  * Separate durable, device-protected intent journal, serialized with operation writes.
- * True means the write survived a crash (including directory metadata); failures return false.
+ * True means the write survived a crash (including directory metadata). False is not acknowledged:
+ * the write may still have landed, so callers read the intent again and never treat false as CLEAR.
  * Request IDs are never reused. REQUESTED is monotonic and initialize must never clear it.
  */
 interface CancelIntentStore {
@@ -136,6 +140,7 @@ class WaitingStart internal constructor(internal val identity: WaitingIdentity, 
         "${identity.requestId.length}:${identity.requestId}${starter.value.length}:${starter.value}")
     internal var used = false
 }
+/** NOT_READY: storage was unreadable or a write was not acknowledged (it may have landed); read again before telling anyone. */
 enum class WaitingOutcome { PENDING, COMMITTING, CANCELLED, REFUSED, BUSY, NOT_READY, LOW_BATTERY, ALREADY_IN_PROGRESS, IGNORED }
 
 /**

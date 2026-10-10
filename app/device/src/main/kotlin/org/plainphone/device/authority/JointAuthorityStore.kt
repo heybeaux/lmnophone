@@ -86,10 +86,15 @@ internal fun interface StorageFaults { fun at(point: WritePoint, dir: File) }
  * the two copies when they agree at or above the fence, else the single copy at exactly the
  * fence, else null. So an interrupted write reads old until copy B lands and new after; a lone
  * copy above the fence (a refused or unfinished write) never surfaces, even after the other copy
- * is lost; and a copy below the fence (a stale or replayed replica) is never served. Every
- * result is what reads back afterwards: true exactly when the new record does. After true, no
- * older record remains, so any later loss reads that record or nothing. A section that would not
- * decode is never written.
+ * is lost; and a copy below the fence (a stale or replayed replica) is never served.
+ *
+ * Results (PLA-160): true means acknowledged, so the new record reads back. After true, no older
+ * record remains, so any later loss reads that record or nothing. False means not acknowledged:
+ * the store may hold the previous record or the new one. A writer that cannot read its own
+ * directory (for example after losing search permission once copy B has landed) cannot tell
+ * which, so callers read again before acting and never treat false as "unchanged" or as a
+ * definite refusal. This holds for every compare-and-set, commit, move, friction transaction,
+ * [initialize] and [migrate]. A section that would not decode is never written.
  *
  * All views share one coordinator per directory, keyed by its canonical path so symlinked aliases
  * share it too. A write made from inside a running transaction is refused rather than allowed to
@@ -232,7 +237,8 @@ class JointAuthorityStore internal constructor(
     /**
      * Durably records that [person]'s notice for receipt [id] was handed over. A receipt leaves the
      * outbox once every recipient is acknowledged. True when, afterwards, nothing for [person] under
-     * [id] is pending (including when it already was not).
+     * [id] is pending (including when it already was not). False is not acknowledged: the next
+     * delivery pass reads the outbox again and may resend under the same dedup ID.
      */
     fun acknowledgeUpdateReceipt(id: String, person: TrustedPersonId): Boolean {
         var settled = false
@@ -642,7 +648,14 @@ class JointAuthorityStore internal constructor(
         }
     }
 
-    /** Enrollment-time creation of the first record. Refuses if any copy or fence already exists. */
+    /**
+     * Enrollment-time creation of the first record. Refuses if a fence exists or a record reads.
+     * True means genesis reads back. False is not acknowledged, as for every write. The first-record
+     * cases are explicit (PLA-159): a blocked second copy returns false with no readable genesis, so
+     * initialize can run again; a blocked fence returns true with a readable genesis that [migrate]
+     * completes later; search denial after the second copy returns false yet genesis reads once
+     * access returns, so initialize then refuses and [migrate] completes it. Callers read after false.
+     */
     fun initialize(credentials: CredentialState, waiting: WaitingState, elevation: ElevationRecord,
         approvals: AppApprovalState = AppApprovalState()): Boolean = coordinator.run(false) {
         // Copies without any fence are a creation that never committed; they may be replaced.
@@ -668,10 +681,13 @@ class JointAuthorityStore internal constructor(
      * both new copies agree; after that the old files are never read again. Schema 3 cancel
      * intents are rewritten in the current format too (see [migrateIntents]).
      *
-     * True only when the migration is complete: both copies and both fences hold one readable
-     * current record and no old intent is left. False means "not ready; run again later". The
-     * record may already be current, but a caller must not act on it until a run returns true. An
-     * old record that does not decode is left untouched and refused.
+     * This is the startup readiness gate: no controller and no permissive authority action runs
+     * until it returns true. True only when the migration is complete: both copies and both fences
+     * hold one readable current record and no rewritable old intent is left. The one exception:
+     * damaged or misnamed old intent files, which name no request, stay in place and read UNKNOWN
+     * (their markers still read REQUESTED). False means unavailable, so run again later. It does not
+     * mean unchanged or empty: the record may already be current. Restrictions stay in place and
+     * nothing initializes over it. An old record that does not decode is left untouched and refused.
      */
     fun migrate(): Boolean = coordinator.run(false) {
         val intents = migrateIntents()
@@ -872,6 +888,10 @@ class JointAuthorityStore internal constructor(
         }
     }
 
+    /**
+     * One transaction: [change] returns the replacement or null to refuse before any write. True
+     * means acknowledged; false means not acknowledged (see the class notes), never "unchanged".
+     */
     private fun commit(change: (Snapshot) -> Snapshot?): Boolean = coordinator.run(false) {
         val current = load() ?: return@run false
         if (current.sequence == Long.MAX_VALUE) return@run false
@@ -896,9 +916,10 @@ class JointAuthorityStore internal constructor(
     /**
      * Repair, then copy A, copy B, fence A, fence B. If a copy write fails (including its directory
      * sync), both copies are put back to [previous] where possible; a lone new copy above the fence is
-     * never served either way. The
-     * result is read from disk: true exactly when [next] reads back. A migration names the copy
-     * that holds no old record, so the old one survives until both new copies are written.
+     * never served either way. The result is read from disk: true when [next] reads back. False is
+     * not acknowledged: the store tries to resolve (restore, then read), but when the directory cannot
+     * be read [next] may still have committed, so false never promises [previous]. A migration names
+     * the copy that holds no old record, so the old one survives until both new copies are written.
      */
     private fun save(previous: Snapshot?, next: Snapshot, spare: AtomicRecord? = null): Boolean {
         if (previous != null && !heal(previous)) return false

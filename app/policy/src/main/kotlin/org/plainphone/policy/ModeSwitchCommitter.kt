@@ -23,7 +23,8 @@ interface ModeSwitchCommitter : PeopleChangeCommitter {
      * Write mode, holders, recovery profile, raised structure generation and appliedPeopleChange
      * together. Leave the elevation record and every debit unchanged, including expired debits;
      * switching never creates or resets a ledger. Leave the operation COMMITTING for completion.
-     * False changes nothing. Crash exposes old or new credential state, never mixed authority.
+     * False is not acknowledged (see [CredentialStore.compareAndSet]); the patch may have landed.
+     * Crash exposes old or new credential state, never mixed authority.
      * Fence stale replicas just as for PeopleChangeCommitter. Never route this through applyPatch.
      */
     fun applyModePatch(expectedCredentials: CredentialState, replacementCredentials: CredentialState,
@@ -32,8 +33,9 @@ interface ModeSwitchCommitter : PeopleChangeCommitter {
     /**
      * Terminal COMPLETED or CANCELLED write plus fixed-contact receipts/audit, comparing the same
      * credential/waiting/elevation revisions as applyModePatch. expectedElevation must be clear of
-     * temporary authority. Preserve it and its entire ledger. False leaves the journal and latch
-     * held; success makes the durable operation terminal and permits release of the local cleanup latch. Rollback
+     * temporary authority. Preserve it and its entire ledger. False is not acknowledged: the journal
+     * may already be terminal, but the local latch stays held until a later acknowledged write.
+     * Success makes the durable operation terminal and permits release of the local cleanup latch. Rollback
      * intent still uses move, since writing a restrictive direction never releases authority.
      */
     fun finishMode(expectedCredentials: CredentialState, expectedWaiting: WaitingState,
