@@ -201,12 +201,12 @@ class DeviceApprovalEffectsTest {
     }
 
     @Test fun aHandlerOutsideTheDispatcherWouldBreakTheWindow() {
-        // The control: run the same handler inline at the unhide, as an unserialized receiver could.
-        val handler = PackageAddedHandler(dispatcher, port, { false }, { neverHide })
+        // The control: hide inline at the unhide, as an unserialized receiver could. The handler itself
+        // has no such entry: onPackageAdded only queues (VerifierWindowProbeTest).
         val inline = object : DevicePolicyPort by port {
             override fun setHidden(name: PackageName, hidden: Boolean) {
                 port.setHidden(name, hidden)
-                if (!hidden) handler.handle(name)
+                if (!hidden) port.setHidden(name, true)
             }
         }
         val e = effects(inline)

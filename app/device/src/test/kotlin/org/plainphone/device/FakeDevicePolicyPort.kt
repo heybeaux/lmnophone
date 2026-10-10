@@ -86,6 +86,17 @@ class FakeDevicePolicyPort(
     override fun home(): PackageName? { touch("home"); return homePackage }
     override fun setHome(name: PackageName) { write("home", "home ${name.value}"); homePackage = name }
 
+    /** App UIDs; a package without an entry gets its own. Packages in [uidUnreadable] throw. */
+    val uids = mutableMapOf<PackageName, Int>()
+    val uidUnreadable = mutableSetOf<PackageName>()
+    private val assigned = mutableMapOf<PackageName, Int>()
+    fun uid(name: PackageName): Int? {
+        touch("uid")
+        if (name in uidUnreadable) throw IllegalStateException("uid of ${name.value} unreadable")
+        if (name !in state) return null
+        return uids[name] ?: assigned.getOrPut(name) { 10_000 + assigned.size }
+    }
+
     override fun flushComponentEnabled(): Boolean? { touch("flush"); return flushComponent }
     override fun setFlushComponentEnabled(enabled: Boolean) {
         write("flush", "flip $enabled")
