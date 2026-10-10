@@ -12,3 +12,45 @@ screen shows: text="911"
 telecom:   mCalls:    mCallAudioManager:     All calls: 
 topResumedActivity=ActivityRecord{446cbb1 u0 org.plainphone/.MainActivity t5}
 mLockTaskModeState=LOCKED
+## 1c Lock screen Emergency call after a locked restart (emulator only: temporary PIN 1590, cleared at the end)
+Pin set to '1590'
+after restart, before unlock:
+State: RUNNING_LOCKED
+mLockTaskModeState=LOCKED
+10-10 11:44:08.323 I/PlainphoneBoot( 1002): reapply reason=start control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_R
+10-10 11:44:08.704 I/PlainphoneBoot( 1002): reapply reason=locked-boot control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FAC
+10-10 11:44:08.957 I/PlainphoneBoot( 1002): reapply reason=package:PACKAGE_CHANGED:android control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 wi
+10-10 11:44:09.732 I/PlainphoneBoot( 1002): reapply reason=package:PACKAGE_CHANGED:com.android.stk control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailu
+10-10 11:44:12.065 I/PlainphoneBoot( 1002): reapply reason=package:PACKAGE_CHANGED:android control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 wi
+(UI dump to /sdcard fails before unlock: shared storage is credential-encrypted. Screenshot 1c-0-bouncer.png shows the PIN bouncer with Emergency.)
+tap Emergency on the PIN bouncer (540,2147)
+topResumedActivity=ActivityRecord{79ba31a u0 com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity t6}
+mLockTaskModeState=LOCKED
+text="Emergency" text="Owner" text="View emergency info" content-desc="View emergency information" content-desc="backspace" text="1" text="2" text="3" text="4" text="5" text="6" text="7" text="8" text="9" text="∗" text="0" text="#" text="Call" 
+first attempt: the UI-dump parse found no digit nodes, so no digit was typed (input tap had no coordinates). Retried below.
+screen shows: 
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+mLockTaskModeState=LOCKED
+## leave the dial pad (Back), unlock with the temporary PIN, then the full re-apply
+State: RUNNING_UNLOCKED
+10-10 11:49:09.076 I/PlainphoneBoot( 1002): reapply reason=boot control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 with
+10-10 11:49:09.182 I/PlainphoneBoot( 1002): home shown lockTask=1 at=310722
+10-10 11:49:09.865 I/PlainphoneBoot( 1002): reapply reason=package:PACKAGE_REMOVED:com.android.stk control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HO
+topResumedActivity=ActivityRecord{762404b u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED
+## clear the temporary PIN
+Lock credential cleared
+false
+## 1c retry (the first digit taps failed: the UI dump parse found no node). Temporary PIN 1590 again, screen off, lock screen, Emergency.
+Pin set to '1590'
+topResumedActivity=ActivityRecord{9007f31 u0 com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity t7}
+mLockTaskModeState=LOCKED
+digits tapped: 9 at 872,1810; 1 at 206,1429 twice (the 2a positions on this AVD). Call is never touched.
+screen shows: text="911"
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+topResumedActivity=ActivityRecord{9007f31 u0 com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity t7}
+mLockTaskModeState=LOCKED
+topResumedActivity=ActivityRecord{762404b u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED
+Lock credential cleared
+PIN disabled: false
