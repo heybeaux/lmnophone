@@ -6,8 +6,15 @@ package org.plainphone.device.facts
  * One installed package as PackageManager reported it in one read.
  * @property signers DER encodings of `SigningInfo.apkContentsSigners` (current signers only, never the
  *   rotation history); null when Android returned no signing info.
+ * @property enabled `ApplicationInfo.enabled`: false for a disabled (or disabled-until-used) package.
  */
-class RawPackage(val name: String, val system: Boolean, val versionCode: Long, val signers: List<ByteArray>?)
+class RawPackage(
+    val name: String,
+    val system: Boolean,
+    val versionCode: Long,
+    val signers: List<ByteArray>?,
+    val enabled: Boolean = true,
+)
 
 /**
  * The live OS reads behind a policy pass. Every package-level answer includes hidden and disabled
