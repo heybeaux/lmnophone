@@ -1,0 +1,12 @@
+# Check 3 on the spare (<spare>, user build, no root), build ed18e62, 2026-10-10T00:48:26Z
+Without root the restrictions file can't be read. Evidence: hidden state and the FlushMarker state read back straight after the apply;
+the flip uses PackageManager.SYNCHRONOUS, so it returns only after the package settings are written.
+Start (Clock hidden):
+00:48:26.306 clock: hidden=true | FlushMarker: default
+## Clock added to the list -> unhide, then the flip
+00:48:29.920 clock: hidden=false | FlushMarker: enabledComponents
+00:48:31.774 clock: hidden=false | FlushMarker: enabledComponents
+10-09 17:48:29.150 31948   635 I Plainphone: PREVIEW2 APPLY complete=true failed=null applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] hidden=40 absent=[] flipFailures=[] floorUnreadable=[]
+## Back to the fixed starter list (Clock hidden again)
+00:48:36.006 clock: hidden=true | FlushMarker: enabledComponents
+10-09 17:48:34.268 31948   732 I Plainphone: PREVIEW2 APPLY complete=true failed=null applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] hidden=41 absent=[] flipFailures=[] floorUnreadable=[]
