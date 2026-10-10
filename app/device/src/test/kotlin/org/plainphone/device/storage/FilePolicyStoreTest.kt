@@ -150,10 +150,10 @@ class FilePolicyStoreTest {
     @Test fun failedSyncAfterTheBackupRenameIsNotAcknowledged() {
         assertTrue(store().write(policy("com.example.maps")))
         var renames = 0
-        // First rename is the backup: deny its sync, then allow the primary's.
+        // The first rename is the backup. Only its sync is denied; the save stops there.
         val s = FilePolicyStore(dir) { if (++renames == 1) denySync(dir) else dir.setReadable(true, true) }
         try { assertFalse(s.write(policy("com.example.bank"))) } finally { dir.setReadable(true, true) }
-        assertEquals(2, renames)
+        assertEquals(1, renames)
     }
 
     @Test fun failedSyncOfANewDirectoryEntryIsNotAcknowledged() {

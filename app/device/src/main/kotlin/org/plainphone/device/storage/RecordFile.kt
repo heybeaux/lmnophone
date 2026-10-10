@@ -18,6 +18,10 @@ import java.nio.file.StandardOpenOption
  * becomes the last-known-good copy; a corrupt primary never overwrites a good backup. Records that
  * must never fall back to an older copy pass [keepLastKnownGood] = false.
  *
+ * Every rename and every directory created here is followed by a sync of its directory. If that
+ * sync fails, the save is not acknowledged. False means "not acknowledged", not "nothing changed":
+ * the new bytes may already be visible and may or may not survive a power cut.
+ *
  * [beforeRename] is a test seam that runs on the synced temp file just before it is renamed.
  */
 internal class RecordFile(
@@ -33,9 +37,9 @@ internal class RecordFile(
     fun readPrimary(): ByteArray? = read(primary)
     fun readLastKnownGood(): ByteArray? = read(backup)
 
-    /** True only when the new primary has been synced, renamed and read back unchanged. */
+    /** True only when the new primary has been synced, renamed, its directory synced, and read back unchanged. */
     fun save(payload: ByteArray): Boolean = try {
-        if (!dir.isDirectory && !dir.mkdirs()) throw IOException("no directory: $dir")
+        createDirectory()
         if (keepLastKnownGood) primary.takeIf { it.isFile }?.readBytes()
             ?.takeIf { RecordCodec.decode(it, schemaVersion) != null }
             ?.let { replace(backup, it) }
@@ -59,15 +63,19 @@ internal class RecordFile(
         }
         beforeRename(temp)
         Files.move(temp.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-        syncDirectory()
+        sync(dir)
     }
 
-    /** Makes the rename itself durable where the platform allows opening a directory. */
-    private fun syncDirectory() {
-        try {
-            FileChannel.open(dir.toPath(), StandardOpenOption.READ).use { it.force(true) }
-        } catch (e: IOException) {
-            // Not supported on every file system; the file contents are already synced.
-        }
+    /** Creates any missing directories and syncs the parent of each new one. */
+    private fun createDirectory() {
+        if (dir.isDirectory) return
+        val created = generateSequence(dir.absoluteFile) { it.parentFile }.takeWhile { !it.exists() }.toList()
+        if (!dir.mkdirs() && !dir.isDirectory) throw IOException("no directory: $dir")
+        created.reversed().forEach { sync(it.parentFile) }
+    }
+
+    /** Makes a rename or a new entry in [directory] durable. Throws when the sync cannot be done. */
+    private fun sync(directory: File) {
+        FileChannel.open(directory.toPath(), StandardOpenOption.READ).use { it.force(true) }
     }
 }
