@@ -57,6 +57,11 @@ class EmergencyGate : Instrumentation() {
         "locked-boot" -> listOf(lockScreenEmergency(check, expectLocked = true))
         "sos" -> listOf(sos(check))
         "telecom-emergency-call" -> listOf(emergencyCall(arguments.getString("number") ?: "7357"))
+        // The emulated modem keeps a live call through an Android reboot, so the host ends every test
+        // call before going on.
+        "hangup" -> listOf(hangUp().let { state ->
+            CheckResult(check, if (state == "0") Verdict.PASS else Verdict.FAIL, "mCallState=$state")
+        })
         "alert" -> listOf(alertDisplayReady(), alertLaunch(), GateJudge.alertShown(injectionSupported = false, shown = null)
             .let { it.copy(detail = "${it.detail} (emulator console has no cbs; modem has no +CBM injection)") })
         else -> listOf(CheckResult(check.ifEmpty { "unknown" }, Verdict.FAIL, "unknown check"))
@@ -254,14 +259,15 @@ class EmergencyGate : Instrumentation() {
     }
 
     /** Ends the test call from the in-call screen (`KEYCODE_ENDCALL` does not end an emergency call). */
-    private fun hangUp() {
+    private fun hangUp(): String? {
         repeat(3) {
-            if (callState() == "0") return
+            if (callState() == "0") return "0"
             shell("input keyevent KEYCODE_WAKEUP")
             if (top()?.className?.endsWith("InCallActivity") != true) shell("su 0 am start -n $IN_CALL")
             waitNode("End call", 5_000) { it == "End call" }?.let(::tap)
             waitFor(5_000) { callState() == "0" }
         }
+        return callState()
     }
 
     private fun callState(): String? = Regex("""mCallState=(\d)""").find(shell("dumpsys telephony.registry"))?.groupValues?.get(1)

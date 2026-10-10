@@ -132,6 +132,19 @@ check_early() {
     echo "GATE $name FAIL gate could not start within 180 s of boot"
 }
 
+# The emulated modem keeps a live call through an Android reboot. End the test call, or stop here.
+end_call() {
+    local out
+    for _ in 1 2 3; do
+        [ "$(sh_ dumpsys telephony.registry | grep -m1 -o 'mCallState=[0-9]')" = "mCallState=0" ] && return 0
+        out="$(instrument -e check hangup)"
+        echo "$out" | grep -q '^GATE hangup PASS' && return 0
+    done
+    echo "GATE hangup FAIL the test call is still live; stopping this build before any reboot"
+    sh_ dpm remove-active-admin "$ADMIN" >&2
+    return 1
+}
+
 provision() {
     local build="$1" control
     control="$(control_name "$build")"
@@ -158,6 +171,7 @@ run_build() {
     for name in home-phone app-home-phone more-emergency sos alert; do check "$name"; done
     sh_ su 0 cmd phone emergency-number-test-mode -a "$NUMBER" >/dev/null
     check telecom-emergency-call -e number "$NUMBER"
+    end_call || return
     sh_ su 0 cmd phone emergency-number-test-mode -c >/dev/null
     if [ "$QUICK" = 0 ]; then
         sh_ locksettings set-pin "$PIN" >/dev/null
