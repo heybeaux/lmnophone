@@ -1,0 +1,29 @@
+# Check 3 on preview-2b (emulator-5742 pla113-a35, API 35, root adb), release/preview-2 @ cfe55d4, 2026-10-10T18:38:18Z
+Reads /data/system/users/0/package-restrictions.xml (abx2xml) right after each setup re-apply. Device clock times. FlushMarker is org.plainphone.boot.FlushMarker (manifest default: disabled).
+Start (Chrome hidden; standard starter list):
+11:38:19.434 file mtime 11:37:25.552 | chrome: hidden="true" | FlushMarker on disk: disabled-components
+## Control: Chrome taken off the list -> hidden; hides get no flip
+result=0
+11:38:19.824 file mtime 11:38:19.608 | chrome: hidden="true" | FlushMarker on disk: disabled-components
+11:38:21.028 file mtime 11:38:19.608 | chrome: hidden="true" | FlushMarker on disk: disabled-components
+## Chrome put back on the list -> unhidden; the applier flips FlushMarker right after
+result=0
+11:38:21.522 file mtime 11:38:21.308 | chrome: no hidden attr = shown | FlushMarker on disk: enabled-components
+11:38:22.711 file mtime 11:38:21.984 | chrome: no hidden attr = shown | FlushMarker on disk: enabled-components
+## Restore: Chrome off the list again (final emulator state = the standard starter list)
+result=0
+11:38:23.120 file mtime 11:38:22.904 | chrome: hidden="true" | FlushMarker on disk: enabled-components
+## Re-apply log
+10-10 11:38:19.647 I/PlainphoneBoot(  959): reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET,
+10-10 11:38:21.341 I/PlainphoneBoot(  959): reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET,
+10-10 11:38:22.945 I/PlainphoneBoot(  959): reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET,
+
+## Reading
+- Unhide: the setup re-apply logged ready at 11:38:21.341. package-restrictions.xml (mtime 11:38:21.308) already showed
+  Chrome shown and FlushMarker flipped disabled -> enabled. flipFailures=0 on every run. This is the same result as
+  preview-2a, now through the boot runtime (PolicyRuntime -> BootReapply -> ReadbackPolicyApplier).
+- Control: the hide was also on disk at once (mtime 11:38:19.608), so this emulator does not separate the flip from the
+  platform's own write. Mitigation B stays best effort: on Android 15 the write behind the SYNCHRONOUS flip is queued
+  (PLA-25, PLA-185 F1). The power-cut test (power-cut-unhide.txt) shows the boot re-apply repairs a lost unhide before Home.
+- An earlier probe in this run read the FlushMarker state wrongly (a grep bug), so it was rerun. The emulator ends on the
+  standard starter list.
