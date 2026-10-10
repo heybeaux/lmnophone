@@ -8,6 +8,8 @@ import org.junit.Test
 import org.plainphone.ui.user.BlockedLinkEvent
 import org.plainphone.ui.user.BlockedLinkUiState
 import org.plainphone.ui.user.MoreEvent
+import org.plainphone.ui.user.WifiMessageEvent
+import org.plainphone.ui.user.WifiProblem
 
 /** preview-2 (PLA-144): nothing unwired may look as if it worked. */
 class TestBuildNavigatorTest {
@@ -36,5 +38,19 @@ class TestBuildNavigatorTest {
     @Test fun sharingABlockedLinkSaysNotInThisTestBuildInsteadOfSent() {
         val link = ShellRoute.BlockedLink(BlockedLinkUiState.Confirm("Sam", "text"), "example.invalid/bus")
         assertEquals(at(link, ShellRoute.NotInBuild), nav.onLink(at(link), BlockedLinkEvent.Send).state)
+    }
+
+    @Test fun forgetThisNetworkSaysNotInThisTestBuildFromBothWifiEntries() {
+        for (entry in listOf("wifi_sign_in", "wifi_no_internet")) {
+            val state = ShellState.forPreviewEntry(entry)
+            val step = nav.onWifi(state, WifiMessageEvent.ForgetNetwork)
+            assertEquals(entry, ShellRoute.NotInBuild, step.state.current)
+            assertNull(step.effect)
+        }
+    }
+
+    @Test fun okOnAWifiMessageStillJustCloses() {
+        val wifi = at(ShellRoute.Wifi(WifiProblem.NoInternet))
+        assertEquals(ShellState(), nav.onWifi(wifi, WifiMessageEvent.Ok).state)
     }
 }
