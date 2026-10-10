@@ -1,0 +1,56 @@
+# Check 2 on preview-2b (emulator-5742 pla113-a35, API 35), release/preview-2 @ 6616a3d, 2026-10-10T18:40:41Z
+testOnly: TEST_ONLY
+Before: User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+lock task: mLockTaskModeState=LOCKED
+hidden before (15):
+  com.android.chrome
+  com.android.stk
+  com.android.vending
+  com.google.android.apps.docs
+  com.google.android.apps.photos
+  com.google.android.apps.wellbeing
+  com.google.android.apps.youtube.music
+  com.google.android.calendar
+  com.google.android.contacts
+  com.google.android.deskclock
+  com.google.android.documentsui
+  com.google.android.gm
+  com.google.android.googlequicksearchbox
+  com.google.android.projection.gearhead
+  com.google.android.youtube
+## dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver
+Success: Admin removed ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
+After: no owners
+lock task: mLockTaskModeState=NONE
+hidden after (0):
+
+came back: 15 of 15
+runtime after removal: 10-10 11:40:45.494   959  1004 W PlainphoneBoot: reapply package:PACKAGE_CHANGED:com.android.chrome skipped: not Device Owner
+
+## Set up again: app/tools/preview-2/setup.sh (same APK)
+Success: Device owner set to package org.plainphone/.PlainphoneAdminReceiver
+Active admin set to component org.plainphone/.PlainphoneAdminReceiver
+starter list: com.google.android.dialer,com.google.android.apps.messaging,com.android.camera2,com.google.android.apps.maps
+Broadcasting: Intent { act=org.plainphone.preview.SET_STARTER flg=0x400000 cmp=org.plainphone/.preview.SetupCommandReceiver (has extras) }
+Broadcast completed: result=0
+apply: 10-10 11:42:02.476  4798  4829 I PlainphoneBoot: reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESE
+10-10 11:42:02.422  4798  4829 I Plainphone: PREVIEW2 PLAN hidden=11 lockTask=[com.android.camera2, com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.android.apps.safe
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+--- read back
+1 owner:
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+home: org.plainphone/.MainActivity
+lock task state: mLockTaskModeState=LOCKED
+  hidden: com.android.chrome
+  hidden: com.android.vending
+  hidden: com.google.android.apps.docs
+  hidden: com.google.android.apps.photos
+  hidden: com.google.android.apps.youtube.music
+  hidden: com.google.android.calendar
+  hidden: com.google.android.contacts
+  hidden: com.google.android.deskclock
+  hidden: com.google.android.documentsui
+  hidden: com.google.android.gm
+  hidden: com.google.android.googlequicksearchbox
+  hidden: com.google.android.youtube
+testOnly: TEST_ONLY
