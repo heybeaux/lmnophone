@@ -21,6 +21,13 @@ interface NegativeControl {
     /** Runs after every re-apply, while Plainphone is Device Owner. */
     fun afterReapply(context: Context, dpm: DevicePolicyManager, admin: ComponentName) {}
 
+    /**
+     * True for package events the control's own fault causes. Without this, the re-apply undoes the
+     * fault, the control re-applies it, and each change queues another re-apply (seen on API 36: the
+     * alert package flapped hidden/unhidden every ~0.3 s, so checks saw it either way).
+     */
+    fun ignoresPackageEvent(packageName: String?): Boolean = false
+
     object None : NegativeControl {
         override val name = "none"
     }
