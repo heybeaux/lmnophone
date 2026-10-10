@@ -936,6 +936,7 @@ class AppApprovalControllerTest {
             run
         }
         events.clear()
+        containmentRequests.clear()
         return action
     }
 
