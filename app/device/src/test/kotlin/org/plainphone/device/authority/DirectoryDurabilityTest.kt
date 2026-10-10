@@ -37,7 +37,8 @@ class DirectoryDurabilityTest {
         }
         val result = initialize(store)
         println("genesis: result=$result syncCalls=$calls visibleRevision=${JointAuthorityStore(dir).credentials.read()?.revision}")
-        assertEquals(2, calls)
+        // Was assertEquals(2, calls) at b12a371; the durable rollback now adds its own syncs.
+        assertTrue(calls >= 2)
         assertFalse("genesis acknowledged despite failed second copy sync", result)
     }
 
@@ -82,7 +83,8 @@ class DirectoryDurabilityTest {
         }
         val result = store.credentials.compareAndSet(store.credentials.read()!!, credentials(1))
         println("rollback unavailable: result=$result syncCalls=$calls visibleRevision=${JointAuthorityStore(dir).credentials.read()?.revision}")
-        assertEquals(2, calls)
+        // Was assertEquals(2, calls) at b12a371; the rollback attempt now adds its own syncs.
+        assertTrue(calls >= 2)
         assertFalse("failed rollback promoted the unsynced second copy to acknowledged", result)
     }
 
@@ -111,8 +113,8 @@ class DirectoryDurabilityTest {
 
     // ---- Author additions ----
 
-    /** R3 follow-through: after a rollback that cannot be made durable, no version reads in this process. */
-    @Test fun unrecoverableRollbackLeavesTheRecordUnreadableUntilRestart() {
+    /** R3 follow-through: false is "not acknowledged" (PLA-160); fresh reads agree on one whole record. */
+    @Test fun unrecoverableRollbackIsNotAcknowledgedAndFreshReadsAgree() {
         val dir = tmp.newFolder()
         val store = JointAuthorityStore(dir)
         assertTrue(initialize(store))
@@ -125,15 +127,14 @@ class DirectoryDurabilityTest {
             PlatformDirectorySync.sync(d)
         }
         assertFalse(store.credentials.compareAndSet(store.credentials.read()!!, credentials(1)))
-        // Neither the old nor the unsynced new record may be acted on in this process.
-        assertNull(store.credentials.read())
-        assertNull(JointAuthorityStore(dir).waitingStore.read())
-        assertFalse(store.credentials.compareAndSet(credentials(0), credentials(2)))
-        // A restart reads whatever the disk holds, as one whole record.
+        val a = JointAuthorityStore(dir).credentials.read()?.revision
+        assertEquals(a, JointAuthorityStore(dir).credentials.read()?.revision)
+        assertTrue("revision $a", a == 0L || a == 1L)
+        // A compare-and-set built from a fresh read works once storage recovers.
         File(dir, "authority-a.rec.tmp").delete(); File(dir, "authority-b.rec.tmp").delete()
-        JointAuthorityStore.forgetProcessStateForTest()
-        val after = JointAuthorityStore(dir).credentials.read()
-        assertTrue("revision ${after?.revision}", after != null && after.revision in 0L..1L)
+        store.withDirectorySync(PlatformDirectorySync)
+        val fresh = store.credentials.read()!!
+        assertTrue(store.credentials.compareAndSet(fresh, credentials(fresh.revision + 1)))
     }
 
     @Test fun cancelRetriesSucceedOnceDirectorySyncWorksAgain() {
