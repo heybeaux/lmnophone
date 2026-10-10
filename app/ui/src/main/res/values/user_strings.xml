@@ -54,7 +54,7 @@
     <string name="link_failed_body">The phone may have no signal.</string>
     <string name="wifi_title">Calls and texts still work</string>
     <string name="wifi_signal">when the phone has signal (the bars at the top of the screen).</string>
-    <string name="wifi_signin">This Wi-Fi needs a sign-in page, which Own Phone doesn\'t allow. Use mobile data or another Wi-Fi.</string>
+    <string name="wifi_signin">This Wi-Fi needs a sign-in page, which LMNOPhone doesn\'t allow. Use mobile data or another Wi-Fi.</string>
     <string name="wifi_no_internet">This Wi-Fi isn\'t reaching the internet.</string>
     <string name="wifi_forget_explanation">Forget this network stops the phone trying to join this Wi-Fi.</string>
     <string name="wifi_forget">Forget this network</string>

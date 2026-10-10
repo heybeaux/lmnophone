@@ -5,8 +5,8 @@
     <string name="home_messages">Messages</string>
     <string name="home_more">More</string>
     <string name="home_more_description">Ask for an app, settings, help</string>
-    <string name="notice_attention">Own Phone needs attention</string>
-    <string name="notice_turn_off">Own Phone will turn off after %1$s. Tap to cancel.</string>
+    <string name="notice_attention">LMNOPhone needs attention</string>
+    <string name="notice_turn_off">LMNOPhone will turn off after %1$s. Tap to cancel.</string>
     <string name="notice_people">A change to trusted people is waiting. Tap to cancel.</string>
     <string name="notice_mode">A change to how this phone is set up is waiting. Tap to cancel.</string>
     <plurals name="notice_opening">
