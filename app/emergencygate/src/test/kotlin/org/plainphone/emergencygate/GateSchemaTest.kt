@@ -57,12 +57,12 @@ class GateSchemaTest {
     }
 
     @Test fun `the fence needs an emulator and the number in the test-mode list`() {
-        val list = "Emergency number test mode list:\n  7357\n"
+        val list = "[112, 911, 7357]" // the `-p` format; API 35 prints `[112, 911]` before `-a`
         assertEquals(null, NumberFence.refusal("7357", qemu = "1", testModeList = list))
         assertTrue(NumberFence.refusal("911", qemu = "1", testModeList = list)!!.contains("allowlist"))
         assertTrue(NumberFence.refusal("7357", qemu = "", testModeList = list)!!.contains("emulator"))
         assertTrue(NumberFence.refusal("7357", qemu = "0", testModeList = list)!!.contains("emulator"))
-        assertTrue(NumberFence.refusal("7357", qemu = "1", testModeList = "Emergency number test mode list:\n")!!.contains("test-mode"))
-        assertTrue(NumberFence.refusal("7357", qemu = "1", testModeList = "  73570\n")!!.contains("test-mode"))
+        assertTrue(NumberFence.refusal("7357", qemu = "1", testModeList = "[112, 911]")!!.contains("test-mode"))
+        assertTrue(NumberFence.refusal("7357", qemu = "1", testModeList = "[112, 73570]")!!.contains("test-mode"))
     }
 }
