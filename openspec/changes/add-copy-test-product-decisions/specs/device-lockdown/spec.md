@@ -8,7 +8,7 @@ Every time Plainphone unhides a package, it SHALL apply PLA-22 mitigation B stra
 - the emergency floor, including on unknown builds and the locked-boot path;
 - turning off.
 
-**How.** Plainphone SHALL change the enabled state of one of its own components for real, with `PackageManager.DONT_KILL_APP | PackageManager.SYNCHRONOUS`, check that the call returned and that the new state reads back, then put the component back the same way. If the flip fails, Plainphone SHALL retry once, log it and show "Plainphone needs attention". It SHALL NOT undo the unhide, because it may be an emergency repair.
+**How.** Plainphone SHALL change the enabled state of one of its own components for real, with `PackageManager.DONT_KILL_APP | PackageManager.SYNCHRONOUS`, check that the call returned and that the new state reads back. Each unhide gets one flip, to the opposite of the state the component reads at that moment; the component is not put back, so consecutive flips alternate. If the component's state can't be read, Plainphone SHALL NOT flip blindly and SHALL treat it as a failed flip. If the flip fails, Plainphone SHALL retry once, log it and show "Plainphone needs attention". It SHALL NOT undo the unhide, because it may be an emergency repair.
 
 **Battery guard.** Discretionary unhides (session and elevation starts, approvals, turning off) SHALL NOT start while the battery is below 5% and not charging. Emergency repairs (the floor, the never-hide guard, the protected-state check) SHALL NEVER be delayed.
 

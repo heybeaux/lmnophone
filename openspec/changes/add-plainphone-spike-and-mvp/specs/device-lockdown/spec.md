@@ -221,7 +221,7 @@ Plainphone SHALL write its policy atomically, check its schema version before ap
 7. home preference.
 
 **Locked-boot path.** At `LOCKED_BOOT_COMPLETED`, Plainphone SHALL use only device-protected data. It SHALL do only these steps, then read them back:
-- steps 1–3, where step 3 includes restoring the emergency UI subset's lock-task membership;
+- steps 1–3, where step 3 includes restoring the emergency UI subset's lock-task membership and keeping Plainphone itself in the lock-task list, so the home activity can start lock task at the first frame even if the list was lost;
 - the never-hide guard.
 
 **When to re-apply.** Plainphone SHALL re-apply policy at locked and unlocked boot, on package events, after trusted-person actions, and every 15 minutes.
