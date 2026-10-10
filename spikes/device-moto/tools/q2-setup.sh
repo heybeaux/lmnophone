@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# THROWAWAY SPIKE (PLA-24). Q2 window setup on SPARE_DEVICE_SERIAL: roll back preinstalled Google apps so Play has
+# THROWAWAY SPIKE (PLA-24). Q2 window setup on the spare test device: roll back preinstalled Google apps so Play has
 # real updates waiting, then (MODE=test) apply the intended policy, or (MODE=compare) leave the phone unrestricted.
 set -uo pipefail
-SERIAL=SPARE_DEVICE_SERIAL; a() { adb -s "$SERIAL" "$@"; }; pp() { bash "$(dirname "$0")/pp.sh" "$@"; }
+: "${SERIAL:?Set SERIAL to the explicitly approved test device}"
+case "$SERIAL" in emulator-*) echo "refusing: physical-device helper requires an approved physical device" >&2; exit 2;; esac
+export SERIAL
+a() { adb -s "$SERIAL" "$@"; }; pp() { bash "$(dirname "$0")/pp.sh" "$@"; }
 MODE="${MODE:?MODE=test or MODE=compare}"
 ROLLBACK="com.google.android.apps.messaging com.google.android.gm com.google.android.deskclock com.google.android.apps.photos com.google.android.calculator"
 APPROVED="com.google.android.dialer,com.google.android.apps.messaging,com.google.android.gm,com.android.phone,com.google.android.apps.safetyhub,org.telegram.messenger,com.Slack,com.spotify.music,com.microsoft.office.outlook"

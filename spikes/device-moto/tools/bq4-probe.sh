@@ -3,7 +3,10 @@
 # Usage: tools/bq4-probe.sh <app> <step-label> [--no-text] [--no-shot]
 # --no-text / --no-shot: for screens that may show account data (Gmail inbox).
 set -euo pipefail
-SERIAL="${SERIAL:-SPARE_DEVICE_SERIAL}"; app="$1"; step="$2"; shift 2
+: "${SERIAL:?Set SERIAL to the explicitly approved test device}"
+case "$SERIAL" in emulator-*) echo "refusing: physical-device helper requires an approved physical device" >&2; exit 2;; esac
+export SERIAL
+app="$1"; step="$2"; shift 2
 notext=0; noshot=0; for f in "$@"; do [ "$f" = --no-text ] && notext=1; [ "$f" = --no-shot ] && noshot=1; done
 d="$(dirname "$0")/../evidence/phase-b/bq4/$app"; mkdir -p "$d"
 a() { adb -s "$SERIAL" "$@"; }

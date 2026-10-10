@@ -2,7 +2,8 @@
 # THROWAWAY SPIKE (PLA-18). Point the emulator's captive-portal probes at the host fake portal.
 # Usage: bash tools/fixture.sh <serial> captive|open|reset   (portal.py must be running on the host, port 8099)
 S="${1:?serial}"; M="${2:?mode}"
-case "$S" in emulator-5590|emulator-5604|SPARE_DEVICE_SERIAL) echo "REFUSED: $S is not ours"; exit 1;; esac
+case "$S" in emulator-*) ;; *) echo "REFUSED: emulator serial required" >&2; exit 1;; esac
+case "$S" in emulator-5590|emulator-5604) echo "REFUSED: $S is not ours"; exit 1;; esac
 MODEFILE="${PORTAL_MODEFILE:?set PORTAL_MODEFILE}"
 A() { adb -s "$S" "$@" < /dev/null; }
 if [ "$M" = reset ]; then

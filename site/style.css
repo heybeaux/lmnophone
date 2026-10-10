@@ -1,0 +1,171 @@
+/* LMNOPhone landing page. Tokens: docs/ux/design-tokens.md (black, white and grey only; Lexend 400 and 500). */
+@font-face {
+  font-family: "Lexend";
+  src: url("fonts/Lexend%5Bwght%5D.ttf") format("truetype");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --ink: #000000;
+  --paper: #FFFFFF;
+  --ink-2: #545454;
+  --ink-3: #757575;
+  --fill-2: #E8E8E8;
+  --fill-1: #F6F6F6;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s6: 24px; --s8: 32px; --s12: 48px;
+  --radius-box: 16px;
+  --border: 1.5px solid var(--ink-3);
+  --hairline: 1px solid var(--fill-2);
+  --page: 1120px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Lexend", sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 26px;
+  overflow-wrap: break-word;
+}
+
+a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
+
+h1, h2, h3 { font-weight: 500; margin: 0; }
+p { margin: 0 0 var(--s4); }
+em.plain { font-style: normal; font-weight: 500; }
+
+.wrap { width: 100%; max-width: var(--page); margin: 0 auto; padding: 0 var(--s6); }
+.narrow > * { max-width: 712px; }
+
+/* Top bar */
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--s2) var(--s6); min-height: 72px; }
+.top a { display: inline-flex; align-items: center; min-height: 48px; min-width: 48px; }
+.mark { font-size: 22px; line-height: 28px; font-weight: 500; text-decoration: none; }
+.toplink { font-size: 16px; }
+
+/* Hero: text on the left, the home screen on the right */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 340px);
+  gap: var(--s12) 64px;
+  align-items: end;
+  padding-top: 64px;
+  padding-bottom: 96px;
+}
+h1 { font-size: 72px; line-height: 80px; font-weight: 400; letter-spacing: -1px; }
+.lede { font-size: 26px; line-height: 36px; margin: var(--s6) 0 var(--s8); max-width: 30ch; }
+.notice {
+  background: var(--fill-1);
+  border-radius: var(--radius-box);
+  padding: var(--s4);
+  font-weight: 500;
+  max-width: 34ch;
+  margin-bottom: 64px;
+}
+
+/* Like the phone's app list: names in big type, nothing else */
+.apps { display: flex; flex-direction: column; }
+.apps a {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  text-decoration: none;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+}
+.apps a:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+
+.hero-shot { margin: 0; }
+.hero-shot img, .shots img { display: block; width: 100%; height: auto; }
+
+/* Sections */
+.section { padding-top: 96px; padding-bottom: 32px; }
+h2 { font-size: 40px; line-height: 48px; margin-bottom: var(--s6); }
+h3 { font-size: 22px; line-height: 28px; margin-bottom: var(--s2); }
+.intro { color: var(--ink-2); font-size: 20px; line-height: 30px; max-width: 46ch; margin-bottom: var(--s12); }
+
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s12) var(--s12); margin-top: var(--s8); }
+.cols p { color: var(--ink-2); }
+.aside { margin-top: var(--s8); font-weight: 500; font-size: 20px; line-height: 30px; }
+
+/* Screens */
+.shots {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s12) var(--s6);
+  margin-top: 0;
+  margin-bottom: var(--s8);
+}
+.shots li { margin: 0; }
+.shots p { font-size: 16px; line-height: 22px; color: var(--ink-2); margin-top: var(--s4); }
+.shots b { color: var(--ink); font-weight: 500; }
+.fine { font-size: 16px; line-height: 22px; color: var(--ink-2); }
+
+/* Promise */
+.promise { list-style: none; padding: 0; margin: 0; counter-reset: none; }
+.promise li { padding: var(--s6) 0; border-top: var(--hairline); }
+.promise li:last-child { border-bottom: var(--hairline); }
+.promise p { color: var(--ink-2); margin: 0; }
+
+/* Buttons: pills, black for the main action, outline for the other */
+.buttons { display: flex; flex-wrap: wrap; gap: var(--s4); margin-top: var(--s8); }
+.btn {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 64px;
+  padding: 10px 32px;
+  border-radius: 999px;
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.btn.primary { background: var(--ink); color: var(--paper); border: 1.5px solid var(--ink); align-items: center; }
+.btn.outline { background: var(--paper); color: var(--ink); border: var(--border); }
+.btn .sub { font-size: 16px; line-height: 22px; font-weight: 400; color: var(--ink-2); }
+.btn:hover { text-decoration: underline; text-underline-offset: 3px; }
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Footer */
+.foot { padding-top: 96px; padding-bottom: 64px; font-size: 16px; line-height: 22px; color: var(--ink-2); }
+.foot a { color: var(--ink-2); }
+.foot p { margin-bottom: var(--s2); }
+
+/* Narrower screens */
+@media (max-width: 1000px) {
+  .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; margin-left: auto; margin-right: auto; }
+  .cols { grid-template-columns: 1fr; gap: var(--s8); max-width: 640px; }
+}
+
+@media (max-width: 760px) {
+  .hero { grid-template-columns: 1fr; padding-top: var(--s8); padding-bottom: 64px; }
+  .hero-shot { max-width: 300px; }
+  h1 { font-size: 52px; line-height: 60px; }
+  .lede { font-size: 22px; line-height: 32px; }
+  .notice { margin-bottom: var(--s8); }
+  h2 { font-size: 32px; line-height: 40px; }
+  .section { padding-top: 64px; }
+  .shots { grid-template-columns: 1fr; gap: var(--s8); }
+  .shots li { max-width: 300px; }
+  .btn { width: 100%; }
+}
+
+@media (max-width: 380px) {
+  h1 { font-size: 44px; line-height: 52px; }
+  .apps a { font-size: 28px; line-height: 36px; }
+}
+
+.nb { white-space: nowrap; }

@@ -3,8 +3,9 @@
 # Usage: tools/a3-probe.sh <outdir> <name> "<launch spec>" "<label1>" ["<label2>" ...]
 # A label of "@x,y" taps a raw coordinate (for icon-only buttons).
 set -uo pipefail
-SERIAL="${SERIAL:-SPARE_DEVICE_SERIAL}"
-case "$SERIAL" in emulator-5590|emulator-5604) echo "refusing: $SERIAL belongs to another team" >&2; exit 2;; esac
+: "${SERIAL:?Set SERIAL to the explicitly approved test device}"
+case "$SERIAL" in emulator-*) echo "refusing: physical-device helper requires an approved physical device" >&2; exit 2;; esac
+export SERIAL
 a() { adb -s "$SERIAL" "$@"; }
 here="$(cd "$(dirname "$0")" && pwd)"
 out="$1"; name="$2"; spec="$3"; shift 3; mkdir -p "$out"

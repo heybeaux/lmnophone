@@ -55,6 +55,7 @@ class ElevatedAppApprovalTest {
         override fun commitElevationApproval(expected: AppApprovalState, replacement: AppApprovalState,
             expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
             expectedCredentials: CredentialState, finalCheck: () -> Boolean): Boolean {
+            assertTrue(replacement.pending!!.record.identity.packageName in hidden, "elevation commit must run hidden")
             if (!event("before-atomic") || !finalCheck()) return false
             if (approvals !== expected || elevation !== expectedElevation || credentials !== expectedCredentials) return false
             // A single durable replacement, simulated without a crash point between the fields.
@@ -83,13 +84,28 @@ class ElevatedAppApprovalTest {
     private fun manifest(identity: ApprovalBinding) = PermissionManifest(identity, 1, "build", listOf(
         RuntimePermission(camera, "Camera", listOf("Taking photos"), PermissionGrantCapability.SUPPORTED)))
     private var manifests = listOf(a, b).associate { it.packageName to manifest(it) }
+    private val hidden = mutableSetOf(a.packageName, b.packageName)
     private val effects = object : AppApprovalEffects {
-        override fun hideAndReadBack(identity: ApprovalBinding) = event("hide")
-        override fun setPermission(identity: ApprovalBinding, write: PermissionWrite) = event("permission")
+        override fun hideAndReadBack(identity: ApprovalBinding): Boolean {
+            if (!event("hide")) return false
+            hidden += identity.packageName; return true
+        }
+        override fun openPermissionWindow(identity: ApprovalBinding): Boolean {
+            assertFalse(identity.packageName in approvals.approvedPackages(policy.installed, policy.installedIdentities))
+            hidden -= identity.packageName
+            return event("window-open")
+        }
+        override fun closePermissionWindow(identity: ApprovalBinding): Boolean {
+            hidden += identity.packageName
+            return event("window-close")
+        }
+        override fun setPermission(identity: ApprovalBinding, write: PermissionWrite) =
+            identity.packageName !in hidden && event("permission")
         override fun readPermissions(identity: ApprovalBinding): Map<PermissionName, PermissionReadback> =
             if (event("permissions-readback")) mapOf(camera to PermissionReadback.GRANTED) else emptyMap()
         override fun applyPolicy(plan: PolicyPlan) = event("apply")
         override fun readBackPolicy(plan: PolicyPlan) = event("policy-readback")
+        override fun containFailedActivation(packages: Set<PackageName>) = event("contain")
     }
     private var id = 0
     private val ids = AppApprovalIdSource { "id-${++id}" }

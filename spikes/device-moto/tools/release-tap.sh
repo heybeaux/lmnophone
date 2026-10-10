@@ -2,8 +2,9 @@
 # THROWAWAY SPIKE (PLA-5). Taps the in-app RELEASE button twice within its 3 s confirm window.
 # A uiautomator dump between taps takes >3 s, so find the button once and tap the same point twice.
 set -euo pipefail
-SERIAL="${SERIAL:-SPARE_DEVICE_SERIAL}"
-case "$SERIAL" in emulator-5590|emulator-5604) echo "refusing: $SERIAL belongs to another team" >&2; exit 2;; esac
+: "${SERIAL:?Set SERIAL to the explicitly approved test device}"
+case "$SERIAL" in emulator-*) echo "refusing: physical-device helper requires an approved physical device" >&2; exit 2;; esac
+export SERIAL
 a() { adb -s "$SERIAL" "$@"; }
 # The first tap swaps the status text for a short "Tap RELEASE again" line, which can move the button.
 # So: tap once to arm, let the layout settle (and the 3 s window lapse), find the button again, then

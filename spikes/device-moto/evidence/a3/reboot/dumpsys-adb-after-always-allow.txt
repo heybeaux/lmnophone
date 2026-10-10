@@ -1,10 +1,11 @@
+# PUBLIC COPY: workstation identity redacted; original preserved privately.
 ADB MANAGER STATE (dumpsys adb):
 {
   debugging_manager={
     connected_to_adb=true
     last_key_received=AC:1D:CA:40:CA:66:86:F5:2F:58:BD:34:78:4A:EF:46
-    user_keys=<key> user@workstation
+    user_keys=<key> [workstation identity redacted]
     
-    keystore=ABX2��keyStoreo��version2��adbKey/��key�<key> user@workstation���lastConnection�Te�32��wifiAP/��bssid<bssid>33
+    keystore=ABX2��keyStoreo��version2��adbKey/��key�<key> [workstation identity redacted]���lastConnection�Te�32��wifiAP/��bssid<bssid>33
   }
 }
