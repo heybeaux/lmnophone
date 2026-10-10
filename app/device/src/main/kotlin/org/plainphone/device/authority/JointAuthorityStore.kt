@@ -61,6 +61,16 @@ internal enum class WritePoint { BEFORE_COPY_A, AFTER_COPY_A, AFTER_COPY_B, AFTE
 /** Storage could not durably reserve a new identity; the caller shows "not ready" and retries later. */
 class IdentityUnavailable : IllegalStateException("identity reservation unavailable")
 
+/** Makes a directory's entries durable, or throws. Identity reservations refuse when this fails. */
+internal fun interface DirectorySync { fun sync(dir: File) }
+
+/** fsync of the directory itself through a read-only channel, which Linux and Android's libcore support. */
+internal object PlatformDirectorySync : DirectorySync {
+    override fun sync(dir: File) {
+        java.nio.channels.FileChannel.open(dir.toPath(), java.nio.file.StandardOpenOption.READ).use { it.force(true) }
+    }
+}
+
 /** Test seam for crash and readback faults at fixed points of a transaction. */
 internal fun interface StorageFaults { fun at(point: WritePoint, dir: File) }
 
@@ -370,8 +380,13 @@ class JointAuthorityStore internal constructor(
 
     private var entropy: (Int) -> ByteArray = { n -> ByteArray(n).also { SecureRandom().nextBytes(it) } }
 
+    private var directorySync: DirectorySync = PlatformDirectorySync
+
     /** Test seam: the random source for identities. */
     internal fun withEntropy(source: (Int) -> ByteArray) = apply { entropy = source }
+
+    /** Test seam: how directory entries are made durable. */
+    internal fun withDirectorySync(sync: DirectorySync) = apply { directorySync = sync }
 
     /**
      * Request IDs and cancel codes, each reserved before it is returned and never reused, even when
@@ -393,7 +408,12 @@ class JointAuthorityStore internal constructor(
         reserve("person") { "person-" + hex(entropy(16)) }?.let(::TrustedPersonId)
     }
 
-    /** Callers hold the coordinator. Up to [ATTEMPTS] draws; null if none could be reserved durably. */
+    /**
+     * Callers hold the coordinator. Up to [ATTEMPTS] draws; null if none could be reserved durably.
+     * A value is handed out only after its file contents, the `reserved/` folder entry and the folder's
+     * own entry in [dir] are all synced (PLA-143 R1). Any failure refuses; the created file still marks
+     * the value as taken, so a refused value is never handed out later either.
+     */
     private fun reserve(kind: String, draw: () -> String): String? {
         val folder = File(dir, "reserved")
         if (!folder.isDirectory && !folder.mkdirs()) return null
@@ -407,14 +427,10 @@ class JointAuthorityStore internal constructor(
             } catch (_: IOException) {
                 return null
             }
-            // Created means taken, even if the rest fails; only a fully synced reservation is handed out.
             return try {
                 java.io.FileOutputStream(file).use { it.write(value.toByteArray()); it.fd.sync() }
-                try {
-                    java.nio.channels.FileChannel.open(folder.toPath(), java.nio.file.StandardOpenOption.READ).use { it.force(true) }
-                } catch (_: IOException) {
-                    // Directory sync is not supported everywhere; the file itself is synced.
-                }
+                directorySync.sync(folder)
+                directorySync.sync(dir)
                 value
             } catch (_: IOException) {
                 null
