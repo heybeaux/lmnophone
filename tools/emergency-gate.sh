@@ -72,14 +72,28 @@ wait_boot() {
     log "boot did not complete"; return 1
 }
 
+keyguard_showing() { sh_ dumpsys window | grep -q "isKeyguardShowing=true"; }
+
+# Unlocks with the PIN. Never types it into an emergency dialer: that screen would take the digits.
 unlock() {
+    local top focus
+    for _ in 1 2 3 4; do
+        top="$(sh_ dumpsys activity activities | grep -m1 topResumedActivity)"
+        case "$top" in *safetyhub*|*com.android.phone/*|*dialer*) sh_ input keyevent KEYCODE_BACK >/dev/null; sleep 1 ;; *) break ;; esac
+    done
     sh_ input keyevent KEYCODE_WAKEUP >/dev/null
+    keyguard_showing || return 0
     sh_ wm dismiss-keyguard >/dev/null
-    sleep 1
+    sleep 1.5
+    focus="$(sh_ dumpsys window | grep -m1 mCurrentFocus)"
+    case "$focus" in
+        *NotificationShade*|*Keyguard*|*Bouncer*) ;;
+        *) log "not on the PIN screen ($focus); not typing the PIN"; return 1 ;;
+    esac
     sh_ input text "$PIN" >/dev/null
     sh_ input keyevent KEYCODE_ENTER >/dev/null
-    for _ in $(seq 1 20); do sh_ dumpsys user | grep -q "State: RUNNING_UNLOCKED" && return 0; sleep 0.5; done
-    log "unlock did not finish"
+    for _ in $(seq 1 20); do keyguard_showing || return 0; sleep 0.5; done
+    log "unlock did not finish"; return 1
 }
 
 # Runs one gate check and prints its GATE lines. A missing line is a FAIL, never silence.
