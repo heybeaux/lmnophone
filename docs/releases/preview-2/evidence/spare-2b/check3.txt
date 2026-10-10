@@ -1,0 +1,19 @@
+# Check 3 on preview-2b, spare (<spare>, API 35, no root), release/preview-2 @ 7440cab, 2026-10-10T19:07:27Z
+No root on the spare: this reads Android's in-memory state (dumpsys) after each setup re-apply, not the file.
+Start:
+12:07:27.106 maps hidden=false | FlushMarker: 
+## Control: Maps taken off the list -> hidden; hides get no flip
+result=0
+12:07:28.569 maps hidden=true | FlushMarker: 
+## Maps put back on the list -> unhidden; the applier flips FlushMarker right after
+result=0
+12:07:30.863 maps hidden=false | FlushMarker: enabledComponents:FlushMarker
+## Re-apply log
+10-10 12:07:28.511 I/PlainphoneBoot( 2984): reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET,
+10-10 12:07:30.819 I/PlainphoneBoot( 2984): reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET,
+
+## Reading
+- After the unhide the setup re-apply read back ready=true with flipFailures=0, and FlushMarker's explicit state flipped.
+  This shows the flip ran after the unhide. It does not show the unhide reached storage: on Android 15 that write is queued
+  (PLA-185 F1, PLA-25). Mitigation B stays best effort. The boot re-apply (restart.txt) is what repairs a lost unhide.
+- The spare ends on the standard starter list (Phone, Messages, Camera, Maps).
