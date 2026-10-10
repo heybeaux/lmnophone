@@ -22,7 +22,7 @@ device-lockdown, all in the `add-copy-test-product-decisions` change. C1–C9 = 
 
 **Where things live.** Screens that already had a home were changed in place:
 - setup (mode choice, two people, privacy steps): [flows-setup.md](flows-setup.md);
-- "What Plainphone can't stop" and turning off: [flows-limits-and-off.md](flows-limits-and-off.md);
+- "What Own Phone can't stop" and turning off: [flows-limits-and-off.md](flows-limits-and-off.md);
 - the user's side of a waiting change (U9) and the countdown (U10): [flows-user.md](flows-user.md);
 - the PIN screen and the trusted-person menu: [flows-trusted-person.md](flows-trusted-person.md).
 
@@ -40,34 +40,34 @@ wording is in the screen named.
 | String | Where it shows | Source |
 |---|---|---|
 | Who are you? | PIN screen, two trusted people ([M1](#m1-who-are-you)) | C1 ("Who are you? First trusted person / Second trusted person"); TPC "up to two trusted people" |
-| You are equals. Either of you can approve apps, or turn Plainphone off. | Setup, second trusted person ([S2c](flows-setup.md#s2-whos-who-step-2-of-8)) | C1. **Flag 1** |
-| Plainphone will turn off after {time}. Tap to cancel. | Home notice line | CHS |
+| You are equals. Either of you can approve apps, or turn Own Phone off. | Setup, second trusted person ([S2c](flows-setup.md#s2-whos-who-step-2-of-8)) | C1. **Flag 1** |
+| Own Phone will turn off after {time}. Tap to cancel. | Home notice line | CHS |
 | A change to trusted people is waiting. Tap to cancel. | Home notice line | CHS |
 | A change to how this phone is set up is waiting. Tap to cancel. | Home notice line | CHS (PLA-39) |
 | Opening up in {n} minutes | Home notice line, U10a | CHS |
 | Ready – tap to start | Home notice line, U10b | CHS |
 | Ask [trusted person] to do the monthly phone check | Home notice line | CHS. **Flag 2** for two people |
 | Time for your monthly phone check | Home notice line, self-managed | CHS (PLA-39) |
-| Plainphone needs attention | Home notice line; "Needs you" | CHS; DL |
+| Own Phone needs attention | Home notice line; "Needs you" | CHS; DL |
 | Already in progress | U9e; [M3d](#m3d-the-change-on-the-trusted-person-side) | TPC "Commit"; C2 |
-| Cancelled | U9d | TPC ("before Plainphone shows 'Cancelled'") |
+| Cancelled | U9d | TPC ("before Own Phone shows 'Cancelled'") |
 | Time while the phone is off doesn't count. | U9a, [M3](#m3-changes-that-wait-24-hours), [M7](#m7-self-managed-mode) | C2 ("Screens say: …"); TPC clock |
-| Skip the wait and turn Plainphone off now? | Skip screen ([M3e](#m3e-skip-the-wait-with-a-recovery-code)) | C2; TPC recovery-code scenario |
+| Skip the wait and turn Own Phone off now? | Skip screen ([M3e](#m3e-skip-the-wait-with-a-recovery-code)) | C2; TPC recovery-code scenario |
 | Reset protection not updated – call the helper | Trusted-person "Needs you" ([M4](#m4-a-change-is-stuck)) | DL; TPC |
 | Until this is fixed, we can't say whose Google account a wipe would ask for. | M4 | C3 |
 | Stop this change | M4 | C3 |
-| Plainphone recovered from an interrupted change. … | [M5](#m5-after-an-interrupted-change) | C2, **draft**, finished in M5 |
-| Plainphone closes this at {time} | Session screen, self-managed ([M7f](#m7f-while-it-is-open)) | C4 ("Custody wording") |
+| Own Phone recovered from an interrupted change. … | [M5](#m5-after-an-interrupted-change) | C2, **draft**, finished in M5 |
+| Own Phone closes this at {time} | Session screen, self-managed ([M7f](#m7f-while-it-is-open)) | C4 ("Custody wording") |
 | Stay with the phone until you tap Done. | Session screen, supervised (unchanged) | TPC session contract |
 | Charge the phone first. | [M10](#m10-battery-and-the-clock) | C7 |
 | friction, not a lock | Self-managed setup ([S1b](flows-setup.md#s1-how-is-this-phone-looked-after-step-1-of-8)), [M7](#m7-self-managed-mode), L1 | GS scenario "Self-managed setup"; TPC disclosure scenario |
-| In self-managed mode, you hold the PIN. Plainphone adds waits and limits so that distraction takes effort. It can't stop you, because you are in charge. You can always remove it by waiting at least 24 hours of the phone being on, or by wiping the phone. | S1b, L1 (self-managed) | C4. **Flag 3** adds the spec's "longer if…" |
-| Plainphone has no server of its own, no analytics and no account. It sends texts to your trusted people through your carrier, connects to your helper's computer over home Wi-Fi only to update itself, and keeps its history on the phone. But this phone runs Google's Android with a Google account, and Google collects some data that Plainphone can't stop. The privacy steps from setup reduce it. | L1 item 11 | C9. **Flag 4** for self-managed |
-| Plainphone will turn off after at least 24 hours of the phone being on. To stop it, open the phone and tap Cancel{, or reply CANCEL {code}}. | Start text ([M9](#m9-texts)) | C2, **draft**, finished in M9 |
+| In self-managed mode, you hold the PIN. Own Phone adds waits and limits so that distraction takes effort. It can't stop you, because you are in charge. You can always remove it by waiting at least 24 hours of the phone being on, or by wiping the phone. | S1b, L1 (self-managed) | C4. **Flag 3** adds the spec's "longer if…" |
+| Own Phone has no server of its own, no analytics and no account. It sends texts to your trusted people through your carrier, connects to your helper's computer over home Wi-Fi only to update itself, and keeps its history on the phone. But this phone runs Google's Android with a Google account, and Google collects some data that Own Phone can't stop. The privacy steps from setup reduce it. | L1 item 11 | C9. **Flag 4** for self-managed |
+| Own Phone will turn off after at least 24 hours of the phone being on. To stop it, open the phone and tap Cancel{, or reply CANCEL {code}}. | Start text ([M9](#m9-texts)) | C2, **draft**, finished in M9 |
 | CANCEL {code} | Reply format, only if Q15 passes | C2; TPC |
 
 The privacy-step names (Web & App Activity, Timeline, ad personalisation, advertising ID) are Google's and
-Android's own labels, so the helper can find them. They are not Plainphone words.
+Android's own labels, so the helper can find them. They are not Own Phone words.
 
 ### Flags: strings I think should change
 
@@ -75,7 +75,7 @@ None of these is changed on screen yet. The Lead decides; each has a recommendat
 
 1. **"approve" in the equals note.** C1's sentence says "Either of you can approve apps". The [word
    list](README.md#words-we-use-and-words-we-never-show) keeps "approve" off every screen; trusted people see
-   "Add". **Recommendation:** "You are equals. Either of you can add apps, or turn Plainphone off." Same meaning.
+   "Add". **Recommendation:** "You are equals. Either of you can add apps, or turn Own Phone off." Same meaning.
 2. **The monthly line with two trusted people.** CHS gives "Ask [trusted person] to do the monthly phone check".
    With two people there are two names. **Recommendation:** fill the placeholder with `{tps}`: "Ask Sam or Jo to do
    the monthly phone check". This fills the placeholder; it doesn't reword the line.
@@ -167,7 +167,7 @@ T1c is unchanged, except:
 
 - **Title:** Trusted people
 - **Body:** People who look after {user}'s phone. Each has their own PIN and recovery code. You are equals:
-  either of you can add apps, open the Play Store, or turn Plainphone off.
+  either of you can add apps, open the Play Store, or turn Own Phone off.
   (With one person: "{name} looks after {user}'s phone.")
 - One box per person: **{name}**, second line their number.
 - **Rows** (menu, no primary button):
@@ -179,7 +179,7 @@ T1c is unchanged, except:
   | **Remove {other}** | Two people | Takes 24 hours, and {other} gets a text |
   | **Switch to {user} looking after this phone** | Always | Takes 24 hours ([M6](#m6-switching-mode)) |
 
-- **Notes:** there is no "Remove {name}" for yourself and no remove at all with one person: Plainphone never removes
+- **Notes:** there is no "Remove {name}" for yourself and no remove at all with one person: Own Phone never removes
   the last trusted person (TPC). "Hand your place" covers leaving.
 
 ### M2b. Before it starts (one screen per kind)
@@ -228,7 +228,7 @@ The four kinds, and the words used for each everywhere (U9, texts, history):
 
 | Kind | `{change}` | Done (past tense, for texts) |
 |---|---|---|
-| Turning off | turn Plainphone off | Plainphone is now off on {user}'s phone. |
+| Turning off | turn Own Phone off | Own Phone is now off on {user}'s phone. |
 | Adding a trusted person | add {new} as a trusted person | {new} is now a trusted person for {user}'s phone. |
 | Handing over | hand {name}'s place to {new} | {new} has taken {name}'s place for {user}'s phone. |
 | Removing a trusted person | remove {other} as a trusted person | {other} is no longer a trusted person for {user}'s phone. |
@@ -256,7 +256,7 @@ Shown when someone tries to start a second waiting change (TPC "One at a time").
 Every kind starts with the confirmations it already had, then a fresh PIN (M1 → T1a). The last confirmation always
 names the wait:
 "This happens after at least 24 hours of the phone being on. Time while the phone is off doesn't count."
-Turning off has its own two confirmations ([L4](flows-limits-and-off.md#l4-turning-plainphone-off)).
+Turning off has its own two confirmations ([L4](flows-limits-and-off.md#l4-turning-own-phone-off)).
 
 If saving fails, nothing starts: "This didn't start. Nothing has changed. Try again." **OK**. (TPC "If the write
 fails, the change SHALL NOT start.")
@@ -290,7 +290,7 @@ It opens:
 **Spec:** TPC "Skip"; TPC "Recovery code has its own counter" (skip only through a screen that names the change);
 C2. Supervised mode only.
 
-1. **Title:** Skip the wait and turn Plainphone off now? (for turning off). For other kinds: "Skip the wait and
+1. **Title:** Skip the wait and turn Own Phone off now? (for turning off). For other kinds: "Skip the wait and
    {change} now?"
    **Body:** Skipping needs your recovery code, not your PIN. You'll then choose a new PIN and get a new recovery
    code. {everyone} will get a text saying you skipped the wait.
@@ -300,16 +300,16 @@ C2. Supervised mode only.
    **Primary:** Yes, skip the wait · **Secondary:** No, keep waiting
 4. Choose a new PIN (typed twice), then the new recovery code, shown once (S3b).
 5. **Title:** Started. **Body:** {change} is being made now. **Primary:** OK.
-   For turning off, this goes straight to L4d ("Turning Plainphone off…").
+   For turning off, this goes straight to L4d ("Turning Own Phone off…").
 
 - **Notes:** steps 3–4 are saved together in one write (TPC). Until then, nothing is skipped and the old PIN and code
   still work. If the phone restarts in between, the wait is still on and the old PIN and code work.
 - **Who can skip:** either trusted person, including the one being removed (it's their code, and their own
   authority; C2).
 
-### M3f. When Plainphone cancels it itself
+### M3f. When Own Phone cancels it itself
 
-Before the change is made, if a PIN it depends on is replaced, or the people or the mode change, Plainphone cancels
+Before the change is made, if a PIN it depends on is replaced, or the people or the mode change, Own Phone cancels
 it at once (TPC "Dependencies"). The user sees only that the line goes away. Texts in [M9](#m9-texts). In
 History: "Cancelled: the PIN that started it was changed" or "Cancelled: the trusted people or the set-up changed".
 
@@ -327,21 +327,21 @@ people in charge don't change.
 
 - **Title:** Reset protection not updated – call the helper
 - **Body:**
-  Plainphone is trying to {change}, but Google's reset protection didn't accept the new list yet. Plainphone keeps
+  Own Phone is trying to {change}, but Google's reset protection didn't accept the new list yet. Own Phone keeps
   trying.
   Until this works, nothing changes: the trusted people are still {everyone}, with the same PINs. Calls, texts and Emergency work.
   Until this is fixed, we can't say whose Google account a wipe would ask for.
 - **Primary:** OK
-- **Secondary:** Stop this change → fresh PIN (M1 → T1a) → "Stop this change? Plainphone puts reset protection back
+- **Secondary:** Stop this change → fresh PIN (M1 → T1a) → "Stop this change? Own Phone puts reset protection back
   for {everyone}. {new}'s details are thrown away." **Stop it** / **Keep trying** → "Stopping…" → "Stopped. Nothing
   changed." **OK**.
 - **Notes:**
   - "Stop this change" shows only while it can still be stopped (C3). Once the new people are in charge, it's gone.
-  - If stopping can't finish: "Still stopping. Plainphone keeps trying, and won't start the change again. Call
+  - If stopping can't finish: "Still stopping. Own Phone keeps trying, and won't start the change again. Call
     {helper}." **OK**. The item stays.
   - The PIN-free Cancel never stops a stuck change. Only a current trusted person's PIN does (in self-managed mode,
     the user's PIN).
-  - The user sees "Plainphone needs attention" on the home screen (U3), with no detail beyond "Plainphone is
+  - The user sees "Own Phone needs attention" on the home screen (U3), with no detail beyond "Own Phone is
     finishing a change and needs {helper} to look at it." (new U3 `{reason}` row).
   - **Supervised → self-managed is stuck:** the body is as above. The Stop confirmation says "{user}'s new PIN is
     thrown away" instead of "{new}'s details are thrown away".
@@ -354,13 +354,13 @@ until the change is done. So M4 changes for this one kind. The item shows at the
 
 - **Title:** Reset protection not updated – call the helper
 - **Body:**
-  Plainphone is trying to switch to {new} looking after this phone, but Google's reset protection didn't accept
-  {new}'s account yet. Plainphone keeps trying.
+  Own Phone is trying to switch to {new} looking after this phone, but Google's reset protection didn't accept
+  {new}'s account yet. Own Phone keeps trying.
   Until this works, nothing changes: you still look after this phone, with the same PIN, waits and limits. Calls,
   texts and Emergency work.
   Until this is fixed, we can't say whose Google account a wipe would ask for.
 - **Primary:** OK
-- **Secondary:** Stop this change → your PIN (T1a, self-managed) → "Stop this change? Plainphone puts reset
+- **Secondary:** Stop this change → your PIN (T1a, self-managed) → "Stop this change? Own Phone puts reset
   protection back for your Google account. {new}'s PIN and details are thrown away, and you keep looking after
   this phone." **Stop it** / **Keep trying** → "Stopping…" → "Stopped. Nothing changed. You still look after this
   phone." **OK**.
@@ -373,11 +373,11 @@ until the change is done. So M4 changes for this one kind. The item shows at the
 
 **Spec:** TPC "Lost operation record" (Repair); C2.
 
-When Plainphone can't even read who is in charge, it holds still and shows "Plainphone needs attention".
+When Own Phone can't even read who is in charge, it holds still and shows "Own Phone needs attention".
 
-- **Trusted-person "Needs you" item:** Plainphone needs repair
-- **Title:** Plainphone needs repair
-- **Body:** Plainphone couldn't finish checking who looks after this phone, so it's holding everything as it is.
+- **Trusted-person "Needs you" item:** Own Phone needs repair
+- **Title:** Own Phone needs repair
+- **Body:** Own Phone couldn't finish checking who looks after this phone, so it's holding everything as it is.
   Calls, texts and Emergency work. Repair tries again and shows what went wrong. It doesn't change anything else.
 - **Primary:** Repair → PIN → "Repaired. {summary from M5}." or "Repair didn't finish: {plain reason}. Call
   {helper} and show this screen."
@@ -391,24 +391,24 @@ When Plainphone can't even read who is in charge, it holds still and shows "Plai
 text SHALL NOT say the change was cancelled or didn't finish"); TPC scenario "Record lost after the credential
 patch"; C2 (draft); PLA-35 R2.
 
-This shows when Plainphone lost its record of a change part-way, and set itself back to a known state from what it
+This shows when Own Phone lost its record of a change part-way, and set itself back to a known state from what it
 could read. It **never** guesses whether the change happened. It says who is in charge now.
 
 ### M5a. Trusted-person "Needs you" item and page (one time, until OK)
 
-- **Item:** Plainphone recovered from an interrupted change
-- **Title:** Plainphone recovered from an interrupted change
+- **Item:** Own Phone recovered from an interrupted change
+- **Title:** Own Phone recovered from an interrupted change
 - **Body:**
   Trusted people now: {everyone}. (self-managed: "{user} looks after this phone.")
-  Plainphone is on, with all its protections. If you were changing something, check whether it happened before
+  Own Phone is on, with all its protections. If you were changing something, check whether it happened before
   you start it again.
 - **Primary:** OK
 - **Secondary:** See trusted people → M2a
 
 ### M5b. If turning off had already finished
 
-Plainphone can tell only one thing for certain: if it is no longer in charge of the phone, turning off finished.
-It shows L4e ("Plainphone is off") and sends the "off" text in M9. Nothing else.
+Own Phone can tell only one thing for certain: if it is no longer in charge of the phone, turning off finished.
+It shows L4e ("Own Phone is off") and sends the "off" text in M9. Nothing else.
 
 ### M5c. The user
 
@@ -429,7 +429,7 @@ From M2a, **Switch to {user} looking after this phone**.
 
 1. **Title:** Let {user} look after this phone?
    **Body:**
-   {user} will hold the PIN instead of {everyone}. Plainphone keeps everything as it is, but {user} can open
+   {user} will hold the PIN instead of {everyone}. Own Phone keeps everything as it is, but {user} can open
    things up after a 10-minute wait, twice a day. It's friction, not a lock: {user} can always remove it by waiting
    24 hours, or by wiping the phone.
    This waits 24 hours of the phone being on. {everyone} will get a text now, and anyone can cancel until then.
@@ -472,7 +472,7 @@ grant…"; TPC session contract (custody wording); CHS (rows 3 and 4); C4.
 
 The same calm phone. The user holds the PIN. The band on these screens reads **"Your settings"**
 ([design-tokens.md](design-tokens.md#trusted-person-mode-band)). "Opening up" is the user's word for an elevation:
-the Play Store, full phone settings, adding a hidden app, or a Plainphone update, for a few minutes.
+the Play Store, full phone settings, adding a hidden app, or an Own Phone update, for a few minutes.
 
 ### M7a. Your settings
 
@@ -480,7 +480,7 @@ More shows **Your settings** where a supervised phone shows "For {tp}", and **Ad
 app" (TPC "App requests": no request flow). Both ask for the user's PIN.
 
 - **Title:** Your settings
-- **Line under the title, always:** You hold the PIN. Plainphone adds waits so that distraction takes effort. It's
+- **Line under the title, always:** You hold the PIN. Own Phone adds waits so that distraction takes effort. It's
   friction, not a lock.
 - **Openings line:** "{left} of {limit} openings left" (or "No openings left until about {time}").
 - **Menu:**
@@ -494,17 +494,17 @@ app" (TPC "App requests": no request flow). Both ask for the user's PIN.
   | **Open full phone settings** | For 5 minutes, after a {wait}-minute wait | M7b (Settings) |
   | **Waits and limits** | Wait {wait} minutes · {limit} a day | M7g |
   | **History** | The last 90 days | M8 |
-  | **What Plainphone can't stop** | | L1, self-managed version |
-  | **Install a Plainphone update** | Only with {helper}, when {helper} asks | M7b (Update), then P6 |
+  | **What Own Phone can't stop** | | L1, self-managed version |
+  | **Install an Own Phone update** | Only with {helper}, when {helper} asks | M7b (Update), then P6 |
   | **Change PIN** | | T1-style |
   | **Let someone look after this phone** | Takes 24 hours | M6b |
-  | **Turn Plainphone off** | Takes 24 hours | L4 |
+  | **Turn Own Phone off** | Takes 24 hours | L4 |
 
 - **Primary:** Done – back to the home screen
 
 ### M7b. Before opening up
 
-- **Title (by kind):** Open the Play Store? · Open full phone settings? · Add a hidden app? · Install a Plainphone
+- **Title (by kind):** Open the Play Store? · Open full phone settings? · Add a hidden app? · Install an Own Phone
   update?
 - **Body:**
   First there's a {wait}-minute wait. Then you tap Start, and {kind} is open for {deadline} minutes.
@@ -513,7 +513,7 @@ app" (TPC "App requests": no request flow). Both ask for the user's PIN.
 - **Secondary:** Not now
 - **Add a hidden app** first shows the list of hidden apps to pick one (name and developer as Android reports them).
   The picked app is named on U10b and on the add screen. The grant can only add that app.
-- `{kind}` (U10): "the Play Store", "full phone settings", "adding {app}", "a Plainphone update". `{deadline}`: 10, 5,
+- `{kind}` (U10): "the Play Store", "full phone settings", "adding {app}", "an Own Phone update". `{deadline}`: 10, 5,
   5, 10.
 
 ### M7c. No openings left
@@ -540,13 +540,13 @@ U10a and U10b in [flows-user.md](flows-user.md#u10-opening-up-self-managed-mode-
 
 The session screens (P2) with self-managed custody wording, and no "stay with the phone":
 
-- **Notification / return bar:** Plainphone closes this at {time}
-- **Back in Plainphone after the Play Store** (Play grant): "**Add what you installed.** You can add each app you
+- **Notification / return bar:** Own Phone closes this at {time}
+- **Back in Own Phone after the Play Store** (Play grant): "**Add what you installed.** You can add each app you
   installed until {time}." Then T4 for each app. After {time}: "**Too late to add {app}.** The time ran out, so
   {app} stays hidden. You can add it with another opening." **OK** (TPC "Approval after the deadline").
 - **Add a hidden app:** T4 for the picked app. A second app can't be added on the same opening: "**This opening is
   used up.** It was for one app. Use another opening to add {app}." **OK**.
-- **Plainphone update:** P6. If the update isn't ready by {time}: "**The update didn't install.** It wasn't ready
+- **Own Phone update:** P6. If the update isn't ready by {time}: "**The update didn't install.** It wasn't ready
   before {time}. Nothing changed. Try again with another opening." **OK**.
 - **After closing**, the protected-state check as usual (P4/P5). Not ready: "Not ready – call the helper" (the
   spec's non-handback state, worded the same in both modes).
@@ -601,11 +601,11 @@ settings.
   ```
 
   - Line 2, the action: "Added {app}", "Removed {app}", "Changed what {app} can use", "Opened the Play Store",
-    "Opened full phone settings", "Installed a Plainphone update", "Started: {change}", "Cancelled: {change}",
+    "Opened full phone settings", "Installed an Own Phone update", "Started: {change}", "Cancelled: {change}",
     "Skipped the wait: {change}", "Done: {change}", "Stopped: {change}", "Recovered from an interrupted change",
     "Opened up: {kind}" (self-managed).
   - Line 3, the credential: "With {name}'s PIN", "With {name}'s recovery code", "On the phone, without a PIN"
-    (cancels), "By a text from {name}" (cancel replies), "By Plainphone" (cancelled on its own, recovered). Never
+    (cancels), "By a text from {name}" (cancel replies), "By Own Phone" (cancelled on its own, recovered). Never
     "by {name}": a PIN shows who knew it, not who typed it (C1, "Authority is a credential").
   - Line 4, each recipient: ✓ sent, "– waiting", "– didn't send". Words and ticks, no colour.
 - **Primary:** Done
@@ -628,29 +628,29 @@ replies (tasks.md 1.1).
 
 | When | To the others | Receipt (to {name}) |
 |---|---|---|
-| A waiting change starts | `Plainphone: {name}'s PIN was used to start a change on {user}'s phone: {change}. It will happen after at least 24 hours of the phone being on. To stop it, open the phone and tap Cancel{reply}.` | `Plainphone: your PIN was used to start a change on {user}'s phone: {change}. It will happen after at least 24 hours of the phone being on. If that wasn't you, tap Cancel on the phone and change your PIN.` |
-| …turning off (start) | `Plainphone: {name}'s PIN was used to start turning Plainphone off on {user}'s phone. Plainphone will turn off after at least 24 hours of the phone being on. To stop it, open the phone and tap Cancel{reply}.` | as above, "your PIN", with "If that wasn't you, tap Cancel on the phone and change your PIN." |
-| Cancelled on the phone, no PIN | `Plainphone: someone holding {user}'s phone cancelled this change: {change}. Nothing changed.` | (same to all) |
-| Cancelled with a PIN | `Plainphone: {name}'s PIN cancelled this change on {user}'s phone: {change}. Nothing changed.` | `…your PIN cancelled…` |
-| Cancelled by a reply (Q15 only) | `Plainphone: a text from {name}'s number cancelled this change on {user}'s phone: {change}. Nothing changed.` | `…a text from your number…` |
-| Cancelled by Plainphone (a PIN it depended on changed) | `Plainphone: this change on {user}'s phone was cancelled because the PIN that started it was changed: {change}. Nothing changed.` | (same to all) |
-| Cancelled by Plainphone (people or mode changed) | `Plainphone: this change on {user}'s phone was cancelled because the trusted people or the set-up changed: {change}. Nothing changed.` | (same to all) |
-| Wait skipped | `Plainphone: {name}'s recovery code was used to skip the wait on {user}'s phone. This is happening now: {change}.` | `Plainphone: your recovery code was used to skip the wait on {user}'s phone. This is happening now: {change}. If that wasn't you, call {helper}.` |
-| Done | `Plainphone: done on {user}'s phone. {done}` (`{done}` from the M3 table) | (same to all) |
-| Stuck (M4) | `Plainphone: a change on {user}'s phone is stuck and needs {helper}: {change}. Nothing has changed yet: the trusted people are still {everyone}. Calls, texts and Emergency work.` | (same to all) |
-| Stopped (M4) | `Plainphone: {name}'s PIN stopped this change on {user}'s phone: {change}. Nothing changed.` | `…your PIN stopped…` |
-| Recovered (M5) | `Plainphone recovered from an interrupted change on {user}'s phone. Trusted people now: {everyone}. Plainphone is on, with all its protections. If you were changing something, check on the phone whether it happened before you start it again.` | (same to all) |
-| Recovered, already off (M5b) | `Plainphone: Plainphone is now off on {user}'s phone.` | (same to all) |
-| App added, removed, permissions changed | `Plainphone: {name}'s PIN was used on {user}'s phone: {action}.` (`{action}` = M8 line 2, e.g. "Added Spotify") | `Plainphone: your PIN was used on {user}'s phone: {action}. If that wasn't you, change your PIN.` |
-| Play Store or settings opened | `Plainphone: {name}'s PIN opened {kind} on {user}'s phone for {n} minutes.` | `…your PIN opened…` with "If that wasn't you, change your PIN." |
-| Plainphone update installed | `Plainphone: {name}'s PIN installed a Plainphone update on {user}'s phone.` | `…your PIN installed…` |
-| 10 wrong entries of one PIN | `Plainphone: {name}'s PIN on {user}'s phone was entered wrong 10 times. If that wasn't {name}, have a look together when you can.` | `Plainphone: your PIN on {user}'s phone was entered wrong 10 times. If that wasn't you, have a look together when you can.` |
+| A waiting change starts | `Own Phone: {name}'s PIN was used to start a change on {user}'s phone: {change}. It will happen after at least 24 hours of the phone being on. To stop it, open the phone and tap Cancel{reply}.` | `Own Phone: your PIN was used to start a change on {user}'s phone: {change}. It will happen after at least 24 hours of the phone being on. If that wasn't you, tap Cancel on the phone and change your PIN.` |
+| …turning off (start) | `Own Phone: {name}'s PIN was used to start turning Own Phone off on {user}'s phone. Own Phone will turn off after at least 24 hours of the phone being on. To stop it, open the phone and tap Cancel{reply}.` | as above, "your PIN", with "If that wasn't you, tap Cancel on the phone and change your PIN." |
+| Cancelled on the phone, no PIN | `Own Phone: someone holding {user}'s phone cancelled this change: {change}. Nothing changed.` | (same to all) |
+| Cancelled with a PIN | `Own Phone: {name}'s PIN cancelled this change on {user}'s phone: {change}. Nothing changed.` | `…your PIN cancelled…` |
+| Cancelled by a reply (Q15 only) | `Own Phone: a text from {name}'s number cancelled this change on {user}'s phone: {change}. Nothing changed.` | `…a text from your number…` |
+| Cancelled by Own Phone (a PIN it depended on changed) | `Own Phone: this change on {user}'s phone was cancelled because the PIN that started it was changed: {change}. Nothing changed.` | (same to all) |
+| Cancelled by Own Phone (people or mode changed) | `Own Phone: this change on {user}'s phone was cancelled because the trusted people or the set-up changed: {change}. Nothing changed.` | (same to all) |
+| Wait skipped | `Own Phone: {name}'s recovery code was used to skip the wait on {user}'s phone. This is happening now: {change}.` | `Own Phone: your recovery code was used to skip the wait on {user}'s phone. This is happening now: {change}. If that wasn't you, call {helper}.` |
+| Done | `Own Phone: done on {user}'s phone. {done}` (`{done}` from the M3 table) | (same to all) |
+| Stuck (M4) | `Own Phone: a change on {user}'s phone is stuck and needs {helper}: {change}. Nothing has changed yet: the trusted people are still {everyone}. Calls, texts and Emergency work.` | (same to all) |
+| Stopped (M4) | `Own Phone: {name}'s PIN stopped this change on {user}'s phone: {change}. Nothing changed.` | `…your PIN stopped…` |
+| Recovered (M5) | `Own Phone recovered from an interrupted change on {user}'s phone. Trusted people now: {everyone}. Own Phone is on, with all its protections. If you were changing something, check on the phone whether it happened before you start it again.` | (same to all) |
+| Recovered, already off (M5b) | `Own Phone: Own Phone is now off on {user}'s phone.` | (same to all) |
+| App added, removed, permissions changed | `Own Phone: {name}'s PIN was used on {user}'s phone: {action}.` (`{action}` = M8 line 2, e.g. "Added Spotify") | `Own Phone: your PIN was used on {user}'s phone: {action}. If that wasn't you, change your PIN.` |
+| Play Store or settings opened | `Own Phone: {name}'s PIN opened {kind} on {user}'s phone for {n} minutes.` | `…your PIN opened…` with "If that wasn't you, change your PIN." |
+| Own Phone update installed | `Own Phone: {name}'s PIN installed an Own Phone update on {user}'s phone.` | `…your PIN installed…` |
+| 10 wrong entries of one PIN | `Own Phone: {name}'s PIN on {user}'s phone was entered wrong 10 times. If that wasn't {name}, have a look together when you can.` | `Own Phone: your PIN on {user}'s phone was entered wrong 10 times. If that wasn't you, have a look together when you can.` |
 
 **Stuck and Stopped when switching from self-managed to supervised** ([M4a](#m4a-self-managed--supervised-is-stuck)):
 neither text is sent. "The trusted people are still {everyone}" would be untrue, and there is nobody to send it to.
 The user sees M4a on the phone. When the change is done, the Done text goes to {new} as usual.
 
-**Texts in [README.md](README.md#texts-plainphone-sends) that change with two people:** the app request ("To add it,
+**Texts in [README.md](README.md#texts-own-phone-sends) that change with two people:** the app request ("To add it,
 one of you needs to be with {user} and the phone. On the phone: More, then 'For {everyone}'.") and the monthly
 check ("…with {user}'s phone in your hands…", unchanged) go to everyone. The rest are unchanged; "to {tp}" means
 every trusted person.
@@ -672,7 +672,7 @@ would start below 5% and not charging:
 - **Body:** The battery is below 5%. Plug the phone in, then try again. Calls, texts and Emergency still work.
 - **Primary:** OK
 - Never shown for anything that keeps 9-1-1 working: those repairs are never delayed.
-- A turn-off whose wait ends below 5%: U9a adds "Plainphone will turn off once the phone is charging or above 5%."
+- A turn-off whose wait ends below 5%: U9a adds "Own Phone will turn off once the phone is charging or above 5%."
   The home line keeps its wording.
 
 **The clock** (TPC "Waits, countdowns and daily counts use one proven running-time clock"). Every screen that shows

@@ -5,7 +5,7 @@ Every installed app that is not on the allowlist SHALL be hidden with `setApplic
 
 **What is promised.** An unapproved app cannot be **opened**, from the first interactive frame after unlock. It is not promised that the app is never installed, or never runs any code.
 
-**When Plainphone hides apps.** Plainphone SHALL hide new packages when it receives the package-added broadcast. It SHALL also check every package against the allowlist at boot and every 15 minutes. Lock task SHALL stop an unapproved app from opening even if hiding it fails.
+**When Own Phone hides apps.** Own Phone SHALL hide new packages when it receives the package-added broadcast. It SHALL also check every package against the allowlist at boot and every 15 minutes. Lock task SHALL stop an unapproved app from opening even if hiding it fails.
 
 **Background code.** If hiding fails, the app may run background code, and no time limit is promised. This SHALL be disclosed.
 
@@ -17,21 +17,21 @@ Every installed app that is not on the allowlist SHALL be hidden with `setApplic
 
 #### Scenario: Hide call fails
 - **WHEN** hiding a new package fails
-- **THEN** Plainphone retries, lock task still prevents the app opening, and trusted-person mode shows "Plainphone needs attention"
+- **THEN** Own Phone retries, lock task still prevents the app opening, and trusted-person mode shows "Own Phone needs attention"
 
 ### Requirement: Approved apps keep receiving updates, and the monthly check cannot silently lapse
-Plainphone SHALL keep the Play Store installed, enabled and signed in to the user's own account. Play SHALL stay outside the lock-task UI list except during a Play session. Setup SHALL include a step where the helper confirms Play auto-update is on.
+Own Phone SHALL keep the Play Store installed, enabled and signed in to the user's own account. Play SHALL stay outside the lock-task UI list except during a Play session. Setup SHALL include a step where the helper confirms Play auto-update is on.
 
-**Per-app record.** Plainphone SHALL keep a record for each approved app: its version and when it was last updated.
+**Per-app record.** Own Phone SHALL keep a record for each approved app: its version and when it was last updated.
 
 **Monthly check:**
-- **Stored state.** Plainphone SHALL store the monthly check's due date and the date it was last completed.
+- **Stored state.** Own Phone SHALL store the monthly check's due date and the date it was last completed.
 - **Reminders.** On the due date it SHALL text the trusted person. If the text fails, it SHALL retry once a day, for up to 7 days, without sending duplicates.
 - **Overdue note.** When the check is more than 7 days past its due date, whether or not any text was delivered, the user's home screen SHALL show one calm line: "Ask [trusted person] to do the monthly phone check." Tapping it SHALL only explain what the check is; it SHALL NOT open Play. The line SHALL be removed when completion is recorded, and the next due date set.
 - **Completion.** The check counts as completed only when the trusted person, in the Play session opened from the check, confirms with their PIN that they reviewed Play's update list. They SHALL record any app whose update failed. Unresolved failures SHALL stay listed in trusted-person mode.
 - **Play services.** If Google Play services has not changed in 30 days, the reminder SHALL say so neutrally. It SHALL NOT call the phone insecure.
 
-Plainphone SHALL NOT claim to know whether a newer version of any app exists.
+Own Phone SHALL NOT claim to know whether a newer version of any app exists.
 
 #### Scenario: Background update of an approved app
 - **WHEN** Play is offering a newer version of an approved app and auto-update is on
@@ -39,7 +39,7 @@ Plainphone SHALL NOT claim to know whether a newer version of any app exists.
 
 #### Scenario: Reminder text fails
 - **WHEN** the monthly text cannot be sent, for example because there is no service or no SMS permission
-- **THEN** Plainphone retries daily, and after 7 days the user's home screen shows the "Ask [trusted person]" line until the check is completed
+- **THEN** Own Phone retries daily, and after 7 days the user's home screen shows the "Ask [trusted person]" line until the check is completed
 
 #### Scenario: Reminder delivered but check skipped
 - **WHEN** the text arrives but nobody runs the check
@@ -54,7 +54,7 @@ Adding an app SHALL happen in a Play session, which follows the supervised-sessi
 
 **Approving.** Approving a newly installed app SHALL need a fresh PIN entry. The approval SHALL be bound to the app's package name and its signing-certificate digest.
 
-**Permissions.** `BLOCK_ACTIVITY_START_IN_TASK` blocks runtime permission prompts. Device test PLA-5 A3 showed "Permission controller is not available right now." So the approval screen SHALL list the app's runtime permissions in plain words. For each permission, the trusted person chooses Allow or Deny. Plainphone SHALL apply those choices with `setPermissionGrantState`.
+**Permissions.** `BLOCK_ACTIVITY_START_IN_TASK` blocks runtime permission prompts. Device test PLA-5 A3 showed "Permission controller is not available right now." So the approval screen SHALL list the app's runtime permissions in plain words. For each permission, the trusted person chooses Allow or Deny. Own Phone SHALL apply those choices with `setPermissionGrantState`.
 
 **Q1 checks** whether Android lets the Device Owner grant sensor permissions (camera, microphone, location) on the build. If it does not, the app's listing SHALL say which features will not work.
 
@@ -69,7 +69,7 @@ Adding an app SHALL happen in a Play session, which follows the supervised-sessi
 - **THEN** the session ends, and any app installed in the session stays hidden until it is approved
 
 ### Requirement: Removing an app is immediate and reversible
-After a fresh PIN entry, the trusted person SHALL be able to remove an app from the allowlist. Plainphone SHALL hide the app, not uninstall it.
+After a fresh PIN entry, the trusted person SHALL be able to remove an app from the allowlist. Own Phone SHALL hide the app, not uninstall it.
 
 #### Scenario: Remove then re-approve
 - **WHEN** the trusted person removes an app and later approves it again

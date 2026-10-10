@@ -1,18 +1,18 @@
 ## ADDED Requirements
 
-### Requirement: Plainphone runs as the Device Owner and the home screen
-Plainphone SHALL be the device's Device Owner. It SHALL also be the persistent preferred home activity, set with `addPersistentPreferredActivity` for `CATEGORY_HOME`. Plainphone SHALL block changes to default apps with `DISALLOW_CONFIG_DEFAULT_APPS` where the API level supports it.
+### Requirement: Own Phone runs as the Device Owner and the home screen
+Own Phone SHALL be the device's Device Owner. It SHALL also be the persistent preferred home activity, set with `addPersistentPreferredActivity` for `CATEGORY_HOME`. Own Phone SHALL block changes to default apps with `DISALLOW_CONFIG_DEFAULT_APPS` where the API level supports it.
 
 #### Scenario: User tries to pick another home screen
 - **WHEN** the user presses Home or tries to change the default launcher
-- **THEN** the Plainphone home screen opens and no launcher chooser is shown
+- **THEN** the Own Phone home screen opens and no launcher chooser is shown
 
-#### Scenario: User tries to uninstall Plainphone
-- **WHEN** any path tries to uninstall or deactivate Plainphone, other than the trusted-person off switch, on a release build (`testOnly=false`)
+#### Scenario: User tries to uninstall Own Phone
+- **WHEN** any path tries to uninstall or deactivate Own Phone, other than the trusted-person off switch, on a release build (`testOnly=false`)
 - **THEN** Android refuses, because a Device Owner cannot be uninstalled or deactivated by the user
 
 ### Requirement: Escape routes are closed by policy
-Plainphone SHALL apply, and keep applied, at least these restrictions:
+Own Phone SHALL apply, and keep applied, at least these restrictions:
 - `DISALLOW_SAFE_BOOT`, `DISALLOW_FACTORY_RESET`, `DISALLOW_DEBUGGING_FEATURES`
 - `DISALLOW_ADD_USER`, `DISALLOW_USER_SWITCH`, `DISALLOW_ADD_MANAGED_PROFILE`
 - `DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY`, `DISALLOW_USB_FILE_TRANSFER`
@@ -20,7 +20,7 @@ Plainphone SHALL apply, and keep applied, at least these restrictions:
 - `DISALLOW_CONFIG_DATE_TIME`, `DISALLOW_SYSTEM_ERROR_DIALOGS`, `DISALLOW_CREATE_WINDOWS`
 - `DISALLOW_MODIFY_ACCOUNTS`, `DISALLOW_CONFIG_CELL_BROADCASTS`
 
-A supervised session SHALL NOT lift `DISALLOW_SAFE_BOOT`, `DISALLOW_FACTORY_RESET` or `DISALLOW_DEBUGGING_FEATURES`. Accessibility services and input methods SHALL be limited to system-provided ones. Plainphone SHALL NOT set `DISALLOW_INSTALL_APPS` permanently.
+A supervised session SHALL NOT lift `DISALLOW_SAFE_BOOT`, `DISALLOW_FACTORY_RESET` or `DISALLOW_DEBUGGING_FEATURES`. Accessibility services and input methods SHALL be limited to system-provided ones. Own Phone SHALL NOT set `DISALLOW_INSTALL_APPS` permanently.
 
 #### Scenario: Safe mode attempt
 - **WHEN** the user long-presses power off to reboot into safe mode
@@ -35,10 +35,10 @@ A supervised session SHALL NOT lift `DISALLOW_SAFE_BOOT`, `DISALLOW_FACTORY_RESE
 - **THEN** USB and wireless debugging cannot be enabled, and a previously authorised adb host cannot connect
 
 ### Requirement: Lock task blocks other apps' screens, including within a task
-Plainphone SHALL run in multi-app lock task mode.
+Own Phone SHALL run in multi-app lock task mode.
 
 The lock task packages SHALL be exactly the **lock-task UI list**:
-- Plainphone
+- Own Phone
 - the approved apps
 - the **emergency UI subset** from the runtime emergency floor: the system dialer, the system emergency-dialer package, and the system dialer's in-call UI package
 - the minimum UI entries in the build inventory
@@ -51,7 +51,7 @@ Lock task features SHALL include `HOME`, `KEYGUARD`, `GLOBAL_ACTIONS`, `NOTIFICA
 
 With the flag **on**, App info and the share chooser were blocked. The Photos route was **not run** with the flag on (Q1 follow-up). They SHALL NOT include `OVERVIEW`.
 
-Each minimum UI entry, apart from Plainphone and approved apps, SHALL have a negative test showing that Settings, the Play Store and web content cannot be reached through it. Packages that share a UID with a lock-task package SHALL be listed and covered by the same tests.
+Each minimum UI entry, apart from Own Phone and approved apps, SHALL have a negative test showing that Settings, the Play Store and web content cannot be reached through it. Packages that share a UID with a lock-task package SHALL be listed and covered by the same tests.
 
 #### Scenario: An approved app opens Settings in a new task
 - **WHEN** an approved app starts a Settings activity with `FLAG_ACTIVITY_NEW_TASK`
@@ -66,15 +66,15 @@ Each minimum UI entry, apart from Plainphone and approved apps, SHALL have a neg
 - **THEN** notifications are shown and Quick Settings tiles cannot be used
 
 ### Requirement: Reset protection names the trusted person and a backup person
-Plainphone SHALL call `setFactoryResetProtectionPolicy` with FRP enabled and a list of one or two Google `userId` values:
+Own Phone SHALL call `setFactoryResetProtectionPolicy` with FRP enabled and a list of one or two Google `userId` values:
 - the trusted person's;
 - optionally, a backup person's.
 
-It SHALL then send `com.google.android.gms.auth.FRP_CONFIG_CHANGED` explicitly to Google Play services. Plainphone SHALL read the policy back and confirm it matches. Neither account SHALL be signed in on the phone.
+It SHALL then send `com.google.android.gms.auth.FRP_CONFIG_CHANGED` explicitly to Google Play services. Own Phone SHALL read the policy back and confirm it matches. Neither account SHALL be signed in on the phone.
 
 If the policy cannot be set or read back, setup SHALL NOT report Ready. The one exception is an explicit, recorded acceptance by Beaux.
 
-FRP does not reinstall Plainphone, and the disclosure SHALL say so.
+FRP does not reinstall Own Phone, and the disclosure SHALL say so.
 
 #### Scenario: Reset protection configured
 - **WHEN** setup reaches the handover check
@@ -85,9 +85,9 @@ FRP does not reinstall Plainphone, and the disclosure SHALL say so.
 - **THEN** setup requires a listed account instead. This is test Q10, which needs a separate board-approved procedure on the device being tested.
 
 ### Requirement: No unapproved app can be opened from the first interactive frame
-After boot, the Plainphone home activity SHALL start lock task before it draws its first interactive frame.
+After boot, the Own Phone home activity SHALL start lock task before it draws its first interactive frame.
 
-Restrictions, hidden apps and lock-task package settings are kept by Android across reboots. Plainphone SHALL NOT clear them during recovery.
+Restrictions, hidden apps and lock-task package settings are kept by Android across reboots. Own Phone SHALL NOT clear them during recovery.
 
 From unlock until lock task starts, no unapproved app SHALL be openable from:
 - a notification
@@ -99,7 +99,7 @@ From unlock until lock task starts, no unapproved app SHALL be openable from:
 - **THEN** the app does not open
 
 ### Requirement: A runtime emergency floor, from OS-managed identities only, that does not depend on any inventory or policy file
-At every policy pass, Plainphone SHALL compute an **emergency floor** from the live system.
+At every policy pass, Own Phone SHALL compute an **emergency floor** from the live system.
 
 **Who can join the floor.** Only these may be floor members:
 - packages named by an OS-managed identity;
@@ -140,10 +140,10 @@ The floor SHALL be computed without any inventory or policy file, and SHALL outr
 
 #### Scenario: Previously hidden system emergency component
 - **WHEN** after an OTA a hidden **system** package becomes the `MATCH_SYSTEM_ONLY` resolver for the emergency dialer
-- **THEN** Plainphone unhides it and adds it to the lock-task UI list, including on the locked-boot path
+- **THEN** Own Phone unhides it and adds it to the lock-task UI list, including on the locked-boot path
 
 ### Requirement: One reviewed inventory per supported build drives sweeping and minimum UI
-Plainphone SHALL ship, compiled into the APK, a versioned **build inventory** for each supported model and build fingerprint. The inventory SHALL add to the emergency floor.
+Own Phone SHALL ship, compiled into the APK, a versioned **build inventory** for each supported model and build fingerprint. The inventory SHALL add to the emergency floor.
 
 **(a) Never-hide dependencies.** Packages that SHALL never be hidden, suspended or disabled:
 - Google Play services and the Play Store;
@@ -160,13 +160,13 @@ Plainphone SHALL ship, compiled into the APK, a versioned **build inventory** fo
 - **THEN** the full sweep, classifier hiding and minimum UI entries apply
 
 ### Requirement: System updates follow a maintained lifecycle, and unknown builds fail safe
-**Delaying updates.** Plainphone SHALL set `SystemUpdatePolicy.createPostponeInstallPolicy()`, which delays updates up to Android's limit. The disclosure SHALL say that some security updates may install anyway.
+**Delaying updates.** Own Phone SHALL set `SystemUpdatePolicy.createPostponeInstallPolicy()`, which delays updates up to Android's limit. The disclosure SHALL say that some security updates may install anyway.
 
-**When an update is pending.** On `onSystemUpdatePending`, Plainphone SHALL text the trusted person and the helper: "A phone software update is coming. Plainphone needs a review."
+**When an update is pending.** On `onSystemUpdatePending`, Own Phone SHALL text the trusted person and the helper: "A phone software update is coming. Own Phone needs a review."
 
-**Ownership.** The Plainphone team owns reviewing each new build and delivering its inventory. The Android Platform Engineer prepares it; the Verifier reviews it. Delivery is a signed Plainphone update over local Wi-Fi.
+**Ownership.** The Own Phone team owns reviewing each new build and delivering its inventory. The Android Platform Engineer prepares it; the Verifier reviews it. Delivery is a signed Own Phone update over local Wi-Fi.
 
-**On a fingerprint with no inventory (an unknown build), Plainphone SHALL:**
+**On a fingerprint with no inventory (an unknown build), Own Phone SHALL:**
 1. keep lock task running, with the previous UI list plus the emergency UI subset;
 2. unhide any previously hidden package that the floor now computes, so emergency dependencies fail open. Only the emergency UI subset is added to lock task; other floor members (keyboards, WebView, permission controller) are unhidden but get no UI access;
 3. hide nothing new except user-installed (non-system) packages. It SHALL NOT hide newly classified system packages.
@@ -188,11 +188,11 @@ Plainphone SHALL ship, compiled into the APK, a versioned **build inventory** fo
 - **THEN** lock task stays on, emergency floor packages are unhidden, only the emergency UI subset is added to lock task, no system package is newly hidden, the trusted person and helper are texted, and trusted-person mode lists the changed packages
 
 #### Scenario: A previously hidden package becomes an emergency dependency
-- **WHEN** after an OTA, a **system** package Plainphone had hidden now resolves the emergency dialer intent under `MATCH_SYSTEM_ONLY`
-- **THEN** Plainphone unhides it and adds it to the lock-task UI list on the next policy pass
+- **WHEN** after an OTA, a **system** package Own Phone had hidden now resolves the emergency dialer intent under `MATCH_SYSTEM_ONLY`
+- **THEN** Own Phone unhides it and adds it to the lock-task UI list on the next policy pass
 
 ### Requirement: Policy storage is atomic, validated, and falls back to an emergency-safe baseline
-Plainphone SHALL write its policy atomically, check its schema version before applying it, and keep a last-known-good copy.
+Own Phone SHALL write its policy atomically, check its schema version before applying it, and keep a last-known-good copy.
 
 **Device-protected copy.** A minimal copy, protected by a checksum, SHALL be kept in device-protected storage. It holds:
 - the setup-complete flag;
@@ -204,14 +204,14 @@ Plainphone SHALL write its policy atomically, check its schema version before ap
 - the runtime emergency floor;
 - the matching build inventory, if one exists;
 - Messages;
-- Plainphone;
+- Own Phone;
 - every restriction.
 
-**When the baseline applies.** If both the policy and the last-known-good copy are invalid, Plainphone SHALL apply the baseline and show "Plainphone needs attention".
+**When the baseline applies.** If both the policy and the last-known-good copy are invalid, Own Phone SHALL apply the baseline and show "Own Phone needs attention".
 
-**Unknown build and corrupt policy together.** If the build is unknown **and** both policy copies are invalid, the baseline SHALL be the floor plus Messages, Plainphone and every restriction. No sweep SHALL run. Existing hidden state SHALL be kept, except where the floor needs a package unhidden. Plainphone SHALL text the trusted person and the helper.
+**Unknown build and corrupt policy together.** If the build is unknown **and** both policy copies are invalid, the baseline SHALL be the floor plus Messages, Own Phone and every restriction. No sweep SHALL run. Existing hidden state SHALL be kept, except where the floor needs a package unhidden. Own Phone SHALL text the trusted person and the helper.
 
-**Order of application.** Plainphone SHALL apply policy in this order, reading back each step:
+**Order of application.** Own Phone SHALL apply policy in this order, reading back each step:
 1. revoke the session journal (a damaged journal means revoking every relaxation);
 2. restrictions;
 3. emergency floor;
@@ -220,22 +220,22 @@ Plainphone SHALL write its policy atomically, check its schema version before ap
 6. lock-task packages and features;
 7. home preference.
 
-**Locked-boot path.** At `LOCKED_BOOT_COMPLETED`, Plainphone SHALL use only device-protected data. It SHALL do only these steps, then read them back:
+**Locked-boot path.** At `LOCKED_BOOT_COMPLETED`, Own Phone SHALL use only device-protected data. It SHALL do only these steps, then read them back:
 - steps 1–3, where step 3 includes restoring the emergency UI subset's lock-task membership;
 - the never-hide guard.
 
-**When to re-apply.** Plainphone SHALL re-apply policy at locked and unlocked boot, on package events, after trusted-person actions, and every 15 minutes.
+**When to re-apply.** Own Phone SHALL re-apply policy at locked and unlocked boot, on package events, after trusted-person actions, and every 15 minutes.
 
-**Disclosure.** The baseline helps only while Plainphone can run. If it cannot, the system lock screen, the system dialer and the recovery path remain.
+**Disclosure.** The baseline helps only while Own Phone can run. If it cannot, the system lock screen, the system dialer and the recovery path remain.
 
 #### Scenario: Corrupt policy and backup
 - **WHEN** both the policy file and its last-known-good copy are truncated on a supported build
-- **THEN** Plainphone applies the baseline. Calls, the in-call UI, Emergency, alerts and SMS keep working, and "Plainphone needs attention" is shown.
+- **THEN** Own Phone applies the baseline. Calls, the in-call UI, Emergency, alerts and SMS keep working, and "Own Phone needs attention" is shown.
 
 #### Scenario: Unknown build plus corrupt policy
 - **WHEN** the build is unknown and both policy copies are invalid
-- **THEN** Plainphone applies the floor-plus-Messages baseline, runs no sweep, keeps Emergency and calls working, and texts the trusted person and the helper
+- **THEN** Own Phone applies the floor-plus-Messages baseline, runs no sweep, keeps Emergency and calls working, and texts the trusted person and the helper
 
 #### Scenario: Damaged journal
 - **WHEN** the session journal's checksum fails
-- **THEN** Plainphone removes every possible session package from lock task and runs the protected-state check, without blocking calls or Emergency
+- **THEN** Own Phone removes every possible session package from lock task and runs the protected-state check, without blocking calls or Emergency

@@ -1,6 +1,6 @@
 # MVP lanes, modules and interfaces
 
-Owner: Plainphone Lead. Board direction: Beaux, Telegram 4496/4498 (2026-10-09). Parent issue: PLA-15. Lane issues: D0 skeleton PLA-44, A Policy PLA-46, B UI PLA-47, C Link PLA-49, D1 Device PLA-48.
+Owner: Own Phone Lead. Board direction: Beaux, Telegram 4496/4498 (2026-10-09). Parent issue: PLA-15. Lane issues: D0 skeleton PLA-44, A Policy PLA-46, B UI PLA-47, C Link PLA-49, D1 Device PLA-48.
 
 The MVP is built in four parallel lanes. Each lane owns one or more Gradle modules and the API those modules export. Lanes build against the seams below. To change another lane's API, ask its owner on their lane issue; the Lead settles disagreements.
 
@@ -68,7 +68,7 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 **`:ui` (lane B) exports:** one `@Composable` per screen, with this shape:
 - `XScreen(state: XUiState, onEvent: (XEvent) -> Unit)`.
 - `XUiState` and `XEvent` are plain Kotlin types owned by lane B.
-- Covers: home (with the single notice line), More, ask for an app, blocked link, Wi-Fi messages, the trusted-person screens ("Who are you?", PIN, approvals, permissions, people, waits and cancel), Plainphone settings, setup, turning off, About, and "What Plainphone can't stop".
+- Covers: home (with the single notice line), More, ask for an app, blocked link, Wi-Fi messages, the trusted-person screens ("Who are you?", PIN, approvals, permissions, people, waits and cancel), Own Phone settings, setup, turning off, About, and "What Own Phone can't stop".
 
 **`:device` / `:plainphone` (lane D):** implements `JournalStore`, `PolicyStore` and `KeyDerivation`. It also provides:
 - `PolicyApplier`, which applies a `PolicyPlan` through DPM and reads it back;

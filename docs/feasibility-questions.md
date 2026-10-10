@@ -2,7 +2,7 @@
 
 - Revision 6, 2026-10-08. Ranked after the PLA-3 review (F15, F17), then updated after PLA-4 (N1–N11), PLA-7 (R1–R8), PLA-8 (S1–S5) and PLA-9 (T1–T3).
 - Device results so far come from the spare Motorola (PLA-5, `spikes/device-moto/RESULT.md`): **Q3 adb: yes** and **way back without a wipe: yes**. Everything else is still open.
-- Owner: Plainphone Lead. Spike author: Android Platform Engineer. Reviewer: Verifier & Escape Artist.
+- Owner: Own Phone Lead. Spike author: Android Platform Engineer. Reviewer: Verifier & Escape Artist.
 - The questions are ranked by how much a "no" would change the plan. Each test ID maps to requirements in `docs/verification-matrix.md`.
 
 ## Spike rules
@@ -63,10 +63,10 @@
 **Q4. Do the real must-have apps work, and is the web contained?**
 - **Must-have apps:** use the two initial users' actual list where it installs on the emulator. Current list (Telegram 4446/4448/4451): Beaux: Slack, Spotify, maybe Telegram. The partner: Gmail, Outlook.
   - Web-leak leads to check: Telegram's in-app browser; where Gmail and Outlook open links in HTML mail (in-app browser, Custom Tab, or handed to Android); Gmail's Chat and Meet tabs; whether Outlook's sign-in, and adding a Google account to Outlook, needs a web page that hidden browsers break. Test sign-in, signing in again, password reset, payment or 3-D Secure approval, notifications and updates, all with every general browser hidden and the block flag on.
-- **Browser role and classifier:** does Plainphone get the browser role? Run the classifier against fixtures: a general browser, an app that only opens its own domain, and the never-hide packages.
+- **Browser role and classifier:** does Own Phone get the browser role? Run the classifier against fixtures: a general browser, an app that only opens its own domain, and the never-hide packages.
 - **Link matrix:** verified App Links, ordinary links, `intent:` URIs, custom schemes, Custom Tabs fallback.
-- **Wi-Fi sign-in page (N5, go/no-go):** with CaptivePortalLogin hidden, an ordinary WPA2 network must connect and reach the internet. A network that needs sign-in must show Plainphone's message and allow forgetting it, with calls and Emergency unaffected.
-- **Classifier fixtures (N3):** Plainphone itself, a general browser, an app that only opens its own domain, an http-only viewer, an app with a URL bar but no web intent filter, and the never-hide packages. Also an explicit intent to a hidden browser, and navigation inside an app's WebView, which is expected to be not intercepted.
+- **Wi-Fi sign-in page (N5, go/no-go):** with CaptivePortalLogin hidden, an ordinary WPA2 network must connect and reach the internet. A network that needs sign-in must show Own Phone's message and allow forgetting it, with calls and Emergency unaffected.
+- **Classifier fixtures (N3):** Own Phone itself, a general browser, an app that only opens its own domain, an http-only viewer, an app with a URL bar but no web intent filter, and the never-hide packages. Also an explicit intent to a hidden browser, and navigation inside an app's WebView, which is expected to be not intercepted.
 - **Other reachable screens:** Google account, help and privacy screens reachable from Messages and Play services menus; keyboard GIF, search and help; accessibility tutorials; photo and file pickers.
 - **Hidden Google app and Gemini:** what breaks? Do Circle to Search or Lens still appear?
 - *A failure on a must-have app is a go/no-go failure, even if Q1 and Q2 pass.*
@@ -77,9 +77,9 @@
 - Escape list items: E01, E04, E05 (including a previously authorised adb host), E06, E12, E13, E15, E21, E25, E29.
 - The Verifier's vectors F1–F14 from the PLA-3 review.
 
-**Q6. Do boot, Plainphone replacement and policy damage recover safely?** *(N4: the result must be "no unapproved app opened in the foreground at any point during recovery", apart from the disclosed unknown-build exceptions: new routes inside allowed packages, and shared-UID eligibility. The user-installed emergency-filter fixture must fail unconditionally.)*
-- Reboot and stay at the lock screen. Install a package before the first unlock. Kill Plainphone between policy steps. Update Plainphone to a build signed with the same key. Feed it a truncated policy and a policy with an unknown version.
-- Unlock immediately after a reboot, and try to open an unapproved app with a queued notification, an explicit intent and a deep link before Plainphone's home screen appears.
+**Q6. Do boot, Own Phone replacement and policy damage recover safely?** *(N4: the result must be "no unapproved app opened in the foreground at any point during recovery", apart from the disclosed unknown-build exceptions: new routes inside allowed packages, and shared-UID eligibility. The user-installed emergency-filter fixture must fail unconditionally.)*
+- Reboot and stay at the lock screen. Install a package before the first unlock. Kill Own Phone between policy steps. Update Own Phone to a build signed with the same key. Feed it a truncated policy and a policy with an unknown version.
+- Unlock immediately after a reboot, and try to open an unapproved app with a queued notification, an explicit intent and a deep link before Own Phone's home screen appears.
 - With both policy copies corrupt: the emergency-safe baseline must apply.
 - **Unhide then sudden power loss (PLA-22).** On API 35 and 36 emulators, unhiding any app and then losing power within about 10 s, before Android writes its package settings, leaves system_server crashing on every boot. A phone in that state can't call 9-1-1, and only a recovery wipe brings it back. Hiding is safe, so the dangerous step is the start of a session. Mitigation B (a synchronous PackageManager flush right after every unhide) booted 3 of 3 times on the emulator. Before handover:
   - the Verifier reviews the result;
@@ -98,10 +98,10 @@
   - the notices and texts go out.
 
   Next, corrupt both policy copies and damage the journal, and reboot before first unlock. Check that the floor-only baseline applies, and that calls, the in-call screen, simulated SMS and alerts, and Emergency all still work. Finally, install a reviewed B inventory through the signed local updater and repeat the checks.
-- A Plainphone update over local Wi-Fi that crashes on purpose: check the "Plainphone can't run" recovery path, and that emergency access still works.
+- An Own Phone update over local Wi-Fi that crashes on purpose: check the "Own Phone can't run" recovery path, and that emergency access still works.
 - Check that hidden apps and restrictions survive a Play update of an allowed app, a Play update of a hidden app, and a system image update.
 
-**Q7. Can turning Plainphone off finish without a wipe, and resume after interruptions?** *(device: releasing without a wipe is **yes** for the test-only spike, PLA-5 A2. The full restore list is still open.)*
+**Q7. Can turning Own Phone off finish without a wipe, and resume after interruptions?** *(device: releasing without a wipe is **yes** for the test-only spike, PLA-5 A2. The full restore list is still open.)*
 - Kill the process after each item on the turn-off restore list, and again just before and just after Device Owner removal, then reboot. Check that it resumes, that "Off" is reported only when every step is done, and that photos and messages survive.
 - Test that every item on the restore list is read back. Test that another home screen and the dialer resolve before Device Owner is removed. *If turning off can't avoid a wipe:* revise the promise and get Beaux's approval. Never fall back to a wipe silently.
 
@@ -112,21 +112,21 @@
 - **[device]** Needs a separate board-approved procedure on the target phone. Policy readback, or waiting 72 hours on a new account, does not replace this test. **Never on the spare Motorola** (policy forbids recovery wipes there).
 
 **Q12. Can a supervised session be escaped or left open? (N1: servicing go/no-go)**
-- Turn the screen off, take an incoming call, kill Plainphone, reboot, let the deadline pass in the middle of an install, and leave nested Play, account and help screens open.
+- Turn the screen off, take an incoming call, kill Own Phone, reboot, let the deadline pass in the middle of an install, and leave nested Play, account and help screens open.
 - After each, try to reach Play, approve an app, or use adb.
-- **Failure model:** use a build that crashes on every start while a session is journaled. Measure how long the relaxation stays live, checked continuously, not only after Plainphone reopens. Repeat before the first unlock.
-- Run everything for **both** session kinds, Play and Settings. In a Settings session, also go through: search, app info and defaults, account, help and privacy screens, keyboards and accessibility, connected devices, and alert settings. Try to change the default SMS app, Plainphone's SMS permission and the keyboards. Then confirm the protected-state check restores them.
+- **Failure model:** use a build that crashes on every start while a session is journaled. Measure how long the relaxation stays live, checked continuously, not only after Own Phone reopens. Repeat before the first unlock.
+- Run everything for **both** session kinds, Play and Settings. In a Settings session, also go through: search, app info and defaults, account, help and privacy screens, keyboards and accessibility, connected devices, and alert settings. Try to change the default SMS app, Own Phone's SMS permission and the keyboards. Then confirm the protected-state check restores them.
 - **What gets recorded (R1):**
-  - whether revocation runs first on every start where Plainphone can run, including locked boot. A *no* here is a no-go.
+  - whether revocation runs first on every start where Own Phone can run, including locked boot. A *no* here is a no-go.
   - for a build that crashes on every start, how long and how much stays reachable. This is **reported against the custody limit Beaux accepted**. It is not a pass/fail of "cannot happen". If Beaux has not accepted that limit, an independent revocation mechanism becomes a G0 question.
-- **Plainphone update from local Wi-Fi:** wrong signer refused, lower version refused, adb never enabled.
+- **Own Phone update from local Wi-Fi:** wrong signer refused, lower version refused, adb never enabled.
 
 **Q14. Does the emergency gate behave correctly?**
 - Run the D5 / essential-calling UI test in every listed state, including the negative-control build, which must fail.
 - Run with the block flag on, during setup, during a PIN lockout and during a Play session.
 - Check that Alert Ready–style cell broadcasts still show where the emulator can inject them. Where it can't, record **inconclusive**, which blocks release until covered. Negative controls: Phone (or the More emergency entry) doesn't open the system dialer, dialer missing from lock task, alert display disabled. Each must fail the gate.
-- States: before first unlock, lock screen, home via Phone, inside an approved app via Home then Phone, setup, PIN lockout, supervised session, Plainphone update, turning off, after restart, Plainphone can't start.
-- **[device] Power-button SOS (Telegram 4487):** on the XT2415, does pressing power 5 times open Emergency SOS while Plainphone's lock task is active, with BLOCK on? Stop at the SOS countdown screen and cancel it. **Never let it place a call.** Do this only after confirming, by a settings readback or a dry run with lock task off, that the countdown can be cancelled in time. If it can't be made safe, stop and report. If it doesn't work under lock task, report it before the gate.
+- States: before first unlock, lock screen, home via Phone, inside an approved app via Home then Phone, setup, PIN lockout, supervised session, Own Phone update, turning off, after restart, Own Phone can't start.
+- **[device] Power-button SOS (Telegram 4487):** on the XT2415, does pressing power 5 times open Emergency SOS while Own Phone's lock task is active, with BLOCK on? Stop at the SOS countdown screen and cancel it. **Never let it place a call.** Do this only after confirming, by a settings readback or a dry run with lock task off, that the countdown can be cancelled in time. If it can't be made safe, stop and report. If it doesn't work under lock task, report it before the gate.
 - **[device, before handover]** Emergency dialer in every state without placing a call; an incoming call answered and its keypad sending tones; an alert **observed** on screen (a scheduled Alert Ready test or an approved test method), or else the phone stays in custody or Beaux records acceptance of a narrower promise; manufacturer emergency components on the never-hide list. A live 9-1-1 call only under a separate procedure agreed with E-Comm or the carrier and approved by Beaux.
 
 **Q8. Do texting and calling defaults work?**
@@ -156,5 +156,5 @@
 
 ## Decided by policy, not by testing
 
-- **Plainphone never obstructs emergency access.** This is a requirement, enforced by the behavioral gate (Q14).
+- **Own Phone never obstructs emergency access.** This is a requirement, enforced by the behavioral gate (Q14).
 - **No market-size claims** until there is a primary source.

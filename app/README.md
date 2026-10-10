@@ -1,8 +1,8 @@
 <!--
-  Copyright 2026 The Plainphone Authors
+  Copyright 2026 The Own Phone Authors
   SPDX-License-Identifier: Apache-2.0
 -->
-# Plainphone app
+# Own Phone app
 
 The Gradle root for the MVP. The module map, the owner of each module, and the seams between them are in [`docs/mvp/lanes.md`](../docs/mvp/lanes.md).
 

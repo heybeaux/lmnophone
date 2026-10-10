@@ -12,7 +12,7 @@ So we first test the risky parts on an emulator against go/no-go conditions, the
 
 Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 6, after cross-model reviews PLA-3, PLA-4, PLA-7, PLA-8 and PLA-9). First device results on a board-approved spare Motorola:
 - adb setup of our unapproved Device Owner works on certified Android 15, and the phone can be released without a wipe;
-- lock task with in-task launches blocked closes the App info and share-sheet leaks that appear without it (the Photos route has not been tested with it on yet). Runtime permission prompts are blocked too, so Plainphone plans to pre-grant permissions at approval; that is not tested yet.
+- lock task with in-task launches blocked closes the App info and share-sheet leaks that appear without it (the Photos route has not been tested with it on yet). Runtime permission prompts are blocked too, so Own Phone plans to pre-grant permissions at approval; that is not tested yet.
 
 ## What Changes
 
@@ -20,13 +20,13 @@ Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 6, af
   - Answer the go/no-go questions Q1–Q4 and the pre-handover questions Q5–Q8, Q10, Q12–Q14 in `docs/feasibility-questions.md`.
   - No real phones.
   - If the results change ADR 0001 or any promise in it, Beaux re-approves before the MVP starts.
-- **Phase 2: MVP for two phones.** A single Kotlin app, "Plainphone", that is:
+- **Phase 2: MVP for two phones.** A single Kotlin app, "Own Phone", that is:
   - the phone's **Device Owner**. It hides apps that aren't approved, runs approved apps in lock task mode, and blocks other apps' screens from opening even inside an approved app. It also blocks the known escape routes and names the trusted person in factory-reset protection.
   - the phone's **home screen**: big, plain, no search, no feeds.
 - **A trusted person approves apps on the phone** using a PIN, with a fresh check for each important action. The user can ask for an app, and the request goes to the trusted person by text.
-- **Plainphone never gets in the way of 9-1-1**, calls, texts or emergency alerts. It never filters incoming calls. A release-blocking test taps through the emergency flow, and must fail on a deliberately broken build.
+- **Own Phone never gets in the way of 9-1-1**, calls, texts or emergency alerts. It never filters incoming calls. A release-blocking test taps through the emergency flow, and must fail on a deliberately broken build.
 - **Web links are blocked** unless they belong to an approved app. General browsers and the Wi-Fi sign-in page are hidden. Leftover web access is described to the trusted person in plain words and accepted in writing by Beaux.
-- **App updates keep working** in the background. The Play Store stays installed but the user can't open it. The trusted person gets a monthly text to run a supervised update check. Plainphone updates itself from the helper's computer over local Wi-Fi, only if the update is signed with Plainphone's key. No adb maintenance mode.
+- **App updates keep working** in the background. The Play Store stays installed but the user can't open it. The trusted person gets a monthly text to run a supervised update check. Own Phone updates itself from the helper's computer over local Wi-Fi, only if the update is signed with Own Phone's key. No adb maintenance mode.
 - **Supervised sessions** (Play, Settings) are the only way the lockdown is relaxed. They are trusted-person custody, with a journal that is undone on every restart.
 - **Wi-Fi networks that need a sign-in page are not supported** in the MVP.
 - **Setup** is done by a helper with a computer, using a written guide and a script that checks the phone first. The phone isn't marked ready until a handover check passes.
@@ -37,9 +37,9 @@ Architecture and evidence: `docs/decisions/0001-architecture.md` (revision 6, af
 ### New Capabilities
 - `device-lockdown`: Device Owner policies, lock task with in-task blocking, factory-reset protection, safe policy storage and boot recovery.
 - `approved-apps`: the allowlist. "Can't be opened" guarantee, updates and staleness warnings, the supervised Play session.
-- `calm-home-screen`: home screen, always-present Phone and Messages, no Emergency button on the home screen (9-1-1 stays reachable through Phone, the lock screen and the power-button SOS gesture), Plainphone's own basic settings.
-- `trusted-person-controls`: PIN and recovery code, fresh authority for actions, app requests, the supervised session contract, Plainphone updates over local Wi-Fi, recovery when Plainphone cannot run, disclosure, turning off.
-- `web-containment`: browser classifier (excludes Plainphone itself), link handling rules, the isolated blocked-link screen, unsupported Wi-Fi sign-in pages, web-leak notes per app version.
+- `calm-home-screen`: home screen, always-present Phone and Messages, no Emergency button on the home screen (9-1-1 stays reachable through Phone, the lock screen and the power-button SOS gesture), Own Phone's own basic settings.
+- `trusted-person-controls`: PIN and recovery code, fresh authority for actions, app requests, the supervised session contract, Own Phone updates over local Wi-Fi, recovery when Own Phone cannot run, disclosure, turning off.
+- `web-containment`: browser classifier (excludes Own Phone itself), link handling rules, the isolated blocked-link screen, unsupported Wi-Fi sign-in pages, web-leak notes per app version.
 - `essential-calling-and-texting`: protections for 9-1-1, calls, texts and alerts, plus the behavioral release gate.
 - `guided-setup`: setup guide and checking script, helper-custody setup, handover check.
 

@@ -2,7 +2,7 @@
 
 # Device spike review — request changes
 
-Reviewed by Plainphone Verifier & Escape Artist, 2026-10-09 UTC, for [PLA-6](/PLA/issues/PLA-6). Author: Android Platform Engineer, [PLA-5](/PLA/issues/PLA-5).
+Reviewed by Own Phone Verifier & Escape Artist, 2026-10-09 UTC, for [PLA-6](/PLA/issues/PLA-6). Author: Android Platform Engineer, [PLA-5](/PLA/issues/PLA-5).
 
 **Overall verdict: request changes to the conclusions and evidence labels.** The central feasibility results are credible. This is not a rejection of the board-accepted Outlook leak and is not a production handover approval. Correct the specific overclaims below before using this report to close broader gates. The review itself is complete.
 

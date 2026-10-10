@@ -1,8 +1,8 @@
-# ADR 0001: How Plainphone locks a phone down
+# ADR 0001: How Own Phone locks a phone down
 
 - Status: **Accepted as the plan of record.** Beaux approved it on 2026-10-08 at 21:28 UTC, through PLA-1 confirmation `eb7a21ba` on plan revision 1, together with the OpenSpec change `add-plainphone-spike-and-mvp`. Option A is still a candidate that the spike's go/no-go conditions below must confirm.
 - Date: 2026-10-08
-- Author: Plainphone Lead (Claude)
+- Author: Own Phone Lead (Claude)
 - Reviewer: Verifier & Escape Artist (OpenAI model)
   - Revision 1 was reviewed in [PLA-3](/PLA/issues/PLA-3): request changes, with 3 blockers, 12 major and 2 minor findings.
   - Revision 2 was reviewed in [PLA-4](/PLA/issues/PLA-4): request changes, with N1–N11 (1 blocker, 8 major, 2 minor).
@@ -53,12 +53,12 @@ We do not build a custom ROM. We do not ship a launcher-only version. The emulat
 
 | Goal | Control | Source / confidence |
 |---|---|---|
-| Plainphone can't be removed by the user | A Device Owner "cannot be deactivated by the user… It also cannot be uninstalled" | DPM reference (documented) |
+| Own Phone can't be removed by the user | A Device Owner "cannot be deactivated by the user… It also cannot be uninstalled" | DPM reference (documented) |
 | Only approved apps open | `setApplicationHidden` on everything not approved. Lock task mode limited to approved packages. **`LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK` (API 30)** so that no other app's screen can start inside an approved app's task. | DPM reference; lock task guide ("can start new activities as long as the activity doesn't start a new task", so the block flag is needed) (documented). Whether a normal day still works with it on is **unknown** (Q1). |
 | No factory reset or OEM unlock from Settings | `DISALLOW_FACTORY_RESET`. AOSP `OemLockService` clears the "allow OEM unlock" permission while it is set. It does **not** relock a bootloader that is already unlocked, so setup must check the bootloader. | UserManager (documented); AOSP 15 OemLockService L97–109 (code-confirmed, also checked by the Verifier) |
 | No safe mode, adb, extra users or sideloading | `DISALLOW_SAFE_BOOT`, `DISALLOW_DEBUGGING_FEATURES`, `DISALLOW_ADD_USER`, `DISALLOW_USER_SWITCH`, `DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY` | UserManager (documented) |
 | A wipe doesn't hand the user a free phone | `setFactoryResetProtectionPolicy` with the **trusted person's Google `userId`**, then the `FRP_CONFIG_CHANGED` broadcast to Play services. The `userId` comes from People API `people.get(me)`. New accounts may take 72 hours. An empty list falls back to whichever accounts were on the phone, which would include the user's own. | developer.android.com/work/dpc/security (documented). Whether it really stops setup after a wipe is **unknown** (Q10, a gate before handover). |
-| Plainphone never gets in the way of 9-1-1 | Never hide, suspend or disable the system dialer, Telecom, the cell broadcast receiver, Play services or the default SMS app. The dialer is always in lock task. `LOCK_TASK_FEATURE_KEYGUARD` is always set. Plainphone never filters incoming calls. A test that **actually taps through** the emergency flow blocks every release. | AOSP 15 LockTaskController L387–401 has a keyguard emergency exemption (code-confirmed). That is a rule for launching screens, **not** proof that a call goes through: real calls and location need a real phone. |
+| Own Phone never gets in the way of 9-1-1 | Never hide, suspend or disable the system dialer, Telecom, the cell broadcast receiver, Play services or the default SMS app. The dialer is always in lock task. `LOCK_TASK_FEATURE_KEYGUARD` is always set. Own Phone never filters incoming calls. A test that **actually taps through** the emergency flow blocks every release. | AOSP 15 LockTaskController L387–401 has a keyguard emergency exemption (code-confirmed). That is a rule for launching screens, **not** proof that a call goes through: real calls and location need a real phone. |
 | Texting works | `setDefaultSmsApplication` (API 29) → Google Messages. Never hide Play services. The phone plan needs data for RCS and MMS. | DPM reference; support.google.com/messages/answer/9363493 (documented) |
 
 **Board decision (Beaux, Telegram 4487, 2026-10-08):** no Emergency button on the home screen, so it can't be bumped by accident. The promise is now *9-1-1 is always reachable, and never from an accidental tap on the home screen*. The routes are:
@@ -89,19 +89,19 @@ The escape threat list is in `research/evidence/webview-and-escape-threats.md` (
   2. Keep Play out of lock task and off the home screen.
   3. Hide any app that wasn't approved. This includes first-boot pushes.
      - On the spare Motorola, the committed A0 table records **7 pushed installs plus 1 preload** within 8 minutes of first boot, with Wi-Fi and no account: 4 Digital Turbine games; Google One, Fit and Wallet; and Facebook preloaded. The engineer's comment said 5 games; PLA-5 is asked to reconcile the count.
-     - So Plainphone sweeps all apps while the phone has **no network at all**: the script checks this, and the SIM is inserted only afterwards.
-  4. The trusted person runs a supervised update check once a month, in Play's own update list. Plainphone can't tell on its own whether a newer version exists.
+     - So Own Phone sweeps all apps while the phone has **no network at all**: the script checks this, and the SIM is inserted only afterwards.
+  4. The trusted person runs a supervised update check once a month, in Play's own update list. Own Phone can't tell on its own whether a newer version exists.
 - **What we promise:** an unapproved app can't be **opened**. We do not promise that one can't be **installed**, or that it never runs any code. If Beaux needs "never runs any code", this architecture can't promise it; see the go/no-go conditions.
 
 **Risk 3. The web can't be fully removed.** WebView can't be removed. An app's in-app browser traffic shares that app's network identity. Browser links can't be redirected with `addPersistentPreferredActivity` (all documented).
 - **Plan:**
   1. Hide general-purpose browsers, the Google app, Gemini, and **the Wi-Fi sign-in page (CaptivePortalLogin)**.
-     - **Wi-Fi networks that need a sign-in page are unsupported in the MVP**, with no exception session. Plainphone says so plainly and offers to forget the network.
-     - **Board decision for later (Beaux, Telegram 4481, 2026-10-08, PLA-17).** Beaux (Telegram 4481, 2026-10-08, PLA-17 card) approved the **direction**: a Wi-Fi sign-in window that Plainphone ships (a companion app with no admin rights; Android's sign-in app stays hidden), which the user can open alone once a trusted person has switched it on with the PIN. Limits: a 5-minute target per try, 3 tries in 24 hours, a text to the trusted person each time with no Wi-Fi name. He accepts that a hotspot can show other websites for the whole window and that some sign-in pages (Google account, bank app) won't work. It is built **after the MVP core**, in a follow-up OpenSpec change shared with the general web window (Telegram 4481, PLA-14), after an emulator spike and cross-model review, and Beaux approves that change before build. Details: `docs/wifi-signin-recommendation.md` revision 3.
+     - **Wi-Fi networks that need a sign-in page are unsupported in the MVP**, with no exception session. Own Phone says so plainly and offers to forget the network.
+     - **Board decision for later (Beaux, Telegram 4481, 2026-10-08, PLA-17).** Beaux (Telegram 4481, 2026-10-08, PLA-17 card) approved the **direction**: a Wi-Fi sign-in window that Own Phone ships (a companion app with no admin rights; Android's sign-in app stays hidden), which the user can open alone once a trusted person has switched it on with the PIN. Limits: a 5-minute target per try, 3 tries in 24 hours, a text to the trusted person each time with no Wi-Fi name. He accepts that a hotspot can show other websites for the whole window and that some sign-in pages (Google account, bank app) won't work. It is built **after the MVP core**, in a follow-up OpenSpec change shared with the general web window (Telegram 4481, PLA-14), after an emulator spike and cross-model review, and Beaux approves that change before build. Details: `docs/wifi-signin-recommendation.md` revision 3.
        - This is an explicit exception to the fresh-PIN rule for relaxing the lockdown, and to web containment. It is **not** a D2 session: no device policy changes during use, so it avoids the observed PLA-22 unhide race. That claim depends on the spike's audit.
        - Fallbacks that unhide Android's sign-in app are **not** approved. Any fallback goes back to Beaux.
        - Wi-Fi calling: used sometimes. Checked on ordinary Wi-Fi before handover (task 6.3).
-  2. Plainphone handles outside links that no approved app claims, and shows "This link is blocked". Navigation inside an approved app's own WebView is not intercepted.
+  2. Own Phone handles outside links that no approved app claims, and shows "This link is blocked". Navigation inside an approved app's own WebView is not intercepted.
   3. Every app on the list gets a web-leak note, reviewed per app version, that the trusted person reads before approving.
   4. A DNS filter is spiked only. It does **not** count as a protection in this MVP.
 - **Told openly:**
@@ -132,7 +132,7 @@ We did not find a published open-source "trusted person controls the allowlist" 
 
 **License: Apache-2.0**. Beaux decided this in Telegram 4446/4448.
 
-**Plainphone's own updates.** No adb maintenance mode. The helper's computer serves a signed APK over local Wi-Fi. Plainphone checks that it is signed with the pinned key and has a higher version, then installs it silently as Device Owner after a fresh PIN entry. Release builds are `testOnly=false` and `debuggable=false`.
+**Own Phone's own updates.** No adb maintenance mode. The helper's computer serves a signed APK over local Wi-Fi. Own Phone checks that it is signed with the pinned key and has a higher version, then installs it silently as Device Owner after a fresh PIN entry. Release builds are `testOnly=false` and `debuggable=false`.
 
 ## Device results so far (spare Motorola XT2415, Android 15, [PLA-5](/PLA/issues/PLA-5))
 
@@ -141,7 +141,7 @@ We did not find a published open-source "trusted person controls the allowlist" 
 - **A0.** At first boot, with Wi-Fi on, 7 apps were pushed and 1 was preloaded.
 - **A3, lock task (partial):**
   - **With `BLOCK_ACTIVITY_START_IN_TASK` off,** three leaks opened inside the locked task: App info (leading to Permissions and Notifications), the share chooser, and Google Photos from the Camera thumbnail.
-  - **With it on,** App info and the share chooser were blocked, and so were runtime permission prompts. The Photos route was **not run** with it on. So Plainphone plans to pre-grant permissions at approval; that is **not tested yet**.
+  - **With it on,** App info and the share chooser were blocked, and so were runtime permission prompts. The Photos route was **not run** with it on. So Own Phone plans to pre-grant permissions at approval; that is **not tested yet**.
   - **Emergency dialer:** blocked in both modes until `com.android.phone` was on the lock-task list. Then it opened with the flag off; it was **not re-run** with the flag on. The runtime emergency floor adds the system emergency-dialer package automatically.
   - **Direct share to Messages:** a **text** share worked. An image attachment was not tested.
   - **Quick Settings** showed no tiles.
@@ -158,14 +158,14 @@ We did not find a published open-source "trusted person controls the allowlist" 
 **Requirements for the eventual daily-use phone (Beaux decides later):**
 1. Sold unlocked in Canada, Google-certified, stock Android.
 2. At least 5 years of security updates left on the manufacturer's own page.
-3. Bootloader locked, with verified boot confirmed by Plainphone during setup.
+3. Bootloader locked, with verified boot confirmed by Own Phone during setup.
 4. As few manufacturer extras as possible. Each brand adds escape routes; Motorola alone adds Secure folder, Cloned Apps, Smart Connect, Sidebar/Gametime and background installers (`canada-and-motorola.md`).
 
 **Candidates:**
 - **Pixel 9a or newer.** Fewest extras and 7 years of updates. Also keeps GrapheneOS (B) open.
 - **Samsung A-series.** Wisephone's choice. Many extras; Knox is not evaluated.
 
-**Support obligation (S1).** Each system update produces a new build, and each new build needs a reviewed inventory delivered as a signed Plainphone update.
+**Support obligation (S1).** Each system update produces a new build, and each new build needs a reviewed inventory delivered as a signed Own Phone update.
 - Until that inventory arrives, the phone runs in a safe mode for unknown builds:
   - lock task stays on;
   - the emergency floor is protected;
@@ -185,11 +185,11 @@ The candidate becomes the decision only if, on the emulator, and later on one ph
 2. **Approved apps update without the user reaching Play (Q2).**
    - *If not:* a revised ADR. A weekly supervised update window is **not** assumed acceptable.
 3. **The two initial users' actual must-have apps work end to end (Q4):** sign-in, signing in again, password reset, payment approval, updates and notifications. All under the full policy, with no regular helper visits.
-4. **Recovery works:** turning Plainphone off (Q7) and reset protection (Q10) both behave as the specs say.
+4. **Recovery works:** turning Own Phone off (Q7) and reset protection (Q10) both behave as the specs say.
 5. **Leftover web access is limited to what the trusted person accepted in writing.**
 6. **Setup and support effort stays within the guide's limits.**
-7. **Beaux explicitly accepts the session custody limit.** If Plainphone can't run for any reason while a supervised session is open, nothing revokes the relaxation automatically, and it stays until a helper fixes the phone. The reason could be a real bad update, a storage or startup fault, or a crash loop.
-   - **What Q12 is for.** Q12 measures what is reachable in that state, and confirms that revocation runs first whenever Plainphone *can* run. It cannot prove the failure never happens.
+7. **Beaux explicitly accepts the session custody limit.** If Own Phone can't run for any reason while a supervised session is open, nothing revokes the relaxation automatically, and it stays until a helper fixes the phone. The reason could be a real bad update, a storage or startup fault, or a crash loop.
+   - **What Q12 is for.** Q12 measures what is reachable in that state, and confirms that revocation runs first whenever Own Phone *can* run. It cannot prove the failure never happens.
    - **Handback.** The phone is never handed back until the policy reads back correctly.
    - **If Beaux does not accept this:** an independent revocation mechanism becomes a G0 feasibility question, and the ADR is revised.
 
@@ -212,14 +212,14 @@ Beaux's copy-test answers (card `c60170d6`, Telegram 4481) touch two promises in
 **1. Option D comes back as a mode, not as the architecture.**
 - A phone is **supervised** (one or two trusted people) or **self-managed** (the user is their own trusted person).
 - Self-managed mode keeps everything in option A: Device Owner, hidden apps, lock task with in-task launches blocked, restrictions, emergency floor, web containment. Only who can relax it changes.
-- **It is friction, not a lock**, and Plainphone says so in those words. The user holds the PIN. Opening up needs a 10-minute countdown, is limited to 2 times a day, closes at its deadline, and no setting can make it permanent. Making it stricter is instant; making it looser waits 24 hours. *Exception, disclosed:* if Plainphone can't run while an elevation is open, it stays open until a helper fixes the phone (the custody limit), with nobody watching. The user can get full control back by waiting at least 24 hours of proven running time (longer if the change is cancelled, a PIN is replaced, the battery is nearly flat or a fault interrupts it), or by wiping the phone.
+- **It is friction, not a lock**, and Own Phone says so in those words. The user holds the PIN. Opening up needs a 10-minute countdown, is limited to 2 times a day, closes at its deadline, and no setting can make it permanent. Making it stricter is instant; making it looser waits 24 hours. *Exception, disclosed:* if Own Phone can't run while an elevation is open, it stays open until a helper fixes the phone (the custody limit), with nobody watching. The user can get full control back by waiting at least 24 hours of proven running time (longer if the change is cancelled, a PIN is replaced, the battery is nearly flat or a fault interrupts it), or by wiping the phone.
 - Keeping option A's controls is what makes this better than option D alone: the restrictions, the persistent Home pin and lock task (table above) are meant to stop the friction being skipped through safe mode, adb or a launcher change. They are verified per build; for example `no_config_default_apps` did not take effect on the spare, where the Home pin did the work (PLA-5 A4/A6).
-- Reset protection names the user's own account in this mode, so a recovery-mode wipe erases the phone and then lets the user set it up without Plainphone (subject to Q10). That matches the friction promise and is disclosed.
+- Reset protection names the user's own account in this mode, so a recovery-mode wipe erases the phone and then lets the user set it up without Own Phone (subject to Q10). That matches the friction promise and is disclosed.
 
-**2. Who can relax the lockdown.** Package access to Play or Settings still opens only through a supervised session and its contract. Approving apps, installing Plainphone updates and turning off follow their own authority rules. What changes:
+**2. Who can relax the lockdown.** Package access to Play or Settings still opens only through a supervised session and its contract. Approving apps, installing Own Phone updates and turning off follow their own authority rules. What changes:
 - **Two trusted people, as equals.** Either can approve apps and open sessions alone. Each has their own PIN, lockout, recovery code and reset-protection ID. Both get texts.
 - **The user**, in self-managed mode only, through an elevation: a bounded grant with friction (countdown, daily limit, deadline). Approve and Update grants are used up by their one action; a Play grant can approve each app installed in its session until its deadline. Play and Settings grants open a supervised session under the same journal, revoke-on-every-start and protected-state rules; Approve and Update grants open no package access and are checked immediately before their irreversible step.
-- **Changes that can't be put back wait 24 hours** (installing a signed Plainphone update is the stated exception: it takes effect at once and has no rollback): turning off, changing who the trusted people are, and switching mode in either direction. Only one can be in progress at a time, from start until it completes or is cancelled. It is cancelled at once if a PIN it depends on is replaced, or the people or mode change, before it commits. Each change has one recoverable operation record; if that is lost, Plainphone reconciles to the credentials in charge (or reports "Off" if turning off had finished) and reports what it found. Texts go out at once, and either trusted person (or anyone holding the phone) can cancel. In supervised mode, a trusted person's recovery code skips the wait, on a screen naming the change. In self-managed mode, nothing in Plainphone does.
+- **Changes that can't be put back wait 24 hours** (installing a signed Own Phone update is the stated exception: it takes effect at once and has no rollback): turning off, changing who the trusted people are, and switching mode in either direction. Only one can be in progress at a time, from start until it completes or is cancelled. It is cancelled at once if a PIN it depends on is replaced, or the people or mode change, before it commits. Each change has one recoverable operation record; if that is lost, Own Phone reconciles to the credentials in charge (or reports "Off" if turning off had finished) and reports what it found. Texts go out at once, and either trusted person (or anyone holding the phone) can cancel. In supervised mode, a trusted person's recovery code skips the wait, on a screen naming the change. In self-managed mode, nothing in Own Phone does.
 - **A PIN proves knowledge, not identity.** The waits, receipts to both people and re-checks exist because a PIN can be seen. New credentials take effect only after the new reset-protection list reads back.
 - **The user alone can never change who the trusted people are.**
 - **PLA-22 mitigation B** is applied at every unhide, with a low-battery guard for discretionary unhides. It narrows the boot-loop window but doesn't close it: a power loss between the unhide and the save can still loop. That is disclosed.
@@ -242,11 +242,11 @@ Each PLA-3 finding, and where it is addressed:
 | F7 reactive hiding | Guarantee narrowed to "no launch"; measured; fail-safe (approved-apps) |
 | F8 boot and policy | Direct Boot, atomic policy, last-known-good, readback (device-lockdown, D8) |
 | F9 PIN | Persistent attempt count, a ceiling on delays, KDF parameters, recovery code entropy (trusted-person-controls) |
-| F10 off switch | Resumable and authenticated; restores only what Plainphone changed (trusted-person-controls) |
+| F10 off switch | Resumable and authenticated; restores only what Own Phone changed (trusted-person-controls) |
 | F11 setup | A helper-custody phase, bootloader check, live adb check (guided-setup) |
 | F12 confused deputy | Untrusted input rules, separate link entry point (trusted-person-controls, web-containment) |
 | F13 captive portal and system surfaces | Graded major; sign-in page hidden by default; system screens tested and disclosed |
-| F14 updates | Setup checks, warnings when apps go stale, maintenance mode for Plainphone's own updates (approved-apps, trusted-person-controls). *Maintenance mode was replaced in revision 3; see N2.* |
+| F14 updates | Setup checks, warnings when apps go stale, maintenance mode for Own Phone's own updates (approved-apps, trusted-person-controls). *Maintenance mode was replaced in revision 3; see N2.* |
 | F15 triggers | The go/no-go list above |
 | F16 wording | Fixed here; errata added to the evidence files |
 | F17 matrix | `docs/verification-matrix.md`; gates re-ranked in `docs/feasibility-questions.md` |
@@ -255,14 +255,14 @@ Each PLA-3 finding, and where it is addressed:
 
 | PLA-4 finding | Where addressed |
 |---|---|
-| N1 temporary authority while Plainphone is down | One shared contract for supervised sessions: journal written first, revoked at every start including locked boot, custody wording, Q12 as a go/no-go, no automatic-close promise (trusted-person-controls, D2) |
+| N1 temporary authority while Own Phone is down | One shared contract for supervised sessions: journal written first, revoked at every start including locked boot, custody wording, Q12 as a go/no-go, no automatic-close promise (trusted-person-controls, D2) |
 | N2 maintenance mode | adb maintenance cut. Updates come from the helper's computer over local Wi-Fi with a pinned signature and version check. Release builds non-debuggable. Signing-key custody named (trusted-person-controls, D6) |
-| N3 classifier forbids Plainphone | Plainphone and never-hide packages excluded first. Probe uses `MATCH_ALL` plus a catalog review. Link promise limited to outside implicit links; in-app WebView not intercepted (web-containment, D4) |
+| N3 classifier forbids Own Phone | Own Phone and never-hide packages excluded first. Probe uses `MATCH_ALL` plus a catalog review. Link promise limited to outside implicit links; in-app WebView not intercepted (web-containment, D4) |
 | N4 boot interval and background code | Invariant from the first interactive frame. Built-in safe policy. No time limit promised for background code (device-lockdown, approved-apps) |
 | N5 Wi-Fi sign-in page | Unsupported, with a plain message and "forget network" (web-containment) |
 | N6 recovery and off switch | People API steps on the trusted person's own device. Their ability to sign in elsewhere is checked. Backup person option. Full restore list. Successor home screen and dialer confirmed before removing Device Owner. No silent wipe (device-lockdown, guided-setup, trusted-person-controls) |
 | N7 PIN schedule | Exact delays. Rejected entries during a delay aren't counted. Remaining delay survives a reboot. Recovery code has its own counter (trusted-person-controls) |
-| N8 emergency coverage | OEM emergency components on the never-hide list. All states, including "Plainphone can't run" and before first unlock. Alert negative control. Real-device handover checks with callback keypad (essential-calling-and-texting) |
+| N8 emergency coverage | OEM emergency components on the never-hide list. All states, including "Own Phone can't run" and before first unlock. Alert negative control. Real-device handover checks with callback keypad (essential-calling-and-texting) |
 | N9 update health | Per-app record, monthly texted update check in Play's own list, Play services 30-day warning; no claim to know about newer versions (approved-apps) |
 | N10 Play test source | Preinstalled Google apps rolled back with `pm uninstall-system-updates`, compared against an unrestricted run. "Inconclusive" if Play offers no update. Publishing removed (feasibility Q2, tasks 1.2) |
 | N11 evidence and wording | Canada evidence superseded notes. RCS works over Wi-Fi. "No Android 16" kept as an inference. Spare-device facts. No Q10 recovery wipe on the spare (evidence, ADR Risk 5) |
@@ -271,10 +271,10 @@ Each PLA-3 finding, and where it is addressed:
 
 | PLA-7 finding | Where addressed |
 |---|---|
-| R1 crash-loop gate contradiction | One contract. The custody limit covers any reason Plainphone can't run, and Beaux must accept it explicitly. Q12 measures and does not "prove". ADR go/no-go #7, Q12, the matrix and task 3.5 now agree. |
+| R1 crash-loop gate contradiction | One contract. The custody limit covers any reason Own Phone can't run, and Beaux must accept it explicitly. Q12 measures and does not "prove". ADR go/no-go #7, Q12, the matrix and task 3.5 now agree. |
 | R2 Settings session scope | A table of packages per session kind. A protected-state check before handback restores protections and keeps ordinary changes. Q12 covers both kinds. In-session web content disclosed. (trusted-person-controls) |
 | R3 inventory, baseline, sweep | One versioned build inventory, compiled into the app, lists the never-hide dependencies and minimum UI entries. The emergency-safe baseline is built from it. No inventory means no sweep and no Ready. A damaged journal means revoke everything. The sweep runs only with no network active, which the script checks, and the SIM goes in afterwards. (device-lockdown, guided-setup) |
-| R4 updater binding | Exact package name, valid signature, pinned signer and a strictly higher `longVersionCode`. The exact bytes are staged in private storage and installed through a session bound to Plainphone's package name. Size, timeout and redirect limits. Install success is checked separately from a working start. Key custody, a lost-key procedure and a compromised-key procedure. No promise of rollback. (trusted-person-controls) |
+| R4 updater binding | Exact package name, valid signature, pinned signer and a strictly higher `longVersionCode`. The exact bytes are staged in private storage and installed through a session bound to Own Phone's package name. Size, timeout and redirect limits. Install success is checked separately from a working start. Key custody, a lost-key procedure and a compromised-key procedure. No promise of rollback. (trusted-person-controls) |
 | R5 Alert Ready at handover | The alert must be observed on the target build before handover. Otherwise the phone stays in custody, or Beaux accepts the narrower promise. An emulator that can't inject an alert gives "inconclusive", which blocks release. (essential-calling-and-texting) |
 | R6 monthly check | Due date and last completion are stored. Daily retries for 7 days. If the check is overdue, a single line appears on the home screen. Completion needs a PIN after reviewing Play's list. SMS setup is tested end to end at handover. (approved-apps, trusted-person-controls, guided-setup) |
 | R7 People API account selection | The trusted person picks the exact account in Google's picker, not by display name. New accounts wait 72 hours and are re-tested. The guide is dry-run with accounts that share a display name. (guided-setup) |

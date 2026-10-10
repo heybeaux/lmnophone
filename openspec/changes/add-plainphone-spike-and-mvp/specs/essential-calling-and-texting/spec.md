@@ -1,6 +1,6 @@
 ## ADDED Requirements
 
-### Requirement: Plainphone never obstructs emergency access
+### Requirement: Own Phone never obstructs emergency access
 The **never-hide list** SHALL be the build inventory's never-hide dependencies (device-lockdown). It covers at least:
 - the system dialer, Telecom and the in-call UI;
 - the cell broadcast service, receiver and alert display;
@@ -15,10 +15,10 @@ The system dialer and the cell broadcast alert display SHALL always be on the lo
 **Invariant: 9-1-1 is always reachable, and never from an accidental tap on the home screen** (Beaux, Telegram 4487). The routes are:
 - **Phone:** the system dialer, reached from Phone on the home screen. From inside an approved app, the user presses Home, then Phone. Dialling 9-1-1 there SHALL work under lock task with in-task launches blocked.
 - **Lock screen:** stock Android's "Emergency call".
-- **Power button:** the Emergency SOS gesture (press power 5 times), where the build has it **and** Q14 shows it works while Plainphone's lock task is active. Otherwise the setup guide SHALL NOT mention it.
+- **Power button:** the Emergency SOS gesture (press power 5 times), where the build has it **and** Q14 shows it works while Own Phone's lock task is active. Otherwise the setup guide SHALL NOT mention it.
 - **Optional:** an "Emergency 9-1-1" entry inside More (calm-home-screen).
 
-Any emergency intent Plainphone sends SHALL be `ACTION_DIAL` for `tel:911` sent explicitly to the system dialer package, after checking that the dialer resolves. The power-menu emergency entry, where the build has one, SHALL remain available.
+Any emergency intent Own Phone sends SHALL be `ACTION_DIAL` for `tel:911` sent explicitly to the system dialer package, after checking that the dialer resolves. The power-menu emergency entry, where the build has one, SHALL remain available.
 
 #### Scenario: A policy tries to hide the dialer
 - **WHEN** any code path asks the policy engine to hide, suspend or disable the system dialer or one of its components
@@ -34,11 +34,11 @@ Any emergency intent Plainphone sends SHALL be `ACTION_DIAL` for `tel:911` sent 
   - during setup
   - during a PIN lockout
   - during a supervised session
-  - during a Plainphone update
-  - while turning Plainphone off
-  - after Plainphone restarts
-  - while Plainphone cannot start
-- **THEN** the system emergency dialer opens each time. The last two states rely on the lock screen and system dialer, not on Plainphone.
+  - during an Own Phone update
+  - while turning Own Phone off
+  - after Own Phone restarts
+  - while Own Phone cannot start
+- **THEN** the system emergency dialer opens each time. The last two states rely on the lock screen and system dialer, not on Own Phone.
 
 ### Requirement: The emergency release gate is behavioral, with negative controls
 The build SHALL include an instrumented test of the emergency flow. It SHALL:
@@ -74,7 +74,7 @@ Before a phone is handed to either initial user for daily use, all of the follow
 
 **If alert display cannot be observed,** the phone SHALL do one of these:
 - stay in supervised test custody;
-- be handed over only after Beaux explicitly accepts, in a recorded decision, that alert display is unverified on that build. The promise is then narrowed to "alerts are not blocked by Plainphone's policy".
+- be handed over only after Beaux explicitly accepts, in a recorded decision, that alert display is unverified on that build. The promise is then narrowed to "alerts are not blocked by Own Phone's policy".
 
 **Live 9-1-1 test call.** One SHALL be placed only under a separate procedure, agreed with E-Comm or the carrier and approved by Beaux.
 
@@ -87,7 +87,7 @@ Before a phone is handed to either initial user for daily use, all of the follow
 - **THEN** the phone is not handed over unless Beaux has recorded his acceptance of the narrowed promise
 
 ### Requirement: Incoming calls are never filtered
-Plainphone SHALL NOT block, screen, silence or hide incoming calls, and SHALL NOT interfere with E-Comm's automatic callback after a 9-1-1 hang-up.
+Own Phone SHALL NOT block, screen, silence or hide incoming calls, and SHALL NOT interfere with E-Comm's automatic callback after a 9-1-1 hang-up.
 
 #### Scenario: Callback after 911
 - **WHEN** a call from an unknown 604 number arrives minutes after a 9-1-1 call
@@ -102,7 +102,7 @@ While in lock task, all of these SHALL work:
 - MMS
 - group texts
 
-Plainphone SHALL NOT block emergency alerts (Alert Ready). On each supported build, alert display is verified as described in the real-device check above. Where Beaux has accepted a build-scoped exception, the promise is limited to "Plainphone does not block alerts".
+Own Phone SHALL NOT block emergency alerts (Alert Ready). On each supported build, alert display is verified as described in the real-device check above. Where Beaux has accepted a build-scoped exception, the promise is limited to "Own Phone does not block alerts".
 
 The setup guide SHALL say:
 - RCS works over Wi-Fi or mobile data.
@@ -115,4 +115,4 @@ The setup guide SHALL say:
 
 #### Scenario: Group text with an iPhone user
 - **WHEN** a group message that includes an iPhone user arrives
-- **THEN** it appears in Messages, with no Plainphone screen in the way
+- **THEN** it appears in Messages, with no Own Phone screen in the way
