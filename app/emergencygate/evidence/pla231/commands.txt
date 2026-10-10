@@ -1,0 +1,32 @@
+# PLA-231 (D1 slice 7) emergency release gate: exact commands. Copyright 2026 Plainphone contributors. SPDX-License-Identifier: Apache-2.0
+# AVD pla140-a35 (emulator-5770), google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug, API 35. Emulator 37.3.3.0.
+# Emulator results are NOT proof that a real 9-1-1 call gets through. No real emergency number is ever dialled:
+# the Telecom check dials 7357, added as a test-mode emergency number, and only the emulated modem answers.
+
+# One command: builds the real debug build, the three ctl* controls and the gate, runs every check on each, removes the owner.
+tools/emergency-gate.sh -s emulator-5770            # full: PIN 2580 (set and cleared), locked boot, boot check
+tools/emergency-gate.sh -s emulator-5770 --quick    # no PIN and no reboots
+
+# What the script runs per build (BUILD = debug | ctlNoPhone | ctlNoDialerLockTask | ctlNoAlert):
+adb -s emulator-5770 install -t -r app/emergencygate/build/outputs/apk/debug/emergencygate-debug.apk
+adb -s emulator-5770 install -t -r app/plainphone/build/outputs/apk/$BUILD/plainphone-$BUILD.apk
+adb -s emulator-5770 shell dpm set-device-owner org.plainphone/.PlainphoneAdminReceiver
+#   wait for logcat PlainphoneBoot "control=<name> locked=false ready=true"
+adb -s emulator-5770 shell am instrument -w -e check home-phone org.plainphone.emergencygate/.EmergencyGate
+#   ... and app-home-phone, more-emergency, sos, alert
+adb -s emulator-5770 shell su 0 cmd phone emergency-number-test-mode -a 7357
+adb -s emulator-5770 shell am instrument -w -e check telecom-emergency-call -e number 7357 org.plainphone.emergencygate/.EmergencyGate
+adb -s emulator-5770 shell su 0 cmd phone emergency-number-test-mode -c
+adb -s emulator-5770 shell locksettings set-pin 2580
+adb -s emulator-5770 shell am instrument -w -e check lock-screen org.plainphone.emergencygate/.EmergencyGate
+#   unlock (BACK out of the emergency dialer first), reboot, do not unlock (RUNNING_LOCKED):
+adb -s emulator-5770 shell am instrument -w -e check locked-boot org.plainphone.emergencygate/.EmergencyGate
+#   unlock, then:
+adb -s emulator-5770 shell locksettings clear --old 2580
+adb -s emulator-5770 reboot   # then retry am instrument -e check boot-checking until it answers
+adb -s emulator-5770 shell dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver
+adb -s emulator-5770 shell dpm list-owners      # -> no owners
+
+# Alert fix demonstration (real debug build, not part of the gate): add the alert app to lock task by hand.
+adb -s emulator-5770 shell am broadcast -a org.plainphone.test.RELAX --es package com.google.android.cellbroadcastreceiver -n org.plainphone/.boot.TestHook
+adb -s emulator-5770 shell am instrument -w -e check alert org.plainphone.emergencygate/.EmergencyGate
