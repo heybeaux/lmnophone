@@ -221,8 +221,11 @@ LMNOPhone SHALL write its policy atomically, check its schema version before app
 7. home preference.
 
 **Locked-boot path.** At `LOCKED_BOOT_COMPLETED`, LMNOPhone SHALL use only device-protected data. It SHALL do only these steps, then read them back:
-- steps 1–3, where step 3 includes restoring the emergency UI subset's lock-task membership;
+- steps 1–3, where step 3 includes restoring the emergency UI subset's lock-task membership and keeping LMNOPhone itself in the lock-task list, so the home activity can start lock task at the first frame even if the list was lost;
+- the lock-task features listed under *Lock task blocks other apps' screens*, including `BLOCK_ACTIVITY_START_IN_TASK`. They are fixed, so they need no policy file. Without them, an allowed app can open Settings inside its own task even while lock task is on (PLA-232 finding 9);
 - the never-hide guard.
+
+Emergency repair SHALL NOT depend on the session revoke succeeding. If step 1 fails, LMNOPhone SHALL keep the relaxations revoke-pending and SHALL NOT hand control back, but it SHALL still run steps 2–3, the lock-task features and the never-hide guard, and read them back.
 
 **When to re-apply.** LMNOPhone SHALL re-apply policy at locked and unlocked boot, on package events, after trusted-person actions, and every 15 minutes.
 
