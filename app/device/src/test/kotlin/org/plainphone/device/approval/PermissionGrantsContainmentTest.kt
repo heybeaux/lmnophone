@@ -51,6 +51,8 @@ class PermissionGrantsContainmentTest {
         var afterRead: () -> Unit = {}
         /** Runs inside `setUninstallBlocked(false)`, before the block is cleared. */
         var whileUnblocking: () -> Unit = {}
+        /** Runs inside `setUninstallBlocked(false)`, after the block is cleared and before it returns. */
+        var afterUnblocking: () -> Unit = {}
         /** Runs after each signer read has taken its value; gets the read's 1-based count. */
         var afterSigners: (Int) -> Unit = {}
         val log = mutableListOf<String>()
@@ -92,6 +94,7 @@ class PermissionGrantsContainmentTest {
             if (!blocked) whileUnblocking()
             if (!blockWriteWorks) return false
             this.blocked = blocked
+            if (!blocked) afterUnblocking()
             return true
         }
     }
@@ -147,6 +150,50 @@ class PermissionGrantsContainmentTest {
         assertFalse(PermissionGrants(fake).set(identity, allowCamera))
     }
 
+    // Early rotation has three outcomes besides DONE. Seen at the first identity check: NOT_DONE, and
+    // nothing is written. Seen after the write: the rotated app's grant is fixed DENIED and read back;
+    // REPLACED_CONTAINED when that holds, REPLACED_NOT_CONTAINED (the grant may stay) when it does not.
+
+    @Test fun rotationAlreadyThereAtTheFirstIdentityCheckIsNotDoneAndWritesNothing() {
+        // The Verifier's PLA-215 rotationAlreadyPresentBeforeWriteReturnsNotDone.
+        val fake = Fake().apply { rotateTo(rotated) }
+        val grants = PermissionGrants(fake)
+        assertEquals(GrantWrite.NOT_DONE, grants.write(identity, allowCamera))
+        assertTrue(fake.writtenTo.isEmpty())
+        assertTrue(fake.log.none { it.startsWith("set") })
+        assertFalse(fake.blocked)
+        assertEquals(PermissionReadback.UNKNOWN, grants.read(identity, listOf(camera))[camera])
+    }
+
+    @Test fun rotationSeenAfterTheWriteWithARefusedContainmentIsNotContainedAndKeepsTheGrant() {
+        // The Verifier's PLA-215 earlyRotationWithRefusedCompensationIsNotContained.
+        val fake = Fake().apply { compensationWorks = false }
+        fake.afterWrite = { fake.rotateTo(rotated) }
+        val grants = PermissionGrants(fake)
+        assertEquals(GrantWrite.REPLACED_NOT_CONTAINED, grants.write(identity, allowCamera))
+        assertEquals(listOf("set GRANTED", "set DENIED"), fake.log.filter { it.startsWith("set") })
+        assertEquals(setOf(rotated), fake.installed!!.signers)
+        assertEquals(PolicyGrant.GRANTED, fake.installed!!.fixed)
+        assertEquals(true, fake.installed!!.actual)
+        assertEquals(PermissionReadback.UNKNOWN, grants.read(identity, listOf(camera))[camera])
+    }
+
+    @Test fun rotationSeenAfterTheWriteWithAContainmentThatDoesNotReadBackIsNotContained() {
+        // Android accepts the DENIED write, but the readback still shows the grant.
+        val fake = object : Fake() {
+            override fun setPolicyState(name: PackageName, permission: PermissionName, state: PolicyGrant): Boolean =
+                if (state == PolicyGrant.DENIED && writtenTo.isNotEmpty()) { log += "set $state"; true }
+                else super.setPolicyState(name, permission, state)
+        }
+        fake.afterWrite = { fake.rotateTo(rotated) }
+        val grants = PermissionGrants(fake)
+        assertEquals(GrantWrite.REPLACED_NOT_CONTAINED, grants.write(identity, allowCamera))
+        assertEquals(listOf("set GRANTED", "set DENIED"), fake.log.filter { it.startsWith("set") })
+        assertEquals(PolicyGrant.GRANTED, fake.installed!!.fixed)
+        assertEquals(true, fake.installed!!.actual)
+        assertEquals(PermissionReadback.UNKNOWN, grants.read(identity, listOf(camera))[camera])
+    }
+
     @Test fun replacementDuringTheVerifyReadIsContained() {
         val fake = Fake().apply { blockHolds = false }
         fake.afterWrite = { fake.afterRead = { fake.replaceWith(b); fake.afterRead = {} } }
@@ -195,6 +242,26 @@ class PermissionGrantsContainmentTest {
         assertEquals(PolicyGrant.GRANTED, fake.installed!!.fixed)
         assertEquals(true, fake.installed!!.actual)
         fake.afterSigners = {}
+        assertEquals(PermissionReadback.UNKNOWN, grants.read(identity, listOf(camera))[camera])
+    }
+
+    @Test fun unrelatedReplacementAfterTheTemporaryBlockIsClearedIsOutsideDoneAndTheReReadIsUnknown() {
+        // The Verifier's PLA-215 unrelatedReplacementAfterBlockClearCanPrecedeDoneReturn. Once write
+        // clears the block it added, a full uninstall and a fresh install by any signer can land before
+        // the return. DONE is the snapshot at the last signer read; the exact-identity re-read catches it.
+        // No claim about the fresh app's grant state: the fake's fresh state is not Android evidence.
+        val fake = Fake()
+        var replacedWhileBlocked = true
+        var replacedAfterClear = false
+        fake.whileUnblocking = { replacedWhileBlocked = fake.replaceWith(b) }
+        fake.afterUnblocking = { replacedAfterClear = fake.replaceWith(b) }
+        val grants = PermissionGrants(fake)
+        assertEquals(GrantWrite.DONE, grants.write(identity, allowCamera))
+        assertFalse("Android refuses the uninstall while blocked", replacedWhileBlocked)
+        assertTrue("the uninstall works once the block is cleared", replacedAfterClear)
+        assertEquals(listOf(setOf(a)), fake.writtenTo)
+        assertEquals(setOf(b), fake.installed!!.signers)
+        assertFalse(fake.blocked)
         assertEquals(PermissionReadback.UNKNOWN, grants.read(identity, listOf(camera))[camera])
     }
 
