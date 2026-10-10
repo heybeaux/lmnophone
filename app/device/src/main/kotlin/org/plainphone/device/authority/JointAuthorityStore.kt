@@ -110,10 +110,10 @@ class JointAuthorityStore internal constructor(
     constructor(dir: File, matchingInventory: BuildInventory?) : this(dir, StorageFaults { _, _ -> }, matchingInventory)
     internal constructor(dir: File, faults: StorageFaults) : this(dir, faults, null)
 
-    private val copyA = AtomicRecord(dir, "authority-a", SCHEMA)
-    private val copyB = AtomicRecord(dir, "authority-b", SCHEMA)
-    private val fenceA = AtomicRecord(dir, "fence-a", SCHEMA)
-    private val fenceB = AtomicRecord(dir, "fence-b", SCHEMA)
+    private val copyA = AtomicRecord(dir, "authority-a", SCHEMA) { directorySync }
+    private val copyB = AtomicRecord(dir, "authority-b", SCHEMA) { directorySync }
+    private val fenceA = AtomicRecord(dir, "fence-a", SCHEMA) { directorySync }
+    private val fenceB = AtomicRecord(dir, "fence-b", SCHEMA) { directorySync }
     private val coordinator = coordinators.computeIfAbsent(canonical(dir)) { Coordinator() }
 
     val credentials: CredentialStore = object : CredentialStore {
@@ -625,7 +625,8 @@ class JointAuthorityStore internal constructor(
     /** The entry keeps its original `intent-clear-` file name although it can also hold REQUESTED. */
     private fun intentRecords(requestId: String): Pair<AtomicRecord, AtomicRecord> {
         val hash = intentHash(requestId)
-        return AtomicRecord(dir, "$INTENT_ENTRY$hash", INTENT_SCHEMA) to AtomicRecord(dir, "$INTENT_MARKER$hash", INTENT_SCHEMA)
+        return AtomicRecord(dir, "$INTENT_ENTRY$hash", INTENT_SCHEMA) { directorySync } to
+            AtomicRecord(dir, "$INTENT_MARKER$hash", INTENT_SCHEMA) { directorySync }
     }
 
     private fun intentPayload(tag: Byte, requestId: String) = byteArrayOf(tag) + requestId.toByteArray()
@@ -893,8 +894,9 @@ class JointAuthorityStore internal constructor(
     }
 
     /**
-     * Repair, then copy A, copy B, fence A, fence B. If a copy write fails, both copies are put back
-     * to [previous] where possible; a lone new copy above the fence is never served either way. The
+     * Repair, then copy A, copy B, fence A, fence B. If a copy write fails (including its directory
+     * sync), both copies are put back to [previous] where possible; a lone new copy above the fence is
+     * never served either way. The
      * result is read from disk: true exactly when [next] reads back. A migration names the copy
      * that holds no old record, so the old one survives until both new copies are written.
      */
@@ -909,7 +911,9 @@ class JointAuthorityStore internal constructor(
         if (copied) {
             fenceA.write(fence) { faults.at(WritePoint.AFTER_FENCE_A, dir) }
             fenceB.write(fence) { faults.at(WritePoint.AFTER_FENCE, dir) }
-        } else if (previous != null && load()?.encode()?.contentEquals(bytes) != true) {
+        } else if (previous != null) {
+            // Even if both new copies are visible: a copy whose directory entry did not sync is not
+            // durable, so it must not be acknowledged (PLA-143 R1). Put [previous] back and report what reads.
             val old = previous.encode()
             other.write(old) {}; first.write(old) {}
         }
@@ -968,7 +972,8 @@ internal fun intentHash(requestId: String): String =
     MessageDigest.getInstance("SHA-256").digest(requestId.toByteArray()).joinToString("") { "%02x".format(it) }
 
 /** A single checksummed file replaced by synced temp-file rename, then read back. */
-internal class AtomicRecord(private val dir: File, name: String, private val schema: Int) {
+internal class AtomicRecord(private val dir: File, name: String, private val schema: Int,
+    private val directorySync: () -> DirectorySync = { PlatformDirectorySync }) {
     private val file = File(dir, "$name.rec")
 
     fun exists() = file.exists()
@@ -980,7 +985,11 @@ internal class AtomicRecord(private val dir: File, name: String, private val sch
         null
     }
 
-    /** [afterRename] runs between the rename and the readback. */
+    /**
+     * [afterRename] runs between the rename and the readback. False unless the directory entry was
+     * synced too: a rename is not durable until its directory is (PLA-143 R1). The rename may still be
+     * visible after a false result, so callers decide from what reads back.
+     */
     fun write(payload: ByteArray, afterRename: () -> Unit): Boolean = try {
         if (!dir.isDirectory && !dir.mkdirs()) throw IOException("no directory")
         val temp = File(dir, "${file.name}.tmp")
@@ -990,13 +999,9 @@ internal class AtomicRecord(private val dir: File, name: String, private val sch
         }
         java.nio.file.Files.move(temp.toPath(), file.toPath(),
             java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
-        try {
-            java.nio.channels.FileChannel.open(dir.toPath(), java.nio.file.StandardOpenOption.READ).use { it.force(true) }
-        } catch (_: IOException) {
-            // Directory sync is not supported everywhere; the file contents are already synced.
-        }
+        val synced = try { directorySync().sync(dir); true } catch (_: IOException) { false }
         afterRename()
-        read()?.contentEquals(payload) == true
+        synced && read()?.contentEquals(payload) == true
     } catch (_: IOException) {
         false
     }
