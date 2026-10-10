@@ -21,6 +21,9 @@ import org.plainphone.policy.PolicyPlan
  *   (including BLOCK_ACTIVITY_START_IN_TASK). This is the locked-boot path of device-lockdown.
  * - The never-hide guard fails a plan that would hide a never-hide package. Hides skip that list
  *   whatever the plan says. [PolicyPlan.allowedDestruction] is a guard result and is never run.
+ * - A package the plan needs enabled gets one best-effort enable. If it stays disabled it is reported
+ *   in [ApplyResult.unrepairable] and the apply goes on; there is no supported Device Owner call that
+ *   clears a user-disabled state.
  * - Every real unhide is followed at once by its own flip of Plainphone's flush component to the
  *   opposite of its current state (mitigation B, best effort). A failed flip is retried once, then
  *   reported; the unhide is never undone and the apply continues.
@@ -78,9 +81,10 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
         private val expected: ExpectedPolicyState = plan.expected
         private val absent = mutableSetOf<PackageName>()
         private val flipFailures = mutableSetOf<PackageName>()
+        private val unrepairable = mutableSetOf<PackageName>()
 
         fun result(applied: List<ApplyStage>, failed: ApplyStage?) =
-            ApplyResult(applied.toList(), failed, absent.toSet(), flipFailures.toSet())
+            ApplyResult(applied.toList(), failed, absent.toSet(), flipFailures.toSet(), unrepairable.toSet())
 
         private val floorPackages get() = plan.emergencyUi + (plan.unhide intersect plan.neverHide)
         private val floorLockTask get() =
@@ -149,7 +153,12 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
                 val now = port.packageState(name)
                 if (now == null) { absent += name; continue }
                 if (wantUnsuspended && now.suspended) port.unsuspend(name)
-                if (wantShown && !now.enabled) port.enable(name)
+                if (wantShown && !now.enabled) {
+                    // Best effort only: enableSystemApp installs an existing package for the user but
+                    // does not clear a user-disabled state (PLA-232 finding 3, checked on API 35).
+                    port.enable(name)
+                    if (port.packageState(name)?.enabled == false) unrepairable += name
+                }
                 if (wantShown && now.hidden) {
                     port.setHidden(name, false)
                     flush(name)
@@ -157,9 +166,10 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
             }
         }
 
+        /** Hidden and suspended are read back. Enabled is not: nothing here can set it, so show() reports it. */
         private fun shown(names: Set<PackageName>) = names.all { name ->
             val now = port.packageState(name) ?: return@all true // reported in absent by show()
-            (name !in expected.unhiddenAndEnabled || (!now.hidden && now.enabled)) &&
+            (name !in expected.unhiddenAndEnabled || !now.hidden) &&
                 (name !in expected.unsuspended || !now.suspended)
         }
 

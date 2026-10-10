@@ -19,7 +19,19 @@ import org.plainphone.policy.SessionEffects
  * @property apply the plan's apply; after a failed run, the emergency repair's result. Null when no plan could be built.
  * @property withheld restrictions the build's [RestrictionFilter] left out.
  */
-data class BootOutcome(val ready: Boolean, val locked: Boolean, val apply: ApplyResult?, val withheld: Set<Restriction>)
+data class BootOutcome(
+    val ready: Boolean,
+    val locked: Boolean,
+    val apply: ApplyResult?,
+    val withheld: Set<Restriction>,
+    /** Emergency-UI or never-hide packages that stay disabled. Calls stay reachable through the rest. */
+    val disabledFloor: Set<PackageName> = emptySet(),
+) {
+    /** Show "Plainphone needs attention" (Home still draws when [ready]). */
+    val needsAttention: Boolean get() = apply?.needsAttention != false || disabledFloor.isNotEmpty()
+    /** Setup must not finish while a floor package is disabled. */
+    val setupMayFinish: Boolean get() = ready && disabledFloor.isEmpty()
+}
 
 /**
  * The boot and start re-apply (device-lockdown 4.11 and 4.3). Every run goes through
@@ -67,7 +79,9 @@ class BootReapply(
         if (!ready && current != null && applied?.applied?.containsAll(ReadbackPolicyApplier.EMERGENCY_STAGES) != true) {
             attempt { applier.repairEmergency(current) }?.let { applied = it }
         }
-        return BootOutcome(ready, locked, applied, filter.withheld)
+        val floor = current?.let { it.emergencyUi + it.neverHide }.orEmpty()
+        val disabledFloor = applied?.unrepairable.orEmpty() intersect floor
+        return BootOutcome(ready, locked, applied, filter.withheld, disabledFloor)
     }
 
     private inner class Effects : SessionEffects {

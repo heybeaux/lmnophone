@@ -19,6 +19,7 @@ interface DevicePolicyPort {
     fun packageState(name: PackageName): PackageState?
     fun setHidden(name: PackageName, hidden: Boolean)
     fun unsuspend(name: PackageName)
+    /** Best-effort enable. It may not clear a user-disabled state; the caller reads the state again. */
     fun enable(name: PackageName)
 
     fun restrictions(): Set<Restriction>

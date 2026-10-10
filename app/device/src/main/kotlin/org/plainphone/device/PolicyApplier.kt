@@ -24,8 +24,14 @@ data class ApplyResult(
     val absent: Set<PackageName>,
     /** Unhides whose mitigation-B flip did not read back after one retry. They stay unhidden. */
     val flipFailures: Set<PackageName>,
+    /**
+     * Packages the plan needs enabled that are still disabled after one best-effort enable. A Device
+     * Owner has no supported call that clears a user-disabled state (PLA-233 finding 3), so this is
+     * reported, not failed: hidden and suspended are still applied and read back.
+     */
+    val unrepairable: Set<PackageName> = emptySet(),
 ) {
     val complete: Boolean get() = failedStage == null
     /** Show "Plainphone needs attention". */
-    val needsAttention: Boolean get() = !complete || flipFailures.isNotEmpty()
+    val needsAttention: Boolean get() = !complete || flipFailures.isNotEmpty() || unrepairable.isNotEmpty()
 }

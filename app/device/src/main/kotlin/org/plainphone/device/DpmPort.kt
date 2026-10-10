@@ -65,6 +65,12 @@ class DpmPort(
         dpm.setPackagesSuspended(admin, arrayOf(name.value), false)
     }
 
+    /**
+     * Best effort. enableSystemApp calls installExistingPackageAsUser; it does not clear a user-disabled
+     * state (PLA-232: Chrome stayed at state 3 on API 35). No public DevicePolicyManager method sets an
+     * application's enabled state, and PackageManager.setApplicationEnabledSetting on another package
+     * needs CHANGE_COMPONENT_ENABLED_STATE (signature|privileged). The applier reports what stays disabled.
+     */
     override fun enable(name: PackageName) {
         dpm.enableSystemApp(admin, name.value)
     }
