@@ -35,7 +35,7 @@ docs/decisions/       architecture decision records
 docs/                 setup guide, verification matrix, feasibility questions, reviews
 research/             early research; leads only, not truth
 spikes/               throwaway experiments; never import from them
-site/                 static landing page (HTML/CSS, no tracking), published to GitHub Pages from main
+site/                 static landing page (HTML/CSS, no tracking); not published yet. GitHub Pages and DNS need a board decision
 ```
 
 ## Commands

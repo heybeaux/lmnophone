@@ -19,7 +19,7 @@ LMNOPhone (say it like the alphabet song: "elemeno-phone") is an open-source "fo
 
 <sub>Left: the preview-2 test build running as the phone's manager on an Android 15 emulator. Middle and right: the More page and the blocked-link screen, rendered by the screenshot tests in `app/ui`. "Sam" is a sample trusted person.</sub>
 
-> **Status: early and not ready for anyone's daily phone.** The MVP (the first small version that works end to end) is being built in the open. Test builds run on emulators and on one spare test phone. See [Where things stand](#where-things-stand).
+> **Status: early and not ready for anyone's daily phone.** The MVP (the first small version that works end to end) is being built as open source. Test builds run on emulators and on one spare test phone. See [Where things stand](#where-things-stand).
 
 ## Contents
 
