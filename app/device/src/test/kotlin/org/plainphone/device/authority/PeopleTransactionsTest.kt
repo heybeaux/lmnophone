@@ -228,6 +228,18 @@ class PeopleTransactionsTest {
         assertEquals(WaitingPhase.PENDING, rig.journal().operation!!.phase)
     }
 
+    /** A cancel request is "durable" only when the directory holding its files was synced too. */
+    @Test fun cancelRequestReportsFalseWhenItsDirectoryCannotBeSynced() {
+        val rig = Rig()
+        val id = rig.startAdd()
+        rig.store.withDirectorySync { throw java.io.IOException("directory sync failed") }
+        assertFalse(rig.store.cancelIntents.request(id))
+        assertFalse(rig.store.cancelIntents.initialize("fresh"))
+        rig.store.withDirectorySync(PlatformDirectorySync)
+        assertTrue(rig.store.cancelIntents.request(id))
+        assertEquals(CancelIntent.REQUESTED, rig.disk().cancelIntents.read(id))
+    }
+
     @Test fun damagedIntentEntriesNeverReadAsClear() {
         val rig = Rig()
         val intents = rig.store.cancelIntents

@@ -167,6 +167,26 @@ class JointAuthorityStoreTest {
         }
     }
 
+    /**
+     * PLA-143 R1 for the joint record: each directory sync of a write fails in turn. Syncs 1-2 follow
+     * the two copy renames (the commit point), 3-4 the fences. A copy whose directory entry was not
+     * synced never commits; every result equals the record that reads back.
+     */
+    @Test fun failedDirectorySyncAtEveryStepReportsExactlyTheVisibleRecord() {
+        for (failing in 1..4) {
+            tmp.root.listFiles()!!.forEach { it.deleteRecursively() }
+            val store = initialized()
+            var syncs = 0
+            store.withDirectorySync { d -> if (++syncs == failing) throw java.io.IOException("sync $failing") else PlatformDirectorySync.sync(d) }
+            val result = bump(store, 7)
+            store.withDirectorySync(PlatformDirectorySync)
+            val visible = open().credentials.read()
+            assertEquals("sync $failing", if (result) 1L else 0L, visible?.revision)
+            if (failing <= 2) assertFalse("sync $failing: an unsynced copy must not commit", result)
+            assertTrue("sync $failing: the next write succeeds", bump(open(), 8))
+        }
+    }
+
     @Test fun readbackFailureReturnsFalseAndChangesNothing() {
         val store = initialized()
         faults = StorageFaults { at, d -> if (at == WritePoint.AFTER_COPY_A) File(d, "authority-a.rec").writeBytes(byteArrayOf(1, 2, 3)) }
