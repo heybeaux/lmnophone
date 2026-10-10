@@ -21,11 +21,13 @@ object CertDigests {
  * @property facts one [PackageFacts] per package, for `:links`.
  * @property installed for `:policy`; a package whose facts changed between the two reads appears once per variant.
  * @property identities for `PolicyInput.installedIdentities`; conflicting signer sets appear once each.
+ * @property disabled packages disabled in both reads of the pass.
  */
 data class LivePackages(
     val facts: List<PackageFacts>,
     val installed: List<InstalledPackage>,
     val identities: List<ApprovalBinding>,
+    val disabled: Set<PackageName> = emptySet(),
 )
 
 /**
@@ -53,6 +55,7 @@ class LivePackageReader(private val port: PackageSystemPort) : PackageFactsSourc
         val facts = mutableListOf<PackageFacts>()
         val installed = mutableListOf<InstalledPackage>()
         val identities = mutableListOf<ApprovalBinding>()
+        val disabled = mutableSetOf<PackageName>()
         for ((name, variants) in byName) {
             val pkg = PackageName(name)
             val agreed = variants.map { it.system to it.signers }.distinct().singleOrNull()
@@ -66,14 +69,15 @@ class LivePackageReader(private val port: PackageSystemPort) : PackageFactsSourc
             variants.map { InstalledPackage(pkg, it.system, it.versionCode) }.distinct().forEach { installed += it }
             val signerSets = variants.map { it.signers }.distinct()
             if (signerSets.none { it.isEmpty() }) signerSets.forEach { identities += ApprovalBinding(pkg, it) }
+            if (variants.none { it.enabled }) disabled += pkg
         }
-        return LivePackages(facts, installed, identities)
+        return LivePackages(facts, installed, identities, disabled)
     }
 
-    private data class Fact(val name: String, val system: Boolean, val versionCode: Long, val signers: Set<CertDigest>)
+    private data class Fact(val name: String, val system: Boolean, val versionCode: Long, val signers: Set<CertDigest>, val enabled: Boolean)
 
     private fun fact(raw: RawPackage) =
-        Fact(raw.name, raw.system, raw.versionCode, raw.signers.orEmpty().map(CertDigests::sha256).toSet())
+        Fact(raw.name, raw.system, raw.versionCode, raw.signers.orEmpty().map(CertDigests::sha256).toSet(), raw.enabled)
 
     companion object {
         const val PROBE_HTTP = "http://${PackageFacts.PROBE_HOST}/"
