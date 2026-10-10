@@ -26,6 +26,16 @@ interface HomeAppList {
     fun publish(names: Set<PackageName>)
 }
 
+/** An access path containment could not verify as closed for a package. */
+enum class Exposure {
+    /** Not read back hidden. */
+    VISIBLE,
+    /** Not read back out of the applied lock-task list. */
+    LOCK_TASK,
+    /** Not read back off Home's list. */
+    HOME,
+}
+
 /** The in-process [HomeAppList] that Home reads. */
 class PublishedHomeApps : HomeAppList {
     @Volatile var listed: Set<PackageName> = emptySet()
@@ -50,8 +60,9 @@ class PublishedHomeApps : HomeAppList {
  *
  * Effective exclusion (PLA-218). Android lets every package that shares a UID with an allowed lock-task
  * package start lock task too (`DevicePolicyManager.setLockTaskPackages`). After the name is out of the
- * applied list, open refuses, before any unhide, while a package left in that list shares the
- * candidate's UID or any of those UIDs cannot be read. It never removes the sibling or the floor.
+ * applied list, open refuses, before any unhide, unless the candidate and every package left in that
+ * list resolve to a UID and none equals the candidate's. A UID that reads as absent (null) or throws
+ * proves nothing, so it refuses too (PLA-229). It never removes the sibling or the floor.
  *
  * One window at a time. Open claims the window for its identity before its first write, and keeps it
  * even when it fails part-way; a second open is refused and touches nothing. Only the owner's close or
@@ -59,8 +70,9 @@ class PublishedHomeApps : HomeAppList {
  * returns false and leaves the window with its owner.
  *
  * A failed [applyPolicy] leaves no discretionary package visible and in lock task that was not both
- * before it: each such package is taken out of lock task and Home, hidden, and read back. Floor
- * packages (never-hide and emergency UI) are left as the apply repaired them.
+ * before it: each such package is taken out of lock task and Home, hidden, and all three are read back.
+ * Floor packages (never-hide and emergency UI) are left as the apply repaired them. What could not be
+ * verified stays in [unresolvedCleanup]; a failed apply alone does not prove containment.
  */
 class DeviceApprovalEffects(
     private val dispatcher: SerialDispatcher,
@@ -78,6 +90,13 @@ class DeviceApprovalEffects(
     /** Whether the owner's open completed; only then may it write permissions. */
     private var opened = false
 
+    /**
+     * After the last failed apply, each contained package whose exclusion did not read back, with the
+     * paths still open; empty when all were verified. A complete apply, read back, clears it.
+     */
+    @Volatile var unresolvedCleanup: Map<PackageName, Set<Exposure>> = emptyMap()
+        private set
+
     override fun hideAndReadBack(identity: ApprovalBinding): Boolean = serialized {
         hide(identity.packageName).also { if (it && identity == owner) release() }
     }
@@ -92,9 +111,10 @@ class DeviceApprovalEffects(
             if (name in before) port.setLockTaskPackages(before - name)
             val applied = port.lockTaskPackages()
             if (applied != before - name) return@attempt false
-            // Effective exclusion: no package left in lock task may share the candidate's UID.
+            // Effective exclusion: every package left in lock task has a known UID, and none is the candidate's.
             val uid = port.uid(name) ?: return@attempt false
-            if (applied.any { port.uid(it) == uid }) return@attempt false
+            val others = applied.map { port.uid(it) ?: return@attempt false }
+            if (uid in others) return@attempt false
             home.remove(name)
             if (home.lists(name) != false) return@attempt false
             // Only the exact identity becomes visible.
@@ -139,7 +159,7 @@ class DeviceApprovalEffects(
         val result = attempt { applier.apply(plan) }
         val done = result != null && !result.needsAttention &&
             plan.expected.lockTaskPackages.let { it == null || attempt { home.publish(it) } != null }
-        if (!done) contain(discretionary - active)
+        unresolvedCleanup = if (done) emptyMap() else contain(discretionary - active)
         done
     }
 
@@ -159,18 +179,26 @@ class DeviceApprovalEffects(
     }
 
     /**
-     * After a failed apply: takes [names] out of lock task and Home and hides them, reading both back.
-     * Best effort; the apply already failed, so the result only says whether containment read back.
+     * Takes [names] out of lock task and Home and hides them, then reads all three back for each name.
+     * Every step is attempted even after an earlier one fails. Returns the exposures that did not read
+     * back as closed; empty means containment is verified. The caller excludes floor packages; [hide]
+     * also checks the live never-hide list, so a protected name is reported VISIBLE, never hidden.
      */
-    private fun contain(names: Set<PackageName>): Boolean {
-        if (names.isEmpty()) return true
-        val excluded = attempt {
+    private fun contain(names: Set<PackageName>): Map<PackageName, Set<Exposure>> {
+        if (names.isEmpty()) return emptyMap()
+        attempt {
             val now = port.lockTaskPackages()
             if (now.any { it in names }) port.setLockTaskPackages(now - names)
-            port.lockTaskPackages().none { it in names }
-        } == true
-        names.forEach { attempt { home.remove(it) } }
-        return names.map { hide(it) }.all { it } && excluded
+        }
+        val lockTask = attempt { port.lockTaskPackages() }
+        return names.associateWith { name ->
+            attempt { home.remove(name) }
+            buildSet {
+                if (lockTask == null || name in lockTask) add(Exposure.LOCK_TASK)
+                if (attempt { home.lists(name) } != false) add(Exposure.HOME)
+                if (!hide(name)) add(Exposure.VISIBLE)
+            }
+        }.filterValues { it.isNotEmpty() }
     }
 
     private fun mayHide(name: PackageName): Boolean = attempt { neverHide() }?.let { name !in it } == true

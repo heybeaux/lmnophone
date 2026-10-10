@@ -80,13 +80,14 @@ import org.plainphone.policy.WaitingState
  *   an active lock task (checked with `getLockTaskModeState`). The approval (or, after one complete
  *   approval, the edit) opens its window; right after the unhide the check logs PAUSED, posts a
  *   notification whose tap opens the target, and blocks. The host tries to enter the target and then
- *   kills this process with `am force-stop`, so no `finally` runs.
+ *   kills this process with root `kill -9` (`run-check.sh` tries `am force-stop` first, but API 35
+ *   ignores force-stop for the Device Owner), so no `finally` runs.
  * - `recover` (`-e session ok|fail`, `-e battery ok|low`): a new process with a fresh dispatcher, Home
  *   list and controller on the same store. Logs every effect, session, battery and Home event in order.
  * - `cleanup`: clears lock task, Home, the store, and unhides the fixtures.
  *
  * Restriction writes are recorded, not applied (DISALLOW_DEBUGGING_FEATURES would cut adb), as in
- * [PermissionWindowCheck]. Process death here is `am force-stop`, not a power cut.
+ * [PermissionWindowCheck]. Process death here is SIGKILL, not a power cut.
  */
 class WindowContainmentCheck(
     private val instrumentation: Instrumentation,

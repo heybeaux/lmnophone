@@ -27,3 +27,18 @@ Second test commit (VerifiedContainmentTest)
 Compilation fails: Unresolved reference 'unresolvedCleanup' (VerifiedContainmentTest.kt:71),
 Unresolved reference 'Exposure' (:87). The failed-apply containment result had no way to report
 which exclusions were unverified; the Boolean was discarded (DeviceApprovalEffects.kt:142).
+
+Commit 00335e4 (tests only: the reopen control moved to the adapter; a refused approval stays
+PREPARING until onStart). Run with VerifiedContainmentTest set aside, since it cannot compile yet:
+./gradlew --offline :device:testDebugUnitTest --tests '*UnknownUidExclusionTest'
+10 tests, 4 failures: the same three absent-listed-UID cases, and
+  FAIL theWindowOpensAgainOnceEveryUidReads  (assertFalse(open) with an absent dialer UID: it opened)
+
+After the fix (next commit):
+./gradlew --offline :device:testDebugUnitTest :policy:test :device:compileDebugAndroidTestKotlin
+BUILD SUCCESSFUL. device 477 tests, 0 failures, 0 errors, 0 skipped; policy 588 tests, 0 failures.
+UnknownUidExclusionTest 10/10, VerifierRoundTwoProbeTest 2/2, VerifiedContainmentTest 5/5,
+SharedUidExclusionTest 4/4, FinalFlushContainmentTest 3/3.
+Probe stdout after the fix:
+  null allowed UID: opened=false hidden=true permitted=false home=false
+  failed publish: hidden=true permitted=false home=true removalReads=1   (reported as unresolved HOME)
