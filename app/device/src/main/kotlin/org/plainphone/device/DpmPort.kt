@@ -9,7 +9,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.UserManager
 import org.plainphone.core.PackageName
 import org.plainphone.policy.LockTaskFeature
@@ -18,8 +17,8 @@ import org.plainphone.policy.Restriction
 /**
  * [DevicePolicyPort] over DevicePolicyManager and PackageManager, for a Device Owner [admin] in the
  * calling user. [flushComponent] is a no-op component of the same app, flipped between explicit
- * ENABLED and DISABLED with `DONT_KILL_APP | SYNCHRONOUS` (API 33+). Below API 33 there is no
- * SYNCHRONOUS flag, so the component reads as unknown and every flip is reported as failed.
+ * ENABLED and DISABLED with `DONT_KILL_APP | SYNCHRONOUS`. SYNCHRONOUS exists from API 30, which is
+ * also minSdk, so no API gate is needed.
  * Reading other packages needs QUERY_ALL_PACKAGES (declared in this module's manifest).
  */
 class DpmPort(
@@ -118,7 +117,6 @@ class DpmPort(
     }
 
     override fun flushComponentEnabled(): Boolean? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return null
         return when (pm.getComponentEnabledSetting(flushComponent)) {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT -> false
@@ -127,7 +125,6 @@ class DpmPort(
     }
 
     override fun setFlushComponentEnabled(enabled: Boolean) {
-        check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { "SYNCHRONOUS needs API 33" }
         val state = if (enabled) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
         pm.setComponentEnabledSetting(flushComponent, state, PackageManager.DONT_KILL_APP or PackageManager.SYNCHRONOUS)
     }
