@@ -27,10 +27,11 @@ class StagedUpdateInstallerTest {
     private val staging by lazy { UpdateStaging(File(tmp.root, "update-staging")) }
     private var inspections = 0
     private var duringInspect: () -> Unit = {}
+    private var overrideFacts: String? = null
     /** Test APKs are text "package;signer,signer;version"; "badsig" stands for a failed signature check. */
     private val inspector = ApkInspector { apk ->
         inspections++
-        val text = apk.readText()
+        val text = overrideFacts ?: apk.readText()
         duringInspect()
         if (text.startsWith("badsig")) null else text.split(";").let { (p, s, v) ->
             ApkFacts(PackageName(p), s.split(",").map { CertDigest(it) }.toSet(), v.toLong())
@@ -142,16 +143,17 @@ class StagedUpdateInstallerTest {
     }
 
     @Test fun wrongPackageSignerOrSignatureFoundAtTheFinalReadIsRefused() {
-        // The staged bytes and the session agree, but the facts read from them do not fit the pinned self.
+        // The final read inspects the file again rather than trusting what prepare() saw.
         for (bad in listOf(apk(pkg = "org.other"), apk(signers = "cd".repeat(32)), "badsig;x;2")) {
+            staging.clear()
             val port = FakeInstallerPort()
-            val staging = UpdateStaging(tmp.newFolder())
             val installer = StagedUpdateInstaller(port, inspector, staging, pinned) { true }
-            val part = staging.receive()!!.also { it.writeText(bad) }
-            assertTrue(staging.seal(part))
-            val id = port.create(self, 1)!!
-            port.write(id, "base.apk", staging.staged()!!)
+            stage(apk())
+            installer.prepare()!!
+            overrideFacts = bad
             assertNull(bad, installer.finalFacts())
+            overrideFacts = null
+            assertNotNull(installer.finalFacts())
         }
     }
 
