@@ -126,7 +126,9 @@ class ShellNavigator(
     }
 
     fun onWifi(s: ShellState, e: WifiMessageEvent): Step = when (e) {
-        WifiMessageEvent.ForgetNetwork, WifiMessageEvent.Ok -> back(s)
+        WifiMessageEvent.Ok -> back(s)
+        // Forgetting a network isn't wired; a test build says so instead of looking done.
+        WifiMessageEvent.ForgetNetwork -> if (testBuild) notInBuild(s) else back(s)
     }
 
     private fun push(s: ShellState, route: ShellRoute) = Step(s.copy(stack = s.stack + route))
