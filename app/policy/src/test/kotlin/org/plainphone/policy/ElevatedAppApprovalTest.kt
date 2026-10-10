@@ -90,12 +90,12 @@ class ElevatedAppApprovalTest {
             if (!event("hide")) return false
             hidden += identity.packageName; return true
         }
-        fun openPermissionWindow(identity: ApprovalBinding): Boolean {
+        override fun openPermissionWindow(identity: ApprovalBinding): Boolean {
             assertFalse(identity.packageName in approvals.approvedPackages(policy.installed, policy.installedIdentities))
             hidden -= identity.packageName
             return event("window-open")
         }
-        fun closePermissionWindow(identity: ApprovalBinding): Boolean {
+        override fun closePermissionWindow(identity: ApprovalBinding): Boolean {
             hidden += identity.packageName
             return event("window-close")
         }

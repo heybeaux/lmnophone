@@ -99,8 +99,7 @@ class AppApprovalControllerTest {
             hidden = true
             return true
         }
-        // These become overrides when the production port gains the explicit window.
-        fun openPermissionWindow(identity: ApprovalBinding): Boolean {
+        override fun openPermissionWindow(identity: ApprovalBinding): Boolean {
             assertTrue(hidden)
             if (!event("window-exclude")) return false
             appliedLockTask = appliedLockTask - identity.packageName
@@ -109,7 +108,7 @@ class AppApprovalControllerTest {
             if (!event("window-unhide")) return false
             return event("window-visible-readback")
         }
-        fun closePermissionWindow(identity: ApprovalBinding): Boolean {
+        override fun closePermissionWindow(identity: ApprovalBinding): Boolean {
             check(!poweredOff)
             if (!event("window-rehide")) return false
             hidden = true
