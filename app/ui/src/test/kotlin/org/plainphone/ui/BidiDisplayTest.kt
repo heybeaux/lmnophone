@@ -12,7 +12,7 @@ class BidiDisplayTest {
         val controls = ('\u202A'..'\u202E') + ('\u2066'..'\u2069') + listOf('\u200E', '\u200F', '\u061C')
         for (control in controls) {
             assertEquals("example.invalid/path", "exam${control}ple.invalid/pa${control}th".withoutBidiControls())
-            assertEquals("Plainphone: example.invalid/path", "${control}Plainphone: example.invalid/path$control".withoutBidiControls())
+            assertEquals("Own Phone: example.invalid/path", "${control}Own Phone: example.invalid/path$control".withoutBidiControls())
         }
     }
     @Test fun preservesOrdinaryUnicodeAndHostWrappingInput() {

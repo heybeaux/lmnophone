@@ -118,9 +118,9 @@ class UserScreensTest {
     }
     @Test fun previewStripsBidiControlsFromHostAndPath() {
         show { BlockedLinkScreen(BlockedLinkUiState.Confirm("Sam and Jo",
-            "Plainphone: Margaret would like to look at this link with you: safe\u202E.invalid/\u2066bus"), {}) }
+            "Own Phone: Alex would like to look at this link with you: safe\u202E.invalid/\u2066bus"), {}) }
         compose.onNodeWithText("Look at this link with Sam and Jo?").assertIsDisplayed()
-        compose.onNodeWithText("Plainphone: Margaret would like to look at this link with you: safe.invalid/bus")
+        compose.onNodeWithText("Own Phone: Alex would like to look at this link with you: safe.invalid/bus")
             .assertExists()
     }
     @Test fun confirmStripsBidiControlsFromRecipient() {
