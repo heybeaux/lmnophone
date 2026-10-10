@@ -14,19 +14,23 @@ import org.plainphone.policy.PermissionName
 
 /**
  * [PermissionGrantPort] over DevicePolicyManager (Device Owner [admin]) and PackageManager.
- * `MATCH_UNINSTALLED_PACKAGES` keeps a hidden app visible to the signer read.
+ * `MATCH_UNINSTALLED_PACKAGES` keeps a hidden app visible to the signer read. Every framework
+ * exception is an unavailable value (null or false), never an escape.
  */
 class DpmPermissionGrantPort(context: Context, private val admin: ComponentName) : PermissionGrantPort {
     private val dpm = context.getSystemService(DevicePolicyManager::class.java)
     private val pm = context.packageManager
 
     override fun signers(name: PackageName): Set<CertDigest>? = try {
-        val info = pm.getPackageInfo(name.value, PackageManager.PackageInfoFlags.of(
-            PackageManager.GET_SIGNING_CERTIFICATES.toLong() or PackageManager.MATCH_UNINSTALLED_PACKAGES.toLong() or
-                PackageManager.MATCH_DISABLED_COMPONENTS.toLong()))
+        // The int-flags overload: PackageInfoFlags needs API 33 and minSdk is 30.
+        @Suppress("DEPRECATION")
+        val info = pm.getPackageInfo(name.value,
+            PackageManager.GET_SIGNING_CERTIFICATES or PackageManager.MATCH_UNINSTALLED_PACKAGES or PackageManager.MATCH_DISABLED_COMPONENTS)
         if ((info.applicationInfo?.flags ?: 0) and ApplicationInfo.FLAG_INSTALLED == 0) null
         else info.signingInfo?.apkContentsSigners?.map { CertDigests.sha256(it.toByteArray()) }?.toSet()?.takeIf { it.isNotEmpty() }
     } catch (_: PackageManager.NameNotFoundException) {
+        null
+    } catch (_: RuntimeException) {
         null
     }
 
@@ -55,5 +59,19 @@ class DpmPermissionGrantPort(context: Context, private val admin: ComponentName)
         pm.checkPermission(permission.value, name.value) == PackageManager.PERMISSION_GRANTED
     } catch (_: RuntimeException) {
         null
+    }
+
+    override fun uninstallBlocked(name: PackageName): Boolean? = try {
+        dpm.isUninstallBlocked(admin, name.value)
+    } catch (_: RuntimeException) {
+        null
+    }
+
+    /** `setUninstallBlocked` returns nothing, so this reads the block back. */
+    override fun setUninstallBlocked(name: PackageName, blocked: Boolean): Boolean = try {
+        dpm.setUninstallBlocked(admin, name.value, blocked)
+        dpm.isUninstallBlocked(admin, name.value) == blocked
+    } catch (_: RuntimeException) {
+        false
     }
 }
