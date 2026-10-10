@@ -1,0 +1,13 @@
+# Final spare state after preview-2b, 2026-10-10T19:11:51Z
+Failed to write while dumping service user: Broken pipe
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+mLockTaskModeState=LOCKED
+accounts: 0
+lock screen PIN: false (false = swipe, no credential)
+user restrictions (Device Owner, user 0):
+    Effective restrictions:
+      no_add_private_profile
+      no_add_managed_profile
+      no_add_clone_profile
+    UserProperties:
+    versionName=0.1.0-dev

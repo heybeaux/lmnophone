@@ -1,0 +1,29 @@
+# Check 2 on preview-2b, spare (<spare>, API 35), release/preview-2 @ 69bdf18, 2026-10-10T19:09:55Z
+testOnly: TEST_ONLY
+Before: User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+lock task: mLockTaskModeState=LOCKED
+hidden or uninstalled before: 42 (list withheld, PLA-185 F3)
+## dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver
+Success: Admin removed ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
+After: no owners
+lock task: mLockTaskModeState=NONE
+hidden or uninstalled after: 0
+came back: 42 of 42
+still listed after removal (packages not installed for user 0, not hidden): 0
+
+## Set up again: app/tools/preview-2/setup.sh (same APK)
+Success: Device owner set to package org.plainphone/.PlainphoneAdminReceiver
+Active admin set to component org.plainphone/.PlainphoneAdminReceiver
+starter list: com.google.android.dialer,com.google.android.apps.messaging,com.motorola.camera3,com.google.android.apps.maps
+Broadcasting: Intent { act=org.plainphone.preview.SET_STARTER flg=0x400000 cmp=org.plainphone/.preview.SetupCommandReceiver (has extras) }
+Broadcast completed: result=0
+apply: 10-10 12:11:40.212  9991 10028 I PlainphoneBoot: reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESE
+10-10 12:11:39.889  9991 10028 I Plainphone: PREVIEW2 PLAN hidden=42 lockTask=[com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.android.apps.safetyhub, com.google.and
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+--- read back
+1 owner:
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+home: org.plainphone/.MainActivity
+lock task state: mLockTaskModeState=LOCKED
+testOnly: TEST_ONLY
+hidden or uninstalled for user 0: 42 (list withheld)
