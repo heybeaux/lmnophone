@@ -73,7 +73,8 @@ import org.plainphone.policy.WaitingState
  *
  * - `uid`: uid-a in applied lock task and visible, uid-b (same UID) hidden. The real adapter's window
  *   for uid-b must refuse without unhiding it; the window for launch-target (own UID) opens (control).
- *   Then leaves uid-a and this APK in lock task and uid-b visible, for the host's launch demonstration.
+ *   Then shows uid-b and launch-target, neither listed, starts lock task and waits to be killed, so the
+ *   host can show which of the two Android lets into lock task.
  * - `pause-preparing` / `pause-editing`: a durable [JointAuthorityStore] in this app's files, the real
  *   controller and adapter over [DpmPort], the ordinary policy applied, and this APK's [CheckHome] in
  *   an active lock task (checked with `getLockTaskModeState`). The approval (or, after one complete
@@ -150,10 +151,15 @@ class WindowContainmentCheck(
         } finally {
             dispatcher.close()
         }
-        // For the host's demonstration of why the gate exists: uid-b visible but not listed, uid-a listed.
+        // For the host's demonstration of why the gate exists: uid-a listed; uid-b (same UID) and
+        // launch-target (own UID) visible but not listed. Then wait in lock task to be killed.
         dpm.setApplicationHidden(admin, uidB.value, false)
-        note("demo setup: lock task packages=${dpm.getLockTaskPackages(admin).sorted()} uid-b ${state(uidB)}")
+        dpm.setApplicationHidden(admin, target.value, false)
         startLockTask()
+        note("demo setup: lock task packages=${dpm.getLockTaskPackages(admin).sorted()}; uid-b ${state(uidB)}; launch-target ${state(target)}")
+        note("PAUSED phase=uid-demo")
+        SystemClock.sleep(300_000)
+        fail("not killed within 5 minutes")
     }
 
     fun pause(editing: Boolean) {

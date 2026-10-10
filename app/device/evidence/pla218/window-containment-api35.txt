@@ -1,0 +1,399 @@
+# PLA-219 (PLA-218 findings 1 and 4) on-device check, 2026-10-10T08:42:16Z
+# AVD pla219-a35 (fresh, system-images;android-35;google_apis;arm64-v8a, no lock PIN, no accounts), API 35, google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys
+# Built from mvp/device with WindowContainmentCheck (androidTest) and the fixtures in check-fixtures/launch-target
+# and check-fixtures/uid-target. Test APK installed with -t, made Device Owner with
+#   dpm set-device-owner org.plainphone.device.test/org.plainphone.device.apply.CheckAdmin
+#   pm grant org.plainphone.device.test android.permission.POST_NOTIFICATIONS
+# Host side: check-fixtures/launch-target/run-check.sh <phase> -e expect <launch-target sha256> [...]
+#
+# What this shows
+# - Finding 1: with uid-a (UID 10207) in applied lock task and uid-b (same UID) hidden, the real adapter
+#   refuses uid-b's window and never unhides it; uid-a keeps its access. Control: launch-target (own UID
+#   10208) opens outside lock task and closes hidden.
+#   Not shown: Android's documented shared-UID extension itself. With LOCK_TASK_MODE_LOCKED, uid-a listed
+#   and uid-b visible but not listed, a shell 'am start' of uid-b was refused (code 101, "Attempted Lock
+#   Task Mode violation"), exactly like the own-UID control. So this route did not reproduce the
+#   extension; other routes (a start from inside uid-a's task, startLockTask by uid-b) need fixtures with
+#   code and were not tried. The gate refuses shared-UID candidates either way.
+# - Finding 4: durable JointAuthorityStore (files dir), the real AppApprovalController and
+#   DeviceApprovalEffects over DpmPort, the ordinary policy applied, and CheckHome in an active lock task
+#   (getLockTaskModeState = LOCKED; features=119 = SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|
+#   BLOCK_ACTIVITY_START_IN_TASK, no OVERVIEW). The window pauses right after the unhide with the record
+#   durably PREPARING (approval) or EDITING (edit of an approved app). Explicit start, deep link, share
+#   and a real tap on a notification whose content intent opens the target each ended on Android's
+#   BlockedAppActivity; the target's process never started; BACK returned to CheckHome. KEYCODE_APP_SWITCH
+#   left CheckHome on top (no recents).
+# - Process death: API 35 ignores 'am force-stop' for the Device Owner ("Ignoring request to force stop
+#   protected package"), so the kill is SIGKILL as root (kill -9): no finally runs. Android then restarts
+#   the Device Owner app process (a new pid); that process is not the check. Lock task ended with the
+#   process (NONE); the target stayed visible until recovery.
+# - Recovery in a new process (fresh SerialDispatcher, PublishedHomeApps and controller on the same store):
+#   in all four cases the first event is hideAndReadBack=true, read back via DPM, before any session,
+#   battery or Home event; Home never lists the target.
+#     PREPARING + failed session -> NOT_READY.  PREPARING + 3% battery -> READY (the uncommitted approval
+#     is dropped; the ordinary policy, without the target, is applied and published; PREPARING recovery
+#     reads no battery).  EDITING + 3% battery -> LOW_BATTERY.  EDITING + failed session -> NOT_READY.
+# - Limits: process death is not a power cut, and no flush-component flip is claimed durable. Restriction
+#   writes are recorded, not applied (DISALLOW_DEBUGGING_FEATURES would cut adb). The Home list is the
+#   in-process PublishedHomeApps; no Home UI reads it yet. Lock task did not survive the kill, so recovery
+#   ran outside lock task.
+# - The uid run below came before the runner's kill fix: its force-stop was ignored (lock task still LOCKED),
+#   and the check process was then killed by hand with 'su 0 kill -9'; lock task then read NONE.
+#
+
+######## uid
+PLA219 ok: this test APK is the Device Owner
+PLA219 uids: [org.plainphone.uidtarget.a=10207, org.plainphone.uidtarget.b=10207, org.plainphone.launchtarget=10208]
+PLA219 ok: uid-a and uid-b share one UID; launch-target has its own
+PLA219 ok: setup: uid-a visible and allowed; uid-b hidden and not listed
+PLA219 window for uid-b: opened=false -> uid-b hidden=true lockTaskPermitted=false lockTaskMode=NONE; uid-a hidden=false lockTaskPermitted=true lockTaskMode=NONE
+PLA219 ok: the window for uid-b is refused while shared-UID uid-a is allowed
+PLA219 ok: uid-b was never unhidden
+PLA219 ok: uid-a keeps its access
+PLA219 control window for launch-target: opened=true -> hidden=false lockTaskPermitted=false lockTaskMode=NONE
+PLA219 ok: control: launch-target (own UID) opens, outside lock task
+PLA219 ok: control: closed and hidden
+PLA219 ok: CheckHome started lock task: getLockTaskModeState=LOCKED
+PLA219 demo setup: lock task packages=[org.plainphone.device.test, org.plainphone.uidtarget.a]; uid-b hidden=false lockTaskPermitted=false lockTaskMode=LOCKED; launch-target hidden=false lockTaskPermitted=false lockTaskMode=LOCKED
+PLA219 PAUSED phase=uid-demo
+## paused; lock task: mLockTaskModeState=LOCKED; top resumed: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: uid-b (shares uid-a's UID, not listed)
+$ am start -W -n org.plainphone.uidtarget.b/android.app.Activity
+  Starting: Intent { cmp=org.plainphone.uidtarget.b/android.app.Activity }
+  Error: Activity not started, unknown error code 101
+  -> top resumed: org.plainphone.device.test/org.plainphone.device.apply.CheckHome; mLockTaskModeState=LOCKED
+## attempt: launch-target (own UID, not listed; control)
+$ am start -W -n org.plainphone.launchtarget/android.app.Activity
+  Starting: Intent { cmp=org.plainphone.launchtarget/android.app.Activity }
+  Error: Activity not started, unknown error code 101
+  -> top resumed: org.plainphone.device.test/org.plainphone.device.apply.CheckHome; mLockTaskModeState=LOCKED
+## kill: am force-stop org.plainphone.device.test
+  -> lock task after kill: mLockTaskModeState=LOCKED; top resumed: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## am instrument output after the kill:
+
+######## pause-preparing
+PLA219 ok: this test APK is the Device Owner
+PLA219 ok: durable store initialized at pla219-authority with launch-target as a removed (re-approvable) app
+PLA219 event 1: session revokeAllRelaxations
+PLA219 event 2: session protectedStateCheck=true
+PLA219 event 3: session readBackPolicy
+PLA219 ok: controller onStart READY
+PLA219 event 4: home publish [com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test]
+PLA219 ok: ordinary policy applied: lock task [com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test]
+PLA219 ok: target starts hidden and outside lock task
+PLA219 ok: CheckHome started lock task: getLockTaskModeState=LOCKED
+PLA219 event 5: battery read 80%
+PLA219 event 6: battery read 80%
+PLA219 event 7: session revokeAllRelaxations
+PLA219 event 8: session protectedStateCheck=true
+PLA219 event 9: session readBackPolicy
+PLA219 event 10: effect hideAndReadBack=true -> hidden=true lockTaskPermitted=false lockTaskMode=LOCKED
+PLA219 event 11: battery read 80%
+PLA219 event 12: effect openPermissionWindow=true -> hidden=false lockTaskPermitted=false lockTaskMode=LOCKED
+PLA219 inside the window: durable phase=PREPARING; target hidden=false lockTaskPermitted=false lockTaskMode=LOCKED; lock task packages=[com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test]; features=119
+PLA219 ok: lock task is active (LOCK_TASK_MODE_LOCKED) while the window is open
+PLA219 notification posted: enabled=true active=[219]
+PLA219 PAUSED phase=PREPARING
+## paused; lock task: mLockTaskModeState=LOCKED; top resumed: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: explicit start
+$ am start -W -n org.plainphone.launchtarget/android.app.Activity
+  Starting: Intent { cmp=org.plainphone.launchtarget/android.app.Activity }
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED
+## attempt: deep link
+$ am start -W -a android.intent.action.VIEW -d plainphone-check://open
+  Starting: Intent { act=android.intent.action.VIEW dat=plainphone-check://open/... }
+  Warning: Activity not started, intent has been delivered to currently running top-most instance.
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED
+## attempt: share (SEND text/plain to the target)
+$ am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT hello -p org.plainphone.launchtarget
+  Starting: Intent { act=android.intent.action.SEND typ=text/plain pkg=org.plainphone.launchtarget (has extras) }
+  Warning: Activity not started, intent has been delivered to currently running top-most instance.
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED
+## attempt: notification tap
+  shade expanded; notification row: bounds="[179,216][507,267]"
+  tapped
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED
+## attempt: recents (KEYCODE_APP_SWITCH)
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED
+## target state while paused: hidden=hidden=false
+## kill: am force-stop org.plainphone.device.test (then kill -9 5017 as root if it survives)
+  force-stop ignored: Ignoring request to force stop protected package org.plainphone.device.test u0
+  -> process after kill: '5249' (empty = dead)
+  -> lock task after kill: mLockTaskModeState=NONE; top resumed: com.google.android.apps.nexuslauncher/.NexusLauncherActivity
+## am instrument output after the kill:
+  INSTRUMENTATION_RESULT: shortMsg=Process crashed.
+  INSTRUMENTATION_CODE: 0
+
+######## recover-preparing-session
+PLA219 new process; before any controller call: target hidden=false lockTaskPermitted=false lockTaskMode=NONE
+PLA219 durable pending operation: PREPARING for org.plainphone.launchtarget
+PLA219 ok: a durable PREPARING or EDITING record survived the kill
+PLA219 event 1: controller.onStart (session=fail, battery=80%)
+PLA219 event 2: effect hideAndReadBack=true -> hidden=true lockTaskPermitted=false lockTaskMode=NONE
+PLA219 event 3: session revokeAllRelaxations
+PLA219 event 4: session protectedStateCheck=false
+PLA219 event 5: onStart returned NOT_READY; target hidden=true lockTaskPermitted=false lockTaskMode=NONE; Home lists target=false
+PLA219 ok: the target is re-hidden (read back) before any session, battery or Home event
+PLA219 ok: target hidden after recovery
+PLA219 ok: Home never lists the target unless the operation completed
+PLA219 recover outcome=NOT_READY
+RESULT PASS phase=recover
+
+######## pause-preparing-2
+PLA219 ok: CheckHome started lock task: getLockTaskModeState=LOCKED
+PLA219 inside the window: durable phase=PREPARING; target hidden=false lockTaskPermitted=false lockTaskMode=LOCKED; lock task packages=[com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test]; features=119
+PLA219 ok: lock task is active (LOCK_TASK_MODE_LOCKED) while the window is open
+PLA219 notification posted: enabled=true active=[219]
+PLA219 PAUSED phase=PREPARING
+## paused; lock task: mLockTaskModeState=LOCKED; top resumed: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: explicit start
+$ am start -W -n org.plainphone.launchtarget/android.app.Activity
+  Starting: Intent { cmp=org.plainphone.launchtarget/android.app.Activity }
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: deep link
+$ am start -W -a android.intent.action.VIEW -d plainphone-check://open
+  Starting: Intent { act=android.intent.action.VIEW dat=plainphone-check://open/... }
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: share (SEND text/plain to the target)
+$ am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT hello -p org.plainphone.launchtarget
+  Starting: Intent { act=android.intent.action.SEND typ=text/plain pkg=org.plainphone.launchtarget (has extras) }
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: notification tap
+  shade expanded; notification row: bounds="[179,299][996,356]"
+  tapped
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: recents (KEYCODE_APP_SWITCH)
+  -> top resumed: org.plainphone.device.test/org.plainphone.device.apply.CheckHome; mLockTaskModeState=LOCKED; recents activity resumed: 0
+## target state while paused: hidden=hidden=false
+## kill: am force-stop org.plainphone.device.test (then kill -9 5346 as root if it survives)
+  force-stop ignored: Ignoring request to force stop protected package org.plainphone.device.test u0
+  -> test-package process after kill: '5588' (killed pid 5346; a new pid is Android restarting the Device Owner app, not the check)
+  -> lock task after kill: mLockTaskModeState=NONE; top resumed: com.google.android.apps.nexuslauncher/.NexusLauncherActivity
+## am instrument output after the kill:
+  INSTRUMENTATION_RESULT: shortMsg=Process crashed.
+  INSTRUMENTATION_CODE: 0
+
+######## recover-preparing-battery
+PLA219 new process; before any controller call: target hidden=false lockTaskPermitted=false lockTaskMode=NONE
+PLA219 durable pending operation: PREPARING for org.plainphone.launchtarget
+PLA219 ok: a durable PREPARING or EDITING record survived the kill
+PLA219 event 1: controller.onStart (session=ok, battery=3%)
+PLA219 event 2: effect hideAndReadBack=true -> hidden=true lockTaskPermitted=false lockTaskMode=NONE
+PLA219 event 3: session revokeAllRelaxations
+PLA219 event 4: session protectedStateCheck=true
+PLA219 event 5: session readBackPolicy
+PLA219 event 6: home publish [com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test]
+PLA219 event 7: effect applyPolicy=true -> hidden=true lockTaskPermitted=false lockTaskMode=NONE
+PLA219 event 8: onStart returned READY; target hidden=true lockTaskPermitted=false lockTaskMode=NONE; Home lists target=false
+PLA219 ok: the target is re-hidden (read back) before any session, battery or Home event
+PLA219 ok: target hidden after recovery
+PLA219 ok: Home never lists the target unless the operation completed
+PLA219 recover outcome=READY
+RESULT PASS phase=recover
+
+######## pause-editing
+PLA219 ok: this test APK is the Device Owner
+PLA219 ok: durable store initialized at pla219-authority with launch-target as a removed (re-approvable) app
+PLA219 event 1: session revokeAllRelaxations
+PLA219 event 2: session protectedStateCheck=true
+PLA219 event 3: session readBackPolicy
+PLA219 ok: controller onStart READY
+PLA219 event 4: home publish [com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test]
+PLA219 ok: ordinary policy applied: lock task [com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test]
+PLA219 ok: target starts hidden and outside lock task
+PLA219 ok: CheckHome started lock task: getLockTaskModeState=LOCKED
+PLA219 event 5: battery read 80%
+PLA219 event 6: battery read 80%
+PLA219 event 7: session revokeAllRelaxations
+PLA219 event 8: session protectedStateCheck=true
+PLA219 event 9: session readBackPolicy
+PLA219 event 10: effect hideAndReadBack=true -> hidden=true lockTaskPermitted=false lockTaskMode=LOCKED
+PLA219 event 11: battery read 80%
+PLA219 event 12: effect openPermissionWindow=true -> hidden=false lockTaskPermitted=false lockTaskMode=LOCKED
+PLA219 event 13: effect closePermissionWindow=true -> hidden=true lockTaskPermitted=false lockTaskMode=LOCKED
+PLA219 event 14: battery read 80%
+PLA219 event 15: battery read 80%
+PLA219 event 16: home publish [com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test, org.plainphone.launchtarget]
+PLA219 event 17: effect applyPolicy=true -> hidden=false lockTaskPermitted=true lockTaskMode=LOCKED
+PLA219 ok: first approval completes: hidden=false lockTaskPermitted=true lockTaskMode=LOCKED
+PLA219 ok: no pending operation after the approval
+PLA219 event 18: battery read 80%
+PLA219 event 19: battery read 80%
+PLA219 event 20: session revokeAllRelaxations
+PLA219 event 21: session protectedStateCheck=true
+PLA219 event 22: session readBackPolicy
+PLA219 event 23: battery read 80%
+PLA219 event 24: effect hideAndReadBack=true -> hidden=true lockTaskPermitted=true lockTaskMode=LOCKED
+PLA219 event 25: battery read 80%
+PLA219 event 26: effect openPermissionWindow=true -> hidden=false lockTaskPermitted=false lockTaskMode=LOCKED
+PLA219 inside the window: durable phase=EDITING; target hidden=false lockTaskPermitted=false lockTaskMode=LOCKED; lock task packages=[com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test]; features=119
+PLA219 ok: lock task is active (LOCK_TASK_MODE_LOCKED) while the window is open
+PLA219 notification posted: enabled=true active=[219]
+PLA219 PAUSED phase=EDITING
+## paused; lock task: mLockTaskModeState=LOCKED; top resumed: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: explicit start
+$ am start -W -n org.plainphone.launchtarget/android.app.Activity
+  Starting: Intent { cmp=org.plainphone.launchtarget/android.app.Activity }
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: deep link
+$ am start -W -a android.intent.action.VIEW -d plainphone-check://open
+  Starting: Intent { act=android.intent.action.VIEW dat=plainphone-check://open/... }
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: share (SEND text/plain to the target)
+$ am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT hello -p org.plainphone.launchtarget
+  Starting: Intent { act=android.intent.action.SEND typ=text/plain pkg=org.plainphone.launchtarget (has extras) }
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: notification tap
+  shade expanded; notification row: bounds="[179,299][996,356]"
+  tapped
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: recents (KEYCODE_APP_SWITCH)
+  -> top resumed: org.plainphone.device.test/org.plainphone.device.apply.CheckHome; mLockTaskModeState=LOCKED; recents activity resumed: 0
+## target state while paused: hidden=hidden=false
+## kill: am force-stop org.plainphone.device.test (then kill -9 5681 as root if it survives)
+  force-stop ignored: Ignoring request to force stop protected package org.plainphone.device.test u0
+  -> test-package process after kill: '5951' (killed pid 5681; a new pid is Android restarting the Device Owner app, not the check)
+  -> lock task after kill: mLockTaskModeState=NONE; top resumed: com.google.android.apps.nexuslauncher/.NexusLauncherActivity
+## am instrument output after the kill:
+  INSTRUMENTATION_RESULT: shortMsg=Process crashed.
+  INSTRUMENTATION_CODE: 0
+
+######## recover-editing-battery
+PLA219 new process; before any controller call: target hidden=false lockTaskPermitted=false lockTaskMode=NONE
+PLA219 durable pending operation: EDITING for org.plainphone.launchtarget
+PLA219 ok: a durable PREPARING or EDITING record survived the kill
+PLA219 event 1: controller.onStart (session=ok, battery=3%)
+PLA219 event 2: effect hideAndReadBack=true -> hidden=true lockTaskPermitted=false lockTaskMode=NONE
+PLA219 event 3: session revokeAllRelaxations
+PLA219 event 4: session protectedStateCheck=true
+PLA219 event 5: session readBackPolicy
+PLA219 event 6: effect hideAndReadBack=true -> hidden=true lockTaskPermitted=false lockTaskMode=NONE
+PLA219 event 7: battery read 3%
+PLA219 event 8: onStart returned LOW_BATTERY; target hidden=true lockTaskPermitted=false lockTaskMode=NONE; Home lists target=false
+PLA219 ok: the target is re-hidden (read back) before any session, battery or Home event
+PLA219 ok: target hidden after recovery
+PLA219 ok: Home never lists the target unless the operation completed
+PLA219 recover outcome=LOW_BATTERY
+RESULT PASS phase=recover
+
+######## pause-editing-2
+PLA219 ok: this test APK is the Device Owner
+PLA219 ok: durable store initialized at pla219-authority with launch-target as a removed (re-approvable) app
+PLA219 event 1: session revokeAllRelaxations
+PLA219 event 2: session protectedStateCheck=true
+PLA219 event 3: session readBackPolicy
+PLA219 ok: controller onStart READY
+PLA219 event 4: home publish [com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test]
+PLA219 ok: ordinary policy applied: lock task [com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test]
+PLA219 ok: target starts hidden and outside lock task
+PLA219 ok: CheckHome started lock task: getLockTaskModeState=LOCKED
+PLA219 event 5: battery read 80%
+PLA219 event 6: battery read 80%
+PLA219 event 7: session revokeAllRelaxations
+PLA219 event 8: session protectedStateCheck=true
+PLA219 event 9: session readBackPolicy
+PLA219 event 10: effect hideAndReadBack=true -> hidden=true lockTaskPermitted=false lockTaskMode=LOCKED
+PLA219 event 11: battery read 80%
+PLA219 event 12: effect openPermissionWindow=true -> hidden=false lockTaskPermitted=false lockTaskMode=LOCKED
+PLA219 event 13: effect closePermissionWindow=true -> hidden=true lockTaskPermitted=false lockTaskMode=LOCKED
+PLA219 event 14: battery read 80%
+PLA219 event 15: battery read 80%
+PLA219 event 16: home publish [com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test, org.plainphone.launchtarget]
+PLA219 event 17: effect applyPolicy=true -> hidden=false lockTaskPermitted=true lockTaskMode=LOCKED
+PLA219 ok: first approval completes: hidden=false lockTaskPermitted=true lockTaskMode=LOCKED
+PLA219 ok: no pending operation after the approval
+PLA219 event 18: battery read 80%
+PLA219 event 19: battery read 80%
+PLA219 event 20: session revokeAllRelaxations
+PLA219 event 21: session protectedStateCheck=true
+PLA219 event 22: session readBackPolicy
+PLA219 event 23: battery read 80%
+PLA219 event 24: effect hideAndReadBack=true -> hidden=true lockTaskPermitted=true lockTaskMode=LOCKED
+PLA219 event 25: battery read 80%
+PLA219 event 26: effect openPermissionWindow=true -> hidden=false lockTaskPermitted=false lockTaskMode=LOCKED
+PLA219 inside the window: durable phase=EDITING; target hidden=false lockTaskPermitted=false lockTaskMode=LOCKED; lock task packages=[com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test]; features=119
+PLA219 ok: lock task is active (LOCK_TASK_MODE_LOCKED) while the window is open
+PLA219 notification posted: enabled=true active=[219]
+PLA219 PAUSED phase=EDITING
+## paused; lock task: mLockTaskModeState=LOCKED; top resumed: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: explicit start
+$ am start -W -n org.plainphone.launchtarget/android.app.Activity
+  Starting: Intent { cmp=org.plainphone.launchtarget/android.app.Activity }
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: deep link
+$ am start -W -a android.intent.action.VIEW -d plainphone-check://open
+  Starting: Intent { act=android.intent.action.VIEW dat=plainphone-check://open/... }
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: share (SEND text/plain to the target)
+$ am start -W -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT hello -p org.plainphone.launchtarget
+  Starting: Intent { act=android.intent.action.SEND typ=text/plain pkg=org.plainphone.launchtarget (has extras) }
+  Status: ok
+  Activity: android/com.android.internal.app.BlockedAppActivity
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: notification tap
+  shade expanded; notification row: bounds="[179,299][996,356]"
+  tapped
+  -> top resumed: android/com.android.internal.app.BlockedAppActivity; mLockTaskModeState=LOCKED; target process: ''
+  -> after BACK: org.plainphone.device.test/org.plainphone.device.apply.CheckHome
+## attempt: recents (KEYCODE_APP_SWITCH)
+  -> top resumed: org.plainphone.device.test/org.plainphone.device.apply.CheckHome; mLockTaskModeState=LOCKED; recents activity resumed: 0
+## target state while paused: hidden=hidden=false
+## kill: am force-stop org.plainphone.device.test (then kill -9 6038 as root if it survives)
+  force-stop ignored: Ignoring request to force stop protected package org.plainphone.device.test u0
+  -> test-package process after kill: '6293' (killed pid 6038; a new pid is Android restarting the Device Owner app, not the check)
+  -> lock task after kill: mLockTaskModeState=NONE; top resumed: com.google.android.apps.nexuslauncher/.NexusLauncherActivity
+## am instrument output after the kill:
+  INSTRUMENTATION_RESULT: shortMsg=Process crashed.
+  INSTRUMENTATION_CODE: 0
+
+######## recover-editing-session
+PLA219 new process; before any controller call: target hidden=false lockTaskPermitted=false lockTaskMode=NONE
+PLA219 durable pending operation: EDITING for org.plainphone.launchtarget
+PLA219 ok: a durable PREPARING or EDITING record survived the kill
+PLA219 event 1: controller.onStart (session=fail, battery=80%)
+PLA219 event 2: effect hideAndReadBack=true -> hidden=true lockTaskPermitted=false lockTaskMode=NONE
+PLA219 event 3: session revokeAllRelaxations
+PLA219 event 4: session protectedStateCheck=false
+PLA219 event 5: onStart returned NOT_READY; target hidden=true lockTaskPermitted=false lockTaskMode=NONE; Home lists target=false
+PLA219 ok: the target is re-hidden (read back) before any session, battery or Home event
+PLA219 ok: target hidden after recovery
+PLA219 ok: Home never lists the target unless the operation completed
+PLA219 recover outcome=NOT_READY
+RESULT PASS phase=recover
+
+######## cleanup
+PLA219 ok: cleanup cleared lock task, Home, input-method policy and the store, and unhid the fixtures
+RESULT PASS phase=containment-cleanup
