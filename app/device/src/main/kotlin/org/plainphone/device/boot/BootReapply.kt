@@ -1,0 +1,95 @@
+// Copyright 2026 Plainphone contributors
+// SPDX-License-Identifier: Apache-2.0
+package org.plainphone.device.boot
+
+import org.plainphone.core.PackageName
+import org.plainphone.device.ApplyResult
+import org.plainphone.device.DevicePolicyPort
+import org.plainphone.device.ReadbackPolicyApplier
+import org.plainphone.policy.JournalStore
+import org.plainphone.policy.PolicyPlan
+import org.plainphone.policy.Restriction
+import org.plainphone.policy.SessionAccess
+import org.plainphone.policy.SessionController
+import org.plainphone.policy.SessionEffects
+
+/**
+ * What one re-apply achieved.
+ * @property ready every step was written and read back and the journal is clear. Home may show only then.
+ * @property apply the plan's apply, or null when no plan could be built or the revoke failed first.
+ * @property withheld restrictions the build's [RestrictionFilter] left out.
+ */
+data class BootOutcome(val ready: Boolean, val locked: Boolean, val apply: ApplyResult?, val withheld: Set<Restriction>)
+
+/**
+ * The boot and start re-apply (device-lockdown 4.11 and 4.3). Every run goes through
+ * [SessionController.onStart]: it latches revocation, revokes every session relaxation (all of
+ * [sessionPackages], whatever the journal says, so a damaged journal revokes them all), applies the
+ * plan through [ReadbackPolicyApplier], reads it back, and only then clears the journal.
+ *
+ * - Locked boot ([run] with `locked = true`): [decide] must return the locked-boot plan, which has
+ *   only restrictions, the emergency floor (with the emergency UI's lock-task membership) and the
+ *   never-hide guard. The journal store must be in device-protected storage.
+ * - Unlocked start: the full plan, ending with lock task and Home.
+ *
+ * Revoking a relaxation takes the package out of lock task and hides it, unless the plan's never-hide
+ * list names it. With no plan the packages still leave lock task, and the run is not ready.
+ * The controller has no clock or authority, so it cannot open a session: [SessionEffects.open] is
+ * refused. Run on the one serialized policy dispatcher.
+ */
+class BootReapply(
+    journal: JournalStore,
+    private val port: DevicePolicyPort,
+    private val sessionPackages: Set<PackageName>,
+    private val decide: (locked: Boolean) -> PolicyPlan,
+    private val filter: RestrictionFilter,
+) {
+    private val applier = ReadbackPolicyApplier(port)
+    private var plan: PolicyPlan? = null
+    private var applied: ApplyResult? = null
+
+    val sessions = SessionController(journal, Effects(), { null }, null, { _, _ -> false })
+
+    fun run(locked: Boolean): BootOutcome {
+        applied = null
+        plan = try {
+            filter.apply(decide(locked))
+        } catch (e: RuntimeException) {
+            null
+        }
+        val ready = sessions.onStart()
+        return BootOutcome(ready, locked, applied, filter.withheld)
+    }
+
+    private inner class Effects : SessionEffects {
+        override fun revokeAllRelaxations(): Boolean = attempt {
+            val keep = plan?.neverHide
+            val inLockTask = port.lockTaskPackages()
+            if (inLockTask.any { it in sessionPackages }) port.setLockTaskPackages(inLockTask - sessionPackages)
+            if (keep != null) {
+                for (name in sessionPackages - keep) {
+                    if (port.packageState(name)?.hidden == false) port.setHidden(name, true)
+                }
+            }
+            keep != null && port.lockTaskPackages().none { it in sessionPackages } &&
+                (sessionPackages - keep).all { port.packageState(it)?.hidden != false }
+        } == true
+
+        override fun open(access: SessionAccess): Boolean = false
+
+        override fun protectedStateCheck(): Boolean {
+            val current = plan ?: return false
+            val result = attempt { applier.apply(current) } ?: return false
+            applied = result
+            return result.complete
+        }
+
+        override fun readBackPolicy(): Boolean = plan?.let { attempt { applier.readBack(it) } } == true
+    }
+
+    private inline fun <T> attempt(call: () -> T): T? = try {
+        call()
+    } catch (_: RuntimeException) {
+        null
+    }
+}
