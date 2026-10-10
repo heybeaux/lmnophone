@@ -26,9 +26,12 @@ data class BootOutcome(
     val withheld: Set<Restriction>,
     /** Emergency-UI or never-hide packages that stay disabled. Calls stay reachable through the rest. */
     val disabledFloor: Set<PackageName> = emptySet(),
+    /** [PolicyPlan.needsAttention]: baseline after corrupt policy, no system dialer, and similar. */
+    val planNeedsAttention: Boolean = false,
 ) {
     /** Show "Plainphone needs attention" (Home still draws when [ready]). */
-    val needsAttention: Boolean get() = apply?.needsAttention != false || disabledFloor.isNotEmpty()
+    val needsAttention: Boolean get() =
+        planNeedsAttention || apply?.needsAttention != false || disabledFloor.isNotEmpty()
     /** Setup must not finish while a floor package is disabled. */
     val setupMayFinish: Boolean get() = ready && disabledFloor.isEmpty()
 }
@@ -81,7 +84,7 @@ class BootReapply(
         }
         val floor = current?.let { it.emergencyUi + it.neverHide }.orEmpty()
         val disabledFloor = applied?.unrepairable.orEmpty() intersect floor
-        return BootOutcome(ready, locked, applied, filter.withheld, disabledFloor)
+        return BootOutcome(ready, locked, applied, filter.withheld, disabledFloor, current?.needsAttention == true)
     }
 
     private inner class Effects : SessionEffects {

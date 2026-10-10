@@ -23,6 +23,7 @@ import org.plainphone.boot.CheckingScreen
 import org.plainphone.boot.HomeGate
 import org.plainphone.boot.PolicyRuntime
 import org.plainphone.ui.home.HomeEvent
+import org.plainphone.ui.home.HomeNotice
 import org.plainphone.ui.home.HomeScreen
 import org.plainphone.ui.home.HomeUiState
 import org.plainphone.ui.theme.PlainphoneTheme
@@ -48,7 +49,8 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(Unit) {
                         Log.i(PolicyRuntime.TAG, "home shown lockTask=${activities.lockTaskModeState} at=${SystemClock.elapsedRealtime()}")
                     }
-                    Home()
+                    val notice by runtime.notice.collectAsState()
+                    Home(notice)
                 } else {
                     CheckingScreen(onPhone = ::openPhone, onEmergency = ::openEmergency)
                 }
@@ -69,13 +71,14 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun Home() {
+    private fun Home(notice: HomeNotice?) {
         val now = LocalDateTime.now()
         HomeScreen(
             HomeUiState(
                 time = now.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)),
                 date = now.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)),
                 shortDate = now.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
+                notice = notice,
             ),
         ) { event ->
             // The wiring slice adds apps, Messages and More.

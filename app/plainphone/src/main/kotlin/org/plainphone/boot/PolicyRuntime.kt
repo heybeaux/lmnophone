@@ -24,6 +24,7 @@ import org.plainphone.device.facts.LivePolicyInputAssembler
 import org.plainphone.device.storage.FileJournalStore
 import org.plainphone.device.storage.FilePolicyStore
 import org.plainphone.policy.PolicyEngine
+import org.plainphone.ui.home.HomeNotice
 
 /** What Home may show. Only [READY] lets Home draw; the others show the neutral checking screen. */
 enum class HomeGate { CHECKING, READY, NOT_READY }
@@ -56,9 +57,12 @@ class PolicyRuntime private constructor(private val context: Context) {
         BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT),
     )
     private val gateState = MutableStateFlow(HomeGate.CHECKING)
+    private val noticeState = MutableStateFlow<HomeNotice?>(null)
     private val packageEventQueued = AtomicBoolean(false)
 
     val gate: StateFlow<HomeGate> = gateState
+    /** The Home notice from the last unlocked re-apply ([homeNotice]). */
+    val notice: StateFlow<HomeNotice?> = noticeState
 
     /** Queues one re-apply; [done] runs on the dispatcher after it. */
     fun reapply(reason: String, done: () -> Unit = {}) = dispatcher.post {
@@ -97,14 +101,17 @@ class PolicyRuntime private constructor(private val context: Context) {
         log(reason, outcome, SystemClock.elapsedRealtime() - started)
         BuildControl.control.afterReapply(context, dpm, admin)
         // A locked run never opens Home: the full plan has not run yet.
-        if (!locked) gateState.value = if (outcome?.ready == true) HomeGate.READY else HomeGate.NOT_READY
+        if (!locked) {
+            noticeState.value = homeNotice(outcome)
+            gateState.value = if (outcome?.ready == true) HomeGate.READY else HomeGate.NOT_READY
+        }
     }
 
     private fun log(reason: String, outcome: BootOutcome?, millis: Long) {
         val apply = outcome?.apply
         Log.i(TAG, "reapply reason=$reason control=${BuildControl.control.name} locked=${outcome?.locked} ready=${outcome?.ready} " +
             "applied=${apply?.applied} failed=${apply?.failedStage} flipFailures=${apply?.flipFailures?.size} " +
-            "withheld=${outcome?.withheld?.sorted()} ms=$millis")
+            "withheld=${outcome?.withheld?.sorted()} attention=${outcome?.needsAttention} disabledFloor=${outcome?.disabledFloor} ms=$millis")
     }
 
     companion object {
