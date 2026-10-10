@@ -55,6 +55,7 @@ class PolicyRuntime private constructor(private val context: Context) {
         port, SESSION_PACKAGES,
         { locked -> PolicyEngine.decide(assembler.assemble().input.copy(lockedBoot = locked)) },
         BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT),
+        { stage, error -> Log.w(TAG, "stage $stage failed: ${error ?: "readback mismatch"}", error) },
     )
     private val gateState = MutableStateFlow(HomeGate.CHECKING)
     private val noticeState = MutableStateFlow<HomeNotice?>(null)

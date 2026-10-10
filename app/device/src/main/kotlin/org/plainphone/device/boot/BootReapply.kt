@@ -6,6 +6,7 @@ import org.plainphone.core.PackageName
 import org.plainphone.device.ApplyResult
 import org.plainphone.device.DevicePolicyPort
 import org.plainphone.device.ReadbackPolicyApplier
+import org.plainphone.policy.ApplyStage
 import org.plainphone.policy.JournalStore
 import org.plainphone.policy.PolicyPlan
 import org.plainphone.policy.Restriction
@@ -61,8 +62,9 @@ class BootReapply(
     private val sessionPackages: Set<PackageName>,
     private val decide: (locked: Boolean) -> PolicyPlan,
     private val filter: RestrictionFilter,
+    onFailure: (ApplyStage, Throwable?) -> Unit = { _, _ -> },
 ) {
-    private val applier = ReadbackPolicyApplier(port)
+    private val applier = ReadbackPolicyApplier(port, onFailure)
     private var plan: PolicyPlan? = null
     private var applied: ApplyResult? = null
 

@@ -28,7 +28,11 @@ import org.plainphone.policy.PolicyPlan
  *   opposite of its current state (mitigation B, best effort). A failed flip is retried once, then
  *   reported; the unhide is never undone and the apply continues.
  */
-class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier {
+class ReadbackPolicyApplier(
+    private val port: DevicePolicyPort,
+    /** Told about each failed stage: the exception, or null when the readback did not match. Diagnostics only. */
+    private val onFailure: (ApplyStage, Throwable?) -> Unit = { _, _ -> },
+) : PolicyApplier {
 
     override fun apply(plan: PolicyPlan): ApplyResult {
         val run = Run(plan)
@@ -37,8 +41,9 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
             if (step.stage == ApplyStage.REVOKE_JOURNAL) continue
             val ok = try {
                 run.write(step.stage)
-                !step.readbackRequired || run.readBack(step.stage)
+                (!step.readbackRequired || run.readBack(step.stage)).also { if (!it) onFailure(step.stage, null) }
             } catch (e: Exception) {
+                onFailure(step.stage, e)
                 false
             }
             if (!ok) return run.result(applied, step.stage)
@@ -60,8 +65,9 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
         for (stage in EMERGENCY_STAGES) {
             val ok = try {
                 run.write(stage)
-                run.readBack(stage)
+                run.readBack(stage).also { if (!it) onFailure(stage, null) }
             } catch (e: Exception) {
+                onFailure(stage, e)
                 false
             }
             if (ok) applied += stage else if (failed == null) failed = stage
