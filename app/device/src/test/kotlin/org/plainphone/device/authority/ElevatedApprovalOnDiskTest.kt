@@ -108,6 +108,8 @@ class ElevatedApprovalOnDiskTest {
         RuntimePermissionFor(camera)))
     private val effects = object : AppApprovalEffects {
         override fun hideAndReadBack(identity: ApprovalBinding) = event("hide")
+        override fun openPermissionWindow(identity: ApprovalBinding) = event("window-open")
+        override fun closePermissionWindow(identity: ApprovalBinding) = event("window-close")
         override fun setPermission(identity: ApprovalBinding, write: PermissionWrite) = event("permission")
         override fun readPermissions(identity: ApprovalBinding): Map<PermissionName, PermissionReadback> =
             mapOf(camera to PermissionReadback.GRANTED).also { event("permissions-readback") }
