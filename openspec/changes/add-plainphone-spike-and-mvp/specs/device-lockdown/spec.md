@@ -87,12 +87,21 @@ FRP does not reinstall LMNOPhone, and the disclosure SHALL say so.
 ### Requirement: No unapproved app can be opened from the first interactive frame
 After boot, the LMNOPhone home activity SHALL start lock task before it draws its first interactive frame.
 
+**Keyguard first.** The home activity SHALL NOT be in lock task while the lock-task features lack `KEYGUARD`. Entering lock task without `KEYGUARD` makes Android dismiss the secure keyguard, even before the first unlock (PLA-242 spike and PLA-264 finding 1, API 35). So:
+- lock-task entry SHALL be explicit, from LMNOPhone's own code after the check below, and never automatic from the manifest, because Android can start an automatic lock task before LMNOPhone has restored lost features;
+- before the home activity enters lock task, and before LMNOPhone grants it lock-task membership, LMNOPhone SHALL write the lock-task features and read them back with `KEYGUARD` set;
+- if the features cannot be written or do not read back, the home activity SHALL stay out of lock task, the secure keyguard SHALL stay, and LMNOPhone SHALL show "LMNOPhone needs attention" after unlock. The lock-screen emergency call SHALL stay reachable.
+
 Restrictions, hidden apps and lock-task package settings are kept by Android across reboots. LMNOPhone SHALL NOT clear them during recovery.
 
 From unlock until lock task starts, no unapproved app SHALL be openable from:
 - a notification
 - an explicit intent
 - a deep link
+
+#### Scenario: Lock-task list kept, features lost
+- **WHEN** the lock-task list survives a reboot but the lock-task features lose `KEYGUARD`, and nobody enters the PIN
+- **THEN** the secure keyguard stays, the user stays locked, and the lock-screen emergency call opens the emergency dialer
 
 #### Scenario: Immediate unlock after reboot
 - **WHEN** the user unlocks right after a reboot and taps a queued notification from an unapproved app
@@ -221,7 +230,7 @@ LMNOPhone SHALL write its policy atomically, check its schema version before app
 7. home preference.
 
 **Locked-boot path.** At `LOCKED_BOOT_COMPLETED`, LMNOPhone SHALL use only device-protected data. It SHALL do only these steps, then read them back:
-- steps 1–3, where step 3 includes restoring the emergency UI subset's lock-task membership and keeping LMNOPhone itself in the lock-task list, so the home activity can start lock task at the first frame even if the list was lost;
+- steps 1–3, where step 3 includes restoring the emergency UI subset's lock-task membership and keeping LMNOPhone itself in the lock-task list, so the home activity can start lock task, once the features read back (*Keyguard first*), even if the list was lost;
 - the lock-task features listed under *Lock task blocks other apps' screens*, including `BLOCK_ACTIVITY_START_IN_TASK`. They are fixed, so they need no policy file. Without them, an allowed app can open Settings inside its own task even while lock task is on (PLA-232 finding 9);
 - the never-hide guard.
 
