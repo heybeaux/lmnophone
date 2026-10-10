@@ -33,6 +33,7 @@ import org.plainphone.policy.SessionPhase
  *
  * `-e phase apply` runs the PLA-117 policy applier check instead ([org.plainphone.device.apply.DpmPortCheck]);
  * `-e phase reset` runs the PLA-92 reset-protection check ([org.plainphone.device.apply.ResetProtectionCheck]);
+ * `-e phase permissions` runs the PLA-86 hidden-package permission check ([org.plainphone.device.apply.HiddenPermissionCheck]);
  * `-e phase facts` and `-e phase rotated` run the PLA-132 live package facts check
  * ([org.plainphone.device.facts.PackageFactsCheck]); all of these need this APK as Device Owner.
  *
@@ -60,6 +61,7 @@ class DirectBootJournalCheck : Instrumentation() {
                 "reset" -> org.plainphone.device.apply.ResetProtectionCheck(targetContext, ::note).check()
                 "facts" -> org.plainphone.device.facts.PackageFactsCheck(targetContext, args, ::note).facts()
                 "rotated" -> org.plainphone.device.facts.PackageFactsCheck(targetContext, args, ::note).rotated()
+                "permissions" -> org.plainphone.device.apply.HiddenPermissionCheck(targetContext, args, ::note).check()
                 else -> fail("unknown phase $phase")
             }
             note("RESULT PASS phase=$phase")
