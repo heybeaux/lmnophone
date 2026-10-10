@@ -7,12 +7,17 @@ import org.plainphone.device.ApplyResult
 import org.plainphone.device.DevicePolicyPort
 import org.plainphone.device.ReadbackPolicyApplier
 import org.plainphone.policy.ApplyStage
+import org.plainphone.policy.ApplyStep
+import org.plainphone.policy.ExpectedPolicyState
+import org.plainphone.policy.FloorResult
 import org.plainphone.policy.JournalStore
+import org.plainphone.policy.LockTaskFeature
 import org.plainphone.policy.PolicyPlan
 import org.plainphone.policy.Restriction
 import org.plainphone.policy.SessionAccess
 import org.plainphone.policy.SessionController
 import org.plainphone.policy.SessionEffects
+import org.plainphone.policy.SweepMode
 
 /**
  * What one re-apply achieved.
@@ -49,7 +54,14 @@ data class BootOutcome(
  * - Unlocked start: the full plan, ending with lock task and Home.
  *
  * If the run is not ready and the ordinary apply did not complete restrictions, the floor and the
- * guard (a failed revoke, a failed stage), [ReadbackPolicyApplier.repairEmergency] still runs them.
+ * guard (a failed revoke, a failed stage, or a throw from the journal, the revoke or onStart),
+ * [ReadbackPolicyApplier.repairEmergency] still runs them. When no plan could be built (facts or
+ * decide threw), it runs a plan-independent one ([fallbackPlan]): the compiled restrictions and
+ * features and the floor from OS sources only ([floor]). It unhides and re-adds lock-task membership
+ * and never hides. During a committing turn-off, or when that cannot be read, it repairs only the floor.
+ *
+ * Unresolved flip failures are kept in [flipFailures] (PLA-241 finding 4). Enabled state is read for
+ * every expected package after the final readback (finding 5).
  *
  * Revoking a relaxation takes the package out of lock task and hides it, unless the plan's never-hide
  * list names it. With no plan the packages still leave lock task, and the run is not ready.
@@ -63,30 +75,89 @@ class BootReapply(
     private val decide: (locked: Boolean) -> PolicyPlan,
     private val filter: RestrictionFilter,
     onFailure: (ApplyStage, Throwable?) -> Unit = { _, _ -> },
+    /** The emergency floor from OS-managed sources only, for [fallbackPlan]. Null or a throw: no floor packages. */
+    private val floor: () -> FloorResult? = { null },
+    /** Plainphone's own package: kept in lock task by [fallbackPlan] so Home can still enter it. */
+    private val home: PackageName? = null,
+    /** Whether a turn-off is committing. A throw counts as yes: the fallback then repairs only the floor. */
+    private val turnOffCommitting: () -> Boolean = { false },
+    private val flipFailures: FlipFailureStore = InMemoryFlipFailureStore(),
 ) {
     private val applier = ReadbackPolicyApplier(port, onFailure)
     private var plan: PolicyPlan? = null
     private var applied: ApplyResult? = null
+    private val runFlipFailures = mutableSetOf<PackageName>()
+    private val runFlipped = mutableSetOf<PackageName>()
+    private var unresolved: Set<PackageName>? = null
 
     val sessions = SessionController(journal, Effects(), { null }, null, { _, _ -> false })
 
     fun run(locked: Boolean): BootOutcome {
         applied = null
-        plan = try {
-            filter.apply(decide(locked))
-        } catch (e: RuntimeException) {
-            null
+        runFlipFailures.clear()
+        runFlipped.clear()
+        plan = attempt { filter.apply(decide(locked)) }
+        val ready = attempt { sessions.onStart() } == true
+        // Emergency repair does not depend on the revoke, on an earlier stage or on a plan. The journal
+        // stays revoke-pending and the run stays not ready, so nothing is handed back.
+        val repairPlan = plan ?: fallbackPlan()
+        if (!ready && applied?.applied?.containsAll(ReadbackPolicyApplier.EMERGENCY_STAGES) != true) {
+            attempt { applier.repairEmergency(repairPlan) }?.let(::record)
         }
-        val ready = sessions.onStart()
-        // Emergency repair does not depend on the revoke or on an earlier stage. The journal stays
-        // revoke-pending and the run stays not ready, so nothing is handed back.
-        val current = plan
-        if (!ready && current != null && applied?.applied?.containsAll(ReadbackPolicyApplier.EMERGENCY_STAGES) != true) {
-            attempt { applier.repairEmergency(current) }?.let { applied = it }
-        }
-        val floor = current?.let { it.emergencyUi + it.neverHide }.orEmpty()
-        val disabledFloor = applied?.unrepairable.orEmpty() intersect floor
-        return BootOutcome(ready, locked, applied, filter.withheld, disabledFloor, current?.needsAttention == true)
+        val failures = rememberFlipFailures()
+        val floorPackages = repairPlan.emergencyUi + repairPlan.neverHide
+        val nowDisabled = attempt { applier.disabled(repairPlan) }.orEmpty()
+        val disabledFloor = (applied?.unrepairable.orEmpty() + nowDisabled) intersect floorPackages
+        return BootOutcome(
+            ready, locked, applied?.copy(flipFailures = failures), filter.withheld, disabledFloor,
+            plan?.needsAttention ?: true,
+        )
+    }
+
+    /** The trusted person saw the flip-failure notice: clear it (the wiring slice calls this). */
+    fun acknowledgeFlipFailures() {
+        unresolved = emptySet()
+        attempt { flipFailures.save(emptySet()) }
+    }
+
+    /** Earlier unresolved failures plus this run's, minus packages whose flip read back this run. */
+    private fun rememberFlipFailures(): Set<PackageName> {
+        val earlier = unresolved ?: attempt { flipFailures.read() }.orEmpty()
+        val now = earlier - runFlipped + runFlipFailures
+        unresolved = now
+        if (now != earlier) attempt { flipFailures.save(now) }
+        return now
+    }
+
+    private fun record(result: ApplyResult) {
+        applied = result
+        runFlipFailures += result.flipFailures
+        runFlipped += result.flipped
+    }
+
+    /** Restrictions, floor and guard without the policy engine: fixed sets and OS-sourced floor only. */
+    private fun fallbackPlan(): PolicyPlan {
+        val emergency = attempt { floor() }
+        val emergencyUi = emergency?.emergencyUi.orEmpty()
+        val neverHide = emergency?.neverHide.orEmpty() + emergencyUi
+        val lockdown = attempt { !turnOffCommitting() } == true
+        val restrictions = if (lockdown) Restriction.entries.toSet() else emptySet()
+        val features = LockTaskFeature.entries.toSet()
+        return filter.apply(PolicyPlan(
+            hidden = emptySet(), unhide = neverHide, neverHide = neverHide, emergencyUi = emergencyUi,
+            lockTaskPackages = emptySet(), features = if (lockdown) features else emptySet(), restrictions = restrictions,
+            steps = ReadbackPolicyApplier.EMERGENCY_STAGES.map { ApplyStep(it) },
+            expected = ExpectedPolicyState(
+                hidden = null, unhiddenAndEnabled = neverHide, unsuspended = neverHide,
+                lockTaskPackages = if (lockdown) emergencyUi + listOfNotNull(home) else null,
+                features = if (lockdown) features else null,
+                restrictions = if (lockdown) restrictions else null,
+                home = home.takeIf { lockdown },
+                systemInputMethodsOnly = null, systemAccessibilityServicesOnly = null,
+            ),
+            sweepMode = SweepMode.NONE, refusedDestruction = emptyList(), allowedDestruction = emptyList(),
+            classifierConflicts = emptySet(), changedPackages = emptySet(), needsAttention = true, notifyBuildReview = false,
+        ))
     }
 
     private inner class Effects : SessionEffects {
@@ -108,16 +179,17 @@ class BootReapply(
         override fun protectedStateCheck(): Boolean {
             val current = plan ?: return false
             val result = attempt { applier.apply(current) } ?: return false
-            applied = result
+            record(result)
             return result.complete
         }
 
         override fun readBackPolicy(): Boolean = plan?.let { attempt { applier.readBack(it) } } == true
     }
 
+    /** Any throw except an [Error] is a failed step (a SecurityException, an IOException from Java). */
     private inline fun <T> attempt(call: () -> T): T? = try {
         call()
-    } catch (_: RuntimeException) {
+    } catch (e: Exception) {
         null
     }
 }

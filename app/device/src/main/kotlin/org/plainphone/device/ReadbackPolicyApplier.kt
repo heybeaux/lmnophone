@@ -83,14 +83,24 @@ class ReadbackPolicyApplier(
         }
     }
 
+    /**
+     * Expected-visible packages that read back disabled now (PLA-241 finding 5). The readback stages
+     * check hidden and suspended; this is the enabled half, read for every expected package. A package
+     * whose state cannot be read is left out: it is not proof of anything.
+     */
+    fun disabled(plan: PolicyPlan): Set<PackageName> = plan.expected.unhiddenAndEnabled.filterTo(mutableSetOf()) { name ->
+        try { port.packageState(name)?.enabled == false } catch (e: Exception) { false }
+    }
+
     private inner class Run(private val plan: PolicyPlan) {
         private val expected: ExpectedPolicyState = plan.expected
         private val absent = mutableSetOf<PackageName>()
         private val flipFailures = mutableSetOf<PackageName>()
         private val unrepairable = mutableSetOf<PackageName>()
+        private val flipped = mutableSetOf<PackageName>()
 
         fun result(applied: List<ApplyStage>, failed: ApplyStage?) =
-            ApplyResult(applied.toList(), failed, absent.toSet(), flipFailures.toSet(), unrepairable.toSet())
+            ApplyResult(applied.toList(), failed, absent.toSet(), flipFailures.toSet(), unrepairable.toSet(), flipped - flipFailures)
 
         private val floorPackages get() = plan.emergencyUi + (plan.unhide intersect plan.neverHide)
         private val floorLockTask get() =
@@ -195,7 +205,10 @@ class ReadbackPolicyApplier(
                     port.setFlushComponentEnabled(!before)
                     port.flushComponentEnabled() == !before
                 }.getOrDefault(false)
-                if (ok) return
+                if (ok) {
+                    flipped += unhidden
+                    return
+                }
             }
             flipFailures += unhidden
         }
