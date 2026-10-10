@@ -369,7 +369,8 @@ class JointAuthorityStore internal constructor(
         override fun initialize(requestId: String): Boolean = coordinator.run(false) {
             val (entry, marker) = intentRecords(requestId)
             when {
-                marker.exists() || entry.exists() -> intent(requestId) == CancelIntent.CLEAR
+                // An existing CLEAR entry is acknowledged only once its directory entry is synced.
+                marker.exists() || entry.exists() -> intent(requestId) == CancelIntent.CLEAR && entry.ensure(intentPayload(CLEAR_TAG, requestId))
                 else -> entry.write(intentPayload(CLEAR_TAG, requestId)) {}
             }
         }
@@ -377,8 +378,8 @@ class JointAuthorityStore internal constructor(
             val (entry, marker) = intentRecords(requestId)
             val requested = intentPayload(REQUESTED_TAG, requestId)
             // Both writes are attempted even if the first fails; true only when both are durable.
-            val markerSaved = marker.read()?.contentEquals(requested) == true || marker.write(requested) {}
-            val entrySaved = entry.read()?.contentEquals(requested) == true || entry.write(requested) {}
+            val markerSaved = marker.ensure(requested)
+            val entrySaved = entry.ensure(requested)
             markerSaved && entrySaved
         }
         override fun read(requestId: String): CancelIntent = coordinator.run(CancelIntent.UNKNOWN) { intent(requestId) }
@@ -737,7 +738,7 @@ class JointAuthorityStore internal constructor(
             val (entry, marker) = intentRecords(requestId)
             val requested = marker.exists()
             val tag = if (requested) REQUESTED_TAG else CLEAR_TAG
-            fun rewrite(record: AtomicRecord, payload: ByteArray) = record.read()?.contentEquals(payload) == true || record.write(payload) {}
+            fun rewrite(record: AtomicRecord, payload: ByteArray) = record.ensure(payload)
             val entrySaved = rewrite(entry, intentPayload(tag, requestId))
             val markerSaved = !requested || (entrySaved && rewrite(marker, intentPayload(REQUESTED_TAG, requestId)))
             done = done && entrySaved && markerSaved
@@ -909,14 +910,17 @@ class JointAuthorityStore internal constructor(
     private fun heal(current: Snapshot): Boolean {
         val bytes = current.encode(); val fence = fenceBytes(current.sequence)
         for ((record, payload) in listOf(copyA to bytes, copyB to bytes, fenceA to fence, fenceB to fence))
+            // No extra sync for files that already match: the copy writes that follow sync this directory,
+            // which also makes these entries durable, and nothing is acknowledged without those syncs.
             if (record.read()?.contentEquals(payload) != true && !record.write(payload) {}) return false
         return true
     }
 
     /**
-     * Repair, then copy A, copy B, fence A, fence B. If a copy write fails (including its directory
-     * sync), both copies are put back to [previous] where possible; a lone new copy above the fence is
-     * never served either way. The result is read from disk: true when [next] reads back. False is
+     * Repair, then copy A, copy B, fence A, fence B. Both copies written and their directory synced is
+     * the commit point, and the only way to a true result. If a copy step fails (including its directory
+     * sync), both copy files are put back to exactly what they held where possible and the result is
+     * false, which means not acknowledged: either record may read afterwards (PLA-160). The result is read from disk: true when [next] reads back. False is
      * not acknowledged: the store tries to resolve (restore, then read), but when the directory cannot
      * be read [next] may still have committed, so false never promises [previous]. A migration names
      * the copy that holds no old record, so the old one survives until both new copies are written.
@@ -926,18 +930,20 @@ class JointAuthorityStore internal constructor(
         val bytes = next.encode()
         val fence = fenceBytes(next.sequence)
         val (first, other) = if (spare === copyB) copyB to copyA else copyA to copyB
+        // Exactly what each copy file held, legacy formats included, so a failure can put it back.
+        val before = try { first.snapshot() to other.snapshot() } catch (_: IOException) { return false }
         faults.at(WritePoint.BEFORE_COPY_A, dir)
         val copied = first.write(bytes) { faults.at(WritePoint.AFTER_COPY_A, dir) } &&
             other.write(bytes) { faults.at(WritePoint.AFTER_COPY_B, dir) }
-        if (copied) {
-            fenceA.write(fence) { faults.at(WritePoint.AFTER_FENCE_A, dir) }
-            fenceB.write(fence) { faults.at(WritePoint.AFTER_FENCE, dir) }
-        } else if (previous != null) {
-            // Even if both new copies are visible: a copy whose directory entry did not sync is not
-            // durable, so it must not be acknowledged (PLA-143 R1). Put [previous] back and report what reads.
-            val old = previous.encode()
-            other.write(old) {}; first.write(old) {}
+        if (!copied) {
+            // Not committed: a copy whose rename was not synced is not durable, even if both read back
+            // (PLA-188 R1/R3), so this is never acknowledged. Put both files back as they were where
+            // possible. False only means "not acknowledged" (PLA-160): fresh reads decide.
+            other.restore(before.second); first.restore(before.first)
+            return false
         }
+        fenceA.write(fence) { faults.at(WritePoint.AFTER_FENCE_A, dir) }
+        fenceB.write(fence) { faults.at(WritePoint.AFTER_FENCE, dir) }
         return load()?.encode()?.contentEquals(bytes) == true
     }
 
@@ -1026,4 +1032,33 @@ internal class AtomicRecord(private val dir: File, name: String, private val sch
     } catch (_: IOException) {
         false
     }
+
+    /**
+     * [write], or if the file already holds [payload], a directory sync alone: content found on disk
+     * may come from an earlier write whose rename was never synced, so it is not durable yet (PLA-188 R2).
+     */
+    fun ensure(payload: ByteArray): Boolean =
+        if (read()?.contentEquals(payload) == true) syncDirectory() else write(payload) {}
+
+    /** The file's raw bytes, or null if it does not exist. Throws if it exists but cannot be read. */
+    fun snapshot(): ByteArray? = if (file.exists()) file.readBytes() else null
+
+    /** Puts back exactly [raw] (null: no file), with the directory synced. True only if that is durable. */
+    fun restore(raw: ByteArray?): Boolean = try {
+        when {
+            raw == null -> (!file.exists() || file.delete()) && !file.exists() && syncDirectory()
+            file.exists() && file.readBytes().contentEquals(raw) -> syncDirectory()
+            else -> {
+                val temp = File(dir, "${file.name}.tmp")
+                java.io.FileOutputStream(temp).use { out -> out.write(raw); out.fd.sync() }
+                java.nio.file.Files.move(temp.toPath(), file.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                syncDirectory() && file.readBytes().contentEquals(raw)
+            }
+        }
+    } catch (_: IOException) {
+        false
+    }
+
+    private fun syncDirectory(): Boolean = try { directorySync().sync(dir); true } catch (_: IOException) { false }
 }
