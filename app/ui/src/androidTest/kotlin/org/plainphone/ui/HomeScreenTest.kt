@@ -5,6 +5,9 @@ package org.plainphone.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.FontScale
@@ -28,6 +31,8 @@ import org.junit.Test
 import org.plainphone.ui.home.HomeApp
 import org.plainphone.ui.home.HomeEvent
 import org.plainphone.ui.home.HomeNotice
+import org.plainphone.ui.home.HomeNoticeDay
+import java.time.LocalDate
 import org.plainphone.ui.home.HomeScreen
 import org.plainphone.ui.home.HomeUiState
 import org.plainphone.ui.theme.PlainphoneTheme
@@ -36,6 +41,54 @@ import org.plainphone.ui.theme.PlainphoneTheme
 @OptIn(ExperimentalTestApi::class)
 class HomeScreenTest {
     @get:Rule val compose = createComposeRule()
+
+    @Test fun noticeLeavesACompleteFirstRowAndEveryAppCanBeRevealed() {
+        data class Case(val scale: Float, val notice: HomeNotice)
+        val cases = listOf(1f, 1.3f, 1.5f, 1.8f, 2f).flatMap { scale ->
+            listOf(HomeNotice.Cancelling, HomeNotice.NeedsAttention,
+                HomeNotice.MonthlyCheck(listOf("Sam")), HomeNotice.ModeChangeWaiting,
+                HomeNotice.TurnOffWaiting("21:15", HomeNoticeDay(LocalDate.of(2026, 10, 8), 0)),
+                HomeNotice.TurnOffWaiting("21:15", HomeNoticeDay(LocalDate.of(2026, 10, 9), 1)),
+                HomeNotice.TurnOffWaiting("21:15", HomeNoticeDay(LocalDate.of(2026, 10, 10), 2)),
+                HomeNotice.TurnOffWaiting("21:15", HomeNoticeDay(LocalDate.of(2026, 10, 15), 7)))
+                .map { Case(scale, it) }
+        }
+        val current = mutableStateOf(cases.first())
+        val events = mutableListOf<HomeEvent>()
+        compose.setContent {
+            val case = current.value
+            DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(case.scale)) {
+                PlainphoneTheme {
+                    Box(Modifier.size(360.dp, 560.dp)) {
+                        key(case) {
+                            HomeScreen(HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct",
+                                (1..4).map { HomeApp("app-$it", "App $it") }, case.notice), events::add)
+                        }
+                    }
+                }
+            }
+        }
+        cases.forEach { case ->
+            compose.runOnIdle { current.value = case; events.clear() }
+            val notice = compose.onNodeWithTag("home-notice").getUnclippedBoundsInRoot()
+            val list = compose.onNodeWithTag("home-apps").getUnclippedBoundsInRoot()
+            val first = compose.onNodeWithText("App 1").getUnclippedBoundsInRoot()
+            assertTrue("$case: list must clear the notice", list.top >= notice.bottom + 12.dp)
+            assertTrue("$case: first app must be completely below the notice", first.top >= notice.bottom)
+            assertTrue("$case: first app must fit inside the list", first.top >= list.top && first.bottom <= list.bottom)
+            for (index in 1..4) {
+                compose.onNodeWithTag("home-apps").performScrollToNode(hasText("App $index"))
+                val row = compose.onNodeWithText("App $index")
+                val bounds = row.getUnclippedBoundsInRoot()
+                assertTrue("$case: App $index must be fully revealed", bounds.top >= list.top && bounds.bottom <= list.bottom)
+                row.assertIsDisplayed().performClick()
+                compose.onNodeWithText("Messages").assertIsDisplayed()
+                compose.onNodeWithText("Phone").assertIsDisplayed()
+                compose.onNodeWithText("More").assertIsDisplayed()
+            }
+            assertEquals((1..4).map { HomeEvent.OpenApp("app-$it") }, events)
+        }
+    }
 
     @Test fun pinnedActionsStayVisibleAndEmitOnlyTheirEvents() {
         val events = mutableListOf<HomeEvent>()
@@ -51,8 +104,8 @@ class HomeScreenTest {
                 }
             }
         }
-        // The last supplied app must be present immediately, above the pinned block.
-        compose.onNodeWithText("App 20").assertIsDisplayed()
+        // Overflow starts with the first app in the supplied order.
+        compose.onNodeWithText("App 1").assertIsDisplayed()
         compose.onNodeWithText("Emergency", substring = true).assertDoesNotExist()
         compose.onNodeWithText("9-1-1", substring = true).assertDoesNotExist()
         compose.onNodeWithText("Messages").assertIsDisplayed().performClick()
@@ -67,7 +120,7 @@ class HomeScreenTest {
         assertEquals(listOf(HomeEvent.OpenMessages, HomeEvent.OpenPhone, HomeEvent.OpenMore,
             HomeEvent.OpenApp("app-1"), HomeEvent.OpenNotice), events)
     }
-    @Test fun platformAccessibilityCanRevealEarlierApps() {
+    @Test fun platformAccessibilityCanRevealLaterApps() {
         compose.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(2f)) {
                 PlainphoneTheme {
@@ -87,12 +140,14 @@ class HomeScreenTest {
             }
             return null
         }
-        val root = InstrumentationRegistry.getInstrumentation().uiAutomation.rootInActiveWindow
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        compose.waitUntil(timeoutMillis = 5_000) { automation.rootInActiveWindow != null }
+        val root = requireNotNull(automation.rootInActiveWindow)
         val list = requireNotNull(scrollNode(root)) { "Platform accessibility has no scrollable list" }
-        assertTrue("Earlier apps must be reachable through Android accessibility", list.performAction(
-            AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD))
+        assertTrue("Later apps must be reachable through Android accessibility", list.performAction(
+            AccessibilityNodeInfo.ACTION_SCROLL_FORWARD))
         compose.waitForIdle()
-        compose.onNodeWithText("App 6").assertIsDisplayed()
+        compose.onNodeWithText("App 3").assertIsDisplayed()
         compose.onNodeWithText("Phone").assertIsDisplayed()
     }
 

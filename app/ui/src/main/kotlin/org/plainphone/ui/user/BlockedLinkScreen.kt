@@ -34,7 +34,7 @@ fun BlockedLinkScreen(state: BlockedLinkUiState, onEvent: (BlockedLinkEvent) -> 
             { onEvent(BlockedLinkEvent.GoBack) },
         ) { Text(stringResource(R.string.link_too_long), style = PlainphoneType.Body) }
         is BlockedLinkUiState.Confirm -> TaskScreen(
-            stringResource(R.string.link_confirm_title, state.recipientName.withoutBidiControls()), stringResource(R.string.user_send),
+            stringResource(R.string.link_confirm_title, state.recipientName.withoutBidiControls()), stringResource(if (state.sending) R.string.ask_sending else R.string.user_send),
             { onEvent(BlockedLinkEvent.Send) }, primaryEnabled = !state.sending,
             secondary = stringResource(R.string.link_dont_send), secondaryEnabled = !state.sending,
             onSecondary = { onEvent(BlockedLinkEvent.DontSend) },
