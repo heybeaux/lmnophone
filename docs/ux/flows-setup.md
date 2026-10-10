@@ -1,7 +1,7 @@
 # On-phone setup and the handover check
 
 Words, rules and placeholders are in [README.md](README.md). This is what the phone shows **after** the setup
-script has made Plainphone the phone's manager. The steps before that (backup, reset, the offline wizard, the
+script has made LMNOPhone the phone's manager. The steps before that (backup, reset, the offline wizard, the
 script) are in [../setup-guide.md](../setup-guide.md).
 
 **Spec:** guided-setup ("Setup asks which mode the phone uses"; "Privacy steps after Google sign-in"; "On-phone setup
@@ -33,15 +33,15 @@ A step bar is shown on every screen, as text, not dots: "Step 3 of 8".
 
 ## S0. Welcome
 
-- **Title:** Set up Plainphone
+- **Title:** Set up LMNOPhone
 - **Body:**
   This part is for the helper. It takes about 30 minutes, plus a few minutes with each trusted person.
   Keep the phone with you until the last step says **Ready**.
-  First, Plainphone tidies up the phone. It hides apps that came with it. This happens before the phone goes
+  First, LMNOPhone tidies up the phone. It hides apps that came with it. This happens before the phone goes
   online.
 - **Primary:** Start
 - **Then:** "Tidying up the phone…" (the preinstall sweep, guided-setup; offline), then "Done. {n} apps were
-  hidden." with **Next**. If the sweep can't run: "Plainphone can't tidy up this phone. Stop here and see the
+  hidden." with **Next**. If the sweep can't run: "LMNOPhone can't tidy up this phone. Stop here and see the
   setup guide, 'The script or sweep stopped'." No way forward.
 
 ## S1. How is this phone looked after? (step 1 of 8)
@@ -56,8 +56,8 @@ says "friction, not a lock" before the user sets their PIN).
 
   | Choice | Second line |
   |---|---|
-  | **Someone looks after it** | One or two trusted people add apps with {user}. Turning Plainphone off waits 24 hours. |
-  | **{user} looks after it** | {user} holds the PIN. Plainphone adds waits and limits so that distraction takes effort. |
+  | **Someone looks after it** | One or two trusted people add apps with {user}. Turning LMNOPhone off waits 24 hours. |
+  | **{user} looks after it** | {user} holds the PIN. LMNOPhone adds waits and limits so that distraction takes effort. |
 
 - **Body (under the choices, small):** You can change this later. Changing it takes 24 hours.
 - **Primary:** Next (enabled once one is chosen)
@@ -70,7 +70,7 @@ Shown before the user sets a PIN (spec scenario "Self-managed setup").
 
 - **Title:** Friction, not a lock
 - **Body:**
-  In self-managed mode, you hold the PIN. Plainphone adds waits and limits so that distraction takes effort. It
+  In self-managed mode, you hold the PIN. LMNOPhone adds waits and limits so that distraction takes effort. It
   can't stop you, because you are in charge. You can always remove it by waiting at least 24 hours of the phone
   being on (longer if the change is cancelled or interrupted), or by wiping the phone.
   ([Flag 3](flows-people-modes-and-waits.md#flags-strings-i-think-should-change): the words in brackets are the
@@ -78,7 +78,7 @@ Shown before the user sets a PIN (spec scenario "Self-managed setup").
 - **Box** (grey), heading **"How opening up works"**:
   - To open the Play Store or full phone settings, you enter your PIN, then wait **10 minutes**, then tap Start.
   - You can do this **2 times a day**. It closes by itself after 5 or 10 minutes.
-  - Turning Plainphone off, or making the waits shorter, takes 24 hours.
+  - Turning LMNOPhone off, or making the waits shorter, takes 24 hours.
 - **Primary:** I understand
 - **Secondary:** Go back
 
@@ -120,15 +120,15 @@ Only when a second trusted person was added. Both should be there; if not, the h
 
 - **Title:** {tp} and {other} are equals
 - **Body:**
-  You are equals. Either of you can approve apps, or turn Plainphone off.
+  You are equals. Either of you can approve apps, or turn LMNOPhone off.
   ([Flag 1](flows-people-modes-and-waits.md#flags-strings-i-think-should-change) proposes "add apps".)
   Each of you has your own PIN. Neither of you can see or change the other's. You both get a text whenever either
   PIN is used, so you'll know if someone else used yours.
-  Big changes, like turning Plainphone off, wait 24 hours so either of you can cancel. That protects against
+  Big changes, like turning LMNOPhone off, wait 24 hours so either of you can cancel. That protects against
   someone who saw a PIN. It doesn't stop the other trusted person: a recovery code skips the wait.
 - **Primary:** We understand
 - **Notes:** spec (TPC): "Setup SHALL tell both people, in plain words, that they are equals and that either can
-  approve apps or turn Plainphone off." The last sentence is the disclosure item about two people, said here first.
+  approve apps or turn LMNOPhone off." The last sentence is the disclosure item about two people, said here first.
 
 ## S3. PINs and recovery codes (step 3 of 8)
 
@@ -145,7 +145,7 @@ With two trusted people, S3a–S3c run once for each, in turn: "Hand the phone t
   unlock code.
 - **Keypad**, then "Type it again".
 - **Primary:** Next
-- **Notes:** two trusted people may pick the same PIN. Plainphone never says so (TPC).
+- **Notes:** two trusted people may pick the same PIN. LMNOPhone never says so (TPC).
 
 ### S3b. Your recovery code
 
@@ -185,7 +185,7 @@ The guide makes sure the SIM is out (or the eSIM is off) until here.
   The tidy-up is done, so it's safe to go online.
   1. Put the SIM card back in, or turn the eSIM back on (the setup guide shows how).
   2. Join Wi-Fi.
-- **Secondary:** Turn the eSIM on → a Plainphone screen listing the phone's eSIMs, each with an on/off switch.
+- **Secondary:** Turn the eSIM on → an LMNOPhone screen listing the phone's eSIMs, each with an on/off switch.
   (If this can't be done without Android Settings, the AE makes it a short Settings session; the guide covers
   both.)
 - **Primary:** Join Wi-Fi → the U7 Wi-Fi screen, then back here.
@@ -211,7 +211,7 @@ The guide makes sure the SIM is out (or the eSIM is off) until here.
 ### S4d. Test text to each trusted person
 
 - **Title:** Send a test text to {tp}
-- **Body:** Plainphone uses texts to tell {tp} about requests, changes and the monthly check. This checks they arrive.
+- **Body:** LMNOPhone uses texts to tell {tp} about requests, changes and the monthly check. This checks they arrive.
   If the phone has two SIMs: "Send from: {SIM 1 name} / {SIM 2 name}".
 - **Primary:** Send test text
 - **With two trusted people:** one text to each, and one "Did {tp} get it?" question for each. Each answer is its own
@@ -226,13 +226,13 @@ The guide makes sure the SIM is out (or the eSIM is off) until here.
 ### S4e. Make Google collect less
 
 **Spec:** guided-setup "Privacy steps after Google sign-in" (straight after sign-in, before lock task; four steps;
-each recorded as done or skipped by the helper; Plainphone doesn't claim to check them or read account data);
+each recorded as done or skipped by the helper; LMNOPhone doesn't claim to check them or read account data);
 design C9.
 
 - **Title:** Make Google collect less
 - **Body:**
   This phone runs Google's Android, and Google collects some data about how it's used. These four settings reduce
-  that. They're in {user}'s Google account and in the phone's settings, so Plainphone can't change or check them:
+  that. They're in {user}'s Google account and in the phone's settings, so LMNOPhone can't change or check them:
   you do them together, and tick each one.
   The setup guide, "Privacy steps", shows where each one is.
 - **Four rows**, each with a short line and two choice buttons, **Done** and **Skip** (nothing pre-selected):
@@ -250,7 +250,7 @@ design C9.
 - **Notes:**
   - "Skip" is a fine answer (spec scenario "User wants to keep Timeline"). No warning when skipping.
   - Never say "private", "protected" or "Google can't see". Say "collect less".
-  - Plainphone stores only the four answers. It reads nothing from the Google account.
+  - LMNOPhone stores only the four answers. It reads nothing from the Google account.
   - Self-managed: "{user}'s" becomes "your".
 
 ## S5. Google's reset protection (step 5 of 8)
@@ -262,8 +262,8 @@ design C9.
 - **Title:** If the phone is ever wiped
 - **Body:**
   If someone erases this phone using its buttons, Google will ask for {tp}'s Google account before the phone can
-  be used again. That stops someone simply wiping Plainphone away.
-  For that, Plainphone needs an account number from Google. {tp} gets it on their own phone or computer, not
+  be used again. That stops someone simply wiping LMNOPhone away.
+  For that, LMNOPhone needs an account number from Google. {tp} gets it on their own phone or computer, not
   this one. The setup guide, "Get the account number", shows how; it takes about 5 minutes.
 - **Two trusted people:** "…Google will ask for {tp}'s or {other}'s Google account…". S5b–S5d run once for each, then
   S5e.
@@ -271,9 +271,9 @@ design C9.
   **Title:** If the phone is ever wiped
   **Body:** If someone erases this phone using its buttons, Google will ask for your Google account before the phone
   can be used again. A stranger can't get past that.
-  You can, though: after a wipe, you can set the phone up without Plainphone. That's part of self-managed mode:
+  You can, though: after a wipe, you can set the phone up without LMNOPhone. That's part of self-managed mode:
   friction, not a lock.
-  For this, Plainphone needs an account number from Google. Get it on a computer or another phone, not this one.
+  For this, LMNOPhone needs an account number from Google. Get it on a computer or another phone, not this one.
   The setup guide, "Get the account number", shows how.
 - **Primary:** I have the number
 
@@ -296,8 +296,8 @@ design C9.
 
 - **Title:** Two checks with {tp}
 - ☐ {tp} can sign in to this Google account on a phone or computer that isn't {user}'s phone or {tp}'s own
-  Plainphone phone.
-- ☐ {tp}'s 2-step verification (codes or prompts) isn't only on a Plainphone phone.
+  LMNOPhone.
+- ☐ {tp}'s 2-step verification (codes or prompts) isn't only on an LMNOPhone.
 - **Question:** "Is this Google account less than 3 days old?" **Yes** / **No**.
   Yes → "Carry on. After {date+72h}, repeat 'Get the account number' and check it still matches. The setup guide
   has a reminder." The handover check then shows reset protection as "set, waiting for the 3-day re-check".
@@ -312,7 +312,7 @@ design C9.
   This matters most when two people look after each other's phones.
 - **Primary:** Add a backup person → S5b–S5d again, for the backup person
 - **Secondary:** Not now
-- **Notes:** when `{tp}` is also the user of the other Plainphone phone (the two initial users), the body adds:
+- **Notes:** when `{tp}` is also the user of the other LMNOPhone (the two initial users), the body adds:
   "Recommended: you two look after each other's phones." In supervised mode, no trusted person's or backup person's
   account may be signed in on this phone; in self-managed mode, {user}'s own account is signed in as normal, and the
   backup person's must not be (device-lockdown).
@@ -334,16 +334,16 @@ design C9.
 
 ## S7. Read the limits (step 7 of 8)
 
-- **Title:** Before you finish: what Plainphone can't stop
+- **Title:** Before you finish: what LMNOPhone can't stop
 - **Body:** {tp}, please read this. It takes about 3 minutes. (Two trusted people: "{tp} and {other}, please
   read this together." Self-managed: "{user}, please read this.")
-- Then [L1](flows-limits-and-off.md#l1-what-plainphone-cant-stop) in full, in the version for this mode.
+- Then [L1](flows-limits-and-off.md#l1-what-lmnophone-cant-stop) in full, in the version for this mode.
 - **Primary:** I've read this
 
 ## S8. Last step: unplug and check (step 8 of 8)
 
 - **Title:** Unplug the computer
-- **Body:** Plainphone will now switch off the computer connection, lock everything down, and check the phone.
+- **Body:** LMNOPhone will now switch off the computer connection, lock everything down, and check the phone.
   This takes about a minute.
 - **Primary:** Lock down and check
 - **Then:** the handover check (S9). From here, setup can't be opened again.
@@ -354,17 +354,17 @@ design C9.
 
 A list, one row per check. A passed check shows **✓** and its text in `ink`. A failed check shows **✗** and the
 failure text in `ink`, with the fix on a second line in `ink-2`, inside a grey box so failures stand out by shape,
-not colour ([design-tokens.md](design-tokens.md)). Plainphone says **Ready** only when every check has passed; the
+not colour ([design-tokens.md](design-tokens.md)). LMNOPhone says **Ready** only when every check has passed; the
 only exception is reset protection with Beaux's recorded acceptance.
 
 | Check (text when passed) | Failure text | Fix shown |
 |---|---|---|
-| Plainphone is in charge of this phone | "Plainphone isn't in charge of this phone." | "Run the setup script again (setup guide, Part F)." |
+| LMNOPhone is in charge of this phone | "LMNOPhone isn't in charge of this phone." | "Run the setup script again (setup guide, Part F)." |
 | Protections are on | "{n} protections didn't turn on." | "Restart the phone and run the check again. If it still fails, see the guide." |
 | Computer connection is off | "The computer connection is still on." | "Unplug the cable and tap Check again." |
-| Phone software is genuine | "This phone's software isn't the locked, original version." | "Stop. This phone can't be used with Plainphone. See the guide." |
+| Phone software is genuine | "This phone's software isn't the locked, original version." | "Stop. This phone can't be used with LMNOPhone. See the guide." |
 | Reset protection is set for {everyone} (and {backup}); self-managed: "for {user}" (and {backup}) | "Reset protection doesn't match the numbers entered." | "Re-enter the numbers in step 5." |
-| Web links come to Plainphone | "Another app is handling web links." | "Run the check again. If it fails, see the guide." |
+| Web links come to LMNOPhone | "Another app is handling web links." | "Run the check again. If it fails, see the guide." |
 | Emergency and phone parts are all there | "Part of the phone's emergency system is missing." | "Stop. Don't hand the phone over. See the guide." |
 | Emergency self-test passed | "The emergency self-test failed." | "Stop. Don't hand the phone over. See the guide." |
 | App updates are on | "Automatic app updates weren't confirmed." | "Go back to step 4." |
@@ -373,7 +373,7 @@ only exception is reset protection with Beaux's recorded acceptance.
 
 Under the list, a grey box that **doesn't** gate Ready (GS):
 **Privacy steps (recorded by the helper):** Web & App Activity: done · Timeline: skipped · Ad personalisation: done ·
-Advertising ID: done. No ✓ or ✗ here: Plainphone can't check them, so it only repeats what was ticked.
+Advertising ID: done. No ✓ or ✗ here: LMNOPhone can't check them, so it only repeats what was ticked.
 
 **Primary:** Check again (while anything fails) · **Done** (when every check has passed, after S10)
 
@@ -381,7 +381,7 @@ Advertising ID: done. No ✓ or ✗ here: Plainphone can't check them, so it onl
 
 - **Title:** Ready
 - **Body:**
-  Plainphone is set up on {user}'s phone.
+  LMNOPhone is set up on {user}'s phone.
   Before {user} uses it every day, do the emergency and calling checks in the setup guide, Part I. They need a
   second phone and about 15 minutes.
 - **Box** (grey), heading **"Show {user} how to call 9-1-1"**. There's no Emergency button on the home screen,

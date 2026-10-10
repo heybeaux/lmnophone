@@ -1,7 +1,7 @@
 # Battery and data: Lead's recommendation (PLA-123)
 
 Status: **revision 1, desk assessment; measurements pending.** Board request from Beaux (Telegram 4537, 2026-10-09):
-can Plainphone cut trackers and background processes, so the battery lasts longer and less data is used?
+can LMNOPhone cut trackers and background processes, so the battery lasts longer and less data is used?
 This comes **after the MVP core** and must not hold up the test build. Measurements on the spare wait for the MVP test
 build ([PLA-15](/PLA/issues/PLA-15)) and run in the spike in [PLA-125](/PLA/issues/PLA-125) (question Q15).
 
@@ -44,7 +44,7 @@ Sources: Android 15 AOSP (`android15-release`); full list under [Sources](#sourc
 | Doze and standby | Irrelevant: a hidden app has no process and can't start | — |
 
 So "hidden apps run no background work" is supported by the source, with one gap (jobs before the cache refresh,
-and FCM) that Q15 measures. Plainphone itself is a device admin, so Android keeps it in the exempt standby bucket
+and FCM) that Q15 measures. LMNOPhone itself is a device admin, so Android keeps it in the exempt standby bucket
 (`AppStandbyController.getAppMinBucket`). That is why its 15-minute check keeps running; it is small and stays.
 
 ## Other Device Owner levers
@@ -57,12 +57,12 @@ Android gives a Device Owner few extra levers. None is worth adding before Q15 s
 | Suspend (`setPackagesSuspended`) | Blocks the app's screens and notifications, but its jobs, alarms and network keep running. Android refuses it for the dialer, launcher, Play (S3) and device admins | **No.** Weaker than hiding |
 | Disable a system app | No Device Owner API; only `enableSystemApp` exists | Not available |
 | Block mobile data per app (`setMeteredDataDisabledPackages`, API 28) | Blocks the app on mobile data **even in the foreground**; Wi-Fi only if marked metered. Skips system UIDs and hidden apps | **No for approved apps** (it would break them on mobile). Possible later for an approved app the trusted person wants Wi-Fi-only, as a visible setting |
-| Background data per app, Data Saver, standby bucket, "Restricted" battery mode | Need system permissions (`MANAGE_NETWORK_POLICY`, `CHANGE_APP_IDLE_STATE`); adb only | **Not available** to Plainphone. Doing it by adb at setup would not survive and isn't supportable |
+| Background data per app, Data Saver, standby bucket, "Restricted" battery mode | Need system permissions (`MANAGE_NETWORK_POLICY`, `CHANGE_APP_IDLE_STATE`); adb only | **Not available** to LMNOPhone. Doing it by adb at setup would not survive and isn't supportable |
 | Tracker-blocking private DNS (`setGlobalPrivateDnsModeSpecifiedHost`, API 29) | Forces a DNS-over-TLS host for the whole phone. If the host is down, Android marks the network "No internet access" | **Not now.** It is the existing optional Q9 (DNS filter). One outside service could cut off every app's data, and its effect on Wi-Fi calling and captive portals is unverified. Revisit only if Q15 shows approved apps sending lots of tracker traffic |
 | Always-on VPN filter | System apps can bypass a VPN (javadoc), so it doesn't reach preinstalled bloat | **No** for this purpose (Q9 again) |
 | Lock task | Changes nothing for Doze or standby; the phone dozes normally when the screen is off | Neutral |
 
-Useful for later: as Device Owner, Plainphone can read per-app data use for every app with no extra permission
+Useful for later: as Device Owner, LMNOPhone can read per-app data use for every app with no extra permission
 (`NetworkStatsManager`, `NetworkStatsAccess.checkAccessLevel` returns `DEVICE`). A future "data used this month"
 line for the trusted person is cheap. Per-app battery stats are not readable without `BATTERY_STATS` (unverified).
 
@@ -83,7 +83,7 @@ restrict the data of, or block the DNS of any of these:
   reviews) already owns this. Q15 also checks it on the phone and reports any miss as blocking.
 - **The custody contract** (design D2). Any new protection must be checked by the protected-state check at the end
   of every supervised session. A session must never be able to remove it quietly.
-- **Plainphone's own checks.** It hides new installs at once and re-checks every 15 minutes (D3). That costs a little
+- **LMNOPhone's own checks.** It hides new installs at once and re-checks every 15 minutes (D3). That costs a little
   battery and stays.
 
 ## Battery and data budget for the MVP acceptance run
@@ -99,7 +99,7 @@ Proposed budget. The hard checks apply now; the numeric ones are set from Q15's 
 | Check | Budget | How it is verified |
 |---|---|---|
 | Hidden packages | **Zero** CPU time, wakeups, jobs run and bytes over 24 h idle | Per-UID batterystats, jobscheduler history, netstats |
-| Plainphone itself | **Zero bytes** (the app has no `INTERNET` permission on `main`); at most about 5 wakeups an hour (the 15-minute check plus events) | Same, for Plainphone's UID |
+| LMNOPhone itself | **Zero bytes** (the app has no `INTERNET` permission on `main`); at most about 5 wakeups an hour (the 15-minute check plus events) | Same, for LMNOPhone's UID |
 | Whole phone, idle 24 h, screen off | Estimated drain **no higher than stock** (window A), target to be set from Q15 | batterystats estimated mAh ÷ 5000 mAh |
 | Wi-Fi data, idle 24 h, excluding Play and Play services updates | **No higher than stock**, target to be set from Q15 | `dumpsys netstats detail`, per UID |
 | Doze | The phone enters deep Doze within about an hour of screen-off | `dumpsys deviceidle` history |
