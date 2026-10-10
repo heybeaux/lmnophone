@@ -94,14 +94,18 @@ class FakeDevicePolicyPort(
     override fun home(): PackageName? { touch("home"); return homePackage }
     override fun setHome(name: PackageName) { write("home", "home ${name.value}"); homePackage = name }
 
-    /** App UIDs; a package without an entry gets its own. Packages in [uidUnreadable] throw. */
+    /**
+     * App UIDs; a package without an entry gets its own. Packages in [uidUnreadable] throw; packages in
+     * [uidAbsent] read as not installed (null), as `DpmPort.uid` does for an absent package.
+     */
     val uids = mutableMapOf<PackageName, Int>()
     val uidUnreadable = mutableSetOf<PackageName>()
+    val uidAbsent = mutableSetOf<PackageName>()
     private val assigned = mutableMapOf<PackageName, Int>()
     override fun uid(name: PackageName): Int? {
         touch("uid")
         if (name in uidUnreadable) throw IllegalStateException("uid of ${name.value} unreadable")
-        if (name !in state) return null
+        if (name !in state || name in uidAbsent) return null
         return uids[name] ?: assigned.getOrPut(name) { 10_000 + assigned.size }
     }
 
