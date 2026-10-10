@@ -41,6 +41,14 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
         return run.result(applied, null)
     }
 
+    /** Reads every readback step of [plan] against Android now and writes nothing. A throwing read is false. */
+    fun readBack(plan: PolicyPlan): Boolean {
+        val run = Run(plan)
+        return plan.steps.all { step ->
+            !step.readbackRequired || try { run.readBack(step.stage) } catch (e: Exception) { false }
+        }
+    }
+
     private inner class Run(private val plan: PolicyPlan) {
         private val expected: ExpectedPolicyState = plan.expected
         private val absent = mutableSetOf<PackageName>()
