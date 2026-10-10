@@ -11,6 +11,9 @@ import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasText
@@ -54,14 +57,16 @@ class HomeScreenTest {
             compose.runOnIdle { scale.value = value; events.clear() }
             compose.onNodeWithText("Ask for an app, settings, help").assertDoesNotExist()
             compose.onNodeWithText("^", useUnmergedTree = true).assertDoesNotExist()
-            val label = compose.onNodeWithText("More", useUnmergedTree = true)
+            // Unmerged tests also see the cleared measurement probes; only inspect the visible label.
+            val clearedProbe = SemanticsMatcher("cleared measurement probe") { it.config.isClearingSemantics }
+            val label = compose.onNode(hasText("More") and !hasAnyAncestor(clearedProbe), useUnmergedTree = true)
                 .getUnclippedBoundsInRoot()
             assertTrue("$value: More label must be centered", kotlin.math.abs((label.left.value + label.right.value) / 2f - 180f) < 1f)
             val control = compose.onNodeWithText("More")
             val target = control.getUnclippedBoundsInRoot()
             assertTrue("$value: preserve full-width inset target", target.right - target.left >= 312.dp)
             assertTrue("$value: preserve 64 dp target height", target.bottom - target.top >= 64.dp)
-            control.assertIsDisplayed().performClick()
+            control.assertTextEquals("More").assertIsDisplayed().performClick()
             assertEquals(listOf(HomeEvent.OpenMore), events)
         }
     }

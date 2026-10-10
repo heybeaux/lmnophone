@@ -140,8 +140,10 @@ recommendation; none changes a promise.
    date, Phone, Messages and their other approved apps, "and nothing else" (Emergency is no longer on the home
    screen: Beaux, Telegram 4487). But the user also needs a way to ask for
    an app, reach Plainphone's own settings, and hand the phone to the trusted person. **Recommendation:** one
-   last tile, "More", below the apps, styled like an app tile. Amend the scenario to "…and their other approved
-   apps, then More". Also confirm that "one primary action" applies to task screens, not menu pages.
+   last control, "More", below the apps. **Visual direction settled in [PLA-285](/PLA/issues/PLA-285):**
+   centered plain text, no subtitle, caret, border or decorative Home divider rules; retain its 64 dp touch target.
+   The remaining spec wording suggestion is "…and their other approved apps, then More".
+   "One primary action" applies to task screens, not menu pages.
 2. **Helper and trusted person are the same person.** On the partner's phone, Beaux is both. guided-setup says the
    helper confirms "the trusted person, and not the helper, has the recovery code". That can't be satisfied as
    written. **Recommendation:** when the two are the same person, the setup screen asks instead that the code is

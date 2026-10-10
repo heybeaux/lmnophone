@@ -113,7 +113,7 @@ still work, which calms me down"), and could still call at a hotel.
 
 | What he said | Change |
 |---|---|
-| Q1: "I was confused by 'Ask Sam to do the monthly phone check'. … 'Request App/Access' could be an alternative. Oh, it was under More." | The More tile gets a small line: "Ask for an app, settings, help" ([U1](flows-user.md#u1-home-screen)). |
+| Q1: "I was confused by 'Ask Sam to do the monthly phone check'. … 'Request App/Access' could be an alternative. Oh, it was under More." | The original revision added a subtitle. **Superseded by the approved [PLA-285](/PLA/issues/PLA-285) visual feedback:** centered plain-text More, without a subtitle, caret or border ([U1](flows-user.md#u1-home-screen)). |
 | Q2: "I'm not sure why it's on the main screen if it's used so infrequently." | It shows only when the check is due; U1 and the packet now say so. The Lead may make the check event-driven (PLA-24). For {tp}, it is now one path, "Check for updates". The home line's wording is spec-fixed; see "Heard, not changed". |
 | Q3: "This could get very restrictive… I would perhaps prefer the ability to turn web browsing on for 2-5 minutes." | Product question for the Lead ([README](README.md#open-questions-for-the-lead), question 9). |
 | Q4: "It looks like it sends Sam a message. I don't know if he got it or not." | New list of requests under the box, with "Sam's phone got it ✓" when the network confirms delivery ([U5e](flows-user.md#u5e-your-requests-below-the-box-on-u5a)). It never claims Sam has read it. |

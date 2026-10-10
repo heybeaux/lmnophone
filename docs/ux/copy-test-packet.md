@@ -49,7 +49,7 @@ SCREEN 1 (the main screen)
   Camera
   Messages
   Phone
-  More — Ask for an app, settings, help
+              More
 
 SCREEN 2 (after tapping "Ask Sam to do the monthly phone check")
   Title: The monthly phone check

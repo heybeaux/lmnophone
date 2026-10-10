@@ -19,7 +19,8 @@ screen; Readable by default); essential-calling-and-texting (9-1-1 always reacha
 
 The look (font, black and white, sizes) is in [design-tokens.md](design-tokens.md); the mockups are in
 [mockups/plainphone-screens.html](mockups/plainphone-screens.html). The screen has a fixed top block and an app list
-that sits low, where a thumb reaches, with white space between them. The words on this screen are unchanged.
+that sits low, where a thumb reaches, with white space between them. The Home revision approved in
+[PLA-285](/PLA/issues/PLA-285) uses centered plain-text More, without a subtitle, border or decorative divider rules.
 
 1. **Time and date**, one line each. At 200% the date may shorten to "Thu 8 Oct".
 2. **Notice line** (only when one applies, see below), in a light grey box under the date.
@@ -31,10 +32,9 @@ that sits low, where a thumb reaches, with white space between them. The words o
    Large type, one per row, left-aligned.
 5. **Messages**, then **Phone**: always there, always the last two names, nearest the thumb (as in Beaux's
    reference image).
-6. **More**: an outlined bar across the bottom, "More ^", with a small line under it: **"Ask for an app,
-   settings, help"**. It sits where Beaux's reference image has a search field; there is no search field. In his
-   copy test, Beaux looked for a way to ask for an app and found it only after a while. See
-   [Open question 1](README.md#open-questions-for-the-lead).
+6. **More**: centered plain text, **"More"**, with no subtitle, caret, border or fill. Keep the full-width
+   inset touch target, at least 64 dp tall, pinned below Phone. Tapping it opens More (U4), including its
+   Emergency 9-1-1 row. Separate Home elements with whitespace, never decorative horizontal rules.
 
 Nothing else: no icons, no search bar, no widgets, no badges, no dots, no suggestions, no feeds, no swipe-up
 drawer.
@@ -56,11 +56,7 @@ drawer.
 │ Camera                       │
 │ Messages                     │
 │ Phone                        │  ← 9-1-1 is dialled here
-│ ╭──────────────────────────╮ │
-│ │ More ^                   │ │
-│ │ Ask for an app, settings,│ │
-│ │ help                     │ │
-│ ╰──────────────────────────╯ │
+│             More             │
 └──────────────────────────────┘
 ```
 
@@ -79,16 +75,14 @@ drawer.
 │ Camera                       │
 │ Messages                     │
 │ Phone                        │
-│ ╭──────────────────────────╮ │
-│ │ More ^                   │ │
-│ ╰──────────────────────────╯ │
+│             More             │
 └──────────────────────────────┘
 ```
 
 **Rule (calm-home-screen, "Overdue monthly check at largest font"):** the time, date and the notice line are a
 fixed block at the top; Messages, Phone and More are a fixed block at the bottom. Neither scrolls. Only the
 other apps scroll, in the space between. The notice line is at most 3 lines; if longer it ends with "…" (the
-full text is on the screen it opens). At 200% More drops its second line. All text, the time included, grows with
+full text is on the screen it opens). More has the same single label at every text size. All text, the time included, grows with
 the text size and never shrinks. If the screen is short, the layout gives way in a fixed order (time and date on
 one line, notice cut to 2 lines, and so on), never shrinking Messages, Phone or More. The order and the
 smallest supported screen (360 × 640 dp) are in
