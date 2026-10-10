@@ -1,0 +1,34 @@
+# preview-2b emulator: power cut during an unhide (pla113-a35, API 35), 2026-10-10
+# Before: com.android.chrome hidden=true. SET_STARTER adds it; the host killed the emulator (adb emu kill, no shutdown) 100 ms after the PREVIEW2 PLAN line, i.e. during the apply.
+# Lines streamed before the kill:
+10-10 10:36:55.094 I/Plainphone(  968): PREVIEW2 STARTER [com.google.android.dialer, com.google.android.apps.messaging, com.android.camera2, com.google.android.apps.maps, com.android.chrome]
+10-10 10:36:55.178 I/Plainphone(  968): PREVIEW2 PLAN hidden=11 lockTask=[com.android.camera2, com.android.chrome, com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.an
+# killed at 17:36:55.278 UTC (10:36:55.278 device time)
+
+# Cold boot (no snapshot, no wipe). logcat from boot:
+10-10 10:37:19.194 I/ActivityTaskManager(  570): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=org.plainphone/.MainActivity (has extras)} with LAUNCH_SINGLE_TASK from uid 0 (BAL_ALLOW_ALLOWLISTED_UID) result cod
+10-10 10:37:19.650 I/boot_progress_enable_screen(  570): 9196
+10-10 10:37:20.129 I/PlainphoneBoot(  959): reapply reason=start control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledF
+10-10 10:37:22.623 I/am_user_state_changed(  570): [0,1]
+10-10 10:37:22.689 I/am_user_state_changed(  570): [0,2]
+10-10 10:37:22.735 I/am_user_state_changed(  570): [0,3]
+10-10 10:37:23.554 I/Plainphone(  959): PREVIEW2 PLAN hidden=11 lockTask=[com.android.camera2, com.android.chrome, com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.android.apps.safetyhub
+10-10 10:37:24.137 I/PlainphoneBoot(  959): reapply reason=package:PACKAGE_CHANGED:android control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DIS
+10-10 10:37:24.399 I/PlainphoneBoot(  959): home shown lockTask=1 at=13945
+10-10 10:37:24.738 I/Plainphone(  959): PREVIEW2 PLAN hidden=11 lockTask=[com.android.camera2, com.android.chrome, com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.android.apps.safetyhub
+10-10 10:37:25.308 I/PlainphoneBoot(  959): reapply reason=locked-boot control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEAT
+10-10 10:37:25.330 I/ActivityTaskManager(  570): START u0 {flg=0x10000000 cmp=org.plainphone/.MainActivity} with LAUNCH_SINGLE_TASK from uid 10217 (BAL_ALLOW_ALLOWLISTED_COMPONENT) result code=3
+10-10 10:37:25.628 I/Plainphone(  959): PREVIEW2 PLAN hidden=11 lockTask=[com.android.camera2, com.android.chrome, com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.android.apps.safetyhub
+10-10 10:37:25.728 I/PlainphoneBoot(  959): reapply reason=package:PACKAGE_ADDED:com.android.chrome control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_R
+
+# After boot:
+hidden=false
+mLockTaskModeState=LOCKED
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+
+# Reading:
+# - Home was not drawn until the first full unlocked re-apply read back (10:37:24.137); Home shown at 24.399, in lock task.
+# - PACKAGE_ADDED for com.android.chrome arrives only after boot (25.728). An unhide enqueues PACKAGE_ADDED, so this
+#   suggests the cut lost the in-flight unhide (chrome came back hidden) and the boot re-apply unhid it again. Not proven:
+#   the on-disk state before the re-apply was not read. Either way chrome ends hidden=false and the run reads back ready=true.
+# - emu kill ends qemu without a guest shutdown; it stands in for a power cut, host-side caching aside.
