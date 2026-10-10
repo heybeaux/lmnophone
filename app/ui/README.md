@@ -49,8 +49,7 @@ From `app/`:
 ./gradlew :ui:assembleDebugAndroidTest
 ```
 
-The 83 committed goldens include 18 home cases and 22 user-screen cases at font
-scales 1.0 and 2.0 on a
+Home has 19 fixtures at font scales 1.0, 1.3, 1.5, 1.8 and 2.0 (95 goldens) on a
 360×640 device, reserving 32 dp for the status bar and 48 dp for navigation.
 These cover cancelling, eight apps, duplicate IDs, singular/plural minutes,
 zero/one/two trusted people, and same-day/tomorrow/weekday/short-date wording.
@@ -76,7 +75,10 @@ Run on a 360×640 dp emulator. Home and user-screen tests force 200% text using
 They check bottom anchoring, pinned actions, scroll behavior, duplicate IDs,
 cancelling, absence of an emergency control, event routing, a unique full
 accessible notice, and reaching pinned actions below the minimum viewport.
-The suite also invokes Android accessibility scrolling to reveal earlier apps;
+The Home bounds regression checks eight notices (including all four turn-off date
+forms) at those five scales: initial first-row clearance, full reveal and taps of
+four apps, and pinned Messages/Phone/More. The suite also invokes Android
+accessibility scrolling to reveal later apps;
 user-screen cases cover name joins, host validation, IME entry, history/retry,
 blocked-link isolation and pinned Wi-Fi actions. Never use a physical device or
 an unqualified connected-device Gradle task for this lane.
