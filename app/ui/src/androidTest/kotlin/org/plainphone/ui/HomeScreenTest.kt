@@ -37,6 +37,35 @@ import org.plainphone.ui.theme.PlainphoneTheme
 class HomeScreenTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun moreIsCenteredPlainTextWithTheExistingTouchTarget() {
+        val scale = mutableStateOf(1f)
+        val events = mutableListOf<HomeEvent>()
+        compose.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(scale.value)) {
+                PlainphoneTheme {
+                    Box(Modifier.size(360.dp, 560.dp)) {
+                        HomeScreen(HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct",
+                            listOf(HomeApp("camera", "Camera"))), events::add)
+                    }
+                }
+            }
+        }
+        listOf(1f, 1.3f, 1.5f, 1.8f, 2f).forEach { value ->
+            compose.runOnIdle { scale.value = value; events.clear() }
+            compose.onNodeWithText("Ask for an app, settings, help").assertDoesNotExist()
+            compose.onNodeWithText("^", useUnmergedTree = true).assertDoesNotExist()
+            val label = compose.onNodeWithText("More", useUnmergedTree = true)
+                .getUnclippedBoundsInRoot()
+            assertTrue("$value: More label must be centered", kotlin.math.abs((label.left.value + label.right.value) / 2f - 180f) < 1f)
+            val control = compose.onNodeWithText("More")
+            val target = control.getUnclippedBoundsInRoot()
+            assertTrue("$value: preserve full-width inset target", target.right - target.left >= 312.dp)
+            assertTrue("$value: preserve 64 dp target height", target.bottom - target.top >= 64.dp)
+            control.assertIsDisplayed().performClick()
+            assertEquals(listOf(HomeEvent.OpenMore), events)
+        }
+    }
+
     @Test fun pinnedActionsStayVisibleAndEmitOnlyTheirEvents() {
         val events = mutableListOf<HomeEvent>()
         compose.setContent {
