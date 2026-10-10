@@ -15,7 +15,8 @@ Installed on the spare Moto (<spare>, Android 15) on 2026-10-10 at 00:51 UTC (Fr
 - No PIN, recovery code, approvals, "Ask for an app", link rules, waits or a trusted person. Each of these opens
   "Not in this test build yet", and nothing is changed or sent.
 - The names on the More screen (Sam, Jo) are sample text.
-- No restrictions such as blocking safe mode or factory reset.
+- Plainphone sets no restrictions, so nothing blocks safe mode or factory reset. Android's own Device Owner defaults
+  (no extra work, clone or private profiles) still apply.
 - After a restart, Android keeps the hidden apps, Home and the lock task list, and Plainphone applies its settings
   again when Home opens. The full boot path, checked before Home shows (including Direct Boot), is preview-2b
   (Saturday 10 Oct).
@@ -28,7 +29,13 @@ Installed on the spare Moto (<spare>, Android 15) on 2026-10-10 at 00:51 UTC (Fr
 |---|---|---|
 | 1. 9-1-1 typed in, no call placed | More, Phone, lock-screen button (temporary PIN) | More, Phone; lock screen has no button without a PIN |
 | 2. `remove-active-admin` removes Plainphone, hidden apps come back | 13 of 13 back | 70 of 70 back |
-| 3. Each unhide saved at once (mitigation B) | on disk 3 ms after the apply | flip read back straight after the unhide |
+| 3. Each unhide followed at once by its save flip (mitigation B, best effort) | unhide and flip seen in the file 3 ms after the apply (the hide control was also prompt, so this does not isolate the flip) | flip ran and read back straight after the unhide; storage not observable without root |
+
+## Known risk (unchanged by this build)
+Mitigation B is best effort, not a guarantee. On Android 15 the package-settings write that records an unhide is queued,
+not forced to storage (PLA-185 F1, PLA-25). If power is lost just after an unhide, the phone can come back with that app
+hidden again. In the worst case (PLA-22) it can get stuck restarting. The board accepted that risk for the spare only, and
+the spare may be erased from recovery if it gets stuck (1A consent).
 
 ## Way out
 `adb -s <spare> shell dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver`. This brings back every app

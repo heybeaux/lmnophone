@@ -1,6 +1,8 @@
 # Check 3 on the spare (<spare>, user build, no root), build ed18e62, 2026-10-10T00:48:26Z
-Without root the restrictions file can't be read. Evidence: hidden state and the FlushMarker state read back straight after the apply;
-the flip uses PackageManager.SYNCHRONOUS, so it returns only after the package settings are written.
+Without root the restrictions file can't be read. Evidence: the hidden state and the FlushMarker state, read back straight after the apply.
+This shows the flip ran after the unhide and took effect. It does NOT show the settings reached storage: on Android 15 the
+SYNCHRONOUS flag still queues the package-settings write (PackageManagerService -> Settings.writePackageRestrictions with
+sync=false; PLA-185 F1). Mitigation B is best effort, as the approved spec and PLA-25 say.
 Start (Clock hidden):
 00:48:26.306 clock: hidden=true | FlushMarker: default
 ## Clock added to the list -> unhide, then the flip

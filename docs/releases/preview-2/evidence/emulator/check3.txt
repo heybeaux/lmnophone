@@ -17,6 +17,9 @@ after ~14 s:
 
 ## Reading
 - Unhide: apply finished 15:33:26.781 (log); package-restrictions.xml mtime 15:33:26.784 shows Clock shown and
-  FlushMarker flipped disabled -> enabled. The unhide was on disk at once. flipFailures=[] on every apply.
+  FlushMarker flipped disabled -> enabled. Both were in the file 3 ms later. flipFailures=[] on every apply.
 - Control: on this API 35 emulator the hide was also on disk at once (mtime 15:33:12.072, 17 ms after the apply), so
   the control does not separate the flip from the platform's own write here. Mitigation B stays best effort (PLA-25).
+
+Correction (PLA-185 F1): this shows the platform wrote promptly in this trial. It is not a durability guarantee: on Android 15
+the write behind the SYNCHRONOUS flip is queued (sync=false). Mitigation B is best effort.
