@@ -1,7 +1,8 @@
+# PUBLIC COPY: device serial or local workstation path generalized; original preserved privately.
 # First attempt with testOnly v2/v3 failed: INSTALL_FAILED_TEST_ONLY (a session from the app cannot pass -t). Production builds are not test-only, so v2/v3 rebuilt with testOnly=false.
 ## Self-update v1 -> v2, grey on, in lock task
 $ adb push grey-v2.apk (testOnly=false, same debug key) /data/local/tmp/u.apk; run-as ... cp to files/update.apk
-/Users/user/.openclaw/tmp/paperclip-run-pla-38-7e63826d-9d6-PL2i7m/grey-v2.apk: 1 file pushed, 0 skipped. 483.4 MB/s (2396571 bytes in 0.005s)
+/path/to/workspace/.openclaw/tmp/paperclip-run-pla-38-7e63826d-9d6-PL2i7m/grey-v2.apk: 1 file pushed, 0 skipped. 483.4 MB/s (2396571 bytes in 0.005s)
 $ cmd self-update
 committed session 1739789517 (2396571 bytes)
 $ logcat
@@ -19,18 +20,18 @@ android.permission.WRITE_SECURE_SETTINGS
 android.permission.WRITE_SECURE_SETTINGS: granted=true
 $ keys
 enabled=1 mode=0
-colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]] 
+colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]]
 $ cmd status
 version=grey-2(2) deviceOwner=true WRITE_SECURE_SETTINGS=true lockTask=1 accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0
 $ cmd grey-off / grey-on (grant still usable after update?)
 putInt mode=true enabled=true -> accessibility_display_daltonizer_enabled=0 accessibility_display_daltonizer=0
-colorTransformMatrix=[[1.000,0.000,0.000,0.000][0.000,1.000,0.000,0.000][0.000,0.000,1.000,0.000][0.000,0.000,0.000,1.000]] 
+colorTransformMatrix=[[1.000,0.000,0.000,0.000][0.000,1.000,0.000,0.000][0.000,0.000,1.000,0.000][0.000,0.000,0.000,1.000]]
 putInt mode=true enabled=true -> accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0
-colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]] 
+colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]]
 
 ## Self-update v2 -> v3
 $ adb push grey-v3.apk (testOnly=false, same debug key) /data/local/tmp/u.apk; run-as ... cp to files/update.apk
-/Users/user/.openclaw/tmp/paperclip-run-pla-38-7e63826d-9d6-PL2i7m/grey-v3.apk: 1 file pushed, 0 skipped. 503.3 MB/s (2396571 bytes in 0.005s)
+/path/to/workspace/.openclaw/tmp/paperclip-run-pla-38-7e63826d-9d6-PL2i7m/grey-v3.apk: 1 file pushed, 0 skipped. 503.3 MB/s (2396571 bytes in 0.005s)
 $ cmd self-update
 committed session 1553246389 (2396571 bytes)
 $ logcat
@@ -48,19 +49,19 @@ android.permission.WRITE_SECURE_SETTINGS
 android.permission.WRITE_SECURE_SETTINGS: granted=true
 $ keys
 enabled=1 mode=0
-colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]] 
+colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]]
 $ cmd status
 version=grey-3(3) deviceOwner=true WRITE_SECURE_SETTINGS=true lockTask=1 accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0
 $ cmd grey-off / grey-on (grant still usable after update?)
 putInt mode=true enabled=true -> accessibility_display_daltonizer_enabled=0 accessibility_display_daltonizer=0
-colorTransformMatrix=[[1.000,0.000,0.000,0.000][0.000,1.000,0.000,0.000][0.000,0.000,1.000,0.000][0.000,0.000,0.000,1.000]] 
+colorTransformMatrix=[[1.000,0.000,0.000,0.000][0.000,1.000,0.000,0.000][0.000,0.000,1.000,0.000][0.000,0.000,0.000,1.000]]
 putInt mode=true enabled=true -> accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0
-colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]] 
+colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]]
 
 ## Reboot after updates
 versionCode=3 minSdk=33 targetSdk=35
 android.permission.WRITE_SECURE_SETTINGS
 android.permission.WRITE_SECURE_SETTINGS: granted=true
 enabled=1 mode=0
-colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]] 
+colorTransformMatrix=[[0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.213,0.715,0.072,0.000][0.000,0.000,0.000,1.000]]
 version=grey-3(3) deviceOwner=true WRITE_SECURE_SETTINGS=true lockTask=1 accessibility_display_daltonizer_enabled=1 accessibility_display_daltonizer=0

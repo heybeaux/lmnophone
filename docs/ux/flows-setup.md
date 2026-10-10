@@ -312,7 +312,7 @@ design C9.
   This matters most when two people look after each other's phones.
 - **Primary:** Add a backup person → S5b–S5d again, for the backup person
 - **Secondary:** Not now
-- **Notes:** when `{tp}` is also the user of the other Plainphone phone (Beaux and the trusted person), the body adds:
+- **Notes:** when `{tp}` is also the user of the other Plainphone phone (the two initial users), the body adds:
   "Recommended: you two look after each other's phones." In supervised mode, no trusted person's or backup person's
   account may be signed in on this phone; in self-managed mode, {user}'s own account is signed in as normal, and the
   backup person's must not be (device-lockdown).

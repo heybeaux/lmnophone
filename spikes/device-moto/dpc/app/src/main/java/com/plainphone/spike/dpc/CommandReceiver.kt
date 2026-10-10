@@ -1,5 +1,5 @@
 // THROWAWAY SPIKE (PLA-5). adb test hook:
-//   adb -s SPARE_DEVICE_SERIAL shell am broadcast -n com.plainphone.spike.dpc/.CommandReceiver \
+//   adb -s "$SERIAL" shell am broadcast -n com.plainphone.spike.dpc/.CommandReceiver \
 //       -a com.plainphone.spike.CMD --es cmd "status"
 // Protected by android.permission.DUMP, which the adb shell holds and normal apps cannot get.
 package com.plainphone.spike.dpc

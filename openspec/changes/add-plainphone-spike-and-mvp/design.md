@@ -1,6 +1,6 @@
 ## Context
 
-- **Users.** Beaux and the trusted person in [town], Canada. Neither is technical. Each is likely the other's trusted person.
+- **Users.** The two initial users in Canada. Neither is technical. Each is likely the other's trusted person.
 - **Architecture.** `docs/decisions/0001-architecture.md` (revision 6) names the leading candidate:
   - a Device Owner app that is also the home screen;
   - running on a certified stock Android phone with long security support.
@@ -20,7 +20,7 @@
   - **Permissions:** pre-granting them is proposed, **not tested**.
   - **Not yet tested:** reboot, power menu, lock-screen emergency, calls and SMS.
 - **Policy constraints:**
-  - Physical work only on the board-approved spare (serial SPARE_DEVICE_SERIAL), within its rules: Settings resets only, no recovery wipes, test-only DPC.
+  - Physical work only on the board-approved spare (the spare test device), within its rules: Settings resets only, no recovery wipes, test-only DPC.
   - No remote repo.
   - No paid services.
   - Cross-model review.
@@ -146,7 +146,7 @@ Q13 adds the manufacturer's emergency components, such as Motorola's SOS and eme
 
 If an alert can't be injected, the result is **inconclusive**, which blocks release. The only way past it is a build-scoped exception that Beaux records; that exception must also say whether the disabled-alert negative control was verified.
 
-**Before handover to Beaux or the trusted person (N8), on their actual model and build:**
+**Before handover to either initial user (N8), on their actual model and build:**
 - the emergency dialer opens in every state, without placing a call;
 - an incoming call can be answered, and its keypad sends tones (E-Comm's automatic callback needs a keypress);
 - an alert is **observed** on screen, either from a scheduled Alert Ready test or a test method Beaux approves. Otherwise the phone stays in custody, or Beaux records a build-scoped exception and the promise becomes "Plainphone does not block alerts";
@@ -221,7 +221,7 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 - On their own device, the trusted person opens the People API `people.get` "Try it" page. They pick the exact account (by address) in Google's account picker and authenticate with `personFields=names`. Then they copy the digits after `people/` as text. Accounts less than 72 hours old are re-tested later; Q10 on the target phone gates handover.
 - Plainphone shows the digits back for confirmation. It collects no tokens or passwords.
 - The helper records that the trusted person can sign in from a device other than either Plainphone phone, and that their second factor isn't only on a Plainphone phone.
-- A backup person's ID can be added. This is recommended when Beaux and the trusted person are each other's trusted person.
+- A backup person's ID can be added. This is recommended when the two initial users are each other's trusted person.
 
 **Handover check.** Plainphone shows "Ready" only when all of these pass:
 - Device Owner set
@@ -288,16 +288,16 @@ Anything else needs a supervised Settings session. There is no generic "helper t
   3. Beaux approves the target model
   4. Beaux's phone, after the real-device handover checks
   5. two weeks of use
-  6. the trusted person's phone
+  6. The partner's phone
 - **Rollback:** turn Plainphone off (journaled and resumable). As a last resort: a recovery wipe plus the trusted person's account, with Beaux's approval for that phone.
 
 ## Open Questions
 
 **Answered by Beaux (Telegram 4446/4448, 2026-10-08, relayed by Scout):**
 1. **Device.** The spare XT2415 is the device for the spike and the MVP. The daily-use model is deferred and needs its own OK.
-2. **People.** Beaux and the trusted person are each other's trusted person. The backup is a separate Google account that Beaux controls. *Lead note:* on Beaux's own phone, that backup lets Beaux pass reset protection after a wipe. This weakens the check the trusted person provides on his phone. It is fine for the trusted person's phone. **Beaux confirmed (Telegram 4448/4451): keep it.** He accepts the weaker check on his own phone. the trusted person's phone is unchanged.
+2. **People.** The two initial users are each other's trusted person. The backup is a separate Google account that Beaux controls. *Lead note:* on Beaux's own phone, that backup lets Beaux pass reset protection after a wipe. This weakens the check the partner provides on his phone. It is fine for the partner's phone. **Beaux confirmed (Telegram 4448/4451): keep it.** He accepts the weaker check on his own phone. The partner's phone is unchanged.
 3. **License.** Apache-2.0.
-4. **Must-have apps.** Beaux: Slack, Spotify, and maybe Telegram. the trusted person (Telegram 4448/4451): Gmail and Outlook. *Lead notes, all leads to verify in Q4:*
+4. **Must-have apps.** Beaux: Slack, Spotify, and maybe Telegram. The partner (Telegram 4448/4451): Gmail and Outlook. *Lead notes, all leads to verify in Q4:*
    - Telegram has its own in-app browser, which is a likely web-leak route.
    - Gmail and Outlook both render HTML mail and open links. Each may open links inside the app (an in-app browser or Custom Tab) rather than handing them to Android, so the blocked-link screen may never see them.
    - Gmail is preinstalled on the Motorola, so it is a system app, and it carries other Google surfaces (Chat, Meet tabs).
@@ -308,6 +308,6 @@ Anything else needs a supervised Settings session. There is no generic "helper t
 
 7. **Plan, leftover risks and custody limit.** Accepted with the plan (PLA-1 confirmation eb7a21ba).
 
-8. **Wi-Fi sign-in and Wi-Fi calling (Telegram 4481, PLA-17).** Sign-in Wi-Fi stays unsupported in the MVP. The approved direction for later is in D4. Beaux and the trusted person rely on Wi-Fi calling **sometimes**, so the handover checklist (task 6.3) checks that Wi-Fi calling works on ordinary Wi-Fi with Plainphone's policy on. Wi-Fi calling on a sign-in network only works once the sign-in is done, which Beaux accepted.
+8. **Wi-Fi sign-in and Wi-Fi calling (Telegram 4481, PLA-17).** Sign-in Wi-Fi stays unsupported in the MVP. The approved direction for later is in D4. The two initial users rely on Wi-Fi calling **sometimes**, so the handover checklist (task 6.3) checks that Wi-Fi calling works on ordinary Wi-Fi with Plainphone's policy on. Wi-Fi calling on a sign-in network only works once the sign-in is done, which Beaux accepted.
 
 **For the spike:** Q1–Q14 in `docs/feasibility-questions.md`.

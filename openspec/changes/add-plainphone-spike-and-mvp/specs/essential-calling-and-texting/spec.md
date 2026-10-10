@@ -60,7 +60,7 @@ A failing gate SHALL block release. If Beaux records a build-scoped exception fo
 - **THEN** the gate fails
 
 ### Requirement: Real-device emergency checks before handover to a user
-Before a phone is handed to Beaux or the trusted person for daily use, all of the following SHALL pass on that phone's model and build:
+Before a phone is handed to either initial user for daily use, all of the following SHALL pass on that phone's model and build:
 
 - **Emergency dialer.** It opens in every state listed above, without placing a call.
 - **Incoming calls.** An incoming call can be answered under lock task, and its in-call keypad sends tones (DTMF) to the caller. E-Comm's automatic callback needs a keypress.

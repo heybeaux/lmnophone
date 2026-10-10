@@ -3,8 +3,9 @@
 # Launches each spec from the spike's MainActivity (an allowed app) and records what ends up on top.
 # Usage: tools/a3-matrix.sh <outdir>
 set -uo pipefail
-SERIAL="${SERIAL:-SPARE_DEVICE_SERIAL}"
-case "$SERIAL" in emulator-5590|emulator-5604) echo "refusing: $SERIAL belongs to another team" >&2; exit 2;; esac
+: "${SERIAL:?Set SERIAL to the explicitly approved test device}"
+case "$SERIAL" in emulator-*) echo "refusing: physical-device helper requires an approved physical device" >&2; exit 2;; esac
+export SERIAL
 a() { adb -s "$SERIAL" "$@"; }
 here="$(cd "$(dirname "$0")" && pwd)"
 out="$1"; mkdir -p "$out"

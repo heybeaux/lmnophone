@@ -10,7 +10,7 @@ This is spike work, not MVP code. Everything under `spikes/emulator/` is throwaw
 | `pp11-a36` | emulator-5630 | `google/sdk_gphone64_arm64/emu64a:16/BE2A.250530.026.D1/13818094:user/release-keys` (Google Play, API 36), fresh `-wipe-data` boot | Q3 adb and QR path, Q1 matrix and Q4 repeated |
 | `pp11-a37` | (crashed during startup) | `system-images/android-37.0/google_apis_playstore` | Not used: the emulator exited during first boot. API 36 is the newest image that ran. |
 
-- No Google account on any emulator (`dumpsys account` count = 0). We never touched emulator-5590, emulator-5604 or SPARE_DEVICE_SERIAL.
+- No Google account on any emulator (`dumpsys account` count = 0). We never touched emulator-5590, emulator-5604 or the spare test device.
 - DPC: `apps/dpc` (`com.plainphone.spike.emu`), built `testOnly`. It is the Device Owner, the home app, the lock-task owner and the link-catcher. Test hook: `tools/pp.sh` (`cmd …` sends a broadcast to `CommandReceiver`, guarded by `android.permission.DUMP` so only adb can call it).
 - Lock-task setup (`tools/setup.sh`): packages = Dialer, Messages, Camera (`com.android.camera2`), `com.android.phone`, plus the system-only emergency floor (`com.android.server.telecom`, `com.google.android.apps.safetyhub`). Features = `SYSTEM_INFO|NOTIFICATIONS|HOME|GLOBAL_ACTIONS|KEYGUARD|BLOCK_ACTIVITY_START_IN_TASK` ("flag on").
 - Fixtures (`apps/fx-*`, user-installed): `fx-browser` (general browser), `fx-applinks` (one domain with `autoVerify` plus custom scheme `ppfx:`), `fx-httponly`, `fx-urlbar` (in-app URL bar and WebView, no web filter), `fx-emergency` (declares `EmergencyDialer.DIAL`, `CALL_EMERGENCY` and `DIAL_EMERGENCY` at priority 1000).
@@ -69,7 +69,7 @@ java.lang.SecurityException: Permission Denial ... requires android.permission.D
 - The emulator boots straight to the Pixel launcher (`evidence/q3/a36-welcome.png`; the file name is wrong, it shows the launcher). So there is no welcome screen to tap six times for the QR reader.
 - The only other way into ManagedProvisioning needs a privileged permission that adb shell does not hold.
 - We built the QR payload anyway (`tools/qr.py`, image `evidence/q3/qr-testonly.png`; checksum = SHA-256 of the debug signing cert, base64url). We booted API 36 with it as a virtual-scene camera poster. It can be reused on the phone.
-- **Next step:** QR provisioning of the test-only DPC has to be tried on SPARE_DEVICE_SERIAL in PLA-5, which owns the phone.
+- **Next step:** QR provisioning of the test-only DPC has to be tried on the spare test device in PLA-5, which owns the phone.
 
 ---
 
@@ -332,7 +332,7 @@ This answers the Verifier's findings V1–V7 in `docs/reviews/PLA-13-emulator-sp
 - **DPC versions.** a36 ran `emu-3-pla23` (sha256 `cd4a6d06…`) from setup. On a35 the DPC was updated in place during the run to `emu-4-pla23` (`65b4c793…`, logged at the end of `provenance-a35.txt`), to add the `es.` launch extras and the `classify-essential` hook. To install it I cleared `no_install_apps`, installed, and set the restriction again. The policy read-back after the update matches the read-back before it.
 - **Two intended restrictions did not stick.** `no_config_private_dns` and `no_config_default_apps` returned "OK added" but are missing from the read-back on both images. Not investigated.
 - **Policy per result.** Each detector row asserts the policy line before and after the case. Each matrix file starts and ends with the full policy line. The scripts that change the list (V3, V4, V6) print every change and read-back inline.
-- I did not touch emulator-5590, emulator-5604, emulator-5640 (the Verifier's `pla25-review-a35`) or SPARE_DEVICE_SERIAL. After every hide or unhide the scripts wait 15 s (PLA-22). No emulator was rebooted after a hide.
+- I did not touch emulator-5590, emulator-5604, emulator-5640 (the Verifier's `pla25-review-a35`) or the spare test device. After every hide or unhide the scripts wait 15 s (PLA-22). No emulator was rebooted after a hide.
 
 ### V2: result detector, and the matrix re-run
 
