@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Plainphone contributors. SPDX-License-Identifier: Apache-2.0 -->
+<!--
+  PLA-219 launch target for WindowContainmentCheck. No code: the framework's own Activity class serves
+  every entry point, so the check can try an explicit start, a deep link and a share into it. Requests
+  CAMERA so the approval flow has a permission to write in its window.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.plainphone.launchtarget">
+    <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="35" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <application android:hasCode="false" android:label="Plainphone launch target">
+        <activity android:name="android.app.Activity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="plainphone-check" android:host="open" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
