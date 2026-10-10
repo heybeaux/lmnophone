@@ -1,0 +1,52 @@
+# Spare <spare> setup, motorola/cancunn_g_sys/cancunn:15/V1UDS35H.26-14-6-2-11/27ec35b-72bc9:user/release-keys, build 09cb880, 2026-10-10T00:34:28Z
+APK sha256: e26a7e386c4102673009a457edae4f380925f1622cf78915871f0eef5ca0caea
+accounts: 0 (Google and Meet removed in Settings with board consent, card cd29e97d)
+before: User  0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
+Warning: Activity not started, its current task has been brought to the front
+Success: Admin removed ComponentInfo{com.plainphone.spike.dpc/com.plainphone.spike.dpc.AdminReceiver}
+after spike removal: no owners
+Performing Streamed Install
+Success
+Success: Device owner set to package org.plainphone/.PlainphoneAdminReceiver
+Active admin set to component org.plainphone/.PlainphoneAdminReceiver
+starter list: com.google.android.dialer,com.google.android.apps.messaging,com.motorola.camera3,com.google.android.apps.maps
+Broadcasting: Intent { act=org.plainphone.preview.SET_STARTER flg=0x400000 cmp=org.plainphone/.preview.SetupCommandReceiver (has extras) }
+Broadcast completed: result=0
+apply: 10-09 17:34:46.562 30394 30517 I Plainphone: PREVIEW2 APPLY complete=false failed=HIDES applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] hidden=72 lockTask=[com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.android.apps.safetyhub, com.google.android.dialer, com.motorola.camera3, org.plainphone] absent=[] flipFailures=[] floorUnreadable=[]
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+--- read back
+1 owner:
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+home: com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher
+lock task state: mLockTaskModeState=NONE
+hidden or uninstalled: 71 packages (list left out of the repo: it is the spare's personal app inventory)
+testOnly: TEST_ONLY
+
+## First apply stopped at HIDES: com.plainphone.spike.dpc (old throwaway spike, no longer admin) would not hide;
+## PackageManager logs 'Missing required system package: com.plainphone.spike.dpc'. Lock task and Home were not set (fail closed).
+uninstall spike dpc: Success
+uninstall spike target: Success
+Broadcast completed: result=0
+10-09 17:35:53.453 30394 31190 I Plainphone: PREVIEW2 APPLY complete=false failed=HIDES applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] hidden=71 lockTask=[com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.android.apps.safetyhub, com.google.android.dialer, com.motorola.camera3, org.plainphone] absent=[] flipFailures=[] floorUnreadable=[]
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+home: com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher
+topResumedActivity=ActivityRecord{c4d94f9 u0 com.motorola.launcher3/com.android.launcher3.CustomizationPanelLauncher t130}
+mLockTaskModeState=NONE
+visible launcher apps: com.android.settings com.google.android.apps.maps com.google.android.apps.messaging com.google.android.dialer com.motorola.camera3 org.plainphone 
+
+## Second attempt still stopped at HIDES: com.tracfone.preload.accountservices is system-disabled, declares a launcher
+## activity, and never reads back hidden. Fix c2bb012: disabled apps leave the hide set. Re-run setup:
+Performing Streamed Install
+Success
+starter list: com.google.android.dialer,com.google.android.apps.messaging,com.motorola.camera3,com.google.android.apps.maps
+Broadcasting: Intent { act=org.plainphone.preview.SET_STARTER flg=0x400000 cmp=org.plainphone/.preview.SetupCommandReceiver (has extras) }
+Broadcast completed: result=0
+apply: 10-09 17:39:56.945 31948 32010 I Plainphone: PREVIEW2 APPLY complete=true failed=null applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] hidden=41 lockTask=[com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.android.apps.safetyhub, com.google.android.dialer, com.motorola.camera3, org.plainphone] absent=[] flipFailures=[] floorUnreadable=[]
+--- read back
+1 owner:
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+home: org.plainphone/.MainActivity
+lock task state: mLockTaskModeState=LOCKED
+testOnly: TEST_ONLY
+hidden or uninstalled count: 70
+visible launcher apps: com.android.settings com.google.android.apps.maps com.google.android.apps.messaging com.google.android.dialer com.motorola.camera3 org.plainphone 

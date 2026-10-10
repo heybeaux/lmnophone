@@ -1,0 +1,45 @@
+# Check 1 on the spare (<spare>, motorola/cancunn_g_sys/cancunn:15/V1UDS35H.26-14-6-2-11/27ec35b-72bc9:user/release-keys), build c2bb012, 2026-10-10T00:41:09Z. No call button is ever pressed.
+topResumedActivity=ActivityRecord{adc631e u0 org.plainphone/.MainActivity t212}
+mLockTaskModeState=LOCKED
+## 1a Home > More > Emergency 9-1-1
+emergency row at 522 529
+topResumedActivity=ActivityRecord{db6cc2b u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivityDialAlias t213}
+mLockTaskModeState=LOCKED
+screen shows: text="911"
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+## 1b Home key, then Home > Phone, dial pad 9 1 1
+topResumedActivity=ActivityRecord{adc631e u0 org.plainphone/.MainActivity t212}
+topResumedActivity=ActivityRecord{db6cc2b u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivityDialAlias t213}
+mLockTaskModeState=LOCKED
+content-desc="" bounds="[0,117][1080,2120]" content-desc="" bounds="[0,117][1080,1049]" 
+Phone opened the dialer task left from 1a, still showing text="911". Cleared with three DEL key presses:
+after clear: text="911"
+after tapping 9 1 1 on the dial pad: text="911-911"
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+topResumedActivity=ActivityRecord{db6cc2b u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivityDialAlias t213}
+mLockTaskModeState=LOCKED
+topResumedActivity=ActivityRecord{adc631e u0 org.plainphone/.MainActivity t212}
+DEL key events don't clear this field. Retry: Home > Phone, then long-press the dial pad's delete button.
+topResumedActivity=ActivityRecord{db6cc2b u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivityDialAlias t213}
+showing: text="911-911"
+delete button bounds: 940 1024 1080 1162 
+(eval):6: bad math expression: operator expected at `1024 1080 ...'
+delete button bounds [940,1024][1080,1162]; long-press at 1010,1093
+after long-press delete: text="Phone Number"
+after tapping 9 1 1: text="911"
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+topResumedActivity=ActivityRecord{db6cc2b u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivityDialAlias t213}
+mLockTaskModeState=LOCKED
+topResumedActivity=ActivityRecord{adc631e u0 org.plainphone/.MainActivity t212}
+## 1c Lock screen (spare: no PIN, per the preview-2 rules; no SIM, status bar shows 'Emergency calls only')
+- The swipe-only lock screen shows no Emergency button: AOSP shows it only on the PIN/password screen.
+- Power menu (the other lock-screen route): injected 'input keyevent --longpress' and '--duration 1500' KEYCODE_POWER did not open it.
+- After the swipe: topResumedActivity=ActivityRecord{adc631e u0 org.plainphone/.MainActivity t212}
+  mLockTaskModeState=LOCKED
+- Lock-task list includes Personal Safety, which the lock-screen Emergency button and SOS need (PLA-40): com.google.android.apps.safetyhub
+- So on the spare, 9-1-1 from the lock screen is: swipe, then Phone or More > Emergency (1a, 1b). The lock-screen
+  Emergency button itself was shown on the emulator with a temporary PIN (evidence/emulator/check1.txt, 1c).
+telecom at end:   mCalls:    mCallAudioManager:     All calls: 
+
+Screenshots: checked by eye before commit. No accounts are on the phone; no names, numbers, contacts or call log are
+visible, so none needed redaction.
