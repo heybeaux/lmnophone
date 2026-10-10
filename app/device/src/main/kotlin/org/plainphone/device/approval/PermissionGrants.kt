@@ -71,32 +71,53 @@ enum class GrantWrite {
  * 3. checks the identity again after the readback. If another identity is installed by then, its
  *    grant is fixed DENIED (not DEFAULT: DEFAULT would leave a granted permission granted and
  *    changeable) and read back, whatever the requested choice was;
- * 4. puts back an uninstall block it added, in every case. If the process dies, or Android refuses
+ * 4. clears an uninstall block it added, in every case. If the process dies, or Android refuses
  *    that write, the block stays and the app cannot be uninstalled until it is cleared.
  *
  * A key-rotation update (APK Signature Scheme v3) is a normal update, so the block does not stop it
  * and the permission state carries over (`pla182` evidence: "rotated update installs while uninstall
  * is blocked", "the rotated app kept CAMERA GRANTED"). The binding pins the exact signer set, so the
- * rotated app is another identity. If it lands before the last signer read (step 3), its grant is
- * fixed DENIED and the result is [GrantWrite.REPLACED_CONTAINED].
+ * rotated app is another identity. When the rotation lands decides the result (host tests named):
+ * - already there at the first identity check (step 2): [GrantWrite.NOT_DONE], and nothing is
+ *   written (`rotationAlreadyThereAtTheFirstIdentityCheckIsNotDoneAndWritesNothing`);
+ * - after that check and by the last signer read (step 3): [write] fixes the grant DENIED on whatever
+ *   is installed now and reads it back. If that reads back DENIED, the result is
+ *   [GrantWrite.REPLACED_CONTAINED] (`keyRotationBeforeTheLastSignerReadIsAnotherIdentityAndIsContained`).
+ *   If Android refuses that write or it does not read back, the result is
+ *   [GrantWrite.REPLACED_NOT_CONTAINED], and the rotated app may keep the grant
+ *   (`rotationSeenAfterTheWriteWithARefusedContainmentIsNotContainedAndKeepsTheGrant`,
+ *   `rotationSeenAfterTheWriteWithAContainmentThatDoesNotReadBackIsNotContained`; for an unrelated
+ *   replacement, `failedContainmentIsReportedAsNotContained`);
+ * - after the last signer read: [GrantWrite.DONE], see below.
  *
  * What DONE means. [GrantWrite.DONE] says: the grant was written and read back for the exact approved
  * identity, and that identity was still installed at the last signer read (step 3), while the uninstall
- * block was held. It is a verified snapshot, not a guarantee for the whole call. Nothing is checked from
- * the last signer read, through putting back the block (step 4), to the return. Only a same-lineage v3
- * rotation can land in that window: the block refuses uninstall, and Android refuses an update signed
- * by an unrelated key (`pla182` evidence: DELETE_FAILED_OWNER_BLOCKED and
- * INSTALL_FAILED_UPDATE_INCOMPATIBLE, hidden and visible). A rotation needs the app developer's own
- * signing lineage. If one lands there, [write] still returns DONE and the rotated app keeps the grant;
- * no containment runs. Another signer check would only move the window. The `pla182` emulator check
- * injects its rotation before the first grant write; host tests cover the late window.
+ * block was held. It is a verified snapshot, not a guarantee for the whole call. Nothing is checked
+ * after that read. Two intervals follow it before [write] returns:
+ * - Block held: from the last signer read until [write] clears the block it added (step 4), or, for a
+ *   block that was already there, until the return. Only a same-lineage v3 rotation can change the
+ *   identity here: the block refuses uninstall, and Android refuses an update signed by an unrelated key
+ *   (`pla182` evidence: DELETE_FAILED_OWNER_BLOCKED and INSTALL_FAILED_UPDATE_INCOMPATIBLE, hidden and
+ *   visible). A rotation needs the app developer's own signing lineage. If one lands here, [write]
+ *   still returns DONE and the rotated app keeps the grant; no containment runs. The `pla182` emulator
+ *   check injects its rotation before the first grant write; host tests cover this interval
+ *   (`rotationWhileTheBlockIsRestoredIsOutsideDoneAndTheReReadIsUnknown`,
+ *   `rotationAfterTheLastSignerReadWithAnExistingBlockIsOutsideDoneAndTheReReadIsUnknown`).
+ * - After a temporary block is cleared, until the return (only when [write] added the block). Nothing
+ *   refuses an uninstall now, so the package can also be fully uninstalled and a fresh app by any
+ *   signer installed under the same name. [write] still returns DONE. No claim is made here about the
+ *   fresh app's grant state. A host test covers this interval
+ *   (`unrelatedReplacementAfterTheTemporaryBlockIsClearedIsOutsideDoneAndTheReReadIsUnknown`); there is
+ *   no device evidence for this timing.
+ * Another signer check would only move the window.
  *
  * Callers' duty. Before relying on a grant, or committing an approval, re-read it with [read] by the
- * exact identity. [read] gives UNKNOWN for an identity that is no longer installed, so a rotated app
- * fails that check (`:policy` re-reads after its writes and again in its commit check). The rotated app
- * may still hold the grant while it is hidden and unapproved. Plainphone clears it only at the next
- * approval for that package, which writes and reads back every requested permission; withdrawal and
- * removal keep the app hidden and do not rewrite its grants.
+ * exact identity. [read] gives UNKNOWN for an identity that is no longer installed, so a rotated app,
+ * or a fresh app by another signer, fails that check (`:policy` re-reads after its writes and again in
+ * its commit check). A rotated app may still hold the grant while it is hidden and unapproved.
+ * Plainphone replaces that stale grant only at the next approval for that package, with the new
+ * explicit choices (which may include Allow): that approval writes and reads back every requested
+ * permission. Withdrawal and removal keep the app hidden and do not rewrite its grants.
  *
  * [set] is true only for [GrantWrite.DONE], with the same meaning. False means "not done", also when a
  * side effect on a replacement was contained.
