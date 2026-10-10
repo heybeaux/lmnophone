@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import android.text.format.DateFormat
 import androidx.activity.ComponentActivity
@@ -19,6 +20,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +29,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import kotlin.concurrent.thread
 import kotlinx.coroutines.delay
+import org.plainphone.boot.CheckingScreen
+import org.plainphone.boot.HomeGate
+import org.plainphone.boot.PolicyRuntime
 import org.plainphone.policy.NoticeInput
 import org.plainphone.preview.Preview2Device
 import org.plainphone.shell.ApprovedApp
@@ -38,28 +43,47 @@ import org.plainphone.shell.ShellState
 import org.plainphone.shell.ShellUiMapper
 import org.plainphone.shell.Step
 import org.plainphone.ui.theme.PlainphoneColors
+import org.plainphone.ui.theme.PlainphoneTheme
 
 /**
- * preview-2 (PLA-144): Home and Device Owner. Before Home shows, the starter-list policy is applied and
- * read back ([Preview2Device]); then the activity enters lock task. Screens still read [PreviewPhone]
- * for everything except the app list, and every unwired action says "Not in this test build yet".
+ * preview-2 (PLA-144): Home and Device Owner. The manifest's `lockTaskMode="if_whitelisted"` puts this
+ * task in lock task as it launches. Home draws only when [PolicyRuntime.gate] is READY (the starter-list
+ * plan re-applied and read back) and the task is in lock task; until then the neutral checking screen
+ * shows, with only Phone and Emergency. Screens still read [PreviewPhone] for everything except the app
+ * list, and every unwired action says "Not in this test build yet".
  */
 class MainActivity : ComponentActivity() {
     private val shell: ShellViewModel by viewModels()
+
+    private val dpm by lazy { getSystemService(DevicePolicyManager::class.java) }
+    private val activities by lazy { getSystemService(ActivityManager::class.java) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val paper = PlainphoneColors.Paper.toArgb()
         enableEdgeToEdge(SystemBarStyle.light(paper, paper), SystemBarStyle.light(paper, paper))
         super.onCreate(savedInstanceState)
+        enterLockTask()
         val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         shell.start(if (debuggable) intent.getStringExtra(EXTRA_PREVIEW_SCREEN) else null)
-        shell.prepare(Preview2Device(applicationContext)) { runOnUiThread(::enterLockTask) }
+        val runtime = PolicyRuntime.get(this)
+        val device = Preview2Device(applicationContext)
         val mapper = ShellUiMapper(resources.configuration.locales[0], DateFormat.is24HourFormat(this))
         setContent {
-            // Nothing but paper until the policy has been applied and read back.
+            val gate by runtime.gate.collectAsState()
+            val notice by runtime.notice.collectAsState()
+            if (gate != HomeGate.READY || !enterLockTask()) {
+                PlainphoneTheme { CheckingScreen(onPhone = { perform(ShellEffect.OpenDialer) }, onEmergency = ::openEmergency) }
+                return@setContent
+            }
+            // Each read-back run refreshes the app list and the attention notice.
+            LaunchedEffect(notice) { shell.prepare(device, attention = notice != null) }
+            // Nothing but paper until the app list is read.
             val phone = shell.phone ?: return@setContent
-            var snapshot by remember { mutableStateOf(phone.snapshot()) }
-            LaunchedEffect(shell.state) {
+            LaunchedEffect(phone) {
+                Log.i(PolicyRuntime.TAG, "home shown lockTask=${activities.lockTaskModeState} at=${SystemClock.elapsedRealtime()}")
+            }
+            var snapshot by remember(phone) { mutableStateOf(phone.snapshot()) }
+            LaunchedEffect(shell.state, phone) {
                 while (true) {
                     snapshot = phone.snapshot()
                     delay(1_000)
@@ -80,18 +104,28 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (shell.phone != null) enterLockTask()
+        enterLockTask()
     }
 
-    /** Lock task only as Device Owner with this package allowed; otherwise Plainphone is an ordinary app. */
-    private fun enterLockTask() {
-        val dpm = getSystemService(DevicePolicyManager::class.java)
-        val am = getSystemService(ActivityManager::class.java)
-        if (!dpm.isLockTaskPermitted(packageName) || am.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE) return
-        try {
+    /** True when this task is in lock task, starting it first if the package is allowed. */
+    private fun enterLockTask(): Boolean {
+        if (activities.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE) return true
+        if (!dpm.isLockTaskPermitted(packageName)) return false
+        return try {
             startLockTask()
-        } catch (e: IllegalStateException) {
-            Log.w(Preview2Device.TAG, "PREVIEW2 lock task not started", e)
+            activities.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
+        } catch (e: RuntimeException) {
+            Log.w(PolicyRuntime.TAG, "lock task not started", e)
+            false
+        }
+    }
+
+    /** The emergency-dialer screen of `com.android.phone` (PLA-5 A3), from the checking screen. */
+    private fun openEmergency() {
+        try {
+            startActivity(Intent(EMERGENCY_DIAL).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (_: ActivityNotFoundException) {
+            perform(ShellEffect.OpenEmergencyDialer)
         }
     }
 
@@ -114,35 +148,35 @@ class MainActivity : ComponentActivity() {
     companion object {
         /** Debug builds only: `more`, `blocked_link`, `wifi_sign_in` or `wifi_no_internet`. */
         const val EXTRA_PREVIEW_SCREEN = "org.plainphone.preview.SCREEN"
+        const val EMERGENCY_DIAL = "com.android.phone.EmergencyDialer.DIAL"
     }
 }
 
 /** Keeps the back stack and the phone across configuration changes such as text size. */
 class ShellViewModel : ViewModel() {
-    /** Null until [prepare] has applied the policy and read it back. */
+    /** Null until [prepare] has read the app list after a read-back run. */
     var phone by mutableStateOf<PreviewPhone?>(null)
         private set
     var navigator: ShellNavigator? = null
         private set
     var state by mutableStateOf(ShellState())
     private var started = false
-    private var preparing = false
+    private var prepared = 0
 
-    /** Applies and reads back the policy off the main thread, then shows Home with the real app list. */
-    fun prepare(device: Preview2Device, onReady: () -> Unit) {
-        if (preparing) return
-        preparing = true
-        thread(name = "preview2-apply") {
-            val result = runCatching { device.apply() }
-                .onFailure { Log.e(Preview2Device.TAG, "PREVIEW2 APPLY threw", it) }
-            val attention = result.isFailure || result.getOrNull()?.needsAttention == true
+    /**
+     * Reads the starter apps off the main thread, after the runtime has re-applied and read back the
+     * policy, then shows Home with the real app list. The latest call wins.
+     */
+    fun prepare(device: Preview2Device, attention: Boolean) {
+        val generation = ++prepared
+        thread(name = "preview2-home") {
             val apps = runCatching { device.homeApps() }.getOrDefault(emptyList()).map { (id, label) -> ApprovedApp(id, label) }
             val sample = PreviewPhone.sample()
             val ready = PreviewPhone(sample.copy(apps = apps, notices = NoticeInput(sample.mode, needsAttention = attention)))
             Handler(Looper.getMainLooper()).post {
+                if (generation != prepared) return@post
                 navigator = ShellNavigator(ready, ready, testBuild = true)
                 phone = ready
-                onReady()
             }
         }
     }

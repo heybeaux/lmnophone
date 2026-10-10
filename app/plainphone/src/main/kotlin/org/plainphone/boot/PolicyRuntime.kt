@@ -19,11 +19,8 @@ import org.plainphone.device.DpmPort
 import org.plainphone.device.SerialDispatcher
 import org.plainphone.device.boot.BootOutcome
 import org.plainphone.device.boot.BootReapply
-import org.plainphone.device.facts.AndroidPackageSystemPort
-import org.plainphone.device.facts.LivePolicyInputAssembler
 import org.plainphone.device.storage.FileJournalStore
-import org.plainphone.device.storage.FilePolicyStore
-import org.plainphone.policy.PolicyEngine
+import org.plainphone.preview.Preview2Device
 import org.plainphone.ui.home.HomeNotice
 
 /** What Home may show. Only [READY] lets Home draw; the others show the neutral checking screen. */
@@ -45,15 +42,12 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val admin = ComponentName(context, PlainphoneAdminReceiver::class.java)
     private val port = DpmPort(context, admin, ComponentName(context, FlushMarker::class.java))
     private val protectedDir = context.createDeviceProtectedStorageContext().filesDir
-    private val packagesPort = AndroidPackageSystemPort(context)
-    private val assembler = LivePolicyInputAssembler(
-        packagesPort, FilePolicyStore(File(protectedDir, "policy")), emptyList(),
-        PackageName(context.packageName), MESSAGES,
-    )
+    /** preview-2 (PLA-144): the starter-list plan stands in for PolicyEngine, which sets every restriction. */
+    private val preview = Preview2Device(context)
     private val boot = BootReapply(
         FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT),
         port, SESSION_PACKAGES,
-        { locked -> PolicyEngine.decide(assembler.assemble().input.copy(lockedBoot = locked)) },
+        { locked -> preview.plan(locked) },
         BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT),
         { stage, error -> Log.w(TAG, "stage $stage failed: ${error ?: "readback mismatch"}", error) },
     )
@@ -117,7 +111,6 @@ class PolicyRuntime private constructor(private val context: Context) {
 
     companion object {
         const val TAG = "PlainphoneBoot"
-        private val MESSAGES = PackageName("com.google.android.apps.messaging")
         /** Every package a session window can relax: Play, plus a matching inventory's Settings packages (none compiled in yet). */
         private val SESSION_PACKAGES = setOf(PackageName("com.android.vending"))
 

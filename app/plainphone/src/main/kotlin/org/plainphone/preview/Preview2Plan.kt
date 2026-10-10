@@ -80,4 +80,47 @@ object Preview2Plan {
             notifyBuildReview = false,
         )
     }
+
+    /**
+     * The plan before the first unlock, when the starter list (credential-protected storage) can't be
+     * read: like the engine's locked-boot plan, it hides nothing. It shows the emergency floor and
+     * Plainphone, and puts them and the lock-task features back, so Home can start in lock task.
+     */
+    fun decideLocked(
+        plainphone: PackageName,
+        installed: List<InstalledPackage>,
+        identities: List<FloorIdentity>,
+    ): PolicyPlan {
+        val floor = EmergencyFloor.compute(installed, identities)
+        val neverHide = floor.neverHide + plainphone
+        val lockTask = floor.emergencyUi + plainphone
+        return PolicyPlan(
+            hidden = emptySet(),
+            unhide = neverHide,
+            neverHide = neverHide,
+            emergencyUi = floor.emergencyUi,
+            lockTaskPackages = lockTask,
+            features = FEATURES,
+            restrictions = emptySet(),
+            steps = listOf(ApplyStage.EMERGENCY_FLOOR, ApplyStage.NEVER_HIDE_GUARD).map { ApplyStep(it) },
+            expected = ExpectedPolicyState(
+                hidden = emptySet(),
+                unhiddenAndEnabled = neverHide,
+                unsuspended = neverHide,
+                lockTaskPackages = lockTask,
+                features = FEATURES,
+                restrictions = null,
+                home = plainphone,
+                systemInputMethodsOnly = null,
+                systemAccessibilityServicesOnly = null,
+            ),
+            sweepMode = SweepMode.NONE,
+            refusedDestruction = emptyList(),
+            allowedDestruction = emptyList(),
+            classifierConflicts = emptySet(),
+            changedPackages = emptySet(),
+            needsAttention = !floor.hasSystemDialer,
+            notifyBuildReview = false,
+        )
+    }
 }

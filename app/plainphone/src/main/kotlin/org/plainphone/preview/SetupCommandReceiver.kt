@@ -6,38 +6,39 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import kotlin.concurrent.thread
+import org.plainphone.boot.HomeGate
+import org.plainphone.boot.PolicyRuntime
 
 /**
  * The setup script's way in, over adb only: the manifest requires android.permission.DUMP, which the
  * adb shell holds and ordinary apps can't get.
  *
- * - `ACTION_SET_STARTER --esa packages a,b,c` saves the starter list, then applies.
- * - `ACTION_APPLY` applies the saved list again.
+ * - `ACTION_SET_STARTER --esa packages a,b,c` saves the starter list, then re-applies.
+ * - `ACTION_APPLY` re-applies the saved list.
+ *
+ * Both go through [PolicyRuntime] (log tag `PlainphoneBoot`, reason `setup`). The result code is 0 when
+ * the re-apply read back and Home may show.
  */
 class SetupCommandReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val pending = goAsync()
-        val device = Preview2Device(context.applicationContext)
-        thread(name = "preview2-setup") {
-            try {
-                when (intent.action) {
-                    ACTION_SET_STARTER -> {
-                        val packages = intent.getStringArrayExtra(EXTRA_PACKAGES)?.toList().orEmpty()
-                        require(packages.isNotEmpty()) { "no packages" }
-                        device.saveStarter(packages)
-                        Log.i(Preview2Device.TAG, "PREVIEW2 STARTER $packages")
-                        device.apply()
-                    }
-                    ACTION_APPLY -> device.apply()
-                }
-                pending.resultCode = 0
-            } catch (e: Exception) {
-                Log.e(Preview2Device.TAG, "PREVIEW2 COMMAND failed ${intent.action}", e)
-                pending.resultCode = 1
-            } finally {
-                pending.finish()
+        val runtime = PolicyRuntime.get(context)
+        try {
+            if (intent.action == ACTION_SET_STARTER) {
+                val packages = intent.getStringArrayExtra(EXTRA_PACKAGES)?.toList().orEmpty()
+                require(packages.isNotEmpty()) { "no packages" }
+                Preview2Device(context.applicationContext).saveStarter(packages)
+                Log.i(Preview2Device.TAG, "PREVIEW2 STARTER $packages")
             }
+        } catch (e: Exception) {
+            Log.e(Preview2Device.TAG, "PREVIEW2 COMMAND failed ${intent.action}", e)
+            pending.resultCode = 1
+            pending.finish()
+            return
+        }
+        runtime.reapply("setup") {
+            pending.resultCode = if (runtime.gate.value == HomeGate.READY) 0 else 1
+            pending.finish()
         }
     }
 

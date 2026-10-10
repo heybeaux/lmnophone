@@ -3,32 +3,26 @@
 package org.plainphone.preview
 
 import android.app.admin.DevicePolicyManager
-import android.content.BroadcastReceiver
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
 import android.util.Log
 import java.io.File
-import org.plainphone.PlainphoneAdminReceiver
 import org.plainphone.core.PackageName
-import org.plainphone.device.ApplyResult
-import org.plainphone.device.DpmPort
-import org.plainphone.device.ReadbackPolicyApplier
 import org.plainphone.device.facts.AndroidPackageSystemPort
 import org.plainphone.device.facts.FloorIdentityReader
+import org.plainphone.device.facts.FloorRead
 import org.plainphone.device.facts.LivePackageReader
+import org.plainphone.policy.PolicyPlan
 
 /**
- * preview-2 device wiring: reads the live phone, builds [Preview2Plan] and applies it through the
- * readback applier. Every apply logs one `PREVIEW2 APPLY` line (tag [TAG]) for the setup script.
+ * preview-2 device wiring: reads the live phone and builds [Preview2Plan] for the boot runtime, which
+ * applies it through the readback applier on every re-apply (boot, start, setup, alarm, package events).
  */
 class Preview2Device(private val context: Context) {
     private val dpm = context.getSystemService(DevicePolicyManager::class.java)
     private val pm = context.packageManager
-    private val admin = ComponentName(context, PlainphoneAdminReceiver::class.java)
-    private val flush = ComponentName(context, FlushMarker::class.java)
     private val plainphone = PackageName(context.packageName)
     private val starterFile = File(context.filesDir, "starter-list.txt")
 
@@ -45,24 +39,26 @@ class Preview2Device(private val context: Context) {
         check(tmp.renameTo(starterFile)) { "could not save the starter list" }
     }
 
-    /** Null when Plainphone isn't Device Owner or there is no starter list yet: nothing is changed. */
-    fun apply(): ApplyResult? {
-        val starter = starter()
-        if (!isOwner || starter.isEmpty()) {
-            Log.i(TAG, "PREVIEW2 APPLY skipped owner=$isOwner starter=${starter.size}")
-            return null
-        }
+    /**
+     * The plan for one re-apply ([org.plainphone.boot.PolicyRuntime]). Before the first unlock the
+     * starter list can't be read, so the locked plan only restores the floor and lock task.
+     * Unlocked, it throws when there is no starter list yet: the run is then not ready and Home stays on
+     * the checking screen.
+     */
+    fun plan(locked: Boolean): PolicyPlan {
+        lateinit var floor: FloorRead
         val port = AndroidPackageSystemPort(context)
-        val packages = LivePackageReader(port).read()
-        val floor = FloorIdentityReader(port).read()
-        val plan = Preview2Plan.decide(plainphone, packages.installed, floor.identities, launchable(), starter,
+        val read = LivePackageReader(port).read { floor = FloorIdentityReader(port).read() }
+        val floorNames = floor.identities.map { it.name }.toSet()
+        val installed = read.installed.filter { it.name !in read.disabled || it.name in floorNames }
+        if (locked) return Preview2Plan.decideLocked(plainphone, installed, floor.identities)
+        val starter = starter()
+        check(starter.isNotEmpty()) { "no starter list yet" }
+        val plan = Preview2Plan.decide(plainphone, installed, floor.identities, launchable(), starter,
             keepVisible(), setOf(PackageName(SAFETY_HUB)))
-        val result = ReadbackPolicyApplier(DpmPort(context, admin, flush)).apply(plan)
-        Log.i(TAG, "PREVIEW2 APPLY complete=${result.complete} failed=${result.failedStage} " +
-            "applied=${result.applied} hidden=${plan.hidden.size} lockTask=${plan.lockTaskPackages.map { it.value }.sorted()} " +
-            "absent=${result.absent.map { it.value }} flipFailures=${result.flipFailures.map { it.value }} " +
+        Log.i(TAG, "PREVIEW2 PLAN hidden=${plan.hidden.size} lockTask=${plan.lockTaskPackages.map { it.value }.sorted()} " +
             "floorUnreadable=${floor.unreadable}")
-        return result
+        return plan
     }
 
     /** Starter apps to list on Home, with their launcher labels. Phone and Messages have their own rows. */
@@ -103,9 +99,4 @@ class Preview2Device(private val context: Context) {
         /** Android Safety (SOS). Must be in lock task for the power-button SOS on the spare (PLA-40). */
         const val SAFETY_HUB = "com.google.android.apps.safetyhub"
     }
-}
-
-/** The no-op component the applier flips after every unhide (mitigation B). Never receives anything. */
-class FlushMarker : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) = Unit
 }
