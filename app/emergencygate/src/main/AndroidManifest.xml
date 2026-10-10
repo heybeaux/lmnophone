@@ -1,3 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright 2026 Plainphone contributors. SPDX-License-Identifier: Apache-2.0 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
+<!-- The emergency release gate (task 4.4). Never shipped. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Reads the alert-display package and the dialers, which may be hidden. -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <application android:label="Plainphone emergency gate" android:testOnly="true">
+        <!-- Never invoked. Makes the package Direct Boot aware so the gate can run before the first unlock. -->
+        <receiver
+            android:name=".DirectBootMarker"
+            android:directBootAware="true"
+            android:exported="false" />
+    </application>
+
+    <instrumentation
+        android:name=".EmergencyGate"
+        android:label="Plainphone emergency gate"
+        android:targetPackage="org.plainphone.emergencygate" />
+</manifest>
