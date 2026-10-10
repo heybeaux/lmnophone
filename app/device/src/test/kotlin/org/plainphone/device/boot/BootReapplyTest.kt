@@ -21,6 +21,7 @@ import org.plainphone.policy.ApplyStage
 import org.plainphone.policy.FloorIdentity
 import org.plainphone.policy.FloorRole
 import org.plainphone.policy.InstalledPackage
+import org.plainphone.policy.LockTaskFeature
 import org.plainphone.policy.PolicyEngine
 import org.plainphone.policy.PolicyInput
 import org.plainphone.policy.Restriction
@@ -111,7 +112,8 @@ class BootReapplyTest {
     @Test fun lockedBootRunsOnlyRestrictionsFloorAndGuard() {
         seedEmptyJournal()
         port.lockTask = names(plainphone)
-        port.forbidden += setOf("features", "home")
+        port.features = LockTaskFeature.entries.toSet()
+        port.forbidden += setOf("home")
 
         val outcome = reapply().run(locked = true)
 
@@ -202,5 +204,51 @@ class BootReapplyTest {
         assertTrue(outcome.ready)
         assertFalse(port.hidden(messages))
         assertFalse(port.ops.contains("hide $messages"))
+    }
+
+    // --- Locked boot after the list or the features were lost (PLA-232 findings 4 and 9, spec 722610b) ---
+
+    @Test fun lockedBootRestoresPlainphoneAndTheEmergencyUiAfterTheListWasLost() {
+        seedEmptyJournal()
+        port.lockTask = emptySet()
+        port.features = LockTaskFeature.entries.toSet()
+
+        val outcome = reapply().run(locked = true)
+
+        assertTrue(outcome.ready)
+        assertEquals(names(plainphone, dialer, phone), port.lockTask)
+    }
+
+    @Test fun lockedBootRestoresTheFixedFeaturesAfterTheyWereLost() {
+        seedEmptyJournal()
+        port.lockTask = names(plainphone, dialer, phone)
+        port.features = setOf(LockTaskFeature.GLOBAL_ACTIONS) // mFlags=16, as in the PLA-232 evidence
+
+        val outcome = reapply().run(locked = true)
+
+        assertTrue(outcome.ready)
+        assertEquals(LockTaskFeature.entries.toSet(), port.features)
+        assertTrue(LockTaskFeature.BLOCK_ACTIVITY_START_IN_TASK in port.features)
+        assertEquals(names(plainphone, dialer, phone), port.lockTask)
+    }
+
+    @Test fun lockedBootRestoresTheListAndTheFeaturesLostTogether() {
+        seedEmptyJournal()
+        port.lockTask = emptySet()
+        port.features = setOf(LockTaskFeature.GLOBAL_ACTIONS)
+
+        val outcome = reapply().run(locked = true)
+
+        assertTrue(outcome.ready)
+        assertEquals(names(plainphone, dialer, phone), port.lockTask)
+        assertEquals(LockTaskFeature.entries.toSet(), port.features)
+    }
+
+    @Test fun lockedBootIsNotReadyWhenTheListDoesNotReadBack() {
+        seedEmptyJournal()
+        port.lockTask = emptySet()
+        port.lockTaskSticks = false
+
+        assertFalse(reapply().run(locked = true).ready)
     }
 }
