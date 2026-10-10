@@ -246,16 +246,50 @@ class ReadbackPolicyApplierTest {
         assertFalse(port.hidden(camera))
     }
 
-    @Test fun floorUnhidesFirstAndRepairsSuspendedOrDisabledFloorPackages() {
-        val port = port(dialer).apply {
-            state[PackageName(messages)] = visible().copy(suspended = true)
-            state[PackageName(gms)] = visible().copy(enabled = false)
-        }
+    @Test fun floorUnhidesFirstAndRepairsSuspendedFloorPackages() {
+        val port = port(dialer).apply { state[PackageName(messages)] = visible().copy(suspended = true) }
         val result = ReadbackPolicyApplier(port).apply(plan())
 
         assertTrue(result.complete)
         assertTrue(firstIndex(port.ops, "unhide $dialer") < firstIndex(port.ops, "hide "))
         assertFalse(port.state.getValue(PackageName(messages)).suspended)
+        assertTrue(result.unrepairable.isEmpty())
+    }
+
+    // --- A user-disabled package cannot be re-enabled by a Device Owner (PLA-232 finding 3) ---
+
+    @Test fun aDisabledFloorPackageIsReportedUnrepairableAndTheApplyContinues() {
+        val port = port(dialer).apply { state[PackageName(dialer)] = hiddenApp().copy(enabled = false) }
+        val result = ReadbackPolicyApplier(port).apply(plan())
+
+        // One best-effort enable; it does not stick, so the package is reported, not retried forever.
+        assertTrue("enable $dialer" in port.ops)
+        assertEquals(names(dialer), result.unrepairable)
+        assertTrue(result.needsAttention)
+        // The rest still runs: the package is unhidden, and lock task and Home are applied.
+        assertTrue(result.complete)
+        assertFalse(port.hidden(dialer))
+        assertEquals(PackageName(pp), port.homePackage)
+        assertTrue(ReadbackPolicyApplier(port).readBack(plan()))
+    }
+
+    @Test fun aDisabledPackageThatStaysHiddenStillFailsTheReadback() {
+        val port = port(dialer).apply { state[PackageName(dialer)] = hiddenApp().copy(enabled = false) }
+        // An unhide that does not stick: hidden is still read back even though enabled is not.
+        val result = ReadbackPolicyApplier(object : DevicePolicyPort by port {
+            override fun setHidden(name: PackageName, hidden: Boolean) { port.ops += "ignored $hidden ${name.value}" }
+        }).apply(plan())
+        assertEquals(ApplyStage.EMERGENCY_FLOOR, result.failedStage)
+    }
+
+    @Test fun aPackageTheBuildCanReEnableIsNotReported() {
+        val port = port().apply {
+            state[PackageName(gms)] = visible().copy(enabled = false)
+            enableRepairs = true
+        }
+        val result = ReadbackPolicyApplier(port).apply(plan())
+        assertTrue(result.complete)
+        assertTrue(result.unrepairable.isEmpty())
         assertTrue(port.state.getValue(PackageName(gms)).enabled)
     }
 

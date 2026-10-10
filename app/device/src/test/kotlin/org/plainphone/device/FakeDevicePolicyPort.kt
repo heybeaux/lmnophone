@@ -56,9 +56,15 @@ class FakeDevicePolicyPort(
         write("packages", "unsuspend ${name.value}")
         state[name]?.let { state[name] = it.copy(suspended = false) }
     }
+    /**
+     * Whether [enable] clears a disabled state. Off by default, matching what PLA-232 observed on API 35
+     * (enableSystemApp left a user-disabled Chrome at state 3). A fake cannot prove Android behaviour;
+     * that is checked on the emulator (DisabledPackageCheck).
+     */
+    var enableRepairs = false
     override fun enable(name: PackageName) {
         write("packages", "enable ${name.value}")
-        state[name]?.let { state[name] = it.copy(enabled = true) }
+        if (enableRepairs) state[name]?.let { state[name] = it.copy(enabled = true) }
     }
 
     override fun restrictions(): Set<Restriction> { touch("restrictions"); return restrictionSet.toSet() }

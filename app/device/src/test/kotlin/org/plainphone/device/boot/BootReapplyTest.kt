@@ -294,4 +294,20 @@ class BootReapplyTest {
         assertFalse(outcome.ready)
         assertFalse(port.hidden(dialer))
     }
+
+    // --- A disabled floor package (PLA-232 finding 3) ---
+
+    @Test fun aDisabledFloorPackageKeepsCallsReachableButBlocksSetup() {
+        seedEmptyJournal()
+        port.state[PackageName(dialer)] = hiddenApp().copy(enabled = false)
+
+        val outcome = reapply().run(locked = false)
+
+        assertTrue(outcome.ready)
+        assertFalse(port.hidden(dialer))
+        assertTrue(PackageName(dialer) in port.lockTask)
+        assertEquals(names(dialer), outcome.disabledFloor)
+        assertTrue(outcome.needsAttention)
+        assertFalse(outcome.setupMayFinish)
+    }
 }
