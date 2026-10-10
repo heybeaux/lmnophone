@@ -1,0 +1,17 @@
+# Check 1 on preview-2b, spare (<spare>, API 35, no PIN), release/preview-2 @ bbc34c6, 2026-10-10T19:03:08Z. No call button is ever pressed.
+topResumedActivity=ActivityRecord{9ff487d u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED
+## 1a Home > More > Emergency 9-1-1
+topResumedActivity=ActivityRecord{3f23af4 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivityDialAlias t321}
+mLockTaskModeState=LOCKED
+screen shows: text="911"
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+## 1b Home key, then Home > Phone, type 9 1 1
+topResumedActivity=ActivityRecord{9ff487d u0 org.plainphone/.MainActivity t5}
+topResumedActivity=ActivityRecord{3f23af4 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivityDialAlias t321}
+mLockTaskModeState=LOCKED
+screen shows: text="911"
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+topResumedActivity=ActivityRecord{9ff487d u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED
+## 1c The spare has no PIN (TEAM-POLICY), so its lock screen has no Emergency button. Covered on the emulator (check1.txt there, with a locked restart).
