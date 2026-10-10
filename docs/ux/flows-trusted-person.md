@@ -145,7 +145,7 @@ A menu page. At the top, a short **"Needs you"** list, only when something is wa
 | **What Own Phone can't stop** | Read this before adding apps | [L1](flows-limits-and-off.md#l1-what-own-phone-cant-stop) |
 | **Trusted people** | {everyone} | [M2](flows-people-modes-and-waits.md#m2-trusted-people) |
 | **History** | Changes on this phone, last 90 days | [M8](flows-people-modes-and-waits.md#m8-history) |
-| **Install an Own Phone update** | Only with {helper}, when {helper} asks | [P6](flows-sessions.md#p6-install-a-own-phone-update) |
+| **Install an Own Phone update** | Only with {helper}, when {helper} asks | [P6](flows-sessions.md#p6-install-an-own-phone-update) |
 | **Change PIN** | (none) | T1-style: old PIN, new PIN twice |
 | **Turn Own Phone off** | Makes this an ordinary phone, after 24 hours | [L4](flows-limits-and-off.md#l4-turning-own-phone-off) |
 
