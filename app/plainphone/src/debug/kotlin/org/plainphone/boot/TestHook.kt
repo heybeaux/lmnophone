@@ -19,8 +19,9 @@ import org.plainphone.PlainphoneAdminReceiver
  * policy itself. Shell-only (`android.permission.DUMP`). Neither action triggers a re-apply.
  *
  * - `org.plainphone.test.RELAX --es package P`: adds P to the lock-task list, as an open session would.
- * - `org.plainphone.test.DROP --es restriction R`: clears user restriction R and the whole lock-task
- *   list, as a power cut that lost both writes would.
+ * - `org.plainphone.test.DROP --es restriction R [--ei features F]`: clears user restriction R and the
+ *   whole lock-task list, as a power cut that lost both writes would; with `features`, also sets the
+ *   lock-task feature mask to F (PLA-233: F=16 drops BLOCK_ACTIVITY_START_IN_TASK).
  * - `org.plainphone.test.NOTIFY --es component C`: posts a notification whose tap opens activity C, an
  *   unapproved app. Android clears notifications on reboot and the shell cannot attach a tap intent,
  *   so this stands in for an unapproved app's notification right after boot. Works before unlock.
@@ -38,6 +39,7 @@ class TestHook : BroadcastReceiver() {
                 val restriction = intent.getStringExtra("restriction") ?: return
                 dpm.clearUserRestriction(admin, restriction)
                 dpm.setLockTaskPackages(admin, emptyArray())
+                if (intent.hasExtra("features")) dpm.setLockTaskFeatures(admin, intent.getIntExtra("features", 0))
             }
             "org.plainphone.test.NOTIFY" -> {
                 val target = intent.getStringExtra("component")?.let(ComponentName::unflattenFromString) ?: return
@@ -56,6 +58,6 @@ class TestHook : BroadcastReceiver() {
             }
             else -> return
         }
-        Log.i(PolicyRuntime.TAG, "test hook ${intent.action} lockTask=${dpm.getLockTaskPackages(admin).sorted()}")
+        Log.i(PolicyRuntime.TAG, "test hook ${intent.action} lockTask=${dpm.getLockTaskPackages(admin).sorted()} features=${dpm.getLockTaskFeatures(admin)}")
     }
 }
