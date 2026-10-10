@@ -1,0 +1,14 @@
+# Check 1 on preview-2b (emulator-5742 pla113-a35, API 35), branch release/preview-2 @ 5a054b2, 2026-10-10T17:43:15Z. No call button is ever pressed.
+## 1a Home > More > Emergency 9-1-1
+topResumedActivity=ActivityRecord{83c87b u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t6}
+mLockTaskModeState=LOCKED
+screen shows: text="911"
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+## 1b Home key, then Home > Phone, type 9 1 1
+topResumedActivity=ActivityRecord{446cbb1 u0 org.plainphone/.MainActivity t5}
+topResumedActivity=ActivityRecord{83c87b u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t6}
+mLockTaskModeState=LOCKED
+screen shows: text="911"
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+topResumedActivity=ActivityRecord{446cbb1 u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED
