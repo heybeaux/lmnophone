@@ -127,10 +127,14 @@ register_number() {
     number_listed || { echo "$NUMBER is not in the test-mode list after registration"; return 1; }
 }
 
+# The list updates asynchronously (API 36 still listed it right after -c): poll for up to 10 s.
 clear_number() {
     sh_ su 0 cmd phone emergency-number-test-mode -c >/dev/null 2>&1
-    if number_listed; then log "test number $NUMBER is still registered"; return 1; fi
-    NUMBER_ADDED=0
+    for _ in $(seq 1 20); do
+        if ! number_listed; then NUMBER_ADDED=0; return 0; fi
+        sleep 0.5
+    done
+    log "test number $NUMBER is still registered"; return 1
 }
 
 set_pin() {

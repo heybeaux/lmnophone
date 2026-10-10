@@ -157,7 +157,7 @@ class EmergencyGate : Instrumentation() {
             ?: return CheckResult(check, Verdict.FAIL, "no Emergency call on the lock screen; top=${top()}")
         val before = top()
         tap(button)
-        return observe(check, before, emergencyDialPad()).let {
+        return observe(check, before, keyguardEmergencyDialPad()).let {
             it.copy(detail = "${it.detail} unlocked=${users.isUserUnlocked} lockTask=${lockTask()}")
         }
     }
@@ -277,7 +277,8 @@ class EmergencyGate : Instrumentation() {
     private fun tapAndExpect(check: String, label: String, expected: Set<Activity>): CheckResult {
         if (lockTask() != "LOCKED") return CheckResult(check, Verdict.FAIL, "lock task is ${lockTask()}, not LOCKED; top=${top()}")
         SystemClock.sleep(SETTLE_MS) // Let the screen transition finish, or the tap lands mid-animation.
-        val node = waitNode(label, 10_000) { it == label }
+        // Only Plainphone's own button: another window (a notification, the status bar) may show the same word.
+        val node = waitNode(label, 10_000, inPackage = PLAINPHONE) { it == label }
             ?: return CheckResult(check, Verdict.FAIL, "no '$label' on screen; top=${top()}")
         val before = top()
         tap(node)
@@ -286,19 +287,22 @@ class EmergencyGate : Instrumentation() {
 
     /**
      * After a tap: waits for one of [expected] (or lock task's blocked screen), then samples the
-     * foreground for [STAY_MS] and reads the dial keys on screen. [GateJudge.routeReached] decides.
+     * foreground for [STAY_MS], waits for the dial keys to finish sliding in, and samples once more.
+     * [GateJudge.routeReached] decides.
      */
     private fun observe(check: String, before: Activity?, expected: Set<Activity>): CheckResult {
         var seen: Activity? = null
-        waitFor(8_000) {
+        // A dialer's first start after boot can take several seconds on an emulator.
+        waitFor(15_000) {
             seen = top()
             seen in expected || seen?.className == GateJudge.BLOCKED_APP
         }
         val samples = mutableListOf(seen)
         var labels = emptyList<String>()
         if (seen in expected) {
-            labels = visibleLabels()
             repeat(STAY_SAMPLES) { SystemClock.sleep(STAY_MS / STAY_SAMPLES); samples += top() }
+            waitFor(PAD_MS) { visibleLabels().also { labels = it }.let(GateJudge::dialPadUsable) }
+            samples += top()
         }
         // Close lock task's blocked screen, or it stays behind as a locked task of its own.
         if (samples.any { it?.className == GateJudge.BLOCKED_APP }) shell("input keyevent KEYCODE_BACK")
@@ -311,8 +315,16 @@ class EmergencyGate : Instrumentation() {
         return resolved(Intent(Intent.ACTION_DIAL).setPackage(dialer))
     }
 
-    /** The activities the emergency-dialer intent resolves to (the keyguard's and More's target). */
+    /** The activities the emergency-dialer intent resolves to (More's target). */
     private fun emergencyDialPad(): Set<Activity> = resolved(Intent(EMERGENCY_DIAL))
+
+    /**
+     * The keyguard's Emergency call: Telecom's `createLaunchEmergencyDialerIntent` (a system API) sends
+     * `ACTION_DIAL_EMERGENCY`, so expect what that resolves to, plus each resolved trampoline's verified
+     * dial pad ([TRAMPOLINES]).
+     */
+    private fun keyguardEmergencyDialPad(): Set<Activity> =
+        resolved(Intent(DIAL_EMERGENCY)).let { found -> found + found.mapNotNull(TRAMPOLINES::get) }
 
     /** Each resolved activity by its name and, for an alias, its target: `dumpsys` shows the target. */
     private fun resolved(intent: Intent): Set<Activity> =
@@ -357,9 +369,14 @@ class EmergencyGate : Instrumentation() {
         shell("input tap ${bounds.centerX()} ${bounds.centerY()}")
     }
 
-    private fun waitNode(label: String, timeoutMs: Long, match: (String) -> Boolean = { it == label }): AccessibilityNodeInfo? {
+    private fun waitNode(
+        label: String,
+        timeoutMs: Long,
+        inPackage: String? = null,
+        match: (String) -> Boolean = { it == label },
+    ): AccessibilityNodeInfo? {
         var found: AccessibilityNodeInfo? = null
-        waitFor(timeoutMs) { findNode(match = match)?.also { found = it } != null }
+        waitFor(timeoutMs) { findNode(inPackage, match)?.also { found = it } != null }
         return found
     }
 
@@ -396,6 +413,18 @@ class EmergencyGate : Instrumentation() {
         const val SETTLE_MS = 1_500L
         const val STAY_MS = 2_000L
         const val STAY_SAMPLES = 4
+        const val PAD_MS = 5_000L
+        const val DIAL_EMERGENCY = "android.intent.action.DIAL_EMERGENCY"
+
+        /**
+         * Emergency dialers that resolve to a trampoline and show their dial pad in another activity.
+         * Verified on the API 35 and 36 Google emulator images (PLA-245 evidence): the keyguard's
+         * Emergency call resolves to safetyhub's EmergencyDialerActivity, which shows DialPadActivity.
+         */
+        val TRAMPOLINES = mapOf(
+            Activity("com.google.android.apps.safetyhub", "com.google.android.apps.safetyhub.emergencydialer.ui.EmergencyDialerActivity") to
+                Activity("com.google.android.apps.safetyhub", "com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity"),
+        )
         const val NOT_BUILT_KEY = "org.plainphone.gate.notBuilt"
         const val EMERGENCY_DIAL = "com.android.phone.EmergencyDialer.DIAL"
         const val MESSAGES = "com.google.android.apps.messaging"
