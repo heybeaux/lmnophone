@@ -9,11 +9,12 @@ import java.nio.ByteBuffer
 import org.plainphone.core.BuildInventory
 import org.plainphone.policy.AppApprovalState
 
-/** A committed record as a schema 1-4 store read it, and which copy files held it. */
+/** A committed record as a schema 1-5 store read it, and which copy files held it. */
 internal class LegacyRecord(val schema: Int, val sequence: Long, val sections: List<ByteArray>, val holders: Set<String>)
 
 /**
- * Read-only access to records written before schema 5. Schema 1-3 stores wrote copy A, copy B, then
+ * Read-only access to records written before schema 6. Schema 5 is schema 4's read rule with the
+ * Update section and no Recovery section (no loss could have been recorded). Schema 1-3 stores wrote copy A, copy B, then
  * both fences, and served the newest valid copy at or above the fence. Schema 4 served the two
  * copies when they agreed at or above the fence, else the single copy at exactly the fence, and
  * had no Update section (Update was never enabled, so none can have been recorded). Schema 1 had four
@@ -27,7 +28,8 @@ internal object LegacyAuthority {
     private const val INTENT_SCHEMA = 3
 
     fun load(dir: File): LegacyRecord? {
-        loadFenced(dir)?.let { return it }
+        loadFenced(dir, 5)?.let { return it }
+        loadFenced(dir, 4)?.let { return it }
         for (schema in 3 downTo 1) {
             val fences = listOf("fence-a", "fence-b").mapNotNull { AtomicRecord(dir, it, schema).read() }
             if (fences.isEmpty()) continue
@@ -45,18 +47,19 @@ internal object LegacyAuthority {
         return null
     }
 
-    /** The schema 4 read rule; null when no schema 4 fence or agreeing copy pair exists. */
-    private fun loadFenced(dir: File): LegacyRecord? {
-        val fence = listOf("fence-a", "fence-b").mapNotNull { AtomicRecord(dir, it, 4).read() }
+    /** The schema 4/5 read rule; null when no fence or agreeing copy pair of that schema exists. */
+    private fun loadFenced(dir: File, schema: Int): LegacyRecord? {
+        val count = if (schema == 4) 5 else 6
+        val fence = listOf("fence-a", "fence-b").mapNotNull { AtomicRecord(dir, it, schema).read() }
             .mapNotNull { if (it.size == 8) ByteBuffer.wrap(it).long else null }.maxOrNull()
-        val held = copies.mapNotNull { name -> AtomicRecord(dir, name, 4).read()?.let { bytes -> decode(bytes, 5)?.let { Triple(name, it, bytes) } } }
+        val held = copies.mapNotNull { name -> AtomicRecord(dir, name, schema).read()?.let { bytes -> decode(bytes, count)?.let { Triple(name, it, bytes) } } }
         if (held.size == 2 && held[0].third.contentEquals(held[1].third) && (fence == null || held[0].second.first >= fence))
-            return LegacyRecord(4, held[0].second.first, held[0].second.second, copies.toSet())
+            return LegacyRecord(schema, held[0].second.first, held[0].second.second, copies.toSet())
         if (fence == null) return null
         val atFence = held.filter { it.second.first == fence }
         val first = atFence.firstOrNull() ?: return null
         if (atFence.any { !it.third.contentEquals(first.third) }) return null
-        return LegacyRecord(4, fence, first.second.second, atFence.map { it.first }.toSet())
+        return LegacyRecord(schema, fence, first.second.second, atFence.map { it.first }.toSet())
     }
 
     /**
@@ -92,7 +95,10 @@ internal object LegacyAuthority {
         return listOf(AuthorityCodec.encodeCredentials(credentials) ?: return null, AuthorityCodec.encodeWaiting(waiting) ?: return null,
             AuthorityCodec.encodeElevation(elevation) ?: return null, AuthorityCodec.encodeReceipts(receipts) ?: return null,
             AuthorityCodec.encodeApprovals(approvals) ?: return null,
-            AuthorityCodec.encodeUpdate(UpdateSection(org.plainphone.policy.UpdateRecord(), emptyList())) ?: return null)
+            // Schema 5 has an Update section; before that Update was never enabled.
+            (if (r.schema >= 5) AuthorityCodec.decodeUpdate(s[Section.UPDATE.ordinal]) ?: return null
+                else UpdateSection(org.plainphone.policy.UpdateRecord(), emptyList())).let(AuthorityCodec::encodeUpdate) ?: return null,
+            AuthorityCodec.encodeRecovery(RecoverySection(null, emptyList())) ?: return null)
     }
 
     fun decode(bytes: ByteArray, count: Int): Pair<Long, List<ByteArray>>? = try {

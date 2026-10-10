@@ -48,6 +48,9 @@ import org.plainphone.policy.WaitingChangeStore
 import org.plainphone.policy.WaitingEvent
 import org.plainphone.policy.WaitingPhase
 import org.plainphone.policy.WaitingState
+import org.plainphone.policy.WaitingReconciliationStore
+import org.plainphone.policy.RecoveredState
+import org.plainphone.policy.LostWaitingRecord
 import org.plainphone.policy.UpdatePhase
 import org.plainphone.policy.UpdateRecord
 import org.plainphone.policy.UpdateSelfCheck
@@ -55,7 +58,7 @@ import org.plainphone.policy.UpdateSubmission
 import org.plainphone.policy.UpdateUseStore
 import org.plainphone.policy.StagedUpdateBinding
 
-internal enum class Section { CREDENTIALS, WAITING, ELEVATION, RECEIPTS, APPROVALS, UPDATE }
+internal enum class Section { CREDENTIALS, WAITING, ELEVATION, RECEIPTS, APPROVALS, UPDATE, RECOVERY }
 /** In write order: copy A, copy B (both agreeing is the commit point), fence A, fence B. */
 internal enum class WritePoint { BEFORE_COPY_A, AFTER_COPY_A, AFTER_COPY_B, AFTER_FENCE_A, AFTER_FENCE }
 /** Storage could not durably reserve a new identity; the caller shows "not ready" and retries later. */
@@ -665,7 +668,8 @@ class JointAuthorityStore internal constructor(
         val sections = listOf(AuthorityCodec.encodeCredentials(credentials) ?: return@run false,
             AuthorityCodec.encodeWaiting(waiting) ?: return@run false, AuthorityCodec.encodeElevation(elevation) ?: return@run false,
             AuthorityCodec.encodeReceipts(emptyList()) ?: return@run false, AuthorityCodec.encodeApprovals(approvals) ?: return@run false,
-            AuthorityCodec.encodeUpdate(UpdateSection(UpdateRecord(), emptyList())) ?: return@run false)
+            AuthorityCodec.encodeUpdate(UpdateSection(UpdateRecord(), emptyList())) ?: return@run false,
+            AuthorityCodec.encodeRecovery(RecoverySection(null, emptyList())) ?: return@run false)
         val genesis = Snapshot(0, sections)
         if (!readable(genesis)) return@run false
         save(null, genesis)
@@ -767,6 +771,68 @@ class JointAuthorityStore internal constructor(
     fun frictionReceipts(): List<StoredFrictionReceipt>? = section(Section.RECEIPTS)?.let(AuthorityCodec::decodeReceipts)
 
     internal fun sectionBytesForTest(section: Section): ByteArray? = section(section)
+
+    /** Test seam: commit raw bytes into one section, bypassing the decode check, to model a section that stops decoding. */
+    internal fun replaceSectionForTest(section: Section, bytes: ByteArray): Boolean = coordinator.run(false) {
+        val current = load() ?: return@run false
+        save(current, Snapshot(current.sequence + 1, current.with(section, bytes).sections))
+    }
+
+    /** Recovery receipt addresses, kept as a permanent audit. Null when the record is unreadable. */
+    fun recoveryAddresses(): List<StoredRecoveryAddresses>? = section(Section.RECOVERY)?.let(AuthorityCodec::decodeRecovery)?.audit
+
+    /**
+     * Lost-journal reconciliation on the same record and coordinator as every other writer. Credentials
+     * and the journal share one record here, so a confirmed loss is a readable record whose waiting
+     * section no longer decodes. A wholly unreadable record is never a confirmed loss: the credentials
+     * are gone too, and the phone stays held. Ordinary reads and writes delegate to [waitingStore].
+     */
+    val reconciliation: WaitingReconciliationStore = object : WaitingReconciliationStore {
+        override fun read(): WaitingState? = waitingStore.read()
+        override fun compareAndSet(expected: WaitingState, replacement: WaitingState): Boolean = waitingStore.compareAndSet(expected, replacement)
+
+        /** Reserves the episode ID durably and records it in the same record; the same ID until completion. */
+        override fun lostRecord(): LostWaitingRecord? = coordinator.run(null) {
+            val s = load() ?: return@run null
+            val waiting = s.sections[Section.WAITING.ordinal]
+            if (AuthorityCodec.decodeWaiting(waiting) != null) return@run null
+            val recovery = AuthorityCodec.decodeRecovery(s.sections[Section.RECOVERY.ordinal]) ?: return@run null
+            val digest = hex(MessageDigest.getInstance("SHA-256").digest(waiting))
+            recovery.loss?.takeIf { it.digest == digest }?.let { return@run LostWaitingRecord(it.id) }
+            val id = reserve("loss") { "loss-" + hex(entropy(16)) } ?: return@run null
+            val marked = commitHeld { now ->
+                if (!now.sections[Section.WAITING.ordinal].contentEquals(waiting)) null
+                else now.with(Section.RECOVERY, AuthorityCodec.encodeRecovery(RecoverySection(LossEpisode(id, digest), recovery.audit)))
+            }
+            if (marked) LostWaitingRecord(id) else null
+        }
+
+        /**
+         * One write: the still-lost episode and the exact credential record are compared; the vacant
+         * journal with its single recovery receipt replaces the lost section; the loss marker is cleared;
+         * and the receipt's addresses, frozen from [expectedCredentials], join the permanent audit.
+         */
+        override fun completeReconciliation(lost: LostWaitingRecord, expectedCredentials: CredentialState,
+            replacement: WaitingState): Boolean = commit { s ->
+            val waiting = s.sections[Section.WAITING.ordinal]
+            if (AuthorityCodec.decodeWaiting(waiting) != null) return@commit null
+            val recovery = AuthorityCodec.decodeRecovery(s.sections[Section.RECOVERY.ordinal]) ?: return@commit null
+            val loss = recovery.loss ?: return@commit null
+            if (loss.id != lost.id || loss.digest != hex(MessageDigest.getInstance("SHA-256").digest(waiting)) ||
+                !s.matches(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(expectedCredentials))) return@commit null
+            val profile = expectedCredentials.recoveryProfile ?: return@commit null
+            val receipt = replacement.recoveryReceipts.singleOrNull() ?: return@commit null
+            val generations = expectedCredentials.people.mapValues { it.value.generation }
+            if (replacement.storageGeneration != lost.id || replacement.revision != 0L || replacement.operation != null ||
+                replacement.texts.isNotEmpty() || receipt.key != "recovered:${lost.id.length}:${lost.id}" ||
+                receipt.mode != expectedCredentials.mode || receipt.recipientGenerations != generations ||
+                receipt.friction != profile.friction || receipt.state != RecoveredState.ACTIVE ||
+                recovery.audit.any { it.key == receipt.key }) return@commit null
+            val addresses = StoredRecoveryAddresses(receipt.key, generations, expectedCredentials.people.mapValues { it.value.contact })
+            s.with(Section.WAITING, AuthorityCodec.encodeWaiting(replacement))
+                .with(Section.RECOVERY, AuthorityCodec.encodeRecovery(RecoverySection(null, recovery.audit + addresses)))
+        }
+    }
 
     override fun applyStricter(expectedCredentials: CredentialState, replacementCredentials: CredentialState,
         expectedWaiting: WaitingState, expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
@@ -892,6 +958,7 @@ class JointAuthorityStore internal constructor(
             Section.RECEIPTS -> AuthorityCodec.decodeReceipts(bytes) != null
             Section.APPROVALS -> AuthorityCodec.decodeApprovals(bytes) != null
             Section.UPDATE -> AuthorityCodec.decodeUpdate(bytes) != null
+            Section.RECOVERY -> AuthorityCodec.decodeRecovery(bytes) != null
         }
     }
 
@@ -899,14 +966,17 @@ class JointAuthorityStore internal constructor(
      * One transaction: [change] returns the replacement or null to refuse before any write. True
      * means acknowledged; false means not acknowledged (see the class notes), never "unchanged".
      */
-    private fun commit(change: (Snapshot) -> Snapshot?): Boolean = coordinator.run(false) {
-        val current = load() ?: return@run false
-        if (current.sequence == Long.MAX_VALUE) return@run false
-        val next = change(current) ?: return@run false
+    private fun commit(change: (Snapshot) -> Snapshot?): Boolean = coordinator.run(false) { commitHeld(change) }
+
+    /** [commit] for a caller that already holds the coordinator. */
+    private fun commitHeld(change: (Snapshot) -> Snapshot?): Boolean {
+        val current = load() ?: return false
+        if (current.sequence == Long.MAX_VALUE) return false
+        val next = change(current) ?: return false
         // Only sections this transaction replaced must decode; untouched ones are kept byte for byte.
         val changed = Section.entries.filter { !next.sections[it.ordinal].contentEquals(current.sections[it.ordinal]) }
-        if (changed.any { !readable(next, it) }) return@run false
-        save(current, Snapshot(current.sequence + 1, next.sections))
+        if (changed.any { !readable(next, it) }) return false
+        return save(current, Snapshot(current.sequence + 1, next.sections))
     }
 
     /**
@@ -978,8 +1048,8 @@ class JointAuthorityStore internal constructor(
     companion object {
         /** Longest wait for another thread's transaction before a call is refused (not ready). */
         @Volatile internal var coordinatorWaitMillis: Long = 10_000
-        /** 2 adds the app approval section; 3 stores people patches; 4 commits at the fence with canonical maps; 5 adds Update. */
-        private const val SCHEMA = 5
+        /** 2 adds the app approval section; 3 stores people patches; 4 commits at the fence with canonical maps; 5 adds Update; 6 adds Recovery. */
+        private const val SCHEMA = 6
         /** Cancel-intent files keep the schema 4 format; the Update section did not change them. */
         private const val INTENT_SCHEMA = 4
         private val BUSY = setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)

@@ -107,6 +107,31 @@ class StoredUpdateReceipt(
     override fun toString() = "StoredUpdateReceipt(redacted)"
 }
 
+/**
+ * The fixed delivery addresses of one recovery receipt, kept as a permanent audit entry. The policy's
+ * [org.plainphone.policy.RecoveryReceipt] carries recipient generations only; delivery looks the
+ * addresses up here by key and never resolves them from a later credential record. Null is an
+ * explicitly unavailable address.
+ */
+class StoredRecoveryAddresses(val key: String, recipientGenerations: Map<TrustedPersonId, Long>,
+    recipientContacts: Map<TrustedPersonId, PersonContact?>) {
+    val recipientGenerations: Map<TrustedPersonId, Long> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientGenerations))
+    val recipientContacts: Map<TrustedPersonId, PersonContact?> = java.util.Collections.unmodifiableMap(LinkedHashMap(recipientContacts))
+    init { require(key.isNotBlank() && this.recipientContacts.keys == this.recipientGenerations.keys && this.recipientGenerations.isNotEmpty()) }
+    override fun toString() = "StoredRecoveryAddresses(redacted)"
+}
+
+/** A confirmed loss of the waiting section: its reserved episode ID and the digest of the bytes that no longer decode. */
+internal class LossEpisode(val id: String, val digest: String) {
+    init { require(id.isNotBlank() && digest.length == 64) }
+}
+
+/** The RECOVERY section (schema 6): the current loss episode, if any, and the recovery address audit. */
+internal class RecoverySection(val loss: LossEpisode?, audit: List<StoredRecoveryAddresses>) {
+    val audit: List<StoredRecoveryAddresses> = java.util.Collections.unmodifiableList(audit.toList())
+    init { require(this.audit.map { it.key }.toSet().size == this.audit.size) }
+}
+
 /** The UPDATE section: the policy's update record plus the receipt outbox the policy never sees. */
 internal class UpdateSection(val record: UpdateRecord, outbox: List<StoredUpdateReceipt>) {
     val outbox: List<StoredUpdateReceipt> = java.util.Collections.unmodifiableList(outbox.toList())
@@ -265,6 +290,17 @@ internal object AuthorityCodec {
             require(key.isNotBlank())
             StoredFrictionReceipt(key, actor, source, target, generations, contacts)
         }
+    }
+
+    fun encodeRecovery(r: RecoverySection): ByteArray? = write {
+        optional(r.loss) { writeUTF(it.id); writeUTF(it.digest) }
+        list(r.audit) { a -> writeUTF(a.key); recipients(a.recipientGenerations, a.recipientContacts) }
+    }
+
+    fun decodeRecovery(bytes: ByteArray): RecoverySection? = read(bytes) {
+        val loss = optional { LossEpisode(readUTF(), readUTF()) }
+        val audit = list { val key = readUTF(); val (g, c) = recipients(); StoredRecoveryAddresses(key, g, c) }
+        RecoverySection(loss, audit)
     }
 
     fun encodeUpdate(u: UpdateSection): ByteArray? = write {
