@@ -15,8 +15,10 @@ import org.plainphone.policy.StoredPolicy
  * the backup decodes, and [PolicyHealth.BOTH_INVALID] (with nothing approved) when neither does, so
  * the engine falls back to the compiled-in baseline.
  */
-class FilePolicyStore(dir: File) : PolicyStore {
-    private val file = RecordFile(dir, "policy", SCHEMA_VERSION)
+class FilePolicyStore internal constructor(dir: File, beforeRename: (File) -> Unit) : PolicyStore {
+    constructor(dir: File) : this(dir, {})
+
+    private val file = RecordFile(dir, "policy", SCHEMA_VERSION, beforeRename = beforeRename)
 
     override fun read(): StoredPolicy {
         file.readPrimary()?.let(::decode)?.let { return StoredPolicy(SCHEMA_VERSION, it, PolicyHealth.VALID) }

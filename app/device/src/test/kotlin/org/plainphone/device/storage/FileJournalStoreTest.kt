@@ -5,6 +5,9 @@ package org.plainphone.device.storage
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.io.File
+import java.io.IOException
+import java.nio.channels.FileChannel
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -12,6 +15,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -372,5 +376,32 @@ class FileJournalStoreTest {
         val out = ByteArrayOutputStream()
         DataOutputStream(out).use(block)
         return out.toByteArray()
+    }
+
+    // --- A failed directory sync is never acknowledged (PLA-232 finding 1) ---
+
+    private fun denySync(d: File) {
+        assertTrue(d.setReadable(false, false))
+        try {
+            FileChannel.open(d.toPath(), StandardOpenOption.READ).use { }
+            fail("control: opening the directory for sync must fail")
+        } catch (_: IOException) { }
+    }
+
+    @Test fun failedDirectorySyncKeepsTheLatchAndIsNotAcknowledged() {
+        startedStore().compareAndSet(SessionJournal.Empty, active()).let(::assertTrue)
+        val s = FileJournalStore(dir, inventory, "model", "build-1") { denySync(dir) }
+        s.beginRevocation()
+        try { assertFalse(s.compareAndSet(active(), SessionJournal.Empty)) } finally { dir.setReadable(true, true) }
+        // The in-memory latch survives an unacknowledged clear.
+        assertTrue(s.revocationPending())
+    }
+
+    @Test fun failedSyncOfANewJournalDirectoryIsNotAcknowledged() {
+        val parent = tmp.newFolder("parent")
+        denySync(parent)
+        val s = FileJournalStore(File(parent, "journal"), inventory, "model", "build-1")
+        try { assertFalse(s.compareAndSet(SessionJournal.Damaged, SessionJournal.Empty)) }
+        finally { parent.setReadable(true, true) }
     }
 }
