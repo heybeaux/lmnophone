@@ -49,6 +49,15 @@ class DpmPort(
         )
     }
 
+    override fun uid(name: PackageName): Int? {
+        val info = try {
+            pm.getApplicationInfo(name.value, PackageManager.MATCH_UNINSTALLED_PACKAGES or PackageManager.MATCH_DISABLED_COMPONENTS)
+        } catch (e: PackageManager.NameNotFoundException) {
+            return null
+        }
+        return if (info.flags and ApplicationInfo.FLAG_INSTALLED == 0) null else info.uid
+    }
+
     override fun setHidden(name: PackageName, hidden: Boolean) {
         dpm.setApplicationHidden(admin, name.value, hidden)
     }

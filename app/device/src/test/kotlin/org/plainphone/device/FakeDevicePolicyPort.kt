@@ -90,7 +90,7 @@ class FakeDevicePolicyPort(
     val uids = mutableMapOf<PackageName, Int>()
     val uidUnreadable = mutableSetOf<PackageName>()
     private val assigned = mutableMapOf<PackageName, Int>()
-    fun uid(name: PackageName): Int? {
+    override fun uid(name: PackageName): Int? {
         touch("uid")
         if (name in uidUnreadable) throw IllegalStateException("uid of ${name.value} unreadable")
         if (name !in state) return null

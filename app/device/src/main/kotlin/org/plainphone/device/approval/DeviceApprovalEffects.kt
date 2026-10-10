@@ -47,6 +47,20 @@ class PublishedHomeApps : HomeAppList {
  * event handler on the same dispatcher cannot re-hide the app inside the window. Every hide, window
  * open and window close checks the live never-hide list first; unreadable means refuse. Nothing is
  * suspended: a suspended app misreports sensor grants, so open fails for one.
+ *
+ * Effective exclusion (PLA-218). Android lets every package that shares a UID with an allowed lock-task
+ * package start lock task too (`DevicePolicyManager.setLockTaskPackages`). After the name is out of the
+ * applied list, open refuses, before any unhide, while a package left in that list shares the
+ * candidate's UID or any of those UIDs cannot be read. It never removes the sibling or the floor.
+ *
+ * One window at a time. Open claims the window for its identity before its first write, and keeps it
+ * even when it fails part-way; a second open is refused and touches nothing. Only the owner's close or
+ * hide, read back hidden, frees it. A close for another identity still hides its own package but
+ * returns false and leaves the window with its owner.
+ *
+ * A failed [applyPolicy] leaves no discretionary package visible and in lock task that was not both
+ * before it: each such package is taken out of lock task and Home, hidden, and read back. Floor
+ * packages (never-hide and emergency UI) are left as the apply repaired them.
  */
 class DeviceApprovalEffects(
     private val dispatcher: SerialDispatcher,
@@ -59,19 +73,28 @@ class DeviceApprovalEffects(
     private val grants = PermissionGrants(grantPort)
     private val signers: (PackageName) -> Set<org.plainphone.core.CertDigest>? = { attempt { grantPort.signers(it) } }
     private val applier = ReadbackPolicyApplier(port)
-    /** The identity whose window is open now; written only on the dispatcher. */
-    private var open: ApprovalBinding? = null
+    /** The identity that owns the window, from its open until its close; written only on the dispatcher. */
+    private var owner: ApprovalBinding? = null
+    /** Whether the owner's open completed; only then may it write permissions. */
+    private var opened = false
 
-    override fun hideAndReadBack(identity: ApprovalBinding): Boolean = serialized { hide(identity.packageName) }
+    override fun hideAndReadBack(identity: ApprovalBinding): Boolean = serialized {
+        hide(identity.packageName).also { if (it && identity == owner) release() }
+    }
 
     override fun openPermissionWindow(identity: ApprovalBinding): Boolean = serialized {
-        open = null
+        if (owner != null) return@serialized false
         val name = identity.packageName
         if (!mayHide(name)) return@serialized false
-        val opened = attempt {
+        owner = identity
+        opened = attempt {
             val before = port.lockTaskPackages()
             if (name in before) port.setLockTaskPackages(before - name)
-            if (port.lockTaskPackages() != before - name) return@attempt false
+            val applied = port.lockTaskPackages()
+            if (applied != before - name) return@attempt false
+            // Effective exclusion: no package left in lock task may share the candidate's UID.
+            val uid = port.uid(name) ?: return@attempt false
+            if (applied.any { port.uid(it) == uid }) return@attempt false
             home.remove(name)
             if (home.lists(name) != false) return@attempt false
             // Only the exact identity becomes visible.
@@ -84,17 +107,20 @@ class DeviceApprovalEffects(
             }
             port.packageState(name)?.let { !it.hidden && !it.suspended } == true
         } == true
-        if (opened) open = identity
         opened
     }
 
     override fun closePermissionWindow(identity: ApprovalBinding): Boolean = serialized {
-        open = null
-        hide(identity.packageName)
+        val hidden = hide(identity.packageName)
+        when (owner) {
+            null -> hidden
+            identity -> hidden.also { if (it) release() }
+            else -> false
+        }
     }
 
     override fun setPermission(identity: ApprovalBinding, write: PermissionWrite): Boolean = serialized {
-        open == identity && grants.set(identity, write)
+        owner == identity && opened && grants.set(identity, write)
     }
 
     /** Works hidden or visible; the permissions are the live manifest's. */
@@ -104,10 +130,17 @@ class DeviceApprovalEffects(
     }
 
     override fun applyPolicy(plan: PolicyPlan): Boolean = serialized {
-        val result = attempt { applier.apply(plan) } ?: return@serialized false
-        if (result.needsAttention) return@serialized false
-        plan.expected.lockTaskPackages?.let { attempt { home.publish(it) } ?: return@serialized false }
-        true
+        // Discretionary packages this apply could newly make visible and lock-task permitted.
+        val discretionary = plan.unhide - plan.neverHide - plan.emergencyUi
+        val active = attempt {
+            val permitted = port.lockTaskPackages()
+            discretionary.filter { it in permitted && port.packageState(it)?.hidden == false }.toSet()
+        } ?: emptySet()
+        val result = attempt { applier.apply(plan) }
+        val done = result != null && !result.needsAttention &&
+            plan.expected.lockTaskPackages.let { it == null || attempt { home.publish(it) } != null }
+        if (!done) contain(discretionary - active)
+        done
     }
 
     override fun readBackPolicy(plan: PolicyPlan): Boolean = attempt { applier.readBack(plan) } == true
@@ -118,6 +151,26 @@ class DeviceApprovalEffects(
             if (port.packageState(name)?.hidden == false) port.setHidden(name, true)
             port.packageState(name)?.hidden != false
         } == true
+    }
+
+    private fun release() {
+        owner = null
+        opened = false
+    }
+
+    /**
+     * After a failed apply: takes [names] out of lock task and Home and hides them, reading both back.
+     * Best effort; the apply already failed, so the result only says whether containment read back.
+     */
+    private fun contain(names: Set<PackageName>): Boolean {
+        if (names.isEmpty()) return true
+        val excluded = attempt {
+            val now = port.lockTaskPackages()
+            if (now.any { it in names }) port.setLockTaskPackages(now - names)
+            port.lockTaskPackages().none { it in names }
+        } == true
+        names.forEach { attempt { home.remove(it) } }
+        return names.map { hide(it) }.all { it } && excluded
     }
 
     private fun mayHide(name: PackageName): Boolean = attempt { neverHide() }?.let { name !in it } == true

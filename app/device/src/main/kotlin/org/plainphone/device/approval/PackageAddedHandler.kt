@@ -27,10 +27,12 @@ class PackageAddedHandler(
     private val mayShow: (PackageName) -> Boolean?,
     private val neverHide: () -> Set<PackageName>?,
 ) {
+    /** The only entry point: queues the hide as its own dispatcher task. */
     fun onPackageAdded(name: PackageName) = dispatcher.post { handle(name) }
 
-    /** The hide itself. Call only on [dispatcher]; [onPackageAdded] is the entry point. */
-    fun handle(name: PackageName) {
+    /** The hide itself; private so nothing can run it outside its own dispatcher task (PLA-218). */
+    private fun handle(name: PackageName) {
+        if (!dispatcher.onDispatcher) return
         try {
             if (mayShow(name) == true) return
             val floor = neverHide() ?: return

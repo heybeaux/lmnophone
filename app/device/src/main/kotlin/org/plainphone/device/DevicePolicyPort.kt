@@ -28,6 +28,13 @@ interface DevicePolicyPort {
     fun systemAccessibilityServicesOnly(): Boolean
     fun setSystemAccessibilityServicesOnly(only: Boolean)
 
+    /**
+     * The app UID of [name] in this user, hidden packages included (`MATCH_UNINSTALLED_PACKAGES`); null
+     * when it is not installed for this user. Throws when it cannot be read. Android lets every package
+     * that shares a UID with an allowed lock-task package start lock task too.
+     */
+    fun uid(name: PackageName): Int?
+
     fun lockTaskPackages(): Set<PackageName>
     fun setLockTaskPackages(packages: Set<PackageName>)
     fun lockTaskFeatures(): Set<LockTaskFeature>
