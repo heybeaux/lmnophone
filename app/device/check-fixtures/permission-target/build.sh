@@ -2,9 +2,11 @@
 # Copyright 2026 Plainphone contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-# Builds the HiddenPermissionCheck target into OUT (default ./out) as target.apk, signed with a
-# throwaway key made there, and prints its signer with `apksigner verify --print-certs`.
-# The key never leaves OUT; do not commit it.
+# Builds the HiddenPermissionCheck target into OUT (default ./out), with throwaway keys made there:
+#   target.apk          versionCode 1, key A (the approved identity)
+#   target-other.apk    versionCode 2, unrelated key C (a different-signer replacement)
+#   target-rotated.apk  versionCode 2, key B rotated from A (apksigner --lineage)
+# and prints each signer with `apksigner verify --print-certs`. Keys never leave OUT; do not commit them.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 out="${1:-$here/out}"
@@ -15,7 +17,22 @@ mkdir -p "$out"
 cd "$out"
 [ -f key.jks ] || keytool -genkeypair -keystore key.jks -storepass checkpass -keypass checkpass \
   -alias k -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Plainphone permission check key" >/dev/null 2>&1
-"$bt/aapt2" link -o unsigned.apk -I "$jar" --manifest "$here/AndroidManifest.xml" --version-code 1 --version-name 1
-"$bt/zipalign" -f -p 4 unsigned.apk aligned.apk
-"$bt/apksigner" sign --out target.apk --ks key.jks --ks-pass pass:checkpass --ks-key-alias k aligned.apk
-"$bt/apksigner" verify --print-certs target.apk
+for k in b c; do
+  [ -f "key-$k.jks" ] || keytool -genkeypair -keystore "key-$k.jks" -storepass checkpass -keypass checkpass \
+    -alias "$k" -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Plainphone permission check key $k" >/dev/null 2>&1
+done
+sign_a=(--ks key.jks --ks-pass pass:checkpass --ks-key-alias k)
+sign_b=(--ks key-b.jks --ks-pass pass:checkpass --ks-key-alias b)
+sign_c=(--ks key-c.jks --ks-pass pass:checkpass --ks-key-alias c)
+[ -f lineage ] || "$bt/apksigner" rotate --out lineage --old-signer "${sign_a[@]}" --new-signer "${sign_b[@]}"
+for v in 1 2; do
+  "$bt/aapt2" link -o "unsigned-v$v.apk" -I "$jar" --manifest "$here/AndroidManifest.xml" --version-code "$v" --version-name "$v"
+  "$bt/zipalign" -f -p 4 "unsigned-v$v.apk" "aligned-v$v.apk"
+done
+"$bt/apksigner" sign --out target.apk "${sign_a[@]}" aligned-v1.apk
+"$bt/apksigner" sign --out target-other.apk "${sign_c[@]}" aligned-v2.apk
+"$bt/apksigner" sign --out target-rotated.apk "${sign_a[@]}" --next-signer "${sign_b[@]}" --lineage lineage aligned-v2.apk
+for f in target.apk target-other.apk target-rotated.apk; do
+  echo "== $f"
+  "$bt/apksigner" verify --print-certs "$f"
+done

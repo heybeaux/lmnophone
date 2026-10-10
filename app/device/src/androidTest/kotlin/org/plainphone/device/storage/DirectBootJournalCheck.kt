@@ -6,6 +6,7 @@ import android.app.Activity
 import android.app.Instrumentation
 import android.os.Build
 import android.os.Bundle
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.os.UserManager
 import android.util.Log
@@ -35,6 +36,7 @@ import org.plainphone.policy.SessionPhase
  * `-e phase reset` runs the PLA-92 reset-protection check ([org.plainphone.device.apply.ResetProtectionCheck]);
  * `-e phase reserve` runs the PLA-92 identity reservation check (no Device Owner needed);
  * `-e phase permissions` runs the PLA-86 hidden-package permission check ([org.plainphone.device.apply.HiddenPermissionCheck]);
+ * `-e phase uninstall-block` runs the PLA-182 permission write-boundary check ([org.plainphone.device.apply.UninstallBlockCheck]);
  * `-e phase update`, `pending1` and `pending2` run the PLA-167 Update installer check ([org.plainphone.device.update.UpdateInstallerCheck]);
  * `-e phase facts` and `-e phase rotated` run the PLA-132 live package facts check
  * ([org.plainphone.device.facts.PackageFactsCheck]); all of these need this APK as Device Owner.
@@ -65,6 +67,7 @@ class DirectBootJournalCheck : Instrumentation() {
                 "facts" -> org.plainphone.device.facts.PackageFactsCheck(targetContext, args, ::note).facts()
                 "rotated" -> org.plainphone.device.facts.PackageFactsCheck(targetContext, args, ::note).rotated()
                 "permissions" -> org.plainphone.device.apply.HiddenPermissionCheck(targetContext, args, ::note).check()
+                "uninstall-block" -> org.plainphone.device.apply.UninstallBlockCheck(targetContext, args, ::note, ::shell).check()
                 "update" -> org.plainphone.device.update.UpdateInstallerCheck(targetContext, args, ::note).update()
                 "pending1" -> org.plainphone.device.update.UpdateInstallerCheck(targetContext, args, ::note).pending1()
                 "pending2" -> org.plainphone.device.update.UpdateInstallerCheck(targetContext, args, ::note).pending2()
@@ -79,6 +82,10 @@ class DirectBootJournalCheck : Instrumentation() {
         val results = Bundle().apply { putString(REPORT_KEY_STREAMRESULT, lines.joinToString("\n", postfix = "\n")) }
         finish(if (ok) Activity.RESULT_OK else Activity.RESULT_CANCELED, results)
     }
+
+    /** Runs [command] as the shell user, like `adb shell`, and returns its trimmed output. */
+    private fun shell(command: String): String =
+        ParcelFileDescriptor.AutoCloseInputStream(uiAutomation.executeShellCommand(command)).use { it.readBytes().decodeToString().trim() }
 
     private val deContext by lazy { targetContext.createDeviceProtectedStorageContext() }
     private val dir by lazy { File(deContext.filesDir, "session-journal") }

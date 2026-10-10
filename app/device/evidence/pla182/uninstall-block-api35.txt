@@ -1,0 +1,78 @@
+# PLA-182 permission write boundary: uninstall block, replacement, containment, key rotation, 2026-10-10T03:59:07Z
+# AVD pla182-a35 (fresh, system-images;android-35;google_apis;arm64-v8a, no lock PIN, no accounts), API 35, google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys
+# Built from mvp/device bd4d9a2 plus the uncommitted check changes committed with this file.
+# check-fixtures/permission-target/build.sh out   (throwaway keys: A = target.apk, C = target-other.apk, B rotated from A = target-rotated.apk)
+# adb install -t device-debug-androidTest.apk; adb install out/target.apk; adb push out/*.apk /data/local/tmp/pla182/
+# dpm set-device-owner org.plainphone.device.test/org.plainphone.device.apply.CheckAdmin
+# am instrument -w -e phase uninstall-block -e expect <A> -e other <C> -e rotated <B> org.plainphone.device.test/org.plainphone.device.storage.DirectBootJournalCheck
+# Shell commands run from the instrumentation through UiAutomation.executeShellCommand, as the shell user (same as adb shell).
+# Every "ok:" line is an assertion; "shell" lines are the raw pm output that the next "ok:" asserts.
+# Reading notes:
+# - Blocked: plain `pm uninstall` -> DELETE_FAILED_OWNER_BLOCKED, hidden and visible. Visible: --user 0 forms too.
+# - Hidden: the --user 0 forms say "not installed for 0" with or without a block (asserted control); that refusal is not the block's.
+# - A different-signer install is refused as an update (INSTALL_FAILED_UPDATE_INCOMPATIBLE) whatever the block.
+# - "Control" rows use a port that only pretends to block, to show the replacement is real and the write contains it.
+# - A rotated (v3 lineage A->B) update installs while blocked and keeps the grant state; the write contains it.
+# A=eb75d32ee1b4a42d727152892e3fe2bb47d02e7284b963eaecdb58a82a4adffc C=996b53f42d8adff062a87cede9b014010e2b332cefeac0d7e1bec05cc265e365 B=e9b9ae47fd7cf6d5259a1f2e3753f4cdd645809a3286d470d10c8a3b54940f08
+PLA182 ok: this test APK is the Device Owner
+PLA182 ok: A is installed
+PLA182 ok: A starts without an uninstall block
+PLA182 ok: setUninstallBlocked(true) reads back
+PLA182 ok: target hidden=true
+PLA182 shell `pm uninstall org.plainphone.permtarget` -> Failure [DELETE_FAILED_OWNER_BLOCKED]
+PLA182 ok: hidden=true: `pm uninstall org.plainphone.permtarget` refused, A still installed (Failure [DELETE_FAILED_OWNER_BLOCKED])
+PLA182 shell `pm uninstall --user 0 org.plainphone.permtarget` -> Failure [not installed for 0]
+PLA182 ok: hidden=true: `pm uninstall --user 0 org.plainphone.permtarget` refused, A still installed (Failure [not installed for 0])
+PLA182 shell `pm uninstall -k --user 0 org.plainphone.permtarget` -> Failure [not installed for 0]
+PLA182 ok: hidden=true: `pm uninstall -k --user 0 org.plainphone.permtarget` refused, A still installed (Failure [not installed for 0])
+PLA182 shell `pm install -r -t /data/local/tmp/pla182/target-other.apk` -> Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package org.plainphone.permtarget signatures do not match newer version; ignoring!]
+PLA182 ok: hidden=true, another signer: `pm install -r -t /data/local/tmp/pla182/target-other.apk` refused, A still installed (Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package org.plainphone.permtarget signatures do not match newer version; ignoring!])
+PLA182 ok: target hidden=false
+PLA182 shell `pm uninstall org.plainphone.permtarget` -> Failure [DELETE_FAILED_OWNER_BLOCKED]
+PLA182 ok: hidden=false: `pm uninstall org.plainphone.permtarget` refused, A still installed (Failure [DELETE_FAILED_OWNER_BLOCKED])
+PLA182 shell `pm uninstall --user 0 org.plainphone.permtarget` -> Failure [DELETE_FAILED_OWNER_BLOCKED]
+PLA182 ok: hidden=false: `pm uninstall --user 0 org.plainphone.permtarget` refused, A still installed (Failure [DELETE_FAILED_OWNER_BLOCKED])
+PLA182 shell `pm uninstall -k --user 0 org.plainphone.permtarget` -> Failure [DELETE_FAILED_OWNER_BLOCKED]
+PLA182 ok: hidden=false: `pm uninstall -k --user 0 org.plainphone.permtarget` refused, A still installed (Failure [DELETE_FAILED_OWNER_BLOCKED])
+PLA182 shell `pm install -r -t /data/local/tmp/pla182/target-other.apk` -> Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package org.plainphone.permtarget signatures do not match newer version; ignoring!]
+PLA182 ok: hidden=false, another signer: `pm install -r -t /data/local/tmp/pla182/target-other.apk` refused, A still installed (Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package org.plainphone.permtarget signatures do not match newer version; ignoring!])
+PLA182 ok: block cleared for the control
+PLA182 shell `pm uninstall --user 0 org.plainphone.permtarget` -> Failure [not installed for 0]
+PLA182 ok: control, hidden and not blocked: `pm uninstall --user 0 org.plainphone.permtarget` -> Failure [not installed for 0]
+PLA182 shell `pm uninstall -k --user 0 org.plainphone.permtarget` -> Failure [not installed for 0]
+PLA182 ok: control, hidden and not blocked: `pm uninstall -k --user 0 org.plainphone.permtarget` -> Failure [not installed for 0]
+PLA182 ok: target visible again
+PLA182 shell `pm uninstall org.plainphone.permtarget` -> Failure [DELETE_FAILED_OWNER_BLOCKED]
+PLA182 shell `pm install -t /data/local/tmp/pla182/target-other.apk` -> Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package org.plainphone.permtarget signatures do not match newer version; ignoring!]
+PLA182 ok: pm replacement inside the write was refused: [Failure [DELETE_FAILED_OWNER_BLOCKED], Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package org.plainphone.permtarget signatures do not match newer version; ignoring!]]
+PLA182 ok: write is DONE for A while the replacement was refused (got DONE)
+PLA182 ok: A holds CAMERA GRANTED
+PLA182 ok: write put back the block it added (none)
+PLA182 ok: write with an existing block is DONE
+PLA182 ok: write kept the existing block
+PLA182 shell `pm uninstall org.plainphone.permtarget` -> Success
+PLA182 shell `pm install -t /data/local/tmp/pla182/target-other.apk` -> Success
+PLA182 ok: without an enforced block, pm replaced the app with target-other.apk
+PLA182 ok: replacement inside the write is REPLACED_CONTAINED (got REPLACED_CONTAINED)
+PLA182 ok: the replacement C holds CAMERA fixed DENIED, not granted
+PLA182 shell `pm uninstall org.plainphone.permtarget` -> Success
+PLA182 shell `pm install -t /data/local/tmp/pla182/target.apk` -> Success
+PLA182 ok: without an enforced block, pm replaced the app with target.apk
+PLA182 ok: A has CAMERA ALLOW before the rotation
+PLA182 shell `pm install -r -t /data/local/tmp/pla182/target-rotated.apk` -> Success
+PLA182 ok: rotated update installs while uninstall is blocked (Success)
+PLA182 ok: after the rotation the signer set is B only
+PLA182 ok: the rotated app kept CAMERA GRANTED
+PLA182 ok: A's binding writes nothing to the rotated app
+PLA182 shell `pm uninstall org.plainphone.permtarget` -> Success
+PLA182 shell `pm install -t /data/local/tmp/pla182/target.apk` -> Success
+PLA182 ok: without an enforced block, pm replaced the app with target.apk
+PLA182 shell `pm install -r -t /data/local/tmp/pla182/target-rotated.apk` -> Success
+PLA182 ok: rotation inside the write is REPLACED_CONTAINED (got REPLACED_CONTAINED)
+PLA182 ok: the rotated app holds CAMERA fixed DENIED, not granted
+PLA182 ok: write put back the block it added (none)
+PLA182 shell `pm uninstall org.plainphone.permtarget` -> Success
+PLA182 shell `pm install -t /data/local/tmp/pla182/target.apk` -> Success
+PLA182 ok: without an enforced block, pm replaced the app with target.apk
+PLA182 ok: cleanup left A installed, visible, unblocked, DEFAULT
+RESULT PASS phase=uninstall-block
