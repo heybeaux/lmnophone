@@ -66,6 +66,8 @@ class PolicyRuntime private constructor(private val context: Context) {
         flipFailures = FileFlipFailureStore(File(protectedDir, "flip-failures")),
     )
     private val gateState = MutableStateFlow(HomeGate.CHECKING)
+    @Volatile private var lastGate = HomeGate.CHECKING
+    @Volatile private var checkingHeld = false
     private val noticeState = MutableStateFlow<HomeNotice?>(null)
     private val packageEventQueued = AtomicBoolean(false)
 
@@ -90,13 +92,23 @@ class PolicyRuntime private constructor(private val context: Context) {
         }
     }
 
+    /**
+     * Test builds only (debug `TestHook` HOLD; release never calls it): keeps the checking screen up so
+     * the emergency gate can test its Phone, then restores the last re-apply's gate.
+     */
+    fun holdChecking(hold: Boolean) {
+        checkingHeld = hold
+        gateState.value = if (hold) HomeGate.CHECKING else lastGate
+    }
+
     /** Hook for the wiring slice: run after every trusted-person action commits. */
     fun afterTrustedPersonAction() = reapply("trusted-person")
 
     private fun run(reason: String) {
         if (!dpm.isDeviceOwnerApp(context.packageName)) {
             Log.w(TAG, "reapply $reason skipped: not Device Owner")
-            gateState.value = HomeGate.NOT_READY
+            lastGate = HomeGate.NOT_READY
+            if (!checkingHeld) gateState.value = lastGate
             return
         }
         val locked = !users.isUserUnlocked
@@ -112,7 +124,8 @@ class PolicyRuntime private constructor(private val context: Context) {
         // A locked run never opens Home: the full plan has not run yet.
         if (!locked) {
             noticeState.value = homeNotice(outcome)
-            gateState.value = if (outcome?.ready == true) HomeGate.READY else HomeGate.NOT_READY
+            lastGate = if (outcome?.ready == true) HomeGate.READY else HomeGate.NOT_READY
+            if (!checkingHeld) gateState.value = lastGate
         }
     }
 

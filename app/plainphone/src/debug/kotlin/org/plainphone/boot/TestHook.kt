@@ -25,6 +25,8 @@ import org.plainphone.PlainphoneAdminReceiver
  * - `org.plainphone.test.NOTIFY --es component C`: posts a notification whose tap opens activity C, an
  *   unapproved app. Android clears notifications on reboot and the shell cannot attach a tap intent,
  *   so this stands in for an unapproved app's notification right after boot. Works before unlock.
+ * - `org.plainphone.test.HOLD --ez hold true|false`: holds (or releases) the checking screen, so the
+ *   emergency gate can test its Phone (PLA-245; the real checking screen lasts under a second).
  */
 class TestHook : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -41,6 +43,7 @@ class TestHook : BroadcastReceiver() {
                 dpm.setLockTaskPackages(admin, emptyArray())
                 if (intent.hasExtra("features")) dpm.setLockTaskFeatures(admin, intent.getIntExtra("features", 0))
             }
+            "org.plainphone.test.HOLD" -> PolicyRuntime.get(context).holdChecking(intent.getBooleanExtra("hold", false))
             "org.plainphone.test.NOTIFY" -> {
                 val target = intent.getStringExtra("component")?.let(ComponentName::unflattenFromString) ?: return
                 val notifications = context.getSystemService(NotificationManager::class.java)

@@ -72,5 +72,9 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
+        <!-- Routes this build does not have yet; the emergency gate accepts NOT_BUILT only for these. -->
+        <meta-data
+            android:name="org.plainphone.gate.notBuilt"
+            android:value="more-emergency" />
     </application>
 </manifest>
