@@ -1,0 +1,24 @@
+# debug qualification run: ctlNoPhone on emulator-5800, API 36, google/sdk_gphone64_arm64/emu64a:16/BE2A.250530.026.F3/13894323:userdebug/dev-keys
+# gate_apk_sha256=077093b793c5ccc035b10a2c1fbee7a0a1a318f59f88762cddb0b3ad27ecc2d3 commit=623b3b5+dirty
+# variant=ctlNoPhone control=no-phone apk=plainphone-ctlNoPhone.apk apk_sha256=10c130c062d052dc116db1cd325e24161c9f32ab68bf3195fec795d9deb04f46
+# restrictions=no_add_private_profile,no_network_reset,no_add_user,no_config_cell_broadcasts,disallow_config_default_apps,no_install_unknown_sources_globally,no_usb_file_transfer,no_system_error_dialogs,no_create_windows,no_modify_accounts,no_add_managed_profile,disallow_config_private_dns,no_add_clone_profile,no_safe_boot,no_config_vpn,no_user_switch,no_config_date_time
+# 10-10 15:47:16.633  3533  3569 I PlainphoneBoot: reapply reason=package:PACKAGE_REMOVED:com.android.vending control=no-phone locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=385
+GATE capabilities PASS control=no-phone notBuilt=more-emergency ready=true
+GATE sos NOT_COVERED by design: the power-button SOS gesture is never triggered by a tool (AGENTS.md rule 3); Q14 real-device check
+GATE setup NOT_COVERED not yet implemented: setup
+GATE pin-lockout NOT_COVERED not yet implemented: PIN lockout
+GATE supervised-session NOT_COVERED not yet implemented: supervised session
+GATE updater NOT_COVERED not yet implemented: Plainphone update
+GATE turn-off NOT_COVERED not yet implemented: turning Plainphone off
+GATE home-phone FAIL foreground is org.plainphone/org.plainphone.MainActivity, expected one of [com.google.android.dialer/com.android.dialer.main.impl.MainActivity] lockTask=LOCKED
+GATE app-home-phone FAIL from com.google.android.apps.messaging: foreground is org.plainphone/org.plainphone.MainActivity, expected one of [com.google.android.dialer/com.android.dialer.main.impl.MainActivity] lockTask=LOCKED
+GATE more-emergency NOT_BUILT declared not built by the build (org.plainphone.gate.notBuilt)
+GATE alert-display-ready PASS com.google.android.cellbroadcastreceiver componentState=0 lockTask=LOCKED
+GATE alert-display-launch PASS com.google.android.cellbroadcastreceiver/com.android.cellbroadcastreceiver.CellBroadcastAlertDialog lockTask=LOCKED
+GATE alert-shown INCONCLUSIVE this image cannot inject a cell broadcast alert (emulator console has no cbs; modem has no +CBM injection)
+GATE telecom-emergency-call FAIL dialer not reached: foreground is org.plainphone/org.plainphone.MainActivity, expected one of [com.google.android.dialer/com.android.dialer.main.impl.MainActivity] lockTask=LOCKED afterHangUp=mCallState=0
+# after telecom-emergency-call: mCallState=0
+GATE lock-screen PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=true lockTask=LOCKED
+GATE locked-boot PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=false lockTask=LOCKED
+GATE boot-checking FAIL screen=checking uptime=17s foreground is org.plainphone/org.plainphone.MainActivity, expected one of [com.google.android.dialer/com.android.dialer.main.impl.MainActivity] lockTask=LOCKED
+# removal: no owners  lockTask=mLockTaskModeState=NONE
