@@ -19,6 +19,8 @@ import org.plainphone.device.storage.FileJournalStore
 import org.plainphone.device.visible
 import org.plainphone.policy.ApplyStage
 import org.plainphone.policy.FloorIdentity
+import org.plainphone.policy.FloorResult
+import org.plainphone.policy.JournalStore
 import org.plainphone.policy.FloorRole
 import org.plainphone.policy.InstalledPackage
 import org.plainphone.policy.LockTaskFeature
@@ -142,7 +144,7 @@ class BootReapplyTest {
         val outcome = reapply(RestrictionFilter.NONE).run(locked = false)
         assertTrue(outcome.ready)
         assertTrue(outcome.withheld.isEmpty())
-        assertEquals(Restriction.entries.toSet(), port.restrictionSet)
+        assertEquals(Restriction.entries.toSet() - outcome.withheld, port.restrictionSet)
     }
 
     @Test fun unlockedStartRestoresALostRestrictionAndLockTaskBeforeReady() {
@@ -178,8 +180,106 @@ class BootReapplyTest {
         decideFails = true
         val outcome = reapply().run(locked = true)
         assertFalse(outcome.ready)
-        assertNull(outcome.apply)
+        // The plan-independent repair still ran (PLA-241 finding 2); nothing was hidden by it.
+        assertEquals(listOf(ApplyStage.RESTRICTIONS, ApplyStage.EMERGENCY_FLOOR, ApplyStage.NEVER_HIDE_GUARD), outcome.apply!!.applied)
+        assertTrue(outcome.needsAttention)
         assertFalse(PackageName(play) in port.lockTask)
+        assertFalse(port.hidden(notes))
+    }
+
+    private val osFloor = FloorResult(names(dialer, phone, messages), names(dialer, phone), true)
+
+    private fun fallback(committing: () -> Boolean, floor: () -> FloorResult? = { osFloor }) = BootReapply(
+        journal, port, setOf(PackageName(play)), { check(false) { "no facts" }; PolicyEngine.decide(input(it)) },
+        RestrictionFilter.TEST_BUILD, floor = floor, home = PackageName(plainphone), turnOffCommitting = committing,
+    )
+
+    @Test fun aFailedPlanRestoresCompiledRestrictionsFeaturesAndTheOsFloor() {
+        seedEmptyJournal()
+        port.state[PackageName(dialer)] = hiddenApp()
+        port.state[PackageName(notes)] = hiddenApp()
+        val outcome = fallback({ false }).run(locked = true)
+        assertFalse(outcome.ready)
+        assertEquals(Restriction.entries.toSet() - outcome.withheld, port.restrictionSet)
+        assertEquals(LockTaskFeature.entries.toSet(), port.features)
+        assertFalse(port.hidden(dialer))
+        assertTrue(port.lockTask.containsAll(names(dialer, phone, plainphone)))
+        // Uncertain packages are left as they are: never unhidden by the fallback, never hidden.
+        assertTrue(port.hidden(notes))
+        assertFalse(port.hidden(play))
+        assertTrue(journal.revocationPending())
+    }
+
+    @Test fun aCommittingTurnOffGetsOnlyTheFloorFromTheFallback() {
+        seedEmptyJournal()
+        port.state[PackageName(dialer)] = hiddenApp()
+        val outcome = fallback({ true }).run(locked = false)
+        assertFalse(outcome.ready)
+        assertTrue(port.restrictionSet.isEmpty())
+        assertTrue(port.features.isEmpty())
+        assertFalse(port.hidden(dialer))
+    }
+
+    @Test fun anUnreadableTurnOffStateCountsAsCommitting() {
+        seedEmptyJournal()
+        fallback({ error("waiting store unreadable") }).run(locked = true)
+        assertTrue(port.restrictionSet.isEmpty())
+        assertTrue(port.features.isEmpty())
+    }
+
+    @Test fun aThrowingFloorReaderStillRestoresRestrictions() {
+        seedEmptyJournal()
+        val outcome = fallback({ false }, { error("roles unreadable") }).run(locked = true)
+        assertFalse(outcome.ready)
+        assertEquals(Restriction.entries.toSet() - outcome.withheld, port.restrictionSet)
+    }
+
+    private fun withStore(store: FlipFailureStore) = BootReapply(
+        journal, port, setOf(PackageName(play)), { PolicyEngine.decide(input(it)) }, RestrictionFilter.TEST_BUILD,
+        flipFailures = store,
+    )
+
+    @Test fun aFlipFailureSurvivesAProcessRestartUntilALaterFlipReadsBack() {
+        seedEmptyJournal()
+        val store = org.plainphone.device.storage.FileFlipFailureStore(tmp.newFolder("flips"))
+        port.state[PackageName(dialer)] = hiddenApp()
+        port.flushComponent = null
+        assertTrue(PackageName(dialer) in withStore(store).run(locked = true).apply!!.flipFailures)
+
+        // A new process with nothing to unhide still shows the failure.
+        val afterRestart = withStore(store).run(locked = false)
+        assertTrue(PackageName(dialer) in afterRestart.apply!!.flipFailures)
+        assertTrue(afterRestart.needsAttention)
+
+        // A later flip for that package that reads back is the defined repair.
+        port.state[PackageName(dialer)] = hiddenApp()
+        port.flushComponent = false
+        val repaired = withStore(store).run(locked = false)
+        assertFalse(PackageName(dialer) in repaired.apply!!.flipFailures)
+        assertTrue(store.read().isEmpty())
+    }
+
+    @Test fun acknowledgingClearsTheFlipFailure() {
+        seedEmptyJournal()
+        val store = InMemoryFlipFailureStore()
+        port.state[PackageName(dialer)] = hiddenApp()
+        port.flushComponent = null
+        val boot = withStore(store)
+        boot.run(locked = true)
+        boot.acknowledgeFlipFailures()
+        assertTrue(store.read().isEmpty())
+        assertTrue(boot.run(locked = false).apply!!.flipFailures.isEmpty())
+    }
+
+    @Test fun aThrowingOnStartStillRepairsTheFloorAndIsNotReady() {
+        dir = tmp.newFolder("de")
+        val throwing = object : JournalStore by journal { override fun read(): SessionJournal = throw java.io.IOException("unreadable") }
+        port.state[PackageName(dialer)] = hiddenApp()
+        val outcome = BootReapply(throwing, port, setOf(PackageName(play)), { PolicyEngine.decide(input(it)) }, RestrictionFilter.TEST_BUILD)
+            .run(locked = true)
+        assertFalse(outcome.ready)
+        assertFalse(port.hidden(dialer))
+        assertTrue(Restriction.DISALLOW_SAFE_BOOT in port.restrictionSet)
     }
 
     @Test fun anOpenSessionIsClosedOnEveryStart() {
