@@ -116,6 +116,23 @@ class ElevationFrictionOnDiskTest {
         }
     }
 
+    // PLA-160: a countdown write that lands unacknowledged is NOT_READY. The controller never adopts
+    // the landed countdown it was not told about; the next tick closes it, and no turn is spent.
+    @Test fun unacknowledgedCountdownIsNotReadyAndTheNextTickClosesItWithoutSpendingATurn() {
+        val rig = Rig()
+        val r = checkNotNull(rig.elevations.prepare(self, ElevationTarget.Settings))
+        val fresh = (rig.vault.authenticate(self, rig.pin, r.action) as PinResult.Authorized).authority
+        val outcome = SearchDenial(WritePoint.AFTER_COPY_B).run(rig.dir, { rig.faults = it }) { rig.elevations.request(r, fresh) }
+        assertEquals(ElevationOutcome.NOT_READY, outcome)
+        assertEquals(r.id, rig.disk().elevationStore.read()!!.state.countdown!!.id)
+        assertEquals(ElevationOutcome.LAPSED, rig.elevations.tick())
+        val after = rig.disk().elevationStore.read()!!
+        assertNull(after.state.countdown); assertNull(after.state.grant)
+        assertTrue(after.state.ledger.debits.isEmpty())
+        rig.at(20 * minute)
+        assertEquals(ElevationOutcome.REFUSED, rig.elevations.start(r.id, ElevationTarget.Settings))
+    }
+
     @Test fun limitsAreTheStoredActiveFrictionAndFailClosedWhenUnreadable() {
         val rig = Rig()
         assertEquals(ElevationLimits(base.countdownMillis, base.dailyLimit), rig.store.activeLimits())

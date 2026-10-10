@@ -33,6 +33,8 @@ class UpdateControllerTest {
         var abandonPasses = true
         var checkCalls = 1
         var resultWritesPass = true
+        /** PLA-160: the joint write lands but is not acknowledged, as when the directory loses search permission. */
+        var landsUnacknowledged = false
         val elevationStore = object : ElevationStore() {
             override fun read() = record
             override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean {
@@ -58,7 +60,7 @@ class UpdateControllerTest {
                 if (!matches()) return false
                 event("before-write"); if (!matches()) return false
                 record = replacementElevation; update = UpdateRecord(expectedUpdate.revision + 1, submission)
-                event("after-write"); return true
+                event("after-write"); return !landsUnacknowledged
             }
         }
         val installer = object : UpdateInstaller {
@@ -156,7 +158,9 @@ class UpdateControllerTest {
                 "policy" -> f.input = f.input.copy(lockedBoot = true)
                 "record" -> f.record = f.record.replacing(f.record.state)
             } } }
-            assertEquals(UpdateOutcome.REFUSED, f.controller.submitUpdate(), change)
+            // Revision-only and record changes pass the final check; the store's false after it is not acknowledged.
+            assertEquals(if (change in setOf("revision", "record")) UpdateOutcome.NOT_READY else UpdateOutcome.REFUSED,
+                f.controller.submitUpdate(), change)
             assertEquals(0, f.commits); assertNull(f.update.submission); assertEquals(debit, f.record.state.ledger.debits)
         }
     }
@@ -253,7 +257,8 @@ class UpdateControllerTest {
                 "elevation" -> f.record = f.record.replacing(f.record.state)
                 "update" -> f.update = UpdateRecord(f.update.revision + 1)
             } }
-            assertEquals(UpdateOutcome.REFUSED, f.controller.submitUpdate(), change)
+            // After its final check passed, a false write is not acknowledged: not ready, never a refusal.
+            assertEquals(UpdateOutcome.NOT_READY, f.controller.submitUpdate(), change)
             assertEquals(old.state.ledger.debits, f.record.state.ledger.debits)
             assertNotNull(f.record.state.grant); assertNull(f.update.submission); assertEquals(0, f.commits)
         }
@@ -407,11 +412,34 @@ class UpdateControllerTest {
                     if (it == "facts" && finalCheck && failure == "callback-throws") error("read failed")
                     if (it == "before-write" && failure == "cas") f.update = UpdateRecord(f.update.revision + 1)
                 }
-                assertEquals(if (failure == "callback-throws") UpdateOutcome.NOT_READY else UpdateOutcome.REFUSED,
+                assertEquals(if (failure in setOf("callback-throws", "cas")) UpdateOutcome.NOT_READY else UpdateOutcome.REFUSED,
                     submit(), "$mode $failure")
                 assertNull(f.update.submission); assertEquals(0, f.commits)
                 assertEquals(debit, f.record.state.ledger.debits)
             }
+    }
+    // PLA-160: false from the joint write means not acknowledged. The SUBMITTED record may have landed,
+    // so the person is told NOT_READY, never "refused"; nothing reaches the installer, no process-local
+    // retry remains, and the next start reads the landed submission fresh and settles it without a refund.
+    @Test fun `joint write that lands unacknowledged is not ready in either mode and startup reads it fresh`() {
+        for (mode in listOf(Mode.SELF_MANAGED, Mode.TRUSTED)) {
+            val f = F(mode = mode)
+            val submit: () -> UpdateOutcome
+            if (mode == Mode.SELF_MANAGED) { f.grant(); submit = { f.controller.submitUpdate() } }
+            else {
+                f.startUp(); val r = assertNotNull(f.controller.prepareSupervisedUpdate(f.person, f.binding))
+                val fresh = f.auth(r.action); submit = { f.controller.submitSupervisedUpdate(r, fresh) }
+            }
+            val debit = f.record.state.ledger.debits
+            f.landsUnacknowledged = true
+            assertEquals(UpdateOutcome.NOT_READY, submit(), "$mode")
+            f.landsUnacknowledged = false
+            assertEquals(UpdatePhase.SUBMITTED, f.update.submission!!.phase, "$mode"); assertEquals(0, f.commits, "$mode")
+            assertNotEquals(UpdateOutcome.SUBMITTED, submit(), "$mode"); assertEquals(0, f.commits, "$mode")
+            assertEquals(ElevationOutcome.IDLE, f.restart(), "$mode")
+            assertEquals(UpdatePhase.FAILED, f.update.submission!!.phase, "$mode"); assertEquals(0, f.commits, "$mode")
+            assertEquals(debit, f.record.state.ledger.debits, "$mode")
+        }
     }
     @Test fun `failed journaled self check exposes persistent read only attention status`() {
         for (passes in listOf(false, true)) {

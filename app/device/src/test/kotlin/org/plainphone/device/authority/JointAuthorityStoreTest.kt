@@ -187,7 +187,7 @@ class JointAuthorityStoreTest {
         }
     }
 
-    @Test fun readbackFailureReturnsFalseAndChangesNothing() {
+    @Test fun corruptReadbackReturnsFalseAndTheStoreResolvesToTheOldRecord() {
         val store = initialized()
         faults = StorageFaults { at, d -> if (at == WritePoint.AFTER_COPY_A) File(d, "authority-a.rec").writeBytes(byteArrayOf(1, 2, 3)) }
         assertFalse(bump(store, 7))
