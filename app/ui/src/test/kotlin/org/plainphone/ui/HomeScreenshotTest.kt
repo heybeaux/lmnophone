@@ -77,6 +77,6 @@ class HomeScreenshotTest(private val scale: Float) {
 
     companion object {
         @JvmStatic @Parameterized.Parameters(name = "fontScale={0}")
-        fun scales() = listOf(arrayOf(1.0f), arrayOf(2.0f))
+        fun scales() = listOf(1.0f, 1.3f, 1.5f, 1.8f, 2.0f).map { arrayOf(it) }
     }
 }

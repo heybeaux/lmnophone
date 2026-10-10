@@ -31,6 +31,8 @@ import org.junit.Test
 import org.plainphone.ui.home.HomeApp
 import org.plainphone.ui.home.HomeEvent
 import org.plainphone.ui.home.HomeNotice
+import org.plainphone.ui.home.HomeNoticeDay
+import java.time.LocalDate
 import org.plainphone.ui.home.HomeScreen
 import org.plainphone.ui.home.HomeUiState
 import org.plainphone.ui.theme.PlainphoneTheme
@@ -42,9 +44,13 @@ class HomeScreenTest {
 
     @Test fun noticeLeavesACompleteFirstRowAndEveryAppCanBeRevealed() {
         data class Case(val scale: Float, val notice: HomeNotice)
-        val cases = listOf(1.3f, 1.5f, 1.8f, 2f).flatMap { scale ->
+        val cases = listOf(1f, 1.3f, 1.5f, 1.8f, 2f).flatMap { scale ->
             listOf(HomeNotice.Cancelling, HomeNotice.NeedsAttention,
-                HomeNotice.MonthlyCheck(listOf("Sam")), HomeNotice.ModeChangeWaiting)
+                HomeNotice.MonthlyCheck(listOf("Sam")), HomeNotice.ModeChangeWaiting,
+                HomeNotice.TurnOffWaiting("21:15", HomeNoticeDay(LocalDate.of(2026, 10, 8), 0)),
+                HomeNotice.TurnOffWaiting("21:15", HomeNoticeDay(LocalDate.of(2026, 10, 9), 1)),
+                HomeNotice.TurnOffWaiting("21:15", HomeNoticeDay(LocalDate.of(2026, 10, 10), 2)),
+                HomeNotice.TurnOffWaiting("21:15", HomeNoticeDay(LocalDate.of(2026, 10, 15), 7)))
                 .map { Case(scale, it) }
         }
         val current = mutableStateOf(cases.first())
