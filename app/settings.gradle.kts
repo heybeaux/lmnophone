@@ -34,3 +34,5 @@ rootProject.name = "plainphone"
 
 // Module map: docs/mvp/lanes.md. Paths are binding so lane branches rebase cleanly.
 include(":core", ":policy", ":links", ":ui", ":device", ":plainphone")
+// Release gate only, never shipped (task 4.4).
+include(":emergencygate")
