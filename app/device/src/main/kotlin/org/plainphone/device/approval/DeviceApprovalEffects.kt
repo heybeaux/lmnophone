@@ -73,6 +73,8 @@ class PublishedHomeApps : HomeAppList {
  * before it: each such package is taken out of lock task and Home, hidden, and all three are read back.
  * Floor packages (never-hide and emergency UI) are left as the apply repaired them. What could not be
  * verified stays in [unresolvedCleanup]; a failed apply alone does not prove containment.
+ * [containFailedActivation] runs the same containment for the packages policy names after a failed
+ * final activation (PLA-234), including approved apps that were active before it.
  */
 class DeviceApprovalEffects(
     private val dispatcher: SerialDispatcher,
@@ -165,8 +167,13 @@ class DeviceApprovalEffects(
 
     override fun readBackPolicy(plan: PolicyPlan): Boolean = attempt { applier.readBack(plan) } == true
 
-    /** Compile stub for the merge of the PLA-234 port (PLA-237); no side effects. */
-    override fun containFailedActivation(packages: Set<PackageName>): Boolean = false
+    /**
+     * True only when every name in [packages] reads back hidden, out of lock task and off Home. A name the
+     * live never-hide list protects (it holds the emergency UI) is not touched and makes this false.
+     */
+    override fun containFailedActivation(packages: Set<PackageName>): Boolean = serialized {
+        attempt { contain(packages).isEmpty() } == true
+    }
 
     private fun hide(name: PackageName): Boolean {
         if (!mayHide(name)) return false
@@ -184,17 +191,20 @@ class DeviceApprovalEffects(
     /**
      * Takes [names] out of lock task and Home and hides them, then reads all three back for each name.
      * Every step is attempted even after an earlier one fails. Returns the exposures that did not read
-     * back as closed; empty means containment is verified. The caller excludes floor packages; [hide]
-     * also checks the live never-hide list, so a protected name is reported VISIBLE, never hidden.
+     * back as closed; empty means containment is verified. The live never-hide list is read first: a
+     * name it protects, or every name when it cannot be read, is not touched and is reported with all
+     * three exposures. [hide] checks the list again.
      */
     private fun contain(names: Set<PackageName>): Map<PackageName, Set<Exposure>> {
         if (names.isEmpty()) return emptyMap()
-        attempt {
+        val targets = attempt { neverHide() }?.let { names - it }.orEmpty()
+        if (targets.isNotEmpty()) attempt {
             val now = port.lockTaskPackages()
-            if (now.any { it in names }) port.setLockTaskPackages(now - names)
+            if (now.any { it in targets }) port.setLockTaskPackages(now - targets)
         }
         val lockTask = attempt { port.lockTaskPackages() }
         return names.associateWith { name ->
+            if (name !in targets) return@associateWith Exposure.entries.toSet()
             attempt { home.remove(name) }
             buildSet {
                 if (lockTask == null || name in lockTask) add(Exposure.LOCK_TASK)

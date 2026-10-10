@@ -1,0 +1,44 @@
+PLA-237 green run after the fix
+Base: 6a95c24 + DeviceApprovalEffects.containFailedActivation (this commit)
+Command (from app/): ./gradlew --offline :device:testDebugUnitTest :policy:test :device:compileDebugAndroidTestKotlin
+Date: 2026-10-10T21:59Z, JVM unit tests only, no emulator
+
+device/build/test-results/testDebugUnitTest: 523 tests, 0 failures, 0 errors, 0 skipped
+policy/build/test-results/test: 596 tests, 0 failures, 0 errors, 0 skipped
+androidTest: compileDebugAndroidTestKotlin succeeded
+
+New and changed tests:
+ContainFailedActivationTest 16 tests, 0 failed
+    pass anEmergencyPackageInTheSetIsNeverTouched
+    pass allTargetsVerifiedReturnsTrue
+    pass hideThatDoesNotStickReturnsFalse
+    pass aThrowingLockTaskWriteReturnsFalseAndTheOtherStepsStillRun
+    pass lockTaskRemovalAndHideBothFailingReturnsFalse
+    pass aPackageProtectedSinceThePlanIsNeverTouched
+    pass offTheDispatcherItRefusesAndTouchesNothing
+    pass anEmptySetIsTrueAndTouchesNothing
+    pass accessOutsideTheSetIsPreserved
+    pass lockTaskRemovalThatDoesNotStickReturnsFalse
+    pass aThrowingHideReturnsFalse
+    pass aNeverHidePackageInTheSetIsNeverTouched
+    pass aSecondCallIsIdempotent
+    pass homeRemovalThatDoesNotStickReturnsFalse
+    pass aThrowingHomeWriteReturnsFalse
+    pass anUnreadableNeverHideListTouchesNothing
+VerifierRoundTwoProbeTest 4 tests, 0 failed
+    pass failedFinalReadbackMustContainApproval
+    pass failedFinalReadbackMustContainEdit
+    pass nullUidOfListedPackageMustRefuseBeforeUnhide
+    pass failedPublishMustVerifyHomeRemoval
+  stdout:
+    approval: hidden=true permitted=false home=false pending=COMMITTED
+    edit: hidden=true permitted=false home=false pending=COMMITTED
+    null allowed UID: opened=false hidden=true permitted=false home=false
+    failed publish: hidden=true permitted=false home=true removalReads=1
+VerifiedContainmentTest 6 tests, 0 failed
+    pass aHomeRemovalThatDoesNotStickIsReported
+    pass aNameProtectedSinceThePlanIsNotTouchedAndIsReported
+    pass verifiedContainmentReadsBackHomeAndReportsNothingUnresolved
+    pass lockTaskRemovalAndHideBothFailingAreReported
+    pass aLaterCompleteApplyClearsTheReport
+    pass anUnreadableHomeIsReported
