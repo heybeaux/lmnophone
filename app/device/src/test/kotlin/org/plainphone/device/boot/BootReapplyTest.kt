@@ -23,6 +23,7 @@ import org.plainphone.policy.FloorRole
 import org.plainphone.policy.InstalledPackage
 import org.plainphone.policy.LockTaskFeature
 import org.plainphone.policy.PolicyEngine
+import org.plainphone.policy.PolicyHealth
 import org.plainphone.policy.PolicyInput
 import org.plainphone.policy.Restriction
 import org.plainphone.policy.SessionJournal
@@ -309,5 +310,37 @@ class BootReapplyTest {
         assertEquals(names(dialer), outcome.disabledFloor)
         assertTrue(outcome.needsAttention)
         assertFalse(outcome.setupMayFinish)
+    }
+
+    // --- The attention signal reaches the outcome (PLA-232 finding 8) ---
+
+    @Test fun corruptPolicyIsReadyButNeedsAttention() {
+        seedEmptyJournal()
+        val boot = BootReapply(journal, port, setOf(PackageName(play)),
+            { PolicyEngine.decide(input(it).copy(health = PolicyHealth.BOTH_INVALID)) }, RestrictionFilter.TEST_BUILD)
+
+        val outcome = boot.run(locked = false)
+
+        assertTrue(outcome.ready)
+        assertTrue(outcome.needsAttention)
+    }
+
+    @Test fun aFailedFlipIsReadyButNeedsAttention() {
+        seedEmptyJournal()
+        port.state[PackageName(dialer)] = hiddenApp()
+        port.flushComponent = null
+
+        val outcome = reapply().run(locked = false)
+
+        assertTrue(outcome.ready)
+        assertEquals(names(dialer), outcome.apply!!.flipFailures)
+        assertTrue(outcome.needsAttention)
+    }
+
+    @Test fun aCleanRunNeedsNoAttention() {
+        seedEmptyJournal()
+        val outcome = reapply().run(locked = false)
+        assertTrue(outcome.ready)
+        assertFalse(outcome.needsAttention)
     }
 }
