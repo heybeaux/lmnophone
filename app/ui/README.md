@@ -40,6 +40,11 @@ self-managed and U9/U10 waiting/opening screens. The source of truth is `docs/ux
 The upstream Lexend file is unchanged in `res/font/lexend.ttf`. Its licence ships
 in `assets/fonts/OFL.txt`; the `lexend_notice` string is available for About.
 
+Home uses centered plain-text More with a 64 dp minimum touch target and 24 dp
+side margins. No subtitle, caret, idle border or decorative Home divider rules;
+pressed/focus feedback and `OpenMore` remain. See `evidence/pla285-calm-home.md`
+for the approved visual revision and before/after evidence.
+
 ## Verification
 
 From `app/`:

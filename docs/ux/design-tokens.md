@@ -8,7 +8,12 @@ the font, greys and spacing from Generosity Catalyst (GC) and the layout from Be
 text-only list of apps in large type, low on the screen where a thumb reaches, with lots of white space above.
 
 This file sets the look. The words stay as written in the flow files ([README.md](README.md)); nothing here changes
-copy, except where a flow said "red" (see [What changed in the flow files](#what-changed-in-the-flow-files)).
+copy, except the approved Home revision below and where a flow said "red" (see
+[What changed in the flow files](#what-changed-in-the-flow-files)).
+
+**Home revision, [PLA-285](/PLA/issues/PLA-285), approved by Beaux:** center plain-text "More"; remove its
+subtitle, caret and border, and use whitespace instead of decorative horizontal rules between Home elements.
+The 64 dp touch target, accessible name and More navigation remain. Other screens keep their existing design.
 
 ## The rules
 
@@ -48,7 +53,7 @@ after seeing the build, that is a one-line theme change.
 |---|---|---|---|
 | `ink` | `#000000` | Black | Text, app names, filled buttons, focus ring, selected choice |
 | `paper` | `#FFFFFF` | White | Screen background, text on black |
-| `ink-2` | `#545454` | Gray 600 | Second lines ("Opens the dialer", "Ask for an app, settings, help"), body notes |
+| `ink-2` | `#545454` | Gray 600 | Second lines ("Opens the dialer"), body notes |
 | `ink-3` | `#757575` | Gray 500 | Borders of fields and outline buttons, the `›` and `^` glyphs, the time on the request list. **On white only.** |
 | `line` | `#AFAFAF` | Gray 400 | Disabled text only. Never for anything the reader must read. |
 | `fill-2` | `#E8E8E8` | Background Tertiary | Pressed and selected rows, dividers, disabled button fill |
@@ -120,9 +125,9 @@ Nothing is smaller than 16 sp. No italics. No all-caps (harder to read). Underli
 | `s8` | 32 dp | Between sections |
 | `s12` | 48 dp | Large gaps, e.g. above the app list when there's room |
 | `radius-box` | 16 dp | Boxes and cards (GC's card radius) |
-| `radius-pill` | 999 (full) | Buttons, the More bar, text fields |
+| `radius-pill` | 999 (full) | Buttons and text fields |
 | `hairline` | 1 dp `fill-2` | Dividers between menu rows |
-| `border` | 1.5 dp `ink-3` | Outline buttons, text fields, the More bar (3:1 or better on white) |
+| `border` | 1.5 dp `ink-3` | Outline buttons and text fields (3:1 or better on white) |
 | `focus` | 2 dp `ink` outline, 2 dp gap | Keyboard and switch-access focus (GC's blue ring, made black) |
 
 **Touch targets** are at least 48 × 48 dp; home-screen app rows are at least 56 dp tall. **Shadows:** none. Dialogs
@@ -152,11 +157,7 @@ where a thumb reaches. There is no Emergency button and nothing filled: the scre
 │ Camera                       │
 │ Messages                     │  always here, pinned
 │ Phone                        │  always here, pinned, nearest the thumb; 9-1-1 is dialled here
-│ ╭──────────────────────────╮ │
-│ │ More ^                   │ │  outline bar, where the reference has "Search tools"
-│ │ Ask for an app, settings,│ │
-│ │ help                     │ │
-│ ╰──────────────────────────╯ │
+│             More             │  centered plain text; 64 dp touch target
 └──────────────────────────────┘
 ```
 
@@ -168,11 +169,12 @@ where a thumb reaches. There is no Emergency button and nothing filled: the scre
 - **Scrolling:** only the other apps scroll, inside their own area, upward. The clock, the date, the notice line,
   Messages, Phone and More never scroll off. If space runs short, see
   [When the screen is short](#when-the-screen-is-short).
-- **More bar:** full width, `radius-pill`, `border`, white fill, 64 dp tall. "More" in `row` style with a `^` after it
-  (`ink-3`), and the second line "Ask for an app, settings, help" in `small`. It sits where the reference has
-  "Search tools". **There is no search field:** calm-home-screen says the home screen SHALL NOT show a search bar,
-  and with a short list there is nothing to search. The `^` is a hint that more is below; tapping opens More (U4).
-  There is still no swipe-up drawer.
+- **More:** "More" in `row` style, centered horizontally and vertically in the existing full-width inset
+  touch target (24 dp side margins, 64 dp minimum height). No subtitle, caret, border or idle fill at any text
+  size. Keep the normal pressed and keyboard-focus feedback. The text supplies its accessible name. Tapping
+  opens More (U4); there is no search field or swipe-up drawer.
+- **Home separators:** whitespace only. No decorative horizontal divider rules between the clock, notice,
+  apps, Messages, Phone and More. The conditional notice keeps its existing `fill-1` box.
 - **Notice line:** a `fill-1` box, `radius-box`, `body` text in 500 weight, `›` at the end in `ink-2` (not `ink-3`,
   which is for white only). At most one, chosen by the priority order in [U1](flows-user.md#the-notice-line). At
   most 3 lines; if longer it ends with "…", and the whole box is the touch target, so the full text and any Cancel
@@ -188,12 +190,11 @@ dp. The build checks the largest Display size together with 200% text on the tar
 The other-apps area must always show **at least one full app row (56 dp)**. When it can't, these steps apply in
 order, each only if still needed:
 
-1. The More bar drops its second line.
-2. The time and date go on one line: the time in `title` style, the date beside it in `date` style ("Thu 8 Oct").
+1. The time and date go on one line: the time in `title` style, the date beside it in `date` style ("Thu 8 Oct").
    Both keep growing with text size; they just stop stacking.
-3. The notice line is cut to 2 lines (it still ends with "…" and `›`).
-4. The other-apps area may shrink to half a row (28 dp). It still scrolls; the cut-off name shows there's more.
-5. Below the smallest supported screen only: the whole home screen scrolls as one page. This is the one case where
+2. The notice line is cut to 2 lines (it still ends with "…" and `›`).
+3. The other-apps area may shrink to half a row (28 dp). It still scrolls; the cut-off name shows there's more.
+4. Below the smallest supported screen only: the whole home screen scrolls as one page. This is the one case where
    Phone and Messages can need a scroll, and it is outside what LMNOPhone supports.
 
 **Never:** shrink any text below its scaled size, or shrink Messages, Phone or More.
@@ -202,7 +203,7 @@ order, each only if still needed:
 something about their phone is about to change, and a 2-line cut can remove the words that say so ("A change to how
 this phone is…"). The clock still reads at a glance on one line. So the clock stops stacking first.
 
-**When the notice is cut** (at 3 lines, or 2 at step 3), "Tap to cancel." is often the part that goes. That is
+**When the notice is cut** (at 3 lines, or 2 at step 2), "Tap to cancel." is often the part that goes. That is
 acceptable, because the meaning is in the first words. Three things still have to be true:
 - the `›` and the whole box still show it can be tapped;
 - TalkBack reads the **full** line, never the cut one;
@@ -215,19 +216,16 @@ render using the 200% sizes above, so illustrative):
 |---|---|
 | Top 24 + time 75 + date 36 + gap 24 | 159 |
 | Notice, 3 lines | 143 |
-| Messages 56 + Phone 56 + gap 8 + More 64 (one line, step 1) + bottom 8 | 192 |
+| Messages 56 + Phone 56 + gap 8 + More 64 (always one line) + bottom 8 | 192 |
 | **Total without the other apps** | **494** |
 
 With a 32 dp status bar and a 24 dp gesture bar the content is 584 dp. That leaves 90 dp for the other apps, or 66 dp
 with a 48 dp three-button bar.
 
-**The build measured more than this.** In the `:ui` goldens (PLA-47, commit `f87ff6e`), real Lexend line heights run
-about 12 dp over the table above: the time and date take about 123 dp, not 111. The browser render and its 3-line
-notice are optimistic. So **on the smallest screen at 200%, expect steps 1 and 2 to apply** (More loses its second
-line, and the time and date go on one line), and step 3 may also apply when the notice is long. An earlier version
-of this section said step 1 alone was enough. That was wrong. Don't size anything from the table above; the goldens
-are the measure. On the target phone (412 × 915 dp) at 200%, frame 3 leaves 365 dp for the other apps, and no step
-should be needed.
+**The build measured more than this.** Real Lexend line heights exceed the illustrative browser table.
+Do not size the layout from this table: Compose measures the actual scaled text. At 360 × 640 and 200%,
+the inline clock and, for a long notice, two-line notice fallbacks may apply. More is always one line;
+there is no subtitle-removal step. The Home goldens at 100%, 130%, 150%, 180% and 200% are the layout evidence.
 
 ### Calling 9-1-1
 
@@ -376,7 +374,7 @@ More.
 - [README.md](README.md) principle 4: "No red except the Emergency button and the one turn-off confirmation" is now
   "No colour at all"; pointer to this file.
 - [flows-user.md](flows-user.md) U1: Emergency is black, not red; the app list is text only, low on the screen, ending
-  with Messages and Phone; More is the bottom bar. The words on the home screen don't change.
+  with Messages and Phone; More sits below Phone.
 - [flows-limits-and-off.md](flows-limits-and-off.md): the "Yes, turn it off" button is no longer red.
 - After the [PLA-37](/PLA/issues/PLA-37) review:
   - [flows-user.md](flows-user.md) U1: all four notice lines in the spec's priority order, the waiting-change lines

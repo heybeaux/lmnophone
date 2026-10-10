@@ -45,10 +45,8 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
 .apps { display: flex; flex-direction: column; }
 .apps .scroll { overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
 .app { font-size: var(--app); line-height: 40px; font-weight: 500; min-height: 56px; display: flex; align-items: center; letter-spacing: -0.3px; }
-.more { margin: var(--s4) 0 var(--s4); border: var(--border); border-radius: 999px; min-height: 64px; padding: 10px 24px; display: flex; flex-direction: column; justify-content: center; }
+.more { margin: var(--s2) 0; min-height: 64px; padding: 8px 24px; display: flex; align-items: center; justify-content: center; text-align: center; }
 .more .l1 { font-size: var(--row); font-weight: 500; line-height: 28px; }
-.more .l1 .caret { color: var(--ink-3); font-weight: 400; margin-left: 6px; }
-.more .l2 { font-size: var(--small); color: var(--ink-2); line-height: 22px; }
 
 /* Task screens */
 .back { font-size: var(--small); font-weight: 500; height: 48px; display: flex; align-items: center; }
@@ -91,7 +89,7 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
 .x2 .notice { line-height: 37px; }
 .x2 .app { line-height: 47px; min-height: 56px; }
 .x2 .more .l1 { line-height: 37px; }
-.x2 .more { border-radius: 40px; margin: 8px 0; }
+.x2 .more { margin: 8px 0; }
 .x2 .apps { flex: 1; min-height: 0; justify-content: flex-end; }
 .x2 .apps .scroll { flex: 1; min-height: 0; }
 .fade { position: relative; }
@@ -109,6 +107,7 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
 
 <div class="grid">
 
+<!-- Home revised by approved PLA-285 feedback: centered More, no subtitle, border or decorative rules. -->
 <!-- 1. Home -->
 <figure>
 <div class="phone"><div class="screen">
@@ -124,7 +123,7 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
       <div class="app">Messages</div>
       <div class="app">Phone</div>
     </div>
-    <div class="more"><div class="l1">More<span class="caret">^</span></div><div class="l2">Ask for an app, settings, help</div></div>
+    <div class="more"><div class="l1">More</div></div>
   </div>
   <div class="navbar"></div>
 </div></div>
@@ -147,7 +146,7 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
       <div class="app">Messages</div>
       <div class="app">Phone</div>
     </div>
-    <div class="more"><div class="l1">More<span class="caret">^</span></div><div class="l2">Ask for an app, settings, help</div></div>
+    <div class="more"><div class="l1">More</div></div>
   </div>
   <div class="navbar"></div>
 </div></div>
@@ -167,11 +166,11 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
       <div class="app">Messages</div>
       <div class="app">Phone</div>
     </div>
-    <div class="more"><div class="l1">More<span class="caret">^</span></div></div>
+    <div class="more"><div class="l1">More</div></div>
   </div>
   <div class="navbar"></div>
 </div></div>
-<figcaption><b>3. Home at the largest text size (200%)</b>Everything grows with the text size, the time included. The worst case here: the longest notice line, the 24-hour turn-off wait, cut to 3 lines with "…" (tapping anywhere on the box opens the screen with Cancel). The notice, Messages, Phone and More stay put; only the other apps scroll. More drops its second line at 200%.</figcaption>
+<figcaption><b>3. Home at the largest text size (200%)</b>Everything grows with the text size, the time included. The worst case here: the longest notice line, the 24-hour turn-off wait, cut to 3 lines with "…" (tapping anywhere on the box opens the screen with Cancel). The notice, Messages, Phone and More stay put; only the other apps scroll. More is centered plain text at every size, with the same generous touch target.</figcaption>
 </figure>
 
 <!-- 4. About this phone: To call 9-1-1 -->
@@ -313,11 +312,11 @@ figcaption b { color: var(--ink); font-weight: 500; font-size: 17px; display: bl
       <div class="app">Messages</div>
       <div class="app">Phone</div>
     </div>
-    <div class="more"><div class="l1">More<span class="caret">^</span></div></div>
+    <div class="more"><div class="l1">More</div></div>
   </div>
   <div class="navbar"></div>
 </div></div>
-<figcaption><b>10. Smallest supported screen (360 × 640 dp) at 200%</b>The worst case: the smallest screen, the largest text, the longest notice. Without the Emergency button it all fits as on the bigger phone: only More's second line goes (step 1 of "When the screen is short"). The other apps get about one and a half rows; the rest scroll.</figcaption>
+<figcaption><b>10. Smallest supported screen (360 × 640 dp) at 200%</b>The worst case: the smallest screen, the largest text, the longest notice. More has no subtitle, border or caret. This browser sketch is illustrative; Compose measures real scaled text and may put the clock and date on one line or shorten the notice to preserve the app viewport. See the 360 × 640 goldens for the measured layout.</figcaption>
 </figure>
 
 <!-- 11. A change is waiting -->
