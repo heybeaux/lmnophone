@@ -97,4 +97,23 @@ class Preview2PlanTest {
         assertTrue(plan(identities = emptyList()).needsAttention)
         assertFalse(plan().needsAttention)
     }
+
+    private fun locked() = Preview2Plan.decideLocked(plainphone, installed, identities)
+
+    @Test fun `before the first unlock the plan only restores the floor, Plainphone's lock task entry and the features`() {
+        assertEquals(listOf(ApplyStage.EMERGENCY_FLOOR, ApplyStage.NEVER_HIDE_GUARD), locked().steps.map { it.stage })
+        assertTrue(locked().steps.all { it.readbackRequired })
+        assertTrue(locked().hidden.isEmpty())
+        assertEquals(emptySet<PackageName>(), locked().expected.hidden)
+        assertEquals(setOf(plainphone, p(dialer)), locked().expected.lockTaskPackages)
+        assertEquals(plainphone, locked().expected.home)
+        assertEquals(plan().expected.features, locked().expected.features)
+    }
+
+    @Test fun `the locked plan never hides, never sets restrictions and keeps the floor shown`() {
+        assertTrue(locked().restrictions.isEmpty())
+        assertNull(locked().expected.restrictions)
+        assertTrue(locked().neverHide.containsAll(listOf(plainphone, p(dialer), p(sms))))
+        assertEquals(locked().neverHide, locked().unhide)
+    }
 }
