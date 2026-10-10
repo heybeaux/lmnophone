@@ -38,6 +38,73 @@ class PolicyEngineTest {
         approvalState = approvedState(approved), installedIdentities = listOf(ApprovalBinding(approved, setOf(approvalSigner))), classifiedBrowsers = setOf(browser),
     )
 
+    private val alerts = PackageName("test.alerts")
+    private fun alertInputs(lockedBoot: Boolean): List<PolicyInput> =
+        listOf(input().inventory, null).flatMap { inventory ->
+            PolicyHealth.entries.map { health ->
+                input().copy(
+                    lockedBoot = lockedBoot, inventory = inventory, health = health,
+                    installed = input().installed + InstalledPackage(alerts, true, 1),
+                    identities = input().identities + FloorIdentity(alerts, FloorRole.CELL_BROADCAST_DISPLAY, IdentitySource.SYSTEM_ONLY_QUERY),
+                    previousHidden = setOf(alerts), previousLockTask = setOf(home, sms),
+                )
+            }
+        }
+
+    private fun assertAlertAccess(input: PolicyInput) {
+        val context = "locked=${input.lockedBoot} health=${input.health} inventory=${input.inventory != null}"
+        val plan = PolicyEngine.decide(input)
+        assertTrue(alerts in plan.emergencyUi, context)
+        assertTrue(alerts in plan.lockTaskPackages, context)
+        assertTrue(alerts in plan.expected.lockTaskPackages.orEmpty(), context)
+        assertTrue(alerts in plan.unhide, context)
+        assertFalse(alerts in plan.hidden, context)
+    }
+
+    @Test fun `alert display joins locked boot UI for approved baseline and unknown inventory`() {
+        alertInputs(lockedBoot = true).forEach(::assertAlertAccess)
+    }
+
+    @Test fun `alert display joins unlocked boot UI for approved baseline and unknown inventory`() {
+        alertInputs(lockedBoot = false).forEach(::assertAlertAccess)
+    }
+
+    @Test fun `invalid approval cannot prune cell broadcast display from lock task`() {
+        for (locked in listOf(false, true)) for (input in alertInputs(locked)) {
+            // A saved approval without a matching live signer is invalid; the floor still wins.
+            assertAlertAccess(input.copy(approved = setOf(alerts), approvalState = approvedState(alerts),
+                previousLockTask = input.previousLockTask + alerts))
+        }
+    }
+
+    @Test fun `untrusted alert display never joins emergency UI or lock task`() {
+        for (locked in listOf(false, true)) for (input in alertInputs(locked)) {
+            for (system in listOf(false, true)) for (source in IdentitySource.entries) {
+                if (system && source == IdentitySource.SYSTEM_ONLY_QUERY) continue
+                val plan = PolicyEngine.decide(input.copy(
+                    installed = input.installed.map { if (it.name == alerts) it.copy(isSystem = system) else it },
+                    identities = input.identities.map { if (it.name == alerts) it.copy(source = source) else it },
+                    previousLockTask = input.previousLockTask + alerts,
+                ))
+                val context = "locked=$locked health=${input.health} inventory=${input.inventory != null} system=$system source=$source"
+                assertFalse(alerts in plan.emergencyUi, context)
+                assertFalse(alerts in plan.lockTaskPackages, context)
+            }
+        }
+    }
+
+    @Test fun `cell broadcast receiver alone never joins emergency UI or lock task`() {
+        for (locked in listOf(false, true)) for (input in alertInputs(locked)) {
+            val plan = PolicyEngine.decide(input.copy(identities = input.identities.map {
+                if (it.name == alerts) it.copy(role = FloorRole.CELL_BROADCAST_RECEIVER) else it
+            }))
+            val context = "locked=$locked health=${input.health} inventory=${input.inventory != null}"
+            assertTrue(alerts in plan.neverHide, context)
+            assertFalse(alerts in plan.emergencyUi, context)
+            assertFalse(alerts in plan.lockTaskPackages, context)
+        }
+    }
+
     @Test fun `supported build sweeps unapproved installs but preserves inventory and floor`() {
         val plan = PolicyEngine.decide(input())
         assertEquals(setOf(browser, pushed, newSystem), plan.hidden)
