@@ -9,7 +9,7 @@ data class Judgement(val outcome: Outcome, val reasons: List<String>)
 
 /**
  * The required result schema (PLA-245). Every build's file must hold each required check exactly once,
- * with a verdict that check may have. `judge_build` in tools/emergency-gate.sh is the same table in awk;
+ * with a verdict that check may have. tools/emergency_gate_judge.py (used by tools/emergency-gate.sh) is the same table in Python;
  * both run `judge-cases.txt`.
  */
 object GateSchema {
