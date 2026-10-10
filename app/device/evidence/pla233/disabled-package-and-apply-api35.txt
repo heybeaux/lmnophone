@@ -1,0 +1,47 @@
+PLA-233 on-emulator checks, 2026-10-10. AVD pla190-a35 (emulator-5790), API 35,
+google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.036/12592187:user/release-keys. No lock-screen PIN set.
+Test APK as testOnly Device Owner; removed at the end (dpm list-owners -> no owners).
+
+adb -s emulator-5790 install -t -r app/device/build/outputs/apk/androidTest/debug/device-debug-androidTest.apk
+adb -s emulator-5790 shell dpm set-device-owner org.plainphone.device.test/org.plainphone.device.apply.CheckAdmin
+
+== Finding 3: -e phase disabled (non-floor package Chrome; no emergency package touched)
+adb -s emulator-5790 shell am instrument -w -e phase disabled org.plainphone.device.test/org.plainphone.device.storage.DirectBootJournalCheck
+ok   this APK is Device Owner
+ok   Chrome is visible before the check
+Package com.android.chrome new state: disabled-user
+ok   1. Chrome reads DISABLED_USER (3): 3
+ok   2a. after DpmPort.enable (enableSystemApp) still 3: 3
+ok   2b. DpmPort reads it as not enabled
+installExistingPackage -> Success(true)
+ok   2c. after installExistingPackage still 3: 3
+setApplicationEnabledSetting -> Failure(java.lang.SecurityException: Attempt to change component state; pid=5733, uid=10208, package=com.android.chrome)
+ok   3. setApplicationEnabledSetting on another package throws SecurityException
+ok   3. still 3: 3
+apply -> ApplyResult(applied=[HIDES], failedStage=null, absent=[], flipFailures=[], unrepairable=[com.android.chrome])
+ok   4. apply completes
+ok   4. Chrome is reported unrepairable
+ok   4. needsAttention
+cleanup: Package com.android.chrome new state: enabled
+ok   cleanup: Chrome enabled again
+RESULT PASS phase=disabled
+
+== Finding 1 on Android: -e phase seed (FileJournalStore CAS now fails if the directory sync fails)
+ok   fresh dir reads Damaged
+ok   latch on disk
+ok   CAS Damaged -> Empty
+ok   CAS Empty -> Active(PLAY, OPEN)
+ok   new instance reads the entry
+RESULT PASS phase=seed
+
+== SYNCHRONOUS gate removed: -e phase apply (real flips through DpmPort on API 35)
+ok   one unhide, one flip
+ok   every planned restriction active (UserManager)   (API 35: DISALLOW_CONFIG_DEFAULT_APPS included)
+readback: lockTask=[..., org.plainphone.device.test] features=119
+ok   fails at LOCK_TASK / Home not written (forced readback failure)
+turn-off floor: flips(before->target)=[(false, true)]
+cleanup: restrictions left=[DISALLOW_ADD_MANAGED_PROFILE] hidden left=[]
+RESULT PASS phase=apply
+
+No API 30-33 system image is installed on this host (installed: android-34, 35, 36, 37.0), so the
+pre-34 apply was not run on an emulator; it is covered by RestrictionFilterTest only.
