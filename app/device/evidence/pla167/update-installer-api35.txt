@@ -1,0 +1,117 @@
+# PLA-167 Update installer check, 2026-10-10T03:13:59Z
+# AVD pla140-a35, API 35, google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys
+# key A e04146ea7ab1d6bd844f4bca37d2010892fabbe1fc483bb2835faba9e29ef319; key B eb274580bb25bc2eca4f25612f58a52c63b1ca9120637fe09e90d13b0979b9b4; v2 sha256 bd07bab1f1cbf08cd57d94d0d2dbc949e23b977057108157245279d570bda86c
+Success: Device owner set to package org.plainphone.device.test/org.plainphone.device.apply.CheckAdmin
+Active admin set to component org.plainphone.device.test/org.plainphone.device.apply.CheckAdmin
+
+== phase update
+PLA167 ok: this test APK is the Device Owner
+PLA167 ok: target v1 installed
+PLA167 ok: startup abandonment with no sessions is ready
+PLA167 ok: loopback source refused
+PLA167 ok: 302 from the redirect server refused, nothing staged (host log shows v3 never fetched)
+PLA167 ok: 41.9 MB body over a 1 MB limit refused, nothing staged
+PLA167 ok: tampered APK (one asset byte flipped after signing): no facts
+PLA167 ok: key B APK reads signer B
+PLA167 ok: other package reads as such
+PLA167 ok: staging cleared
+PLA167 ok: nothing staged: no session
+PLA167 ok: and no session was created
+PLA167 ok: v6-tampered.apk staged
+PLA167 ok: v6-tampered.apk refused before any session
+PLA167 ok: v6-keyb.apk staged
+PLA167 ok: v6-keyb.apk refused before any session
+PLA167 ok: v6-otherpkg.apk staged
+PLA167 ok: v6-otherpkg.apk refused before any session
+PLA167 ok: v2 downloaded into private staging (41951624 bytes)
+PLA167 ok: session 288339446 is bound to org.plainphone.updatetarget, uncommitted
+PLA167 ok: session has exactly one entry
+PLA167 finalFacts: session=288339446 sha256=bd07bab1f1cbf08cd57d94d0d2dbc949e23b977057108157245279d570bda86c version=2 package=org.plainphone.updatetarget signers=[e04146ea7ab1d6bd844f4bca37d2010892fabbe1fc483bb2835faba9e29ef319] installed=1
+PLA167 ok: facts: host sha256 of v2, version 2, pinned identity, installed 1
+PLA167 ok: no second write after the final read
+PLA167 ok: a later download replaced the staged file (v3)
+PLA167 ok: staged file no longer matches the session: null
+PLA167 ok: commit after a failed final read is refused
+PLA167 ok: same v2 bytes again: same facts
+PLA167 ok: still the one session
+PLA167 right after commit: isCommitted=false, abandonOwnSessions=true, 1406 us after commit()
+PLA167 ok: second commit refused
+PLA167 status broadcast: (288339446, 0)
+PLA167 ok: STATUS_SUCCESS for session 288339446
+PLA167 ok: router forwarded success
+PLA167 ok: readback: v2 installed (the session survived abandonment right after commit)
+PLA167 ok: leftover: v4 staged
+PLA167 ok: v3 staged
+PLA167 ok: v3 final facts
+PLA167 sessions before restart abandonment: [OwnSession(id=290995023, committed=true, appPackageName=org.plainphone.updatetarget), OwnSession(id=607929408, committed=false, appPackageName=org.plainphone.updatetarget)]
+PLA167 ok: committed session 290995023 reads isCommitted=true
+PLA167 ok: restarted instance: abandonment ready
+PLA167 sessions after restart abandonment: [OwnSession(id=290995023, committed=true, appPackageName=org.plainphone.updatetarget)]
+PLA167 ok: leftover uncommitted session 607929408 abandoned
+PLA167 ok: committed session 290995023 still finished: STATUS_SUCCESS
+PLA167 ok: readback: v3 installed
+PLA167 ok: no own sessions left
+RESULT PASS phase=update
+
+
+== phase pending1 (the process kills itself right after commit)
+INSTRUMENTATION_RESULT: shortMsg=Process crashed.
+INSTRUMENTATION_CODE: 0
+10-09 20:14:38.604  6503  6516 I PLA167  : ok: this test APK is the Device Owner
+10-09 20:14:38.614  6503  6516 I PLA167  : ok: startup abandonment ready
+10-09 20:14:42.218  6503  6516 I PLA167  : ok: v5 final facts (41951624 bytes), installed 3
+10-09 20:14:42.218  6503  6516 I PLA167  : committing session 715001316, then killing this process
+
+== phase pending2 (new process)
+PLA167 own sessions at startup: []; installed 5
+PLA167 ok: startup abandonment ready
+PLA167 ok: readback after restart: v5 installed
+PLA167 ok: no own sessions left
+RESULT PASS phase=pending2
+
+
+== host requests
+redirect :8766 GET /v3.apk HTTP/1.1 -> 302
+serve :8765 GET /v2.apk HTTP/1.1 -> 200
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59923)
+Traceback (most recent call last):
+  File "/Users/beauxwalton/radioconda/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/Users/beauxwalton/radioconda/lib/python3.10/socketserver.py", line 360, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/Users/beauxwalton/radioconda/lib/python3.10/http/server.py", line 668, in __init__
+    super().__init__(*args, **kwargs)
+  File "/Users/beauxwalton/radioconda/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/Users/beauxwalton/radioconda/lib/python3.10/http/server.py", line 433, in handle
+    self.handle_one_request()
+  File "/Users/beauxwalton/radioconda/lib/python3.10/http/server.py", line 421, in handle_one_request
+    method()
+  File "/Users/beauxwalton/radioconda/lib/python3.10/http/server.py", line 675, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/Users/beauxwalton/radioconda/lib/python3.10/http/server.py", line 875, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/Users/beauxwalton/radioconda/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/Users/beauxwalton/radioconda/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+serve :8765 GET /v6-tampered.apk HTTP/1.1 -> 200
+serve :8765 GET /v6-keyb.apk HTTP/1.1 -> 200
+serve :8765 GET /v6-otherpkg.apk HTTP/1.1 -> 200
+serve :8765 GET /v6-tampered.apk HTTP/1.1 -> 200
+serve :8765 GET /v6-keyb.apk HTTP/1.1 -> 200
+serve :8765 GET /v6-otherpkg.apk HTTP/1.1 -> 200
+serve :8765 GET /v2.apk HTTP/1.1 -> 200
+serve :8765 GET /v3.apk HTTP/1.1 -> 200
+serve :8765 GET /v2.apk HTTP/1.1 -> 200
+serve :8765 GET /v4.apk HTTP/1.1 -> 200
+serve :8765 GET /v3.apk HTTP/1.1 -> 200
+serve :8765 GET /v5.apk HTTP/1.1 -> 200
+
+== cleanup
+Success: Admin removed ComponentInfo{org.plainphone.device.test/org.plainphone.device.apply.CheckAdmin}
+Success
+no owners

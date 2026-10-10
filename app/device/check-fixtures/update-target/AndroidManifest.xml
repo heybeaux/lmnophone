@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Plainphone contributors. SPDX-License-Identifier: Apache-2.0 -->
+<!--
+  Stand-in "self" package for UpdateInstallerCheck (PLA-167). No code. The check updates this
+  package instead of the test APK itself, so the instrumentation process survives the install.
+  build.sh sets the package, the version and the signer.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.plainphone.updatetarget">
+    <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="35" />
+    <application android:hasCode="false" android:label="Plainphone update target" />
+</manifest>
