@@ -101,13 +101,25 @@ interface AppApprovalStore {
      * Durable CAS of revision plus (when supplied) the current credential revision. Shared serialized
      * coordinator with PinVault, package events and every policy writer. Preserve fixed receipt delivery
      * identities and audit alongside state/outbox. A returned false cannot authorize visibility.
+     * False is not acknowledged (see [CredentialStore.compareAndSet]).
      */
     fun compareAndSet(expected: AppApprovalState, replacement: AppApprovalState, expectedCredentials: CredentialState?): Boolean
 }
 interface AppApprovalEffects {
-    /** Hide only this eligible non-floor candidate and confirm it remains hidden before permission writes. */
+    /** Hide this identity and read back. Enforce the live never-hide guard, including during recovery. */
     fun hideAndReadBack(identity: ApprovalBinding): Boolean
+    /**
+     * On the shared dispatcher, remove this pending identity from applied lock-task access and Home,
+     * and read both exclusions back BEFORE unhiding. Preserve all other access and the emergency floor.
+     * Then unhide with the synchronous flush and live visibility readback. False may mean partial work;
+     * the controller always calls closePermissionWindow, even when opening fails. Never suspend instead.
+     */
+    fun openPermissionWindow(identity: ApprovalBinding): Boolean
+    /** Re-hide with the live never-hide guard and read back hidden. Never restores Home/lock-task access. */
+    fun closePermissionWindow(identity: ApprovalBinding): Boolean
+    /** Called only inside a successfully opened permission window, with all DENY writes before ALLOW. */
     fun setPermission(identity: ApprovalBinding, write: PermissionWrite): Boolean
+    /** Live permission readback must work both in the visible window and while the app is hidden. */
     fun readPermissions(identity: ApprovalBinding): Map<PermissionName, PermissionReadback>
     /** Apply only this plan; every discretionary unhide needs the synchronous flush and live readback. */
     fun applyPolicy(plan: PolicyPlan): Boolean
@@ -132,6 +144,7 @@ class AppApprovalWithdrawalRequest internal constructor(
     internal val credentialGeneration: Long,
     internal val structureGeneration: Long,
     internal val preparedAt: BootTime,
+    internal val mode: Mode,
 ) {
     val action: PrivilegedAction get() = PrivilegedAction("app:withdraw-pending", receiptId)
 }
@@ -142,6 +155,7 @@ class AppRemovalRequest internal constructor(
     internal val credentialGeneration: Long,
     internal val structureGeneration: Long,
     internal val preparedAt: BootTime,
+    internal val mode: Mode,
 ) {
     val approvalId: String get() = record.id
     val packageName: PackageName get() = record.identity.packageName
@@ -188,9 +202,12 @@ class AppApprovalController(
     @Synchronized
     fun onStart(): AppApprovalOutcome {
         initialized = false; requests.clear(); withdrawals.clear(); removals.clear(); edits.clear()
-        if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
-        val state = store.read() ?: return AppApprovalOutcome.NOT_READY
-        val op = state.pending
+        val state = store.read()
+        val op = state?.pending
+        // A process can die inside the permission window. Close it before even session/battery gates.
+        if (op?.phase in setOf(AppApprovalPhase.PREPARING, AppApprovalPhase.EDITING) &&
+            !effects.hideAndReadBack(checkNotNull(op).record.identity)) return AppApprovalOutcome.NOT_READY
+        if (!sessions.onStart() || state == null) return AppApprovalOutcome.NOT_READY
         if (op?.phase == AppApprovalPhase.PREPARING) {
             // Never resume pre-commit PIN authority after process death. The ordinary policy excludes it.
             val input = policyInput() ?: return AppApprovalOutcome.NOT_READY
@@ -266,7 +283,12 @@ class AppApprovalController(
         if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
         if (planFor(request.record, state) == null || !sameBoot(request)) return AppApprovalOutcome.REFUSED
         // Ordinary approval closes package access only. Startup would revoke the grant and its history.
-        if (elevations?.closeForApproval(binding) != true) return AppApprovalOutcome.REFUSED
+        val controller = elevations ?: return AppApprovalOutcome.REFUSED
+        when (controller.closeForApproval(binding)) {
+            true -> Unit
+            false -> return AppApprovalOutcome.REFUSED
+            null -> return AppApprovalOutcome.NOT_READY
+        }
         return finishApproval(request, state, current)
     }
 
@@ -276,9 +298,8 @@ class AppApprovalController(
         val preparing = state.replacing(pending = op)
         if (!store.compareAndSet(state, preparing, current)) return AppApprovalOutcome.NOT_READY
         if (!effects.hideAndReadBack(request.record.identity)) return AppApprovalOutcome.NOT_READY
-        for (write in request.record.permissions.writes) {
-            if (planFor(request.record, preparing) == null || !effects.setPermission(request.record.identity, write)) return AppApprovalOutcome.NOT_READY
-        }
+        if (!battery().allowsDiscretionaryUnhide || planFor(request.record, preparing) == null ||
+            !writePermissionsInWindow(request.record, preparing)) return AppApprovalOutcome.NOT_READY
         if (!permissionsMatch(request.record)) return AppApprovalOutcome.NOT_READY
         val atCommit = matchingCredentials(request) ?: return AppApprovalOutcome.NOT_READY
         if (!sameBoot(request) || !battery().allowsDiscretionaryUnhide || planFor(request.record, preparing) == null) return AppApprovalOutcome.NOT_READY
@@ -300,9 +321,9 @@ class AppApprovalController(
         if (!initialized) return AppApprovalOutcome.NOT_READY
         val state = store.read() ?: return AppApprovalOutcome.NOT_READY
         val op = state.pending ?: return AppApprovalOutcome.READY
+        if (op.phase == AppApprovalPhase.EDITING) return finishPermissionEdit(state, op)
         if (state.revision == Long.MAX_VALUE) return AppApprovalOutcome.NOT_READY
         if (op.phase == AppApprovalPhase.WITHDRAWING || op.phase == AppApprovalPhase.REMOVING) return finishWithdrawal(state, op)
-        if (op.phase == AppApprovalPhase.EDITING) return finishPermissionEdit(state, op)
         if (op.phase != AppApprovalPhase.COMMITTED) return AppApprovalOutcome.NOT_READY
         if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
         if (!permissionsMatch(op.record)) return AppApprovalOutcome.NOT_READY
@@ -321,13 +342,13 @@ class AppApprovalController(
         val state = store.read() ?: return null
         val op = state.pending?.takeIf { it.phase in setOf(AppApprovalPhase.COMMITTED, AppApprovalPhase.EDITING) } ?: return null
         if (state.revision > Long.MAX_VALUE - 2) return null
-        val current = credentials()?.takeIf { it.mode == Mode.TRUSTED } ?: return null
+        val current = credentials() ?: return null
         val credential = current.people[person] ?: return null
         val id = ids.next()
         if (id.isBlank() || state.apps.values.any { it.id == id } || state.receipts.any { it.id == id }) return null
         val now = clock.checkpoint() ?: return null
         return AppApprovalWithdrawalRequest(op.record.id, id, person, credential.generation,
-            current.structureGeneration, now.boot).also { withdrawals.add(it) }
+            current.structureGeneration, now.boot, current.mode).also { withdrawals.add(it) }
     }
 
     @Synchronized
@@ -403,13 +424,13 @@ class AppApprovalController(
     }
 
     private fun finishPermissionEdit(state: AppApprovalState, op: AppApprovalOperation): AppApprovalOutcome {
+        // EDITING is durable intent: every retry must close an interrupted window before any gate.
+        if (!effects.hideAndReadBack(op.record.identity)) return AppApprovalOutcome.NOT_READY
         if (state.revision > Long.MAX_VALUE - 2) return AppApprovalOutcome.NOT_READY
         if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
-        if (planFor(op.record, state) == null || !effects.hideAndReadBack(op.record.identity)) return AppApprovalOutcome.NOT_READY
-        for (write in op.record.permissions.writes) {
-            if (planFor(op.record, state) == null || !effects.setPermission(op.record.identity, write)) return AppApprovalOutcome.NOT_READY
-        }
-        if (!permissionsMatch(op.record) || planFor(op.record, state) == null) return AppApprovalOutcome.NOT_READY
+        if (planFor(op.record, state) == null || !writePermissionsInWindow(op.record, state)) return AppApprovalOutcome.NOT_READY
+        if (!permissionsMatch(op.record) || !battery().allowsDiscretionaryUnhide || planFor(op.record, state) == null)
+            return AppApprovalOutcome.NOT_READY
         val committed = state.replacing(pending = AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.COMMITTED))
         if (!store.compareAndSet(state, committed, null)) return AppApprovalOutcome.NOT_READY
         return resume()
@@ -421,12 +442,12 @@ class AppApprovalController(
         val state = store.read() ?: return null
         if (state.pending != null || state.revision > Long.MAX_VALUE - 2) return null
         val record = state.apps[packageName] ?: return null
-        val current = credentials()?.takeIf { it.mode == Mode.TRUSTED } ?: return null
+        val current = credentials() ?: return null
         val credential = current.people[person] ?: return null
         val id = ids.next()
         if (id.isBlank() || state.apps.values.any { it.id == id } || state.receipts.any { it.id == id }) return null
         val now = clock.checkpoint() ?: return null
-        return AppRemovalRequest(record, id, person, credential.generation, current.structureGeneration, now.boot).also { removals.add(it) }
+        return AppRemovalRequest(record, id, person, credential.generation, current.structureGeneration, now.boot, current.mode).also { removals.add(it) }
     }
 
     @Synchronized
@@ -453,7 +474,7 @@ class AppApprovalController(
     }
 
     private fun matchingCredentials(request: AppRemovalRequest): CredentialState? = credentials()?.takeIf {
-        it.mode == Mode.TRUSTED && it.structureGeneration == request.structureGeneration &&
+        it.mode == request.mode && it.structureGeneration == request.structureGeneration &&
             it.people[request.person]?.generation == request.credentialGeneration
     }
 
@@ -488,7 +509,7 @@ class AppApprovalController(
     }
 
     private fun matchingCredentials(request: AppApprovalWithdrawalRequest): CredentialState? = credentials()?.takeIf {
-        it.mode == Mode.TRUSTED && it.structureGeneration == request.structureGeneration &&
+        it.mode == request.mode && it.structureGeneration == request.structureGeneration &&
             it.people[request.person]?.generation == request.credentialGeneration
     }
     private fun sameBoot(preparedAt: BootTime): Boolean = clock.checkpoint()?.boot?.let {
@@ -502,6 +523,20 @@ class AppApprovalController(
     private fun sameBoot(request: AppApprovalRequest): Boolean = clock.checkpoint()?.boot?.let {
         it.bootId == request.preparedAt.bootId && it.elapsedMillis >= request.preparedAt.elapsedMillis
     } == true
+    private fun writePermissionsInWindow(record: AppApprovalRecord, state: AppApprovalState): Boolean {
+        var closed: Boolean
+        val verified = try {
+            effects.openPermissionWindow(record.identity) &&
+                record.permissions.writes.sortedBy { it.choice == PermissionChoice.ALLOW }.all { write ->
+                    planFor(record, state) != null && effects.setPermission(record.identity, write)
+                } && permissionsMatch(record)
+        } finally {
+            // Also close after partial opening, a refused write, failed verification or an exception.
+            closed = effects.closePermissionWindow(record.identity)
+        }
+        return verified && closed
+    }
+
     private fun permissionsMatch(record: AppApprovalRecord): Boolean {
         val readback = effects.readPermissions(record.identity)
         return PermissionChoices.verify(record.permissions, manifest(record.identity.packageName), readback) == PermissionVerification.Verified

@@ -19,6 +19,7 @@ interface DevicePolicyPort {
     fun packageState(name: PackageName): PackageState?
     fun setHidden(name: PackageName, hidden: Boolean)
     fun unsuspend(name: PackageName)
+    /** Best-effort enable. It may not clear a user-disabled state; the caller reads the state again. */
     fun enable(name: PackageName)
 
     fun restrictions(): Set<Restriction>
@@ -27,6 +28,13 @@ interface DevicePolicyPort {
     fun setSystemInputMethodsOnly(only: Boolean)
     fun systemAccessibilityServicesOnly(): Boolean
     fun setSystemAccessibilityServicesOnly(only: Boolean)
+
+    /**
+     * The app UID of [name] in this user, hidden packages included (`MATCH_UNINSTALLED_PACKAGES`); null
+     * when it is not installed for this user. Throws when it cannot be read. Android lets every package
+     * that shares a UID with an allowed lock-task package start lock task too.
+     */
+    fun uid(name: PackageName): Int?
 
     fun lockTaskPackages(): Set<PackageName>
     fun setLockTaskPackages(packages: Set<PackageName>)

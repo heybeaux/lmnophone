@@ -1,0 +1,63 @@
+// Copyright 2026 Plainphone contributors
+// SPDX-License-Identifier: Apache-2.0
+package org.plainphone.boot
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.admin.DevicePolicyManager
+import android.content.BroadcastReceiver
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.util.Log
+import org.plainphone.PlainphoneAdminReceiver
+
+/**
+ * Test build only: sets up the PLA-190 boot scenarios from adb, which cannot change a Device Owner's
+ * policy itself. Shell-only (`android.permission.DUMP`). Neither action triggers a re-apply.
+ *
+ * - `org.plainphone.test.RELAX --es package P`: adds P to the lock-task list, as an open session would.
+ * - `org.plainphone.test.DROP --es restriction R [--ei features F]`: clears user restriction R and the
+ *   whole lock-task list, as a power cut that lost both writes would; with `features`, also sets the
+ *   lock-task feature mask to F (PLA-233: F=16 drops BLOCK_ACTIVITY_START_IN_TASK).
+ * - `org.plainphone.test.NOTIFY --es component C`: posts a notification whose tap opens activity C, an
+ *   unapproved app. Android clears notifications on reboot and the shell cannot attach a tap intent,
+ *   so this stands in for an unapproved app's notification right after boot. Works before unlock.
+ */
+class TestHook : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val dpm = context.getSystemService(DevicePolicyManager::class.java)
+        val admin = ComponentName(context, PlainphoneAdminReceiver::class.java)
+        when (intent.action) {
+            "org.plainphone.test.RELAX" -> {
+                val name = intent.getStringExtra("package") ?: return
+                dpm.setLockTaskPackages(admin, (dpm.getLockTaskPackages(admin).toSet() + name).toTypedArray())
+            }
+            "org.plainphone.test.DROP" -> {
+                val restriction = intent.getStringExtra("restriction") ?: return
+                dpm.clearUserRestriction(admin, restriction)
+                dpm.setLockTaskPackages(admin, emptyArray())
+                if (intent.hasExtra("features")) dpm.setLockTaskFeatures(admin, intent.getIntExtra("features", 0))
+            }
+            "org.plainphone.test.NOTIFY" -> {
+                val target = intent.getStringExtra("component")?.let(ComponentName::unflattenFromString) ?: return
+                val notifications = context.getSystemService(NotificationManager::class.java)
+                notifications.createNotificationChannel(NotificationChannel("test", "Test", NotificationManager.IMPORTANCE_HIGH))
+                val tap = PendingIntent.getActivity(
+                    context, 0, Intent(Intent.ACTION_MAIN).setComponent(target).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    PendingIntent.FLAG_IMMUTABLE,
+                )
+                notifications.notify(
+                    190,
+                    Notification.Builder(context, "test").setSmallIcon(android.R.drawable.ic_dialog_info)
+                        .setContentTitle("Unapproved app").setContentText("Tap to open ${target.packageName}")
+                        .setContentIntent(tap).build(),
+                )
+            }
+            else -> return
+        }
+        Log.i(PolicyRuntime.TAG, "test hook ${intent.action} lockTask=${dpm.getLockTaskPackages(admin).sorted()} features=${dpm.getLockTaskFeatures(admin)}")
+    }
+}

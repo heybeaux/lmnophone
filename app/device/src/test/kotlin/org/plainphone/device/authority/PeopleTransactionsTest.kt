@@ -39,7 +39,13 @@ import org.plainphone.policy.PersonContact
 import org.plainphone.policy.PinResult
 import org.plainphone.policy.PinVault
 import org.plainphone.policy.RecoveryProfile
+import org.plainphone.policy.RecoveryResult
 import org.plainphone.policy.SecretEntropy
+import org.plainphone.policy.TurnOffController
+import org.plainphone.policy.TurnOffEffects
+import org.plainphone.policy.TurnOffFailure
+import org.plainphone.policy.TurnOffOutcome
+import org.plainphone.policy.TurnOffStep
 import org.plainphone.policy.WaitingChangeController
 import org.plainphone.policy.WaitingChangeKind
 import org.plainphone.policy.WaitingEvent
@@ -141,6 +147,82 @@ class PeopleTransactionsTest {
         }
         fun files() = dir.listFiles()!!.filter { it.isFile }.associate { it.name to it.readBytes() }
         fun restore(snapshot: Map<String, ByteArray>, names: Collection<String>) = names.forEach { File(dir, it).writeBytes(snapshot.getValue(it)) }
+        /** PLA-160: [block]'s write commits, but the directory loses search permission right after copy B. */
+        fun <T> unacknowledged(block: () -> T): T = SearchDenial(WritePoint.AFTER_COPY_B).run(dir, { faults = it }, block)
+    }
+
+    // ---- PLA-160: false means not acknowledged; each caller fails closed and reads fresh next time ----
+
+    @Test fun unacknowledgedPatchNeedsAttentionAndTheNextTickCompletesWithoutReapplying() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        val result = rig.unacknowledged { rig.people.tick(id, WaitingPhase.COMMITTING) }
+        assertEquals(PeopleChangeOutcome.NEEDS_ATTENTION, result.outcome)
+        assertEquals(PeopleChangeFailure.PERSISTENCE, result.failure)
+        val landed = rig.credentials()
+        assertEquals(setOf(anna, cleo), landed.people.keys)
+        // The landed patch is already applied: no stop, and the next tick completes it once.
+        assertNull(rig.people.prepareStop(id, anna))
+        rig.wire()
+        assertEquals(PeopleChangeOutcome.COMPLETED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
+        assertEquals(landed.structureGeneration, rig.credentials().structureGeneration)
+    }
+
+    @Test fun unacknowledgedStopNeedsAttentionAndTheLandedRollbackNeverResumesForward() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        val stop = checkNotNull(rig.people.prepareStop(id, anna)); val fresh = rig.auth(anna, stop.action)
+        assertEquals(PeopleChangeOutcome.NEEDS_ATTENTION, rig.unacknowledged { rig.people.stop(stop, fresh) }.outcome)
+        assertTrue(rig.effects.calls.isEmpty())
+        assertEquals(WaitingPhase.ROLLING_BACK, rig.journal().operation!!.phase)
+        assertEquals(PeopleChangeOutcome.REFUSED, rig.people.stop(stop, fresh).outcome)
+        assertEquals(PeopleChangeOutcome.IGNORED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
+        assertEquals(PeopleChangeOutcome.CANCELLED, rig.people.tick(id, WaitingPhase.ROLLING_BACK).outcome)
+        assertEquals(setOf(anna), rig.credentials().people.keys)
+    }
+
+    @Test fun unacknowledgedSkipIsNotReadyNeverAPlainNoAndTheLandedSkipIsRead() {
+        val rig = Rig(people = 2)
+        val id = rig.startRemove()
+        val result = rig.unacknowledged { rig.waiting.skip(id, ben, rig.codes.getValue(ben).toCharArray(), rig.newPin, true, battery) }
+        assertEquals(WaitingSkipResult.NotSkipped(WaitingOutcome.NOT_READY), result)
+        assertEquals(WaitingPhase.COMMITTING, rig.journal().operation!!.phase)
+        assertEquals(ben, rig.journal().operation!!.skipper)
+        assertEquals(WaitingSkipResult.NotSkipped(WaitingOutcome.ALREADY_IN_PROGRESS),
+            rig.waiting.skip(id, ben, rig.codes.getValue(ben).toCharArray(), rig.newPin, true, battery))
+    }
+
+    @Test fun unacknowledgedRecoveryIsUnavailableAndTheNextEntryReadsTheLandedPin() {
+        val rig = Rig()
+        val result = rig.unacknowledged { rig.vault.recover(anna, rig.codes.getValue(anna).toCharArray(), rig.newPin) }
+        assertEquals(RecoveryResult.Unavailable, result)
+        assertEquals(1L, rig.credentials().people.getValue(anna).generation)
+        val action = org.plainphone.policy.PrivilegedAction("test", "probe")
+        assertTrue(rig.vault.authenticate(anna, rig.newPin, action) is PinResult.Authorized)
+    }
+
+    @Test fun unacknowledgedTurnOffCheckpointNeedsAttentionAndTheNextTickContinuesFromTheLandedStep() {
+        val rig = Rig()
+        val r = checkNotNull(rig.waiting.prepareTurnOff(anna))
+        assertEquals(WaitingOutcome.PENDING, rig.waiting.startTurnOff(r, rig.auth(anna, r.action), true, true))
+        rig.mature(r.requestId)
+        val restored = mutableListOf<TurnOffStep>()
+        val turnOff = TurnOffController(rig.store.waitingStore, object : TurnOffEffects {
+            override fun revokeTemporaryAccess() = true
+            override fun isDeviceOwner() = true
+            override fun restoreRecorded(step: TurnOffStep): Boolean { restored += step; return true }
+            override fun readBackRecorded(step: TurnOffStep) = true
+            override fun anotherHomeResolves() = true
+            override fun systemDialerResolves() = true
+            override fun removeDeviceOwner() = false
+        }, { rig.store.credentials.read() })
+        val result = rig.unacknowledged { turnOff.tick(r.requestId) }
+        assertEquals(TurnOffOutcome.NEEDS_ATTENTION, result.outcome)
+        assertEquals(TurnOffFailure.JOURNAL_WRITE, result.failure)
+        assertEquals(1, rig.journal().operation!!.restoredSteps)
+        assertEquals(TurnOffOutcome.PROGRESS, turnOff.tick(r.requestId).outcome)
+        assertEquals(2, rig.journal().operation!!.restoredSteps)
+        assertEquals(TurnOffStep.entries.take(2), restored)
     }
 
     // ---- Codec ----
@@ -226,6 +308,18 @@ class PeopleTransactionsTest {
         rig.now = ClockReading(RunningTime("epoch", day), BootTime("boot", day))
         assertEquals(WaitingOutcome.NOT_READY, rig.waiting.tick(id, battery))
         assertEquals(WaitingPhase.PENDING, rig.journal().operation!!.phase)
+    }
+
+    /** A cancel request is "durable" only when the directory holding its files was synced too. */
+    @Test fun cancelRequestReportsFalseWhenItsDirectoryCannotBeSynced() {
+        val rig = Rig()
+        val id = rig.startAdd()
+        rig.store.withDirectorySync { throw java.io.IOException("directory sync failed") }
+        assertFalse(rig.store.cancelIntents.request(id))
+        assertFalse(rig.store.cancelIntents.initialize("fresh"))
+        rig.store.withDirectorySync(PlatformDirectorySync)
+        assertTrue(rig.store.cancelIntents.request(id))
+        assertEquals(CancelIntent.REQUESTED, rig.disk().cancelIntents.read(id))
     }
 
     @Test fun damagedIntentEntriesNeverReadAsClear() {

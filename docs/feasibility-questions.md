@@ -61,7 +61,7 @@
 - *If no:* revise the ADR. A weekly update window is **not** assumed acceptable.
 
 **Q4. Do the real must-have apps work, and is the web contained?**
-- **Must-have apps:** use Beaux and the trusted person's actual list where it installs on the emulator. Current list (Telegram 4446/4448/4451): Beaux: Slack, Spotify, maybe Telegram. the trusted person: Gmail, Outlook.
+- **Must-have apps:** use the two initial users' actual list where it installs on the emulator. Current list (Telegram 4446/4448/4451): Beaux: Slack, Spotify, maybe Telegram. The partner: Gmail, Outlook.
   - Web-leak leads to check: Telegram's in-app browser; where Gmail and Outlook open links in HTML mail (in-app browser, Custom Tab, or handed to Android); Gmail's Chat and Meet tabs; whether Outlook's sign-in, and adding a Google account to Outlook, needs a web page that hidden browsers break. Test sign-in, signing in again, password reset, payment or 3-D Secure approval, notifications and updates, all with every general browser hidden and the block flag on.
 - **Browser role and classifier:** does Plainphone get the browser role? Run the classifier against fixtures: a general browser, an app that only opens its own domain, and the never-hide packages.
 - **Link matrix:** verified App Links, ordinary links, `intent:` URIs, custom schemes, Custom Tabs fallback.
@@ -145,6 +145,12 @@
 - `getConnectionOwnerUid` attribution of an app's WebView traffic.
 - Does the Wi-Fi sign-in page bypass the VPN?
 - QUIC drop and HTTPS-record stripping.
+
+**Q15. How much battery and data does hiding save, and do hidden apps really do nothing?** *(board request, PLA-123; spike [PLA-125](/PLA/issues/PLA-125), after the MVP test build)*
+- **[device]** Two 24-hour idle windows on the spare (stock, then the MVP policy), per-app CPU, wakeups, jobs and Wi-Fi bytes.
+- Negative control: a package that was busy in the stock window shows zero work once hidden, including after a reboot.
+- Never-hide check: the OTA updater, IMS, carrier services and RCS stay unhidden.
+- Recommendation and budget: `docs/battery-data-recommendation.md`.
 
 **Q11. Does a GrapheneOS emulator build answer Q1, Q3 and Q6?** Only if it costs under a day. Only relevant if Beaux picks a Pixel.
 

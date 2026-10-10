@@ -9,19 +9,27 @@ import java.nio.ByteBuffer
 import org.plainphone.core.BuildInventory
 import org.plainphone.policy.AppApprovalState
 
-/** A committed record as a schema 1-3 store read it, and which copy files held it. */
+/** A committed record as a schema 1-5 store read it, and which copy files held it. */
 internal class LegacyRecord(val schema: Int, val sequence: Long, val sections: List<ByteArray>, val holders: Set<String>)
 
 /**
- * Read-only access to records written before schema 4. Those stores wrote copy A, copy B, then
- * both fences, and served the newest valid copy at or above the fence. Schema 1 had four
+ * Read-only access to records written before schema 6. Schema 5 is schema 4's read rule with the
+ * Update section and no Recovery section (no loss could have been recorded). Schema 1-3 stores wrote copy A, copy B, then
+ * both fences, and served the newest valid copy at or above the fence. Schema 4 served the two
+ * copies when they agreed at or above the fence, else the single copy at exactly the fence, and
+ * had no Update section (Update was never enabled, so none can have been recorded). Schema 1 had four
  * sections (no approvals) and a ledger-only elevation; schemas 1-2 had no people patch in
- * waiting operations. Nothing here writes; [JointAuthorityStore.migrate] does that.
+ * waiting operations. Schema 3 also kept cancel intents. Nothing here writes;
+ * [JointAuthorityStore.migrate] does that.
  */
 internal object LegacyAuthority {
     private val copies = listOf("authority-a", "authority-b")
+    /** Cancel intents first appeared in schema 3; schema 4 changed their payload. */
+    private const val INTENT_SCHEMA = 3
 
     fun load(dir: File): LegacyRecord? {
+        loadFenced(dir, 5)?.let { return it }
+        loadFenced(dir, 4)?.let { return it }
         for (schema in 3 downTo 1) {
             val fences = listOf("fence-a", "fence-b").mapNotNull { AtomicRecord(dir, it, schema).read() }
             if (fences.isEmpty()) continue
@@ -39,7 +47,42 @@ internal object LegacyAuthority {
         return null
     }
 
-    /** Current-format sections holding the same values, or null if any old section does not decode. */
+    /** The schema 4/5 read rule; null when no fence or agreeing copy pair of that schema exists. */
+    private fun loadFenced(dir: File, schema: Int): LegacyRecord? {
+        val count = if (schema == 4) 5 else 6
+        val fence = listOf("fence-a", "fence-b").mapNotNull { AtomicRecord(dir, it, schema).read() }
+            .mapNotNull { if (it.size == 8) ByteBuffer.wrap(it).long else null }.maxOrNull()
+        val held = copies.mapNotNull { name -> AtomicRecord(dir, name, schema).read()?.let { bytes -> decode(bytes, count)?.let { Triple(name, it, bytes) } } }
+        if (held.size == 2 && held[0].third.contentEquals(held[1].third) && (fence == null || held[0].second.first >= fence))
+            return LegacyRecord(schema, held[0].second.first, held[0].second.second, copies.toSet())
+        if (fence == null) return null
+        val atFence = held.filter { it.second.first == fence }
+        val first = atFence.firstOrNull() ?: return null
+        if (atFence.any { !it.third.contentEquals(first.third) }) return null
+        return LegacyRecord(schema, fence, first.second.second, atFence.map { it.first }.toSet())
+    }
+
+    /**
+     * Request ids with a cancel intent in the schema 3 format: an entry holding the bare request
+     * id (CLEAR) and a separate marker holding it (REQUESTED). A file counts only if it decodes as
+     * schema 3 and its content hashes to its own name. Null when the directory can't be listed.
+     */
+    fun intentRequests(dir: File): Set<String>? {
+        val files = dir.listFiles() ?: return null
+        return files.mapNotNull { file ->
+            val prefix = listOf("intent-clear-", "intent-requested-").firstOrNull { file.name.startsWith(it) && file.name.endsWith(".rec") }
+                ?: return@mapNotNull null
+            val name = file.name.removeSuffix(".rec")
+            val id = AtomicRecord(dir, name, INTENT_SCHEMA).read()?.let { String(it) } ?: return@mapNotNull null
+            // The name is the hash of the id's bytes, so a match also proves the bytes round-trip.
+            id.takeIf { intentHash(it) == name.removePrefix(prefix) }
+        }.toSet()
+    }
+
+    /**
+     * Current-format sections holding the same values, in their canonical encoding (unordered maps
+     * and sets sorted), or null if any old section does not decode.
+     */
     fun convert(r: LegacyRecord, matchingInventory: BuildInventory?): List<ByteArray>? {
         val s = r.sections
         val credentials = AuthorityCodec.decodeCredentials(s[Section.CREDENTIALS.ordinal]) ?: return null
@@ -51,7 +94,11 @@ internal object LegacyAuthority {
         val approvals = if (r.schema == 1) AppApprovalState() else AuthorityCodec.decodeApprovals(s[Section.APPROVALS.ordinal]) ?: return null
         return listOf(AuthorityCodec.encodeCredentials(credentials) ?: return null, AuthorityCodec.encodeWaiting(waiting) ?: return null,
             AuthorityCodec.encodeElevation(elevation) ?: return null, AuthorityCodec.encodeReceipts(receipts) ?: return null,
-            AuthorityCodec.encodeApprovals(approvals) ?: return null)
+            AuthorityCodec.encodeApprovals(approvals) ?: return null,
+            // Schema 5 has an Update section; before that Update was never enabled.
+            (if (r.schema >= 5) AuthorityCodec.decodeUpdate(s[Section.UPDATE.ordinal]) ?: return null
+                else UpdateSection(org.plainphone.policy.UpdateRecord(), emptyList())).let(AuthorityCodec::encodeUpdate) ?: return null,
+            AuthorityCodec.encodeRecovery(RecoverySection(null, emptyList())) ?: return null)
     }
 
     fun decode(bytes: ByteArray, count: Int): Pair<Long, List<ByteArray>>? = try {

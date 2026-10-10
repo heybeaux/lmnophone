@@ -43,7 +43,7 @@ Inputs reused here:
 - recovery code (128 bits, hash only) with its own counter;
 - reset-protection Google `userId`.
 
-**The PIN screen asks who is entering it** ("Who are you? Beaux / the trusted person"), then checks the PIN against that person's PIN only, and counts a failure against that person only. Two people may happen to pick the same PIN; that is allowed, and Plainphone never compares them or says so. Someone holding the phone can still run down both people's lockouts one after the other; one lockout never affects the other person's PIN or either recovery code.
+**The PIN screen asks who is entering it** ("Who are you? First trusted person / Second trusted person"), then checks the PIN against that person's PIN only, and counts a failure against that person only. Two people may happen to pick the same PIN; that is allowed, and Plainphone never compares them or says so. Someone holding the phone can still run down both people's lockouts one after the other; one lockout never affects the other person's PIN or either recovery code.
 
 **Powers.** Either trusted person can do every trusted-person action alone. Neither can see, change or reset the other's PIN or recovery code. A recovery code resets only its owner's PIN.
 
@@ -179,7 +179,7 @@ After a restart at any point, either the old people or the new people are in cha
 
 ### C4. Self-managed mode: ADR option D as a mode, friction not a lock
 
-**What it is.** The same Plainphone app, Device Owner, lockdown, emergency floor and restrictions as supervised mode. The only difference is who can relax it: the user holds the PIN, and every loosening goes through friction. ADR 0001 rejected option D (launcher only) because it is "friction, not a lock", and said it wins "only if Beaux and the trusted person decide they want voluntary friction instead". Beaux has now asked for exactly that, as a choice per phone. Self-managed mode keeps option A's controls (ADR "Controls the design relies on": restrictions such as `DISALLOW_SAFE_BOOT` and `DISALLOW_DEBUGGING_FEATURES`, the persistent Home pin, lock task), so the friction is meant to resist changing the home app, safe mode or adb, which a launcher alone can't. These are intended controls, verified per build: for example `no_config_default_apps` did not take effect on the spare Motorola, where the Home pin did the work (PLA-5 A4/A6).
+**What it is.** The same Plainphone app, Device Owner, lockdown, emergency floor and restrictions as supervised mode. The only difference is who can relax it: the user holds the PIN, and every loosening goes through friction. ADR 0001 rejected option D (launcher only) because it is "friction, not a lock", and said it wins "only if the two initial users decide they want voluntary friction instead". Beaux has now asked for exactly that, as a choice per phone. Self-managed mode keeps option A's controls (ADR "Controls the design relies on": restrictions such as `DISALLOW_SAFE_BOOT` and `DISALLOW_DEBUGGING_FEATURES`, the persistent Home pin, lock task), so the friction is meant to resist changing the home app, safe mode or adb, which a launcher alone can't. These are intended controls, verified per build: for example `no_config_default_apps` did not take effect on the spare Motorola, where the Home pin did the work (PLA-5 A4/A6).
 
 **Said openly.** At setup and on "What Plainphone can't stop": "In self-managed mode, you hold the PIN. Plainphone adds waits and limits so that distraction takes effort. It can't stop you, because you are in charge. You can always remove it by waiting at least 24 hours of the phone being on, or by wiping the phone."
 
@@ -326,6 +326,25 @@ During on-phone setup, straight after the user signs in to Google, the guide and
 - **[Unhide-to-flush gap]** → a power loss between an unhide and the mitigation B flip can still boot-loop the phone. Narrowed, measured in task 1.3, disclosed, and on the target-phone checklist (approved plan task 6.3).
 - **[Reset protection with two or three IDs is untested]** → Q10 grows to cover it, including changed lists and failed updates. Google documents configurable account lists, changing them over time, and the broadcast ([FRP guidance](https://developer.android.com/work/dpc/security#factory_reset_protection)); whether this build enforces three IDs is a device test.
 - **[`RECEIVE_SMS` for cancel replies]** → non-default SMS apps can receive `SMS_RECEIVED_ACTION` ([Telephony reference](https://developer.android.com/reference/android/provider/Telephony)), but `RECEIVE_SMS` is hard-restricted and needs installer allowlisting as well as a runtime grant ([permission reference](https://developer.android.com/reference/android/Manifest.permission#RECEIVE_SMS)). Not tested. Q15 decides; without it, cancel is on the phone only, and no copy mentions replies.
+
+### Known installer limitations (PLA-136; Update stays disabled)
+
+The API 35 emulator evidence in `mvp/device:spikes/installer-boundary/README.md` and
+`evidence/app-self-update-api35.txt` establishes the protocol selected by Lead in PLA-126.
+The durable deadline check binds **authority use-up**, not the platform's install start:
+
+- **G2 — pause after use-up:** the process may resume and start the install after the deadline,
+  but only of the exact hash-bound, pinned-signer, strictly newer self package.
+- **G1 — crash before commit:** a crash between the joint use-up/SUBMITTED write and `commit()`
+  spends the turn and installs nothing. Startup abandons all own sessions before revoking
+  temporary elevation authority. It classifies the submission by installed version and never retries
+  the install or refunds the turn.
+- **G3 — mutable session:** no write is allowed after the final hash read through `Session.openRead`.
+  This is an adapter code rule, not a platform guarantee. `setChecksums` does not bind the digest.
+
+The pure controller/store protocol remains behind the existing fail-closed Update refusal until
+both policy and device adapter pass cross-model review. The Lead takes the rule-6 wording to Beaux;
+this note records the implementation limits and does **not** change C4 rule 6.
 
 ## Migration Plan
 

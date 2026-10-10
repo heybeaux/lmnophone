@@ -87,4 +87,60 @@ class IdentityReservationsTest {
         assertFalse(runCatching { stuck.identities.reserve() }.isSuccess)
         assertNull(stuck.reservePerson().let { stuck.reservePerson() })
     }
+
+    // ---- PLA-143 R1: a reservation is handed out only after its directory entries are synced ----
+
+    private class FailingSync(val failing: (File) -> Boolean) : DirectorySync {
+        val synced = mutableListOf<String>()
+        override fun sync(dir: File) {
+            if (failing(dir)) throw java.io.IOException("sync failed: ${dir.name}")
+            synced += dir.name
+        }
+    }
+
+    @Test fun reservedDirectorySyncFailureRefusesAndTheValueStaysTaken() {
+        val dir = tmp.newFolder()
+        val store = open(dir, Script(11, 11)).withDirectorySync(FailingSync { it.name == "reserved" })
+        assertTrue(runCatching { store.identities.reserve() }.exceptionOrNull() is IdentityUnavailable)
+        assertNull(store.reservePerson())
+        // The refused draw was still taken: a healthy store never hands it out later.
+        val healthy = open(dir, Script(11, 11))
+        val next = healthy.identities.reserve()
+        assertFalse(File(dir, "reserved").listFiles()!!.count { it.name.startsWith("request-") } < 2)
+        assertNotEquals("req-" + "0b000000".repeat(4), next.requestId)
+    }
+
+    @Test fun parentDirectorySyncFailureRefusesSoANewReservedFolderIsNeverTrustedUnsynced() {
+        val dir = tmp.newFolder()
+        val store = open(dir).withDirectorySync(FailingSync { it == dir })
+        assertTrue(runCatching { store.identities.reserve() }.exceptionOrNull() is IdentityUnavailable)
+        assertNull(store.reservePerson())
+    }
+
+    @Test fun successSyncsTheReservedFolderAndItsParent() {
+        val dir = tmp.newFolder()
+        val sync = FailingSync { false }
+        open(dir).withDirectorySync(sync).identities.reserve()
+        assertTrue(sync.synced.toString(), "reserved" in sync.synced && dir.name in sync.synced)
+    }
+
+    /** The reviewer's case: the folder can be written but not opened for reading, so it cannot be synced. */
+    @Test fun unreadableReservedFolderRefusesWithTheRealPlatformSync() {
+        org.junit.Assume.assumeFalse(System.getProperty("user.name") == "root")
+        val dir = tmp.newFolder()
+        val folder = File(dir, "reserved").apply { mkdirs() }
+        val path = folder.toPath()
+        val before = java.nio.file.Files.getPosixFilePermissions(path)
+        java.nio.file.Files.setPosixFilePermissions(path, java.nio.file.attribute.PosixFilePermissions.fromString("-wx------"))
+        try {
+            org.junit.Assume.assumeTrue(runCatching {
+                java.nio.channels.FileChannel.open(path, java.nio.file.StandardOpenOption.READ).close()
+            }.isFailure)
+            val store = open(dir)
+            assertTrue(runCatching { store.identities.reserve() }.exceptionOrNull() is IdentityUnavailable)
+            assertNull(store.reservePerson())
+        } finally {
+            java.nio.file.Files.setPosixFilePermissions(path, before)
+        }
+    }
 }

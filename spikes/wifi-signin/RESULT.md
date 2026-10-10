@@ -3,7 +3,7 @@
 Everything under `spikes/wifi-signin/` is throwaway. It answers feasibility questions for the Lead's Wi-Fi sign-in override recommendation ([PLA-17]). It is not MVP code.
 
 - **Emulator:** `pp11-a35` (emulator-5620). API 35, Google Play image, `google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.036/12592187:user/release-keys`. The PLA-11 spike DPC was already Device Owner here.
-- **Not tested:** API 36 and API 37 images (not enough time in this run), and any physical device. SPARE_DEVICE_SERIAL, emulator-5590 and emulator-5604 were not touched.
+- **Not tested:** API 36 and API 37 images (not enough time in this run), and any physical device. The spare test device, emulator-5590 and emulator-5604 were not touched.
 - **Spike DPC:** `apps/dpc` is the PLA-11 DPC plus `Signin.kt`, a sign-in session that uses the Play/Settings session contract. In order:
   1. Write the journal with `commit()`.
   2. Add `com.google.android.captiveportallogin` to the lock-task packages, then unhide it.

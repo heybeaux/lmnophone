@@ -74,7 +74,8 @@ class LegacyMigrationTest {
         }
     }
 
-    @Test fun unchangedSectionFormatsAreKeptByteForByte() {
+    /** One-person fixtures are already canonical, so their bytes survive; several people come out sorted (MigrationJournalTest). */
+    @Test fun canonicalOneSectionFormatsAreKeptByteForByte() {
         for (schema in 1..3) {
             val dir = fixture(schema)
             val legacy = LegacyAuthority.load(dir)!!
@@ -180,5 +181,5 @@ class LegacyMigrationTest {
         assertNull(open(dir).credentials.read())
     }
 
-    private companion object { const val CURRENT = 4 }
+    private companion object { const val CURRENT = 6 }
 }

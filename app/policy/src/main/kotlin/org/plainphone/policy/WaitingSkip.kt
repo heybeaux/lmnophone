@@ -23,5 +23,9 @@ sealed interface WaitingSkipResult {
     }
     data class Wrong(val remainingMillis: Long, val notifyLockout: Boolean) : WaitingSkipResult
     data class Delayed(val remainingMillis: Long) : WaitingSkipResult
+    /**
+     * Not acknowledged as skipped. With NOT_READY the skip may still have landed (the joint write was
+     * not acknowledged, see [CredentialStore.compareAndSet]); read the journal again before saying anything.
+     */
     data class NotSkipped(val outcome: WaitingOutcome) : WaitingSkipResult
 }

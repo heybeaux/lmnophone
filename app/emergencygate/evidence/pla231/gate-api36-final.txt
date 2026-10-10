@@ -1,0 +1,91 @@
+# PLA-231 final gate run, API 36. Copyright 2026 Plainphone contributors. SPDX-License-Identifier: Apache-2.0
+# mvp/device 41243de: tools/emergency-gate.sh -s emulator-5800 --no-build (APKs built at 41243de). Emulator results are not proof that a real 9-1-1 call gets through.
+Emergency gate on emulator-5800: google/sdk_gphone64_arm64/emu64a:16/BE2A.250530.026.F3/13894323:userdebug/dev-keys, API 36
+
+check                   debug                 ctlNoPhone            ctlNoDialerLockTask   ctlNoAlert            ctlNoAlertLockTask    
+home-phone              PASS                  FAIL                  FAIL                  PASS                  PASS                  
+app-home-phone          PASS                  FAIL                  FAIL                  PASS                  PASS                  
+more-emergency          NOT_BUILT             NOT_BUILT             NOT_BUILT             NOT_BUILT             NOT_BUILT             
+sos                     PASS                  PASS                  PASS                  PASS                  PASS                  
+alert-display-ready     PASS                  PASS                  PASS                  PASS                  FAIL                  
+alert-display-launch    PASS                  PASS                  PASS                  FAIL                  FAIL                  
+alert-shown             INCONCLUSIVE          INCONCLUSIVE          INCONCLUSIVE          INCONCLUSIVE          INCONCLUSIVE          
+telecom-emergency-call  PASS                  FAIL                  FAIL                  PASS                  PASS                  
+lock-screen             PASS                  PASS                  PASS                  PASS                  PASS                  
+locked-boot             PASS                  PASS                  PASS                  PASS                  PASS                  
+boot-checking           PASS                  FAIL                  FAIL                  PASS                  PASS                  
+OVERALL                 INCONCLUSIVE          FAIL                  FAIL                  FAIL                  FAIL                  
+Expectation: the real build (debug) does not FAIL; every ctl* build FAILs. Inconclusive is never a pass.
+exit=0
+
+# Per-check detail
+[gate 07:18:24] == debug (control=none) ==
+# 10-10 07:18:27.071  4150  4175 I PlainphoneBoot: reapply reason=package:PACKAGE_REMOVED:com.android.vending control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=260
+GATE home-phone PASS com.google.android.dialer/com.android.dialer.main.impl.MainActivity lockTask=LOCKED
+GATE app-home-phone PASS from com.google.android.apps.messaging: com.google.android.dialer/com.android.dialer.main.impl.MainActivity lockTask=LOCKED
+GATE more-emergency NOT_BUILT More shows no emergency entry; top=org.plainphone/org.plainphone.MainActivity
+GATE sos PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencysos.ui.EmergencySosActivity touchAndHold=true mCallState=0 lockTask=LOCKED
+GATE alert-display-ready PASS com.google.android.cellbroadcastreceiver componentState=0 lockTask=LOCKED
+GATE alert-display-launch PASS com.google.android.cellbroadcastreceiver/com.android.cellbroadcastreceiver.CellBroadcastAlertDialog lockTask=LOCKED
+GATE alert-shown INCONCLUSIVE this image cannot inject a cell broadcast alert (emulator console has no cbs; modem has no +CBM injection)
+GATE telecom-emergency-call PASS TC@1 state=DIALING isEmergency=true service=com.android.phone/com.android.services.telephony.TelephonyConnectionService operator=T-Mobile
+GATE lock-screen PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=true lockTask=LOCKED
+GATE locked-boot PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=false lockTask=NONE
+GATE boot-checking PASS screen=home uptime=15s com.google.android.dialer/com.android.dialer.main.impl.MainActivity lockTask=LOCKED
+# removal: no owners  lockTask=mLockTaskModeState=NONE
+[gate 07:19:30] == ctlNoPhone (control=no-phone) ==
+# 10-10 07:19:34.383  3715  3747 I PlainphoneBoot: reapply reason=package:PACKAGE_REMOVED:com.android.vending control=no-phone locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=361
+GATE home-phone FAIL foreground is org.plainphone/org.plainphone.MainActivity lockTask=LOCKED
+GATE app-home-phone FAIL from com.google.android.apps.messaging: foreground is org.plainphone/org.plainphone.MainActivity lockTask=LOCKED
+GATE more-emergency NOT_BUILT More shows no emergency entry; top=org.plainphone/org.plainphone.MainActivity
+GATE sos PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencysos.ui.EmergencySosActivity touchAndHold=true mCallState=0 lockTask=LOCKED
+GATE alert-display-ready PASS com.google.android.cellbroadcastreceiver componentState=0 lockTask=LOCKED
+GATE alert-display-launch PASS com.google.android.cellbroadcastreceiver/com.android.cellbroadcastreceiver.CellBroadcastAlertDialog lockTask=LOCKED
+GATE alert-shown INCONCLUSIVE this image cannot inject a cell broadcast alert (emulator console has no cbs; modem has no +CBM injection)
+GATE telecom-emergency-call FAIL dialer not reached: foreground is org.plainphone/org.plainphone.MainActivity lockTask=LOCKED
+GATE lock-screen PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=true lockTask=LOCKED
+GATE locked-boot PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=false lockTask=NONE
+GATE boot-checking FAIL screen=home uptime=15s foreground is org.plainphone/org.plainphone.MainActivity lockTask=LOCKED
+# removal: no owners  lockTask=mLockTaskModeState=NONE
+[gate 07:21:01] == ctlNoDialerLockTask (control=no-dialer-lock-task) ==
+# 10-10 07:21:04.577  3836  3861 I PlainphoneBoot: reapply reason=package:PACKAGE_REMOVED:com.android.vending control=no-dialer-lock-task locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=378
+GATE home-phone FAIL blocked by lock task: android/com.android.internal.app.BlockedAppActivity lockTask=LOCKED
+GATE app-home-phone FAIL from com.google.android.apps.messaging: blocked by lock task: android/com.android.internal.app.BlockedAppActivity lockTask=LOCKED
+GATE more-emergency NOT_BUILT More shows no emergency entry; top=android/com.android.internal.app.BlockedAppActivity
+GATE sos PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencysos.ui.EmergencySosActivity touchAndHold=true mCallState=0 lockTask=LOCKED
+GATE alert-display-ready PASS com.google.android.cellbroadcastreceiver componentState=0 lockTask=LOCKED
+GATE alert-display-launch PASS com.google.android.cellbroadcastreceiver/com.android.cellbroadcastreceiver.CellBroadcastAlertDialog lockTask=LOCKED
+GATE alert-shown INCONCLUSIVE this image cannot inject a cell broadcast alert (emulator console has no cbs; modem has no +CBM injection)
+GATE telecom-emergency-call FAIL dialer not reached: blocked by lock task: android/com.android.internal.app.BlockedAppActivity lockTask=LOCKED
+GATE lock-screen PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=true lockTask=LOCKED
+GATE locked-boot PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=false lockTask=NONE
+GATE boot-checking FAIL screen=home uptime=15s blocked by lock task: android/com.android.internal.app.BlockedAppActivity lockTask=LOCKED
+# removal: no owners  lockTask=mLockTaskModeState=NONE
+[gate 07:22:01] == ctlNoAlert (control=no-alert) ==
+# 10-10 07:22:05.675  3673  3702 I PlainphoneBoot: reapply reason=package:PACKAGE_ADDED:com.google.android.cellbroadcastreceiver control=no-alert locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=306
+GATE home-phone PASS com.google.android.dialer/com.android.dialer.main.impl.MainActivity lockTask=LOCKED
+GATE app-home-phone PASS from com.google.android.apps.messaging: com.google.android.dialer/com.android.dialer.main.impl.MainActivity lockTask=LOCKED
+GATE more-emergency NOT_BUILT More shows no emergency entry; top=org.plainphone/org.plainphone.MainActivity
+GATE sos PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencysos.ui.EmergencySosActivity touchAndHold=true mCallState=0 lockTask=LOCKED
+GATE alert-display-ready PASS com.google.android.cellbroadcastreceiver componentState=0 lockTask=LOCKED
+GATE alert-display-launch FAIL start refused: Starting: Intent { cmp=com.google.android.cellbroadcastreceiver/com.android.cellbroadcastreceiver.CellBroadcastAlertDialog } | Error type 3 | Error: Activity class {com.google.android.cellbroadcastreceiver/com.android.cellbroadcastreceiver.CellBroadcastAlertDialog} does not exist.
+GATE alert-shown INCONCLUSIVE this image cannot inject a cell broadcast alert (emulator console has no cbs; modem has no +CBM injection)
+GATE telecom-emergency-call PASS TC@1 state=DIALING isEmergency=true service=com.android.phone/com.android.services.telephony.TelephonyConnectionService operator=T-Mobile
+GATE lock-screen PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=true lockTask=LOCKED
+GATE locked-boot PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=false lockTask=NONE
+GATE boot-checking PASS screen=home uptime=35s com.google.android.dialer/com.android.dialer.main.impl.MainActivity lockTask=LOCKED
+# removal: no owners  lockTask=mLockTaskModeState=NONE
+[gate 07:23:28] == ctlNoAlertLockTask (control=no-alert-lock-task) ==
+# 10-10 07:23:31.194  5021  5060 I PlainphoneBoot: reapply reason=package:PACKAGE_REMOVED:com.android.vending control=no-alert-lock-task locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=368
+GATE home-phone PASS com.google.android.dialer/com.android.dialer.main.impl.MainActivity lockTask=LOCKED
+GATE app-home-phone PASS from com.google.android.apps.messaging: com.google.android.dialer/com.android.dialer.main.impl.MainActivity lockTask=LOCKED
+GATE more-emergency NOT_BUILT More shows no emergency entry; top=org.plainphone/org.plainphone.MainActivity
+GATE sos PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencysos.ui.EmergencySosActivity touchAndHold=true mCallState=0 lockTask=LOCKED
+GATE alert-display-ready FAIL com.google.android.cellbroadcastreceiver: not allowed in lock task componentState=0 lockTask=LOCKED
+GATE alert-display-launch FAIL blocked by lock task: android/com.android.internal.app.BlockedAppActivity lockTask=LOCKED
+GATE alert-shown INCONCLUSIVE this image cannot inject a cell broadcast alert (emulator console has no cbs; modem has no +CBM injection)
+GATE telecom-emergency-call PASS TC@1 state=DIALING isEmergency=true service=com.android.phone/com.android.services.telephony.TelephonyConnectionService operator=T-Mobile
+GATE lock-screen PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=true lockTask=LOCKED
+GATE locked-boot PASS com.google.android.apps.safetyhub/com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity unlocked=false lockTask=NONE
+GATE boot-checking PASS screen=home uptime=34s com.google.android.dialer/com.android.dialer.main.impl.MainActivity lockTask=LOCKED
+# removal: no owners  lockTask=mLockTaskModeState=NONE

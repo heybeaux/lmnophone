@@ -11,7 +11,9 @@ data class AppliedPeopleChange(val requestId: String, val waitingGeneration: Str
 /**
  * Lane D's joint-store boundary, using the SAME stores as the waiting controller and vault.
  * Every method compares credential revision and waiting generation/revision/direction atomically.
- * False leaves both records unchanged. A crash exposes the entire old or new write, never part of it.
+ * False is not acknowledged (see [CredentialStore.compareAndSet]): either record may already hold
+ * the new write, so the controller reports NEEDS_ATTENTION and reads both again. A crash exposes the
+ * entire old or new write, never part of it.
  * Reads must fence acknowledged newer records even if only an older journal replica remains.
  * All readers, writers and effects share one non-reentrant serialized coordinator.
  */

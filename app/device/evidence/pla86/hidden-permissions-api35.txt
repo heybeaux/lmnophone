@@ -1,0 +1,62 @@
+# PLA-86 hidden-package permission check, re-run for PLA-182, 2026-10-10T03:59:07Z
+# AVD pla182-a35 (fresh, system-images;android-35;google_apis;arm64-v8a, no lock PIN, no accounts), API 35, google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys
+# Built from mvp/device bd4d9a2 plus the uncommitted check changes committed with this file.
+# check-fixtures/permission-target/build.sh out   (throwaway keys: A = target.apk, C = target-other.apk, B rotated from A = target-rotated.apk)
+# adb install -t device-debug-androidTest.apk; adb install out/target.apk; adb push out/*.apk /data/local/tmp/pla182/
+# dpm set-device-owner org.plainphone.device.test/org.plainphone.device.apply.CheckAdmin
+# am instrument -w -e phase permissions -e expect <A> org.plainphone.device.test/org.plainphone.device.storage.DirectBootJournalCheck
+# Every "ok:" line is an assertion; the run stops at the first failed one. Matrix rows are asserted against
+# the API 35 answers in HiddenPermissionCheck.expectedRow (returned, fixed state, actual grant, adapter readback,
+# reset result, state after reset). Lines without "ok:" (signers, readback) are logged values that the next
+# "ok:" line asserts. A = eb75d32ee1b4a42d727152892e3fe2bb47d02e7284b963eaecdb58a82a4adffc
+PLA86 ok: this test APK is the Device Owner
+PLA86 ok: target starts without an uninstall block
+PLA86 ok: setApplicationHidden(true) returned true
+PLA86 ok: target reads back hidden
+PLA86 signers while hidden: [CertDigest(value=eb75d32ee1b4a42d727152892e3fe2bb47d02e7284b963eaecdb58a82a4adffc)]
+PLA86 ok: live signer while hidden equals apksigner's digest
+PLA86 ok: fresh install reads DEFAULT for all three, never DENIED
+PLA86 ok: canAdminGrantSensorsPermissions is true
+PLA86 ok: matrix setup hidden=true suspended=false
+PLA86 ok: matrix hidden=true suspended=false android.permission.CAMERA set=GRANTED returned=false policy=DEFAULT granted=false adapter=DEFAULT reset=false resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=true suspended=false android.permission.CAMERA set=DENIED returned=false policy=DEFAULT granted=false adapter=DEFAULT reset=false resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=true suspended=false android.permission.RECORD_AUDIO set=GRANTED returned=false policy=DEFAULT granted=false adapter=DEFAULT reset=false resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=true suspended=false android.permission.RECORD_AUDIO set=DENIED returned=false policy=DEFAULT granted=false adapter=DEFAULT reset=false resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=true suspended=false android.permission.READ_CONTACTS set=GRANTED returned=false policy=DEFAULT granted=false adapter=DEFAULT reset=false resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=true suspended=false android.permission.READ_CONTACTS set=DENIED returned=false policy=DEFAULT granted=false adapter=DEFAULT reset=false resetPolicy=DEFAULT
+PLA86 ok: matrix setup hidden=false suspended=false
+PLA86 ok: matrix hidden=false suspended=false android.permission.CAMERA set=GRANTED returned=true policy=GRANTED granted=true adapter=GRANTED reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=false suspended=false android.permission.CAMERA set=DENIED returned=true policy=DENIED granted=false adapter=DENIED reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=false suspended=false android.permission.RECORD_AUDIO set=GRANTED returned=true policy=GRANTED granted=true adapter=GRANTED reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=false suspended=false android.permission.RECORD_AUDIO set=DENIED returned=true policy=DENIED granted=false adapter=DENIED reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=false suspended=false android.permission.READ_CONTACTS set=GRANTED returned=true policy=GRANTED granted=true adapter=GRANTED reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=false suspended=false android.permission.READ_CONTACTS set=DENIED returned=true policy=DENIED granted=false adapter=DENIED reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix setup hidden=false suspended=true
+PLA86 ok: matrix hidden=false suspended=true android.permission.CAMERA set=GRANTED returned=true policy=DENIED granted=true adapter=UNKNOWN reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=false suspended=true android.permission.CAMERA set=DENIED returned=true policy=DENIED granted=false adapter=DENIED reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=false suspended=true android.permission.RECORD_AUDIO set=GRANTED returned=true policy=DENIED granted=true adapter=UNKNOWN reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=false suspended=true android.permission.RECORD_AUDIO set=DENIED returned=true policy=DENIED granted=false adapter=DENIED reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=false suspended=true android.permission.READ_CONTACTS set=GRANTED returned=true policy=GRANTED granted=true adapter=GRANTED reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix hidden=false suspended=true android.permission.READ_CONTACTS set=DENIED returned=true policy=DENIED granted=false adapter=DENIED reset=true resetPolicy=DEFAULT
+PLA86 ok: matrix matches the API 35 answers ()
+PLA86 ok: matrix unsuspended
+PLA86 ok: matrix ends hidden
+PLA86 ok: another signer set writes nothing
+PLA86 ok: camera still DEFAULT after the refused write
+PLA86 ok: write while hidden is refused, not reported as done
+PLA86 ok: refused write left CAMERA ungranted
+PLA86 ok: unhide returned true
+PLA86 ok: CAMERA=ALLOW written and read back while visible
+PLA86 ok: RECORD_AUDIO=DENY written and read back while visible
+PLA86 ok: READ_CONTACTS=DENY written and read back while visible
+PLA86 ok: the writes put back the uninstall block they added (none left)
+PLA86 readback while visible: {PermissionName(value=android.permission.CAMERA)=GRANTED, PermissionName(value=android.permission.RECORD_AUDIO)=DENIED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA86 ok: visible readback is CAMERA=GRANTED, RECORD_AUDIO=DENIED, READ_CONTACTS=DENIED
+PLA86 ok: policy verify passes on the visible readback
+PLA86 ok: re-hide returned true
+PLA86 readback after re-hide: {PermissionName(value=android.permission.CAMERA)=GRANTED, PermissionName(value=android.permission.RECORD_AUDIO)=DENIED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA86 ok: fixed states survive hiding and read back while hidden
+PLA86 ok: final unhide returned true
+PLA86 ok: fixed states survive unhide
+PLA86 ok: cleanup unsuspended, unhid, unblocked and reset all three to DEFAULT
+RESULT PASS phase=permissions

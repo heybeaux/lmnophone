@@ -40,6 +40,7 @@ class AndroidPackageSystemPort(private val context: Context) : PackageSystemPort
                 versionCode = info.longVersionCode,
                 // Current signers only; signingCertificateHistory is deliberately not read.
                 signers = info.signingInfo?.apkContentsSigners?.map { it.toByteArray() },
+                enabled = app.enabled,
             )
         }
 

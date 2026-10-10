@@ -1,0 +1,128 @@
+# PLA-186 approval permission window through the real controller and adapter, 2026-10-10T04:26:18Z
+# AVD pla186-a35 (fresh, system-images;android-35;google_apis;arm64-v8a, no lock PIN, no accounts), API 35, google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys
+# Built from mvp/device 4227f01 plus the check committed with this file (PermissionWindowCheck).
+# check-fixtures/permission-target/build.sh out   (throwaway key A = target.apk)
+# adb install -t device-debug-androidTest.apk; adb install out/target.apk
+# dpm set-device-owner org.plainphone.device.test/org.plainphone.device.apply.CheckAdmin
+# am instrument -w -e phase window -e expect <A> org.plainphone.device.test/org.plainphone.device.storage.DirectBootJournalCheck
+# then: adb shell dumpsys activity broadcasts history   (summarised at the end)
+#
+# What runs: the real AppApprovalController (in-memory stores, trusted mode, re-approval route, PIN authority
+# from the real PinVault) drives the real DeviceApprovalEffects over DpmPort + DpmPermissionGrantPort, every
+# call on one SerialDispatcher, with the real PackageAddedHandler registered. One approval
+# (CAMERA=ALLOW, RECORD_AUDIO=DENY, READ_CONTACTS=DENY), then one edit of that approved app
+# (CAMERA=DENY, RECORD_AUDIO=ALLOW, READ_CONTACTS=DENY). Every "ok:" line is an assertion. Before each grant
+# write the check reads Android directly: target visible, not in DPM lock-task packages, not on Home's list.
+# Test-build deviation: PolicyEngine plans carry every user restriction (DISALLOW_DEBUGGING_FEATURES would cut
+# adb), so restriction writes are recorded, not applied; every other DPM call is real (listed near the end).
+#
+# Reading notes:
+# - Order seen per approval/edit: hideAndReadBack -> openPermissionWindow (lock task + Home excluded, unhidden)
+#   -> DENY writes, then ALLOW -> visible readPermissions -> closePermissionWindow (hidden, still outside lock
+#   task and Home) -> hidden readPermissions = the chosen states -> COMMITTED -> applyPolicy restores lock task
+#   and Home and unhides.
+# - The edit starts from an approved, visible app in lock task and on Home: hideAndReadBack hides it first,
+#   and the window takes it out of lock task and Home before the unhide.
+# - Broadcasts on API 35: an unhide (setApplicationHidden false) enqueues ACTION_PACKAGE_ADDED for the
+#   package (no EXTRA_REPLACING; also a copy targeted at permissioncontroller). A hide enqueues
+#   ACTION_PACKAGE_REMOVED with DATA_REMOVED=false, USER_INITIATED=true (plus PACKAGE_REMOVED_INTERNAL to the
+#   system). From the broadcast history, the window's PACKAGE_ADDED is enqueued INSIDE the window; delivery
+#   to this test process came ~340-500 ms later. That delay is not something to rely on: the handler is safe
+#   because it only queues on the dispatcher, and the approval holds the dispatcher until it returns.
+# - Times: approval window opened 21:23:54.284 and closed 54.377; its unhide's PACKAGE_ADDED was enqueued at
+#   54.289 (inside) and the close's PACKAGE_REMOVED at 54.376. Edit window 55.972-56.052: PACKAGE_ADDED at
+#   55.980 (inside). Both handler runs per flow came at 54.750/56.465, after the window, mayShow=true.
+# - The app is visible for ~90 ms per window here. It cannot be opened from Plainphone (not in lock task,
+#   not on Home), but its own background code may run (for example on these broadcasts).
+PLA186 ok: this test APK is the Device Owner
+PLA186 ok: live signer equals apksigner's digest
+PLA186 ok: hideAndReadBack: target starts hidden
+PLA186 ok: hidden read: all DEFAULT
+PLA186 ok: controller onStart READY
+PLA186 store: phase none -> PREPARING
+PLA186 effect hideAndReadBack=true -> hidden=true lockTask=false home=false at 2026-10-09 21:23:54.280
+PLA186 window [approval: window open] opening at 2026-10-09 21:23:54.284
+PLA186 effect openPermissionWindow=true -> hidden=false lockTask=false home=false
+PLA186 ok: [approval: window open] before DENY android.permission.RECORD_AUDIO: visible, outside lock task and Home
+PLA186 effect setPermission DENY android.permission.RECORD_AUDIO=true
+PLA186 ok: [approval: window open] before DENY android.permission.READ_CONTACTS: visible, outside lock task and Home
+PLA186 effect setPermission DENY android.permission.READ_CONTACTS=true
+PLA186 ok: [approval: window open] before ALLOW android.permission.CAMERA: visible, outside lock task and Home
+PLA186 effect setPermission ALLOW android.permission.CAMERA=true
+PLA186 effect readPermissions (hidden=false) = {PermissionName(value=android.permission.CAMERA)=GRANTED, PermissionName(value=android.permission.RECORD_AUDIO)=DENIED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA186 effect closePermissionWindow=true -> hidden=true lockTask=false home=false at 2026-10-09 21:23:54.377
+PLA186 effect readPermissions (hidden=true) = {PermissionName(value=android.permission.CAMERA)=GRANTED, PermissionName(value=android.permission.RECORD_AUDIO)=DENIED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA186 store: phase PREPARING -> COMMITTED
+PLA186 effect readPermissions (hidden=true) = {PermissionName(value=android.permission.CAMERA)=GRANTED, PermissionName(value=android.permission.RECORD_AUDIO)=DENIED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA186 effect applyPolicy=true -> hidden=false lockTask=true home=true at 2026-10-09 21:23:54.445
+PLA186 effect readBackPolicy=true
+PLA186 effect readPermissions (hidden=false) = {PermissionName(value=android.permission.CAMERA)=GRANTED, PermissionName(value=android.permission.RECORD_AUDIO)=DENIED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA186 store: phase COMMITTED -> none
+PLA186 handler: ACTION_PACKAGE_ADDED org.plainphone.permtarget handled on the dispatcher during [approval: after window] at 2026-10-09 21:23:54.750, mayShow=true
+PLA186 handler: ACTION_PACKAGE_ADDED org.plainphone.permtarget handled on the dispatcher during [approval: after window] at 2026-10-09 21:23:54.753, mayShow=true
+PLA186 ok: approval outcome APPROVED (was APPROVED)
+PLA186 ok: [approval: after window] committed: target visible
+PLA186 ok: [approval: after window] committed: target back in lock task
+PLA186 ok: [approval: after window] committed: target back on Home
+PLA186 ok: [approval: after window] committed readback {PermissionName(value=android.permission.CAMERA)=GRANTED, PermissionName(value=android.permission.RECORD_AUDIO)=DENIED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA186 ok: [approval: after window] no uninstall block left
+PLA186 ok: [approval: after window] never suspended
+PLA186 store: phase none -> EDITING
+PLA186 effect hideAndReadBack=true -> hidden=true lockTask=true home=true at 2026-10-09 21:23:55.971
+PLA186 window [edit: window open] opening at 2026-10-09 21:23:55.972
+PLA186 effect openPermissionWindow=true -> hidden=false lockTask=false home=false
+PLA186 ok: [edit: window open] before DENY android.permission.CAMERA: visible, outside lock task and Home
+PLA186 effect setPermission DENY android.permission.CAMERA=true
+PLA186 ok: [edit: window open] before DENY android.permission.READ_CONTACTS: visible, outside lock task and Home
+PLA186 effect setPermission DENY android.permission.READ_CONTACTS=true
+PLA186 ok: [edit: window open] before ALLOW android.permission.RECORD_AUDIO: visible, outside lock task and Home
+PLA186 effect setPermission ALLOW android.permission.RECORD_AUDIO=true
+PLA186 effect readPermissions (hidden=false) = {PermissionName(value=android.permission.CAMERA)=DENIED, PermissionName(value=android.permission.RECORD_AUDIO)=GRANTED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA186 effect closePermissionWindow=true -> hidden=true lockTask=false home=false at 2026-10-09 21:23:56.052
+PLA186 effect readPermissions (hidden=true) = {PermissionName(value=android.permission.CAMERA)=DENIED, PermissionName(value=android.permission.RECORD_AUDIO)=GRANTED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA186 store: phase EDITING -> COMMITTED
+PLA186 effect readPermissions (hidden=true) = {PermissionName(value=android.permission.CAMERA)=DENIED, PermissionName(value=android.permission.RECORD_AUDIO)=GRANTED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA186 effect applyPolicy=true -> hidden=false lockTask=true home=true at 2026-10-09 21:23:56.105
+PLA186 effect readBackPolicy=true
+PLA186 effect readPermissions (hidden=false) = {PermissionName(value=android.permission.CAMERA)=DENIED, PermissionName(value=android.permission.RECORD_AUDIO)=GRANTED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA186 store: phase COMMITTED -> none
+PLA186 handler: ACTION_PACKAGE_ADDED org.plainphone.permtarget handled on the dispatcher during [edit: after window] at 2026-10-09 21:23:56.465, mayShow=true
+PLA186 handler: ACTION_PACKAGE_ADDED org.plainphone.permtarget handled on the dispatcher during [edit: after window] at 2026-10-09 21:23:56.466, mayShow=true
+PLA186 ok: edit outcome PERMISSIONS_CHANGED (was PERMISSIONS_CHANGED)
+PLA186 ok: [edit: after window] committed: target visible
+PLA186 ok: [edit: after window] committed: target back in lock task
+PLA186 ok: [edit: after window] committed: target back on Home
+PLA186 ok: [edit: after window] committed readback {PermissionName(value=android.permission.CAMERA)=DENIED, PermissionName(value=android.permission.RECORD_AUDIO)=GRANTED, PermissionName(value=android.permission.READ_CONTACTS)=DENIED}
+PLA186 ok: [edit: after window] no uninstall block left
+PLA186 ok: [edit: after window] never suspended
+PLA186 restriction writes recorded, not applied (test build): [DISALLOW_ADD_MANAGED_PROFILE, DISALLOW_ADD_USER, DISALLOW_CONFIG_CELL_BROADCASTS, DISALLOW_CONFIG_DATE_TIME, DISALLOW_CONFIG_DEFAULT_APPS, DISALLOW_CONFIG_PRIVATE_DNS, DISALLOW_CONFIG_VPN, DISALLOW_CREATE_WINDOWS, DISALLOW_DEBUGGING_FEATURES, DISALLOW_FACTORY_RESET, DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, DISALLOW_MODIFY_ACCOUNTS, DISALLOW_NETWORK_RESET, DISALLOW_SAFE_BOOT, DISALLOW_SYSTEM_ERROR_DIALOGS, DISALLOW_USB_FILE_TRANSFER, DISALLOW_USER_SWITCH]
+PLA186 broadcast received: android.intent.action.PACKAGE_REMOVED at 2026-10-09 21:23:54.750 during [approval: after window] DATA_REMOVED=false, DONT_KILL_APP=false, REMOVED_FOR_ALL_USERS=false, SYSTEM_UPDATE_UNINSTALL=false, USER_INITIATED=true, user_handle=0
+PLA186 broadcast received: android.intent.action.PACKAGE_ADDED at 2026-10-09 21:23:54.752 during [approval: after window] user_handle=0
+PLA186 broadcast received: android.intent.action.PACKAGE_REMOVED at 2026-10-09 21:23:54.753 during [approval: after window] DATA_REMOVED=false, DONT_KILL_APP=false, REMOVED_FOR_ALL_USERS=false, SYSTEM_UPDATE_UNINSTALL=false, USER_INITIATED=true, user_handle=0
+PLA186 broadcast received: android.intent.action.PACKAGE_ADDED at 2026-10-09 21:23:54.753 during [approval: after window] user_handle=0
+PLA186 broadcast received: android.intent.action.PACKAGE_REMOVED at 2026-10-09 21:23:56.465 during [edit: after window] DATA_REMOVED=false, DONT_KILL_APP=false, REMOVED_FOR_ALL_USERS=false, SYSTEM_UPDATE_UNINSTALL=false, USER_INITIATED=true, user_handle=0
+PLA186 broadcast received: android.intent.action.PACKAGE_ADDED at 2026-10-09 21:23:56.465 during [edit: after window] user_handle=0
+PLA186 broadcast received: android.intent.action.PACKAGE_REMOVED at 2026-10-09 21:23:56.465 during [edit: after window] DATA_REMOVED=false, DONT_KILL_APP=false, REMOVED_FOR_ALL_USERS=false, SYSTEM_UPDATE_UNINSTALL=false, USER_INITIATED=true, user_handle=0
+PLA186 broadcast received: android.intent.action.PACKAGE_ADDED at 2026-10-09 21:23:56.465 during [edit: after window] user_handle=0
+PLA186 ok: ACTION_PACKAGE_ADDED received for each unhide (two windows, two committed applies)
+PLA186 ok: the package-added handler never ran inside a window: [approval: after window, approval: after window, edit: after window, edit: after window]
+PLA186 ok: cleanup unhid, unblocked, reset permissions, cleared lock task, Home and input-method policy
+RESULT PASS phase=window
+
+# dumpsys activity broadcasts history, broadcasts for org.plainphone.permtarget during this run (enqueue clock time, action, target, delivery to org.plainphone.device.test):
+2026-10-09 21:23:54.242 PACKAGE_REMOVED (all) -> DELIVERED scheduled +503ms
+2026-10-09 21:23:54.242 PACKAGE_REMOVED_INTERNAL pkg=android -> not to this app
+2026-10-09 21:23:54.289 PACKAGE_ADDED (all) -> DELIVERED scheduled +456ms, DELIVERED scheduled +456ms
+2026-10-09 21:23:54.289 PACKAGE_ADDED pkg=com.google.android.permissioncontroller -> not to this app
+2026-10-09 21:23:54.376 PACKAGE_REMOVED (all) -> DELIVERED scheduled +369ms
+2026-10-09 21:23:54.378 PACKAGE_REMOVED_INTERNAL pkg=android -> not to this app
+2026-10-09 21:23:54.402 PACKAGE_ADDED (all) -> DELIVERED scheduled +343ms, DELIVERED scheduled +343ms
+2026-10-09 21:23:54.403 PACKAGE_ADDED pkg=com.google.android.permissioncontroller -> not to this app
+2026-10-09 21:23:55.962 PACKAGE_REMOVED (all) -> DELIVERED scheduled +502ms
+2026-10-09 21:23:55.964 PACKAGE_REMOVED_INTERNAL pkg=android -> not to this app
+2026-10-09 21:23:55.980 PACKAGE_ADDED (all) -> DELIVERED scheduled +484ms, DELIVERED scheduled +484ms
+2026-10-09 21:23:55.980 PACKAGE_ADDED pkg=com.google.android.permissioncontroller -> not to this app
+2026-10-09 21:23:56.050 PACKAGE_REMOVED (all) -> DELIVERED scheduled +414ms
+2026-10-09 21:23:56.051 PACKAGE_REMOVED_INTERNAL pkg=android -> not to this app
+2026-10-09 21:23:56.076 PACKAGE_ADDED (all) -> DELIVERED scheduled +388ms, DELIVERED scheduled +388ms
+2026-10-09 21:23:56.079 PACKAGE_ADDED pkg=com.google.android.permissioncontroller -> not to this app

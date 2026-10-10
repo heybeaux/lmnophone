@@ -6,6 +6,7 @@ import java.io.File
 import java.security.MessageDigest
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -115,6 +116,71 @@ class FrictionTransactionsTest {
             return editor.applyStricter(r, fresh)
         }
         fun elevationBytes() = disk().sectionBytesForTest(Section.ELEVATION)
+        /** PLA-160: [block]'s write commits, but the directory loses search permission right after copy B. */
+        fun <T> unacknowledged(block: () -> T): T = SearchDenial(WritePoint.AFTER_COPY_B).run(dir, { faults = it }, block)
+    }
+
+    // ---- PLA-160: false means not acknowledged; each caller fails closed and reads fresh next time ----
+
+    @Test fun unacknowledgedStricterEditIsNotReadyAndTheNextEditStartsFromTheLandedValue() {
+        val rig = Rig(); val target = FrictionSettings(1_800_000, 0)
+        val editor = rig.editor(); val r = checkNotNull(editor.prepareStricter(rig.self, target))
+        val fresh = (rig.vault.authenticate(rig.self, rig.pin, r.action) as PinResult.Authorized).authority
+        assertEquals(FrictionSettingsOutcome.NOT_READY, rig.unacknowledged { editor.applyStricter(r, fresh) })
+        assertEquals(target, rig.friction())
+        // The same edit is no longer stricter than what is stored; a further one builds on the landed value.
+        assertNull(rig.editor().prepareStricter(rig.self, target))
+        assertEquals(FrictionSettingsOutcome.APPLIED, rig.stricter(FrictionSettings(2_400_000, 0)))
+        assertEquals(target, rig.disk().frictionReceipts()!!.last().source)
+    }
+
+    @Test fun unacknowledgedLooserStartIsNotReadyAndTheLandedWaitHoldsTheSlot() {
+        val rig = Rig()
+        val r = checkNotNull(rig.waiting.prepareFriction(rig.self, looser)); val fresh = rig.auth(r)
+        assertEquals(WaitingOutcome.NOT_READY, rig.unacknowledged { rig.waiting.startFrictionChange(r, fresh, true) })
+        assertEquals(WaitingPhase.PENDING, rig.disk().waitingStore.read()!!.operation!!.phase)
+        assertEquals(WaitingOutcome.REFUSED, rig.waiting.startFrictionChange(r, fresh, true))
+        val again = checkNotNull(rig.waiting.prepareFriction(rig.self, looser))
+        assertEquals(WaitingOutcome.BUSY, rig.waiting.startFrictionChange(again, rig.auth(again), true))
+        assertEquals(base, rig.friction())
+    }
+
+    @Test fun unacknowledgedMaturityIsNotReadyThenAlreadyInProgressAndCompletesOnce() {
+        val rig = Rig(); val id = rig.start(); rig.at(day)
+        assertEquals(WaitingOutcome.NOT_READY, rig.unacknowledged { rig.waiting.tick(id, BatteryState(50, false)) })
+        assertEquals(WaitingPhase.COMMITTING, rig.disk().waitingStore.read()!!.operation!!.phase)
+        assertEquals(base, rig.friction())
+        assertEquals(WaitingOutcome.ALREADY_IN_PROGRESS, rig.waiting.tick(id, BatteryState(50, false)))
+        assertEquals(FrictionWaitingOutcome.COMPLETED, rig.executor().finish(id))
+        assertEquals(looser, rig.friction())
+    }
+
+    @Test fun unacknowledgedCompletionIsNotReadyThenCompletedWithoutApplyingTwice() {
+        val rig = Rig(); val id = rig.start(); rig.mature(id)
+        assertEquals(FrictionWaitingOutcome.NOT_READY, rig.unacknowledged { rig.executor().finish(id) })
+        val landed = rig.disk().credentials.read()!!
+        assertEquals(looser, landed.recoveryProfile!!.friction)
+        assertEquals(FrictionWaitingOutcome.COMPLETED, rig.executor().finish(id))
+        assertEquals(landed.revision, rig.disk().credentials.read()!!.revision)
+    }
+
+    @Test fun unacknowledgedCancelIsNotReadyAndTheLandedCancelNeverMatures() {
+        val rig = Rig(); val id = rig.start()
+        assertEquals(WaitingOutcome.NOT_READY, rig.unacknowledged { rig.waiting.cancel(id) })
+        assertEquals(WaitingPhase.CANCELLED, rig.disk().waitingStore.read()!!.operation!!.phase)
+        rig.wire(); rig.at(day)
+        assertEquals(WaitingOutcome.IGNORED, rig.waiting.cancel(id))
+        assertEquals(WaitingOutcome.IGNORED, rig.waiting.tick(id, BatteryState(50, false)))
+        assertEquals(FrictionWaitingOutcome.CANCELLED, rig.executor().finish(id))
+        assertEquals(base, rig.friction())
+    }
+
+    @Test fun unacknowledgedPinCounterWriteIsUnavailableNeverWrongAndTheNextEntryReadsFresh() {
+        val rig = Rig(); val action = org.plainphone.policy.PrivilegedAction("test", "probe")
+        assertEquals(PinResult.Unavailable, rig.unacknowledged { rig.vault.authenticate(rig.self, CharArray(6) { '9' }, action) })
+        assertEquals(1, rig.disk().credentials.read()!!.people.getValue(rig.self).pinCounter.failures)
+        assertTrue(rig.vault.authenticate(rig.self, rig.pin, action) is PinResult.Authorized)
+        assertEquals(0, rig.disk().credentials.read()!!.people.getValue(rig.self).pinCounter.failures)
     }
 
     @Test fun stricterEditIsDurableWithRoutineReceiptAndUntouchedLedger() {
@@ -209,7 +275,7 @@ class FrictionTransactionsTest {
         }
     }
 
-    @Test fun readbackFailureDuringCompletionReportsNotReadyAndChangesNothing() {
+    @Test fun corruptReadbackDuringCompletionReportsNotReadyAndResolvesToTheOldRecord() {
         val rig = Rig(); val id = rig.start(); rig.mature(id)
         rig.faults = StorageFaults { at, d -> if (at == WritePoint.AFTER_COPY_A) File(d, "authority-a.rec").writeBytes(ByteArray(3)) }
         assertEquals(FrictionWaitingOutcome.NOT_READY, rig.executor().finish(id))

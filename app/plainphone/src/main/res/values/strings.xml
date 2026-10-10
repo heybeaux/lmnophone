@@ -10,4 +10,9 @@
     <string name="not_in_build_title">Not in this test build yet</string>
     <string name="not_in_build_body">This part of Plainphone comes in a later test build. Nothing was changed or sent.</string>
     <string name="not_in_build_ok">OK</string>
+    <!-- Shown until the policy re-apply reads back. %1$s is the app name. -->
+    <string name="checking_title">%1$s is checking the phone</string>
+    <string name="checking_body">This takes a moment. You can still make calls.</string>
+    <string name="checking_phone">Phone</string>
+    <string name="checking_emergency">Emergency call</string>
 </resources>

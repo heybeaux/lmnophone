@@ -9,6 +9,10 @@
   remove-active-admin` can undo it. It brings a Home activity and a no-op flush component.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- PLA-167: UpdateInstallerCheck downloads its fixtures from the host (10.0.2.2). Test APK only. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- PLA-219: WindowContainmentCheck posts a notification whose tap targets the window's app. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application android:directBootAware="true" android:testOnly="true">
         <receiver
             android:name="org.plainphone.device.storage.DirectBootMarker"

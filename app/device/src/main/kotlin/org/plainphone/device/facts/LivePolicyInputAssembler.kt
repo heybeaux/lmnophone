@@ -21,6 +21,10 @@ data class LivePolicyFacts(val input: PolicyInput, val packages: List<PackageFac
  * OS-managed sources, the policy store's health, the running build, and the one compiled-in inventory
  * for that exact model and fingerprint (none if no inventory matches, or if two of the same revision do).
  * The stored approved list is not copied: approvals come from approval state plus fresh signer bindings.
+ *
+ * A package disabled in both reads is left out of `installed`, so no sweep tries to hide it: it cannot
+ * open, and a system-disabled app never reads back as hidden (PLA-144 spare finding). A disabled package
+ * that a floor identity names stays in, so the floor still enables and unhides it.
  */
 class LivePolicyInputAssembler(
     private val port: PackageSystemPort,
@@ -32,6 +36,7 @@ class LivePolicyInputAssembler(
     fun assemble(): LivePolicyFacts {
         lateinit var floor: FloorRead
         val packages = LivePackageReader(port).read { floor = FloorIdentityReader(port).read() }
+        val floorNames = floor.identities.map { it.name }.toSet()
         val model = port.model()
         val fingerprint = port.fingerprint()
         val input = PolicyInput(
@@ -39,7 +44,7 @@ class LivePolicyInputAssembler(
             fingerprint = fingerprint,
             plainphone = plainphone,
             messages = messages,
-            installed = packages.installed,
+            installed = packages.installed.filter { it.name !in packages.disabled || it.name in floorNames },
             identities = floor.identities,
             inventory = inventoryFor(model, fingerprint),
             health = store.read().health,

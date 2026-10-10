@@ -96,7 +96,8 @@ interface FrictionSettingsStore {
      * countdown and the supplied receipt in the audit/outbox together, incrementing both record revisions; preserve all credentials,
      * profile/backup data, notices, applied markers, exact debit list and session/grant data. Keep the
      * waiting record unchanged. Require the waiting operation not COMMITTING or ROLLING_BACK.
-     * False changes nothing. Crash exposes the old pair or the entire new pair. Fence stale replicas;
+     * False is not acknowledged (see [CredentialStore.compareAndSet]); the new pair may have landed.
+     * Crash exposes the old pair or the entire new pair. Fence stale replicas;
      * a subsequent read must never return a record older than the acknowledged transaction.
      * Do not implement this as consecutive CredentialStore/ElevationStore writes. All consumers,
      * including elevation Start, must read limits from active credentials on this same coordinator.

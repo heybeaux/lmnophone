@@ -17,6 +17,21 @@ any waiting change, and changing self-managed waits and limits. Entering the mod
 also needs the PIN. The first time a second PIN is asked for, one line explains why:
 "Plainphone asks for your PIN for each change, so nobody else can make one if the phone is put down."
 
+**Long names at the largest text size** ([PLA-130](/PLA/issues/PLA-130)). At 200% text on a 360 × 640 dp screen, a
+very long name or app name can fill the black band and the title, so the space left between the band and the
+pinned buttons is shorter than the title. The rule, for every task screen with pinned buttons:
+
+> **If the whole title and at least one line of the body don't fit between the band and the pinned buttons, the
+> whole page scrolls.** The band, title, body and buttons then scroll together as one page, with the buttons right
+> after the body. Otherwise the buttons stay pinned, as usual.
+
+- Measure with the real words, at the current text size and display size, when the screen opens. Check again only
+  if the text size, display size or rotation changes, never while scrolling, so the page doesn't jump.
+- A whole-page screen opens at the top, with the band showing. Nothing is cut or made smaller. The buttons keep
+  their size and order (the secondary link above the primary button). Android's own scrollbar shows there's more.
+- On the PIN screens the keypad counts as body.
+- The home screen has its own rule ([design-tokens.md](design-tokens.md#when-the-screen-is-short)).
+
 ---
 
 ## T1. PIN entry
@@ -37,6 +52,10 @@ With two trusted people, every PIN entry starts with **Who are you?**
 - **Secondary:** Forgot PIN? Use recovery code
 - **Wrong PIN (1–4):** "That PIN isn't right. Try again." No count shown.
 - **Notes:** `FLAG_SECURE`. 9-1-1 is still reachable: Home always returns to the home screen, where Phone is.
+- **Self-managed mode** (the user holds the PIN; no "Who are you?"):
+  - **Title:** Your PIN
+  - **Body:** Enter your PIN to make changes on this phone.
+  - Everything else as above.
 
 ### T1b. Waiting after too many tries
 
@@ -61,7 +80,34 @@ With two trusted people, every PIN entry starts with **Who are you?**
   the same moment.
 - **Note on screen, once:** "This code can't get past Google's reset protection if the phone is ever wiped. Only
   your Google account can do that."
+- **Wrong code (1–4):** "That code isn't right. Check it against what you wrote down, and try again." No count
+  shown.
 - **Notes:** separate counter and the same waiting schedule as the PIN. A PIN wait never blocks this screen.
+
+### T1d. Waiting after too many recovery-code tries
+
+The recovery code's own lockout ([PLA-130](/PLA/issues/PLA-130)). Same tone as T1b.
+
+- **Title:** Too many recovery code tries
+- **Body:**
+  Wait {time} before trying the recovery code again. Then check it against the code you wrote down, one letter at
+  a time. {pin line}
+  Calls, texts and Emergency still work. If the code is lost, call {helper}.
+- **`{pin line}`, Primary and Secondary:**
+
+  | When | `{pin line}` | Primary | Secondary |
+  |---|---|---|---|
+  | The PIN is not waiting | Your PIN still works, if you remember it. | Enter PIN instead → T1a | OK |
+  | The PIN is waiting too | You can try your PIN again in {pin time}. | OK | (none) |
+  | Reached from Skip the wait ([M3e](flows-people-modes-and-waits.md#m3e-skip-the-wait-with-a-recovery-code)) | Nothing was skipped. The change is still waiting. | OK → M3d | (none) |
+
+- **Two trusted people:** title "Too many tries for {name}'s recovery code". `{pin line}` says "{name}'s PIN", and
+  one more sentence is added: "{other}'s PIN still works." The secondary becomes **Choose someone else** → M1a.
+- **Self-managed mode:** as for one person. The Skip row never applies (no skipping in self-managed mode).
+- **Notes:** `{time}` and `{pin time}` work as in T1b (doubling from failure 5, capped at 1 hour; whole minutes
+  only; survives a restart). The code field is hidden during the wait. It never locks for good: after the wait,
+  the code can always be tried again. **OK** goes back to where the PIN screen was opened from; Home always goes to
+  the home screen. No text is sent for wrong recovery codes (the 10-wrong-entries text is for PINs only).
 
 ## T2. Looking after {user}'s phone (front page)
 
@@ -118,7 +164,7 @@ A **Done** button is pinned at the bottom: "Done – back to {user}'s home scree
 Each request is one card:
 
 ```
-From the trusted person:
+From the partner:
 "the bus times app, to check the ferry bus"
 Thursday 8 Oct, 10:40 · Text sent to you ✓      (or: "Text didn't send")
 [ Find it in the Play Store ]   [ Not now ]
@@ -222,6 +268,13 @@ To show what's playing.
 - **Body:** Choose together with {user}. {app} won't ask {user} about these later, and {user} can't change them
   alone. If {user} wants a change, you change it together, with the phone in your hands: "Apps on this phone" →
   {app} → "What {app} can use". If you choose "Don't allow", the parts of {app} that need it won't work.
+- **Self-managed body** ([PLA-130](/PLA/issues/PLA-130)). In self-managed mode these choices can't be changed in one
+  step ([PLA-121](/PLA/issues/PLA-121)). The way to change them is to remove the app, then add it again and choose
+  again. So the body is two blocks:
+  - "Choose what {app} can use. {app} won't ask you about these later. If you choose "Don't allow", the parts of
+    {app} that need it won't work."
+  - "To change these later, remove {app} in "Apps on this phone", then add it again with "Add a hidden app". That
+    takes a {wait}-minute wait and one opening. Your things in {app} stay."
 - **Copy-test change (round 3, Beaux):** the earlier body said "{user} won't be asked later" and "You can change this
   later" without saying who or how. Beaux read it as {user} being locked out and having to bring
   the phone to {tp}. That is how it works, so the screen now says it plainly. The change path depends on
@@ -273,15 +326,19 @@ is hard at large text sizes) and opens its own page when tapped:
 - Version {installed} · Added {date} · Last updated {date}
 - Web-leak note, with the status line from T4a
 - "What {app} can use" (current choices) → **Change what {app} can use** (fresh PIN; reuses T4c;
-  [Open question 4](README.md#open-questions-for-the-lead))
-- **Primary:** Remove from {user}'s phone
+  [Open question 4](README.md#open-questions-for-the-lead)). Supervised mode only.
+- **Self-managed:** "What {app} can use" shows the current choices with no change button, and one line under them:
+  "To change these, remove {app}, then add it again with "Add a hidden app" and choose again."
+- **Primary:** Remove from {user}'s phone (self-managed: **Remove {app}**)
 
 **Remove confirm**
 - **Title:** Remove {app}?
 - **Body:** {app} will disappear from the home screen straight away. Nothing is deleted: if you add it again
   later, {user}'s things in it will still be there.
+  Self-managed: "{app} will disappear from the home screen straight away. Nothing is deleted: if you add it again
+  with "Add a hidden app", your things in it will still be there."
 - **Primary:** Remove
-- **Then:** PIN (fresh). "Removed."
+- **Then:** PIN (fresh; self-managed: the user's PIN, no wait and no opening used). "Removed."
 
 ## T6. An app didn't update
 

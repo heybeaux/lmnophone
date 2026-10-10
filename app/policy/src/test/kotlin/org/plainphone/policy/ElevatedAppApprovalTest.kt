@@ -28,6 +28,8 @@ class ElevatedAppApprovalTest {
         java.security.MessageDigest.getInstance("SHA-256").digest(chars.concatToString().toByteArray() + salt)
     }, SecretEntropy { n -> ByteArray(n) { (++entropy).toByte() } }, clock)
     private var elevation = ElevationRecord()
+    /** PLA-160: the next N elevation writes land but are not acknowledged. */
+    private var unacknowledgedElevationWrites = 0
     private var approvals = AppApprovalState()
     private var hook: ((String) -> Unit)? = null
     private var failure: String? = null
@@ -42,7 +44,9 @@ class ElevatedAppApprovalTest {
         override fun read() = elevation
         override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean {
             if (elevation !== expected || (expectedCredentials != null && credentials !== expectedCredentials)) return false
-            elevation = replacement; return true
+            elevation = replacement
+            if (unacknowledgedElevationWrites > 0) { unacknowledgedElevationWrites--; return false }
+            return true
         }
     }
     private val store = object : ElevationApprovalStore {
@@ -55,6 +59,7 @@ class ElevatedAppApprovalTest {
         override fun commitElevationApproval(expected: AppApprovalState, replacement: AppApprovalState,
             expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
             expectedCredentials: CredentialState, finalCheck: () -> Boolean): Boolean {
+            assertTrue(replacement.pending!!.record.identity.packageName in hidden, "elevation commit must run hidden")
             if (!event("before-atomic") || !finalCheck()) return false
             if (approvals !== expected || elevation !== expectedElevation || credentials !== expectedCredentials) return false
             // A single durable replacement, simulated without a crash point between the fields.
@@ -83,9 +88,23 @@ class ElevatedAppApprovalTest {
     private fun manifest(identity: ApprovalBinding) = PermissionManifest(identity, 1, "build", listOf(
         RuntimePermission(camera, "Camera", listOf("Taking photos"), PermissionGrantCapability.SUPPORTED)))
     private var manifests = listOf(a, b).associate { it.packageName to manifest(it) }
+    private val hidden = mutableSetOf(a.packageName, b.packageName)
     private val effects = object : AppApprovalEffects {
-        override fun hideAndReadBack(identity: ApprovalBinding) = event("hide")
-        override fun setPermission(identity: ApprovalBinding, write: PermissionWrite) = event("permission")
+        override fun hideAndReadBack(identity: ApprovalBinding): Boolean {
+            if (!event("hide")) return false
+            hidden += identity.packageName; return true
+        }
+        override fun openPermissionWindow(identity: ApprovalBinding): Boolean {
+            assertFalse(identity.packageName in approvals.approvedPackages(policy.installed, policy.installedIdentities))
+            hidden -= identity.packageName
+            return event("window-open")
+        }
+        override fun closePermissionWindow(identity: ApprovalBinding): Boolean {
+            hidden += identity.packageName
+            return event("window-close")
+        }
+        override fun setPermission(identity: ApprovalBinding, write: PermissionWrite) =
+            identity.packageName !in hidden && event("permission")
         override fun readPermissions(identity: ApprovalBinding): Map<PermissionName, PermissionReadback> =
             if (event("permissions-readback")) mapOf(camera to PermissionReadback.GRANTED) else emptyMap()
         override fun applyPolicy(plan: PolicyPlan) = event("apply")
@@ -124,6 +143,92 @@ class ElevatedAppApprovalTest {
         elevations = elevations(); controller = controller()
         assertEquals(ElevationOutcome.IDLE, elevations.onStart())
         assertTrue(controller.onStart() in setOf(AppApprovalOutcome.READY, AppApprovalOutcome.APPROVED))
+    }
+
+    @Test fun `self managed removal keeps debit and data then reapproval needs a new exact elevation`() {
+        setup(ElevationTarget.Approve(a))
+        assertEquals(AppApprovalOutcome.APPROVED, controller.approveElevated(request()))
+        val installed = policy.installed
+        val removal = assertNotNull(controller.prepareRemoval(a.packageName, person))
+        val authority = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, removal.action)).authority
+        assertEquals(AppApprovalOutcome.REMOVED, controller.removeApproved(removal, removal.approvalId, authority))
+        assertEquals(1, elevation.state.ledger.debits.size)
+        assertEquals(a, approvals.removedApps[a.packageName])
+        restart()
+        val selection = PermissionSelection(manifest(a), mapOf(camera to PermissionChoice.ALLOW))
+        assertNull(controller.prepareReapproval(a.packageName, person, selection))
+        assertNull(controller.prepareElevated(a.packageName, selection))
+        val next = assertNotNull(elevations.prepare(person, ElevationTarget.Approve(a)))
+        val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, next.action)).authority
+        assertEquals(ElevationOutcome.COUNTING, elevations.request(next, fresh))
+        advance(600_000)
+        assertEquals(ElevationOutcome.STARTED, elevations.start(next.id, ElevationTarget.Approve(a)))
+        assertEquals(AppApprovalOutcome.APPROVED, controller.approveElevated(request()))
+        assertEquals(2, elevation.state.ledger.debits.size)
+        assertFalse(a.packageName in approvals.removedApps)
+        assertEquals(installed, policy.installed)
+    }
+
+    @Test fun `self managed holder withdraws stuck elevated approval without a new turn`() {
+        setup(ElevationTarget.Approve(a))
+        failure = "apply"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.approveElevated(request()))
+        assertNull(elevation.state.grant)
+        val withdrawal = assertNotNull(controller.prepareWithdrawal(person))
+        val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, withdrawal.action)).authority
+        failure = null
+        assertEquals(AppApprovalOutcome.WITHDRAWN, controller.withdrawPending(withdrawal, withdrawal.approvalId, fresh))
+        assertNull(approvals.pending)
+        assertFalse(a.packageName in approvals.apps)
+        assertEquals(1, elevation.state.ledger.debits.size)
+    }
+
+    @Test fun `self managed removal and withdrawal reject changed mode action boot credentials and replay`() {
+        for (withdraw in listOf(false, true)) for (bad in listOf("mode", "action", "boot", "generation", "structure", "expiry", "confirmation")) {
+            now = ClockReading(RunningTime("epoch", 0), BootTime("boot", 0))
+            elevation = ElevationRecord(); approvals = AppApprovalState()
+            elevations = elevations(); controller = controller(); failure = null
+            setup(ElevationTarget.Approve(a))
+            failure = if (withdraw) "apply" else null
+            assertEquals(if (withdraw) AppApprovalOutcome.NOT_READY else AppApprovalOutcome.APPROVED,
+                controller.approveElevated(request()))
+            failure = null
+            val removal = if (withdraw) null else assertNotNull(controller.prepareRemoval(a.packageName, person))
+            val withdrawal = if (withdraw) assertNotNull(controller.prepareWithdrawal(person)) else null
+            val action = withdrawal?.action ?: removal!!.action
+            val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin,
+                if (bad == "action") PrivilegedAction("other", "other") else action)).authority
+            when (bad) {
+                "mode" -> credentials = CredentialState(Mode.TRUSTED, credentials!!.people)
+                "boot" -> now = now.copy(boot = BootTime("other", 0))
+                "generation" -> credentials = credentials!!.replacing(person, credentials!!.people.getValue(person).copy(generation = 1))
+                "structure" -> credentials = CredentialState(Mode.SELF_MANAGED, credentials!!.people, structureGeneration = 1)
+                "expiry" -> advance(120_000)
+            }
+            val before = approvals
+            val outcome = if (withdrawal != null) controller.withdrawPending(withdrawal,
+                if (bad == "confirmation") "wrong" else withdrawal.approvalId, fresh)
+                else controller.removeApproved(removal!!, if (bad == "confirmation") "wrong" else removal.approvalId, fresh)
+            assertEquals(AppApprovalOutcome.REFUSED, outcome, "$withdraw $bad")
+            assertSame(before, approvals)
+        }
+    }
+
+    @Test fun `self managed removal crash resumes restrictive direction with one receipt and no refund`() {
+        setup(ElevationTarget.Approve(a))
+        assertEquals(AppApprovalOutcome.APPROVED, controller.approveElevated(request()))
+        val removal = assertNotNull(controller.prepareRemoval(a.packageName, person))
+        val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, removal.action)).authority
+        crash = "after-REMOVING"
+        assertFailsWith<IllegalStateException> { controller.removeApproved(removal, removal.approvalId, fresh) }
+        crash = null
+        elevations = elevations(); controller = controller()
+        assertEquals(ElevationOutcome.IDLE, elevations.onStart())
+        assertEquals(AppApprovalOutcome.REMOVED, controller.onStart())
+        assertEquals(AppApprovalOutcome.READY, controller.resume())
+        assertEquals(1, approvals.receipts.count { it.kind == AppApprovalReceiptKind.REMOVED })
+        assertEquals(1, elevation.state.ledger.debits.size)
+        assertEquals(AppApprovalOutcome.REFUSED, controller.removeApproved(removal, removal.approvalId, fresh))
     }
 
     @Test fun `one Play grant approves two observed apps and closes access without restarting elevation`() {
@@ -230,6 +335,20 @@ class ElevatedAppApprovalTest {
                 assertEquals(AppApprovalOutcome.REFUSED, f.controller.approveElevated(r))
             }
         }
+    }
+
+    // PLA-160: closing package access before an ordinary approval writes the elevation record. When
+    // that write lands unacknowledged the person is told NOT_READY, never "refused", access stays
+    // closed, nothing is approved, and the next attempt starts from a fresh read.
+    @Test fun `unacknowledged package close before approval is not ready and never refused`() {
+        setup(); val r = request()
+        assertTrue(elevation.state.grant!!.packageAccessOpen)
+        unacknowledgedElevationWrites = 1
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.approveElevated(r))
+        assertFalse(physicallyOpen)
+        assertTrue(approvals.apps.isEmpty()); assertNull(approvals.pending); assertTrue(approvals.receipts.isEmpty())
+        restart()
+        assertTrue(approvals.apps.isEmpty()); assertEquals(1, elevation.state.ledger.debits.size)
     }
 
     @Test fun `failed committed readback resumes without consuming again`() {

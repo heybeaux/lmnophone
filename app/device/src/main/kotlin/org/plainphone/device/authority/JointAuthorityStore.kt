@@ -48,34 +48,63 @@ import org.plainphone.policy.WaitingChangeStore
 import org.plainphone.policy.WaitingEvent
 import org.plainphone.policy.WaitingPhase
 import org.plainphone.policy.WaitingState
+import org.plainphone.policy.WaitingReconciliationStore
+import org.plainphone.policy.RecoveredState
+import org.plainphone.policy.LostWaitingRecord
+import org.plainphone.policy.UpdatePhase
+import org.plainphone.policy.UpdateRecord
+import org.plainphone.policy.UpdateSelfCheck
+import org.plainphone.policy.UpdateSubmission
+import org.plainphone.policy.UpdateUseStore
+import org.plainphone.policy.StagedUpdateBinding
 
-internal enum class Section { CREDENTIALS, WAITING, ELEVATION, RECEIPTS, APPROVALS }
-/** In write order: first copy ("A"), its fence, second copy ("B"), its fence. */
-internal enum class WritePoint { BEFORE_COPY_A, AFTER_COPY_A, AFTER_FENCE_A, AFTER_COPY_B, AFTER_FENCE }
+internal enum class Section { CREDENTIALS, WAITING, ELEVATION, RECEIPTS, APPROVALS, UPDATE, RECOVERY }
+/** In write order: copy A, copy B (both agreeing is the commit point), fence A, fence B. */
+internal enum class WritePoint { BEFORE_COPY_A, AFTER_COPY_A, AFTER_COPY_B, AFTER_FENCE_A, AFTER_FENCE }
 /** Storage could not durably reserve a new identity; the caller shows "not ready" and retries later. */
 class IdentityUnavailable : IllegalStateException("identity reservation unavailable")
+
+/** Makes a directory's entries durable, or throws. Identity reservations refuse when this fails. */
+internal fun interface DirectorySync { fun sync(dir: File) }
+
+/** fsync of the directory itself through a read-only channel, which Linux and Android's libcore support. */
+internal object PlatformDirectorySync : DirectorySync {
+    override fun sync(dir: File) {
+        java.nio.channels.FileChannel.open(dir.toPath(), java.nio.file.StandardOpenOption.READ).use { it.force(true) }
+    }
+}
 
 /** Test seam for crash and readback faults at fixed points of a transaction. */
 internal fun interface StorageFaults { fun at(point: WritePoint, dir: File) }
 
 /**
  * One device-protected record joining credentials, the waiting operation and its texts, the
- * elevation record, the friction receipt outbox and the app approval state with its receipt outbox. Every transaction is a single replacement of
+ * elevation record, the friction receipt outbox, the app approval state with its receipt outbox, and
+ * the Update record with its receipt outbox. Every transaction is a single replacement of
  * the whole record, so a crash exposes either the old or the new record and never a mix.
  *
- * The record is kept as two sides, each a copy (`authority-a`, `authority-b`) and a fence holding
- * its sequence. A write repairs both sides to the current record, then writes copy A, fence A,
- * copy B and fence B, and is acknowledged only when all four hold the new record. Any failure
- * restores every touched file to the previous record and returns false. So after an
- * acknowledgement no older record remains anywhere, and any later loss or corruption of files
- * reads the acknowledged record or nothing. A read takes the copy at the lower valid fence, else
- * the copy at the higher one (a write interrupted after copy B), and never a copy at neither. A
- * section that would not decode is never written.
+ * The record is kept as two copies (`authority-a`, `authority-b`) and two fences holding the
+ * last committed sequence. A write first repairs every file to the current record, then writes
+ * copy A, then copy B, then both fences. Both copies agreeing is the commit point. A read returns
+ * the two copies when they agree at or above the fence, else the single copy at exactly the
+ * fence, else null. So an interrupted write reads old until copy B lands and new after; a lone
+ * copy above the fence (a refused or unfinished write) never surfaces, even after the other copy
+ * is lost; and a copy below the fence (a stale or replayed replica) is never served.
  *
- * All views share one non-reentrant coordinator per directory, keyed by its canonical path so
- * symlinked aliases share it too. A call made from inside a running
- * transaction is refused rather than allowed to interleave. Each section is preserved byte for
- * byte by writers that do not replace it.
+ * Results (PLA-160): true means acknowledged, so the new record reads back. After true, no older
+ * record remains, so any later loss reads that record or nothing. False means not acknowledged:
+ * the store may hold the previous record or the new one. A writer that cannot read its own
+ * directory (for example after losing search permission once copy B has landed) cannot tell
+ * which, so callers read again before acting and never treat false as "unchanged" or as a
+ * definite refusal. This holds for every compare-and-set, commit, move, friction transaction,
+ * [initialize] and [migrate]. A section that would not decode is never written.
+ *
+ * All views share one coordinator per directory, keyed by its canonical path so symlinked aliases
+ * share it too. A write made from inside a running transaction is refused rather than allowed to
+ * interleave; reads from a transaction's final check see the record under comparison. A thread
+ * waits at most [coordinatorWaitMillis] for the coordinator and is then refused, so a lock taken
+ * outside the store in the other order (such as PinVault's) can delay a call but never deadlock it.
+ * Each section is preserved byte for byte by writers that do not replace it.
  *
  * An active session journal reads back only against [matchingInventory], the inventory of this
  * exact build. Without it, a record holding an active session reads as null (damaged).
@@ -89,10 +118,10 @@ class JointAuthorityStore internal constructor(
     constructor(dir: File, matchingInventory: BuildInventory?) : this(dir, StorageFaults { _, _ -> }, matchingInventory)
     internal constructor(dir: File, faults: StorageFaults) : this(dir, faults, null)
 
-    private val copyA = AtomicRecord(dir, "authority-a", SCHEMA)
-    private val copyB = AtomicRecord(dir, "authority-b", SCHEMA)
-    private val fenceA = AtomicRecord(dir, "fence-a", SCHEMA)
-    private val fenceB = AtomicRecord(dir, "fence-b", SCHEMA)
+    private val copyA = AtomicRecord(dir, "authority-a", SCHEMA) { directorySync }
+    private val copyB = AtomicRecord(dir, "authority-b", SCHEMA) { directorySync }
+    private val fenceA = AtomicRecord(dir, "fence-a", SCHEMA) { directorySync }
+    private val fenceB = AtomicRecord(dir, "fence-b", SCHEMA) { directorySync }
     private val coordinator = coordinators.computeIfAbsent(canonical(dir)) { Coordinator() }
 
     val credentials: CredentialStore = object : CredentialStore {
@@ -159,6 +188,138 @@ class JointAuthorityStore internal constructor(
     }
 
     /**
+     * The Update record on the same coordinator (see [UpdateUseStore]). [commitUpdateUse] writes the
+     * used-up elevation, SUBMITTED and its receipt with frozen recipient addresses in one record
+     * replacement; the receipt joins the outbox, so an undelivered earlier receipt survives a later
+     * submission. Only the exact replacement elevation the controller builds is accepted.
+     */
+    val update: UpdateUseStore = object : UpdateUseStore {
+        override val elevationStore: ElevationStore get() = this@JointAuthorityStore.elevationStore
+
+        override fun readUpdate(): UpdateRecord? = section(Section.UPDATE)?.let(AuthorityCodec::decodeUpdate)?.record
+
+        override fun compareAndSetUpdate(expected: UpdateRecord, replacement: UpdateRecord): Boolean = commit { s ->
+            val stored = AuthorityCodec.decodeUpdate(s.sections[Section.UPDATE.ordinal]) ?: return@commit null
+            if (!resultOnly(expected, replacement) || !sameRecord(stored.record, expected)) return@commit null
+            s.with(Section.UPDATE, AuthorityCodec.encodeUpdate(UpdateSection(replacement, stored.outbox)))
+        }
+
+        override fun commitUpdateUse(expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
+            expectedCredentials: CredentialState, expectedUpdate: UpdateRecord, submission: UpdateSubmission,
+            finalCheck: () -> Boolean): Boolean = commit { s ->
+            if (!usable(expectedElevation, replacementElevation, expectedCredentials, expectedUpdate, submission)) return@commit null
+            val elevationBytes = AuthorityCodec.encodeElevation(replacementElevation) ?: return@commit null
+            fun current(of: Snapshot): UpdateSection? {
+                val stored = AuthorityCodec.decodeUpdate(of.sections[Section.UPDATE.ordinal]) ?: return null
+                return stored.takeIf {
+                    sameRecord(it.record, expectedUpdate) &&
+                        of.matches(Section.ELEVATION, AuthorityCodec.encodeElevation(expectedElevation)) &&
+                        of.matches(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(expectedCredentials))
+                }
+            }
+            val stored = current(s) ?: return@commit null
+            if (stored.outbox.any { it.receipt.id == submission.receipt.id }) return@commit null
+            val contacts = submission.receipt.recipientGenerations.keys.associateWith { expectedCredentials.people.getValue(it).contact }
+            val next = try {
+                UpdateSection(UpdateRecord(expectedUpdate.revision + 1, submission), stored.outbox + StoredUpdateReceipt(submission.receipt, contacts))
+            } catch (_: IllegalArgumentException) {
+                return@commit null
+            }
+            val updateBytes = AuthorityCodec.encodeUpdate(next) ?: return@commit null
+            // Once, after all blocking work. The check may read this record; any write it tries is refused.
+            if (!coordinator.viewing(s, finalCheck)) return@commit null
+            val again = load() ?: return@commit null
+            if (again.sequence != s.sequence || current(again) == null) return@commit null
+            s.with(Section.ELEVATION, elevationBytes).with(Section.UPDATE, updateBytes)
+        }
+    }
+
+    /** Update receipts awaiting delivery, oldest first. Null when the record is unreadable. */
+    fun updateReceipts(): List<StoredUpdateReceipt>? = section(Section.UPDATE)?.let(AuthorityCodec::decodeUpdate)?.outbox
+
+    /**
+     * Durably records that [person]'s notice for receipt [id] was handed over. A receipt leaves the
+     * outbox once every recipient is acknowledged. True when, afterwards, nothing for [person] under
+     * [id] is pending (including when it already was not). False is not acknowledged: the next
+     * delivery pass reads the outbox again and may resend under the same dedup ID.
+     */
+    fun acknowledgeUpdateReceipt(id: String, person: TrustedPersonId): Boolean {
+        var settled = false
+        val written = commit { s ->
+            val stored = AuthorityCodec.decodeUpdate(s.sections[Section.UPDATE.ordinal]) ?: return@commit null
+            val entry = stored.outbox.firstOrNull { it.receipt.id == id }
+            if (entry == null || person !in entry.receipt.recipientGenerations || person in entry.acknowledged) {
+                settled = true
+                return@commit null
+            }
+            val outbox = stored.outbox.mapNotNull { r ->
+                if (r !== entry) r else (r.acknowledged + person).let { acked ->
+                    if (acked == r.receipt.recipientGenerations.keys) null else StoredUpdateReceipt(r.receipt, r.recipientContacts, acked)
+                }
+            }
+            s.with(Section.UPDATE, AuthorityCodec.encodeUpdate(UpdateSection(stored.record, outbox)))
+        }
+        return written || settled
+    }
+
+    /** The stored record equals [expected] in every field, compared through the canonical encoding. */
+    private fun sameRecord(stored: UpdateRecord, expected: UpdateRecord): Boolean {
+        val a = AuthorityCodec.encodeUpdate(UpdateSection(stored, emptyList())) ?: return false
+        return a.contentEquals(AuthorityCodec.encodeUpdate(UpdateSection(expected, emptyList())))
+    }
+
+    /**
+     * The result transitions the protocol writes, one revision at a time, with every other field
+     * (session, hash, version, receipt, deadline) kept: SUBMITTED -> INSTALLED or FAILED, FAILED ->
+     * INSTALLED (a late install), and INSTALLED's pending self-check -> PASSED or FAILED.
+     */
+    private fun resultOnly(expected: UpdateRecord, replacement: UpdateRecord): Boolean {
+        val before = expected.submission ?: return false
+        val after = replacement.submission ?: return false
+        if (expected.revision == Long.MAX_VALUE || replacement.revision != expected.revision + 1) return false
+        val kept = after.copy(phase = before.phase, selfCheck = before.selfCheck)
+        if (!sameRecord(UpdateRecord(0, kept), UpdateRecord(0, before))) return false
+        val pending = UpdateSelfCheck.PENDING
+        return when (before.phase) {
+            UpdatePhase.SUBMITTED -> after.phase != UpdatePhase.SUBMITTED && after.selfCheck == pending
+            UpdatePhase.FAILED -> after.phase == UpdatePhase.INSTALLED && after.selfCheck == pending
+            UpdatePhase.INSTALLED -> before.selfCheck == pending && after.phase == UpdatePhase.INSTALLED && after.selfCheck != pending
+        }
+    }
+
+    /**
+     * The use shapes the controller builds. No outstanding SUBMITTED or pending self-check; a new
+     * SUBMITTED whose receipt names exactly the current holders and generations. Self-managed: the
+     * live Update grant for these exact bytes, held by the receipt's actor, is used up to the same
+     * ledger with no grant or holder, one revision higher, keeping its deadline in the submission.
+     * Supervised: no countdown or grant, the elevation written back unchanged and no deadline.
+     */
+    private fun usable(expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
+        credentials: CredentialState, expectedUpdate: UpdateRecord, submission: UpdateSubmission): Boolean {
+        val previous = expectedUpdate.submission
+        if (expectedUpdate.revision == Long.MAX_VALUE || previous?.phase == UpdatePhase.SUBMITTED ||
+            (previous?.phase == UpdatePhase.INSTALLED && previous.selfCheck == UpdateSelfCheck.PENDING) ||
+            submission.phase != UpdatePhase.SUBMITTED || submission.selfCheck != UpdateSelfCheck.PENDING) return false
+        val receipt = submission.receipt
+        if (receipt.recipientGenerations != credentials.people.mapValues { it.value.generation } ||
+            expectedElevation.journal != SessionJournal.Empty) return false
+        val grant = expectedElevation.state.grant
+        if (grant == null) {
+            if (expectedElevation.state.countdown != null || submission.elevationDeadline != null) return false
+            val bytes = AuthorityCodec.encodeElevation(expectedElevation) ?: return false
+            return bytes.contentEquals(AuthorityCodec.encodeElevation(replacementElevation))
+        }
+        val holder = expectedElevation.person ?: return false
+        if (grant.target != ElevationTarget.Update(StagedUpdateBinding(submission.sha256, submission.versionCode)) ||
+            grant.packageAccessOpen || grant.id != receipt.id || holder.person != receipt.actor ||
+            holder.generation != receipt.actorGeneration || submission.elevationDeadline != grant.deadline ||
+            expectedElevation.revision == Long.MAX_VALUE) return false
+        val used = AuthorityCodec.encodeElevation(ElevationRecord(expectedElevation.revision + 1, ElevationState(expectedElevation.state.ledger)))
+            ?: return false
+        return used.contentEquals(AuthorityCodec.encodeElevation(replacementElevation))
+    }
+
+    /**
      * The only replacement pair the joint write accepts, rebuilt here from the expected pair and
      * compared byte for byte. The approval moves PREPARING -> COMMITTED exactly as the controller
      * builds it, with every unrelated field kept. The grant is used up as the policy defines it:
@@ -211,7 +372,8 @@ class JointAuthorityStore internal constructor(
         override fun initialize(requestId: String): Boolean = coordinator.run(false) {
             val (entry, marker) = intentRecords(requestId)
             when {
-                marker.exists() || entry.exists() -> intent(requestId) == CancelIntent.CLEAR
+                // An existing CLEAR entry is acknowledged only once its directory entry is synced.
+                marker.exists() || entry.exists() -> intent(requestId) == CancelIntent.CLEAR && entry.ensure(intentPayload(CLEAR_TAG, requestId))
                 else -> entry.write(intentPayload(CLEAR_TAG, requestId)) {}
             }
         }
@@ -219,8 +381,8 @@ class JointAuthorityStore internal constructor(
             val (entry, marker) = intentRecords(requestId)
             val requested = intentPayload(REQUESTED_TAG, requestId)
             // Both writes are attempted even if the first fails; true only when both are durable.
-            val markerSaved = marker.read()?.contentEquals(requested) == true || marker.write(requested) {}
-            val entrySaved = entry.read()?.contentEquals(requested) == true || entry.write(requested) {}
+            val markerSaved = marker.ensure(requested)
+            val entrySaved = entry.ensure(requested)
             markerSaved && entrySaved
         }
         override fun read(requestId: String): CancelIntent = coordinator.run(CancelIntent.UNKNOWN) { intent(requestId) }
@@ -228,8 +390,13 @@ class JointAuthorityStore internal constructor(
 
     private var entropy: (Int) -> ByteArray = { n -> ByteArray(n).also { SecureRandom().nextBytes(it) } }
 
+    private var directorySync: DirectorySync = PlatformDirectorySync
+
     /** Test seam: the random source for identities. */
     internal fun withEntropy(source: (Int) -> ByteArray) = apply { entropy = source }
+
+    /** Test seam: how directory entries are made durable. */
+    internal fun withDirectorySync(sync: DirectorySync) = apply { directorySync = sync }
 
     /**
      * Request IDs and cancel codes, each reserved before it is returned and never reused, even when
@@ -251,7 +418,18 @@ class JointAuthorityStore internal constructor(
         reserve("person") { "person-" + hex(entropy(16)) }?.let(::TrustedPersonId)
     }
 
-    /** Callers hold the coordinator. Up to [ATTEMPTS] draws; null if none could be reserved durably. */
+    /**
+     * A new, never-reused epoch ID for the proven running clock, or "" if none can be reserved durably;
+     * the clock treats a blank epoch as no reading.
+     */
+    fun reserveEpoch(): String = coordinator.run(null) { reserve("epoch") { "epoch-" + hex(entropy(16)) } } ?: ""
+
+    /**
+     * Callers hold the coordinator. Up to [ATTEMPTS] draws; null if none could be reserved durably.
+     * A value is handed out only after its file contents, the `reserved/` folder entry and the folder's
+     * own entry in [dir] are all synced (PLA-143 R1). Any failure refuses; the created file still marks
+     * the value as taken, so a refused value is never handed out later either.
+     */
     private fun reserve(kind: String, draw: () -> String): String? {
         val folder = File(dir, "reserved")
         if (!folder.isDirectory && !folder.mkdirs()) return null
@@ -265,14 +443,10 @@ class JointAuthorityStore internal constructor(
             } catch (_: IOException) {
                 return null
             }
-            // Created means taken, even if the rest fails; only a fully synced reservation is handed out.
             return try {
                 java.io.FileOutputStream(file).use { it.write(value.toByteArray()); it.fd.sync() }
-                try {
-                    java.nio.channels.FileChannel.open(folder.toPath(), java.nio.file.StandardOpenOption.READ).use { it.force(true) }
-                } catch (_: IOException) {
-                    // Directory sync is not supported everywhere; the file itself is synced.
-                }
+                directorySync.sync(folder)
+                directorySync.sync(dir)
                 value
             } catch (_: IOException) {
                 null
@@ -466,8 +640,9 @@ class JointAuthorityStore internal constructor(
 
     /** The entry keeps its original `intent-clear-` file name although it can also hold REQUESTED. */
     private fun intentRecords(requestId: String): Pair<AtomicRecord, AtomicRecord> {
-        val hash = MessageDigest.getInstance("SHA-256").digest(requestId.toByteArray()).joinToString("") { "%02x".format(it) }
-        return AtomicRecord(dir, "intent-clear-$hash", SCHEMA) to AtomicRecord(dir, "intent-requested-$hash", SCHEMA)
+        val hash = intentHash(requestId)
+        return AtomicRecord(dir, "$INTENT_ENTRY$hash", INTENT_SCHEMA) { directorySync } to
+            AtomicRecord(dir, "$INTENT_MARKER$hash", INTENT_SCHEMA) { directorySync }
     }
 
     private fun intentPayload(tag: Byte, requestId: String) = byteArrayOf(tag) + requestId.toByteArray()
@@ -483,14 +658,24 @@ class JointAuthorityStore internal constructor(
         }
     }
 
-    /** Enrollment-time creation of the first record. Refuses if any copy or fence already exists. */
+    /**
+     * Enrollment-time creation of the first record. Refuses if a fence exists or a record reads.
+     * True means genesis reads back. False is not acknowledged, as for every write. The first-record
+     * cases are explicit (PLA-159): a blocked second copy returns false with no readable genesis, so
+     * initialize can run again; a blocked fence returns true with a readable genesis that [migrate]
+     * completes later; search denial after the second copy returns false yet genesis reads once
+     * access returns, so initialize then refuses and [migrate] completes it. Callers read after false.
+     */
     fun initialize(credentials: CredentialState, waiting: WaitingState, elevation: ElevationRecord,
         approvals: AppApprovalState = AppApprovalState()): Boolean = coordinator.run(false) {
         // Copies without any fence are a creation that never committed; they may be replaced.
         if (fenceA.exists() || fenceB.exists() || load() != null) return@run false
+        // Enrollment is the only place an empty Update record is created.
         val sections = listOf(AuthorityCodec.encodeCredentials(credentials) ?: return@run false,
             AuthorityCodec.encodeWaiting(waiting) ?: return@run false, AuthorityCodec.encodeElevation(elevation) ?: return@run false,
-            AuthorityCodec.encodeReceipts(emptyList()) ?: return@run false, AuthorityCodec.encodeApprovals(approvals) ?: return@run false)
+            AuthorityCodec.encodeReceipts(emptyList()) ?: return@run false, AuthorityCodec.encodeApprovals(approvals) ?: return@run false,
+            AuthorityCodec.encodeUpdate(UpdateSection(UpdateRecord(), emptyList())) ?: return@run false,
+            AuthorityCodec.encodeRecovery(RecoverySection(null, emptyList())) ?: return@run false)
         val genesis = Snapshot(0, sections)
         if (!readable(genesis)) return@run false
         save(null, genesis)
@@ -499,27 +684,82 @@ class JointAuthorityStore internal constructor(
     /**
      * Explicit startup step, run before any controller reads this store. A record written by a
      * schema 1-3 store reads as missing until it is migrated. Migration reads it with the old
-     * rules, converts every section (unchanged formats come out byte for byte), checks the result
-     * decodes, and commits it with the normal fence protocol. The first new copy goes over a file
-     * that does not hold the old record, and the first current fence is the commit point. Until
-     * then the old record stays readable to a retry; after it, the old files are never read again.
-     * True when the store holds a readable current record. An old record that does not decode is
-     * left untouched and refused.
+     * rules, converts every section to its canonical current encoding, checks the result decodes,
+     * and commits it with the normal protocol. Values are kept; bytes are kept only where the old
+     * bytes were already canonical (unordered maps and sets, such as several people, come out
+     * sorted, which keeps the byte compare-and-set checks exact). The first new copy goes over a
+     * file that does not hold the old record, so the old record stays readable to a retry until
+     * both new copies agree; after that the old files are never read again. Schema 3 cancel
+     * intents are rewritten in the current format too (see [migrateIntents]).
+     *
+     * This is the startup readiness gate: no controller and no permissive authority action runs
+     * until it returns true. True only when the migration is complete: both copies and both fences
+     * hold one readable current record and no rewritable old intent is left. The one exception:
+     * damaged or misnamed old intent files, which name no request, stay in place and read UNKNOWN
+     * (their markers still read REQUESTED). False means unavailable, so run again later. It does not
+     * mean unchanged or empty: the record may already be current. Restrictions stay in place and
+     * nothing initializes over it. An old record that does not decode is left untouched and refused.
      */
     fun migrate(): Boolean = coordinator.run(false) {
-        if (fenceA.read() != null || fenceB.read() != null) {
-            val current = load() ?: return@run false
-            if (listOf(copyA, copyB, fenceA, fenceB).all { it.read() != null }) return@run true
-            // Finish an interrupted migration, so no old fence or copy is left beside one current fence.
-            if (current.sequence == Long.MAX_VALUE) return@run false
-            return@run save(current, Snapshot(current.sequence + 1, current.sections))
+        val intents = migrateIntents()
+        val record = migrateRecord()
+        // Readiness also covers renames an earlier failed attempt left unsynced, which a retry may no
+        // longer find to rewrite (PLA-220 R1): one successful directory sync after all of them.
+        record && intents && syncDirectory()
+    }
+
+    /** Callers hold the coordinator. Every record, intent and reservation folder entry lives in [dir]. */
+    private fun syncDirectory(): Boolean = try { directorySync.sync(dir); true } catch (_: IOException) { false }
+
+    /** Callers hold the coordinator. */
+    private fun migrateRecord(): Boolean {
+        // Both new copies may already agree before any new fence is written; that record is current.
+        val loaded = load()
+        if (loaded != null || fenceA.read() != null || fenceB.read() != null) {
+            val current = loaded ?: return false
+            if (!readable(current)) return false
+            if (complete(current)) return true
+            // Finish an interrupted migration, so no old fence or copy is left beside the current record.
+            if (current.sequence == Long.MAX_VALUE) return false
+            val next = Snapshot(current.sequence + 1, current.sections)
+            return save(current, next) && complete(next)
         }
-        val legacy = LegacyAuthority.load(dir) ?: return@run false
-        if (legacy.sequence == Long.MAX_VALUE) return@run false
-        val next = Snapshot(legacy.sequence + 1, LegacyAuthority.convert(legacy, matchingInventory) ?: return@run false)
-        if (!readable(next)) return@run false
+        val legacy = LegacyAuthority.load(dir) ?: return false
+        if (legacy.sequence == Long.MAX_VALUE) return false
+        val next = Snapshot(legacy.sequence + 1, LegacyAuthority.convert(legacy, matchingInventory) ?: return false)
+        if (!readable(next)) return false
         val keepB = "authority-b" in legacy.holders
-        save(null, next, spare = if (keepB) copyA else copyB)
+        return save(null, next, spare = if (keepB) copyA else copyB) && complete(next)
+    }
+
+    /** Both copies and both fences hold exactly [s]. */
+    private fun complete(s: Snapshot): Boolean {
+        val bytes = s.encode(); val fence = fenceBytes(s.sequence)
+        return copyA.read()?.contentEquals(bytes) == true && copyB.read()?.contentEquals(bytes) == true &&
+            fenceA.read()?.contentEquals(fence) == true && fenceB.read()?.contentEquals(fence) == true
+    }
+
+    /**
+     * Rewrites every cancel intent the schema 3 store left (see [LegacyAuthority.intentRequests])
+     * as a current entry: REQUESTED while any marker exists for the request, else CLEAR, then a
+     * current marker if one existed. A crash between the two writes still reads REQUESTED, from
+     * the old marker. Old files that name no request of their own are left alone and read
+     * UNKNOWN, so nothing is guessed CLEAR. True when no rewritable old intent is left. Callers
+     * hold the coordinator.
+     */
+    private fun migrateIntents(): Boolean {
+        val requests = LegacyAuthority.intentRequests(dir) ?: return false
+        var done = true
+        for (requestId in requests) {
+            val (entry, marker) = intentRecords(requestId)
+            val requested = marker.exists()
+            val tag = if (requested) REQUESTED_TAG else CLEAR_TAG
+            fun rewrite(record: AtomicRecord, payload: ByteArray) = record.ensure(payload)
+            val entrySaved = rewrite(entry, intentPayload(tag, requestId))
+            val markerSaved = !requested || (entrySaved && rewrite(marker, intentPayload(REQUESTED_TAG, requestId)))
+            done = done && entrySaved && markerSaved
+        }
+        return done
     }
 
     /**
@@ -537,6 +777,68 @@ class JointAuthorityStore internal constructor(
     fun frictionReceipts(): List<StoredFrictionReceipt>? = section(Section.RECEIPTS)?.let(AuthorityCodec::decodeReceipts)
 
     internal fun sectionBytesForTest(section: Section): ByteArray? = section(section)
+
+    /** Test seam: commit raw bytes into one section, bypassing the decode check, to model a section that stops decoding. */
+    internal fun replaceSectionForTest(section: Section, bytes: ByteArray): Boolean = coordinator.run(false) {
+        val current = load() ?: return@run false
+        save(current, Snapshot(current.sequence + 1, current.with(section, bytes).sections))
+    }
+
+    /** Recovery receipt addresses, kept as a permanent audit. Null when the record is unreadable. */
+    fun recoveryAddresses(): List<StoredRecoveryAddresses>? = section(Section.RECOVERY)?.let(AuthorityCodec::decodeRecovery)?.audit
+
+    /**
+     * Lost-journal reconciliation on the same record and coordinator as every other writer. Credentials
+     * and the journal share one record here, so a confirmed loss is a readable record whose waiting
+     * section no longer decodes. A wholly unreadable record is never a confirmed loss: the credentials
+     * are gone too, and the phone stays held. Ordinary reads and writes delegate to [waitingStore].
+     */
+    val reconciliation: WaitingReconciliationStore = object : WaitingReconciliationStore {
+        override fun read(): WaitingState? = waitingStore.read()
+        override fun compareAndSet(expected: WaitingState, replacement: WaitingState): Boolean = waitingStore.compareAndSet(expected, replacement)
+
+        /** Reserves the episode ID durably and records it in the same record; the same ID until completion. */
+        override fun lostRecord(): LostWaitingRecord? = coordinator.run(null) {
+            val s = load() ?: return@run null
+            val waiting = s.sections[Section.WAITING.ordinal]
+            if (AuthorityCodec.decodeWaiting(waiting) != null) return@run null
+            val recovery = AuthorityCodec.decodeRecovery(s.sections[Section.RECOVERY.ordinal]) ?: return@run null
+            val digest = hex(MessageDigest.getInstance("SHA-256").digest(waiting))
+            recovery.loss?.takeIf { it.digest == digest }?.let { return@run LostWaitingRecord(it.id) }
+            val id = reserve("loss") { "loss-" + hex(entropy(16)) } ?: return@run null
+            val marked = commitHeld { now ->
+                if (!now.sections[Section.WAITING.ordinal].contentEquals(waiting)) null
+                else now.with(Section.RECOVERY, AuthorityCodec.encodeRecovery(RecoverySection(LossEpisode(id, digest), recovery.audit)))
+            }
+            if (marked) LostWaitingRecord(id) else null
+        }
+
+        /**
+         * One write: the still-lost episode and the exact credential record are compared; the vacant
+         * journal with its single recovery receipt replaces the lost section; the loss marker is cleared;
+         * and the receipt's addresses, frozen from [expectedCredentials], join the permanent audit.
+         */
+        override fun completeReconciliation(lost: LostWaitingRecord, expectedCredentials: CredentialState,
+            replacement: WaitingState): Boolean = commit { s ->
+            val waiting = s.sections[Section.WAITING.ordinal]
+            if (AuthorityCodec.decodeWaiting(waiting) != null) return@commit null
+            val recovery = AuthorityCodec.decodeRecovery(s.sections[Section.RECOVERY.ordinal]) ?: return@commit null
+            val loss = recovery.loss ?: return@commit null
+            if (loss.id != lost.id || loss.digest != hex(MessageDigest.getInstance("SHA-256").digest(waiting)) ||
+                !s.matches(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(expectedCredentials))) return@commit null
+            val profile = expectedCredentials.recoveryProfile ?: return@commit null
+            val receipt = replacement.recoveryReceipts.singleOrNull() ?: return@commit null
+            val generations = expectedCredentials.people.mapValues { it.value.generation }
+            if (replacement.storageGeneration != lost.id || replacement.revision != 0L || replacement.operation != null ||
+                replacement.texts.isNotEmpty() || receipt.key != "recovered:${lost.id.length}:${lost.id}" ||
+                receipt.mode != expectedCredentials.mode || receipt.recipientGenerations != generations ||
+                receipt.friction != profile.friction || receipt.state != RecoveredState.ACTIVE ||
+                recovery.audit.any { it.key == receipt.key }) return@commit null
+            val addresses = StoredRecoveryAddresses(receipt.key, generations, expectedCredentials.people.mapValues { it.value.contact })
+            s.with(Section.WAITING, AuthorityCodec.encodeWaiting(replacement))
+                .with(Section.RECOVERY, AuthorityCodec.encodeRecovery(RecoverySection(null, recovery.audit + addresses)))
+        }
+    }
 
     override fun applyStricter(expectedCredentials: CredentialState, replacementCredentials: CredentialState,
         expectedWaiting: WaitingState, expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
@@ -636,20 +938,18 @@ class JointAuthorityStore internal constructor(
     private fun fenceBytes(sequence: Long): ByteArray = ByteBuffer.allocate(8).putLong(sequence).array()
 
     /**
-     * The copy at the lower valid fence, else the copy at the higher one; copies at the same
-     * sequence must agree. A copy at neither fence (an interrupted or restored write) is ignored.
-     * Null when no fence or no matching copy survives.
+     * Both copies when they agree at or above the higher valid fence (or with no fence left); else
+     * the copy at exactly that fence; else null.
      */
     private fun load(): Snapshot? {
-        val fences = listOfNotNull(fenceValue(fenceA), fenceValue(fenceB))
-        if (fences.isEmpty()) return null
+        val fence = listOfNotNull(fenceValue(fenceA), fenceValue(fenceB)).maxOrNull()
         val copies = listOfNotNull(copyA.read(), copyB.read()).mapNotNull { bytes -> Snapshot.decode(bytes)?.let { it to bytes } }
-        for (sequence in listOf(fences.min(), fences.max())) {
-            val matching = copies.filter { it.first.sequence == sequence }
-            val first = matching.firstOrNull() ?: continue
-            return if (matching.all { it.second.contentEquals(first.second) }) first.first else null
-        }
-        return null
+        if (copies.size == 2 && copies[0].second.contentEquals(copies[1].second) &&
+            (fence == null || copies[0].first.sequence >= fence)) return copies[0].first
+        if (fence == null) return null
+        val atFence = copies.filter { it.first.sequence == fence }
+        val first = atFence.firstOrNull() ?: return null
+        return if (atFence.all { it.second.contentEquals(first.second) }) first.first else null
     }
 
     /** Every section of [s] decodes, so an acknowledged record always reads back. */
@@ -663,67 +963,83 @@ class JointAuthorityStore internal constructor(
             Section.ELEVATION -> AuthorityCodec.decodeElevation(bytes, matchingInventory) != null
             Section.RECEIPTS -> AuthorityCodec.decodeReceipts(bytes) != null
             Section.APPROVALS -> AuthorityCodec.decodeApprovals(bytes) != null
+            Section.UPDATE -> AuthorityCodec.decodeUpdate(bytes) != null
+            Section.RECOVERY -> AuthorityCodec.decodeRecovery(bytes) != null
         }
     }
 
-    private fun commit(change: (Snapshot) -> Snapshot?): Boolean = coordinator.run(false) {
-        val current = load() ?: return@run false
-        if (current.sequence == Long.MAX_VALUE) return@run false
-        val next = change(current) ?: return@run false
+    /**
+     * One transaction: [change] returns the replacement or null to refuse before any write. True
+     * means acknowledged; false means not acknowledged (see the class notes), never "unchanged".
+     */
+    private fun commit(change: (Snapshot) -> Snapshot?): Boolean = coordinator.run(false) { commitHeld(change) }
+
+    /** [commit] for a caller that already holds the coordinator. */
+    private fun commitHeld(change: (Snapshot) -> Snapshot?): Boolean {
+        val current = load() ?: return false
+        if (current.sequence == Long.MAX_VALUE) return false
+        val next = change(current) ?: return false
         // Only sections this transaction replaced must decode; untouched ones are kept byte for byte.
         val changed = Section.entries.filter { !next.sections[it.ordinal].contentEquals(current.sections[it.ordinal]) }
-        if (changed.any { !readable(next, it) }) return@run false
-        save(current, Snapshot(current.sequence + 1, next.sections))
+        if (changed.any { !readable(next, it) }) return false
+        return save(current, Snapshot(current.sequence + 1, next.sections))
     }
 
     /**
-     * Repair both sides to [current] before a new write. A failed repair aborts the write; any
-     * file it touched already held or now holds [current], so [current] still reads.
+     * Repair every file to [current] before a new write, copies first. A failed repair aborts the
+     * write; any file it touched holds [current] or is unreadable, so [current] still reads.
      */
     private fun heal(current: Snapshot): Boolean {
         val bytes = current.encode(); val fence = fenceBytes(current.sequence)
-        for ((record, payload) in listOf(copyA to bytes, fenceA to fence, copyB to bytes, fenceB to fence))
+        for ((record, payload) in listOf(copyA to bytes, copyB to bytes, fenceA to fence, fenceB to fence))
+            // No extra sync for files that already match: the copy writes that follow sync this directory,
+            // which also makes these entries durable, and nothing is acknowledged without those syncs.
             if (record.read()?.contentEquals(payload) != true && !record.write(payload) {}) return false
         return true
     }
 
     /**
-     * Repair, then copy A, fence A, copy B, fence B. True only when all four hold [next]. On any
-     * failure every touched file is put back to [previous], fences first; a fence that cannot be
-     * put back is deleted, so the new record cannot become the committed one. A first record or a
-     * migration has no previous record to restore; it reports what reads back.
+     * Repair, then copy A, copy B, fence A, fence B. Both copies written and their directory synced is
+     * the commit point, and the only way to a true result. If a copy step fails (including its directory
+     * sync), both copy files are put back to exactly what they held where possible and the result is
+     * false, which means not acknowledged: either record may read afterwards (PLA-160). The result is read from disk: true when [next] reads back. False is
+     * not acknowledged: the store tries to resolve (restore, then read), but when the directory cannot
+     * be read [next] may still have committed, so false never promises [previous]. A migration names
+     * the copy that holds no old record, so the old one survives until both new copies are written.
      */
     private fun save(previous: Snapshot?, next: Snapshot, spare: AtomicRecord? = null): Boolean {
         if (previous != null && !heal(previous)) return false
         val bytes = next.encode()
         val fence = fenceBytes(next.sequence)
-        // A migration names the copy that holds no old record, so the old one survives until committed.
         val (first, other) = if (spare === copyB) copyB to copyA else copyA to copyB
-        val (firstFence, otherFence) = if (spare === copyB) fenceB to fenceA else fenceA to fenceB
-        val steps = listOf(Triple(first, bytes, WritePoint.AFTER_COPY_A), Triple(firstFence, fence, WritePoint.AFTER_FENCE_A),
-            Triple(other, bytes, WritePoint.AFTER_COPY_B), Triple(otherFence, fence, WritePoint.AFTER_FENCE))
+        // Exactly what each copy file held, legacy formats included, so a failure can put it back.
+        val before = try { first.snapshot() to other.snapshot() } catch (_: IOException) { return false }
         faults.at(WritePoint.BEFORE_COPY_A, dir)
-        var touched = 0
-        for ((record, payload, point) in steps) {
-            touched++
-            if (!record.write(payload) { faults.at(point, dir) }) break
-            if (touched == steps.size && steps.all { it.first.read()?.contentEquals(it.second) == true }) return true
+        val copied = first.write(bytes) { faults.at(WritePoint.AFTER_COPY_A, dir) } &&
+            other.write(bytes) { faults.at(WritePoint.AFTER_COPY_B, dir) }
+        if (!copied) {
+            // Not committed: a copy whose rename was not synced is not durable, even if both read back
+            // (PLA-188 R1/R3), so this is never acknowledged. Put both files back as they were where
+            // possible. False only means "not acknowledged" (PLA-160): fresh reads decide.
+            other.restore(before.second); first.restore(before.first)
+            return false
         }
-        if (previous == null) return load()?.encode()?.contentEquals(bytes) == true && steps.all { it.first.read()?.contentEquals(it.second) == true }
-        val old = previous.encode(); val oldFence = fenceBytes(previous.sequence)
-        val restore = steps.take(touched).map { (record, payload, _) -> record to (if (payload === fence) oldFence else old) }
-        for ((record, payload) in restore.sortedBy { if (it.first === fenceA || it.first === fenceB) 0 else 1 })
-            if (!record.write(payload) {}) record.delete()
-        return false
+        fenceA.write(fence) { faults.at(WritePoint.AFTER_FENCE_A, dir) }
+        fenceB.write(fence) { faults.at(WritePoint.AFTER_FENCE, dir) }
+        return load()?.encode()?.contentEquals(bytes) == true
     }
 
     private class Coordinator {
         private val lock = ReentrantLock()
         private var viewed: Snapshot? = null
-        /** Non-reentrant: a nested call from the thread already inside a transaction is refused. */
+        /** A nested call from the thread already inside a transaction is refused, as is a wait past the limit. */
         fun <T> run(refused: T, block: () -> T): T {
             if (lock.isHeldByCurrentThread) return refused
-            lock.lock()
+            try {
+                if (!lock.tryLock(coordinatorWaitMillis, java.util.concurrent.TimeUnit.MILLISECONDS)) return refused
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt(); return refused
+            }
             try { return block() } finally { lock.unlock() }
         }
         /** Inside a transaction only: lets [block] read [snapshot]. Writes from it are still refused. */
@@ -735,18 +1051,24 @@ class JointAuthorityStore internal constructor(
         fun view(): Snapshot? = if (lock.isHeldByCurrentThread) viewed else null
     }
 
-    private companion object {
-        /** 2 adds the app approval section; 3 stores people patches; 4 commits at the fence with canonical maps. */
-        const val SCHEMA = 4
-        val BUSY = setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
-        val FAIL_CLOSED_LIMITS = ElevationLimits(86_400_000L, 0)
-        val TERMINAL = setOf(WaitingPhase.COMPLETED, WaitingPhase.CANCELLED)
-        const val ATTEMPTS = 16
-        const val CLEAR_TAG: Byte = 'C'.code.toByte()
-        const val REQUESTED_TAG: Byte = 'R'.code.toByte()
-        val coordinators = ConcurrentHashMap<String, Coordinator>()
+    companion object {
+        /** Longest wait for another thread's transaction before a call is refused (not ready). */
+        @Volatile internal var coordinatorWaitMillis: Long = 10_000
+        /** 2 adds the app approval section; 3 stores people patches; 4 commits at the fence with canonical maps; 5 adds Update; 6 adds Recovery. */
+        private const val SCHEMA = 6
+        /** Cancel-intent files keep the schema 4 format; the Update section did not change them. */
+        private const val INTENT_SCHEMA = 4
+        private val BUSY = setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
+        private val FAIL_CLOSED_LIMITS = ElevationLimits(86_400_000L, 0)
+        private val TERMINAL = setOf(WaitingPhase.COMPLETED, WaitingPhase.CANCELLED)
+        private const val ATTEMPTS = 16
+        private const val CLEAR_TAG: Byte = 'C'.code.toByte()
+        private const val REQUESTED_TAG: Byte = 'R'.code.toByte()
+        private const val INTENT_ENTRY = "intent-clear-"
+        private const val INTENT_MARKER = "intent-requested-"
+        private val coordinators = ConcurrentHashMap<String, Coordinator>()
         /** Creates [dir] if needed so symlinks resolve; falls back to the normalized absolute path. */
-        fun canonical(dir: File): String = try {
+        private fun canonical(dir: File): String = try {
             dir.mkdirs(); dir.canonicalPath
         } catch (_: IOException) {
             dir.absoluteFile.normalize().path
@@ -754,8 +1076,13 @@ class JointAuthorityStore internal constructor(
     }
 }
 
+/** The hex SHA-256 of [requestId] that names its cancel-intent files, in every schema since 3. */
+internal fun intentHash(requestId: String): String =
+    MessageDigest.getInstance("SHA-256").digest(requestId.toByteArray()).joinToString("") { "%02x".format(it) }
+
 /** A single checksummed file replaced by synced temp-file rename, then read back. */
-internal class AtomicRecord(private val dir: File, name: String, private val schema: Int) {
+internal class AtomicRecord(private val dir: File, name: String, private val schema: Int,
+    private val directorySync: () -> DirectorySync = { PlatformDirectorySync }) {
     private val file = File(dir, "$name.rec")
 
     fun exists() = file.exists()
@@ -767,7 +1094,11 @@ internal class AtomicRecord(private val dir: File, name: String, private val sch
         null
     }
 
-    /** [afterRename] runs between the rename and the readback. */
+    /**
+     * [afterRename] runs between the rename and the readback. False unless the directory entry was
+     * synced too: a rename is not durable until its directory is (PLA-143 R1). The rename may still be
+     * visible after a false result, so callers decide from what reads back.
+     */
     fun write(payload: ByteArray, afterRename: () -> Unit): Boolean = try {
         if (!dir.isDirectory && !dir.mkdirs()) throw IOException("no directory")
         val temp = File(dir, "${file.name}.tmp")
@@ -777,14 +1108,39 @@ internal class AtomicRecord(private val dir: File, name: String, private val sch
         }
         java.nio.file.Files.move(temp.toPath(), file.toPath(),
             java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
-        try {
-            java.nio.channels.FileChannel.open(dir.toPath(), java.nio.file.StandardOpenOption.READ).use { it.force(true) }
-        } catch (_: IOException) {
-            // Directory sync is not supported everywhere; the file contents are already synced.
-        }
+        val synced = try { directorySync().sync(dir); true } catch (_: IOException) { false }
         afterRename()
-        read()?.contentEquals(payload) == true
+        synced && read()?.contentEquals(payload) == true
     } catch (_: IOException) {
         false
     }
+
+    /**
+     * [write], or if the file already holds [payload], a directory sync alone: content found on disk
+     * may come from an earlier write whose rename was never synced, so it is not durable yet (PLA-188 R2).
+     */
+    fun ensure(payload: ByteArray): Boolean =
+        if (read()?.contentEquals(payload) == true) syncDirectory() else write(payload) {}
+
+    /** The file's raw bytes, or null if it does not exist. Throws if it exists but cannot be read. */
+    fun snapshot(): ByteArray? = if (file.exists()) file.readBytes() else null
+
+    /** Puts back exactly [raw] (null: no file), with the directory synced. True only if that is durable. */
+    fun restore(raw: ByteArray?): Boolean = try {
+        when {
+            raw == null -> (!file.exists() || file.delete()) && !file.exists() && syncDirectory()
+            file.exists() && file.readBytes().contentEquals(raw) -> syncDirectory()
+            else -> {
+                val temp = File(dir, "${file.name}.tmp")
+                java.io.FileOutputStream(temp).use { out -> out.write(raw); out.fd.sync() }
+                java.nio.file.Files.move(temp.toPath(), file.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                syncDirectory() && file.readBytes().contentEquals(raw)
+            }
+        }
+    } catch (_: IOException) {
+        false
+    }
+
+    private fun syncDirectory(): Boolean = try { directorySync().sync(dir); true } catch (_: IOException) { false }
 }

@@ -21,7 +21,7 @@
 - **Versions.** "Reviewed against" is the newest version the sources showed on 2026-10-08. The AE records the
   version actually installed on the test phone in B-Q4 (`dumpsys package <pkg> | grep versionName`); if it
   differs, this file is updated and the note re-read.
-- the trusted person's must-have apps are **Gmail and Outlook** (Beaux, Telegram 4448/4451, recorded in the approval packet,
+- The partner's must-have apps are **Gmail and Outlook** (Beaux, Telegram 4448/4451, recorded in the approval packet,
   decision 4; passed on by the Lead on PLA-12). Their entries were added on 2026-10-08, after the first batch. How
   each one opens links is marked *to confirm in PLA-5 B-Q4* until PLA-5 reports it.
 
@@ -199,7 +199,7 @@
 
 ## Gmail
 
-the trusted person's must-have. **Preinstalled on the Motorola**, so "adding" it means Plainphone stops hiding it; there is
+The partner's must-have. **Preinstalled on the Motorola**, so "adding" it means Plainphone stops hiding it; there is
 nothing to download.
 
 - **Package:** `com.google.android.gm` · **Reviewed against:** 2026.09.28.992490113.Release, 8 Oct 2026
@@ -231,12 +231,12 @@ nothing to download.
     links go with the tabs off.)*
   - **Gemini in Gmail** (summaries, drafting replies) has been reported reaching personal accounts on Android
     in 2026 ([CO/AI, citing Mishaal Rahman](https://getcoai.com/news/gemini-ai-may-come-to-personal-gmail-accounts-on-android)).
-    Whether it is on the trusted person's account in Canada, and whether it can be turned off, is unknown. *(To confirm.)*
+    Whether it is on the partner's account in Canada, and whether it can be turned off, is unknown. *(To confirm.)*
   - **"Manage your Google Account"** (tap the profile picture) opens Google's account pages from Google Play
     services. Those pages contain links to Google help and policies. Play services isn't on the lock-task list,
     so the in-task block flag should stop it. *(Inference; to confirm in B-Q4.)* **Help & feedback** is the
     same.
-  - **Adding another mail account inside Gmail** (for example the trusted person's Outlook address) goes through Android's
+  - **Adding another mail account inside Gmail** (for example the partner's Outlook address) goes through Android's
     accounts, which Plainphone blocks after setup. This is expected to fail. *(Inference from the device-lockdown
     spec; to confirm.)*
 - **Sign-in:** none needed. Gmail uses the Google account signed in at setup (step 3).
@@ -247,7 +247,7 @@ nothing to download.
 
 ## Outlook (Microsoft)
 
-the trusted person's must-have. **It has a known way onto the web, and Beaux has accepted it** (Telegram 4463, 2026-10-08;
+The partner's must-have. **It has a known way onto the web, and Beaux has accepted it** (Telegram 4463, 2026-10-08;
 ADR 0001 Risk 3, commit `8e61a21`). Outlook stays in the catalog.
 
 - **Package:** `com.microsoft.office.outlook` · **Reviewed against:** **5.2639.2** (versionCode 72639116), tested
@@ -284,10 +284,10 @@ ADR 0001 Risk 3, commit `8e61a21`). Outlook stays in the catalog.
     Where a tapped ad goes is *to confirm after sign-in*.
   - **Copilot** is in Outlook for Microsoft 365 Personal or Family subscribers
     ([Microsoft support](https://support.microsoft.com/en-us/office/sharing-copilot-in-outlook-cf2656c0-57f9-4962-97d7-ba0c7b74858a)).
-    *(To confirm, only if the trusted person has a subscription.)*
+    *(To confirm, only if the partner has a subscription.)*
 - **Sign-in:**
   - **Adding a Google account to Outlook doesn't work under lockdown.** "ADD GOOGLE ACCOUNT" hands off to Google
-    Play services, which is blocked; Outlook goes back to its start screen, with no web fallback (B-Q4). If the trusted person
+    Play services, which is blocked; Outlook goes back to its start screen, with no web fallback (B-Q4). If the partner
     reads her Gmail in Outlook, that account can only be added in a supervised window, which the MVP doesn't have
     yet ([README.md](README.md#open-questions-for-the-lead), question 7).
   - **A Microsoft account** (Outlook.com, Hotmail, work) signs in through Outlook's own screens. Not yet tested.
@@ -325,5 +325,5 @@ For each app above, record on the XT2415 with the in-task block flag on:
 8. For Outlook: **before sign-in done** (5.2639.2: Privacy & Cookies web view found and accepted; Google sign-in
    blocked). After sign-in: can a Microsoft account sign in with adding accounts blocked, and do contacts and
    calendar sync? Is Privacy & Cookies (or another web view) reachable from Settings once signed in? Where do a
-   link in an email and an ad go? Which account type does the trusted person use (ask Beaux)? On every new Outlook version,
+   link in an email and an ad go? Which account type does the partner use (ask Beaux)? On every new Outlook version,
    repeat the Privacy & Cookies check; anything easier goes back to Beaux.

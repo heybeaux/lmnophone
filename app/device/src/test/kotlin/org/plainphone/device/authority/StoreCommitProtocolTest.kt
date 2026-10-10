@@ -53,7 +53,8 @@ class StoreCommitProtocolTest {
         return store.credentials.compareAndSet(current, selfManaged(current.revision + 1, failures))
     }
 
-    // F1: whichever file fails, true means the new record is durable and false means the old one still is.
+    // F1: whichever file fails, true means the new record is durable. Here the store can still read its
+    // directory, so a false also resolves to the old record (PLA-160: in general false is only "not acknowledged").
     @Test fun everyFailedFileWriteReportsWhatIsOnDisk() {
         for (name in listOf("authority-a", "authority-b", "fence-a", "fence-b")) {
             val dir = tmp.newFolder(); val store = initialized(dir)
@@ -86,7 +87,8 @@ class StoreCommitProtocolTest {
         assertEquals(0L, open(dir).credentials.read()!!.revision)
     }
 
-    // PLA-148: one directory-wide write denial at any point. The result is exactly what reads back,
+    // PLA-148: one directory-wide write denial (search kept) at any point. The store can still read,
+    // so the result is exactly what reads back,
     // the record is never older than acknowledged, and a refused write never surfaces after later loss.
     @Test fun directoryWriteDenialAtEveryPointReportsExactlyWhatReadsBack() {
         for (point in WritePoint.entries) {
@@ -193,8 +195,8 @@ class StoreCommitProtocolTest {
         }
     }
 
-    // PLA-131 F1.b: false on the next commit keeps the previously acknowledged record readable.
-    @Test fun falseOnNextCommitMustKeepPreviouslyAcknowledgedRecord() {
+    // PLA-131 F1.b: a corrupt readback on the next commit never rolls back past the acknowledged record.
+    @Test fun corruptReadbackOnNextCommitNeverRollsBackTheAcknowledgedRecord() {
         val dir = tmp.newFolder(); val store = initialized(dir)
         File(dir, "fence-b.rec.tmp").mkdir()
         val acknowledged = if (bump(store, 12)) 1L else 0L
@@ -207,8 +209,9 @@ class StoreCommitProtocolTest {
     }
 
     // Every combination of failed writes, then immediately the loss of any one or two files, or a
-    // failed next write: never older than acknowledged, and false always keeps the acknowledged record.
-    @Test fun anyFailedWriteThenAnyLossNeverRollsBackAndFalseKeepsTheAcknowledgedRecord() {
+    // failed next write: never older than acknowledged. With a readable directory these blocked files
+    // resolve inside the store, so false reads the acknowledged record (see FalseNotAcknowledgedTest).
+    @Test fun anyFailedWriteThenAnyLossNeverRollsBackAndAResolvedFalseReadsTheAcknowledgedRecord() {
         val blocks = listOf(emptyList<String>()) + files.map { listOf(it) } + listOf(listOf("fence-b", "authority-b"))
         val losses = files.map { listOf(it) } + files.flatMapIndexed { i, a -> files.drop(i + 1).map { listOf(a, it) } }
         for (blocked in blocks) {

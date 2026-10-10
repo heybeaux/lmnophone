@@ -3,9 +3,13 @@
 package org.plainphone.device.storage
 
 import java.io.File
+import java.io.IOException
+import java.nio.channels.FileChannel
+import java.nio.file.StandardOpenOption
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -124,5 +128,44 @@ class FilePolicyStoreTest {
     @Test fun reportsFailureWhenTheDirectoryCannotBeWritten() {
         val notADir = tmp.newFile("blocked")
         assertFalse(FilePolicyStore(notADir).write(policy("com.example.maps")))
+    }
+
+    // --- A failed directory sync is never acknowledged (PLA-232 finding 1) ---
+    // False means "not acknowledged", not "nothing changed": the new bytes may already be visible.
+
+    /** Leaves write/search permission but makes opening [d] for sync fail; checks that it does. */
+    private fun denySync(d: File) {
+        assertTrue(d.setReadable(false, false))
+        try {
+            FileChannel.open(d.toPath(), StandardOpenOption.READ).use { }
+            fail("control: opening the directory for sync must fail")
+        } catch (_: IOException) { }
+    }
+
+    @Test fun failedSyncAfterThePrimaryRenameIsNotAcknowledged() {
+        val s = FilePolicyStore(dir) { denySync(dir) }
+        try { assertFalse(s.write(policy("com.example.maps"))) } finally { dir.setReadable(true, true) }
+    }
+
+    @Test fun failedSyncAfterTheBackupRenameIsNotAcknowledged() {
+        assertTrue(store().write(policy("com.example.maps")))
+        var renames = 0
+        // The first rename is the backup. Only its sync is denied; the save stops there.
+        val s = FilePolicyStore(dir) { if (++renames == 1) denySync(dir) else dir.setReadable(true, true) }
+        try { assertFalse(s.write(policy("com.example.bank"))) } finally { dir.setReadable(true, true) }
+        assertEquals(1, renames)
+    }
+
+    @Test fun failedSyncOfANewDirectoryEntryIsNotAcknowledged() {
+        val parent = tmp.newFolder("parent")
+        denySync(parent)
+        try { assertFalse(FilePolicyStore(File(parent, "policy")).write(policy("com.example.maps"))) }
+        finally { parent.setReadable(true, true) }
+    }
+
+    @Test fun unacknowledgedWriteMayStillBeVisible() {
+        val s = FilePolicyStore(dir) { denySync(dir) }
+        try { assertFalse(s.write(policy("com.example.maps"))) } finally { dir.setReadable(true, true) }
+        assertEquals(setOf("com.example.maps"), names(store().read()))
     }
 }

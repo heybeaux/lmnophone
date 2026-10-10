@@ -5,6 +5,14 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- The 15-minute re-apply is an exact alarm (ReapplyAlarm). -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+
+
     <!-- Lets the home screen open the listed apps (package visibility, API 30+). -->
     <queries>
         <intent>
@@ -18,16 +26,20 @@
       until Q7 is proven on the spare.
     -->
     <application
+        android:name=".PlainphoneApp"
         android:allowBackup="false"
         android:testOnly="true"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
+        <!-- Home. if_whitelisted starts lock task as the task launches, before its first frame. -->
         <activity
             android:name=".MainActivity"
+            android:directBootAware="true"
             android:exported="true"
             android:launchMode="singleTask"
+            android:lockTaskMode="if_whitelisted"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -40,9 +52,26 @@
             </intent-filter>
         </activity>
 
-        <!-- Flipped after every unhide (mitigation B); never receives anything. -->
+        <!-- Direct Boot aware: the locked-boot re-apply runs before the first unlock. -->
         <receiver
-            android:name=".preview.FlushMarker"
+            android:name=".boot.BootReceiver"
+            android:directBootAware="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".boot.ReapplyAlarm"
+            android:directBootAware="true"
+            android:exported="false" />
+
+        <receiver
+            android:name=".boot.FlushMarker"
+            android:enabled="false"
             android:exported="false" />
 
         <!-- Setup script commands. DUMP: only the adb shell can send these. -->

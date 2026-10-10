@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # THROWAWAY SPIKE (PLA-5). Helpers for driving the spike DPC.
-# Usage: SERIAL=SPARE_DEVICE_SERIAL tools/pp.sh <subcommand> [args]
+# Usage: SERIAL='approved-device-serial' tools/pp.sh <subcommand> [args]
 #   cmd "<dpc command line>"   send a command to the spike DPC (see Commands.kt)
 #   top                        print the top resumed activity
 #   shot <file.png>            screenshot to file
@@ -8,8 +8,9 @@
 #   ui                         list visible texts
 #   log                        dump PPSPIKE + lock task log lines
 set -euo pipefail
-SERIAL="${SERIAL:-SPARE_DEVICE_SERIAL}"
-case "$SERIAL" in emulator-5590|emulator-5604) echo "refusing: $SERIAL belongs to another team" >&2; exit 2;; esac
+: "${SERIAL:?Set SERIAL to the explicitly approved test device}"
+case "$SERIAL" in emulator-*) echo "refusing: physical-device helper requires an approved physical device" >&2; exit 2;; esac
+export SERIAL
 a() { adb -s "$SERIAL" "$@"; }
 sub="$1"; shift
 case "$sub" in

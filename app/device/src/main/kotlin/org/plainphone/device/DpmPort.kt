@@ -9,7 +9,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.UserManager
 import org.plainphone.core.PackageName
 import org.plainphone.policy.LockTaskFeature
@@ -18,8 +17,8 @@ import org.plainphone.policy.Restriction
 /**
  * [DevicePolicyPort] over DevicePolicyManager and PackageManager, for a Device Owner [admin] in the
  * calling user. [flushComponent] is a no-op component of the same app, flipped between explicit
- * ENABLED and DISABLED with `DONT_KILL_APP | SYNCHRONOUS` (API 33+). Below API 33 there is no
- * SYNCHRONOUS flag, so the component reads as unknown and every flip is reported as failed.
+ * ENABLED and DISABLED with `DONT_KILL_APP | SYNCHRONOUS`. SYNCHRONOUS exists from API 30, which is
+ * also minSdk, so no API gate is needed.
  * Reading other packages needs QUERY_ALL_PACKAGES (declared in this module's manifest).
  */
 class DpmPort(
@@ -49,6 +48,15 @@ class DpmPort(
         )
     }
 
+    override fun uid(name: PackageName): Int? {
+        val info = try {
+            pm.getApplicationInfo(name.value, PackageManager.MATCH_UNINSTALLED_PACKAGES or PackageManager.MATCH_DISABLED_COMPONENTS)
+        } catch (e: PackageManager.NameNotFoundException) {
+            return null
+        }
+        return if (info.flags and ApplicationInfo.FLAG_INSTALLED == 0) null else info.uid
+    }
+
     override fun setHidden(name: PackageName, hidden: Boolean) {
         dpm.setApplicationHidden(admin, name.value, hidden)
     }
@@ -57,6 +65,12 @@ class DpmPort(
         dpm.setPackagesSuspended(admin, arrayOf(name.value), false)
     }
 
+    /**
+     * Best effort. enableSystemApp calls installExistingPackageAsUser; it does not clear a user-disabled
+     * state (PLA-232: Chrome stayed at state 3 on API 35). No public DevicePolicyManager method sets an
+     * application's enabled state, and PackageManager.setApplicationEnabledSetting on another package
+     * needs CHANGE_COMPONENT_ENABLED_STATE (signature|privileged). The applier reports what stays disabled.
+     */
     override fun enable(name: PackageName) {
         dpm.enableSystemApp(admin, name.value)
     }
@@ -80,7 +94,7 @@ class DpmPort(
         dpm.setPermittedAccessibilityServices(admin, if (only) emptyList() else null)
     }
 
-    override fun lockTaskPackages(): Set<PackageName> = dpm.getLockTaskPackages(admin).mapTo(mutableSetOf(), ::PackageName)
+    override fun lockTaskPackages(): Set<PackageName> = lockTaskPackageNames(dpm.getLockTaskPackages(admin))
     override fun setLockTaskPackages(packages: Set<PackageName>) {
         dpm.setLockTaskPackages(admin, packages.map { it.value }.sorted().toTypedArray())
     }
@@ -109,7 +123,6 @@ class DpmPort(
     }
 
     override fun flushComponentEnabled(): Boolean? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return null
         return when (pm.getComponentEnabledSetting(flushComponent)) {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT -> false
@@ -118,7 +131,6 @@ class DpmPort(
     }
 
     override fun setFlushComponentEnabled(enabled: Boolean) {
-        check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { "SYNCHRONOUS needs API 33" }
         val state = if (enabled) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
         pm.setComponentEnabledSetting(flushComponent, state, PackageManager.DONT_KILL_APP or PackageManager.SYNCHRONOUS)
     }
@@ -126,7 +138,7 @@ class DpmPort(
     private fun homeIntent() = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
 
     companion object {
-        /** UserManager keys. DISALLOW_CONFIG_DEFAULT_APPS exists from API 34; older builds will not read it back. */
+        /** UserManager keys. DISALLOW_CONFIG_DEFAULT_APPS exists from API 34; RestrictionFilter.forSdk leaves it out below. */
         fun key(r: Restriction): String = when (r) {
             Restriction.DISALLOW_SAFE_BOOT -> UserManager.DISALLOW_SAFE_BOOT
             Restriction.DISALLOW_FACTORY_RESET -> UserManager.DISALLOW_FACTORY_RESET

@@ -11,5 +11,8 @@ android {
         // Only v1 is test-only: an app session cannot install a test-only APK (INSTALL_FAILED_TEST_ONLY).
         manifestPlaceholders["testOnly"] = (versionCode == 1).toString()
     }
+    // PLA-140 X6: -Ppad=1 adds a large incompressible asset (pad/) so the install takes long enough to race.
+    if (findProperty("pad") != null) sourceSets["main"].assets.srcDir("pad")
+    androidResources { noCompress += "bin" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 }

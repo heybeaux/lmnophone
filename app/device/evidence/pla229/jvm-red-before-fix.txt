@@ -1,0 +1,44 @@
+PLA-235 (fix round 2 for the PLA-229 review): red runs before the fix.
+JDK 17, offline Gradle, from app/. The code under test (DeviceApprovalEffects.kt) is unchanged
+between 2d11e4b and the base of this round (dbba288); `git diff 2d11e4b dbba288 -- <that file>` is empty.
+
+Commit 410af4f (tests only: FakeDevicePolicyPort, UnknownUidExclusionTest, VerifierRoundTwoProbeTest)
+./gradlew --offline :device:testDebugUnitTest --tests '*UnknownUidExclusionTest' --tests '*VerifierRoundTwoProbeTest' --tests '*SharedUidExclusionTest'
+16 tests completed, 6 failed
+
+SharedUidExclusionTest 4 tests, 0 failures (unchanged controls)
+UnknownUidExclusionTest 10 tests, 4 failures
+  FAIL anApprovalRefusesAListedPackageWithAnAbsentUid  expected:<NOT_READY> but was:<APPROVED>
+  FAIL anEditRefusesAListedPackageWithAnAbsentUid      expected:<NOT_READY> but was:<PERMISSIONS_CHANGED>
+  FAIL anAllowedSiblingWithAnAbsentUidKeepsItsAccessAndBlocksTheWindow  expected:<NOT_READY> but was:<APPROVED>
+  FAIL theWindowOpensAgainOnceEveryUidReads           expected:<NOT_READY> but was:<APPROVED>
+  ok   anApprovalRefusesAListedPackageWithAThrowingUid, anEditRefusesAListedPackageWithAThrowingUid,
+       anApprovalRefusesACandidateWithAnAbsentUid, anApprovalRefusesACandidateWithAThrowingUid,
+       anEditRefusesACandidateWithAnAbsentUid, anEditRefusesACandidateWithAThrowingUid
+       (controls: round 1 already refused these)
+VerifierRoundTwoProbeTest 2 tests, 2 failures
+  FAIL nullUidOfListedPackageMustRefuseBeforeUnhide   cannot prove exclusion with a null allowed UID
+       stdout: null allowed UID: opened=true hidden=false permitted=false home=false
+  FAIL failedPublishMustVerifyHomeRemoval             Home containment must read back removal
+       stdout: failed publish: hidden=true permitted=false home=true removalReads=0
+
+Second test commit (VerifiedContainmentTest)
+./gradlew --offline :device:testDebugUnitTest --tests '*VerifiedContainmentTest'
+Compilation fails: Unresolved reference 'unresolvedCleanup' (VerifiedContainmentTest.kt:71),
+Unresolved reference 'Exposure' (:87). The failed-apply containment result had no way to report
+which exclusions were unverified; the Boolean was discarded (DeviceApprovalEffects.kt:142).
+
+Commit 00335e4 (tests only: the reopen control moved to the adapter; a refused approval stays
+PREPARING until onStart). Run with VerifiedContainmentTest set aside, since it cannot compile yet:
+./gradlew --offline :device:testDebugUnitTest --tests '*UnknownUidExclusionTest'
+10 tests, 4 failures: the same three absent-listed-UID cases, and
+  FAIL theWindowOpensAgainOnceEveryUidReads  (assertFalse(open) with an absent dialer UID: it opened)
+
+After the fix (next commit):
+./gradlew --offline :device:testDebugUnitTest :policy:test :device:compileDebugAndroidTestKotlin
+BUILD SUCCESSFUL. device 477 tests, 0 failures, 0 errors, 0 skipped; policy 588 tests, 0 failures.
+UnknownUidExclusionTest 10/10, VerifierRoundTwoProbeTest 2/2, VerifiedContainmentTest 5/5,
+SharedUidExclusionTest 4/4, FinalFlushContainmentTest 3/3.
+Probe stdout after the fix:
+  null allowed UID: opened=false hidden=true permitted=false home=false
+  failed publish: hidden=true permitted=false home=true removalReads=1   (reported as unresolved HOME)

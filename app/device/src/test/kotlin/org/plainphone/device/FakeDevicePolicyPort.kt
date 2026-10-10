@@ -27,6 +27,8 @@ class FakeDevicePolicyPort(
     val flips = mutableListOf<Pair<Boolean?, Boolean>>()
 
     var restrictionsStick = true
+    /** Restriction keys this simulated build does not know: adding them is silently ignored. */
+    val unknownRestrictions = mutableSetOf<Restriction>()
     var hidesStick = true
     var lockTaskSticks = true
     /** How many flip calls in a row are ignored (the state does not change). */
@@ -54,15 +56,21 @@ class FakeDevicePolicyPort(
         write("packages", "unsuspend ${name.value}")
         state[name]?.let { state[name] = it.copy(suspended = false) }
     }
+    /**
+     * Whether [enable] clears a disabled state. Off by default, matching what PLA-232 observed on API 35
+     * (enableSystemApp left a user-disabled Chrome at state 3). A fake cannot prove Android behaviour;
+     * that is checked on the emulator (DisabledPackageCheck).
+     */
+    var enableRepairs = false
     override fun enable(name: PackageName) {
         write("packages", "enable ${name.value}")
-        state[name]?.let { state[name] = it.copy(enabled = true) }
+        if (enableRepairs) state[name]?.let { state[name] = it.copy(enabled = true) }
     }
 
     override fun restrictions(): Set<Restriction> { touch("restrictions"); return restrictionSet.toSet() }
     override fun addRestriction(restriction: Restriction) {
         write("restrictions", "restrict ${restriction.name}")
-        if (restrictionsStick) restrictionSet += restriction
+        if (restrictionsStick && restriction !in unknownRestrictions) restrictionSet += restriction
     }
     override fun systemInputMethodsOnly(): Boolean { touch("inputMethods"); return inputMethodsSystemOnly }
     override fun setSystemInputMethodsOnly(only: Boolean) {
@@ -85,6 +93,21 @@ class FakeDevicePolicyPort(
 
     override fun home(): PackageName? { touch("home"); return homePackage }
     override fun setHome(name: PackageName) { write("home", "home ${name.value}"); homePackage = name }
+
+    /**
+     * App UIDs; a package without an entry gets its own. Packages in [uidUnreadable] throw; packages in
+     * [uidAbsent] read as not installed (null), as `DpmPort.uid` does for an absent package.
+     */
+    val uids = mutableMapOf<PackageName, Int>()
+    val uidUnreadable = mutableSetOf<PackageName>()
+    val uidAbsent = mutableSetOf<PackageName>()
+    private val assigned = mutableMapOf<PackageName, Int>()
+    override fun uid(name: PackageName): Int? {
+        touch("uid")
+        if (name in uidUnreadable) throw IllegalStateException("uid of ${name.value} unreadable")
+        if (name !in state || name in uidAbsent) return null
+        return uids[name] ?: assigned.getOrPut(name) { 10_000 + assigned.size }
+    }
 
     override fun flushComponentEnabled(): Boolean? { touch("flush"); return flushComponent }
     override fun setFlushComponentEnabled(enabled: Boolean) {

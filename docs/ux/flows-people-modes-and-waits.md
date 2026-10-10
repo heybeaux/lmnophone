@@ -39,7 +39,7 @@ wording is in the screen named.
 
 | String | Where it shows | Source |
 |---|---|---|
-| Who are you? | PIN screen, two trusted people ([M1](#m1-who-are-you)) | C1 ("Who are you? Beaux / the trusted person"); TPC "up to two trusted people" |
+| Who are you? | PIN screen, two trusted people ([M1](#m1-who-are-you)) | C1 ("Who are you? First trusted person / Second trusted person"); TPC "up to two trusted people" |
 | You are equals. Either of you can approve apps, or turn Plainphone off. | Setup, second trusted person ([S2c](flows-setup.md#s2-whos-who-step-2-of-8)) | C1. **Flag 1** |
 | Plainphone will turn off after {time}. Tap to cancel. | Home notice line | CHS |
 | A change to trusted people is waiting. Tap to cancel. | Home notice line | CHS |
@@ -339,9 +339,35 @@ people in charge don't change.
   - "Stop this change" shows only while it can still be stopped (C3). Once the new people are in charge, it's gone.
   - If stopping can't finish: "Still stopping. Plainphone keeps trying, and won't start the change again. Call
     {helper}." **OK**. The item stays.
-  - The PIN-free Cancel never stops a stuck change. Only a current trusted person's PIN does.
+  - The PIN-free Cancel never stops a stuck change. Only a current trusted person's PIN does (in self-managed mode,
+    the user's PIN).
   - The user sees "Plainphone needs attention" on the home screen (U3), with no detail beyond "Plainphone is
     finishing a change and needs {helper} to look at it." (new U3 `{reason}` row).
+  - **Supervised → self-managed is stuck:** the body is as above. The Stop confirmation says "{user}'s new PIN is
+    thrown away" instead of "{new}'s details are thrown away".
+
+### M4a. Self-managed → supervised is stuck
+
+[PLA-130](/PLA/issues/PLA-130). There are no trusted people yet: the user still holds the PIN, and {new} has no say
+until the change is done. So M4 changes for this one kind. The item shows at the top of **Your settings**
+([M7a](#m7a-your-settings)), with the same exact text, and the user's PIN opens it.
+
+- **Title:** Reset protection not updated – call the helper
+- **Body:**
+  Plainphone is trying to switch to {new} looking after this phone, but Google's reset protection didn't accept
+  {new}'s account yet. Plainphone keeps trying.
+  Until this works, nothing changes: you still look after this phone, with the same PIN, waits and limits. Calls,
+  texts and Emergency work.
+  Until this is fixed, we can't say whose Google account a wipe would ask for.
+- **Primary:** OK
+- **Secondary:** Stop this change → your PIN (T1a, self-managed) → "Stop this change? Plainphone puts reset
+  protection back for your Google account. {new}'s PIN and details are thrown away, and you keep looking after
+  this phone." **Stop it** / **Keep trying** → "Stopping…" → "Stopped. Nothing changed. You still look after this
+  phone." **OK**.
+- **Notes:** the other M4 notes apply ("Still stopping…" unchanged). {new}'s PIN can't stop it: it does nothing
+  until the change is done. **No texts** for stuck or stopped in this case: there are no trusted people to send
+  them to, and {new} gets no texts until the change is done ([M9](#m9-texts),
+  [Open question 4](#open-questions-for-the-lead)).
 
 ### Repair (credential store damaged)
 
@@ -619,6 +645,10 @@ replies (tasks.md 1.1).
 | Play Store or settings opened | `Plainphone: {name}'s PIN opened {kind} on {user}'s phone for {n} minutes.` | `…your PIN opened…` with "If that wasn't you, change your PIN." |
 | Plainphone update installed | `Plainphone: {name}'s PIN installed a Plainphone update on {user}'s phone.` | `…your PIN installed…` |
 | 10 wrong entries of one PIN | `Plainphone: {name}'s PIN on {user}'s phone was entered wrong 10 times. If that wasn't {name}, have a look together when you can.` | `Plainphone: your PIN on {user}'s phone was entered wrong 10 times. If that wasn't you, have a look together when you can.` |
+
+**Stuck and Stopped when switching from self-managed to supervised** ([M4a](#m4a-self-managed--supervised-is-stuck)):
+neither text is sent. "The trusted people are still {everyone}" would be untrue, and there is nobody to send it to.
+The user sees M4a on the phone. When the change is done, the Done text goes to {new} as usual.
 
 **Texts in [README.md](README.md#texts-plainphone-sends) that change with two people:** the app request ("To add it,
 one of you needs to be with {user} and the phone. On the phone: More, then 'For {everyone}'.") and the monthly
