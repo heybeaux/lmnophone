@@ -135,7 +135,7 @@ class DpmPort(
     private fun homeIntent() = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
 
     companion object {
-        /** UserManager keys. DISALLOW_CONFIG_DEFAULT_APPS exists from API 34; older builds will not read it back. */
+        /** UserManager keys. DISALLOW_CONFIG_DEFAULT_APPS exists from API 34; RestrictionFilter.forSdk leaves it out below. */
         fun key(r: Restriction): String = when (r) {
             Restriction.DISALLOW_SAFE_BOOT -> UserManager.DISALLOW_SAFE_BOOT
             Restriction.DISALLOW_FACTORY_RESET -> UserManager.DISALLOW_FACTORY_RESET

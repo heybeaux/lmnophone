@@ -53,7 +53,7 @@ class PolicyRuntime private constructor(private val context: Context) {
         FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT),
         port, SESSION_PACKAGES,
         { locked -> PolicyEngine.decide(assembler.assemble().input.copy(lockedBoot = locked)) },
-        BuildRestrictions.filter,
+        BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT),
     )
     private val gateState = MutableStateFlow(HomeGate.CHECKING)
     private val packageEventQueued = AtomicBoolean(false)
