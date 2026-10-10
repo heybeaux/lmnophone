@@ -692,8 +692,14 @@ class JointAuthorityStore internal constructor(
      */
     fun migrate(): Boolean = coordinator.run(false) {
         val intents = migrateIntents()
-        migrateRecord() && intents
+        val record = migrateRecord()
+        // Readiness also covers renames an earlier failed attempt left unsynced, which a retry may no
+        // longer find to rewrite (PLA-220 R1): one successful directory sync after all of them.
+        record && intents && syncDirectory()
     }
+
+    /** Callers hold the coordinator. Every record, intent and reservation folder entry lives in [dir]. */
+    private fun syncDirectory(): Boolean = try { directorySync.sync(dir); true } catch (_: IOException) { false }
 
     /** Callers hold the coordinator. */
     private fun migrateRecord(): Boolean {
