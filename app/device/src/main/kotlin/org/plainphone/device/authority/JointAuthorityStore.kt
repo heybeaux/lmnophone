@@ -419,6 +419,12 @@ class JointAuthorityStore internal constructor(
     }
 
     /**
+     * A new, never-reused epoch ID for the proven running clock, or "" if none can be reserved durably;
+     * the clock treats a blank epoch as no reading.
+     */
+    fun reserveEpoch(): String = coordinator.run(null) { reserve("epoch") { "epoch-" + hex(entropy(16)) } } ?: ""
+
+    /**
      * Callers hold the coordinator. Up to [ATTEMPTS] draws; null if none could be reserved durably.
      * A value is handed out only after its file contents, the `reserved/` folder entry and the folder's
      * own entry in [dir] are all synced (PLA-143 R1). Any failure refuses; the created file still marks
