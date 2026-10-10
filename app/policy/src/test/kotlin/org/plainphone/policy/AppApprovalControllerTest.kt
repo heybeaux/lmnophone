@@ -31,6 +31,7 @@ class AppApprovalControllerTest {
     }, SecretEntropy { size -> ByteArray(size) { (++entropy).toByte() } }, clock)
     private var state: AppApprovalState? = AppApprovalState()
     private val events = mutableListOf<String>()
+    private class SimulatedProcessDeath : Error()
     private var crash: String? = null
     private var failure: String? = null
     private var beforeSave: (() -> Unit)? = null
@@ -38,7 +39,7 @@ class AppApprovalControllerTest {
     private fun event(name: String): Boolean {
         events += name
         atEvent?.invoke(name)
-        if (crash == name) error("simulated process death")
+        if (crash == name) throw SimulatedProcessDeath()
         return failure != name
     }
     private val store = object : AppApprovalStore {
@@ -85,6 +86,9 @@ class AppApprovalControllerTest {
     private var permissionReadback = mapOf(camera to PermissionReadback.GRANTED)
     private var hidden = true
     private var appliedLockTask = emptySet<PackageName>()
+    private var appliedHome = emptySet<PackageName>()
+    private val containmentRequests = mutableListOf<Set<PackageName>>()
+    private var containmentWorks = true
     private var poweredOff = false
     private var modelPermissions = false
     private var actualPermissions = emptyMap<PermissionName, PermissionReadback>()
@@ -138,10 +142,18 @@ class AppApprovalControllerTest {
             assertNotNull(state!!.apps[app], "unhide before persistent approval")
             assertTrue(app in plan.lockTaskPackages)
             if (!event("unhide")) return false
-            hidden = false; appliedLockTask = plan.lockTaskPackages
+            hidden = false; appliedLockTask = plan.lockTaskPackages; appliedHome = plan.unhide.intersect(plan.lockTaskPackages)
             return true
         }
         override fun readBackPolicy(plan: PolicyPlan) = event("policy-readback")
+        override fun containFailedActivation(packages: Set<PackageName>): Boolean {
+            containmentRequests += packages
+            if (!event("contain") || !containmentWorks) return false
+            appliedLockTask = appliedLockTask - packages
+            appliedHome = appliedHome - packages
+            if (app in packages) hidden = true
+            return event("contain-readback")
+        }
     }
     private var id = 0
     private fun controller() = AppApprovalController(store, { credentials }, vault, sessions, clock,
@@ -263,7 +275,7 @@ class AppApprovalControllerTest {
     @Test fun `startup revokes first and abandons uncommitted work but completes committed work`() {
         for (point in listOf("revoke", "protected", "session-readback", "save-preparing", "after-save-preparing", "hide", "permission", "permissions-readback", "save-committed", "after-save-committed", "unhide", "policy-readback", "save-finished", "after-save-finished")) {
             state = AppApprovalState(); setup(); val r = request(); val a = auth(r); crash = point
-            assertFailsWith<IllegalStateException> { controller.approve(r, a) }
+            assertFailsWith<SimulatedProcessDeath> { controller.approve(r, a) }
             val recoverHide = state!!.pending?.phase == AppApprovalPhase.PREPARING
             val committed = state!!.apps.isNotEmpty()
             crash = null; events.clear(); controller = controller()
@@ -425,7 +437,7 @@ class AppApprovalControllerTest {
             manifest = PermissionManifest(binding, 2, "build", originalManifest.permissions)
             val r = assertNotNull(controller.prepareWithdrawal(person)); val a = withdrawalAuth(r)
             crash = point
-            assertFailsWith<IllegalStateException>(point) { controller.withdrawPending(r, r.approvalId, a) }
+            assertFailsWith<SimulatedProcessDeath>(point) { controller.withdrawPending(r, r.approvalId, a) }
             val saved = state!!.pending?.phase == AppApprovalPhase.WITHDRAWING || state!!.pending == null
             crash = null; events.clear(); controller = controller()
             val result = controller.onStart()
@@ -643,7 +655,7 @@ class AppApprovalControllerTest {
             activeApproval(true)
             val r = assertNotNull(controller.prepareRemoval(app, person)); val a = removalAuth(r)
             crash = point
-            assertFailsWith<IllegalStateException>(point) { controller.removeApproved(r, r.approvalId, a) }
+            assertFailsWith<SimulatedProcessDeath>(point) { controller.removeApproved(r, r.approvalId, a) }
             val saved = state!!.pending?.phase == AppApprovalPhase.REMOVING || app !in state!!.apps
             crash = null; events.clear(); controller = controller()
             val result = controller.onStart()
@@ -782,7 +794,7 @@ class AppApprovalControllerTest {
             val oldId = state!!.apps.getValue(app).id
             val r = editRequest(); val a = editAuth(r)
             permissionReadback = mapOf(camera to PermissionReadback.DENIED); crash = point
-            assertFailsWith<IllegalStateException>(point) { controller.editPermissions(r, r.approvalId, a) }
+            assertFailsWith<SimulatedProcessDeath>(point) { controller.editPermissions(r, r.approvalId, a) }
             val durable = state!!.apps.getValue(app).id != oldId
             if (state!!.pending != null) assertFalse(app in PolicyEngine.decide(policy.copy(approvalState = state)).lockTaskPackages)
             val recoverHide = state!!.pending?.phase == AppApprovalPhase.EDITING
@@ -1017,4 +1029,126 @@ class AppApprovalControllerTest {
         assertEquals(1, f.state!!.receipts.size)
     }
 
+
+    private fun assertContained() {
+        assertEquals(setOf(app), containmentRequests.single())
+        assertTrue(hidden)
+        assertFalse(app in appliedLockTask)
+        assertFalse(app in appliedHome)
+        assertEquals(AppApprovalPhase.COMMITTED, state!!.pending!!.phase)
+        assertFalse(app in state!!.approvedPackages(policy.installed, policy.installedIdentities))
+    }
+
+    @Test fun `failed final readback contains approval and edit and resume retries full activation`() {
+        for (edit in listOf(false, true)) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            f.failure = "policy-readback"
+            assertEquals(AppApprovalOutcome.NOT_READY, action())
+            f.assertContained()
+            assertTrue(f.events.indexOf("policy-readback") < f.events.indexOf("contain"))
+            val receipts = f.state!!.receipts
+            f.failure = null; f.events.clear()
+            assertEquals(if (edit) AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.APPROVED, f.controller.resume())
+            assertTrue("unhide" in f.events && "policy-readback" in f.events)
+            assertFalse("contain" in f.events)
+            assertNull(f.state!!.pending); assertEquals(receipts, f.state!!.receipts)
+            assertFalse(f.hidden); assertTrue(f.app in f.appliedLockTask && f.app in f.appliedHome)
+        }
+    }
+
+    @Test fun `apply false and apply or readback exceptions contain both activation flows`() {
+        for (edit in listOf(false, true)) for (point in listOf("apply-false", "apply-throws", "readback-throws")) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            if (point == "apply-false") f.failure = "unhide"
+            else f.atEvent = { if (it == if (point == "apply-throws") "unhide" else "policy-readback") {
+                // The adapter may have made partial changes before throwing.
+                f.hidden = false; f.appliedLockTask += f.app; f.appliedHome += f.app
+                throw IllegalStateException("adapter failure")
+            } }
+            assertEquals(AppApprovalOutcome.NOT_READY, action(), "$edit $point")
+            f.assertContained()
+        }
+    }
+
+    @Test fun `post apply permission mismatch and invalid plan contain both activation flows`() {
+        for (edit in listOf(false, true)) for (point in listOf("permissions", "plan")) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            f.atEvent = { if (it == "policy-readback") {
+                if (point == "permissions") f.actualPermissions = emptyMap()
+                else f.policy = f.policy.copy(lockedBoot = true)
+            } }
+            assertEquals(AppApprovalOutcome.NOT_READY, action(), "$edit $point")
+            f.assertContained()
+        }
+    }
+
+    @Test fun `post apply permission and final CAS exceptions also contain activation`() {
+        for (edit in listOf(false, true)) for (point in listOf("permissions-visible", "save-finished")) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            f.atEvent = { if (it == point && "policy-readback" in f.events) throw IllegalStateException("post-apply failure") }
+            assertEquals(AppApprovalOutcome.NOT_READY, action())
+            f.assertContained()
+        }
+    }
+
+    @Test fun `final CAS failure contains both flows and retains committed retry`() {
+        for (edit in listOf(false, true)) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            f.failure = "save-finished"
+            assertEquals(AppApprovalOutcome.NOT_READY, action())
+            f.assertContained()
+            assertTrue(f.events.indexOf("save-finished") < f.events.indexOf("contain"))
+            f.failure = null
+            assertEquals(if (edit) AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.APPROVED, f.controller.resume())
+        }
+    }
+
+    @Test fun `failed or throwing containment never reports completion or verified containment`() {
+        for (edit in listOf(false, true)) for (point in listOf("false", "throw", "readback")) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            f.failure = "policy-readback"
+            when (point) {
+                "false" -> f.containmentWorks = false
+                "throw" -> f.atEvent = { if (it == "contain") throw IllegalStateException("containment failure") }
+                else -> f.atEvent = { if (it == "contain") f.failure = "contain-readback" }
+            }
+            assertEquals(AppApprovalOutcome.NOT_READY, action())
+            assertEquals(setOf(f.app), f.containmentRequests.single())
+            assertEquals(AppApprovalPhase.COMMITTED, f.state!!.pending!!.phase)
+            assertFalse("save-finished" in f.events)
+            if (point != "readback") {
+                assertFalse(f.hidden); assertTrue(f.app in f.appliedLockTask && f.app in f.appliedHome)
+            }
+        }
+    }
+
+    @Test fun `containment targets all discretionary activation packages and preserves floor access`() {
+        for (edit in listOf(false, true)) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            val extra = PackageName("test.existing")
+            val identity = ApprovalBinding(extra, setOf(f.signer))
+            val record = AppApprovalRecord("existing", PermissionSelection(PermissionManifest(identity, 1, "build", emptyList()), emptyMap()))
+            f.state = f.state!!.replacing(apps = f.state!!.apps + (extra to record))
+            f.policy = f.policy.copy(installed = f.policy.installed + InstalledPackage(extra, false, 1),
+                installedIdentities = f.policy.installedIdentities + identity)
+            f.failure = "policy-readback"
+            assertEquals(AppApprovalOutcome.NOT_READY, action())
+            assertEquals(setOf(f.app, extra), f.containmentRequests.single())
+            assertTrue(f.containmentRequests.single().intersect(setOf(f.home, f.sms, f.dialer, PLAY_PACKAGE)).isEmpty())
+            assertTrue(setOf(f.home, f.sms, f.dialer).all { it in f.appliedLockTask && it in f.appliedHome })
+            assertFalse(extra in f.appliedLockTask || extra in f.appliedHome)
+        }
+    }
+
+    @Test fun `successful activation and pre apply failure never request containment`() {
+        for (edit in listOf(false, true)) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            assertEquals(if (edit) AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.APPROVED, action())
+            assertTrue(f.containmentRequests.isEmpty())
+            val blocked = AppApprovalControllerTest(); val blockedAction = blocked.windowAction(edit)
+            blocked.failure = "save-committed"
+            assertEquals(AppApprovalOutcome.NOT_READY, blockedAction())
+            assertTrue(blocked.containmentRequests.isEmpty())
+        }
+    }
 }
