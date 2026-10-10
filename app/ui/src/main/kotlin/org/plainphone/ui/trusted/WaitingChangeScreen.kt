@@ -15,7 +15,7 @@ fun WaitingChangeScreen(state: WaitingChangeUiState, onEvent: (WaitingChangeEven
     val self = everyone == null
     val selfManaged = state.context != null && state.context.trustedPersonName == null
     val title = when (state.stage) {
-        WaitingStage.Details -> s(R.string.wait_title)
+        WaitingStage.Details -> s(if (state.context == null && state.turningOff) R.string.wait_turn_off_title else R.string.wait_title)
         WaitingStage.ConfirmCancel -> s(R.string.wait_cancel_title)
         WaitingStage.StillCancelling -> s(R.string.wait_still_cancelling)
         WaitingStage.Cancelled -> s(R.string.wait_cancelled)

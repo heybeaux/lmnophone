@@ -116,6 +116,7 @@
     <string name="admin_trusted_title">Let someone look after this phone?</string>
     <string name="admin_trusted_body">A trusted person will hold the PIN instead of you, and add apps with you. This waits 24 hours of the phone being on, and nothing can make it shorter. Until then, your waits and limits stay as they are, and the new person\'s PIN does nothing.</string>
     <string name="wait_title">A change is waiting</string>
+    <string name="wait_turn_off_title">LMNOPhone will turn off</string>
     <string name="wait_box">%1$s.</string>
     <string name="wait_started_by">Started with %1$s\'s PIN, %2$s at %3$s.</string>
     <string name="wait_started_self">You started this %1$s at %2$s.</string>
