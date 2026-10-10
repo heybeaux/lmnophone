@@ -63,6 +63,8 @@ def gate(check, args):
     elif check == "telecom-emergency-call":
         if env("MOCK_STUCK_CALL"):
             s["call"] = 2
+        if env("MOCK_CALL_RETURNS") and not s.get("returned"):
+            s["returns_in"] = 2  # reads idle twice, then the call is back (API 36, PLA-245)
         print("GATE telecom-emergency-call", verdict(check), "mock afterHangUp=mCallState=0")
     elif check == "hangup":
         if not env("MOCK_STUCK_CALL"):
@@ -104,6 +106,10 @@ elif a[:1] == ["shell"]:
     elif c[:2] == ["dpm", "remove-active-admin"]:
         s["owner"] = False
     elif c[:2] == ["dumpsys", "telephony.registry"]:
+        if s.get("returns_in"):
+            s["returns_in"] -= 1
+            if s["returns_in"] == 0:
+                s["call"], s["returned"] = 2, True
         print(f"    mCallState={s['call']}")
     elif c[:2] == ["dumpsys", "window"]:
         locked = s["pin"] and bool(env("MOCK_UNLOCK_FAIL"))
@@ -262,6 +268,13 @@ class HostGateTest(unittest.TestCase):
         self.assertNotIn("plainphone-ctlNoPhone.apk", log)
         st = self.state()
         self.assertEqual(([], False), (st["numbers"], st["owner"]))
+
+    def test_call_that_comes_back_after_reading_idle_is_ended(self):
+        rc, out = self.run_gate(MOCK_CALL_RETURNS="1")
+        self.assertEqual(5, rc, out)
+        self.assertIn("check hangup", self.adb_log())
+        self.assertNotIn("mCallState=2", _read(os.path.join(self.dir, "out", "debug.txt")))
+        self.assertEqual(0, self.state()["call"])
 
     def test_failed_unlock_stops_the_run_and_clears_the_pin(self):
         rc, out = self.run_gate(MOCK_UNLOCK_FAIL="1")
