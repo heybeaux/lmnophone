@@ -25,7 +25,10 @@ class BootReceiver : BroadcastReceiver() {
         }
         val pending = goAsync()
         ReapplyAlarm.schedule(context)
-        PolicyRuntime.get(context).reapply(reason) { pending.finish() }
+        PolicyRuntime.get(context).reapply(reason) {
+            if (reason == "locked-boot") LockedHome.start(context)
+            pending.finish()
+        }
     }
 }
 

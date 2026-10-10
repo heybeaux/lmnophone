@@ -107,11 +107,13 @@ class ReadbackPolicyApplier(
             }
             ApplyStage.EMERGENCY_FLOOR -> {
                 show(floorPackages)
+                // Features before membership: a Home that enters lock task between the two writes must
+                // already have KEYGUARD, or Android drops even a secure keyguard (PLA-242 spike).
+                expected.features?.let { want -> if (port.lockTaskFeatures() != want) port.setLockTaskFeatures(want) }
                 floorLockTask?.let { want ->
                     val now = port.lockTaskPackages()
                     if (!now.containsAll(want)) port.setLockTaskPackages(now + want)
                 }
-                expected.features?.let { want -> if (port.lockTaskFeatures() != want) port.setLockTaskFeatures(want) }
             }
             ApplyStage.NEVER_HIDE_GUARD -> if (guardHolds()) show(plan.neverHide)
             ApplyStage.HIDES -> {
@@ -121,8 +123,8 @@ class ReadbackPolicyApplier(
                 show(plan.unhide - plan.neverHide)
             }
             ApplyStage.LOCK_TASK -> {
-                expected.lockTaskPackages?.let { port.setLockTaskPackages(plan.lockTaskPackages) }
                 expected.features?.let { port.setLockTaskFeatures(plan.features) }
+                expected.lockTaskPackages?.let { port.setLockTaskPackages(plan.lockTaskPackages) }
             }
             ApplyStage.HOME -> expected.home?.let(port::setHome)
             }

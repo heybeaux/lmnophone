@@ -58,6 +58,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        enterLockTask()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        enterLockTask()
+    }
+
     /** True when this task is in lock task, starting it first if the package is allowed. */
     private fun enterLockTask(): Boolean {
         if (activities.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE) return true
