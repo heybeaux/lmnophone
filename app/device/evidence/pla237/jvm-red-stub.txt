@@ -1,0 +1,62 @@
+PLA-237 red run: new tests against the merge compile stub
+Base: b3efe61 (merge of origin/main b6ed8d0; DeviceApprovalEffects.containFailedActivation = false, no side effects)
+Working tree: b3efe61 + the two test-only commits that follow it (no src/main change)
+Command (from app/): ./gradlew --offline :device:testDebugUnitTest --tests '*ContainFailedActivationTest' --tests '*VerifierRoundTwoProbeTest' --tests '*VerifiedContainmentTest'
+Date: 2026-10-10T21:46Z, JVM unit tests only, no emulator
+
+> Task :device:testDebugUnitTest FAILED
+ContainFailedActivationTest > anEmergencyPackageInTheSetIsNeverTouched FAILED
+ContainFailedActivationTest > allTargetsVerifiedReturnsTrue FAILED
+ContainFailedActivationTest > hideThatDoesNotStickReturnsFalse FAILED
+ContainFailedActivationTest > aThrowingLockTaskWriteReturnsFalseAndTheOtherStepsStillRun FAILED
+ContainFailedActivationTest > lockTaskRemovalAndHideBothFailingReturnsFalse FAILED
+ContainFailedActivationTest > aPackageProtectedSinceThePlanIsNeverTouched FAILED
+ContainFailedActivationTest > anEmptySetIsTrueAndTouchesNothing FAILED
+ContainFailedActivationTest > accessOutsideTheSetIsPreserved FAILED
+ContainFailedActivationTest > lockTaskRemovalThatDoesNotStickReturnsFalse FAILED
+ContainFailedActivationTest > aThrowingHideReturnsFalse FAILED
+ContainFailedActivationTest > aNeverHidePackageInTheSetIsNeverTouched FAILED
+ContainFailedActivationTest > aSecondCallIsIdempotent FAILED
+ContainFailedActivationTest > homeRemovalThatDoesNotStickReturnsFalse FAILED
+ContainFailedActivationTest > aThrowingHomeWriteReturnsFalse FAILED
+VerifiedContainmentTest > aNameProtectedSinceThePlanIsNotTouchedAndIsReported FAILED
+VerifierRoundTwoProbeTest > failedFinalReadbackMustContainApproval FAILED
+VerifierRoundTwoProbeTest > failedFinalReadbackMustContainEdit FAILED
+26 tests completed, 17 failed
+BUILD FAILED in 990ms
+
+Per test (from build/test-results):
+ContainFailedActivationTest 16 tests, 14 failed
+   FAIL anEmergencyPackageInTheSetIsNeverTouched - java.lang.AssertionError: hidden: hidden=false permitted=true home=true
+   FAIL allTargetsVerifiedReturnsTrue - java.lang.AssertionError
+   FAIL hideThatDoesNotStickReturnsFalse - java.lang.AssertionError
+   FAIL aThrowingLockTaskWriteReturnsFalseAndTheOtherStepsStillRun - java.lang.AssertionError
+   FAIL lockTaskRemovalAndHideBothFailingReturnsFalse - java.lang.AssertionError: Home removal still attempted
+   FAIL aPackageProtectedSinceThePlanIsNeverTouched - java.lang.AssertionError: hidden: hidden=false permitted=true home=true
+   pass offTheDispatcherItRefusesAndTouchesNothing 
+   FAIL anEmptySetIsTrueAndTouchesNothing - java.lang.AssertionError
+   FAIL accessOutsideTheSetIsPreserved - java.lang.AssertionError
+   FAIL lockTaskRemovalThatDoesNotStickReturnsFalse - java.lang.AssertionError: hide still attempted and verified
+   FAIL aThrowingHideReturnsFalse - java.lang.AssertionError
+   FAIL aNeverHidePackageInTheSetIsNeverTouched - java.lang.AssertionError: hidden: hidden=false permitted=true home=true
+   FAIL aSecondCallIsIdempotent - java.lang.AssertionError
+   FAIL homeRemovalThatDoesNotStickReturnsFalse - java.lang.AssertionError
+   FAIL aThrowingHomeWriteReturnsFalse - java.lang.AssertionError
+   pass anUnreadableNeverHideListTouchesNothing 
+VerifierRoundTwoProbeTest 4 tests, 2 failed
+   FAIL failedFinalReadbackMustContainApproval - java.lang.AssertionError: NOT_READY must not leave new access: hidden=false permitted=true home=true
+   FAIL failedFinalReadbackMustContainEdit - java.lang.AssertionError: NOT_READY must not leave new access: hidden=false permitted=true home=true
+   pass nullUidOfListedPackageMustRefuseBeforeUnhide 
+   pass failedPublishMustVerifyHomeRemoval 
+  stdout:
+    approval: hidden=false permitted=true home=true pending=COMMITTED
+    edit: hidden=false permitted=true home=true pending=COMMITTED
+    null allowed UID: opened=false hidden=true permitted=false home=false
+    failed publish: hidden=true permitted=false home=true removalReads=1
+VerifiedContainmentTest 6 tests, 1 failed
+   pass aHomeRemovalThatDoesNotStickIsReported 
+   FAIL aNameProtectedSinceThePlanIsNotTouchedAndIsReported - java.lang.AssertionError: left as the apply made it: hidden=false permitted=false home=false reads=1
+   pass verifiedContainmentReadsBackHomeAndReportsNothingUnresolved 
+   pass lockTaskRemovalAndHideBothFailingAreReported 
+   pass aLaterCompleteApplyClearsTheReport 
+   pass anUnreadableHomeIsReported 
