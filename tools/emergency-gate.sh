@@ -20,7 +20,7 @@ APP="$ROOT/app"
 SERIAL=""
 QUICK=0
 BUILD=1
-BUILDS="debug ctlNoPhone ctlNoDialerLockTask ctlNoAlert"
+BUILDS="debug ctlNoPhone ctlNoDialerLockTask ctlNoAlert ctlNoAlertLockTask"
 PIN="${GATE_PIN:-2580}"
 NUMBER="${GATE_NUMBER:-7357}"
 ADMIN="org.plainphone/.PlainphoneAdminReceiver"
@@ -57,6 +57,7 @@ control_name() {
     case "$1" in
         debug) echo none ;; ctlNoPhone) echo no-phone ;;
         ctlNoDialerLockTask) echo no-dialer-lock-task ;; ctlNoAlert) echo no-alert ;;
+        ctlNoAlertLockTask) echo no-alert-lock-task ;;
         *) echo "?" ;;
     esac
 }
@@ -96,24 +97,39 @@ unlock() {
     log "unlock did not finish"; return 1
 }
 
-# Runs one gate check and prints its GATE lines. A missing line is a FAIL, never silence.
+CHECK_TIMEOUT="${GATE_CHECK_TIMEOUT:-150}"
+
+# One am instrument run, killed after CHECK_TIMEOUT seconds so a stuck check can never hang the gate.
+instrument() {
+    local out rc
+    out="$(perl -e 'alarm shift; exec @ARGV' "$CHECK_TIMEOUT" adb -s "$SERIAL" shell am instrument -w "$@" "$GATE" 2>&1)"
+    rc=$?
+    if [ "$rc" = 142 ]; then
+        sh_ am force-stop org.plainphone.emergencygate >/dev/null
+        echo "TIMEOUT after ${CHECK_TIMEOUT}s"
+    fi
+    echo "$out" | tr -d '\r'
+}
+
+# Runs one gate check and prints its GATE lines. A missing line or a timeout is a FAIL, never silence.
 check() {
     local name="$1"; shift
     local out
-    out="$(sh_ am instrument -w -e check "$name" "$@" "$GATE" 2>&1)"
+    out="$(instrument -e check "$name" "$@")"
     if echo "$out" | grep -q '^GATE '; then echo "$out" | grep '^GATE '
     else echo "GATE $name FAIL gate produced no result: $(echo "$out" | head -3 | tr '\n' ' ')"; fi
 }
 
-# Right after a reboot am instrument is refused for a few seconds; retry until the gate answers.
+# Right after a reboot am instrument is refused for a few seconds, and an early attempt can block
+# without ever starting the gate (seen on API 35). Retry with a short timeout per attempt.
 check_early() {
-    local name="$1" out
-    for _ in $(seq 1 120); do
-        out="$(sh_ am instrument -w -e check "$name" "$GATE" 2>&1)"
+    local name="$1" out end=$(( $(date +%s) + 180 ))
+    while [ "$(date +%s)" -lt "$end" ]; do
+        out="$(CHECK_TIMEOUT=25 instrument -e check "$name")"
         if echo "$out" | grep -q '^GATE '; then echo "$out" | grep '^GATE '; return; fi
         sleep 0.5
     done
-    echo "GATE $name FAIL gate could not start after boot"
+    echo "GATE $name FAIL gate could not start within 180 s of boot"
 }
 
 provision() {

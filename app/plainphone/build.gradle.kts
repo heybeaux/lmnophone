@@ -22,7 +22,7 @@ plugins {
 }
 
 /** The gate's negative-control build types; each has its own `BuildControl` in `src/<name>/kotlin`. */
-val NEGATIVE_CONTROLS = listOf("ctlNoPhone", "ctlNoDialerLockTask", "ctlNoAlert")
+val NEGATIVE_CONTROLS = listOf("ctlNoPhone", "ctlNoDialerLockTask", "ctlNoAlert", "ctlNoAlertLockTask")
 
 android {
     namespace = "org.plainphone"
