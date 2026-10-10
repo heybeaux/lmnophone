@@ -1,0 +1,14 @@
+10-10 09:03:14.089   573   773 I wm_set_keyguard_shown: [0,1,0,0,0,setKeyguardShown]
+10-10 09:03:14.415   812   812 D KeyguardViewMediator: KeyguardViewMediator queue processing message: SHOW
+10-10 09:03:14.881   812   812 D KeyguardViewMediator: KeyguardViewMediator queue processing message: SHOW
+10-10 09:03:14.894   973  1116 I PlainphoneBoot: reapply reason=start control=none locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=951
+10-10 09:03:15.065   812   879 D KeyguardTransitionRepository: (Internal) Setting current transition info: TransitionInfo(ownerName=FromLockscreenTransitionInteractor, from=LOCKSCREEN, to=GONE, animated)
+10-10 09:03:15.066   573   588 I wm_set_keyguard_shown: [0,1,0,1,0,keyguardGoingAway]
+10-10 09:03:15.066   812   812 D KeyguardViewMediator: KeyguardViewMediator queue processing message: HIDE
+10-10 09:03:15.066   812   812 D KeyguardViewMediator: KeyguardViewMediator queue processing message: HIDE
+10-10 09:03:15.203   973  1116 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:android control=none locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=309
+10-10 09:03:15.451   973  1116 I PlainphoneBoot: reapply reason=locked-boot control=none locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=247
+10-10 09:03:15.730   573  1009 I wm_set_keyguard_shown: [0,0,0,1,0,setKeyguardShown]
+10-10 09:03:16.034   973  1116 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.android.stk control=none locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=350
+10-10 09:03:16.277   973  1116 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.google.android.apps.wellbeing control=none locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=243
+10-10 09:03:18.123   973  1116 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:android control=none locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=180

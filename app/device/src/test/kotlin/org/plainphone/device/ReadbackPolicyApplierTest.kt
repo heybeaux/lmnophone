@@ -335,4 +335,17 @@ class ReadbackPolicyApplierTest {
         assertTrue(result.complete)
         assertTrue(firstIndex(port.ops, "restrict") >= 0)
     }
+
+    /** PLA-242 spike: a Home entering lock task between the two writes must already have KEYGUARD. */
+    @Test fun lostFeaturesAreRestoredBeforeLockTaskMembership() {
+        for (repair in listOf(false, true)) {
+            val port = port().apply { lockTask = emptySet(); features = setOf(LockTaskFeature.GLOBAL_ACTIONS) }
+            val applier = ReadbackPolicyApplier(port)
+            if (repair) applier.repairEmergency(plan()) else applier.apply(plan())
+            val featureWrites = port.ops.withIndex().filter { it.value.startsWith("features ") }.map { it.index }
+            val listWrites = port.ops.withIndex().filter { it.value.startsWith("lockTask ") }.map { it.index }
+            assertTrue("repair=$repair ${port.ops}", featureWrites.isNotEmpty() && listWrites.isNotEmpty())
+            assertTrue("repair=$repair features first: ${port.ops}", featureWrites.first() < listWrites.first())
+        }
+    }
 }
