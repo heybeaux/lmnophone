@@ -125,6 +125,36 @@ class VaultRuntimeTest {
         assertEquals(a.read(), b.read())
     }
 
+    /** Another process holding `clock.lock` (a child JVM here) refuses the compare-and-set until it lets go. */
+    @Test fun anotherProcessHoldingTheLockRefusesTheWrite() {
+        val dir = tmp.newFolder()
+        val store = FileClockStateStore(dir)
+        val original = ClockRecord(RunningTime("epoch-a", 0), BootTime("boot-1", 0))
+        val next = ClockRecord(RunningTime("epoch-a", 100), BootTime("boot-1", 100))
+        assertTrue(store.compareAndSet(null, original))
+        val holder = File(tmp.newFolder(), "Hold.java")
+        holder.writeText(
+            "import java.nio.channels.*; import java.nio.file.*;\n" +
+                "public class Hold { public static void main(String[] a) throws Exception {\n" +
+                "  try (FileChannel c = FileChannel.open(Paths.get(a[0]), StandardOpenOption.CREATE, StandardOpenOption.WRITE); FileLock l = c.lock()) {\n" +
+                "    System.out.println(\"locked\"); System.out.flush(); System.in.read(); } } }\n",
+        )
+        val javaBin = File(System.getProperty("java.home"), "bin/java").path
+        val child = ProcessBuilder(javaBin, holder.path, File(dir, "clock.lock").path).redirectErrorStream(true).start()
+        try {
+            assertEquals("locked", child.inputStream.bufferedReader().readLine())
+            FileClockStateStore.lockWaitMillis = 300
+            assertFalse(store.compareAndSet(original, next))
+            assertEquals(original, store.read())
+        } finally {
+            FileClockStateStore.lockWaitMillis = 10_000
+            child.outputStream.close()
+            child.waitFor(10, java.util.concurrent.TimeUnit.SECONDS)
+        }
+        assertTrue(store.compareAndSet(original, next))
+        assertEquals(next, FileClockStateStore(dir).read())
+    }
+
     @Test fun provenClockAdvancesWithinABootAndCreditsOnlyTheNewBootAfterARestart() {
         val dir = tmp.newFolder()
         val ids = JointAuthorityStore(tmp.newFolder())
