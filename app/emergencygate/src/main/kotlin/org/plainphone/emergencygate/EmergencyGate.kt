@@ -97,8 +97,14 @@ class EmergencyGate : Instrumentation() {
         if (!waitFor(30_000) { top()?.packageName == PLAINPHONE }) {
             return CheckResult(check, Verdict.FAIL, "Plainphone is not in front after boot: top=${top()}")
         }
-        val screen = if (findNode(PLAINPHONE) { it.contains("is checking the phone") } != null) "checking" else "home"
-        return tapAndExpect(check, PHONE, systemDialer()).let { it.copy(detail = "screen=$screen ${it.detail}") }
+        SystemClock.sleep(SETTLE_MS)
+        val screen = when {
+            findNode(PLAINPHONE) { it == "Messages" } != null -> "home"
+            findNode(PLAINPHONE) { it.contains("is checking the phone") } != null -> "checking"
+            else -> "unknown"
+        }
+        val uptime = SystemClock.elapsedRealtime() / 1000
+        return tapAndExpect(check, PHONE, systemDialer()).let { it.copy(detail = "screen=$screen uptime=${uptime}s ${it.detail}") }
     }
 
     /** The keyguard's Emergency call. The host has set a PIN; [expectLocked] means before the first unlock. */
@@ -198,20 +204,23 @@ class EmergencyGate : Instrumentation() {
         return GateJudge.alertDisplayReady(display).let { it.copy(detail = "${it.detail} componentState=$componentState lockTask=${lockTask()}") }
     }
 
-    /** Starts the alert screen directly (root): the closest the emulator gets to a received alert. */
+    /**
+     * Starts the alert screen directly (root): the closest the emulator gets to a received alert. With no
+     * alert in the intent the screen closes itself at once, so the verdict is the activity that
+     * `am start -W` reports starting: the alert screen, or lock task's blocked screen.
+     */
     private fun alertLaunch(): CheckResult {
         val check = "alert-display-launch"
         val name = alertPackage() ?: return CheckResult(check, Verdict.FAIL, "no alert-display package")
         home()?.let { return CheckResult(check, Verdict.FAIL, it) }
         val out = shell("su 0 am start -W -n $name/$ALERT_DIALOG")
-        if (out.contains("Error")) return CheckResult(check, Verdict.FAIL, "start refused: ${out.lines().firstOrNull { "Error" in it }}")
-        var seen: Activity? = null
-        waitFor(5_000) {
-            seen = top()
-            seen?.packageName == name || seen?.className == GateJudge.BLOCKED_APP
+        val started = Regex("""Activity: ([^/\s]+)/(\S+)""").find(out)?.let { m ->
+            val cls = m.groupValues[2]
+            Activity(m.groupValues[1], if (cls.startsWith(".")) m.groupValues[1] + cls else cls)
         }
-        shell("input keyevent KEYCODE_BACK")
-        return GateJudge.dialerInFront(check, seen, setOf(name)).let { it.copy(detail = "${it.detail} lockTask=${lockTask()}") }
+        if (started?.className == GateJudge.BLOCKED_APP) shell("input keyevent KEYCODE_BACK")
+        if (started == null) return CheckResult(check, Verdict.FAIL, "start refused: ${out.lines().filter { it.isNotBlank() }.joinToString(" | ")}")
+        return GateJudge.dialerInFront(check, started, setOf(name)).let { it.copy(detail = "${it.detail} lockTask=${lockTask()}") }
     }
 
     // ---- helpers ----
