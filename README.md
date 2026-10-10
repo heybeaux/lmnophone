@@ -1,16 +1,16 @@
-# Own Phone
+# LMNOPhone
 
 **A calm Android phone that only runs the apps you chose, with someone you trust holding the key.**
 
-Own Phone is an open-source "focused phone" layer for ordinary Android phones, in the spirit of Wisephone. It is still being built, so this describes what it is designed to do. You won't flash a new operating system. You install one app on a freshly reset, stock Android phone, and that app becomes the phone's manager and its home screen. Once it is finished:
+LMNOPhone (say it like the alphabet song: "elemeno-phone") is an open-source "focused phone" layer for ordinary Android phones, in the spirit of Wisephone. It is still being built, so this describes what it is designed to do. You won't flash a new operating system. You install one app on a freshly reset, stock Android phone, and that app becomes the phone's manager and its home screen. Once it is finished:
 
 - the home screen is a short list of app names in large black text, with no icons, badges or colour;
 - every app that hasn't been added is hidden, apart from the parts of Android that calls, texts and emergency calls depend on;
-- calls, texts and 9-1-1 are designed to stay available: no lock, check or wait in Own Phone stands in their way;
+- calls, texts and 9-1-1 are designed to stay available: no lock, check or wait in LMNOPhone stands in their way;
 - adding an app needs a **trusted person** (a spouse, a friend, a family member) to type their PIN on the phone, with the phone in their hands. On a self-managed phone, the user types their own PIN and waits.
 
 <p align="center">
-  <img src="docs/images/home-emulator.png" width="220" alt="Own Phone home screen on an Android emulator: the time, the date, and four app names (Camera, Maps, Messages, Phone) in large black text, with a More button at the bottom.">
+  <img src="docs/images/home-emulator.png" width="220" alt="LMNOPhone home screen on an Android emulator: the time, the date, and four app names (Camera, Maps, Messages, Phone) in large black text, with a More button at the bottom.">
   &nbsp;
   <img src="docs/images/more.png" width="220" alt="The More page: Emergency 9-1-1, Phone settings, Ask for an app, For Sam, and About this phone.">
   &nbsp;
@@ -26,7 +26,7 @@ Own Phone is an open-source "focused phone" layer for ordinary Android phones, i
 - [Who it's for](#who-its-for)
 - [How it works](#how-it-works)
 - [The custody contract](#the-custody-contract)
-- [What Own Phone can't do](#what-own-phone-cant-do)
+- [What LMNOPhone can't do](#what-lmnophone-cant-do)
 - [Where things stand](#where-things-stand)
 - [What's in this repo](#whats-in-this-repo)
 - [Architecture](#architecture)
@@ -36,7 +36,7 @@ Own Phone is an open-source "focused phone" layer for ordinary Android phones, i
 
 ## Who it's for
 
-Own Phone is for adults who want a simpler phone and have chosen one for themselves, and for the person they trust to help them keep it that way. That might be:
+LMNOPhone is for adults who want a simpler phone and have chosen one for themselves, and for the person they trust to help them keep it that way. That might be:
 
 - someone who wants their phone back as a tool, not a feed;
 - a couple who each hold the key to the other's phone;
@@ -45,7 +45,7 @@ Own Phone is for adults who want a simpler phone and have chosen one for themsel
 
 It is designed for people who are **not** phone tinkerers. Every screen is written in plain words and checked at Android's largest text size (200%). Nobody using it should ever need to know what "Device Owner" means.
 
-There are two kinds of user, and Own Phone designs for both:
+There are two kinds of user, and LMNOPhone designs for both:
 
 | | The person using the phone | The trusted person |
 |---|---|---|
@@ -54,33 +54,33 @@ There are two kinds of user, and Own Phone designs for both:
 
 There is also a **helper**: the person who sets the phone up and fixes it if something goes wrong. Often the trusted person is the helper too.
 
-**Support, not surveillance.** The trusted person adds apps. They don't watch. Own Phone has no server, no account, no analytics and no tracking. Its notifications are a fixed set of SMS texts, sent from the user's own phone to the trusted person or the helper (for example `Own Phone: Alex asked for an app: "WhatsApp"…`). The user can read the full list on the phone under "About this phone", and it is in [docs/ux/README.md](docs/ux/README.md#texts-own-phone-sends). The only other connection it makes is to fetch an Own Phone update from the helper's own computer over local Wi-Fi, after a fresh PIN.
+**Support, not surveillance.** The trusted person adds apps. They don't watch. LMNOPhone has no server, no account, no analytics and no tracking. Its notifications are a fixed set of SMS texts, sent from the user's own phone to the trusted person or the helper (for example `LMNOPhone: Alex asked for an app: "WhatsApp"…`). The user can read the full list on the phone under "About this phone", and it is in [docs/ux/README.md](docs/ux/README.md#texts-lmnophone-sends). The only other connection it makes is to fetch an LMNOPhone update from the helper's own computer over local Wi-Fi, after a fresh PIN.
 
 ## How it works
 
-Own Phone is one Android app with two jobs:
+LMNOPhone is one Android app with two jobs:
 
 1. **The phone's manager.** It is designed to use Android's built-in management for work phones (the [Device Owner](https://developer.android.com/work/dpc/dedicated-devices) API that companies use for kiosks and work phones) to hide apps that haven't been added, keep approved apps in [lock task mode](https://developer.android.com/work/dpc/dedicated-devices/lock-task-mode), and turn off the usual ways out: safe mode, factory reset from Settings, adding users, installing apps from files, and USB debugging.
 2. **The home screen.** A text-only launcher drawn in [Lexend](https://www.lexend.com/), black and white only.
 
 Why this approach and not a custom ROM or a plain launcher? Short version: a custom ROM can break some banking apps and needs a rebuild for every phone model, and a launcher alone is easy to escape. The full comparison, with sources, is in [ADR 0001](docs/decisions/0001-architecture.md).
 
-When the trusted person needs to add an app, Own Phone opens the Play Store for 10 minutes. To change an Android setting that Own Phone doesn't offer, it opens full phone settings for 5 minutes. Then it closes them and checks that every protection is back in place.
+When the trusted person needs to add an app, LMNOPhone opens the Play Store for 10 minutes. To change an Android setting that LMNOPhone doesn't offer, it opens full phone settings for 5 minutes. Then it closes them and checks that every protection is back in place.
 
 ## The custody contract
 
-The lock only ever opens one way. To open the Play Store or full settings, the trusted person types a fresh PIN. Before anything opens, Own Phone writes down what it is about to open and when it must close, in storage it can read even before the phone is unlocked. The session ends when the trusted person taps Done, the screen goes off, a call comes in, time runs out, or someone leaves the allowed apps. Then Own Phone closes everything, checks each protection one by one, repairs anything that changed, and only then hands the phone back. If the phone restarts in the middle, the first thing Own Phone does on boot is close whatever was open. Throughout, the screen says: "Stay with the phone until you tap Done."
+The lock only ever opens one way. To open the Play Store or full settings, the trusted person types a fresh PIN. Before anything opens, LMNOPhone writes down what it is about to open and when it must close, in storage it can read even before the phone is unlocked. The session ends when the trusted person taps Done, the screen goes off, a call comes in, time runs out, or someone leaves the allowed apps. Then LMNOPhone closes everything, checks each protection one by one, repairs anything that changed, and only then hands the phone back. If the phone restarts in the middle, the first thing LMNOPhone does on boot is close whatever was open. Throughout, the screen says: "Stay with the phone until you tap Done."
 
-**Two limits we accept, and say out loud.** If Own Phone itself can't run while the Play Store or settings is open (because of a bad update, a storage fault or a crash loop), nothing closes it automatically. It stays open until a helper fixes the phone. And during a session, the Play Store and Settings can show web pages, such as help or account pages.
+**Two limits we accept, and say out loud.** If LMNOPhone itself can't run while the Play Store or settings is open (because of a bad update, a storage fault or a crash loop), nothing closes it automatically. It stays open until a helper fixes the phone. And during a session, the Play Store and Settings can show web pages, such as help or account pages.
 
 The exact rules are in the [trusted-person-controls spec](openspec/changes/add-plainphone-spike-and-mvp/specs/trusted-person-controls/spec.md).
 
-## What Own Phone can't do
+## What LMNOPhone can't do
 
-Own Phone is honest about its limits, and it shows them on the phone too ("What Own Phone can't stop"):
+LMNOPhone is honest about its limits, and it shows them on the phone too ("What LMNOPhone can't stop"):
 
-- Someone with physical access can still erase the phone from its recovery menu. The plan is for Google's reset protection, tied to the trusted person's Google account, to stop the erased phone being set up again without them. **That isn't proven yet.** It is one of the checks that must pass before a phone is handed over (Q10 in the [verification matrix](docs/verification-matrix.md)). Even when it works, it doesn't reinstall Own Phone. The helper has to set it up again.
-- Some apps contain web pages (help pages, sign-in pages, in-app browsers). Own Phone can't see inside other apps. The [starter catalogue](docs/ux/starter-catalog.md) notes what each common app lets through.
+- Someone with physical access can still erase the phone from its recovery menu. The plan is for Google's reset protection, tied to the trusted person's Google account, to stop the erased phone being set up again without them. **That isn't proven yet.** It is one of the checks that must pass before a phone is handed over (Q10 in the [verification matrix](docs/verification-matrix.md)). Even when it works, it doesn't reinstall LMNOPhone. The helper has to set it up again.
+- Some apps contain web pages (help pages, sign-in pages, in-app browsers). LMNOPhone can't see inside other apps. The [starter catalogue](docs/ux/starter-catalog.md) notes what each common app lets through.
 - It is not parental-control or monitoring software. It doesn't record what anyone does.
 - It is not a security product, and it has not had an outside security audit.
 
@@ -96,7 +96,7 @@ The design is written and approved. The MVP is being built in small, reviewed sl
 | preview-2: hiding live | Sun 11 Oct 2026 | Device Owner, the home screen, lock task. Apps outside a fixed starter list are hidden. Settings are applied again after a restart. |
 | preview-3: trusted person | Tue 13 Oct 2026 | PIN and recovery code, "Ask for an app" by text, adding an app and choosing what it can use, a supervised Play Store session |
 | preview-4: links and waits | Thu 15 Oct 2026 | Blocked links and browser rules, two trusted people, 24-hour waits with Cancel, the notice line, self-managed mode |
-| test-1: full custody contract | Sat 17 Oct 2026 | Turning Own Phone off with a full restore, start-up before unlock, updates, the setup flow, the monthly check |
+| test-1: full custody contract | Sat 17 Oct 2026 | Turning LMNOPhone off with a full restore, start-up before unlock, updates, the setup flow, the monthly check |
 
 Dates are targets and may move. Features that aren't ready yet say "Not in this test build yet" on the phone. Nothing pretends to work.
 
@@ -116,6 +116,8 @@ Dates are targets and may move. Features that aren't ready yet say "Not in this 
 | [`spikes/`](spikes/) | Throwaway experiments that answered one feasibility question each. Not product code |
 | [`site/`](site/) | The landing page: plain HTML and CSS, no tracking. [`.github/workflows/pages.yml`](.github/workflows/pages.yml) publishes it to GitHub Pages from `main` |
 | [`AGENTS.md`](AGENTS.md) | The rules for coding agents (and a good quick start for humans) |
+
+The project was called Plainphone before. Code names such as the `org.plainphone` package and the `:plainphone` module keep the old name until the package rename. The planned app ID is `dev.heybeaux.lmnophone`; the code doesn't use it yet.
 
 ## Architecture
 
@@ -175,8 +177,8 @@ An Android 15 image with the Play Store works best. Use `x86_64` instead of `arm
 
 ```sh
 sdkmanager "platform-tools" "emulator" "platforms;android-36" "system-images;android-35;google_apis_playstore;arm64-v8a"
-avdmanager create avd -n ownphone -k "system-images;android-35;google_apis_playstore;arm64-v8a" -d pixel_7
-emulator -avd ownphone
+avdmanager create avd -n lmnophone -k "system-images;android-35;google_apis_playstore;arm64-v8a" -d pixel_7
+emulator -avd lmnophone
 ```
 
 Don't sign in to a Google account on it. Android only accepts a new Device Owner on a phone with no accounts.
@@ -185,7 +187,7 @@ Don't sign in to a Google account on it. Android only accepts a new Device Owner
 
 Run these from the repo root. Always name the emulator with `-s` (see `adb devices`), so a command never reaches a real phone by mistake.
 
-**To see the working home screen, use a preview build.** Check out a preview branch (for example `git checkout release/preview-2`), build it as in step 1, then run its setup script. The script installs the APK, makes Own Phone the phone's manager, applies a fixed starter list of apps, and prints what Android reports back:
+**To see the working home screen, use a preview build.** Check out a preview branch (for example `git checkout release/preview-2`), build it as in step 1, then run its setup script. The script installs the APK, makes LMNOPhone the phone's manager, applies a fixed starter list of apps, and prints what Android reports back:
 
 ```sh
 app/tools/preview-2/setup.sh emulator-5554 app/plainphone/build/outputs/apk/debug/plainphone-debug.apk
@@ -202,8 +204,8 @@ adb -s emulator-5554 shell dpm set-device-owner org.plainphone/.PlainphoneAdminR
 
 - **Preview builds** are marked `testOnly`, so one command removes them:
   `adb -s emulator-5554 shell dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver`
-  On Android 15, removing Own Phone brings every hidden app back.
-- **The `main` build, or anything else:** wipe the emulator (Android Studio → Device Manager → Wipe Data, or `emulator -avd ownphone -wipe-data`).
+  On Android 15, removing LMNOPhone brings every hidden app back.
+- **The `main` build, or anything else:** wipe the emulator (Android Studio → Device Manager → Wipe Data, or `emulator -avd lmnophone -wipe-data`).
 
 ## Contributing
 
@@ -217,13 +219,13 @@ adb -s emulator-5554 shell dpm set-device-owner org.plainphone/.PlainphoneAdminR
 
 ### Picking something to work on
 
-1. Look through the open [GitHub issues](https://github.com/heybeaux/own-phone/issues). Comment on one to say you're taking it, so two people don't do the same work.
+1. Look through the open [GitHub issues](https://github.com/heybeaux/lmnophone/issues). Comment on one to say you're taking it, so two people don't do the same work.
 2. If what you want to do has no issue, open one first and describe the problem in a few sentences. For anything bigger than a small fix, wait for a maintainer to reply before you write a lot of code.
 3. New to the code? `:core`, `:policy` and `:links` are plain Kotlin with fast tests and no emulator. They are the easiest place to start.
 
 ### How work flows here: spec first
 
-Own Phone changes what a phone will and won't let someone do, so behaviour is agreed in writing before it is built.
+LMNOPhone changes what a phone will and won't let someone do, so behaviour is agreed in writing before it is built.
 
 1. **Spec.** A new feature or a change in behaviour starts as an [OpenSpec](https://github.com/Fission-AI/OpenSpec) change in `openspec/changes/<name>/`: a `proposal.md` (why and what), spec deltas under `specs/`, and a `tasks.md`. Run `openspec validate --all` from the repo root (install the CLI with `npm install -g @fission-ai/openspec`). A maintainer approves the proposal before implementation starts. Bug fixes, tests, refactors and docs don't need a spec.
 2. **Words and screens.** If users will see it, the words come from [docs/ux/](docs/ux/) first. The screens use plain language only (see the word list in [docs/ux/README.md](docs/ux/README.md)) and black, white and grey only ([design tokens](docs/ux/design-tokens.md)).
@@ -236,7 +238,7 @@ Own Phone changes what a phone will and won't let someone do, so behaviour is ag
 - Changes that touch the lockdown (`:policy`, `:links`, `:device`) also get an adversarial review that tries to break them. Please don't take a long list of findings personally. That is the review doing its job.
 - Any claim about what Android allows needs a source (Android docs or AOSP code) or a test someone can repeat on an emulator.
 - Changes to screens must keep the screenshot tests passing at 100% and 200% text size.
-- We aim to reply to new issues and pull requests within a few days. Own Phone is a small project, so it may sometimes take longer.
+- We aim to reply to new issues and pull requests within a few days. LMNOPhone is a small project, so it may sometimes take longer.
 
 ### Using a coding agent?
 
@@ -244,8 +246,8 @@ Point it at [AGENTS.md](AGENTS.md). It has the repo map, the commands for each m
 
 ## Licence
 
-Own Phone is released under the [Apache License 2.0](LICENSE). Copyright 2026 The Own Phone Authors.
+LMNOPhone is released under the [Apache License 2.0](LICENSE). Copyright 2026 The LMNOPhone Authors.
 
-The app bundles the [Lexend](https://www.lexend.com/) font under the SIL Open Font License 1.1. The font is `app/ui/src/main/res/font/lexend.ttf`, and its licence text ships with the app in [`app/ui/src/main/assets/fonts/OFL.txt`](app/ui/src/main/assets/fonts/OFL.txt). The Apache licence doesn't cover the font, and the font's licence doesn't cover Own Phone's code.
+The app bundles the [Lexend](https://www.lexend.com/) font under the SIL Open Font License 1.1. The font is `app/ui/src/main/res/font/lexend.ttf`, and its licence text ships with the app in [`app/ui/src/main/assets/fonts/OFL.txt`](app/ui/src/main/assets/fonts/OFL.txt). The Apache licence doesn't cover the font, and the font's licence doesn't cover LMNOPhone's code.
 
-Own Phone is an independent project. It is not affiliated with Techless, Wisephone, Google or Android. Android is a trademark of Google LLC.
+LMNOPhone is an independent project. It is not affiliated with Techless, Wisephone, Google or Android. Android is a trademark of Google LLC.

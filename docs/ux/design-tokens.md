@@ -1,4 +1,4 @@
-# Own Phone design tokens: black and white
+# LMNOPhone design tokens: black and white
 
 Owner: Product & UX Designer. Task: [PLA-36](/PLA/issues/PLA-36). Status: **ready for the MVP build
 ([PLA-15](/PLA/issues/PLA-15))**, revised after the [PLA-37](/PLA/issues/PLA-37) review. Mockups: [mockups/plainphone-screens.html](mockups/plainphone-screens.html).
@@ -12,14 +12,14 @@ copy, except where a flow said "red" (see [What changed in the flow files](#what
 
 ## The rules
 
-1. **Black, white and grey only**, on every screen Own Phone draws: home, More, the user's screens, trusted-person
+1. **Black, white and grey only**, on every screen LMNOPhone draws: home, More, the user's screens, trusted-person
    mode, setup, the blocked-link and Wi-Fi screens, and the off flow.
 2. **No colour.** There is no "accent", no red for danger, no green for success. If someone proposes colour, it
    goes in the [exceptions table](#colour-exceptions) with a written reason, and the Lead decides. Today the table
    is empty.
 3. **Never use colour alone to mean something.** That is already true, since there is none. State is shown by fill
    (black or white), a word, or a tick (✓).
-4. **No app icons on the home screen.** Names only, as text. Own Phone's own screens use no icons either; the only
+4. **No app icons on the home screen.** Names only, as text. LMNOPhone's own screens use no icons either; the only
    glyphs are `›` (opens a page), `‹` (back), `✓` and `^`.
 5. **No Emergency button on the home screen** (Beaux, Telegram 4487: "I don't want users bumping it by
    accident"). 9-1-1 is always reachable, never from one accidental tap on the home screen. See
@@ -32,10 +32,10 @@ copy, except where a flow said "red" (see [What changed in the flow files](#what
 | | |
 |---|---|
 | Family | **Lexend** (Bonnie Shaver-Troup, Thomas Jockin and others). Designed to be easier to read. |
-| Licence | SIL Open Font License 1.1, which allows bundling the font in any software, including an Apache-2.0 app. Its conditions, and what the build does about each: **(1)** the copyright line and licence text go with the font: ship `OFL.txt` in the app and list "Lexend – SIL Open Font License 1.1" in About this phone's open-source notices; **(2)** the font is never sold on its own, and Own Phone doesn't sell it; **(3)** a modified font can't use the Reserved Font Name "RevReading Lexend": ship the upstream file unchanged (no subsetting), and if it's ever subset, rename it; **(4)** the licence covers the font only, not Own Phone's code, and Own Phone's Apache-2.0 licence doesn't cover the font. |
+| Licence | SIL Open Font License 1.1, which allows bundling the font in any software, including an Apache-2.0 app. Its conditions, and what the build does about each: **(1)** the copyright line and licence text go with the font: ship `OFL.txt` in the app and list "Lexend – SIL Open Font License 1.1" in About this phone's open-source notices; **(2)** the font is never sold on its own, and LMNOPhone doesn't sell it; **(3)** a modified font can't use the Reserved Font Name "RevReading Lexend": ship the upstream file unchanged (no subsetting), and if it's ever subset, rename it; **(4)** the licence covers the font only, not LMNOPhone's code, and LMNOPhone's Apache-2.0 licence doesn't cover the font. |
 | File | `Lexend[wght].ttf`, one variable file, weight axis 100–900 (google/fonts `ofl/lexend`). A copy and its licence are in `mockups/fonts/` for the mockups. |
 | Weights used | **400** (Regular) for body text and the clock. **500** (Medium) for app names, titles and buttons. Nothing else. |
-| Android | Put the file in `res/font/`, define a `FontFamily` with the 400 and 500 instances, set it as the app theme's font. Don't download it at runtime (Own Phone has no network for that). |
+| Android | Put the file in `res/font/`, define a `FontFamily` with the 400 and 500 instances, set it as the app theme's font. Don't download it at runtime (LMNOPhone has no network for that). |
 | Fallback | If the file fails to load: Android's default sans-serif, same sizes. Never a serif. |
 | Numbers | Lexend's default figures. The clock uses tabular figures (`font-feature-settings: "tnum"`) so it doesn't jiggle. |
 
@@ -75,14 +75,14 @@ So:
 
 ### Dark theme
 
-Not in the MVP. Own Phone's screens stay white when Android's dark theme is on (`forceDarkAllowed=false`, dark
+Not in the MVP. LMNOPhone's screens stay white when Android's dark theme is on (`forceDarkAllowed=false`, dark
 status-bar icons kept). If Beaux asks for a dark home screen later, it is the same tokens swapped (`ink`↔`paper`,
 `fill-1` → `#1A1A1A`), and it needs its own contrast check.
 
 ## Type scale
 
 **Every size is in `sp`, including the clock,** so all text follows Android's text size (calm-home-screen: "follow
-the system font scale"). Line heights are in `sp` too, so they follow the same curve. Nothing Own Phone draws gets
+the system font scale"). Line heights are in `sp` too, so they follow the same curve. Nothing LMNOPhone draws gets
 smaller when the text size goes up. When space runs short, the layout changes instead (see
 [When the screen is short](#when-the-screen-is-short)).
 
@@ -98,7 +98,7 @@ Use these numbers for layout checks; the build confirms them on the phone.
 | `date` | 18 / 24 | 30 / 36 | 400 | `ink-2` | Date under the clock. At 200% it shortens to "Thu 8 Oct" |
 | `app` | 32 / 40 | 40 / 47 | 500 | `ink` | App names on the home screen |
 | `title` | 28 / 36 | 37 / 43 | 500 | `ink` | Screen titles. Written to fit 2 lines at 200% on a 360 dp screen. A long name may push one to 3 lines; that is allowed. Never cut a title or shrink it |
-| `row` | 22 / 28 | 35 / 37 | 500 | `ink` | Menu rows (More, Own Phone settings, the trusted-person menu) |
+| `row` | 22 / 28 | 35 / 37 | 500 | `ink` | Menu rows (More, LMNOPhone settings, the trusted-person menu) |
 | `body` | 18 / 26 | 30 / 37 | 400 | `ink` | Body text on every screen |
 | `button` | 18 / 24 | 30 / 36 | 500 | `paper` on `ink` | Primary button labels |
 | `small` | 16 / 22 | 28 / 35 | 400 | `ink-2` | Second lines under rows and buttons ("Opens the dialer" in `paper`), hints, counters |
@@ -194,7 +194,7 @@ order, each only if still needed:
 3. The notice line is cut to 2 lines (it still ends with "…" and `›`).
 4. The other-apps area may shrink to half a row (28 dp). It still scrolls; the cut-off name shows there's more.
 5. Below the smallest supported screen only: the whole home screen scrolls as one page. This is the one case where
-   Phone and Messages can need a scroll, and it is outside what Own Phone supports.
+   Phone and Messages can need a scroll, and it is outside what LMNOPhone supports.
 
 **Never:** shrink any text below its scaled size, or shrink Messages, Phone or More.
 
@@ -241,7 +241,7 @@ list them:
 2. **More → Emergency 9-1-1**, the first row of More (U4). See below.
 3. **The lock screen's "Emergency call"** (stock Android).
 4. **Press the power button 5 times** (Android's Emergency SOS), **only if** feasibility question Q14 confirms it
-   works on this phone while Own Phone is running. Until then no screen mentions it.
+   works on this phone while LMNOPhone is running. Until then no screen mentions it.
 
 **The "Emergency 9-1-1" row in More**
 - The **first row** of More, in the normal menu-row look: "Emergency 9-1-1" in `row`, second line "Opens the dialer
@@ -254,8 +254,8 @@ list them:
 - **No long-press** shortcut on the home screen. Nobody would find it in an emergency, and it's easy to trigger by
   accident.
 
-The dialer, the lock-screen emergency dialer and the SOS screen are Android's, not Own Phone's, so they keep their
-own colours. That is listed under [what Own Phone doesn't draw](#what-own-phone-doesnt-draw).
+The dialer, the lock-screen emergency dialer and the SOS screen are Android's, not LMNOPhone's, so they keep their
+own colours. That is listed under [what LMNOPhone doesn't draw](#what-lmnophone-doesnt-draw).
 
 ### Buttons
 
@@ -305,12 +305,12 @@ again" part is a text link). Times and dates in `small` `ink-2`.
 
 ### Status bar and navigation bar
 
-Drawn by Android. Own Phone sets a white status bar with dark icons (`windowLightStatusBar=true`) and a white
+Drawn by Android. LMNOPhone sets a white status bar with dark icons (`windowLightStatusBar=true`) and a white
 navigation bar with dark buttons, so the whole screen is white from top to bottom, as in the reference image.
 
-## What Own Phone doesn't draw
+## What LMNOPhone doesn't draw
 
-These keep their own look. They are outside Own Phone's control unless the optional grayscale switch below is on.
+These keep their own look. They are outside LMNOPhone's control unless the optional grayscale switch below is on.
 
 - Every added app (Spotify, Slack, Messages, Phone, Camera…).
 - Android's dialer (from Phone or the Emergency 9-1-1 row), its emergency dialer on the lock screen, and the
@@ -336,18 +336,18 @@ trick. Not a board question; nice to have.
 - The setting is two values in `Settings.Secure`: `accessibility_display_daltonizer_enabled` = 1 and
   `accessibility_display_daltonizer` = 0 (`DALTONIZER_SIMULATE_MONOCHROMACY`). Sources: `core/java/android/provider/Settings.java`
   and `core/java/android/view/accessibility/AccessibilityManager.java`.
-- **Own Phone can't set it with its Device Owner rights alone.** `DevicePolicyManager.setSecureSetting` rejects any
+- **LMNOPhone can't set it with its Device Owner rights alone.** `DevicePolicyManager.setSecureSetting` rejects any
   name not on a fixed list: `default_input_method`, `skip_first_use_hints`, `install_non_market_apps`, and for a
   Device Owner also `location_mode`. Being on the list doesn't guarantee success (deprecated entries can still throw),
   and demo users are an exception. The daltonizer settings aren't on it. Source: `SECURE_SETTINGS_ALLOWLIST` and
   `SECURE_SETTINGS_DEVICEOWNER_ALLOWLIST` in `services/devicepolicy/java/com/android/server/devicepolicy/DevicePolicyManagerService.java`.
 - **Likely route: grant one extra permission at setup.** `WRITE_SECURE_SETTINGS` has protection level
   `signature|privileged|development|role|installer` (`core/res/AndroidManifest.xml`). A `development` permission can
-  be granted from the helper's computer with `adb shell pm grant <Own Phone package> android.permission.WRITE_SECURE_SETTINGS`.
-  Setup already uses the helper's computer, so this is one more line in the setup script. Own Phone could then
+  be granted from the helper's computer with `adb shell pm grant <LMNOPhone package> android.permission.WRITE_SECURE_SETTINGS`.
+  Setup already uses the helper's computer, so this is one more line in the setup script. LMNOPhone could then
   switch grayscale on and off itself.
-- **Not tested.** Unknowns: whether the grant survives an Own Phone self-update; whether Motorola's build honours the
-  setting the same way; whether the grant widens what a bug in Own Phone could change (it lets the app write any
+- **Not tested.** Unknowns: whether the grant survives an LMNOPhone self-update; whether Motorola's build honours the
+  setting the same way; whether the grant widens what a bug in LMNOPhone could change (it lets the app write any
   secure setting, which the protected-state check would need to watch). An emulator test by the Android Platform
   Engineer is tracked as a separate, low-priority issue. It doesn't block the MVP.
 

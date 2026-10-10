@@ -15,12 +15,12 @@ From `spikes/wifi-signin/RESULT.md` ([PLA-18](/PLA/issues/PLA-18)). Emulator onl
 
 | Probe finding | What the screens must do |
 |---|---|
-| Q7: Own Phone can tell when the connected Wi-Fi needs a sign-in page. | The way in is only offered then. Both variants check again just before opening. |
+| Q7: LMNOPhone can tell when the connected Wi-Fi needs a sign-in page. | The way in is only offered then. Both variants check again just before opening. |
 | Q4: while it is open, **the sign-in page can reach the open web**: links, redirects, Google Search. Downloads and other apps are blocked. A phone-number link opens the Phone app. | Both start screens say so, plainly. The 5-minute limit is the only limit on browsing. |
-| Q5: the page closes itself about 1 second after the Wi-Fi starts working. | The user doesn't need to find a "Done" on the sign-in page. Own Phone's "Connected" screen follows by itself. |
-| Q5: "Use this network as is" and "Continue anyway" also close it, even though the Wi-Fi may still not work. | After closing, Own Phone checks the internet. If it doesn't work, it shows the existing "isn't reaching the internet" message ([W4](#w4-closed-but-the-wi-fi-still-doesnt-work)). |
-| Q3: Own Phone can't open the sign-in page itself yet. Android's own "Sign in to Wi-Fi network" notification can open it. Once dismissed, that notification only comes back after the Wi-Fi reconnects. | The "Use sign-in page" button needs a working launch path. The copy for each possible path is in [How the page opens](#how-the-page-opens). |
-| Q6a: if Own Phone stops mid-session, the page stays open with no time limit. Pressing Home restarts Own Phone, which closes the page within a second. | "Swipe up from the bottom to stop" is both the normal way out and the recovery. Both start screens say it. |
+| Q5: the page closes itself about 1 second after the Wi-Fi starts working. | The user doesn't need to find a "Done" on the sign-in page. LMNOPhone's "Connected" screen follows by itself. |
+| Q5: "Use this network as is" and "Continue anyway" also close it, even though the Wi-Fi may still not work. | After closing, LMNOPhone checks the internet. If it doesn't work, it shows the existing "isn't reaching the internet" message ([W4](#w4-closed-but-the-wi-fi-still-doesnt-work)). |
+| Q3: LMNOPhone can't open the sign-in page itself yet. Android's own "Sign in to Wi-Fi network" notification can open it. Once dismissed, that notification only comes back after the Wi-Fi reconnects. | The "Use sign-in page" button needs a working launch path. The copy for each possible path is in [How the page opens](#how-the-page-opens). |
+| Q6a: if LMNOPhone stops mid-session, the page stays open with no time limit. Pressing Home restarts LMNOPhone, which closes the page within a second. | "Swipe up from the bottom to stop" is both the normal way out and the recovery. Both start screens say it. |
 | Q6b: **one reboot mid-session sent the emulator into a boot loop.** | No wording fixes this. See [Open question 1](#open-questions-for-the-lead). |
 
 ## Who sees what
@@ -45,20 +45,20 @@ there.
 
 **Today** (flows-user U7, web-containment exact text):
 
-> This Wi-Fi needs a sign-in page, which Own Phone doesn't allow. Use mobile data or another Wi-Fi.
+> This Wi-Fi needs a sign-in page, which LMNOPhone doesn't allow. Use mobile data or another Wi-Fi.
 > Primary: **Forget this network** · Secondary: OK
 
-With either variant, "which Own Phone doesn't allow" is no longer true, so the spec sentence has to change.
+With either variant, "which LMNOPhone doesn't allow" is no longer true, so the spec sentence has to change.
 
 ### Where the message appears
 
-1. On Own Phone's Wi-Fi screen (U7), straight after joining a network.
+1. On LMNOPhone's Wi-Fi screen (U7), straight after joining a network.
 2. When the phone rejoins a known network by itself (the ferry on the next trip), as a **notice line** on the home
-   screen: **This Wi-Fi needs a sign-in page**. "Own Phone needs attention" still wins if both apply. Tapping the
+   screen: **This Wi-Fi needs a sign-in page**. "LMNOPhone needs attention" still wins if both apply. Tapping the
    line opens W0. The line goes away when the phone leaves that Wi-Fi or the Wi-Fi starts working.
 
 Android also shows its own "Sign in to Wi-Fi network" notification. Outside the 5 minutes, tapping it does nothing
-and it disappears (Q3a). Own Phone can't remove it. The W0 message is the one to follow.
+and it disappears (Q3a). LMNOPhone can't remove it. The W0 message is the one to follow.
 
 ### W0 copy
 
@@ -99,21 +99,21 @@ and it disappears (Q3a). Own Phone can't remove it. The W0 message is the one to
 
 ## How the page opens
 
-The probe hasn't found how Own Phone opens the sign-in page itself (Q3c, untested). The screens differ by path.
+The probe hasn't found how LMNOPhone opens the sign-in page itself (Q3c, untested). The screens differ by path.
 The AE confirms which one works; the Lead picks.
 
 | Path | What happens after the start screen | Extra copy |
 |---|---|---|
-| **L1.** Own Phone reconnects the Wi-Fi, Android shows its notification again, Own Phone opens it (untested) | The sign-in page appears | None |
-| **L2.** Own Phone reconnects the Wi-Fi; the person taps Android's notification | An Own Phone screen: **Tap "Sign in to Wi-Fi network"** / "Pull down from the very top of the screen, then tap **Sign in to Wi-Fi network**. It can take up to 30 seconds to appear." If it hasn't appeared after 30 seconds: "It didn't appear. The sign-in page has closed. Try again from the Wi-Fi screen." (In B this try is not counted.) | As shown |
-| **L3.** Own Phone shows the sign-in page in its own window, on that Wi-Fi only (untested) | The sign-in page appears inside Own Phone, with a thin bar at the top: "Wi-Fi sign-in · open until {time} · **Stop**" | The bar. Own Phone could also keep the page to the sign-in site; that is the AE's call |
+| **L1.** LMNOPhone reconnects the Wi-Fi, Android shows its notification again, LMNOPhone opens it (untested) | The sign-in page appears | None |
+| **L2.** LMNOPhone reconnects the Wi-Fi; the person taps Android's notification | An LMNOPhone screen: **Tap "Sign in to Wi-Fi network"** / "Pull down from the very top of the screen, then tap **Sign in to Wi-Fi network**. It can take up to 30 seconds to appear." If it hasn't appeared after 30 seconds: "It didn't appear. The sign-in page has closed. Try again from the Wi-Fi screen." (In B this try is not counted.) | As shown |
+| **L3.** LMNOPhone shows the sign-in page in its own window, on that Wi-Fi only (untested) | The sign-in page appears inside LMNOPhone, with a thin bar at the top: "Wi-Fi sign-in · open until {time} · **Stop**" | The bar. LMNOPhone could also keep the page to the sign-in site; that is the AE's call |
 
 L2 is the hardest for a stranger: it relies on a gesture and an Android label we don't control. If L2 is the path
 we take, Beaux checks it on the real build on the spare Motorola.
 
 ## During the 5 minutes (both variants)
 
-Own Phone can't draw over Android's sign-in page (L1, L2), so, as in Play and Settings sessions (P2), it uses one
+LMNOPhone can't draw over Android's sign-in page (L1, L2), so, as in Play and Settings sessions (P2), it uses one
 ongoing notification:
 
 - **Notification:** "Wi-Fi sign-in open until {time} · Tap here to stop"
@@ -162,7 +162,7 @@ there until Done.
 - With the optional trip pass ([WA5](#wa5-optional-a-trip-pass-for-travelling-alone)) switched on, WA2 isn't shown;
   the B-style start screen is.
 
-Own Phone should **never** suggest reading the PIN over the phone. The same PIN adds apps. Spoken PINs get
+LMNOPhone should **never** suggest reading the PIN over the phone. The same PIN adds apps. Spoken PINs get
 reused, and the [Open question 3](#open-questions-for-the-lead) asks whether A pushes people to do that.
 
 ### WA3. Closing (A)
@@ -206,7 +206,7 @@ Suggested starting values. The Lead can change any number; the copy uses `{n}` a
 
 | Limit | Suggested | Why |
 |---|---|---|
-| Only when the connected Wi-Fi needs a sign-in page | Always | Q7 shows Own Phone can tell. Checked again just before the page opens; if the Wi-Fi has changed, "This Wi-Fi doesn't need a sign-in page any more." with **OK** |
+| Only when the connected Wi-Fi needs a sign-in page | Always | Q7 shows LMNOPhone can tell. Checked again just before the page opens; if the Wi-Fi has changed, "This Wi-Fi doesn't need a sign-in page any more." with **OK** |
 | Time per try | 5 minutes, ends as soon as the Wi-Fi works | Beaux's ask; Q5 shows a working sign-in ends it within about a second |
 | Tries | **3 in any 24 hours** | One trip, a retry, the trip back. It keeps the open-web time to 15 minutes a day at most. Counted over 24 hours, not "today", so changing the phone clock doesn't reset it. The screens still say "today", which is plainer |
 | What counts as a try | Every time the page opens | Simple to explain. In L2, a try where Android's notification never appeared is not counted |
@@ -231,7 +231,7 @@ Suggested starting values. The Lead can change any number; the copy uses `{n}` a
 │                              │
 │ {tp} will get this text:     │
 │ ┌──────────────────────────┐ │
-│ │ Own Phone: a Wi-Fi      │ │
+│ │ LMNOPhone: a Wi-Fi      │ │
 │ │ sign-in page was opened  │ │
 │ │ on {user}'s phone…      │ │
 │ └──────────────────────────┘ │
@@ -252,23 +252,23 @@ Suggested starting values. The Lead can change any number; the copy uses `{n}` a
 - **Primary:** Open sign-in page. Then the page opens (see [How the page opens](#how-the-page-opens)).
 - **Secondary:** Not now
 
-At 200% this screen scrolls; the primary stays pinned. It is the longest start screen in Own Phone. The order
+At 200% this screen scrolls; the primary stays pinned. It is the longest start screen in LMNOPhone. The order
 puts "stay with the phone" and "how to finish" before the text box, so a reader who stops early still knows what
 to do.
 
 ### WB2. The text to {tp}
 
-New row for the [texts table](README.md#texts-own-phone-sends) and for "About this phone" (U8):
+New row for the [texts table](README.md#texts-lmnophone-sends) and for "About this phone" (U8):
 
 | When | To | Text |
 |---|---|---|
-| {user} opens a Wi-Fi sign-in page (variant B, or a trip pass) | {tp} | `Own Phone: a Wi-Fi sign-in page was opened on {user}'s phone, for up to 5 minutes. Sign-in pages can show other websites. This was {n} of 3 today. Nothing for you to do.` |
+| {user} opens a Wi-Fi sign-in page (variant B, or a trip pass) | {tp} | `LMNOPhone: a Wi-Fi sign-in page was opened on {user}'s phone, for up to 5 minutes. Sign-in pages can show other websites. This was {n} of 3 today. Nothing for you to do.` |
 
 - **Sending:** the text is queued when the page opens, and sent as soon as the phone has signal. On a ferry with
   no signal it may arrive hours later. It retries for 7 days, like the monthly check text, and is never sent
   twice. The page **does not wait** for the text: waiting would make B useless where it's needed most.
 - **No network name, place or time of day in the text.** A network name like "BCF Wi-Fi" or a hotel's name says
-  where {user} is, and Own Phone promises that {tp} can't see where {user} is (U8). See
+  where {user} is, and LMNOPhone promises that {tp} can't see where {user} is (U8). See
   [Open question 4](#open-questions-for-the-lead).
 - "Nothing for you to do" is there so the text reads as information, not an alarm.
 
@@ -313,7 +313,7 @@ each. You'll get a text each time." Yes / Not now. (A setup change; see [Open qu
 
 Same as P4a: **Checking the phone…** / "This takes a few seconds." No buttons. The protected-state check runs as
 after any session, even though the sign-in page can't change settings: one rule for every session. After the
-check, Own Phone tests whether the Wi-Fi reaches the internet, then shows W3, W4 or W5.
+check, LMNOPhone tests whether the Wi-Fi reaches the internet, then shows W3, W4 or W5.
 
 If the check fails: P5, "Not ready to hand back – call the helper", unchanged. In variant B, {user} sees P5; its
 body already tells the reader to keep the phone and call {helper}.
@@ -348,7 +348,7 @@ is":
 - **Body, block 2:** Or use mobile data or another Wi-Fi. You can still call when the phone has signal.
 - **Primary / Secondary:** per variant (WA4, WB4).
 - **If the Wi-Fi starts working after all** in the next minute (the sign-in went through just as time ran out),
-  the screen changes to W3 by itself. Own Phone keeps watching that Wi-Fi; it doesn't reopen anything.
+  the screen changes to W3 by itself. LMNOPhone keeps watching that Wi-Fi; it doesn't reopen anything.
 - The same screen, with "The sign-in page closed" and without the first sentence of block 1, is used when the page
   closed early (screen off, a call, Home) and the Wi-Fi isn't working.
 
@@ -367,7 +367,7 @@ For whichever variant is chosen. Listed so the Lead can size it; none is made he
 | U1 notice lines | Third line, "This Wi-Fi needs a sign-in page" | Yes | Yes |
 | T2 front page | Trip pass row (WA5) | Optional | WB5 row |
 | Setup, step 7 | Switch default question | No | Yes |
-| "What Own Phone can't stop" (flows-limits-and-off) | Replace "Wi-Fi with a sign-in page … won't work" with: "Wi-Fi sign-in pages — When a Wi-Fi needs a sign-in page, it can be opened for 5 minutes. While it's open, it can show other websites." | Yes | Yes |
+| "What LMNOPhone can't stop" (flows-limits-and-off) | Replace "Wi-Fi with a sign-in page … won't work" with: "Wi-Fi sign-in pages — When a Wi-Fi needs a sign-in page, it can be opened for 5 minutes. While it's open, it can show other websites." | Yes | Yes |
 | Human check | Beaux checks W0, WA1/WB1, W5, and L2 if used, on the real build on the spare Motorola. No outside testers for now (Telegram 4477) | Yes | Yes |
 
 ## Open questions for the Lead
@@ -387,5 +387,5 @@ For whichever variant is chosen. Listed so the Lead can size it; none is made he
    like A until {tp} turns it on.
 6. **Variant B and P5.** If the closing check fails in B, {user} sees "Not ready to hand back – call the helper"
    alone. The words still work ("keep the phone with you and call {helper}"), but "hand back" makes less sense
-   when nobody handed the phone over. A B-specific title, "Own Phone needs the helper", would read better; it
+   when nobody handed the phone over. A B-specific title, "LMNOPhone needs the helper", would read better; it
    changes an exact spec string.

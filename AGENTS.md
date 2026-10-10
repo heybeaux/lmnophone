@@ -2,9 +2,9 @@
 
 Instructions for coding agents (Claude Code, Codex, Cursor, Copilot and others) working in this repository. Humans are welcome to read it too: it is the fastest tour of the code.
 
-Own Phone is an Android app that becomes a phone's **Device Owner** and its **home screen**. It hides every app a trusted person hasn't added, keeps the approved apps in lock task mode, and never blocks calls, texts or 9-1-1. The people using it are not technical. Read [README.md](README.md) first for the why.
+LMNOPhone is an Android app that becomes a phone's **Device Owner** and its **home screen**. It hides every app a trusted person hasn't added, keeps the approved apps in lock task mode, and never blocks calls, texts or 9-1-1. The people using it are not technical. Read [README.md](README.md) first for the why.
 
-The project used to be called Plainphone. Code names such as the `org.plainphone` package, the `:plainphone` module and `PlainphoneAdminReceiver` keep the old name until the package-rename slice. Both names mean the same project.
+The project used to be called Plainphone. Code names such as the `org.plainphone` package, the `:plainphone` module and `PlainphoneAdminReceiver` keep the old name until the package-rename slice, which moves the app to its planned ID, `dev.heybeaux.lmnophone`. Until then the code uses `org.plainphone`. Both names mean the same project.
 
 > If you work inside the maintainers' own agent team, your team policy also applies. Where it is stricter than this file, it wins.
 
@@ -79,10 +79,10 @@ Prefer the narrowest command that proves your change. A `:policy` change needs `
 **Source files**
 - Every new source file starts with the licence header:
   ```kotlin
-  // Copyright 2026 Own Phone contributors
+  // Copyright 2026 LMNOPhone contributors
   // SPDX-License-Identifier: Apache-2.0
   ```
-  (`LICENSE` says "The Own Phone Authors". The project was called Plainphone before, so existing source headers and the root build files still say "Plainphone contributors" or "The Plainphone Authors" until the package-rename slice. All of these mean the same people; don't churn existing headers.)
+  (`LICENSE` says "The LMNOPhone Authors". The project was called Plainphone before, so existing source headers and the root build files still say "Plainphone contributors" or "The Plainphone Authors" until the package-rename slice. All of these mean the same people; don't churn existing headers.)
 - New versions go in `app/gradle/libs.versions.toml`, and module build files read them through `libs.versions.*` and `libs.plugins.*`. A few `:ui` dependencies (the Compose BOM, Paparazzi) are still pinned in `app/ui/build.gradle.kts`. Leave them unless your change is about them.
 - Toolchain: JDK 17, AGP 8.11.0, Kotlin 2.1.20, compileSdk 36, minSdk 30.
 
@@ -123,10 +123,10 @@ Bug fixes, tests, refactors and docs don't need a spec. If a "fix" changes what 
 2. **No colour outside the palette.** No new `Color(...)` values, no accent, no red for danger. The `lightColorScheme` in `PlainphoneTheme.kt` maps the palette tokens and is the only colour scheme: no default Material schemes, no dynamic (Material You) colour, nothing off the palette.
 3. **Never place an emergency call.** No test, script or tool may start `ACTION_CALL` or `ACTION_CALL_EMERGENCY` to 911, 112, 999, 000 or any other emergency number, press a dialer's call button with one typed in, or trigger the power-button emergency SOS gesture. Emergency checks open the dialer with the number typed in (`ACTION_DIAL`) and stop there. Anything that does place a call uses a fake number (for example `555-0100`), never a real emergency or personal number.
 4. **No commands against real phones.** Use emulators only. Always name the target with `adb -s emulator-NNNN` or `ANDROID_SERIAL`; never run a bare `adb` command while a physical device might be connected. Never run `dpm set-device-owner`, a factory reset, a flash, or an install on a physical phone. A human who owns a specific phone may authorise that phone, in writing, for a specific task. Nothing else counts as permission.
-5. **Never weaken the floor.** Every floor and never-hide package (the Phone app, Messages, emergency dialing, emergency alerts, and the system parts they depend on, such as WebView, keyboards and the permission controller) stays unhidden and enabled. Code that could hide or disable one goes through the never-hide guard in `:policy`. Lock task is a separate list. It holds exactly the **lock-task UI list** from the device-lockdown spec: Own Phone, the approved apps, the emergency UI subset that `EmergencyFloor` returns (the system dialer, the emergency dialer and the in-call UI), and the minimum UI entries in the build inventory, plus a supervised session's packages while one is open. `PolicyEngine` builds this list; don't build it anywhere else. Never bulk-add the whole never-hide floor to lock task, because that would let WebView, keyboards and other system parts launch freely. And don't "fix" the turn-off path, which clears lock task on purpose.
+5. **Never weaken the floor.** Every floor and never-hide package (the Phone app, Messages, emergency dialing, emergency alerts, and the system parts they depend on, such as WebView, keyboards and the permission controller) stays unhidden and enabled. Code that could hide or disable one goes through the never-hide guard in `:policy`. Lock task is a separate list. It holds exactly the **lock-task UI list** from the device-lockdown spec: LMNOPhone, the approved apps, the emergency UI subset that `EmergencyFloor` returns (the system dialer, the emergency dialer and the in-call UI), and the minimum UI entries in the build inventory, plus a supervised session's packages while one is open. `PolicyEngine` builds this list; don't build it anywhere else. Never bulk-add the whole never-hide floor to lock task, because that would let WebView, keyboards and other system parts launch freely. And don't "fix" the turn-off path, which clears lock task on purpose.
 6. **Don't lock yourself out.** Test builds stay `testOnly` so `dpm remove-active-admin` works. Applying `DISALLOW_DEBUGGING_FEATURES` ends your adb connection, so don't apply a full policy plan on an emulator you still need to drive.
 7. **No secrets or personal data in the repo.** No credentials, account addresses, phone numbers, real names, or screenshots that show any of them. Check every image before you commit it.
-8. **No analytics, crash reporters, ads or dependencies that phone home.** Own Phone's notifications are only the SMS texts listed in [docs/ux/README.md](docs/ux/README.md#texts-own-phone-sends). Its one approved network use is the updater: after a fresh PIN, it downloads a signed Own Phone APK from the helper's computer on the local network (trusted-person-controls spec). Any other network use needs an approved spec first.
+8. **No analytics, crash reporters, ads or dependencies that phone home.** LMNOPhone's notifications are only the SMS texts listed in [docs/ux/README.md](docs/ux/README.md#texts-lmnophone-sends). Its one approved network use is the updater: after a fresh PIN, it downloads a signed LMNOPhone APK from the helper's computer on the local network (trusted-person-controls spec). Any other network use needs an approved spec first.
 9. **Don't approve your own work**, and don't force-push `main`.
 
 ## Android facts that have caught us out

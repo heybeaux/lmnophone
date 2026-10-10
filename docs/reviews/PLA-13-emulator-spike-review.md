@@ -130,5 +130,5 @@ These are **unexecuted attack recipes**, not claimed bypasses. Run only on an ow
 
 ## Handoff
 
-The Own Phone Lead owns the go/no-go decision in [PLA-14](/PLA/issues/PLA-14). Carry forward the two **inconclusive** gate verdicts and the narrowly supported observations. The Android Platform Engineer should correct the report and evidence under V1–V7 before requesting another approval review; physical-phone work remains with its separately authorized owner in [PLA-5](/PLA/issues/PLA-5). This reviewer has not edited or approved the spike and has not authorized any device work. [PLA-13](/PLA/issues/PLA-13) is complete with the adverse verdict above.
+The Plainphone Lead owns the go/no-go decision in [PLA-14](/PLA/issues/PLA-14). Carry forward the two **inconclusive** gate verdicts and the narrowly supported observations. The Android Platform Engineer should correct the report and evidence under V1–V7 before requesting another approval review; physical-phone work remains with its separately authorized owner in [PLA-5](/PLA/issues/PLA-5). This reviewer has not edited or approved the spike and has not authorized any device work. [PLA-13](/PLA/issues/PLA-13) is complete with the adverse verdict above.
 

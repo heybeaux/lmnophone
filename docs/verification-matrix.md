@@ -15,7 +15,7 @@
 
 | Spec → requirement | Source or hypothesis | Test ID | Expected observable outcome | Gate | Owner |
 |---|---|---|---|---|---|
-| device-lockdown → Device Owner + home | DPM reference (documented); **[device ✓] adb setup works on XT2415 / Android 15 (PLA-5 A1)** | Q3, Q5-E21 | `dpm list-owners` shows Own Phone; Home always opens Own Phone; no chooser | G0 | AE |
+| device-lockdown → Device Owner + home | DPM reference (documented); **[device ✓] adb setup works on XT2415 / Android 15 (PLA-5 A1)** | Q3, Q5-E21 | `dpm list-owners` shows LMNOPhone; Home always opens LMNOPhone; no chooser | G0 | AE |
 | device-lockdown → first-frame invariant, built-in safe policy | PLA-4 N4 | Q6 | No unapproved app opens from unlock to lock task; both copies corrupt → safe policy | G1 | AE, VE |
 | device-lockdown → escape restrictions | UserManager (documented); OemLockService (code-confirmed) | Q5 | Safe mode refused; OEM unlock greyed out; adb refuses an authorised host; add-user is absent | G1 | AE, VE |
 | device-lockdown → in-task blocking | Lock task guide; DPM `BLOCK_ACTIVITY_START_IN_TASK` (documented); usability **unknown** | Q1 | All normal-day items pass with the flag on; Settings, panels and Play never open (both launch modes); every UI exception has a negative test | G0 | AE, VE |
@@ -32,11 +32,11 @@
 | trusted-person-controls → recovery code | Design D6 | unit + fault injection | Atomic rotation; old or new works, never neither | G1 | AE |
 | trusted-person-controls → fresh authority, no outside input | Design D6 | Q5 (forged intents) | Forged extras change nothing | G1 | VE |
 | trusted-person-controls → requests | Design D6 | unit + Q8 | Approval is bound to the installed package and signing certificate; SMS failure shown | G2 | AE |
-| trusted-person-controls → Own Phone update over local Wi-Fi | Design D6; Android same-key update rule (documented) | Q6, Q12 | Exact package, valid signature, pinned signer, strictly higher `longVersionCode`, staged bytes, session bound to the package; refused: wrong signer, other package signed with the same key, same or lower version, a response that changes, a redirect, a truncated file; post-update self-check; crash-on-start build → recovery path | G1 | AE |
+| trusted-person-controls → LMNOPhone update over local Wi-Fi | Design D6; Android same-key update rule (documented) | Q6, Q12 | Exact package, valid signature, pinned signer, strictly higher `longVersionCode`, staged bytes, session bound to the package; refused: wrong signer, other package signed with the same key, same or lower version, a response that changes, a redirect, a truncated file; post-update self-check; crash-on-start build → recovery path | G1 | AE |
 | trusted-person-controls → turning off | `clearDeviceOwnerApp` (deprecated; **unknown**) | Q7 | Resumes after a kill at every step; "Off" only when complete; data kept | G1 | AE, VE |
 | trusted-person-controls → disclosure | web Part 3; PLA-3 F13 | UX review | Plain-language screen lists every accepted risk | G1 | UX, Lead |
 | web-containment → classifier and hiding | DPM; App Links docs (documented) | Q4 | Fixtures classify correctly; the Wi-Fi sign-in page is hidden and normal Wi-Fi still works | G0 | AE |
-| web-containment → link matrix | DPM ("invoking the browser… cannot be configured") (documented); browser role **unknown** | Q4 | Own Phone holds the browser role; the matrix behaves as specified | G0 | AE, VE |
+| web-containment → link matrix | DPM ("invoking the browser… cannot be configured") (documented); browser role **unknown** | Q4 | LMNOPhone holds the browser role; the matrix behaves as specified | G0 | AE, VE |
 | web-containment → safe blocked-link screen | Design D4 | unit + Q5 | Deceptive URLs show the real host; userinfo and query removed; extras ignored | G1 | AE, VE |
 | web-containment → web-leak notes per version | Design D4 | UX + unit | "Reviewed for an older version" appears after an update | G2 | UX |
 | essential → never obstruct emergency access | AOSP LockTaskController (code-confirmed); the dialer can't be suspended (documented) | Q14, unit | Never-hide guard refuses changes; dialer reachable in every state | G0 | AE, VE |

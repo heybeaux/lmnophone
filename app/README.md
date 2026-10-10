@@ -1,8 +1,8 @@
 <!--
-  Copyright 2026 The Own Phone Authors
+  Copyright 2026 The LMNOPhone Authors
   SPDX-License-Identifier: Apache-2.0
 -->
-# Own Phone app
+# LMNOPhone app
 
 The Gradle root for the MVP. The module map, the owner of each module, and the seams between them are in [`docs/mvp/lanes.md`](../docs/mvp/lanes.md).
 
