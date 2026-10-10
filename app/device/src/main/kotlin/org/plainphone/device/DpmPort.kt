@@ -94,7 +94,7 @@ class DpmPort(
         dpm.setPermittedAccessibilityServices(admin, if (only) emptyList() else null)
     }
 
-    override fun lockTaskPackages(): Set<PackageName> = dpm.getLockTaskPackages(admin).mapTo(mutableSetOf(), ::PackageName)
+    override fun lockTaskPackages(): Set<PackageName> = lockTaskPackageNames(dpm.getLockTaskPackages(admin))
     override fun setLockTaskPackages(packages: Set<PackageName>) {
         dpm.setLockTaskPackages(admin, packages.map { it.value }.sorted().toTypedArray())
     }
