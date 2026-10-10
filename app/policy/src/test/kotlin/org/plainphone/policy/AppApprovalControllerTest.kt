@@ -83,18 +83,63 @@ class AppApprovalControllerTest {
         installedIdentities = listOf(binding))
     private var battery = BatteryState(50, false)
     private var permissionReadback = mapOf(camera to PermissionReadback.GRANTED)
+    private var hidden = true
+    private var appliedLockTask = emptySet<PackageName>()
+    private var poweredOff = false
+    private var modelPermissions = false
+    private var actualPermissions = emptyMap<PermissionName, PermissionReadback>()
+    private fun assertWindowExcluded() {
+        assertFalse(app in appliedLockTask)
+        assertFalse(app in state!!.approvedPackages(policy.installed, policy.installedIdentities))
+    }
     private val effects = object : AppApprovalEffects {
-        override fun hideAndReadBack(identity: ApprovalBinding) = event("hide")
-        override fun setPermission(identity: ApprovalBinding, write: PermissionWrite) = event("permission")
+        override fun hideAndReadBack(identity: ApprovalBinding): Boolean {
+            check(!poweredOff)
+            if (!event("hide")) return false
+            hidden = true
+            return true
+        }
+        override fun openPermissionWindow(identity: ApprovalBinding): Boolean {
+            assertTrue(hidden)
+            if (!event("window-exclude")) return false
+            appliedLockTask = appliedLockTask - identity.packageName
+            assertWindowExcluded()
+            hidden = false
+            if (!event("window-unhide")) return false
+            return event("window-visible-readback")
+        }
+        override fun closePermissionWindow(identity: ApprovalBinding): Boolean {
+            check(!poweredOff)
+            if (!event("window-rehide")) return false
+            hidden = true
+            return event("window-hidden-readback")
+        }
+        override fun setPermission(identity: ApprovalBinding, write: PermissionWrite): Boolean {
+            if (hidden) return false // API 35 refuses both grants and denials while hidden.
+            assertWindowExcluded()
+            if (!event("permission")) return false
+            actualPermissions = actualPermissions + (write.permission to
+                if (write.choice == PermissionChoice.ALLOW) PermissionReadback.GRANTED else PermissionReadback.DENIED)
+            return event("write-${write.choice}-${write.permission.value}")
+        }
         override fun readPermissions(identity: ApprovalBinding): Map<PermissionName, PermissionReadback> {
-            event("permissions-readback"); return permissionReadback
+            if (!hidden && state!!.pending?.phase != AppApprovalPhase.COMMITTED) assertWindowExcluded()
+            if (!event("permissions-readback")) return emptyMap()
+            event(if (hidden) "permissions-hidden" else "permissions-visible")
+            return if (modelPermissions) actualPermissions else permissionReadback
         }
         override fun applyPolicy(plan: PolicyPlan): Boolean {
             assertFalse(PLAY_PACKAGE in plan.lockTaskPackages)
-            if (app !in plan.unhide) return event("restore-policy")
+            if (app !in plan.unhide) {
+                if (!event("restore-policy")) return false
+                hidden = true; appliedLockTask = plan.lockTaskPackages
+                return true
+            }
             assertNotNull(state!!.apps[app], "unhide before persistent approval")
             assertTrue(app in plan.lockTaskPackages)
-            return event("unhide")
+            if (!event("unhide")) return false
+            hidden = false; appliedLockTask = plan.lockTaskPackages
+            return true
         }
         override fun readBackPolicy(plan: PolicyPlan) = event("policy-readback")
     }
@@ -219,10 +264,11 @@ class AppApprovalControllerTest {
         for (point in listOf("revoke", "protected", "session-readback", "save-preparing", "after-save-preparing", "hide", "permission", "permissions-readback", "save-committed", "after-save-committed", "unhide", "policy-readback", "save-finished", "after-save-finished")) {
             state = AppApprovalState(); setup(); val r = request(); val a = auth(r); crash = point
             assertFailsWith<IllegalStateException> { controller.approve(r, a) }
+            val recoverHide = state!!.pending?.phase == AppApprovalPhase.PREPARING
             val committed = state!!.apps.isNotEmpty()
             crash = null; events.clear(); controller = controller()
             val result = controller.onStart()
-            assertEquals("revoke", events.first())
+            assertEquals(if (recoverHide) "hide" else "revoke", events.first())
             assertTrue(result == AppApprovalOutcome.READY || result == AppApprovalOutcome.APPROVED)
             assertNull(state!!.pending)
             assertEquals(committed, state!!.apps.isNotEmpty())
@@ -739,10 +785,11 @@ class AppApprovalControllerTest {
             assertFailsWith<IllegalStateException>(point) { controller.editPermissions(r, r.approvalId, a) }
             val durable = state!!.apps.getValue(app).id != oldId
             if (state!!.pending != null) assertFalse(app in PolicyEngine.decide(policy.copy(approvalState = state)).lockTaskPackages)
+            val recoverHide = state!!.pending?.phase == AppApprovalPhase.EDITING
             crash = null; events.clear(); controller = controller()
             assertEquals(if (durable && state!!.pending != null) AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.READY,
                 controller.onStart(), point)
-            assertEquals("revoke", events.first()); assertNull(state!!.pending)
+            assertEquals(if (recoverHide) "hide" else "revoke", events.first()); assertNull(state!!.pending)
             assertEquals(if (durable) PermissionChoice.DENY else PermissionChoice.ALLOW, state!!.apps.getValue(app).permissions.choices[camera])
             assertEquals(if (durable) 1 else 0, state!!.receipts.size)
             assertEquals(AppApprovalOutcome.REFUSED, controller.editPermissions(r, r.approvalId, a))
@@ -850,6 +897,124 @@ class AppApprovalControllerTest {
         permissionReadback = mapOf(camera to PermissionReadback.DENIED, microphone to PermissionReadback.GRANTED)
         assertEquals(AppApprovalOutcome.PERMISSIONS_CHANGED, controller.resume())
         assertEquals(selection.choices, state!!.apps.getValue(app).permissions.choices)
+    }
+
+    private val microphone = PermissionName("android.permission.RECORD_AUDIO")
+    private val contacts = PermissionName("android.permission.READ_CONTACTS")
+    private fun windowAction(edit: Boolean): () -> AppApprovalOutcome {
+        if (edit) activeApproval(true) else setup()
+        manifest = PermissionManifest(binding, 1, "build", listOf(
+            RuntimePermission(camera, "Camera", listOf("Photos"), PermissionGrantCapability.SUPPORTED),
+            RuntimePermission(microphone, "Microphone", listOf("Recording"), PermissionGrantCapability.SUPPORTED),
+            RuntimePermission(contacts, "Contacts", listOf("Contacts"), PermissionGrantCapability.SUPPORTED)))
+        // Deliberately interleave ALLOW, DENY, ALLOW in manifest order.
+        val choices = linkedMapOf(camera to PermissionChoice.ALLOW, microphone to PermissionChoice.DENY,
+            contacts to PermissionChoice.ALLOW)
+        modelPermissions = true
+        actualPermissions = mapOf(camera to PermissionReadback.DENIED, microphone to PermissionReadback.DENIED,
+            contacts to PermissionReadback.DENIED)
+        val action: () -> AppApprovalOutcome = if (edit) {
+            val r = assertNotNull(controller.preparePermissionEdit(app, person, PermissionSelection(manifest!!, choices)))
+            val a = editAuth(r)
+            val run = { controller.editPermissions(r, r.approvalId, a) }
+            run
+        } else {
+            val r = request(choices); val a = auth(r)
+            val run = { controller.approve(r, a) }
+            run
+        }
+        events.clear()
+        return action
+    }
+
+    @Test fun `permission window writes denials first and commits only after hidden verification`() {
+        for (edit in listOf(false, true)) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            assertEquals(edit, f.app in f.appliedLockTask)
+            f.atEvent = { if (it == "save-committed") assertTrue(f.hidden) }
+            assertEquals(if (edit) AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.APPROVED, action())
+            val order = listOf("hide", "window-exclude", "window-unhide", "window-visible-readback",
+                "write-DENY-${f.microphone.value}", "write-ALLOW-${f.camera.value}", "write-ALLOW-${f.contacts.value}",
+                "permissions-visible", "window-rehide", "window-hidden-readback", "permissions-hidden", "save-committed", "unhide")
+            val positions = order.map { name -> f.events.indexOf(name).also { assertTrue(it >= 0, "$name: ${f.events}") } }
+            assertEquals(positions.sorted(), positions, f.events.toString())
+            assertFalse(f.hidden); assertTrue(f.app in f.appliedLockTask)
+        }
+    }
+
+    @Test fun `permission window refused writes readbacks and gates always rehide without commit`() {
+        for (edit in listOf(false, true)) for (point in listOf("window-exclude", "window-unhide", "window-visible-readback",
+            "permission", "permissions-readback", "plan", "battery", "hidden-readback", "save-committed")) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            when (point) {
+                "plan" -> f.atEvent = { if (it == "window-unhide") f.policy = f.policy.copy(fingerprint = "changed") }
+                "battery" -> f.atEvent = { if (it == "permissions-visible") f.battery = BatteryState(1, false) }
+                "hidden-readback" -> f.atEvent = { if (it == "window-hidden-readback") f.actualPermissions = emptyMap() }
+                else -> f.failure = point
+            }
+            assertEquals(AppApprovalOutcome.NOT_READY, action(), "$edit $point")
+            assertTrue(f.hidden, "$edit $point left app visible")
+            assertFalse("after-save-committed" in f.events)
+            assertTrue("window-rehide" in f.events)
+            assertFalse(f.app in f.state!!.approvedPackages(f.policy.installed, f.policy.installedIdentities))
+        }
+    }
+
+    @Test fun `failed close retains pending work and next start hides before low battery`() {
+        for (edit in listOf(false, true)) for (point in listOf("window-rehide", "window-hidden-readback")) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit); f.failure = point
+            assertEquals(AppApprovalOutcome.NOT_READY, action())
+            assertFalse("after-save-committed" in f.events)
+            f.failure = null; f.battery = BatteryState(1, false); f.events.clear(); f.controller = f.controller()
+            assertEquals(if (edit) AppApprovalOutcome.LOW_BATTERY else AppApprovalOutcome.READY, f.controller.onStart())
+            assertEquals("hide", f.events.first()); assertTrue(f.hidden)
+        }
+    }
+
+    @Test fun `battery dropping after initial hide never opens the permission window`() {
+        for (edit in listOf(false, true)) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            f.atEvent = { if (it == "hide") f.battery = BatteryState(1, false) }
+            assertEquals(if (edit) AppApprovalOutcome.LOW_BATTERY else AppApprovalOutcome.NOT_READY, action())
+            assertTrue(f.hidden); assertFalse("window-unhide" in f.events)
+        }
+    }
+
+    @Test fun `power loss after unhide and each write recovers hidden before any gate`() {
+        for (edit in listOf(false, true)) for (point in listOf("window-unhide", "write-DENY-${microphone.value}",
+            "write-ALLOW-${camera.value}", "write-ALLOW-${contacts.value}")) for (gate in listOf("battery", "session", "plan")) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            f.atEvent = { if (it == point) { f.poweredOff = true; error("power loss; no further effects can run") } }
+            assertFailsWith<IllegalStateException> { action() }
+            assertFalse(f.hidden, point)
+            assertEquals(if (edit) AppApprovalPhase.EDITING else AppApprovalPhase.PREPARING, f.state!!.pending!!.phase)
+            assertFalse("after-save-committed" in f.events)
+            f.poweredOff = false; f.atEvent = null; f.events.clear()
+            when (gate) {
+                "battery" -> f.battery = BatteryState(1, false)
+                "session" -> f.failure = "revoke"
+                "plan" -> f.policy = f.policy.copy(lockedBoot = true)
+            }
+            f.controller = f.controller()
+            val result = f.controller.onStart()
+            assertTrue(result in setOf(AppApprovalOutcome.READY, AppApprovalOutcome.LOW_BATTERY, AppApprovalOutcome.NOT_READY))
+            assertEquals("hide", f.events.first(), "$edit $point $gate")
+            assertTrue(f.hidden); assertFalse("after-save-committed" in f.events)
+            assertFalse(f.app in f.state!!.approvedPackages(f.policy.installed, f.policy.installedIdentities))
+            if (!edit) assertTrue(f.state!!.apps.isEmpty())
+        }
+    }
+
+    @Test fun `recovered edit rewrites every permission before it commits`() {
+        val f = AppApprovalControllerTest(); val action = f.windowAction(true)
+        f.atEvent = { if (it == "write-DENY-${f.microphone.value}") { f.poweredOff = true; error("power loss") } }
+        assertFailsWith<IllegalStateException> { action() }
+        f.poweredOff = false; f.atEvent = null; f.events.clear(); f.controller = f.controller()
+        assertEquals(AppApprovalOutcome.PERMISSIONS_CHANGED, f.controller.onStart())
+        assertEquals("hide", f.events.first())
+        assertEquals(3, f.events.count { it.startsWith("write-") })
+        assertTrue(f.events.indexOf("permissions-hidden") < f.events.indexOf("save-committed"))
+        assertEquals(1, f.state!!.receipts.size)
     }
 
 }
