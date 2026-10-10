@@ -21,6 +21,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+/** The gate's negative-control build types; each has its own `BuildControl` in `src/<name>/kotlin`. */
+val NEGATIVE_CONTROLS = listOf("ctlNoPhone", "ctlNoDialerLockTask", "ctlNoAlert")
+
 android {
     namespace = "org.plainphone"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -37,6 +40,26 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    buildTypes {
+        // Release-gate negative controls (task 4.4): debug, testOnly builds that each break one
+        // emergency route, so the gate can prove it fails. Never shipped.
+        for (control in NEGATIVE_CONTROLS) {
+            create(control) {
+                initWith(getByName("debug"))
+                matchingFallbacks += "debug"
+            }
+        }
+    }
+    sourceSets {
+        getByName("debug").kotlin.srcDir("src/noControl/kotlin")
+        getByName("release").kotlin.srcDir("src/noControl/kotlin")
+        for (control in NEGATIVE_CONTROLS) {
+            getByName(control) {
+                kotlin.srcDir("src/debug/kotlin")
+                manifest.srcFile("src/debug/AndroidManifest.xml")
+            }
+        }
     }
 }
 

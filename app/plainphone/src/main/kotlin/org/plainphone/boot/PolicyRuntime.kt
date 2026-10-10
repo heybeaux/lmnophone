@@ -95,13 +95,14 @@ class PolicyRuntime private constructor(private val context: Context) {
             null
         }
         log(reason, outcome, SystemClock.elapsedRealtime() - started)
+        BuildControl.control.afterReapply(context, dpm, admin)
         // A locked run never opens Home: the full plan has not run yet.
         if (!locked) gateState.value = if (outcome?.ready == true) HomeGate.READY else HomeGate.NOT_READY
     }
 
     private fun log(reason: String, outcome: BootOutcome?, millis: Long) {
         val apply = outcome?.apply
-        Log.i(TAG, "reapply reason=$reason locked=${outcome?.locked} ready=${outcome?.ready} " +
+        Log.i(TAG, "reapply reason=$reason control=${BuildControl.control.name} locked=${outcome?.locked} ready=${outcome?.ready} " +
             "applied=${apply?.applied} failed=${apply?.failedStage} flipFailures=${apply?.flipFailures?.size} " +
             "withheld=${outcome?.withheld?.sorted()} ms=$millis")
     }

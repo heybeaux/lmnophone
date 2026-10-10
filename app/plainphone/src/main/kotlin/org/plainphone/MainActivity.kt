@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import org.plainphone.boot.BuildControl
 import org.plainphone.boot.CheckingScreen
 import org.plainphone.boot.HomeGate
 import org.plainphone.boot.PolicyRuntime
@@ -82,7 +83,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun openPhone() = launch(Intent(Intent.ACTION_DIAL))
+    private fun openPhone() = launch(BuildControl.control.phoneIntent(Intent(Intent.ACTION_DIAL)))
 
     private fun openEmergency() = launch(Intent(EMERGENCY_DIAL))
 
