@@ -65,7 +65,8 @@ class ReadbackPolicyApplierTest {
         assertTrue(result.complete)
         assertNull(result.failedStage)
         assertEquals(ApplyStage.entries.drop(1), result.applied)
-        val order = listOf("restrict", "unhide $dialer", "hide $chrome", "unhide $camera", "lockTask", "features", "home")
+        // The floor restores the fixed features first (PLA-232 finding 9); LOCK_TASK sets them again.
+        val order = listOf("restrict", "unhide $dialer", "features", "hide $chrome", "unhide $camera", "lockTask", "home")
         val at = order.map { firstIndex(port.ops, it) }
         assertTrue("every stage wrote: ${port.ops}", at.all { it >= 0 })
         assertEquals(at.sorted(), at)
@@ -273,7 +274,8 @@ class ReadbackPolicyApplierTest {
         assertEquals(names(pp, dialer), port.lockTask)
         assertFalse(port.hidden(dialer))
         assertEquals(-1, firstIndex(port.ops, "hide "))
-        assertEquals(-1, firstIndex(port.ops, "features"))
+        // The locked-boot path restores the fixed features too (spec 722610b, PLA-232 finding 9).
+        assertEquals(LockTaskFeature.entries.toSet(), port.features)
         assertNull(port.homePackage)
     }
 

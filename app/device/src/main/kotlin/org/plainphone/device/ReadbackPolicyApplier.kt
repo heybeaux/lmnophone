@@ -15,7 +15,10 @@ import org.plainphone.policy.PolicyPlan
  * - [ApplyStage.REVOKE_JOURNAL] belongs to the session controller and is skipped here.
  * - Restrictions are only added, never cleared; the readback requires every expected one.
  * - The floor repairs the emergency UI and every never-hide package the plan unhides (the plan does
- *   not carry the floor's own set separately), and restores the emergency UI's lock-task membership.
+ *   not carry the floor's own set separately). It restores the lock-task membership of the emergency
+ *   UI and of Plainphone ([ExpectedPolicyState.home], the Home package), so Home can start lock task
+ *   at the first frame even after the list was lost, and it restores the fixed lock-task features
+ *   (including BLOCK_ACTIVITY_START_IN_TASK). This is the locked-boot path of device-lockdown.
  * - The never-hide guard fails a plan that would hide a never-hide package. Hides skip that list
  *   whatever the plan says. [PolicyPlan.allowedDestruction] is a guard result and is never run.
  * - Every real unhide is followed at once by its own flip of Plainphone's flush component to the
@@ -58,7 +61,8 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
             ApplyResult(applied.toList(), failed, absent.toSet(), flipFailures.toSet())
 
         private val floorPackages get() = plan.emergencyUi + (plan.unhide intersect plan.neverHide)
-        private val floorLockTask get() = expected.lockTaskPackages?.let { plan.emergencyUi intersect it }
+        private val floorLockTask get() =
+            expected.lockTaskPackages?.let { (plan.emergencyUi + listOfNotNull(expected.home)) intersect it }
         private val toHide get() = expected.hidden?.let { plan.hidden - plan.neverHide }
 
         fun write(stage: ApplyStage) {
@@ -75,6 +79,7 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
                     val now = port.lockTaskPackages()
                     if (!now.containsAll(want)) port.setLockTaskPackages(now + want)
                 }
+                expected.features?.let { want -> if (port.lockTaskFeatures() != want) port.setLockTaskFeatures(want) }
             }
             ApplyStage.NEVER_HIDE_GUARD -> if (guardHolds()) show(plan.neverHide)
             ApplyStage.HIDES -> {
@@ -98,7 +103,8 @@ class ReadbackPolicyApplier(private val port: DevicePolicyPort) : PolicyApplier 
                     expected.systemInputMethodsOnly.let { it == null || port.systemInputMethodsOnly() == it } &&
                     expected.systemAccessibilityServicesOnly.let { it == null || port.systemAccessibilityServicesOnly() == it }
             ApplyStage.EMERGENCY_FLOOR ->
-                shown(floorPackages) && floorLockTask.let { it == null || port.lockTaskPackages().containsAll(it) }
+                shown(floorPackages) && floorLockTask.let { it == null || port.lockTaskPackages().containsAll(it) } &&
+                    expected.features.let { it == null || port.lockTaskFeatures() == it }
             ApplyStage.NEVER_HIDE_GUARD -> guardHolds() && shown(plan.neverHide)
             // Every expected visible or unsuspended package, not only the ones this plan wrote.
             ApplyStage.HIDES ->
