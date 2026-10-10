@@ -49,6 +49,10 @@ class PermissionGrantsContainmentTest {
         var beforeWrite: () -> Unit = {}
         var afterWrite: () -> Unit = {}
         var afterRead: () -> Unit = {}
+        /** Runs inside `setUninstallBlocked(false)`, before the block is cleared. */
+        var whileUnblocking: () -> Unit = {}
+        /** Runs after each signer read has taken its value; gets the read's 1-based count. */
+        var afterSigners: (Int) -> Unit = {}
         val log = mutableListOf<String>()
         val writtenTo = mutableListOf<Set<CertDigest>?>()
 
@@ -61,7 +65,12 @@ class PermissionGrantsContainmentTest {
         /** A key-rotation update: same app data and permission state, new signer set. */
         fun rotateTo(signer: CertDigest) { installed!!.signers = setOf(signer) }
 
-        override fun signers(name: PackageName): Set<CertDigest>? { log += "signers"; return installed?.signers }
+        override fun signers(name: PackageName): Set<CertDigest>? {
+            log += "signers"
+            val result = installed?.signers
+            afterSigners(log.count { it == "signers" })
+            return result
+        }
         override fun policyState(name: PackageName, permission: PermissionName) = installed?.fixed
         override fun granted(name: PackageName, permission: PermissionName): Boolean? {
             val result = installed?.actual; afterRead(); return result
@@ -80,6 +89,7 @@ class PermissionGrantsContainmentTest {
         override fun uninstallBlocked(name: PackageName): Boolean? = if (blockReadFails) null else blocked
         override fun setUninstallBlocked(name: PackageName, blocked: Boolean): Boolean {
             log += "block $blocked"
+            if (!blocked) whileUnblocking()
             if (!blockWriteWorks) return false
             this.blocked = blocked
             return true
@@ -144,7 +154,7 @@ class PermissionGrantsContainmentTest {
         assertEquals(PolicyGrant.DENIED, fake.installed!!.fixed)
     }
 
-    @Test fun keyRotationDuringTheWriteIsAnotherIdentityAndIsContained() {
+    @Test fun keyRotationBeforeTheLastSignerReadIsAnotherIdentityAndIsContained() {
         // A v3 rotation is a normal update, so the uninstall block does not stop it, and the
         // permission state carries over. The binding pins exact signers: the rotated app is not
         // the approved one, its grant is fixed DENIED, and it needs a fresh approval.
@@ -154,6 +164,38 @@ class PermissionGrantsContainmentTest {
         assertEquals(setOf(rotated), fake.installed!!.signers)
         assertEquals(PolicyGrant.DENIED, fake.installed!!.fixed)
         assertEquals(false, fake.installed!!.actual)
+    }
+
+    // DONE is verified at the last signer read, not at return. A same-lineage v3 rotation that lands
+    // after that read (while the block is put back, or before return) is not seen: write is DONE,
+    // the rotated app keeps the grant, and the caller's re-read by exact identity reads UNKNOWN.
+
+    @Test fun rotationWhileTheBlockIsRestoredIsOutsideDoneAndTheReReadIsUnknown() {
+        val fake = Fake()
+        fake.whileUnblocking = { check(fake.blocked); fake.rotateTo(rotated) }
+        val grants = PermissionGrants(fake)
+        assertEquals(GrantWrite.DONE, grants.write(identity, allowCamera))
+        assertEquals(listOf(setOf(a)), fake.writtenTo)
+        assertEquals(setOf(rotated), fake.installed!!.signers)
+        assertEquals(PolicyGrant.GRANTED, fake.installed!!.fixed)
+        assertEquals(true, fake.installed!!.actual)
+        assertEquals(PermissionReadback.UNKNOWN, grants.read(identity, listOf(camera))[camera])
+    }
+
+    @Test fun rotationAfterTheLastSignerReadWithAnExistingBlockIsOutsideDoneAndTheReReadIsUnknown() {
+        val fake = Fake().apply { blocked = true }
+        // Signer reads: write check, readback before, readback after, final check.
+        fake.afterSigners = { if (it == 4) fake.rotateTo(rotated) }
+        val grants = PermissionGrants(fake)
+        assertTrue(grants.set(identity, allowCamera))
+        assertEquals("the rotation followed the last signer read", 4, fake.log.count { it == "signers" })
+        assertEquals("signers", fake.log.last())
+        assertTrue(fake.blocked)
+        assertEquals(setOf(rotated), fake.installed!!.signers)
+        assertEquals(PolicyGrant.GRANTED, fake.installed!!.fixed)
+        assertEquals(true, fake.installed!!.actual)
+        fake.afterSigners = {}
+        assertEquals(PermissionReadback.UNKNOWN, grants.read(identity, listOf(camera))[camera])
     }
 
     @Test fun anUnreadableOrRefusedBlockWritesNothing() {
