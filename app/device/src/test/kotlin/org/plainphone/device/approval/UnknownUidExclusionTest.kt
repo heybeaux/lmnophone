@@ -74,10 +74,14 @@ class UnknownUidExclusionTest {
 
     @Test fun theWindowOpensAgainOnceEveryUidReads() {
         fault(h.dialer, Fault.ABSENT)
-        assertEquals(AppApprovalOutcome.NOT_READY, h.approve())
-        port.uidAbsent.clear()
-        println("resume after the refusal: ${h.resume()} pending=${h.approvals.pending?.phase}")
-        assertEquals(AppApprovalOutcome.APPROVED, h.approve())
-        assertTrue(h.visibleAndPermitted())
+        h.dispatcher.run {
+            assertFalse(h.effects.openPermissionWindow(h.identity))
+            assertTrue(port.hidden(h.target.value))
+            assertTrue(h.effects.closePermissionWindow(h.identity))
+            port.uidAbsent.clear()
+            assertTrue("the gate is not sticky", h.effects.openPermissionWindow(h.identity))
+            assertFalse(port.hidden(h.target.value))
+            assertTrue(h.effects.closePermissionWindow(h.identity))
+        }
     }
 }
