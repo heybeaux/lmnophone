@@ -21,6 +21,8 @@ import org.plainphone.device.boot.BootOutcome
 import org.plainphone.device.boot.BootReapply
 import org.plainphone.device.facts.AndroidPackageSystemPort
 import org.plainphone.device.facts.LivePolicyInputAssembler
+import org.plainphone.device.facts.osFloor
+import org.plainphone.device.storage.FileFlipFailureStore
 import org.plainphone.device.storage.FileJournalStore
 import org.plainphone.device.storage.FilePolicyStore
 import org.plainphone.policy.PolicyEngine
@@ -56,6 +58,12 @@ class PolicyRuntime private constructor(private val context: Context) {
         { locked -> PolicyEngine.decide(assembler.assemble().input.copy(lockedBoot = locked)) },
         BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT),
         { stage, error -> Log.w(TAG, "stage $stage failed: ${error ?: "readback mismatch"}", error) },
+        floor = { osFloor(packagesPort) },
+        home = PackageName(context.packageName),
+        // No waiting-change store is wired yet, so no turn-off can be committing. The wiring slice
+        // that adds turn-off passes its committing read here.
+        turnOffCommitting = { false },
+        flipFailures = FileFlipFailureStore(File(protectedDir, "flip-failures")),
     )
     private val gateState = MutableStateFlow(HomeGate.CHECKING)
     private val noticeState = MutableStateFlow<HomeNotice?>(null)
