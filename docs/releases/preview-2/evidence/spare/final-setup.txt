@@ -1,0 +1,22 @@
+# Final setup for the tester, 2026-10-10T00:50:40Z, build 5e60584
+Performing Streamed Install
+Success
+Success: Device owner set to package org.plainphone/.PlainphoneAdminReceiver
+Active admin set to component org.plainphone/.PlainphoneAdminReceiver
+starter list: com.google.android.dialer,com.google.android.apps.messaging,com.motorola.camera3,com.google.android.apps.maps
+Broadcasting: Intent { act=org.plainphone.preview.SET_STARTER flg=0x400000 cmp=org.plainphone/.preview.SetupCommandReceiver (has extras) }
+Broadcast completed: result=0
+apply: 10-09 17:50:51.383  5007  5111 I Plainphone: PREVIEW2 APPLY complete=true failed=null applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] hidden=41 lockTask=[com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.android.apps.safetyhub, com.google.android.dialer, com.motorola.camera3, org.plainphone] absent=[] flipFailures=[] floorUnreadable=[]
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+--- read back
+1 owner:
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+home: org.plainphone/.MainActivity
+lock task state: mLockTaskModeState=LOCKED
+testOnly: TEST_ONLY
+hidden count: 41
+visible launcher apps: com.android.settings com.google.android.apps.maps com.google.android.apps.messaging com.google.android.dialer com.motorola.camera3 org.plainphone 
+restrictions:     Effective restrictions:       no_add_private_profile       no_add_managed_profile       no_add_clone_profile 
+lock credential: none (locksettings get-disabled=false)
+telecom:   mCalls:    mCallAudioManager:     All calls: 
+topResumedActivity=ActivityRecord{c7de58b u0 org.plainphone/.MainActivity t317}

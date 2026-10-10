@@ -1,0 +1,13 @@
+# Check 2 on the spare (<spare>), build 5e60584, 2026-10-10T00:49:35Z
+testOnly: TEST_ONLY
+Before: User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+lock task: mLockTaskModeState=LOCKED
+hidden or uninstalled-for-user before: 70
+## dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver
+Success: Admin removed ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
+After: no owners
+lock task: mLockTaskModeState=NONE
+hidden or uninstalled-for-user after: 0
+still not listed after removal (should be only apps uninstalled for the user before Plainphone, not hidden ones):
+came back: 70
+accounts: 0
