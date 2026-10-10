@@ -349,14 +349,17 @@ class EmergencyGate : Instrumentation() {
     /** Ends the test call from the in-call screen (`KEYCODE_ENDCALL` does not end an emergency call). */
     private fun hangUp(): String {
         repeat(3) {
-            if (callState() == "0") return "0"
+            if (idleHolds()) return "0"
             shell("input keyevent KEYCODE_WAKEUP")
             if (top()?.className?.endsWith("InCallActivity") != true) shell("su 0 am start -n $IN_CALL")
             waitNode("End call", 5_000) { it == "End call" }?.let(::tap)
             waitFor(5_000) { callState() == "0" }
         }
-        return callState()
+        return if (idleHolds()) "0" else callState()
     }
+
+    /** Idle for 3 s: on API 36 a call read idle once, then came back (mCallState=2). */
+    private fun idleHolds(): Boolean = (1..6).all { SystemClock.sleep(500); callState() == "0" }
 
     private fun callState(): String = Regex("""mCallState=(\d)""").find(shell("dumpsys telephony.registry"))?.groupValues?.get(1) ?: "?"
 

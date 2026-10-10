@@ -101,12 +101,16 @@ call_state() { sh_ dumpsys telephony.registry | grep -m1 -o 'mCallState=[0-9]' |
 
 # Ends any live call through the gate's hang-up (KEYCODE_ENDCALL does not end an emergency call).
 # The emulated modem keeps a call through an Android reboot, so nothing goes on until this succeeds.
+# Idle must hold: on API 36 a call read idle once, then came back (mCallState=2) a moment later.
+idle_stable() {
+    for _ in 1 2 3 4 5 6; do [ "$(call_state)" = 0 ] || return 1; sleep 0.5; done
+}
 hang_up() {
     for _ in 1 2 3; do
-        [ "$(call_state)" = 0 ] && return 0
+        idle_stable && return 0
         instrument -e check hangup >/dev/null
     done
-    [ "$(call_state)" = 0 ]
+    idle_stable
 }
 
 # Before any check that can reach a dialer or a call: idle, or the whole matrix stops.
