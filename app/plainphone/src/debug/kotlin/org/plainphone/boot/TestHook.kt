@@ -2,6 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.boot
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.admin.DevicePolicyManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
@@ -17,6 +21,9 @@ import org.plainphone.PlainphoneAdminReceiver
  * - `org.plainphone.test.RELAX --es package P`: adds P to the lock-task list, as an open session would.
  * - `org.plainphone.test.DROP --es restriction R`: clears user restriction R and the whole lock-task
  *   list, as a power cut that lost both writes would.
+ * - `org.plainphone.test.NOTIFY --es component C`: posts a notification whose tap opens activity C, an
+ *   unapproved app. Android clears notifications on reboot and the shell cannot attach a tap intent,
+ *   so this stands in for an unapproved app's notification right after boot. Works before unlock.
  */
 class TestHook : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -31,6 +38,21 @@ class TestHook : BroadcastReceiver() {
                 val restriction = intent.getStringExtra("restriction") ?: return
                 dpm.clearUserRestriction(admin, restriction)
                 dpm.setLockTaskPackages(admin, emptyArray())
+            }
+            "org.plainphone.test.NOTIFY" -> {
+                val target = intent.getStringExtra("component")?.let(ComponentName::unflattenFromString) ?: return
+                val notifications = context.getSystemService(NotificationManager::class.java)
+                notifications.createNotificationChannel(NotificationChannel("test", "Test", NotificationManager.IMPORTANCE_HIGH))
+                val tap = PendingIntent.getActivity(
+                    context, 0, Intent(Intent.ACTION_MAIN).setComponent(target).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    PendingIntent.FLAG_IMMUTABLE,
+                )
+                notifications.notify(
+                    190,
+                    Notification.Builder(context, "test").setSmallIcon(android.R.drawable.ic_dialog_info)
+                        .setContentTitle("Unapproved app").setContentText("Tap to open ${target.packageName}")
+                        .setContentIntent(tap).build(),
+                )
             }
             else -> return
         }
