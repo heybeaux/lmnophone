@@ -26,6 +26,7 @@ class UpdateControllerTest {
         var update = UpdateRecord()
         var facts: UpdateFinalFacts? = UpdateFinalFacts(7, StagedApkFacts(self, binding, true), 1)
         var installed: Long? = 1
+        var pending: Boolean? = false
         var commits = 0
         var checks = 0
         var checkPasses = true
@@ -68,6 +69,9 @@ class UpdateControllerTest {
                 event("before-commit"); assertEquals(7, sessionId)
                 assertEquals(UpdatePhase.SUBMITTED, update.submission?.phase); assertNull(record.state.grant)
                 commits++; event("after-commit")
+            }
+            fun committedSessionPending(sessionId: Int): Boolean? {
+                assertEquals(update.submission!!.sessionId, sessionId); event("pending"); return pending
             }
             override fun installedVersionCode(): Long? { event("installed"); return installed }
             override fun postUpdateSelfCheck(): Boolean { event("self-check"); checks++; return checkPasses }
@@ -160,11 +164,86 @@ class UpdateControllerTest {
             assertEquals(0, f.commits); assertNull(f.update.submission); assertEquals(debit, f.record.state.ledger.debits)
         }
     }
-    @Test fun `pause after use can commit after deadline but preserves deadline and debit`() {
-        val f = F(); f.grant(); val debit = f.record.state.ledger.debits
-        f.hook = { if (it == "after-write") f.advance(700_000) }
-        assertEquals(UpdateOutcome.SUBMITTED, f.controller.submitUpdate()); assertEquals(1, f.commits)
-        assertEquals(debit, f.record.state.ledger.debits); assertEquals(1_200_000, f.update.submission!!.elevationDeadline!!.elapsedMillis)
+    @Test fun `deadline crossed during or after joint write spends turn without installing`() {
+        for (point in listOf("before-write", "after-write")) {
+            val f = F(); f.grant(); val debit = f.record.state.ledger.debits
+            f.hook = { if (it == point) f.advance(700_000) }
+            assertEquals(UpdateOutcome.FAILED, f.controller.submitUpdate(), point)
+            assertEquals(0, f.commits); assertNull(f.record.state.grant)
+            val submission = assertNotNull(f.update.submission)
+            assertEquals(UpdatePhase.FAILED, submission.phase)
+            assertEquals(1_200_000, submission.elevationDeadline!!.elapsedMillis)
+            assertEquals(f.person, submission.receipt.actor)
+            assertEquals(mapOf(f.person to 0L), submission.receipt.recipientGenerations)
+            assertEquals(debit, f.record.state.ledger.debits)
+            f.hook = {}; f.restart()
+            assertSame(submission.receipt, f.update.submission!!.receipt)
+            assertEquals(debit, f.record.state.ledger.debits); assertEquals(0, f.commits)
+        }
+    }
+    @Test fun `joint write at or before deadline still commits`() {
+        for (delay in listOf(599_999L, 600_000L)) {
+            val f = F(); f.grant()
+            f.hook = { if (it == "before-write") f.advance(delay) }
+            assertEquals(UpdateOutcome.SUBMITTED, f.controller.submitUpdate())
+            assertEquals(1, f.commits); assertEquals(UpdatePhase.SUBMITTED, f.update.submission!!.phase)
+        }
+    }
+    @Test fun `supervised write delay has no elevation deadline or debit`() {
+        val f = F(mode = Mode.TRUSTED); f.startUp()
+        val request = assertNotNull(f.controller.prepareSupervisedUpdate(f.person, f.binding))
+        f.hook = { if (it == "before-write") f.advance(700_000) }
+        assertEquals(UpdateOutcome.SUBMITTED, f.controller.submitSupervisedUpdate(request, f.auth(request.action)))
+        assertNull(f.update.submission!!.elevationDeadline)
+        assertEquals(1, f.commits); assertTrue(f.record.state.ledger.debits.isEmpty())
+    }
+    @Test fun `pending v2 blocks v3 across restart then late install checks once`() {
+        val f = F(mode = Mode.TRUSTED); f.startUp()
+        val request = assertNotNull(f.controller.prepareSupervisedUpdate(f.person, f.binding))
+        assertEquals(UpdateOutcome.SUBMITTED, f.controller.submitSupervisedUpdate(request, f.auth(request.action)))
+        f.pending = true; val saved = f.update; val debit = f.record.state.ledger.debits
+        assertEquals(ElevationOutcome.IDLE, f.restart())
+        assertSame(saved, f.update); assertNull(f.protocol.available())
+        assertNull(f.controller.prepareSupervisedUpdate(f.person, f.binding.copy(versionCode = 3)))
+        assertEquals(UpdateOutcome.SUBMITTED, f.protocol.onResult(7, false))
+        assertSame(saved, f.update)
+        f.installed = 2; f.checkPasses = false
+        assertEquals(UpdateOutcome.INSTALLED, f.protocol.onResult(7, true)); f.restart()
+        assertEquals(2, f.update.submission!!.versionCode); assertEquals(1, f.checks)
+        assertTrue(f.controller.updateNeedsAttention()); assertEquals(1, f.commits)
+        assertEquals(debit, f.record.state.ledger.debits)
+    }
+    @Test fun `pending session gone without install fails and allows replacement`() {
+        for (startup in listOf(false, true)) {
+            val f = F(); f.grant(); f.controller.submitUpdate(); f.pending = true
+            val debit = f.record.state.ledger.debits; val saved = f.update
+            f.restart(); assertSame(saved, f.update); assertNull(f.protocol.available())
+            f.pending = false
+            if (startup) assertEquals(ElevationOutcome.IDLE, f.restart())
+            else assertEquals(UpdateOutcome.FAILED, f.protocol.onResult(7, false))
+            assertEquals(UpdatePhase.FAILED, f.update.submission!!.phase); assertNotNull(f.protocol.available())
+            assertNotNull(f.controller.prepare(f.person, ElevationTarget.Update(f.binding.copy(versionCode = 3))))
+            assertSame(saved.submission!!.receipt, f.update.submission!!.receipt)
+            assertEquals(debit, f.record.state.ledger.debits); assertEquals(1, f.commits); assertEquals(0, f.checks)
+        }
+    }
+    @Test fun `unknown pending session readback holds submitted and returns not ready`() {
+        for (startup in listOf(false, true)) {
+            val f = F(); f.grant(); f.controller.submitUpdate(); f.pending = null
+            val saved = f.update; val debit = f.record.state.ledger.debits
+            if (startup) assertEquals(ElevationOutcome.NOT_READY, f.restart())
+            else assertEquals(UpdateOutcome.NOT_READY, f.protocol.onResult(7, false))
+            assertSame(saved, f.update); assertNull(f.protocol.available())
+            assertEquals(debit, f.record.state.ledger.debits); assertEquals(1, f.commits); assertEquals(0, f.checks)
+            f.installed = 2; assertEquals(ElevationOutcome.IDLE, f.restart())
+            assertEquals(UpdatePhase.INSTALLED, f.update.submission!!.phase); assertEquals(1, f.checks)
+        }
+    }
+    @Test fun `failure callback with installed version runs self check despite unknown session`() {
+        val f = F(); f.grant(); f.controller.submitUpdate(); f.installed = 2; f.pending = null
+        assertEquals(UpdateOutcome.INSTALLED, f.protocol.onResult(7, false))
+        assertEquals(1, f.checks); assertEquals(1, f.commits)
+        assertEquals(UpdateOutcome.REFUSED, f.protocol.onResult(7, false))
     }
     @Test fun `crashes on each side of joint write and commit never replay on restart`() {
         for (point in listOf("before-joint", "before-write", "after-write", "before-commit", "after-commit")) {
