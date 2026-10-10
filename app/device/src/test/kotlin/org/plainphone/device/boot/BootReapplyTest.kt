@@ -251,4 +251,47 @@ class BootReapplyTest {
 
         assertFalse(reapply().run(locked = true).ready)
     }
+
+    // --- Emergency repair does not depend on the revoke (PLA-232 finding 5, spec 722610b) ---
+
+    @Test fun aFailedRevokeStillRepairsTheFloorFeaturesAndGuardButIsNotReady() {
+        seedEmptyJournal()
+        port.state[PackageName(dialer)] = hiddenApp()
+        port.lockTask = names(plainphone, play)
+        port.hidesStick = false
+
+        val outcome = reapply().run(locked = false)
+
+        assertFalse(outcome.ready)
+        assertTrue(journal.revocationPending())
+        assertFalse(port.hidden(dialer))
+        assertTrue(PackageName(dialer) in port.lockTask)
+        assertEquals(LockTaskFeature.entries.toSet(), port.features)
+        // Nothing past the guard: no Home preference while the revoke is pending.
+        assertNull(port.homePackage)
+    }
+
+    @Test fun aFailedRestrictionReadbackStillRepairsTheFloor() {
+        seedEmptyJournal()
+        port.state[PackageName(dialer)] = hiddenApp()
+        port.restrictionsStick = false
+
+        val outcome = reapply().run(locked = true)
+
+        assertFalse(outcome.ready)
+        assertFalse(port.hidden(dialer))
+        assertEquals(LockTaskFeature.entries.toSet(), port.features)
+    }
+
+    @Test fun aFailedJournalWriteStillRepairsTheFloor() {
+        seedEmptyJournal()
+        port.state[PackageName(dialer)] = hiddenApp()
+        val failing = FileJournalStore(dir, null, "model", "build-1") { throw java.io.IOException("disk full") }
+        val boot = BootReapply(failing, port, setOf(PackageName(play)), { PolicyEngine.decide(input(it)) }, RestrictionFilter.TEST_BUILD)
+
+        val outcome = boot.run(locked = true)
+
+        assertFalse(outcome.ready)
+        assertFalse(port.hidden(dialer))
+    }
 }
