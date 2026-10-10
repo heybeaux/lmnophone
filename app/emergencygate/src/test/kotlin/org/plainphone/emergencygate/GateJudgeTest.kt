@@ -8,8 +8,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GateJudgeTest {
-    private val dialers = setOf("com.google.android.dialer", "com.android.phone")
-
     // ---- dumpsys parsing ----
 
     @Test fun `top resumed activity expands a short class name`() {
@@ -63,26 +61,80 @@ class GateJudgeTest {
 
     // ---- judging ----
 
-    @Test fun `system dialer in front passes`() {
-        val result = GateJudge.dialerInFront("home-phone", Activity("com.google.android.dialer", "x.Dialtacts"), dialers)
-        assertEquals(Verdict.PASS, result.verdict)
-        assertEquals("GATE home-phone PASS com.google.android.dialer/x.Dialtacts", result.line())
+    private val dialPad = Activity("com.google.android.dialer", "com.android.dialer.main.impl.MainActivity")
+    private val home = Activity("org.plainphone", "org.plainphone.MainActivity")
+    private val digits = (0..9).map { it.toString() }
+
+    private fun reached(before: Activity?, samples: List<Activity?>, labels: List<String> = digits) =
+        GateJudge.routeReached("home-phone", before, samples, setOf(dialPad), labels)
+
+    @Test fun `the expected dial pad, usable and still in front, passes`() {
+        val result = reached(home, listOf(dialPad, dialPad, dialPad))
+        assertEquals(result.detail, Verdict.PASS, result.verdict)
+        assertEquals("GATE home-phone PASS ${dialPad}", result.line())
     }
 
-    @Test fun `blocked app screen fails even though it is the android package`() {
-        val result = GateJudge.dialerInFront("home-phone", Activity("android", GateJudge.BLOCKED_APP), dialers + "android")
+    @Test fun `a wrong class in an accepted package fails`() {
+        val settings = Activity("com.android.phone", "com.android.phone.Settings")
+        val result = GateJudge.routeReached("locked-boot", home, listOf(settings), setOf(Activity("com.android.phone", "com.android.phone.EmergencyDialer")), digits)
+        assertEquals(Verdict.FAIL, result.verdict)
+        assertTrue(result.detail, result.detail.contains("com.android.phone/com.android.phone.Settings"))
+    }
+
+    @Test fun `an unrelated screen of the emergency role holder fails`() {
+        val other = Activity("com.google.android.apps.safetyhub", "com.google.android.apps.safetyhub.NotADialer")
+        val expected = setOf(Activity("com.google.android.apps.safetyhub", "com.google.android.apps.safetyhub.emergencydialer.ui.DialPadActivity"))
+        assertEquals(Verdict.FAIL, GateJudge.routeReached("lock-screen", home, listOf(other), expected, digits).verdict)
+    }
+
+    @Test fun `a dial pad that does not stay in front fails`() {
+        val result = reached(home, listOf(dialPad, home))
+        assertEquals(Verdict.FAIL, result.verdict)
+        assertTrue(result.detail, result.detail.contains("did not stay"))
+    }
+
+    @Test fun `a tap that changed nothing fails even with the dial pad in front`() {
+        val result = reached(dialPad, listOf(dialPad, dialPad))
+        assertEquals(Verdict.FAIL, result.verdict)
+        assertTrue(result.detail, result.detail.contains("before the tap"))
+    }
+
+    @Test fun `a dial pad without its keys fails`() {
+        val result = reached(home, listOf(dialPad, dialPad), labels = listOf("1", "2", "Search"))
+        assertEquals(Verdict.FAIL, result.verdict)
+        assertTrue(result.detail, result.detail.contains("dial pad"))
+    }
+
+    @Test fun `blocked app screen fails even when listed as expected`() {
+        val blocked = Activity("android", GateJudge.BLOCKED_APP)
+        val result = GateJudge.routeReached("home-phone", home, listOf(blocked), setOf(dialPad, blocked), digits)
         assertEquals(Verdict.FAIL, result.verdict)
         assertTrue(result.detail, result.detail.contains("blocked"))
     }
 
     @Test fun `Plainphone still in front fails`() {
-        val result = GateJudge.dialerInFront("home-phone", Activity("org.plainphone", "org.plainphone.MainActivity"), dialers)
+        val result = reached(home, listOf(home))
         assertEquals(Verdict.FAIL, result.verdict)
         assertTrue(result.detail, result.detail.contains("org.plainphone/org.plainphone.MainActivity"))
     }
 
-    @Test fun `nothing in front fails`() {
-        assertEquals(Verdict.FAIL, GateJudge.dialerInFront("boot-checking", null, dialers).verdict)
+    @Test fun `nothing in front, no samples or no expected component fails`() {
+        assertEquals(Verdict.FAIL, reached(home, listOf(null)).verdict)
+        assertEquals(Verdict.FAIL, reached(home, emptyList()).verdict)
+        assertEquals(Verdict.FAIL, GateJudge.routeReached("home-phone", home, listOf(dialPad), emptySet(), digits).verdict)
+    }
+
+    @Test fun `dial pad keys are read from labels such as 2 ABC`() {
+        assertTrue(GateJudge.dialPadUsable(listOf("1", "2,ABC", "3 DEF", "4,GHI", "5,JKL", "6,MNO", "7,PQRS", "8,TUV", "9,WXYZ", "0 +")))
+        assertTrue(!GateJudge.dialPadUsable(listOf("12", "345", "6789", "0")))
+        assertTrue(!GateJudge.dialPadUsable(emptyList()))
+    }
+
+    @Test fun `the alert screen launch is judged by its exact component`() {
+        val dialog = Activity("com.google.android.cellbroadcastreceiver", "com.android.cellbroadcastreceiver.CellBroadcastAlertDialog")
+        assertEquals(Verdict.PASS, GateJudge.inFront("alert-display-launch", dialog, setOf(dialog)).verdict)
+        val other = Activity("com.google.android.cellbroadcastreceiver", "com.android.cellbroadcastreceiver.CellBroadcastSettings")
+        assertEquals(Verdict.FAIL, GateJudge.inFront("alert-display-launch", other, setOf(dialog)).verdict)
     }
 
     @Test fun `an emergency call that Telecom is placing passes`() {
@@ -120,12 +172,39 @@ class GateJudgeTest {
         }
     }
 
-    @Test fun `overall verdict - any fail fails, then any inconclusive, and not-built items are ignored`() {
-        fun r(v: Verdict) = CheckResult("c", v, "")
-        assertEquals(Verdict.PASS, GateJudge.overall(listOf(r(Verdict.PASS), r(Verdict.NOT_BUILT))))
-        assertEquals(Verdict.INCONCLUSIVE, GateJudge.overall(listOf(r(Verdict.PASS), r(Verdict.INCONCLUSIVE))))
-        assertEquals(Verdict.FAIL, GateJudge.overall(listOf(r(Verdict.INCONCLUSIVE), r(Verdict.FAIL), r(Verdict.PASS))))
-        assertEquals(Verdict.FAIL, GateJudge.overall(emptyList()))
+    @Test fun `an unreadable hidden or suspended state is unknown, never ready`() {
+        val ok = AlertDisplay("cb", found = true, enabled = true, hidden = false, suspended = false, allowedInLockTask = true)
+        val hiddenUnknown = GateJudge.alertDisplayReady(ok.copy(hidden = null))
+        assertEquals(Verdict.FAIL, hiddenUnknown.verdict)
+        assertTrue(hiddenUnknown.detail, hiddenUnknown.detail.contains("hidden state unknown"))
+        assertEquals(Verdict.FAIL, GateJudge.alertDisplayReady(ok.copy(suspended = null)).verdict)
+    }
+
+    private fun fixture(name: String) = javaClass.classLoader!!.getResource("packages/$name")!!.readText()
+
+    @Test fun `API 35 package dump - visible, hidden and hidden plus suspended`() {
+        assertEquals(PackageUserState(hidden = false, suspended = false), Dumpsys.userState(fixture("api35-visible.txt")))
+        assertEquals(PackageUserState(hidden = true, suspended = false), Dumpsys.userState(fixture("api35-hidden.txt")))
+        assertEquals(PackageUserState(hidden = true, suspended = true), Dumpsys.userState(fixture("api35-hidden-suspended.txt")))
+    }
+
+    @Test fun `API 36 package dumps keep or drop the fields as recorded`() {
+        for (name in listOf("api36-visible.txt", "api36-hidden.txt")) {
+            val state = Dumpsys.userState(fixture(name))
+            val text = fixture(name)
+            val first = text.lines().first { it.trimStart().startsWith("User 0: ") }
+            assertEquals(name, if ("hidden=" in first) "hidden=true" in first else null, state.hidden)
+        }
+    }
+
+    @Test fun `a dump without the user line reads as unknown`() {
+        assertEquals(PackageUserState(hidden = null, suspended = null), Dumpsys.userState("Packages:\n  Package [x]\n    User 0:\n      [a,b]:\n"))
+    }
+
+    @Test fun `hidden is taken from package lists when the dump lacks it`() {
+        assertEquals(true, Dumpsys.hiddenFromLists("cb", all = "package:a\npackage:cb\n", visible = "package:a\n"))
+        assertEquals(false, Dumpsys.hiddenFromLists("cb", all = "package:cb\n", visible = "package:cb\n"))
+        assertEquals(null, Dumpsys.hiddenFromLists("cb", all = "", visible = ""))
     }
 
     @Test fun `gate lines parse back`() {
