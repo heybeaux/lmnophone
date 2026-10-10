@@ -27,6 +27,8 @@ class FakeDevicePolicyPort(
     val flips = mutableListOf<Pair<Boolean?, Boolean>>()
 
     var restrictionsStick = true
+    /** Restriction keys this simulated build does not know: adding them is silently ignored. */
+    val unknownRestrictions = mutableSetOf<Restriction>()
     var hidesStick = true
     var lockTaskSticks = true
     /** How many flip calls in a row are ignored (the state does not change). */
@@ -62,7 +64,7 @@ class FakeDevicePolicyPort(
     override fun restrictions(): Set<Restriction> { touch("restrictions"); return restrictionSet.toSet() }
     override fun addRestriction(restriction: Restriction) {
         write("restrictions", "restrict ${restriction.name}")
-        if (restrictionsStick) restrictionSet += restriction
+        if (restrictionsStick && restriction !in unknownRestrictions) restrictionSet += restriction
     }
     override fun systemInputMethodsOnly(): Boolean { touch("inputMethods"); return inputMethodsSystemOnly }
     override fun setSystemInputMethodsOnly(only: Boolean) {
