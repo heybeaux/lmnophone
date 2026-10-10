@@ -1,7 +1,8 @@
+# PUBLIC COPY: device serial or local workstation path generalized; original preserved privately.
 ## 2026-10-08T22:56:42Z restriction set: restrictions=[no_install_apps]
 $ adb install t1.apk  (new install, restricted)
 Performing Streamed Install
-adb: failed to install /Users/user/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t1.apk: 
+adb: failed to install /path/to/workspace/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t1.apk:
 Exception occurred while executing 'install':
 java.lang.SecurityException: User restriction prevents installing
 	at com.android.server.pm.PackageInstallerService.createSessionInternal(PackageInstallerService.java:672)
@@ -18,13 +19,13 @@ $ restrict-clear no_install_apps
 OK cleared no_install_apps
 $ adb install t1.apk  (baseline, unrestricted)
 Performing Streamed Install
-adb: failed to install /Users/user/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t1.apk: Failure [INSTALL_FAILED_TEST_ONLY: Failed to install test-only apk. Did you forget to add -t?]
+adb: failed to install /path/to/workspace/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t1.apk: Failure [INSTALL_FAILED_TEST_ONLY: Failed to install test-only apk. Did you forget to add -t?]
 
 $ restrict-add no_install_apps
 OK added no_install_apps
 $ adb install -r t2.apk  (update, restricted)
 Performing Streamed Install
-adb: failed to install /Users/user/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t2.apk: 
+adb: failed to install /path/to/workspace/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t2.apk:
 Exception occurred while executing 'install':
 java.lang.SecurityException: User restriction prevents installing
 	at com.android.server.pm.PackageInstallerService.createSessionInternal(PackageInstallerService.java:672)
@@ -49,7 +50,7 @@ $ restrict-add no_install_apps
 OK added no_install_apps
 $ adb install -r -t t2.apk  (update of installed app, restricted)
 Performing Streamed Install
-adb: failed to install /Users/user/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t2.apk: 
+adb: failed to install /path/to/workspace/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t2.apk:
 Exception occurred while executing 'install':
 java.lang.SecurityException: User restriction prevents installing
     versionCode=1 minSdk=34 targetSdk=35

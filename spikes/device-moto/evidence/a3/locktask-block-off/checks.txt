@@ -1,3 +1,4 @@
+# PUBLIC COPY: voicemail identifier redacted; original preserved privately.
 permission-prompt: top=com.google.android.permissioncontroller/com.android.permissioncontroller.permission.ui.GrantPermissionsActivity focus=com.google.android.permissioncontroller/com.android.permissioncontroller.permission.ui.GrantPermissionsActivity
 text="Allow Plainphone spike to record audio?"
 text="Don't allow"
@@ -5,7 +6,7 @@ I PPSPIKE : permission result [android.permission.RECORD_AUDIO] -> [-1]
 emergency-dialer-from-home: top=com.plainphone.spike.dpc/.MainActivity
 camera: top=com.motorola.camera3/com.motorola.camera.Camera focus=com.motorola.camera3/com.motorola.camera.Camera
 camera still on top: com.motorola.camera3/com.motorola.camera.Camera
-photo: DCIM/Camera files before=0 after=0: 
+photo: DCIM/Camera files before=0 after=0:
 --- emergency dialer with com.android.phone allowlisted ---
 OK lockTaskPackages=[com.google.android.dialer, com.motorola.camera3, com.google.android.apps.messaging, com.android.phone, com.plainphone.spike.dpc]
 emergency-dialer-from-home (phone allowlisted, BLOCK off): top=com.android.phone/.EmergencyDialer
@@ -24,16 +25,16 @@ text="Edit"
 text="Share"
 photos Share -> top=com.android.intentresolver/.ChooserActivityLauncher focus=com.android.intentresolver/com.android.intentresolver.ChooserActivityLauncher
 text="Messages"
-text="Bluetooth" text="Messages" text="No recommended people to share with" text="Photos" text="Print" text="Quick Share" text="Sharing image" text="Upload to Photos" 
+text="Bluetooth" text="Messages" text="No recommended people to share with" text="Photos" text="Print" text="Quick Share" text="Sharing image" text="Upload to Photos"
 chooser Messages -> top=com.android.intentresolver/.ChooserActivityLauncher
 mLockTaskModeState=LOCKED
 chooser Messages icon -> top=com.android.intentresolver/.ChooserActivityLauncher
 mLockTaskModeState=LOCKED
 home: top=com.plainphone.spike.dpc/.MainActivity
-shade texts: text="2" text="22 minutes ago" text="28 minutes ago" text="31 minutes ago" text="5" text="Android System" text="App installation complete" text="Candy Crush Soda Saga" text="Dial [voicemail-number]" text="Emergency calls only" text="Finish setting up your device" text="Installed 9 out of 9 applications" 
-QS descs: content-desc="Alerted" content-desc="Clear all silent notifications" content-desc="Collapse" content-desc="Expand" content-desc="Settings notification: " 
-power long-press: top=com.plainphone.spike.dpc/.MainActivity focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity texts: text="Ask for microphone permission" text="Camera" text="Emergency dialer screen (does not call)" text="Messages" text="Phone" text="Plainphone spike (throwaway)" text="Plainphone spike" text="RELEASE: clear all + remove Device Owner (tap twice)" text="Start lock task" text="Stop lock task" 
+shade texts: text="2" text="22 minutes ago" text="28 minutes ago" text="31 minutes ago" text="5" text="Android System" text="App installation complete" text="Candy Crush Soda Saga" text="Dial [voicemail number redacted]" text="Emergency calls only" text="Finish setting up your device" text="Installed 9 out of 9 applications"
+QS descs: content-desc="Alerted" content-desc="Clear all silent notifications" content-desc="Collapse" content-desc="Expand" content-desc="Settings notification: "
+power long-press: top=com.plainphone.spike.dpc/.MainActivity focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity texts: text="Ask for microphone permission" text="Camera" text="Emergency dialer screen (does not call)" text="Messages" text="Phone" text="Plainphone spike (throwaway)" text="Plainphone spike" text="RELEASE: clear all + remove Device Owner (tap twice)" text="Start lock task" text="Stop lock task"
 power press 1.5s: focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity
-text="Emergency dialer screen (does not call)" 
+text="Emergency dialer screen (does not call)"
 tap Play-services notification: top=com.plainphone.spike.dpc/.MainActivity focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity
 tap Finish-setup notification: top=com.plainphone.spike.dpc/.MainActivity focus=com.plainphone.spike.dpc/com.plainphone.spike.dpc.MainActivity

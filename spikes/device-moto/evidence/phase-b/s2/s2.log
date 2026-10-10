@@ -1,3 +1,4 @@
+# PUBLIC COPY: device serial or local workstation path generalized; original preserved privately.
 ## S2 rerun 2026-10-08T22:57:31Z (first attempt: harness miss, files/ dir missing)
 restrictions=[no_install_apps]
 $ DPC install t2.apk (restricted)
@@ -44,7 +45,7 @@ Success
 Performing Streamed Install
 Success
     versionCode=1 minSdk=34 targetSdk=35
-/Users/user/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t2.apk: 1 file pushed, 0 skipped. 199.1 MB/s (2377049 bytes in 0.011s)
+/path/to/workspace/.openclaw/tmp/paperclip-run-pla-5-d72db981-e62-5EQmty/apk/t2.apk: 1 file pushed, 0 skipped. 199.1 MB/s (2377049 bytes in 0.011s)
 OK added no_install_apps
 $ DPC install t2.apk (restricted)
 createSession SecurityException: User restriction prevents installing

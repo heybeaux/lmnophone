@@ -164,7 +164,7 @@ A **Done** button is pinned at the bottom: "Done – back to {user}'s home scree
 Each request is one card:
 
 ```
-From the trusted person:
+From the partner:
 "the bus times app, to check the ferry bus"
 Thursday 8 Oct, 10:40 · Text sent to you ✓      (or: "Text didn't send")
 [ Find it in the Play Store ]   [ Not now ]

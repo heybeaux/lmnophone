@@ -282,7 +282,7 @@ app automatically. Any fallback comes back to Beaux before it is built.
    - 9-1-1 can still go through another carrier's network if one is in range. Plainphone never blocks the Emergency
      button, whatever happens with a sign-in page.
    - This feature helps with Wi-Fi calling only after the sign-in is done.
-   - Whether Beaux or the trusted person rely on Wi-Fi calling is still unanswered.
+   - Whether either initial user rely on Wi-Fi calling is still unanswered.
 
 ## Questions for Beaux
 
@@ -302,7 +302,7 @@ gate building it.
    - For (a), (b) or (c): do you accept that a hotspot can show other websites, including search and social sites,
      for the whole window? The window has a 5-minute target, and the real close delay is measured before
      building. Do you also accept that some sign-in pages (Google account, bank app) still won't work?
-3. **Wi-Fi calling.** Do you or the trusted person rely on Wi-Fi calling where there's no cell signal (home, cabin, ferry,
+3. **Wi-Fi calling.** Do you or your partner rely on Wi-Fi calling where there's no cell signal (home, cabin, ferry,
    work)?
 4. **The text to the trusted person.** Leave out the Wi-Fi's name, as recommended? The text is a notice, not a
    control. It may arrive late, may never arrive, and rarely may arrive twice.

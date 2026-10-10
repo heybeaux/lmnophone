@@ -332,7 +332,7 @@ G5. Then, after 72 hours, repeat steps 1–9 and check the digits still match th
 Even a matching number doesn't prove reset protection works: only the reset-protection test on the target phone
 model (Q10) does, and handover waits for it.
 
-**Recommended: a backup person.** Beaux and the trusted person look after each other's phones. Add a backup person's number
+**Recommended: a backup person.** the two initial users look after each other's phones. Add a backup person's number
 too (repeat this part with their account). Note from the approval packet: on Beaux's own phone, a backup account
 that Beaux controls means Beaux could get past reset protection on his own phone. Beaux is to confirm he's fine
 with that.

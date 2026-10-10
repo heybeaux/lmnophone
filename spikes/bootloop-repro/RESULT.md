@@ -1,6 +1,6 @@
 # PLA-22 result: Android 15/16 boot loop after unhide + reboot
 
-**THROWAWAY SPIKE. Emulator only. Not MVP code.** No physical device was used. SPARE_DEVICE_SERIAL, emulator-5590 and emulator-5604 were not touched.
+**THROWAWAY SPIKE. Emulator only. Not MVP code.** No physical device was used. The spare test device, emulator-5590 and emulator-5604 were not touched.
 
 ## Bottom line
 
@@ -254,4 +254,4 @@ Other costs of suspending, from the Android docs, not tested here:
   - It has snapshots `do-clean`, `do-clean2` and `do-clean3`.
   - Re-wipe (`-wipe-data`) before using it for anything else.
 - **`pp11-a36` (port 5622):** left **boot-looping** after a36-t01, then shut down (`adb emu kill`). **It needs `-wipe-data` before reuse.**
-- **Not touched:** SPARE_DEVICE_SERIAL, emulator-5590 and emulator-5604.
+- **Not touched:** the spare test device, emulator-5590 and emulator-5604.

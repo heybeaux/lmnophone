@@ -39,6 +39,7 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
   - lock-task features and user restrictions;
   - the apply order.
   The never-hide guard refuses any plan that touches the never-hide list (essential-calling).
+- `AppApprovalEffects`: `openPermissionWindow(identity): Boolean` removes the pending app from applied lock-task access and Home, reads those exclusions back, then unhides with synchronous flush and live readback. `closePermissionWindow(identity): Boolean` re-hides and reads back; it never restores access. Policy calls `setPermission` only inside this window, all DENY before ALLOW, and requires `readPermissions` to work both visible and hidden. Every attempted open is followed by close, including failure. Pending PREPARING/EDITING recovery hides before startup gates; both ports enforce the live never-hide guard. Lane D implements these new effects; the final `applyPolicy` activation contract stays the same.
 - `SessionController`: the supervised-session and elevation contract (start, end, revoke-on-start from the journal). Journal and policy persistence go through interfaces that lane D implements: `JournalStore`, `PolicyStore`.
 - `PinVault`: PIN and recovery-code logic.
   - Separate counters and the exact lockout schedule.

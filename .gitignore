@@ -1,1 +1,10 @@
 .claude-flow/
+
+# Generated Android/Gradle state can contain local paths and signed debug artifacts.
+**/.gradle/
+**/build/
+**/local.properties
+**/__pycache__/
+*.pyc
+# Private audit/evidence archives never belong in this checkout.
+private-evidence/

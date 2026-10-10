@@ -83,7 +83,7 @@ The helper SHALL record that the trusted person confirmed both of these:
 
 **New accounts.** An account under 72 hours old SHALL be entered, then re-tested after 72 hours. A matching readback is not proof that reset protection is ready. Q10 on the target phone gates handover.
 
-**Backup person.** If Beaux and the trusted person are each other's trusted person, the guide SHALL recommend adding a backup person.
+**Backup person.** If the two initial users are each other's trusted person, the guide SHALL recommend adding a backup person.
 
 The guide SHALL be dry-run, before release, by someone who did not write it, on a computer signed in to several accounts with the same display name.
 

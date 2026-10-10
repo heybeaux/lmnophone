@@ -15,7 +15,7 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 
 - [ ] 1.1 AE: Google Play emulator images: API 35, API 36 or newest, and API 37 if available. Record exact setup commands and build IDs in `spikes/README.md`.
 - [ ] 1.2 AE: A minimal throwaway Device Owner app in `spikes/dpc/`, plus a negative-control harness. The Q2 update source is preinstalled Google apps rolled back with `pm uninstall-system-updates`. Nothing is published to Play.
-- [x] 1.3 Lead: Beaux's must-have apps are Slack, Spotify, and maybe Telegram (Telegram 4446). Q4 tests them on the spare, and Telegram's in-app browser goes on the web-leak list. the trusted person's must-have apps are Gmail and Outlook (Telegram 4448/4451); Q4 tests them too, with web-leak notes on how each opens links in mail.
+- [x] 1.3 Lead: Beaux's must-have apps are Slack, Spotify, and maybe Telegram (Telegram 4446). Q4 tests them on the spare, and Telegram's in-app browser goes on the web-leak list. The partner's must-have apps are Gmail and Outlook (Telegram 4448/4451); Q4 tests them too, with web-leak notes on how each opens links in mail.
 
 ## 2. Spike: go/no-go questions (answer before any MVP code)
 
@@ -78,7 +78,7 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 
 - [ ] 5.1 UX: Plain-language flows and copy for: home, request an app, blocked link, trusted-person mode, "What Plainphone can't stop", turning off, setup. Human copy test: Beaux's pass on PLA-12 (Telegram 4473/4474) counts for this stage (Telegram 4477), and his wording fixes are applied. The next human check is Beaux using the real build on the spare Motorola. No outside testers until Beaux decides he's comfortable asking others.
 - [ ] 5.1b UX: Visual pass (PLA-36, Beaux, Telegram 4485). Black, white and grey only on the home screen and all Plainphone screens. Lexend font and the GC-inspired palette. A text-only home screen like Beaux's reference image. No Emergency button on the home screen (Telegram 4487); 9-1-1 through Phone, the lock screen and the power-button SOS gesture, with an optional entry inside More. AE builds the MVP to this spec, and Beaux judges it on the real build (no mockup review).
-- [ ] 5.2 UX: Starter catalog with web-leak notes for each version, covering Beaux and the trusted person's apps.
+- [ ] 5.2 UX: Starter catalog with web-leak notes for each version, covering the two initial users' apps.
 - [ ] 5.3 UX + AE: `docs/setup-guide.md` and the checking script, including how to find the trusted person's `userId`. Dry-run them on the emulator, done by someone who did not write them.
 
 ## 6. MVP: verification and handover
@@ -86,4 +86,4 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [ ] 6.1 VE: Full escape-artist review and code review of the MVP on the emulator. Verdict: approve, request changes, or blocked.
 - [ ] 6.2 AE: Fix every confirmed finding, or Lead records it as a leftover risk accepted by Beaux.
 - [ ] 6.3 Lead: (Includes the gate 2.6 carry-overs: #2 unattended updates on the MVP build, #3/#5 signed-in app checks and web-leak acceptance, #4, #6, and the boot-loop risk on that phone.) Ask Beaux to approve the target phone model and one unit, and to record acceptance of the custody limit and the leftover risks. Include the checklist to complete before handover: Q3 on that build; Q10 with a board-approved recovery-wipe procedure; Q13 manufacturer extras; Q14 device emergency checks (no live call unless there is an agreed procedure); the PLA-22 unhide/power-loss mitigation on that build (Q6, with a board-approved recovery-wipe fallback); RCS on the carrier; iPhone group texts; Wi-Fi calling on ordinary Wi-Fi with the policy on, including that the carrier's IMS / Carrier Services packages are never hidden (Telegram 4481: used sometimes); must-have apps, signed in by Beaux himself on the first real Plainphone build (PLA-20 deferral, card `2d9260a3`), using the **carry-over checklist** in `spikes/device-moto/RESULT.md` § B-Q4 signed in: Telegram's in-app browser, Web tabs and mini apps first; Outlook's Privacy & Cookies web view after sign-in and after sign-out; links in one Gmail HTML test message; outside links, notifications, sign-out and sign-in again for Slack, Spotify, Telegram and Outlook. Each app's web-leak note stays "before sign-in only" until then.
-- [ ] 6.4 Lead: After two weeks on Beaux's phone, ask Beaux to approve the trusted person's phone.
+- [ ] 6.4 Lead: After two weeks on Beaux's phone, ask Beaux to approve the partner's phone.

@@ -3,8 +3,9 @@
 # Usage: tools/pref-state.sh "<title text>" [max scrolls]
 # Scrolls down until the title is on screen. Read-only: never taps the row.
 set -uo pipefail
-SERIAL="${SERIAL:-SPARE_DEVICE_SERIAL}"
-case "$SERIAL" in emulator-5590|emulator-5604) echo "refusing: $SERIAL belongs to another team" >&2; exit 2;; esac
+: "${SERIAL:?Set SERIAL to the explicitly approved test device}"
+case "$SERIAL" in emulator-*) echo "refusing: physical-device helper requires an approved physical device" >&2; exit 2;; esac
+export SERIAL
 a() { adb -s "$SERIAL" "$@"; }
 title="$1"; max="${2:-12}"
 for _ in $(seq 0 "$max"); do

@@ -1,0 +1,52 @@
+# Publishes site/ (the static landing page) to GitHub Pages on every push to main.
+# One-time setup by a repo admin: Settings > Pages > Build and deployment > Source: "GitHub Actions".
+# Until that is set, the deploy job is skipped and the run explains what to enable.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.pages.outputs.ready }}
+    steps:
+      - id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          build_type="$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq .build_type 2>/dev/null || true)"
+          if [ "$build_type" = "workflow" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=GitHub Pages is not enabled::Set Settings > Pages > Build and deployment > Source to 'GitHub Actions', then re-run this workflow (or push to main)."
+          fi
+
+  deploy:
+    needs: check
+    if: github.ref == 'refs/heads/main' && needs.check.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v5

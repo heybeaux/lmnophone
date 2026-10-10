@@ -1,15 +1,16 @@
+# PUBLIC COPY: device serial or local workstation path generalized; original preserved privately.
 # A1 2026-10-08T20:08:02Z
 fingerprint=motorola/cancunn_g_sys/cancunn:15/V1UDS35H.26-14-6-2-11/27ec35b-72bc9:user/release-keys
-$ adb -s SPARE_DEVICE_SERIAL shell dumpsys account | grep Accounts:
+$ adb -s "$SERIAL" shell dumpsys account | grep Accounts:
   Accounts: 0
-$ adb -s SPARE_DEVICE_SERIAL install -t dpc/app/build/outputs/apk/debug/app-debug.apk
+$ adb -s "$SERIAL" install -t dpc/app/build/outputs/apk/debug/app-debug.apk
 Performing Streamed Install
 Success
-$ adb -s SPARE_DEVICE_SERIAL shell dpm set-device-owner com.plainphone.spike.dpc/.AdminReceiver
+$ adb -s "$SERIAL" shell dpm set-device-owner com.plainphone.spike.dpc/.AdminReceiver
 Success: Device owner set to package com.plainphone.spike.dpc/.AdminReceiver
 Active admin set to component com.plainphone.spike.dpc/.AdminReceiver
 exit=0
-$ adb -s SPARE_DEVICE_SERIAL shell dpm list-owners
+$ adb -s "$SERIAL" shell dpm list-owners
 1 owner:
 User  0: admin=com.plainphone.spike.dpc/.AdminReceiver,DeviceOwner,Affiliated
 $ status

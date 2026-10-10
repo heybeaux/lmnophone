@@ -16,16 +16,16 @@ Actions that the other trusted person can put back afterwards (approving or remo
 Setup SHALL tell both people, in plain words, that they are equals and that either can approve apps or turn Plainphone off.
 
 #### Scenario: Two people approve and remove
-- **WHEN** Beaux approves Spotify, and later the trusted person removes it
+- **WHEN** the first trusted person approves Spotify, and later the second trusted person removes it
 - **THEN** Spotify is hidden again, both actions are texted to both people, and both appear in the history list
 
 #### Scenario: One person locked out
-- **WHEN** Beaux's PIN is in a lockout delay
-- **THEN** the trusted person can still enter her PIN at once, and Beaux's recovery code still works
+- **WHEN** the first trusted person's PIN is in a lockout delay
+- **THEN** the second trusted person can still enter her PIN at once, and the first trusted person's recovery code still works
 
 #### Scenario: An entry is checked against the chosen person only
-- **WHEN** Beaux and the trusted person have different PINs, and someone picks "the trusted person" and enters Beaux's PIN
-- **THEN** the entry fails, only the trusted person's verifier and counter are used, and Beaux's counter does not change
+- **WHEN** the first trusted person and the second trusted person have different PINs, and someone picks "the second trusted person" and enters the first trusted person's PIN
+- **THEN** the entry fails, only the second trusted person's verifier and counter are used, and the first trusted person's counter does not change
 
 ### Requirement: Texts go to every trusted person, and actions are kept in a history list
 Each privileged action, each waiting-change start, cancel, skip and completion, and each notice (app requests, the monthly check, lockout warnings, "Plainphone needs attention", system-update notices) SHALL be texted to **every** trusted person, including the one who did it. Routine receipts MAY be combined into one daily text; waiting-change texts SHALL be sent at once.
@@ -37,11 +37,11 @@ Plainphone SHALL have no Plainphone-run server, no analytics or telemetry, and n
 Trusted-person mode SHALL keep a 90-day history list of privileged actions and waiting changes: which credential, what, when, and text status. It SHALL NOT hold app content, URLs or message text. It SHALL be kept in device-protected storage.
 
 #### Scenario: Someone else used my PIN
-- **WHEN** a child enters Beaux's PIN and approves a game
-- **THEN** both Beaux and the trusted person get a text saying Beaux's PIN approved it
+- **WHEN** a child enters the first trusted person's PIN and approves a game
+- **THEN** both the first trusted person and the second trusted person get a text saying the first trusted person's PIN approved it
 
 #### Scenario: A text fails
-- **WHEN** a notice to the trusted person can't be sent because there is no signal
+- **WHEN** a notice to the second trusted person can't be sent because there is no signal
 - **THEN** the action still takes effect, and her text shows "waiting" and later "sent" or "gave up"
 
 ### Requirement: Waits, countdowns and daily counts use one proven running-time clock
@@ -132,16 +132,16 @@ No part of this SHALL gate calls, Emergency or alerts. During the wait, the lock
 - **THEN** either no record exists and nothing is pending, or the pending record and its queued texts both exist and the texts are sent after restart
 
 #### Scenario: Owner replaces a seen PIN
-- **WHEN** a child starts a handover with the trusted person's PIN, and the trusted person then resets her PIN with her recovery code
+- **WHEN** a child starts a handover with the second trusted person's PIN, and the second trusted person then resets her PIN with her recovery code
 - **THEN** the PIN reset does not skip anything, and the handover is cancelled at once because a slot it depends on changed
 
 #### Scenario: Other person's PIN change
-- **WHEN** Beaux starts handing his role over, and the trusted person replaces her PIN during the wait
-- **THEN** the handover is not cancelled, and when it completes the trusted person's new PIN still works
+- **WHEN** the first trusted person starts handing his role over, and the second trusted person replaces her PIN during the wait
+- **THEN** the handover is not cancelled, and when it completes the second trusted person's new PIN still works
 
 #### Scenario: Skip with the other person's code
-- **WHEN** Beaux started a turn-off, and the trusted person skips the wait with her recovery code
-- **THEN** one write replaces the trusted person's PIN and code, records her as the skipper and starts committing; a crash leaves either none or all of that done
+- **WHEN** the first trusted person started a turn-off, and the second trusted person skips the wait with her recovery code
+- **THEN** one write replaces the second trusted person's PIN and code, records her as the skipper and starts committing; a crash leaves either none or all of that done
 
 #### Scenario: Second change while one is committing
 - **WHEN** a handover is committing and stuck, and someone tries to start a turn-off
@@ -156,7 +156,7 @@ No part of this SHALL gate calls, Emergency or alerts. During the wait, the lock
 - **THEN** the timer finds the request cancelled and does nothing
 
 #### Scenario: Delayed reply cancels the wrong request
-- **WHEN** Q15 passed, the trusted person replied `CANCEL` with request A's code, A was cancelled on the phone, request B was started, and then the trusted person's reply arrives
+- **WHEN** Q15 passed, the second trusted person replied `CANCEL` with request A's code, A was cancelled on the phone, request B was started, and then the second trusted person's reply arrives
 - **THEN** B is not cancelled, because the code doesn't match, and the reply is logged
 
 #### Scenario: Copies disagree
@@ -205,19 +205,19 @@ If step 1 does not read back correctly, the operation SHALL stay committing and 
 After an interruption, either the old people or the new people SHALL be in charge, never neither.
 
 #### Scenario: Handover
-- **WHEN** Beaux hands his role to his sister with his PIN, she sets up her PIN, code and ID, and 24 hours of proven running time pass without a cancel
-- **THEN** the reset-protection list names her and not him, then she becomes a trusted person, and Beaux's PIN and code no longer work
+- **WHEN** the first trusted person hands his role to his sister with his PIN, she sets up her PIN, code and ID, and 24 hours of proven running time pass without a cancel
+- **THEN** the reset-protection list names her and not him, then she becomes a trusted person, and the first trusted person's PIN and code no longer work
 
 #### Scenario: Someone who saw a PIN adds themselves
-- **WHEN** a child enters the trusted person's PIN and starts adding themselves as a second trusted person
+- **WHEN** a child enters the second trusted person's PIN and starts adding themselves as a second trusted person
 - **THEN** both current trusted people are texted at once, anyone can cancel during the wait, and the child's PIN grants nothing during it
 
 #### Scenario: Reset protection can't be updated
 - **WHEN** a handover matures and the new reset-protection list does not read back
-- **THEN** Beaux stays a trusted person with his current PIN, his sister's PIN grants nothing, the change is not reported as done, and the helper is asked to look
+- **THEN** the first trusted person stays a trusted person with his current PIN, his sister's PIN grants nothing, the change is not reported as done, and the helper is asked to look
 
 #### Scenario: Stopping a stuck handover, interrupted
-- **WHEN** the trusted person stops a stuck handover, Plainphone restores the old reset-protection list, and the phone restarts before the change is marked cancelled
+- **WHEN** the second trusted person stops a stuck handover, Plainphone restores the old reset-protection list, and the phone restarts before the change is marked cancelled
 - **THEN** Plainphone continues rolling back and does not resume the handover
 
 #### Scenario: Restart while completing
@@ -370,7 +370,7 @@ A session SHALL be started by a trusted person in supervised mode, or by the use
 
 A **non-handback state** means: the trusted person (or, in self-managed mode, the user) sees "Not ready – call the helper". Calls, Emergency and alerts stay available throughout. No check SHALL gate them.
 
-**Accepted limit.** If Plainphone cannot run while a relaxation is in place, nothing revokes it automatically. That applies whatever the cause: a bad update, a storage or startup fault, or a crash loop. The relaxation stays until a helper fixes the phone. This SHALL be disclosed, and Beaux SHALL explicitly accept it before the MVP is approved. In self-managed mode, nobody is watching when this happens; this SHALL be disclosed too. Q12 measures this behaviour; it does not prove that the failure cannot happen. The disclosure SHALL also say that during a session, Settings or Play pages may show web content, such as help or account pages.
+**Accepted limit.** If Plainphone cannot run while a relaxation is in place, nothing revokes it automatically. That applies whatever the cause: a bad update, a storage or startup fault, or a crash loop. The relaxation stays until a helper fixes the phone. This SHALL be disclosed, and the board SHALL explicitly accept it before the MVP is approved. In self-managed mode, nobody is watching when this happens; this SHALL be disclosed too. Q12 measures this behaviour; it does not prove that the failure cannot happen. The disclosure SHALL also say that during a session, Settings or Play pages may show web content, such as help or account pages.
 
 #### Scenario: Screen turns off mid-session
 - **WHEN** the screen turns off during a Play or Settings session
@@ -542,7 +542,7 @@ If turning off fails, Plainphone SHALL report the failure and SHALL NOT fall bac
 - **THEN** the phone works as a normal Android phone, with its home app and dialer working, and photos and messages are kept. Device test A2 already confirmed that releasing the phone does not wipe it.
 
 #### Scenario: Turn off cancelled
-- **WHEN** Beaux starts turning off, and the trusted person cancels with her PIN 3 hours later
+- **WHEN** the first trusted person starts turning off, and the second trusted person cancels with her PIN 3 hours later
 - **THEN** nothing is restored, the lockdown stays, and both are texted
 
 #### Scenario: Interrupted turn-off
