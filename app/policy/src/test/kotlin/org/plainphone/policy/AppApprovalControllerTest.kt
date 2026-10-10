@@ -82,6 +82,7 @@ class AppApprovalControllerTest {
         listOf(home, sms, dialer, PLAY_PACKAGE).map { InstalledPackage(it, true, 1) } + InstalledPackage(app, false, 1),
         listOf(FloorIdentity(dialer, FloorRole.SYSTEM_DIALER, IdentitySource.OS_MANAGED)), inventory,
         installedIdentities = listOf(binding))
+    private var inputAvailable = true
     private var battery = BatteryState(50, false)
     private var permissionReadback = mapOf(camera to PermissionReadback.GRANTED)
     private var hidden = true
@@ -157,7 +158,7 @@ class AppApprovalControllerTest {
     }
     private var id = 0
     private fun controller() = AppApprovalController(store, { credentials }, vault, sessions, clock,
-        { policy }, { manifest }, { battery }, effects, AppApprovalIdSource { "approval-${++id}" })
+        { policy.takeIf { inputAvailable } }, { manifest }, { battery }, effects, AppApprovalIdSource { "approval-${++id}" })
     private var controller = controller()
     private lateinit var play: PlaySessionState
     private fun setup() {
@@ -1152,4 +1153,124 @@ class AppApprovalControllerTest {
             assertTrue(blocked.containmentRequests.isEmpty())
         }
     }
+
+    private fun failedActivationAndContainment(edit: Boolean) {
+        val action = windowAction(edit)
+        failure = "policy-readback"
+        // Fail cleanup only after activation has exposed the app.
+        atEvent = { if (it == "policy-readback") containmentWorks = false }
+        assertEquals(AppApprovalOutcome.NOT_READY, action())
+        assertEquals(AppApprovalPhase.COMMITTED, state!!.pending!!.phase)
+        assertFalse(hidden); assertTrue(app in appliedLockTask && app in appliedHome)
+        assertEquals(setOf(app), containmentRequests.last())
+        atEvent = null; failure = null; containmentWorks = true
+        events.clear(); containmentRequests.clear()
+    }
+
+    private fun retryContainment(edit: Boolean, gate: String, restart: Boolean) {
+        failedActivationAndContainment(edit)
+        val pending = state!!.pending
+        val receipts = state!!.receipts
+        val permissions = actualPermissions
+        when (gate) {
+            "battery" -> battery = BatteryState(4, false)
+            "permissions" -> actualPermissions = emptyMap()
+            "plan" -> inputAvailable = false
+            "session" -> failure = "revoke"
+        }
+        val result = if (restart) { controller = controller(); controller.onStart() } else controller.resume()
+        assertEquals(if (gate == "battery") AppApprovalOutcome.LOW_BATTERY else AppApprovalOutcome.NOT_READY, result)
+        assertTrue(containmentRequests.isNotEmpty(), "cleanup skipped: edit=$edit gate=$gate restart=$restart")
+        assertTrue(containmentRequests.all { it == setOf(app) })
+        assertEquals(listOf("contain", "contain-readback"), events.take(2))
+        assertTrue(hidden); assertFalse(app in appliedLockTask || app in appliedHome)
+        assertSame(pending, state!!.pending); assertEquals(receipts, state!!.receipts)
+        assertFalse("unhide" in events)
+        battery = BatteryState(50, false); actualPermissions = permissions; inputAvailable = true; failure = null
+        assertEquals(if (edit) AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.APPROVED,
+            if (gate == "session") controller.onStart() else controller.resume())
+        assertNull(state!!.pending); assertEquals(receipts, state!!.receipts)
+        assertFalse(hidden); assertTrue(app in appliedLockTask && app in appliedHome)
+    }
+
+    @Test fun `approval retry contains before battery gate`() = retryContainment(false, "battery", false)
+
+    @Test fun `approval retry contains before permissions gate`() = retryContainment(false, "permissions", false)
+
+    @Test fun `approval retry contains before plan gate`() = retryContainment(false, "plan", false)
+
+    @Test fun `approval restart contains before battery gate`() = retryContainment(false, "battery", true)
+
+    @Test fun `approval restart contains before permissions gate`() = retryContainment(false, "permissions", true)
+
+    @Test fun `approval restart contains before plan gate`() = retryContainment(false, "plan", true)
+
+    @Test fun `approval restart contains before session gate`() = retryContainment(false, "session", true)
+
+    @Test fun `edit retry contains before battery gate`() = retryContainment(true, "battery", false)
+
+    @Test fun `edit retry contains before permissions gate`() = retryContainment(true, "permissions", false)
+
+    @Test fun `edit retry contains before plan gate`() = retryContainment(true, "plan", false)
+
+    @Test fun `edit restart contains before battery gate`() = retryContainment(true, "battery", true)
+
+    @Test fun `edit restart contains before permissions gate`() = retryContainment(true, "permissions", true)
+
+    @Test fun `edit restart contains before plan gate`() = retryContainment(true, "plan", true)
+
+    @Test fun `edit restart contains before session gate`() = retryContainment(true, "session", true)
+
+    @Test fun `unverified recovery cleanup retains journal and never activates`() {
+        for (edit in listOf(false, true)) for (restart in listOf(false, true)) for (point in listOf("false", "throw", "readback")) {
+            val f = AppApprovalControllerTest(); f.failedActivationAndContainment(edit)
+            when (point) {
+                "false" -> f.containmentWorks = false
+                "throw" -> f.atEvent = { if (it == "contain") error("cleanup unavailable") }
+                else -> f.failure = "contain-readback"
+            }
+            f.battery = BatteryState(4, false)
+            val pending = f.state!!.pending
+            assertEquals(AppApprovalOutcome.NOT_READY,
+                if (restart) { f.controller = f.controller(); f.controller.onStart() } else f.controller.resume())
+            assertSame(pending, f.state!!.pending); assertFalse("unhide" in f.events)
+        }
+    }
+
+    @Test fun `low battery committed recovery preserves unrelated approved access`() {
+        for (edit in listOf(false, true)) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
+            val extra = PackageName("test.existing")
+            val identity = ApprovalBinding(extra, setOf(f.signer))
+            val record = AppApprovalRecord("existing", PermissionSelection(PermissionManifest(identity, 1, "build", emptyList()), emptyMap()))
+            f.state = f.state!!.replacing(apps = f.state!!.apps + (extra to record))
+            f.policy = f.policy.copy(installed = f.policy.installed + InstalledPackage(extra, false, 1),
+                installedIdentities = f.policy.installedIdentities + identity)
+            f.appliedLockTask += extra; f.appliedHome += extra
+            f.atEvent = { if (it == "after-save-committed") f.battery = BatteryState(4, false) }
+            assertEquals(AppApprovalOutcome.LOW_BATTERY, action())
+            assertEquals(AppApprovalPhase.COMMITTED, f.state!!.pending!!.phase)
+            assertTrue(f.containmentRequests.isNotEmpty())
+            assertTrue(f.containmentRequests.all { it == setOf(f.app) })
+            assertTrue(extra in f.appliedLockTask && extra in f.appliedHome)
+            assertFalse("unhide" in f.events)
+        }
+    }
+
+    @Test fun `editing recovery revokes lock task and Home before low battery or missing plan`() {
+        for (gate in listOf("battery", "plan")) for (restart in listOf(false, true)) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(true)
+            f.failure = "hide"
+            assertEquals(AppApprovalOutcome.NOT_READY, action())
+            assertEquals(AppApprovalPhase.EDITING, f.state!!.pending!!.phase)
+            f.failure = null; f.events.clear(); f.containmentRequests.clear()
+            if (gate == "battery") f.battery = BatteryState(4, false) else f.inputAvailable = false
+            assertEquals(if (gate == "battery") AppApprovalOutcome.LOW_BATTERY else AppApprovalOutcome.NOT_READY,
+                if (restart) { f.controller = f.controller(); f.controller.onStart() } else f.controller.resume())
+            assertTrue(f.containmentRequests.isNotEmpty())
+            assertTrue(f.hidden); assertFalse(f.app in f.appliedLockTask || f.app in f.appliedHome)
+            assertEquals(AppApprovalPhase.EDITING, f.state!!.pending!!.phase)
+        }
+    }
+
 }
