@@ -75,10 +75,15 @@ class Preview2Device(private val context: Context) {
         }.sortedBy { it.second.lowercase() }
     }
 
+    /**
+     * Hidden apps stay in the query through MATCH_UNINSTALLED_PACKAGES. Disabled apps are left out: they
+     * can't open, and on the spare a system-disabled carrier app never read back as hidden, which
+     * stopped the apply at HIDES (PLA-144).
+     */
     private fun launchable(): Set<PackageName> =
         pm.queryIntentActivities(
             Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
-            PackageManager.MATCH_UNINSTALLED_PACKAGES or PackageManager.MATCH_DISABLED_COMPONENTS,
+            PackageManager.MATCH_UNINSTALLED_PACKAGES,
         ).mapTo(mutableSetOf()) { PackageName(it.activityInfo.packageName) }
 
     /** Settings and every other Home app stay as they are: they are the way back if Plainphone breaks. */
