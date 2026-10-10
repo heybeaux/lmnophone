@@ -4,7 +4,7 @@
 #
 # preview-2 setup (PLA-144): installs the testOnly APK, makes Plainphone Device Owner, sets the
 # fixed starter list (Phone, Messages, Camera, Maps; the emergency floor is added by the app),
-# applies it, and prints what reads back. The phone must have no accounts for set-device-owner.
+# re-applies it through the boot runtime, and prints what reads back. The phone must have no accounts for set-device-owner.
 #
 # Usage: setup.sh <adb-serial> <plainphone-debug.apk>
 # Way out: adb -s <serial> shell dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver
@@ -33,11 +33,12 @@ a logcat -c
 sh_ am broadcast -a org.plainphone.preview.SET_STARTER -n org.plainphone/.preview.SetupCommandReceiver \
   --esa packages "$starter"
 for _ in $(seq 1 30); do
-  line=$(sh_ logcat -d -s Plainphone | grep 'PREVIEW2 APPLY' | tail -1 || true)
+  line=$(sh_ logcat -d -s PlainphoneBoot | grep 'reapply reason=setup' | tail -1 || true)
   [[ -n "$line" ]] && break
   sleep 1
 done
-echo "apply: ${line:-<no apply line after 30 s>}"
+echo "apply: ${line:-<no re-apply line after 30 s>}"
+sh_ logcat -d -s Plainphone | grep 'PREVIEW2 PLAN' | tail -1 || true
 
 sh_ am start -a android.intent.action.MAIN -c android.intent.category.HOME >/dev/null
 sleep 3
