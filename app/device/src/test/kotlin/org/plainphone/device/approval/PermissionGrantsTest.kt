@@ -29,8 +29,11 @@ class PermissionGrantsTest {
         var grantFollows = true
         var policyReadFails = false
         var afterSet: () -> Unit = {}
+        var blocked = false
         val calls = mutableListOf<String>()
         override fun signers(name: PackageName) = signers.takeIf { name == app }
+        override fun uninstallBlocked(name: PackageName) = blocked
+        override fun setUninstallBlocked(name: PackageName, blocked: Boolean): Boolean { this.blocked = blocked; return true }
         override fun policyState(name: PackageName, permission: PermissionName) =
             if (policyReadFails) null else policy[permission] ?: PolicyGrant.DEFAULT
         override fun setPolicyState(name: PackageName, permission: PermissionName, state: PolicyGrant): Boolean {
@@ -78,7 +81,7 @@ class PermissionGrantsTest {
 
     @Test fun signerChangeDuringTheWriteFailsTheWrite() {
         val fake = Fake(); val grants = PermissionGrants(fake)
-        fake.afterSet = { fake.signers = setOf(CertDigest("cd".repeat(32))) }
+        fake.afterSet = { fake.signers = setOf(CertDigest("cd".repeat(32))); fake.afterSet = {} }
         assertFalse(grants.set(identity, PermissionWrite(camera, PermissionChoice.ALLOW)))
     }
 
