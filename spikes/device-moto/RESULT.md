@@ -1,6 +1,6 @@
 # PLA-5 device spike on the spare Motorola (THROWAWAY)
 
-**Public evidence note.** Personal names, device serials, workstation paths and account-derived identifiers have been generalized. Four raw screenshots containing private identifiers are excluded; see [evidence/PRIVACY.md](evidence/PRIVACY.md). These are publication edits to the recorded evidence, not new device tests. For command examples, explicitly set `SERIAL` to the device approved for your test; the helpers have no default device.
+**Public evidence note.** Personal names, device serials, workstation paths and account-derived identifiers have been generalized. Six raw screenshots containing private identifiers are excluded; see [evidence/PRIVACY.md](evidence/PRIVACY.md). These are publication edits to the recorded evidence, not new device tests. For command examples, explicitly set `SERIAL` to the device approved for your test; the helpers have no default device.
 
 > **Throwaway spike.** Not MVP code. The MVP proposal is not approved. Everything under
 > `spikes/device-moto/` exists only to answer feasibility questions Q1, Q2, Q3, Q5, Q6, Q7, Q13.
