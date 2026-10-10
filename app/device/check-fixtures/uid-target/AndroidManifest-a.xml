@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Plainphone contributors. SPDX-License-Identifier: Apache-2.0 -->
+<!-- PLA-219 shared-UID fixture a: same throwaway key and sharedUserId as its sibling. No code. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.plainphone.uidtarget.a" android:sharedUserId="org.plainphone.uidshared">
+    <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="35" />
+    <application android:hasCode="false" android:label="Plainphone UID target a">
+        <activity android:name="android.app.Activity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
