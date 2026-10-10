@@ -1,0 +1,24 @@
+# preview-2b restart on the spare (<spare>, API 35, no PIN), adb reboot at about 18:57:30 UTC (11:57:30 device time)
+# First capture after sys.boot_completed: PlainphoneBoot, Plainphone, boot_progress_enable_screen, user state, Home starts
+10-10 11:58:27.544 I/ActivityTaskManager( 2157): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=org.plainphone/.MainActivity (has extras)} with LAUNCH_SINGLE_TASK from uid 0 (startHomeActivity
+10-10 11:58:28.622 I/boot_progress_enable_screen( 2157): 49953
+10-10 11:58:31.167 I/am_user_state_changed( 2157): [0,1]
+10-10 11:58:31.643 I/am_user_state_changed( 2157): [0,2]
+10-10 11:58:32.665 I/am_user_state_changed( 2157): [0,3]
+10-10 11:58:40.119 I/PlainphoneBoot( 2984): reapply reason=start control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] atten
+# 20 s later (the spare's main buffer wraps fast; the 11:58:40 locked line had already rotated out):
+10-10 11:59:16.238 I/PlainphoneBoot( 2984): reapply reason=locked-boot control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DIS
+# screen was dozing; woke it and swiped the no-PIN lock screen at about 11:59:22. Streamed log:
+10-10 11:59:05.275 I/PlainphoneBoot( 2984): reapply reason=package:PACKAGE_CHANGED:com.motorola.actions control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 with
+10-10 11:59:16.238 I/PlainphoneBoot( 2984): reapply reason=locked-boot control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DIS
+10-10 11:59:21.103 I/PlainphoneBoot( 2984): reapply reason=package:PACKAGE_CHANGED:com.motorola.carriersettingsext control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFail
+10-10 11:59:23.538 I/PlainphoneBoot( 2984): home shown lockTask=1 at=104868
+10-10 11:59:23.690 I/PlainphoneBoot( 2984): home shown lockTask=1 at=105021
+10-10 11:59:24.477 I/PlainphoneBoot( 2984): reapply reason=package:PACKAGE_CHANGED:com.motorola.actions control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 with
+10-10 11:59:25.420 I/PlainphoneBoot( 2984): reapply reason=boot control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_D
+# after boot
+topResumedActivity=org.plainphone/.MainActivity
+mLockTaskModeState=LOCKED
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+
+# Reading: the locked run read back first (11:58:40, floor and guard only). The first full unlocked read-back finished at 11:59:05.275. Home was first drawn at 11:59:23.538, in lock task, after the screen was woken. Nothing drew Home before a full read-back.

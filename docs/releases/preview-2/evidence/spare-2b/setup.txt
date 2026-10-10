@@ -1,0 +1,13 @@
+# preview-2b on the spare (<spare>, Android 15, API 35), 2026-10-10T18:56:39Z. APK sha256 a875f134…4c1c8b1a, built at release/preview-2 001a3d0 (later commits change only scripts and evidence).
+starter list: com.google.android.dialer,com.google.android.apps.messaging,com.motorola.camera3,com.google.android.apps.maps
+Broadcasting: Intent { act=org.plainphone.preview.SET_STARTER flg=0x400000 cmp=org.plainphone/.preview.SetupCommandReceiver (has extras) }
+Broadcast completed: result=0
+apply: 10-10 11:57:15.957 15663 15730 I PlainphoneBoot: reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=4125
+10-10 11:57:15.226 15663 15730 I Plainphone: PREVIEW2 PLAN hidden=42 lockTask=[com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.android.apps.safetyhub, com.google.android.cellbroadcastreceiver, com.google.android.dialer, com.motorola.camera3, org.plainphone] floorUnreadable=[]
+--- read back
+1 owner:
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+home: org.plainphone/.MainActivity
+lock task state: mLockTaskModeState=LOCKED
+testOnly: TEST_ONLY
+hidden or uninstalled for user 0: 42 packages (list withheld: the spare's app inventory is personal, PLA-185 F3)
