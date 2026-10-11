@@ -1,0 +1,16 @@
+
+--------- beginning of main
+I/CountsProbe( 4353): t=149042 pid=4353 command=install action=null
+I/CountsProbe( 4353): t=149062 pid=4353 install=default committed
+I/CountsProbe( 4353): t=149063 pid=4353 unlocked=true grants=[0, 0]
+I/CountsProbe( 4353): t=149067 pid=4353 query=calls-new count=0 ms=4
+I/CountsProbe( 4353): t=149072 pid=4353 query=calls-unread count=0 ms=2
+I/CountsProbe( 4353): t=149079 pid=4353 query=sms-unread count=0 ms=6
+I/CountsProbe( 4353): t=149084 pid=4353 query=mms-unread count=0 ms=4
+I/CountsProbe( 4353): t=149087 pid=4353 command=installed action=null
+I/CountsProbe( 4353): t=149087 pid=4353 install-status=4
+I/CountsProbe( 4353): t=149087 pid=4353 unlocked=true grants=[0, 0]
+I/CountsProbe( 4353): t=149091 pid=4353 query=calls-new count=0 ms=4
+I/CountsProbe( 4353): t=149093 pid=4353 query=calls-unread count=0 ms=2
+I/CountsProbe( 4353): t=149097 pid=4353 query=sms-unread count=0 ms=4
+I/CountsProbe( 4353): t=149100 pid=4353 query=mms-unread count=0 ms=2

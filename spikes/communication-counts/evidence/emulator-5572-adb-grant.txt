@@ -1,0 +1,56 @@
+
+--------- beginning of main
+I/CountsProbe( 4151): t=105243 pid=4151 command=query action=null
+I/CountsProbe( 4151): t=105276 pid=4151 unlocked=true grants=[-1, -1]
+I/CountsProbe( 4151): t=105316 pid=4151 query=calls-new error=SecurityException ms=39
+I/CountsProbe( 4151): t=105318 pid=4151 query=calls-unread error=SecurityException ms=1
+I/CountsProbe( 4151): t=105360 pid=4151 query=sms-unread error=SecurityException ms=42
+I/CountsProbe( 4151): t=105379 pid=4151 query=mms-unread error=SecurityException ms=19
+I/CountsProbe( 4151): t=105491 pid=4151 command=grant action=null
+I/CountsProbe( 4151): t=105493 pid=4151 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 4151): t=105581 pid=4151 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 4151): t=105581 pid=4151 permission=READ_SMS state=1 before
+I/CountsProbe( 4151): t=105592 pid=4151 permission=READ_SMS result=true state=1
+I/CountsProbe( 4151): t=105594 pid=4151 unlocked=true grants=[0, 0]
+I/CountsProbe( 4151): t=105631 pid=4151 query=calls-new count=0 ms=37
+I/CountsProbe( 4151): t=105668 pid=4151 query=calls-unread count=0 ms=35
+I/CountsProbe( 4151): t=105784 pid=4151 query=sms-unread count=0 ms=116
+I/CountsProbe( 4151): t=105814 pid=4151 query=mms-unread count=0 ms=25
+I/CountsProbe( 4151): t=105817 pid=4151 command=watch action=null
+I/CountsProbe( 4151): t=105835 pid=4151 watch=calls ok
+I/CountsProbe( 4151): t=105836 pid=4151 watch=combined ok
+I/CountsProbe( 4151): t=105837 pid=4151 watch=sms ok
+I/CountsProbe( 4151): t=105837 pid=4151 watch=mms ok
+I/CountsProbe( 4151): t=105837 pid=4151 unlocked=true grants=[0, 0]
+I/CountsProbe( 4151): t=105843 pid=4151 query=calls-new count=0 ms=6
+I/CountsProbe( 4151): t=105846 pid=4151 query=calls-unread count=0 ms=1
+I/CountsProbe( 4151): t=105849 pid=4151 query=sms-unread count=0 ms=3
+I/CountsProbe( 4151): t=105851 pid=4151 query=mms-unread count=0 ms=2
+I/CountsProbe( 4151): t=106052 pid=4151 command=query action=LOCKED_BOOT_COMPLETED
+I/CountsProbe( 4151): t=106063 pid=4151 unlocked=true grants=[0, 0]
+I/CountsProbe( 4151): t=106176 pid=4151 query=calls-new count=0 ms=113
+I/CountsProbe( 4151): t=106228 pid=4151 query=calls-unread count=0 ms=44
+I/CountsProbe( 4151): t=106259 pid=4151 query=sms-unread count=0 ms=29
+I/CountsProbe( 4151): t=106263 pid=4151 query=mms-unread count=0 ms=4
+I/CountsProbe( 4151): t=106296 pid=4151 command=query action=BOOT_COMPLETED
+I/CountsProbe( 4151): t=106296 pid=4151 unlocked=true grants=[0, 0]
+I/CountsProbe( 4151): t=106300 pid=4151 query=calls-new count=0 ms=4
+I/CountsProbe( 4151): t=106305 pid=4151 query=calls-unread count=0 ms=1
+I/CountsProbe( 4151): t=106309 pid=4151 query=sms-unread count=0 ms=4
+I/CountsProbe( 4151): t=106374 pid=4151 query=mms-unread count=0 ms=65
+I/CountsProbe( 4151): t=125875 pid=4151 command=grant action=null
+I/CountsProbe( 4151): t=125875 pid=4151 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 4151): t=125894 pid=4151 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 4151): t=125894 pid=4151 permission=READ_SMS state=1 before
+I/CountsProbe( 4151): t=125897 pid=4151 permission=READ_SMS result=true state=1
+I/CountsProbe( 4151): t=125897 pid=4151 unlocked=true grants=[0, 0]
+I/CountsProbe( 4151): t=125900 pid=4151 query=calls-new count=0 ms=3
+I/CountsProbe( 4151): t=125903 pid=4151 query=calls-unread count=0 ms=2
+I/CountsProbe( 4151): t=125910 pid=4151 query=sms-unread count=0 ms=6
+I/CountsProbe( 4151): t=125913 pid=4151 query=mms-unread count=0 ms=2
+I/CountsProbe( 4151): t=125935 pid=4151 command=watch action=null
+I/CountsProbe( 4151): t=125935 pid=4151 unlocked=true grants=[0, 0]
+I/CountsProbe( 4151): t=125939 pid=4151 query=calls-new count=0 ms=4
+I/CountsProbe( 4151): t=125941 pid=4151 query=calls-unread count=0 ms=2
+I/CountsProbe( 4151): t=125945 pid=4151 query=sms-unread count=0 ms=4
+I/CountsProbe( 4151): t=125949 pid=4151 query=mms-unread count=0 ms=4

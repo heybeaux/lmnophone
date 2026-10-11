@@ -1,0 +1,13 @@
+ro.build.version.sdk=35
+ro.build.fingerprint=google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys
+DIALER=com.google.android.dialer
+SMS=com.google.android.apps.messaging
+    installerPackageName=null
+        android.permission.READ_SMS: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+        android.permission.READ_CALL_LOG: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+--------- beginning of main
+I/CountsProbe( 4151): t=105243 pid=4151 command=query action=null
+I/CountsProbe( 4151): t=105276 pid=4151 unlocked=true grants=[-1, -1]
+I/CountsProbe( 4151): t=105316 pid=4151 query=calls-new error=SecurityException ms=39
+I/CountsProbe( 4151): t=105318 pid=4151 query=calls-unread error=SecurityException ms=1
+I/CountsProbe( 4151): t=105360 pid=4151 query=sms-unread error=SecurityException ms=42

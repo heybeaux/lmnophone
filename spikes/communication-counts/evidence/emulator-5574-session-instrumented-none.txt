@@ -1,0 +1,28 @@
+    installerPackageName=com.plainphone.spike.counts
+        android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+        android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+--------- beginning of main
+I/CountsProbe( 5617): t=331844 pid=5617 command=install action=null
+I/CountsProbe( 5617): t=331886 pid=5617 install=none committed
+I/CountsProbe( 5617): t=331887 pid=5617 unlocked=true grants=[0, 0]
+I/CountsProbe( 5617): t=331889 pid=5617 query=calls-new count=1 ms=2
+I/CountsProbe( 5617): t=331891 pid=5617 query=calls-unread count=1 ms=1
+I/CountsProbe( 5617): t=331900 pid=5617 query=sms-unread count=0 ms=9
+I/CountsProbe( 5617): t=331911 pid=5617 query=mms-unread count=0 ms=11
+I/CountsProbe( 5639): t=332259 pid=5639 command=installed action=null
+I/CountsProbe( 5639): t=332264 pid=5639 install-status=0 legacy=1
+I/CountsProbe( 5639): t=332264 pid=5639 unlocked=true grants=[0, 0]
+I/CountsProbe( 5639): t=332281 pid=5639 query=calls-new count=1 ms=17
+I/CountsProbe( 5639): t=332290 pid=5639 query=calls-unread count=1 ms=7
+I/CountsProbe( 5639): t=332323 pid=5639 query=sms-unread count=0 ms=32
+I/CountsProbe( 5639): t=332388 pid=5639 query=mms-unread count=0 ms=65
+I/CountsProbe( 5639): t=334018 pid=5639 command=grant action=null
+I/CountsProbe( 5639): t=334020 pid=5639 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 5639): t=334033 pid=5639 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 5639): t=334033 pid=5639 permission=READ_SMS state=1 before
+I/CountsProbe( 5639): t=334040 pid=5639 permission=READ_SMS result=true state=1
+I/CountsProbe( 5639): t=334041 pid=5639 unlocked=true grants=[0, 0]
+I/CountsProbe( 5639): t=334045 pid=5639 query=calls-new count=1 ms=4
+I/CountsProbe( 5639): t=334051 pid=5639 query=calls-unread count=1 ms=5
+I/CountsProbe( 5639): t=334061 pid=5639 query=sms-unread count=0 ms=8
+I/CountsProbe( 5639): t=334067 pid=5639 query=mms-unread count=0 ms=6

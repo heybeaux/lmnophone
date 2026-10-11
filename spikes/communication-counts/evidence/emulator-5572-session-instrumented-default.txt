@@ -1,0 +1,26 @@
+    installerPackageName=com.plainphone.spike.counts
+        android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+        android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+--------- beginning of main
+I/CountsProbe( 5014): t=320602 pid=5014 command=install action=null
+I/CountsProbe( 5014): t=320645 pid=5014 install=default committed
+I/CountsProbe( 5014): t=320646 pid=5014 unlocked=true grants=[0, 0]
+I/CountsProbe( 5014): t=320653 pid=5014 query=calls-new count=1 ms=7
+I/CountsProbe( 5014): t=320659 pid=5014 query=calls-unread count=1 ms=5
+I/CountsProbe( 5070): t=320922 pid=5070 command=installed action=null
+I/CountsProbe( 5070): t=320923 pid=5070 install-status=0 legacy=1
+I/CountsProbe( 5070): t=320925 pid=5070 unlocked=true grants=[0, 0]
+I/CountsProbe( 5070): t=320930 pid=5070 query=calls-new count=1 ms=5
+I/CountsProbe( 5070): t=320935 pid=5070 query=calls-unread count=1 ms=4
+I/CountsProbe( 5070): t=320946 pid=5070 query=sms-unread count=0 ms=10
+I/CountsProbe( 5070): t=320952 pid=5070 query=mms-unread count=0 ms=5
+I/CountsProbe( 5070): t=322742 pid=5070 command=grant action=null
+I/CountsProbe( 5070): t=322744 pid=5070 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 5070): t=322755 pid=5070 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 5070): t=322755 pid=5070 permission=READ_SMS state=1 before
+I/CountsProbe( 5070): t=322762 pid=5070 permission=READ_SMS result=true state=1
+I/CountsProbe( 5070): t=322762 pid=5070 unlocked=true grants=[0, 0]
+I/CountsProbe( 5070): t=322765 pid=5070 query=calls-new count=1 ms=3
+I/CountsProbe( 5070): t=322768 pid=5070 query=calls-unread count=1 ms=3
+I/CountsProbe( 5070): t=322772 pid=5070 query=sms-unread count=0 ms=4
+I/CountsProbe( 5070): t=322777 pid=5070 query=mms-unread count=0 ms=5

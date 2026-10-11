@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // THROWAWAY probe; versions match the repository toolchain.
 plugins {
-    id("com.android.application") version "8.11.0"
-    id("org.jetbrains.kotlin.android") version "2.1.20"
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 android {
     namespace = "com.plainphone.spike.counts"
@@ -21,4 +21,4 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
 }
-dependencies { testImplementation("junit:junit:4.13.2") }
+dependencies { testImplementation(libs.junit4) }

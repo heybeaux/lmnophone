@@ -1,0 +1,26 @@
+    installerPackageName=null
+        android.permission.READ_SMS: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|APPLY_RESTRICTION]
+        android.permission.READ_CALL_LOG: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|APPLY_RESTRICTION]
+--------- beginning of main
+I/CountsProbe( 5723): t=368749 pid=5723 command=query action=LOCKED_BOOT_COMPLETED
+I/CountsProbe( 5723): t=368752 pid=5723 unlocked=true grants=[-1, -1]
+I/CountsProbe( 5723): t=368754 pid=5723 query=calls-new error=SecurityException ms=2
+I/CountsProbe( 5723): t=368754 pid=5723 query=calls-unread error=SecurityException ms=0
+I/CountsProbe( 5723): t=368768 pid=5723 query=sms-unread error=SecurityException ms=14
+I/CountsProbe( 5723): t=368811 pid=5723 query=mms-unread error=SecurityException ms=43
+I/CountsProbe( 5723): t=368821 pid=5723 command=query action=BOOT_COMPLETED
+I/CountsProbe( 5723): t=368821 pid=5723 unlocked=true grants=[-1, -1]
+I/CountsProbe( 5723): t=368822 pid=5723 query=calls-new error=SecurityException ms=1
+I/CountsProbe( 5723): t=368822 pid=5723 query=calls-unread error=SecurityException ms=0
+I/CountsProbe( 5723): t=368822 pid=5723 query=sms-unread error=SecurityException ms=0
+I/CountsProbe( 5723): t=368822 pid=5723 query=mms-unread error=SecurityException ms=0
+I/CountsProbe( 5723): t=368830 pid=5723 command=grant action=null
+I/CountsProbe( 5723): t=368830 pid=5723 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 5723): t=368840 pid=5723 permission=READ_CALL_LOG result=true state=0
+I/CountsProbe( 5723): t=368841 pid=5723 permission=READ_SMS state=1 before
+I/CountsProbe( 5723): t=368861 pid=5723 permission=READ_SMS result=true state=0
+I/CountsProbe( 5723): t=368862 pid=5723 unlocked=true grants=[-1, -1]
+I/CountsProbe( 5723): t=368863 pid=5723 query=calls-new error=SecurityException ms=1
+I/CountsProbe( 5723): t=368864 pid=5723 query=calls-unread error=SecurityException ms=1
+I/CountsProbe( 5723): t=368867 pid=5723 query=sms-unread error=SecurityException ms=3
+I/CountsProbe( 5723): t=368872 pid=5723 query=mms-unread error=SecurityException ms=5

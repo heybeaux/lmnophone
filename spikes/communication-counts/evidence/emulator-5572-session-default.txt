@@ -1,0 +1,28 @@
+    installerPackageName=null
+        android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+        android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+--------- beginning of main
+I/CountsProbe( 4715): t=226841 pid=4715 command=install action=null
+I/CountsProbe( 4715): t=226886 pid=4715 install=default committed
+I/CountsProbe( 4715): t=226890 pid=4715 unlocked=true grants=[0, 0]
+I/CountsProbe( 4715): t=226972 pid=4715 query=calls-new count=0 ms=82
+I/CountsProbe( 4715): t=227002 pid=4715 query=calls-unread count=0 ms=29
+I/CountsProbe( 4715): t=227057 pid=4715 query=sms-unread count=0 ms=48
+I/CountsProbe( 4715): t=227190 pid=4715 query=mms-unread count=0 ms=118
+I/CountsProbe( 4715): t=227193 pid=4715 command=installed action=null
+I/CountsProbe( 4715): t=227193 pid=4715 install-status=4 legacy=-15
+I/CountsProbe( 4715): t=227193 pid=4715 unlocked=true grants=[0, 0]
+I/CountsProbe( 4715): t=227217 pid=4715 query=calls-new count=0 ms=24
+I/CountsProbe( 4715): t=227259 pid=4715 query=calls-unread count=0 ms=29
+I/CountsProbe( 4715): t=227275 pid=4715 query=sms-unread count=0 ms=15
+I/CountsProbe( 4715): t=227281 pid=4715 query=mms-unread count=0 ms=5
+I/CountsProbe( 4715): t=230234 pid=4715 command=grant action=null
+I/CountsProbe( 4715): t=230235 pid=4715 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 4715): t=230250 pid=4715 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 4715): t=230251 pid=4715 permission=READ_SMS state=1 before
+I/CountsProbe( 4715): t=230254 pid=4715 permission=READ_SMS result=true state=1
+I/CountsProbe( 4715): t=230254 pid=4715 unlocked=true grants=[0, 0]
+I/CountsProbe( 4715): t=230257 pid=4715 query=calls-new count=0 ms=3
+I/CountsProbe( 4715): t=230262 pid=4715 query=calls-unread count=0 ms=3
+I/CountsProbe( 4715): t=230267 pid=4715 query=sms-unread count=0 ms=4
+I/CountsProbe( 4715): t=230272 pid=4715 query=mms-unread count=0 ms=5
