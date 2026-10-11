@@ -1429,12 +1429,20 @@ class AppApprovalControllerTest {
                         }
                     }
                     try {
-                        assertTrue(result.getOrNull() in setOf(AppApprovalOutcome.NOT_READY, AppApprovalOutcome.LOW_BATTERY))
+                        val restrictiveCompletion = fault == "battery" && entry != "finishPermissionEdit" &&
+                            (entry == "withdraw" || phase == AppApprovalPhase.WITHDRAWING)
+                        if (restrictiveCompletion) assertEquals(AppApprovalOutcome.WITHDRAWN, result.getOrNull())
+                        else assertTrue(result.getOrNull() in setOf(AppApprovalOutcome.NOT_READY, AppApprovalOutcome.LOW_BATTERY))
                         assertEquals("contain", f.events.firstOrNull())
                         assertTrue(f.containmentRequests.isNotEmpty())
                         assertTrue(f.containmentRequests.all { it == setOf(f.app) })
-                        assertNotNull(f.state!!.pending)
-                        assertEquals(receipts, f.state!!.receipts)
+                        if (restrictiveCompletion) {
+                            f.assertRestrictiveEditWithdrawal()
+                            assertEquals(receipts, f.state!!.receipts.dropLast(1))
+                        } else {
+                            assertNotNull(f.state!!.pending)
+                            assertEquals(receipts, f.state!!.receipts)
+                        }
                         assertTrue(extra in f.appliedLockTask && extra in f.appliedHome)
                         assertTrue(extra in f.state!!.apps)
                     } catch (e: AssertionError) { failures += "$entry/$phase/$fault: ${e.message}" }
