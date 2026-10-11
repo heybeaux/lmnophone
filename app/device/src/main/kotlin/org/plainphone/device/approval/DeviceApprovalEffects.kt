@@ -72,6 +72,13 @@ class PublishedHomeApps : HomeAppList {
  * are given anything back. A change after the final read is for the next call: the next apply repairs the
  * floor, and every later hide reads the list again.
  *
+ * Positive evidence only (PLA-313 finding 4). A step records something as taken only after a read proved
+ * the name had it: in the read lock-task list, read back visible, or read listed on Home. An unreadable
+ * prior read (null or throwing) is never recorded, so the repair cannot add what the call never removed.
+ * Home is the one step whose prior read can be unknown while the write would still go ahead, so it skips
+ * the removal instead: open fails before it, and containment reports [Exposure.HOME]. A removal that throws
+ * after a positive read stays recorded, since it may have taken effect.
+ *
  * Effective exclusion (PLA-218). Android lets every package that shares a UID with an allowed lock-task
  * package start lock task too (`DevicePolicyManager.setLockTaskPackages`). After the name is out of the
  * applied list, open refuses, before any unhide, unless the candidate and every package left in that
@@ -144,8 +151,12 @@ class DeviceApprovalEffects(
             val others = applied.map { port.uid(it) ?: return@attempt false }
             if (uid in others) return@attempt false
             if (!floor.allows(name)) return@attempt false
-            if (attempt { home.lists(name) } != false) taken.home += name
-            home.remove(name)
+            // Only a positive read is a removal this call can give back; unknown is never a listing (PLA-313).
+            val listed = attempt { home.lists(name) } ?: return@attempt false
+            if (listed) {
+                taken.home += name
+                home.remove(name)
+            }
             if (home.lists(name) != false) return@attempt false
             // Only the exact identity becomes visible.
             if (signers(name)?.let { identity.matches(name, it) } != true) return@attempt false
@@ -255,11 +266,15 @@ class DeviceApprovalEffects(
         val lockTask = attempt { port.lockTaskPackages() }
         val open = names.associateWith { name ->
             if (!floor.allows(name)) return@associateWith Exposure.entries.toSet()
-            if (attempt { home.lists(name) } != false) taken.home += name
-            attempt { home.remove(name) }
+            // An unreadable listing skips the removal (nothing to give back) and stays reported (PLA-313).
+            val listed = attempt { home.lists(name) }
+            if (listed == true) {
+                taken.home += name
+                attempt { home.remove(name) }
+            }
             buildSet {
                 if (lockTask == null || name in lockTask) add(Exposure.LOCK_TASK)
-                if (attempt { home.lists(name) } != false) add(Exposure.HOME)
+                if (listed == null || attempt { home.lists(name) } != false) add(Exposure.HOME)
                 if (!hide(name, floor, taken)) add(Exposure.VISIBLE)
             }
         }
