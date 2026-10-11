@@ -9,9 +9,9 @@
 ## 2. Build
 
 - [x] 2.1 UI (PLA-292, `mvp/home-counts-ui` @ `dfe553a`, Lead-reviewed): Home number on Phone and Messages rows, accessibility names with plurals, "99+", large-text layout at 1.3–2.0 font scale; Settings switch and coverage text. Tests first; Paparazzi goldens; before/after screenshots.
-- [ ] 2.2 Host: count source with fixed projection/selection (unit-tested), observers while Home is visible, hide-on-error, no saved counts, switch persistence (default off, survives update), permission handling per C1/C5.
-- [ ] 2.2b Copy and disclosure (D7): final coverage string, retained-permission note and supported-app line in `communication_counts.xml`, `PhoneSettingsScreen` and `docs/ux/flows-user.md`; re-recorded large-text goldens (host slice, own commit).
-- [ ] 2.3 Cross-model review of 2.2 and 2.2b (Lead, Anthropic).
+- [x] 2.2 Host (PLA-294, PLA-300, PLA-302; `feature/home-counts-host` @ `6ba747d`): count source with fixed projection/selection (unit-tested), observers while Home is visible, hide-on-error, no saved counts, switch persistence (default off, survives update), permission handling per C1/C5.
+- [x] 2.2b Copy and disclosure (D7): final coverage string, retained-permission note and supported-app line in `communication_counts.xml`, `PhoneSettingsScreen` and `docs/ux/flows-user.md`; re-recorded large-text goldens (host slice, own commit).
+- [x] 2.3 Cross-model review of 2.2 and 2.2b (Lead, Anthropic): PLA-300 APPROVE at `67a50b6`, PLA-302 APPROVE at `6ba747d`.
 - [ ] 2.4 Carry the count source into the MVP host (`mvp/device`) when that lane integrates the Home UI.
 
 ## 3. Ship
