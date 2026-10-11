@@ -22,5 +22,5 @@ BUILD                   INCONCLUSIVE          DETECTED              DETECTED    
 Real build: PASS, or INCONCLUSIVE only for alert-shown. Each control: DETECTED (its named checks FAIL, every other check as the real build).
 Raw lines: <scratch>/final-api36
 RESULT QUALIFIED EXCEPT alert-shown INCONCLUSIVE (debug qualification run; the board decides the alert-shown exception)
-[gate 15:52:51] cleanup: mCallState=0 testNumbers=[112, 911] pinDisabled=true owners=no owners 
+[gate 17:19:54] cleanup: mCallState=0 testNumbers=[112, 911] pinDisabled=true owners=no owners 
 exit=5

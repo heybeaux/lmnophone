@@ -19,8 +19,11 @@ Command, per emulator (both run in parallel, APKs built once from the same commi
     tools/emergency-gate.sh -s emulator-5770 --no-build
     tools/emergency-gate.sh -s emulator-5800 --no-build
 
-The `+dirty` on the commit line is the then-uncommitted host test file `tools/tests/test_emergency_gate_host.py`
-(committed next as `604a5ec`); no gate, app or script source differed from the commit.
+Commit `de6e6ff`, clean. Result: `RESULT QUALIFIED EXCEPT alert-shown INCONCLUSIVE` (exit 5) on both.
+Earlier runs this round (not kept) found and fixed: the dial pad read too early and the keyguard route's
+expected activity (`58fa048`), a flapping `ctlNoAlert` (`623b3b5`), a test call that read idle once and then
+came back (`c81bbd8`: idle must now hold for 3 s), and Messages' sign-in prompt covering Home on API 36
+(`de6e6ff`: Home must stay in front; the presses are in the `app-home-phone` line).
 
 ## What a qualification run covers
 
