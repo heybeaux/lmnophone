@@ -11,7 +11,6 @@ import android.os.UserManager
 import android.util.Log
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.plainphone.PlainphoneAdminReceiver
 import org.plainphone.core.PackageName
@@ -21,7 +20,6 @@ import org.plainphone.device.boot.BootOutcome
 import org.plainphone.device.boot.BootReapply
 import org.plainphone.device.storage.FileJournalStore
 import org.plainphone.preview.Preview2Device
-import org.plainphone.ui.home.HomeNotice
 
 /** What Home may show. Only [READY] lets Home draw; the others show the neutral checking screen. */
 enum class HomeGate { CHECKING, READY, NOT_READY }
@@ -51,13 +49,12 @@ class PolicyRuntime private constructor(private val context: Context) {
         BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT),
         { stage, error -> Log.w(TAG, "stage $stage failed: ${error ?: "readback mismatch"}", error) },
     )
-    private val gateState = MutableStateFlow(HomeGate.CHECKING)
-    private val noticeState = MutableStateFlow<HomeNotice?>(null)
+    private val home = HomePublisher()
     private val packageEventQueued = AtomicBoolean(false)
 
-    val gate: StateFlow<HomeGate> = gateState
-    /** The Home notice from the last unlocked re-apply ([homeNotice]). */
-    val notice: StateFlow<HomeNotice?> = noticeState
+    val gate: StateFlow<HomeGate> = home.gate
+    /** The Home notice from the last unlocked re-apply ([homeNotice]), and a revision bumped by every ready one. */
+    val refresh: StateFlow<HomeRefresh> = home.refresh
 
     /** Queues one re-apply; [done] runs on the dispatcher after it. */
     fun reapply(reason: String, done: () -> Unit = {}) = dispatcher.post {
@@ -82,7 +79,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     private fun run(reason: String) {
         if (!dpm.isDeviceOwnerApp(context.packageName)) {
             Log.w(TAG, "reapply $reason skipped: not Device Owner")
-            gateState.value = HomeGate.NOT_READY
+            home.notOwner()
             return
         }
         val locked = !users.isUserUnlocked
@@ -95,11 +92,7 @@ class PolicyRuntime private constructor(private val context: Context) {
         }
         log(reason, outcome, SystemClock.elapsedRealtime() - started)
         BuildControl.control.afterReapply(context, dpm, admin)
-        // A locked run never opens Home: the full plan has not run yet.
-        if (!locked) {
-            noticeState.value = homeNotice(outcome)
-            gateState.value = if (outcome?.ready == true) HomeGate.READY else HomeGate.NOT_READY
-        }
+        home.afterRun(locked, outcome)
     }
 
     private fun log(reason: String, outcome: BootOutcome?, millis: Long) {

@@ -70,13 +70,13 @@ class MainActivity : ComponentActivity() {
         val mapper = ShellUiMapper(resources.configuration.locales[0], DateFormat.is24HourFormat(this))
         setContent {
             val gate by runtime.gate.collectAsState()
-            val notice by runtime.notice.collectAsState()
+            val refresh by runtime.refresh.collectAsState()
             if (gate != HomeGate.READY || !enterLockTask()) {
                 PlainphoneTheme { CheckingScreen(onPhone = { perform(ShellEffect.OpenDialer) }, onEmergency = ::openEmergency) }
                 return@setContent
             }
-            // Each read-back run refreshes the app list and the attention notice.
-            LaunchedEffect(notice) { shell.prepare(device, attention = notice != null) }
+            // Each ready read-back run refreshes the app list and the attention notice.
+            LaunchedEffect(refresh) { shell.prepare(device, attention = refresh.notice != null) }
             // Nothing but paper until the app list is read.
             val phone = shell.phone ?: return@setContent
             LaunchedEffect(phone) {
