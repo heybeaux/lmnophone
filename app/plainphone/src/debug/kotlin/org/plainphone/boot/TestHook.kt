@@ -28,6 +28,8 @@ import org.plainphone.PlainphoneAdminReceiver
  *   so this stands in for an unapproved app's notification right after boot. Works before unlock.
  * - `org.plainphone.test.HOLD --ez hold true|false`: holds (or releases) the checking screen, so the
  *   emergency gate can test its Phone (PLA-245; the real checking screen lasts under a second).
+ * - `org.plainphone.test.IN_CALL --ez on true|false`: stands in for an ongoing call in recovery's call
+ *   check (PLA-322 finding 1), so the in-call restore path runs without placing a call.
  */
 class TestHook : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -45,6 +47,7 @@ class TestHook : BroadcastReceiver() {
                 if (intent.hasExtra("features")) dpm.setLockTaskFeatures(admin, intent.getIntExtra("features", 0))
             }
             "org.plainphone.test.HOLD" -> PolicyRuntime.get(context).holdChecking(intent.getBooleanExtra("hold", false))
+            "org.plainphone.test.IN_CALL" -> PolicyRuntime.get(context).inCallStandIn = intent.getBooleanExtra("on", false).takeIf { it }
             "org.plainphone.test.NOTIFY" -> {
                 val target = intent.getStringExtra("component")?.let(ComponentName::unflattenFromString) ?: return
                 val notifications = context.getSystemService(NotificationManager::class.java)

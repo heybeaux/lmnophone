@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone
 
-import android.app.ActivityManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
@@ -18,8 +17,10 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import org.plainphone.boot.BuildControl
+import org.plainphone.boot.CallingScreen
 import org.plainphone.boot.CheckingScreen
 import org.plainphone.boot.HomeGate
+import org.plainphone.boot.LockTaskState
 import org.plainphone.boot.PolicyRuntime
 import org.plainphone.boot.checkingShowsAttention
 import org.plainphone.ui.home.HomeEvent
@@ -36,9 +37,10 @@ import org.plainphone.ui.theme.PlainphoneTheme
  * the task is in lock task; until then the neutral checking screen shows, with only Phone and Emergency.
  * Lock task must actually be running (PLA-307 finding 2): create and resume read the live state, and
  * the runtime brings Home forward after a ready pass that finds it not running ([LockTaskRecovery]).
+ * Only LOCKED counts; PINNED is not lock task (PLA-322 finding 3). Once LOCKED reads back, Home reopens
+ * the calling screen recovery displaced, inside lock task (PLA-322 finding 1).
  */
 class MainActivity : ComponentActivity() {
-    private val activities by lazy { getSystemService(ActivityManager::class.java) }
     private val runtime by lazy { PolicyRuntime.get(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,9 +51,9 @@ class MainActivity : ComponentActivity() {
                 val gate by runtime.gate.collectAsState()
                 val runs by runtime.runs.collectAsState()
                 LaunchedEffect(runs) { enterLockTask() }
-                if (gate == HomeGate.READY && enterLockTask()) {
+                if (gate == HomeGate.READY && enterLockTask(followUp = false)) {
                     LaunchedEffect(Unit) {
-                        Log.i(PolicyRuntime.TAG, "home shown lockTask=${activities.lockTaskModeState} at=${SystemClock.elapsedRealtime()}")
+                        Log.i(PolicyRuntime.TAG, "home shown lockTask=${runtime.lockTaskState()} at=${SystemClock.elapsedRealtime()}")
                     }
                     val notice by runtime.notice.collectAsState()
                     Home(notice)
@@ -70,18 +72,36 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        runtime.homeResumed()
         enterLockTask()
     }
 
-    /** True when this task is in lock task, starting it first only if Keyguard first allows it now. */
-    private fun enterLockTask(): Boolean {
-        if (activities.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE) return true
-        if (!runtime.mayEnterLockTask()) return false
-        return try {
-            startLockTask()
-            activities.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
-        } catch (e: RuntimeException) {
-            false
+    /**
+     * True when lock task is LOCKED, starting it first only if Keyguard first allows it now. PINNED is
+     * someone else's pin, not ours to start over. With [followUp], a LOCKED read reopens the calling
+     * screen recovery displaced; never from composition.
+     */
+    private fun enterLockTask(followUp: Boolean = true): Boolean {
+        var state = runtime.lockTaskState()
+        if ((state == LockTaskState.NONE || state == LockTaskState.UNREADABLE) && runtime.mayEnterLockTask()) {
+            try {
+                startLockTask()
+            } catch (e: RuntimeException) {
+                // Read below: still not LOCKED.
+            }
+            state = runtime.lockTaskState()
+        }
+        if (followUp) runtime.onHomeLockTaskState(state)?.let(::reopen)
+        return state.contained
+    }
+
+    /** Brings back a displaced calling screen, now inside lock task. Never ends or touches a call. */
+    private fun reopen(screen: CallingScreen) {
+        Log.i(PolicyRuntime.TAG, "reopening $screen inside lock task at=${SystemClock.elapsedRealtime()}")
+        when (screen) {
+            CallingScreen.IN_CALL -> runtime.showInCallScreen()
+            CallingScreen.PHONE -> openPhone()
+            CallingScreen.EMERGENCY_KEYPAD -> openEmergency()
         }
     }
 
@@ -101,9 +121,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun openPhone() = launch(BuildControl.control.phoneIntent(Intent(Intent.ACTION_DIAL)))
+    private fun openPhone() {
+        runtime.opened(CallingScreen.PHONE)
+        launch(BuildControl.control.phoneIntent(Intent(Intent.ACTION_DIAL)))
+    }
 
-    private fun openEmergency() = launch(Intent(EMERGENCY_DIAL))
+    private fun openEmergency() {
+        runtime.opened(CallingScreen.EMERGENCY_KEYPAD)
+        launch(Intent(EMERGENCY_DIAL))
+    }
 
     private fun launch(intent: Intent) {
         try {

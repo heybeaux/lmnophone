@@ -2,14 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.boot
 
+import android.Manifest
 import android.app.ActivityManager
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.os.Build
 import android.os.SystemClock
 import android.os.UserManager
+import android.telecom.TelecomManager
 import android.util.Log
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -77,19 +81,54 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val runsState = MutableStateFlow(0)
     private val home = PackageName(context.packageName)
     private val activities = context.getSystemService(ActivityManager::class.java)
+    private val telecom = context.getSystemService(TelecomManager::class.java)
+    private val audio = context.getSystemService(AudioManager::class.java)
     private val recovery = LockTaskRecovery(
-        { activities.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE },
+        ::lockTaskState,
+        ::inCall,
         {
             context.startActivity(Intent(context, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
         },
+        SystemClock::elapsedRealtime,
     )
+
+    /** Test builds only (debug `TestHook` IN_CALL; release never sets it): stands in for an ongoing call. */
+    @Volatile var inCallStandIn: Boolean? = null
 
     val gate: StateFlow<HomeGate> = gateState
     /** The Home notice from the last unlocked re-apply ([homeNotice]). */
     val notice: StateFlow<HomeNotice?> = noticeState
     /** Counts finished re-apply runs, locked ones included: Home retries lock-task entry after each. */
     val runs: StateFlow<Int> = runsState
+
+    /** The live lock-task state; only [LockTaskState.LOCKED] is containment. */
+    fun lockTaskState(): LockTaskState = LockTaskState.read { activities.lockTaskModeState }
+
+    /** LMNOPhone opened a calling screen; recovery brings it back if it displaces it. */
+    fun opened(screen: CallingScreen) = recovery.opened(screen)
+
+    /** Home is resumed: nothing it opened is in front any more. */
+    fun homeResumed() = recovery.homeResumed()
+
+    /**
+     * Home read its own lock-task [state]: returns the displaced calling screen to reopen inside lock
+     * task, and queues a fresh pass once a pin that made the last pass not ready has ended.
+     */
+    fun onHomeLockTaskState(state: LockTaskState): CallingScreen? {
+        val followUp = recovery.onHomeLockTaskState(state)
+        if (followUp.reapply) reapply("pin-ended")
+        return followUp.restore
+    }
+
+    /** Brings the ongoing call's screen back. It never answers, ends or changes a call. */
+    fun showInCallScreen(): Boolean = try {
+        if (inCallStandIn == true) Log.i(TAG, "in-call stand-in: showInCallScreen at=${SystemClock.elapsedRealtime()}")
+        phoneStateReadable().also { if (it) telecom.showInCallScreen(false) }
+    } catch (e: RuntimeException) {
+        Log.w(TAG, "showInCallScreen failed", e)
+        false
+    }
 
     /** Keyguard first: true only while the features read back with KEYGUARD and Home is on the list. */
     fun mayEnterLockTask(): Boolean = KeyguardFirst.mayEnterLockTask(port, home)
@@ -143,12 +182,38 @@ class PolicyRuntime private constructor(private val context: Context) {
         runsState.value++
         // A locked run never opens Home: the full plan has not run yet.
         if (!locked) {
-            noticeState.value = homeNotice(outcome)
-            lastGate = if (outcome?.ready == true) HomeGate.READY else HomeGate.NOT_READY
+            val action = recovery.afterPass(locked, outcome?.ready == true)
+            // PINNED is not containment (PLA-322 finding 3): not ready, and needs attention.
+            val pinned = action == RecoveryAction.PINNED_ATTENTION
+            noticeState.value = if (pinned) HomeNotice.NeedsAttention else homeNotice(outcome)
+            lastGate = if (outcome?.ready == true && !pinned) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
-            if (recovery.afterPass(locked, outcome?.ready == true)) {
-                Log.i(TAG, "lock task not running after $reason: Home brought forward at=${SystemClock.elapsedRealtime()}")
+            when (action) {
+                RecoveryAction.HOME_FORWARD ->
+                    Log.i(TAG, "lock task not running after $reason: Home brought forward at=${SystemClock.elapsedRealtime()}")
+                RecoveryAction.PINNED_ATTENTION ->
+                    Log.i(TAG, "lock task PINNED after $reason: not ready, needs attention at=${SystemClock.elapsedRealtime()}")
+                RecoveryAction.NOTHING -> {}
             }
+        }
+    }
+
+    /** An ongoing call, from Telecom; the audio mode stands in if READ_PHONE_STATE can't be granted. */
+    private fun inCall(): Boolean {
+        inCallStandIn?.let { return it }
+        if (phoneStateReadable()) return telecom.isInCall
+        return audio.mode == AudioManager.MODE_IN_CALL || audio.mode == AudioManager.MODE_RINGTONE
+    }
+
+    /** READ_PHONE_STATE, which the Device Owner grants itself on first use. */
+    private fun phoneStateReadable(): Boolean {
+        val permission = Manifest.permission.READ_PHONE_STATE
+        if (context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) return true
+        return try {
+            dpm.setPermissionGrantState(admin, context.packageName, permission, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED) &&
+                context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+        } catch (e: RuntimeException) {
+            false
         }
     }
 
@@ -156,7 +221,7 @@ class PolicyRuntime private constructor(private val context: Context) {
         val apply = outcome?.apply
         Log.i(TAG, "reapply reason=$reason control=${BuildControl.control.name} locked=${outcome?.locked} ready=${outcome?.ready} " +
             "applied=${apply?.applied} failed=${apply?.failedStage} flipFailures=${apply?.flipFailures?.size} " +
-            "withheld=${outcome?.withheld?.sorted()} attention=${outcome?.needsAttention} disabledFloor=${outcome?.disabledFloor} ms=$millis")
+            "lockTask=${lockTaskState()} withheld=${outcome?.withheld?.sorted()} attention=${outcome?.needsAttention} disabledFloor=${outcome?.disabledFloor} ms=$millis")
     }
 
     companion object {

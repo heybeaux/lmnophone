@@ -15,6 +15,7 @@
                 <action android:name="org.plainphone.test.DROP" />
                 <action android:name="org.plainphone.test.NOTIFY" />
                 <action android:name="org.plainphone.test.HOLD" />
+                <action android:name="org.plainphone.test.IN_CALL" />
             </intent-filter>
         </receiver>
     </application>
