@@ -98,6 +98,11 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 
 **`:device` / `:plainphone` (lane D):** implements `JournalStore`, `PolicyStore` and `KeyDerivation`. It also provides:
 - `PolicyApplier`, which applies a `PolicyPlan` through DPM and reads it back;
+  its device-internal `DevicePolicyPort.packageHidden` reads only installed-user
+  membership and the live hidden flag for hide-only work. Null means confirmed
+  absent; unreadable queries throw. Pre-write checks, post-write readbacks and
+  independent final verification all remain live, with no state cache. Visible
+  and never-hide packages still use the full package-state reader.
   `PackageSystemPort.packageStates()` supplies the same live installed-user coverage as
   `packages()` without signer data; the Android port omits `GET_SIGNING_CERTIFICATES`
   and keeps all hidden/disabled flags and the installed-user filter. The preview

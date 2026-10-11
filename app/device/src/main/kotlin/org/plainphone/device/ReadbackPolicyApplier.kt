@@ -132,7 +132,7 @@ class ReadbackPolicyApplier(
             ApplyStage.NEVER_HIDE_GUARD -> if (guardHolds()) show(plan.neverHide)
             ApplyStage.HIDES -> {
                 toHide?.forEach { name ->
-                    if (port.packageState(name)?.hidden == false) port.setHidden(name, true)
+                    if (port.packageHidden(name) == false) port.setHidden(name, true)
                 }
                 show(plan.unhide - plan.neverHide)
             }
@@ -157,7 +157,7 @@ class ReadbackPolicyApplier(
             ApplyStage.NEVER_HIDE_GUARD -> guardHolds() && shown(plan.neverHide, "$phase.$stage.shownPackages")
             // Every expected visible or unsuspended package, not only the ones this plan wrote.
             ApplyStage.HIDES ->
-                expected.hidden.let { it == null || it.all { name -> timings.measure("$phase.$stage.hiddenPackages") { port.packageState(name) }?.hidden != false } } &&
+                expected.hidden.let { it == null || it.all { name -> timings.measure("$phase.$stage.hiddenPackages") { port.packageHidden(name) } != false } } &&
                     shown(expected.unhiddenAndEnabled + expected.unsuspended, "$phase.$stage.shownPackages")
             ApplyStage.LOCK_TASK ->
                 expected.lockTaskPackages.let { it == null || port.lockTaskPackages() == it } &&

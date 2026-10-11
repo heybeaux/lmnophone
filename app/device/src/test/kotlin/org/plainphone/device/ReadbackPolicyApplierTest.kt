@@ -78,6 +78,10 @@ class ReadbackPolicyApplierTest {
         var now = 0L
         val fake = port()
         val timedPort = object : DevicePolicyPort by fake {
+            override fun packageHidden(name: PackageName): Boolean? {
+                now += 7
+                return fake.packageHidden(name)
+            }
             override fun packageState(name: PackageName): PackageState? {
                 now += 7
                 return fake.packageState(name)

@@ -29,13 +29,22 @@ class DpmPort(
     private val dpm = context.getSystemService(DevicePolicyManager::class.java)
     private val pm = context.packageManager
 
-    override fun packageState(name: PackageName): PackageState? {
+    private fun installedInfo(name: PackageName): ApplicationInfo? {
         val info = try {
             pm.getApplicationInfo(name.value, PackageManager.MATCH_UNINSTALLED_PACKAGES or PackageManager.MATCH_DISABLED_COMPONENTS)
         } catch (e: PackageManager.NameNotFoundException) {
             return null
         }
-        if (info.flags and ApplicationInfo.FLAG_INSTALLED == 0) return null
+        return info.takeIf { it.flags and ApplicationInfo.FLAG_INSTALLED != 0 }
+    }
+
+    override fun packageHidden(name: PackageName): Boolean? {
+        if (installedInfo(name) == null) return null
+        return dpm.isApplicationHidden(admin, name.value)
+    }
+
+    override fun packageState(name: PackageName): PackageState? {
+        val info = installedInfo(name) ?: return null
         val enabled = when (pm.getApplicationEnabledSetting(name.value)) {
             PackageManager.COMPONENT_ENABLED_STATE_DEFAULT -> info.enabled
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true

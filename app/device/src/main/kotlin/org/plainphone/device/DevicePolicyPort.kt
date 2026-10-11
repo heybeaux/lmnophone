@@ -17,6 +17,8 @@ data class PackageState(val hidden: Boolean, val suspended: Boolean, val enabled
 interface DevicePolicyPort {
     /** Null when the package is not installed for this user. */
     fun packageState(name: PackageName): PackageState?
+    /** Live hidden flag only. Null means not installed; an unreadable query must throw. */
+    fun packageHidden(name: PackageName): Boolean? = packageState(name)?.hidden
     fun setHidden(name: PackageName, hidden: Boolean)
     fun unsuspend(name: PackageName)
     /** Best-effort enable. It may not clear a user-disabled state; the caller reads the state again. */
