@@ -28,6 +28,9 @@ data class Activity(val packageName: String, val className: String) {
 
 data class TelecomCall(val id: String, val state: String, val emergency: Boolean)
 
+/** Whether a call counts as ended ([GateJudge.callEnded]), and the evidence read. */
+data class CallEnd(val ended: Boolean, val detail: String)
+
 /** The alert-display package as Android reports it, for the structural alert check. Null means unreadable. */
 data class AlertDisplay(
     val packageName: String,
@@ -90,6 +93,19 @@ object Dumpsys {
             .distinctBy { it.first }
             .map { (id, state) -> TelecomCall(id, state, emergency[id] == true) }
             .toList()
+    }
+
+    /**
+     * `dumpsys telecom`: the calls in CallsManager's own `mCalls:` list (not the history further down).
+     * Null when the section is missing: an unreadable dump is never an empty list.
+     */
+    fun mCalls(telecom: String): List<TelecomCall>? {
+        val lines = telecom.lines()
+        val start = lines.indexOfFirst { it.trim() == "mCalls:" }
+        if (start < 0) return null
+        val indent = lines[start].indexOfFirst { !it.isWhitespace() }
+        val section = lines.drop(start + 1).takeWhile { line -> line.isBlank() || line.indexOfFirst { !it.isWhitespace() } > indent }
+        return calls(section.joinToString("\n"))
     }
 }
 
@@ -163,6 +179,23 @@ object GateJudge {
                 }
             }
         }
+    }
+
+    /** Reads of `mCallState` 0.5 s apart that make the idle hold: 3 s. */
+    const val HOLD_READS = 6
+
+    /**
+     * When the gate counts a call as ended (PLA-296 R2): every one of [HOLD_READS] reads of `mCallState`
+     * ([hold]) was 0, Telecom's `mCalls` list ([telecom], read after the hold) holds no call that is not
+     * DISCONNECTED, and a read [after] both was still 0. A hold with any other read is not ended, whatever
+     * comes after it. This is an observation over about 3.5 s, not proof that the modem never brings a
+     * call back later, so the gate repeats it before every call-capable step and at cleanup.
+     */
+    fun callEnded(hold: List<String>, telecom: List<TelecomCall>?, after: String): CallEnd {
+        val detail = "hold=${hold.joinToString(",")} mCalls=${telecom?.joinToString(",") { "${it.id}:${it.state}" } ?: "unreadable"} after=$after"
+        val ended = hold.size >= HOLD_READS && hold.all { it == "0" } &&
+            telecom != null && telecom.all { it.state == "DISCONNECTED" } && after == "0"
+        return CallEnd(ended, detail)
     }
 
     fun emergencyCallPlaced(calls: List<TelecomCall>): CheckResult {

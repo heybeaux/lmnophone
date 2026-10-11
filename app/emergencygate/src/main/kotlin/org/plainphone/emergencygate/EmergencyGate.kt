@@ -53,8 +53,9 @@ class EmergencyGate : Instrumentation() {
 
     private fun run(check: String): List<CheckResult> {
         // Every check but these may lead to a call or an emergency dialer: start only from idle.
+        // The same end-of-call check as the hang-up, not a single read (PLA-296 R2).
         if (check !in setOf("capabilities", "not-covered", "hangup")) {
-            callState().let { if (it != "0") return listOf(CheckResult(check, Verdict.ERROR, "a call is live before the check (mCallState=$it)")) }
+            callEnd().let { if (!it.ended) return listOf(CheckResult(check, Verdict.ERROR, "a call is live or unconfirmed before the check (${it.detail})")) }
         }
         return when (check) {
             "capabilities" -> listOf(capabilities())
@@ -70,8 +71,8 @@ class EmergencyGate : Instrumentation() {
             "telecom-emergency-call" -> listOf(emergencyCall(arguments.getString("number") ?: NumberFence.NUMBER))
             // The emulated modem keeps a live call through an Android reboot, so the host ends every test
             // call before going on.
-            "hangup" -> listOf(hangUp().let { state ->
-                CheckResult(check, if (state == "0") Verdict.PASS else Verdict.FAIL, "mCallState=$state")
+            "hangup" -> listOf(hangUp().let { end ->
+                CheckResult(check, if (end.ended) Verdict.PASS else Verdict.FAIL, end.detail)
             })
             "alert" -> listOf(alertDisplayReady(), alertLaunch(), GateJudge.alertShown(injectionSupported = false, shown = null)
                 .let { it.copy(detail = "${it.detail} (emulator console has no cbs; modem has no +CBM injection)") })
@@ -193,11 +194,11 @@ class EmergencyGate : Instrumentation() {
         } catch (e: Throwable) {
             result = CheckResult(check, Verdict.ERROR, "gate error: ${e.javaClass.simpleName}: ${e.message}")
         } finally {
-            val state = hangUp()
-            result = if (state == "0") {
-                result.copy(detail = "${result.detail} afterHangUp=mCallState=0")
+            val end = hangUp()
+            result = if (end.ended) {
+                result.copy(detail = "${result.detail} afterHangUp=mCallState=0 ended(${end.detail})")
             } else {
-                CheckResult(check, Verdict.ERROR, "hang-up failed (mCallState=$state) after: ${result.verdict} ${result.detail}")
+                CheckResult(check, Verdict.ERROR, "hang-up failed (${end.detail}) after: ${result.verdict} ${result.detail}")
             }
         }
         return result
@@ -383,19 +384,32 @@ class EmergencyGate : Instrumentation() {
     private var homePresses = 0
 
     /** Ends the test call from the in-call screen (`KEYCODE_ENDCALL` does not end an emergency call). */
-    private fun hangUp(): String {
+    private fun hangUp(): CallEnd {
+        var end = callEnd()
         repeat(3) {
-            if (idleHolds()) return "0"
+            if (end.ended) return end
             shell("input keyevent KEYCODE_WAKEUP")
             if (top()?.className?.endsWith("InCallActivity") != true) shell("su 0 am start -n $IN_CALL")
             waitNode("End call", 5_000) { it == "End call" }?.let(::tap)
             waitFor(5_000) { callState() == "0" }
+            end = callEnd()
         }
-        return if (idleHolds()) "0" else callState()
+        return end // Ended only if the last full check passed: never from one later read.
     }
 
-    /** Idle for 3 s: on API 36 a call read idle once, then came back (mCallState=2). */
-    private fun idleHolds(): Boolean = (1..6).all { SystemClock.sleep(500); callState() == "0" }
+    /**
+     * The end-of-call evidence [GateJudge.callEnded] judges: idle held for 3 s (on API 36 a call read
+     * idle once, then came back), then Telecom's call list, then one more read. Stops at the first busy read.
+     */
+    private fun callEnd(): CallEnd {
+        val hold = mutableListOf<String>()
+        while (hold.size < GateJudge.HOLD_READS && hold.all { it == "0" }) {
+            SystemClock.sleep(500)
+            hold += callState()
+        }
+        val telecom = if (hold.all { it == "0" }) Dumpsys.mCalls(shell("dumpsys telecom")) else null
+        return GateJudge.callEnded(hold, telecom, after = callState())
+    }
 
     private fun callState(): String = Regex("""mCallState=(\d)""").find(shell("dumpsys telephony.registry"))?.groupValues?.get(1) ?: "?"
 
