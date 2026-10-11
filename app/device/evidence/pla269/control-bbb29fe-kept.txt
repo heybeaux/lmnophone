@@ -1,0 +1,30 @@
+21:00:35 control APK bbb29fe (manifest if_whitelisted). before reboot: LockTaskPolicy {mPackages= com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.android.phone, com.google.android.cellbroadcastreceiver; mFlags= 16 }
+21:00:50 sample 1: user=BOOTING keyguard=false lockTask=NONE
+21:00:51 sample 2: user=BOOTING keyguard=true lockTask=LOCKED
+21:00:52 sample 3: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:00:53 sample 4: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:00:54 sample 5: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:00:55 sample 6: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:00:56 sample 7: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:00:57 sample 8: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:00:58 sample 9: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:00 sample 10: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:01 sample 11: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:02 sample 12: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:03 sample 13: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:04 sample 14: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:05 sample 15: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:06 sample 16: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:07 sample 17: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:08 sample 18: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:09 sample 19: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:10 sample 20: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:12 sample 21: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:13 sample 22: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:14 sample 23: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:15 sample 24: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+21:01:16 sample 25: user=RUNNING_LOCKED keyguard=false lockTask=LOCKED
+10-10 21:00:52.333   826   897 D KeyguardTransitionRepository: (Internal) Setting current transition info: TransitionInfo(ownerName=FromLockscreenTransitionInteractor(#dismissKeyguard()), from=LOCKSCREEN, to=GONE, animated)
+10-10 21:00:52.333   826   895 D KeyguardTransitionRepository: (Internal) Setting current transition info: TransitionInfo(ownerName=FromLockscreenTransitionInteractor, from=LOCKSCREEN, to=GONE, animated)
+10-10 21:00:52.455   826   826 I KeyguardTransitionRepository: STARTED transition: TransitionStep(from=LOCKSCREEN, to=GONE, value=0.0, transitionState=STARTED, ownerName=FromLockscreenTransitionInteractor(#dismissKeyguard()))
+10-10 21:00:52.658   826   888 D KeyguardTransitionRepository: (Internal) Setting current transition info: TransitionInfo(ownerName=FromLockscreenTransitionInteractor(#dismissKeyguard()), from=LOCKSCREEN, to=GONE, animated)

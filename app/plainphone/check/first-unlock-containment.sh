@@ -64,10 +64,15 @@ notification) target=com.android.settings
 esac
 adb exec-out screencap -p > "$out/$name-locked.png"
 
-sh input keyevent KEYCODE_WAKEUP; sleep 0.5
-sh input swipe 540 1900 540 600 200; sleep 1
-sh input text "$pin"; sh input keyevent KEYCODE_ENTER
-until [ "$(user)" = RUNNING_UNLOCKED ]; do sleep 0.2; done
+# PIN entry can miss when the screen has dozed (the keyguard variant samples for 20 s); retry it.
+for attempt in 1 2 3; do
+    sh input keyevent KEYCODE_WAKEUP; sleep 0.5
+    sh input swipe 540 1900 540 600 200; sleep 1
+    sh input text "$pin"; sh input keyevent KEYCODE_ENTER
+    for _ in $(seq 1 50); do [ "$(user)" = RUNNING_UNLOCKED ] && break 2; sleep 0.2; done
+    log "PIN attempt $attempt did not unlock; retrying"
+done
+[ "$(user)" = RUNNING_UNLOCKED ] || { log "FAIL could not unlock"; exit 1; }
 fail=0
 for i in $(seq 1 12); do
     s=$(lock_state); t=$(top)
