@@ -32,18 +32,23 @@ import org.plainphone.device.authority.AuthorityPass
 import org.plainphone.device.authority.DeviceReconciliationEffects
 import org.plainphone.device.authority.DpmDeviceOwnerReader
 import org.plainphone.device.authority.JointAuthorityStore
+import org.plainphone.device.authority.WaitingCheckpoints
 import org.plainphone.device.authority.waitingReconciler
 import org.plainphone.device.boot.BootOutcome
 import org.plainphone.device.boot.BootReapply
 import org.plainphone.device.facts.AndroidPackageSystemPort
 import org.plainphone.device.facts.LivePolicyInputAssembler
 import org.plainphone.device.facts.osFloor
+import org.plainphone.device.runtime.AndroidRuntimeFacts
+import org.plainphone.device.runtime.FileClockStateStore
 import org.plainphone.device.storage.FileFlipFailureStore
 import org.plainphone.device.storage.FileJournalStore
 import org.plainphone.device.storage.FilePolicyStore
 import org.plainphone.policy.PersonAuthorityConsumer
 import org.plainphone.policy.PolicyEngine
+import org.plainphone.policy.ProvenRunningClock
 import org.plainphone.policy.ReconcileOutcome
+import org.plainphone.policy.WaitingOutcome
 import org.plainphone.ui.home.HomeNotice
 
 /** What Home may show. Only [READY] lets Home draw; the others show the neutral checking screen. */
@@ -57,6 +62,10 @@ enum class HomeGate { CHECKING, READY, NOT_READY }
  * Re-apply triggers ([reapply]): boot (locked and unlocked), every Plainphone start, package events,
  * user unlock, the 15-minute alarm and, from the wiring slice, [afterTrustedPersonAction]. Each run re-reads the
  * live phone; repeated runs are harmless.
+ *
+ * Every run first checkpoints a pending wait ([waiting]): the proven clock, a recorded cancel or changed
+ * dependency, and maturity to COMMITTING, which the same run then applies. While a wait is pending the
+ * checkpoint alarm runs every 5 minutes. [cancelWait] is the phone's PIN-free cancel.
  *
  * Every run also reads the current waiting operation fresh from the one authority store ([authority])
  * and, once unlocked, reconciles a confirmed lost waiting record without a PIN. Nothing writes that
@@ -96,6 +105,19 @@ class PolicyRuntime private constructor(private val context: Context) {
             // PIN Repair is not wired yet, so no grant is ever accepted. Automatic reconciliation needs none.
             PersonAuthorityConsumer { _, _, _ -> false },
         ))
+    }
+    /**
+     * The pending wait's checkpoints and PIN-free cancel: one per process, on the same store, with the
+     * proven clock in device-protected storage. No grant is accepted; nothing here starts or skips a wait.
+     */
+    private val waiting: WaitingCheckpoints by lazy {
+        val facts = AndroidRuntimeFacts(context)
+        WaitingCheckpoints(
+            authorityStore,
+            ProvenRunningClock(FileClockStateStore(File(protectedDir, "clock")), facts::bootTime, authorityStore::reserveEpoch),
+            facts::battery,
+            PersonAuthorityConsumer { _, _, _ -> false },
+        )
     }
     private val boot = BootReapply(
         FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT),
@@ -201,6 +223,22 @@ class PolicyRuntime private constructor(private val context: Context) {
     /** Hook for the wiring slice: run after every trusted-person action commits. */
     fun afterTrustedPersonAction() = reapply("trusted-person")
 
+    /** The phone's own cancel of the pending wait it shows; no PIN. The pass that follows reads the result. */
+    fun cancelWait(requestId: String, done: (WaitingOutcome?) -> Unit = {}) = dispatcher.post {
+        val result = try {
+            waiting.cancel(requestId)
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "waiting cancel threw", e)
+            null
+        }
+        Log.i(TAG, "waiting cancel: $result")
+        try {
+            run("waiting-cancel")
+        } finally {
+            done(result)
+        }
+    }
+
     private fun run(reason: String) {
         if (!dpm.isDeviceOwnerApp(context.packageName)) {
             Log.w(TAG, "reapply $reason skipped: not Device Owner")
@@ -210,6 +248,13 @@ class PolicyRuntime private constructor(private val context: Context) {
         }
         val locked = !users.isUserUnlocked
         val started = SystemClock.elapsedRealtime()
+        // Before deciding: a matured wait commits here and this same pass applies it (wiring 2).
+        val waited = try {
+            waiting.checkpoint()?.also { Log.i(TAG, "waiting checkpoint after $reason: $it") }
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "waiting checkpoint threw", e)
+            null
+        }
         val outcome = try {
             boot.run(locked)
         } catch (e: RuntimeException) {
@@ -231,6 +276,13 @@ class PolicyRuntime private constructor(private val context: Context) {
         } catch (e: RuntimeException) {
             Log.e(TAG, "authority attention check threw", e)
             true
+        }
+        // While a wait is pending, the checkpoint alarm runs every 5 minutes; otherwise it is left as it was.
+        if (waited != null) try {
+            val period = waiting.periodMillis(ReapplyAlarm.PERIOD_MILLIS)
+            if (period != ReapplyAlarm.PERIOD_MILLIS) ReapplyAlarm.schedule(context, period)
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "checkpoint alarm threw", e)
         }
         BuildControl.control.afterReapply(context, dpm, admin)
         runsState.value++
