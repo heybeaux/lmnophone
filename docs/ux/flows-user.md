@@ -355,6 +355,26 @@ always be found (trusted-person-controls, "Where Cancel is reachable"), whatever
 | Text size | A sample sentence, then − and + buttons, then "Bigger text may push some apps' words off the edge. LMNOPhone's own screens will still fit." | Done |
 | Battery | "Battery: 64%". "Charging" or "Not charging". No graphs. | (none: information page, Back only) |
 
+### Optional Home counts (approved communication-counts slice)
+
+More → **Phone settings** offers one PIN-free switch, off by default:
+**Show missed calls and unread texts on Home**.
+
+Under it: **Counts texts and picture messages. Chat messages (RCS) may not be counted.**
+When on but unavailable, show the applicable line(s):
+- **LMNOPhone can't read missed calls right now**
+- **LMNOPhone can't read unread texts right now**
+
+Home shows a separate plain number only on Phone and Messages, for positive,
+reliable host counts. Null and zero show nothing; above 99 displays **99+**.
+Spoken names use the full count: **Phone, 1 missed call** / **Phone, 3 missed calls**;
+**Messages, 1 unread text** / **Messages, 4 unread texts**. Without a count the
+spoken names remain **Phone** and **Messages**. Other app rows have no count.
+
+The initial UI slice includes Back, this switch and its coverage/status text only.
+The host maps `MoreEvent.OpenPhoneSettings` to this screen and owns persistence,
+permissions and count sources; the other settings remain separate work.
+
 ### Wi-Fi messages (exact text, from web-containment)
 
 | When | Message | Action |
