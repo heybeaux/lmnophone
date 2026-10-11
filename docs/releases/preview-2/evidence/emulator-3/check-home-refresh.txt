@@ -1,0 +1,56 @@
+# Finding 2 (PLA-266) on emulator-5850 pla267-a35 (API 35, google_apis), release/preview-2 @ a1d75da (fix ba4014a), 2026-10-11T00:56:31Z
+# Two healthy setup runs with different starter lists, both notice=null (attention=false). Home is on screen throughout.
+## Before: standard starter list
+text="5:56" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" text="Ask for an app, settings, help" 
+## Run 1: SET_STARTER without Maps
+Broadcast completed: result=0
+10-10 17:56:36.207  4078  4122 I PlainphoneBoot: reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=356
+10-10 17:56:36.242  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=135789
+10-10 17:56:36.243  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=135790
+10-10 17:56:36.793  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=136340
+10-10 17:56:36.793  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=136341
+10-10 17:56:37.856  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=137404
+10-10 17:56:37.856  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=137404
+Home now shows:
+text="5:56" text="Saturday 10 October" text="Camera" text="Messages" text="Phone" text="More" text="Ask for an app, settings, help" 
+## Run 2: SET_STARTER with Maps added back
+Broadcast completed: result=0
+10-10 17:56:41.803  4078  4122 I PlainphoneBoot: reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=323
+10-10 17:56:41.844  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=141392
+10-10 17:56:41.845  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=141393
+10-10 17:56:42.523  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=142071
+10-10 17:56:42.524  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=142072
+10-10 17:56:42.924  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=142471
+10-10 17:56:42.925  4078  4078 I PlainphoneBoot: home shown lockTask=1 at=142473
+Home now shows:
+text="5:56" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" text="Ask for an app, settings, help" 
+maps hidden? hidden=false
+lock task: mLockTaskModeState=LOCKED
+
+# Control: the same steps on the base build (82648be, before the fix), installed in place over the fixed build.
+base apk sha256: c73993efb67000b6…
+Success
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+## Before: standard starter list
+text="5:59" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" text="Ask for an app, settings, help" 
+## Run 1: SET_STARTER without Maps
+Broadcast completed: result=0
+10-10 17:59:22.184  4616  4640 I PlainphoneBoot: reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=178
+Home now shows:
+text="5:59" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" text="Ask for an app, settings, help" 
+maps hidden? hidden=true
+## Run 2: SET_STARTER with Maps added back
+Broadcast completed: result=0
+10-10 17:59:27.566  4616  4640 I PlainphoneBoot: reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=182
+Home now shows:
+text="5:59" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" text="Ask for an app, settings, help" 
+
+# Fixed build (a1d75da, sha256 d5696eb7adb873d1…) reinstalled in place; the emulator ends on it with the standard list.
+Success
+Home shows:
+text="6:01" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" text="Ask for an app, settings, help" 
+## Reading
+- Fixed build: run 1 dropped Maps from Home, run 2 put it back, each with notice=null (attention=false), without leaving Home.
+- Base build: both runs read back ready, Maps went hidden=true, but Home kept listing Maps (stale), as PLA-266 finding 2 said.
+- With the fix every ready run (setup, and the package events that follow it) re-reads the list, so 'home shown' is logged
+  after each refresh (each line appears twice in this run; not investigated, it does not change what Home shows).
