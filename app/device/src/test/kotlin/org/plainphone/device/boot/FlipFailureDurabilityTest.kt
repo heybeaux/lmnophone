@@ -135,4 +135,62 @@ class FlipFailureDurabilityTest {
         assertEquals(FlipFailures.NONE, FileFlipFailureStore(dir).read())
         assertFalse(process(FileFlipFailureStore(dir)).run(locked = false).flipRecordUnknown)
     }
+
+    /**
+     * Reads fail (a throw, or [FlipFailures.UNKNOWN]) while [unreadable]; saves fail while [failing].
+     * Reads return the last acknowledged save once readable (PLA-307 finding 3).
+     */
+    private class TransientStore(var unreadable: Boolean, private val throwOnRead: Boolean, var failing: Boolean = false) : FlipFailureStore {
+        var saved = FlipFailures.NONE
+        var saves = 0
+        override fun read(): FlipFailures {
+            if (unreadable) if (throwOnRead) throw IOException("transient") else return FlipFailures.UNKNOWN
+            return saved
+        }
+        override fun save(state: FlipFailures): Boolean {
+            saves++
+            if (failing) return false
+            saved = state
+            return true
+        }
+    }
+
+    @Test fun aTransientReadThrowIsSavedAsUnknownAndARestartStillSeesIt() = transientUnknownIsDurable(throwOnRead = true)
+
+    @Test fun aTransientUnknownReadIsSavedAsUnknownAndARestartStillSeesIt() = transientUnknownIsDurable(throwOnRead = false)
+
+    private fun transientUnknownIsDurable(throwOnRead: Boolean) {
+        val store = TransientStore(unreadable = true, throwOnRead = throwOnRead)
+        port.flushComponent = false
+        val boot = process(store)
+        assertTrue(boot.run(locked = false).flipRecordUnknown)
+        assertEquals("a newly found unknown state is saved at once", FlipFailures.UNKNOWN, store.saved)
+        store.unreadable = false
+        val restarted = process(store).run(locked = false)
+        assertTrue(restarted.flipRecordUnknown)
+        assertTrue(restarted.needsAttention)
+    }
+
+    @Test fun aFailedUnknownSaveIsRetriedUntilAcknowledgedAndARestartBeforeThatStillShowsAttention() {
+        val store = TransientStore(unreadable = true, throwOnRead = true, failing = true)
+        port.flushComponent = false
+        val boot = process(store)
+        val first = boot.run(locked = false)
+        assertTrue(first.flipRecordUnknown)
+        assertEquals("the emergency unhide stays", false, port.state[dialer]!!.hidden)
+        boot.run(locked = false)
+        assertEquals("retried on the next pass", 2, store.saves)
+        assertTrue("still unreadable: a restart still sees unknown", process(TransientStore(true, true)).run(locked = false).flipRecordUnknown)
+        store.unreadable = false
+        store.failing = false
+        boot.run(locked = false)
+        assertEquals(FlipFailures.UNKNOWN, store.saved)
+        boot.run(locked = false)
+        assertEquals("no more saves once acknowledged", 3, store.saves)
+        assertTrue(process(store).run(locked = false).flipRecordUnknown)
+
+        boot.acknowledgeFlipFailures()
+        assertEquals(FlipFailures.NONE, store.saved)
+        assertFalse("only an acknowledgement clears it", process(store).run(locked = false).flipRecordUnknown)
+    }
 }
