@@ -98,11 +98,15 @@ After boot, the LMNOPhone home activity SHALL start lock task before it draws it
 - the suspension SHALL be recorded in device-protected storage before it is applied, so that a later pass can lift exactly what it added. It SHALL be lifted only after lock task has started with `KEYGUARD` read back;
 - packages that Android refuses to suspend SHALL be logged and shown in the trusted person's attention details. If one of them can be opened from a notification, an explicit intent or a deep link, this requirement is not met until the board approves a disclosure for that route.
 
-**Lock task must actually be running.** After every policy pass that reports ready, and whenever the home activity is created or resumed, LMNOPhone SHALL read the live lock-task state. If lock task is not running, LMNOPhone SHALL bring the home activity to the front and start lock task (with the `KEYGUARD` check above). This includes the case where LMNOPhone's process died and another app reached the front before it restarted.
+**Lock task must actually be running.** After every unlocked policy pass whose writes read back, and whenever the home activity is created or resumed, LMNOPhone SHALL read the live lock-task state. Only `LOCK_TASK_MODE_LOCKED` counts as containment. `NONE`, `PINNED` and an unreadable state SHALL NOT be reported as contained or ready.
+- If the state is `NONE`, LMNOPhone SHALL bring the home activity to the front and start lock task, with the `KEYGUARD` check above, then read back `LOCKED`.
+- If the activity it displaced was the system Phone, in-call or emergency UI (the emergency UI subset), LMNOPhone SHALL bring that screen back inside lock task as soon as `LOCKED` reads back. Recovery SHALL NOT end a call. Locked-boot passes SHALL keep the keyguard and emergency access.
+- If the state is `PINNED`, LMNOPhone SHALL report not ready and show "LMNOPhone needs attention". Emergency SHALL stay reachable.
+- This recovery covers the case where LMNOPhone's process died and another app reached the front before it restarted. Until recovery reads back `LOCKED`, that app can be used, and changes made in it stay. Test reports SHALL give the observed exposure times and SHALL NOT claim a fixed maximum.
 
 Restrictions, hidden apps and lock-task package settings are kept by Android across reboots. LMNOPhone SHALL NOT clear them during recovery.
 
-From unlock until lock task starts, including during fallback containment and after LMNOPhone's process restarts, no unapproved app SHALL be openable from:
+From unlock until lock task starts, including during fallback containment, no unapproved app SHALL be openable from the routes below. The only exception is the exposure after LMNOPhone's process dies, described under *Lock task must actually be running*.
 - a notification
 - an explicit intent
 - a deep link
@@ -118,8 +122,14 @@ From unlock until lock task starts, including during fallback containment and af
 - **AND** the next time the screen turns off, the secure keyguard still needs the PIN
 
 #### Scenario: LMNOPhone's process dies while another app is opening
-- **WHEN** LMNOPhone's process dies and an explicit intent or a notification tap for an unapproved app arrives before it restarts
-- **THEN** once LMNOPhone restarts, lock task is running with the home activity in front, and the unapproved app cannot be used
+- **WHEN** LMNOPhone's process dies and an explicit intent or a notification tap opens an unapproved app before recovery completes
+- **THEN** that app can be used until recovery completes, and changes made in it stay
+- **AND** after recovery, the lock-task state reads `LOCKED`, and the unapproved app does not accept input or come back through a notification, an intent or the task list
+- **AND** the system Phone, in-call and emergency UI stay reachable
+
+#### Scenario: Recovery while the dialer is open
+- **WHEN** LMNOPhone's process dies while the system Phone or emergency keypad is opening, and recovery runs
+- **THEN** lock task reads `LOCKED`, and the same calling screen is in front again, inside lock task
 
 #### Scenario: Immediate unlock after reboot
 - **WHEN** the user unlocks right after a reboot and taps a queued notification from an unapproved app
