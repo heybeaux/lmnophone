@@ -90,7 +90,10 @@ class PublishedHomeApps : HomeAppList {
  * failed apply contains those names again, even when its plan no longer names them, and drops a name
  * only when all three read back closed (PLA-276 finding 3).
  * [containFailedActivation] runs the same containment for the packages policy names after a failed
- * final activation (PLA-234), including approved apps that were active before it.
+ * final activation (PLA-234), including approved apps that were active before it. Policy also calls it
+ * before its retry and startup gates with the durable pending target alone, with no plan and possibly
+ * without policy facts (PLA-278), so the live floor guard is the only guard there: a protected name is
+ * never touched and the call fails.
  */
 class DeviceApprovalEffects(
     private val dispatcher: SerialDispatcher,
