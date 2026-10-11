@@ -34,6 +34,8 @@ import org.plainphone.ui.theme.PlainphoneTheme
  * KEYGUARD. It tries on create, resume, new intent (the boot receiver's relaunch) and after every
  * re-apply run. Home draws only when [PolicyRuntime.gate] is READY (the full re-apply read back) and
  * the task is in lock task; until then the neutral checking screen shows, with only Phone and Emergency.
+ * Lock task must actually be running (PLA-307 finding 2): create and resume read the live state, and
+ * the runtime brings Home forward after a ready pass that finds it not running ([LockTaskRecovery]).
  */
 class MainActivity : ComponentActivity() {
     private val activities by lazy { getSystemService(ActivityManager::class.java) }

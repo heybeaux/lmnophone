@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.boot
 
+import android.app.ActivityManager
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.SystemClock
 import android.os.UserManager
@@ -13,6 +15,7 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.plainphone.MainActivity
 import org.plainphone.PlainphoneAdminReceiver
 import org.plainphone.core.PackageName
 import org.plainphone.device.DpmPort
@@ -73,6 +76,14 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val packageEventQueued = AtomicBoolean(false)
     private val runsState = MutableStateFlow(0)
     private val home = PackageName(context.packageName)
+    private val activities = context.getSystemService(ActivityManager::class.java)
+    private val recovery = LockTaskRecovery(
+        { activities.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE },
+        {
+            context.startActivity(Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
+        },
+    )
 
     val gate: StateFlow<HomeGate> = gateState
     /** The Home notice from the last unlocked re-apply ([homeNotice]). */
@@ -135,6 +146,9 @@ class PolicyRuntime private constructor(private val context: Context) {
             noticeState.value = homeNotice(outcome)
             lastGate = if (outcome?.ready == true) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
+            if (recovery.afterPass(locked, outcome?.ready == true)) {
+                Log.i(TAG, "lock task not running after $reason: Home brought forward at=${SystemClock.elapsedRealtime()}")
+            }
         }
     }
 
