@@ -32,8 +32,8 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         testInstrumentationRunner = "org.plainphone.counts.CombinedCountInstrumentation"
-        versionCode = 9
-        versionName = "0.1.0-preview-9"
+        versionCode = 10
+        versionName = "0.1.0-preview-10"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
