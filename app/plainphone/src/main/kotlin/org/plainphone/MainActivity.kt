@@ -4,6 +4,7 @@ package org.plainphone
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
@@ -128,14 +129,18 @@ class MainActivity : ComponentActivity() {
 
     private fun openEmergency() {
         runtime.opened(CallingScreen.EMERGENCY_KEYPAD)
-        launch(Intent(EMERGENCY_DIAL))
+        openEmergencyDialer { action, uri ->
+            launch(Intent(action, uri?.let(Uri::parse)))
+        }
     }
 
-    private fun launch(intent: Intent) {
-        try {
+    private fun launch(intent: Intent): Boolean {
+        return try {
             startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            true
         } catch (e: ActivityNotFoundException) {
             Log.w(PolicyRuntime.TAG, "no activity for ${intent.action}")
+            false
         }
     }
 
