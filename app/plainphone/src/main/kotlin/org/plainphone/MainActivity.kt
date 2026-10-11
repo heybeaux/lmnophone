@@ -157,6 +157,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         resumed = true
         runtime.homeResumed()
+        runtime.onUserUnlocked()
         enterLockTask()
     }
 
@@ -209,7 +210,9 @@ class MainActivity : ComponentActivity() {
 
     private fun openEmergency() {
         runtime.opened(CallingScreen.EMERGENCY_KEYPAD)
-        launch(Intent(EMERGENCY_DIAL))
+        openEmergencyDialer { action, uri ->
+            launch(Intent(action, uri?.let(Uri::parse)))
+        }
     }
 
     private fun perform(effect: ShellEffect) {
@@ -229,11 +232,13 @@ class MainActivity : ComponentActivity() {
         launch(intent)
     }
 
-    private fun launch(intent: Intent) {
-        try {
+    private fun launch(intent: Intent): Boolean {
+        return try {
             startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        } catch (_: ActivityNotFoundException) {
-            // Preview: an app missing from this emulator just doesn't open.
+            true
+        } catch (e: ActivityNotFoundException) {
+            Log.w(PolicyRuntime.TAG, "no activity for ${intent.action}")
+            false
         }
     }
 

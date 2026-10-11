@@ -6,11 +6,13 @@ import android.app.Application
 import org.plainphone.boot.PackageEvents
 import org.plainphone.boot.PolicyRuntime
 import org.plainphone.boot.ReapplyAlarm
+import org.plainphone.boot.UserUnlockEvents
 
 /** Every Plainphone start re-applies the policy, before or after the first unlock. */
 class PlainphoneApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        UserUnlockEvents.register(this)
         PackageEvents.register(this)
         ReapplyAlarm.schedule(this)
         PolicyRuntime.get(this).reapply("start")
