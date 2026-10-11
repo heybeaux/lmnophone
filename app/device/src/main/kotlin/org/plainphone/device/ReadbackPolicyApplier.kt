@@ -46,7 +46,7 @@ class ReadbackPolicyApplier(
             if (step.stage == ApplyStage.REVOKE_JOURNAL) continue
             val ok = try {
                 timings.measure("write.${step.stage}") { run.write(step.stage) }
-                (!step.readbackRequired || timings.measure("read.${step.stage}") { run.readBack(step.stage) }).also { if (!it) onFailure(step.stage, null) }
+                (!step.readbackRequired || timings.measure("read.${step.stage}") { run.readBack(step.stage, "read") }).also { if (!it) onFailure(step.stage, null) }
             } catch (e: Exception) {
                 onFailure(step.stage, e)
                 false
@@ -70,7 +70,7 @@ class ReadbackPolicyApplier(
         for (stage in EMERGENCY_STAGES) {
             val ok = try {
                 timings.measure("repairWrite.$stage") { run.write(stage) }
-                timings.measure("repairRead.$stage") { run.readBack(stage) }.also { if (!it) onFailure(stage, null) }
+                timings.measure("repairRead.$stage") { run.readBack(stage, "repairRead") }.also { if (!it) onFailure(stage, null) }
             } catch (e: Exception) {
                 onFailure(stage, e)
                 false
@@ -84,7 +84,7 @@ class ReadbackPolicyApplier(
     fun readBack(plan: PolicyPlan): Boolean {
         val run = Run(plan)
         return plan.steps.all { step ->
-            !step.readbackRequired || try { timings.measure("verify.${step.stage}") { run.readBack(step.stage) } } catch (e: Exception) { false }
+            !step.readbackRequired || try { timings.measure("verify.${step.stage}") { run.readBack(step.stage, "verify") } } catch (e: Exception) { false }
         }
     }
 
@@ -145,7 +145,7 @@ class ReadbackPolicyApplier(
             }
         }
 
-        fun readBack(stage: ApplyStage): Boolean = when (stage) {
+        fun readBack(stage: ApplyStage, phase: String): Boolean = when (stage) {
             ApplyStage.REVOKE_JOURNAL -> true
             ApplyStage.RESTRICTIONS ->
                 expected.restrictions.let { it == null || port.restrictions().containsAll(it) } &&
@@ -154,11 +154,11 @@ class ReadbackPolicyApplier(
             ApplyStage.EMERGENCY_FLOOR ->
                 shown(floorPackages) && floorLockTask.let { it == null || port.lockTaskPackages().containsAll(it) } &&
                     expected.features.let { it == null || port.lockTaskFeatures() == it }
-            ApplyStage.NEVER_HIDE_GUARD -> guardHolds() && shown(plan.neverHide)
+            ApplyStage.NEVER_HIDE_GUARD -> guardHolds() && shown(plan.neverHide, "$phase.$stage.shownPackages")
             // Every expected visible or unsuspended package, not only the ones this plan wrote.
             ApplyStage.HIDES ->
-                expected.hidden.let { it == null || it.all { name -> port.packageState(name)?.hidden != false } } &&
-                    shown(expected.unhiddenAndEnabled + expected.unsuspended)
+                expected.hidden.let { it == null || it.all { name -> timings.measure("$phase.$stage.hiddenPackages") { port.packageState(name) }?.hidden != false } } &&
+                    shown(expected.unhiddenAndEnabled + expected.unsuspended, "$phase.$stage.shownPackages")
             ApplyStage.LOCK_TASK ->
                 expected.lockTaskPackages.let { it == null || port.lockTaskPackages() == it } &&
                     expected.features.let { it == null || port.lockTaskFeatures() == it }
@@ -200,8 +200,9 @@ class ReadbackPolicyApplier(
         }
 
         /** Hidden and suspended are read back. Enabled is not: nothing here can set it, so show() reports it. */
-        private fun shown(names: Set<PackageName>) = names.all { name ->
-            val now = port.packageState(name) ?: return@all true // reported in absent by show()
+        private fun shown(names: Set<PackageName>, queryTiming: String? = null) = names.all { name ->
+            val now = (if (queryTiming == null) port.packageState(name)
+                else timings.measure(queryTiming) { port.packageState(name) }) ?: return@all true // reported in absent by show()
             (name !in expected.unhiddenAndEnabled || !now.hidden) &&
                 (name !in expected.unsuspended || !now.suspended)
         }
