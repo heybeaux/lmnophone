@@ -1,0 +1,16 @@
+{
+  "preview3": {
+    "sha256": "ec3e05bb28f1de9fa7858d42a8083849dada0a300e6edbcd54b135d329f720cb",
+    "signerSha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd"
+  },
+  "preview4": {
+    "sha256": "cbf8ad4a80f7cbb1a0eb3eb63b09a4f1d53e1b36de0a55e783db8fa31f4a5232",
+    "signerSha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd"
+  },
+  "sourceHead": "354bcc109e985cb80ccb606c7fbebc072c8e3ed9",
+  "base": "ac2d56d1d6d515ef5d0e54bb162e4ea226fe46d2",
+  "applicationId": "org.plainphone",
+  "versionCode": 4,
+  "versionName": "0.1.0-preview-4",
+  "testOnly": true
+}
