@@ -57,4 +57,4 @@ show the unhide was actually lost and redone, which is inferred. It does not rem
 
 ## Way out
 `adb -s <spare> shell dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver`. This brings back every app
-and ends lock task. Then run `adb uninstall org.plainphone`.
+and ends lock task. Then run `adb -s <spare> uninstall org.plainphone`.
