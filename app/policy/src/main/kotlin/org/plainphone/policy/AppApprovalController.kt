@@ -128,12 +128,15 @@ interface AppApprovalEffects {
      * Idempotently remove these discretionary packages from lock task and Home, hide them, and read
      * all three exclusions back. Return true only when containment is verified for every target;
      * false or an exception means containment is unverified, never permission to hand back the phone.
-     * Policy supplies an immutable (plan.unhide intersect plan.lockTaskPackages) minus plan.neverHide
-     * and plan.emergencyUi, including other discretionary apps the activation could expose. Enforce
+     * After an activation attempt, policy supplies an immutable (plan.unhide intersect plan.lockTaskPackages)
+     * minus plan.neverHide and plan.emergencyUi, including other discretionary apps it could expose.
+     * Before retry/startup gates, policy supplies only the COMMITTED/EDITING journal target, excluding
+     * known protected packages, even when no activation plan is available. Enforce
      * the live never-hide/emergency-floor guard too: never hide or remove access from a protected
      * package, even if facts changed since the plan. Preserve all access outside the target set.
      *
-     * Called after every unsuccessful final approval/edit activation attempt, including apply failure.
+     * Called before COMMITTED/EDITING recovery gates and after every unsuccessful final approval/edit
+     * activation attempt, including apply failure.
      * finishPermissionEdit commits its choices and delegates activation to resume, so shares this
      * contract. finishWithdrawal and onStart's PREPARING drop do not use this port: their plans exclude
      * the pending app and remove its access, rather than activate it. They retain their pending journal
@@ -225,6 +228,8 @@ class AppApprovalController(
         // A process can die inside the permission window. Close it before even session/battery gates.
         if (op?.phase in setOf(AppApprovalPhase.PREPARING, AppApprovalPhase.EDITING) &&
             !effects.hideAndReadBack(checkNotNull(op).record.identity)) return AppApprovalOutcome.NOT_READY
+        if (op?.phase in setOf(AppApprovalPhase.COMMITTED, AppApprovalPhase.EDITING) &&
+            !containPendingActivation(checkNotNull(op))) return AppApprovalOutcome.NOT_READY
         if (!sessions.onStart() || state == null) return AppApprovalOutcome.NOT_READY
         if (op?.phase == AppApprovalPhase.PREPARING) {
             // Never resume pre-commit PIN authority after process death. The ordinary policy excludes it.
@@ -340,6 +345,7 @@ class AppApprovalController(
         val state = store.read() ?: return AppApprovalOutcome.NOT_READY
         val op = state.pending ?: return AppApprovalOutcome.READY
         if (op.phase == AppApprovalPhase.EDITING) return finishPermissionEdit(state, op)
+        if (op.phase == AppApprovalPhase.COMMITTED && !containPendingActivation(op)) return AppApprovalOutcome.NOT_READY
         if (state.revision == Long.MAX_VALUE) return AppApprovalOutcome.NOT_READY
         if (op.phase == AppApprovalPhase.WITHDRAWING || op.phase == AppApprovalPhase.REMOVING) return finishWithdrawal(state, op)
         if (op.phase != AppApprovalPhase.COMMITTED) return AppApprovalOutcome.NOT_READY
@@ -368,6 +374,29 @@ class AppApprovalController(
                 }
             }
         }
+    }
+
+    /**
+     * COMMITTED/EDITING is itself the durable cleanup obligation: approvedPackages excludes its target
+     * until activation completes. Reconstruct that singleton on every retry/start, without a plan or
+     * a new journal field. Never include other approved apps here merely because activation is gated.
+     * Post-activation failure containment may already have hidden them; only a battery-gated successful
+     * activation restores them. No cleanup result clears the pending operation or changes receipts.
+     *
+     * Exclude currently known protected packages even when activation facts are invalid. If facts are
+     * unavailable, the adapter's mandatory live floor guard still applies to the journal-derived target.
+     * A refusal, exception or failed readback is NOT_READY, never evidence of verified containment.
+     */
+    private fun containPendingActivation(op: AppApprovalOperation): Boolean = try {
+        val name = op.record.identity.packageName
+        val input = policyInput()
+        val protected = input?.let {
+            val floor = EmergencyFloor.compute(it.installed, it.identities)
+            floor.neverHide + floor.emergencyUi + it.inventory?.neverHide?.packages.orEmpty() + it.plainphone + it.messages
+        }.orEmpty()
+        name !in protected && effects.containFailedActivation(immutableSet(setOf(name)))
+    } catch (_: Exception) {
+        false
     }
 
     /** Review the exact stuck approval/edit; no stale-manifest guess or old PIN can withdraw it. */
@@ -460,7 +489,7 @@ class AppApprovalController(
 
     private fun finishPermissionEdit(state: AppApprovalState, op: AppApprovalOperation): AppApprovalOutcome {
         // EDITING is durable intent: every retry must close an interrupted window before any gate.
-        if (!effects.hideAndReadBack(op.record.identity)) return AppApprovalOutcome.NOT_READY
+        if (!effects.hideAndReadBack(op.record.identity) || !containPendingActivation(op)) return AppApprovalOutcome.NOT_READY
         if (state.revision > Long.MAX_VALUE - 2) return AppApprovalOutcome.NOT_READY
         if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
         if (planFor(op.record, state) == null || !writePermissionsInWindow(op.record, state)) return AppApprovalOutcome.NOT_READY

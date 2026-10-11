@@ -56,6 +56,7 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
         val height = constraints.maxHeight
         val natural = Constraints.fixedWidth(width)
         val minimumApp = 56.dp.roundToPx()
+        val appTopGap = PlainphoneSpace.S3.roundToPx()
 
         // Measure real scaled text, then use the token document's fallback order.
         var briefMore = largeText
@@ -73,19 +74,19 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
 
         var bottom = bottom(briefMore)
         var top = top(noticeLines, inlineClock)
-        if (height - top.height - bottom.height < minimumApp && !briefMore) {
+        if (height - top.height - bottom.height - appTopGap < minimumApp && !briefMore) {
             briefMore = true
             bottom = bottom(true)
         }
-        if (height - top.height - bottom.height < minimumApp) {
+        if (height - top.height - bottom.height - appTopGap < minimumApp) {
             inlineClock = true
             top = top(noticeLines, true)
         }
-        if (height - top.height - bottom.height < minimumApp) {
+        if (height - top.height - bottom.height - appTopGap < minimumApp) {
             noticeLines = 2
             top = top(noticeLines, true)
         }
-        val available = height - top.height - bottom.height
+        val available = height - top.height - bottom.height - appTopGap
         if (available < 28.dp.roundToPx()) {
             // Unsupported smaller viewports: preserve text and touch sizes using one scroll page.
             val page = subcompose("whole-page") {
@@ -109,18 +110,19 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
                 HomeBottom(briefMore, onEvent)
             }.single().measure(natural)
             val apps = subcompose("apps") {
-                LazyColumn(Modifier.fillMaxSize().testTag("home-apps"), reverseLayout = true,
+                LazyColumn(Modifier.fillMaxSize().testTag("home-apps"),
                     verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S3, Alignment.Bottom)) {
-                    // Reversing both keeps the supplied visual order, with the last app at the bottom.
+                    // Short lists sit low; overflowing lists start with a complete first row.
+                    // Scrolling reveals later apps without drawing an earlier row against the notice.
                     // Positional keys tolerate duplicate IDs; host insertions may move focus/press state.
-                    items(state.apps.asReversed()) { app ->
+                    items(state.apps) { app ->
                         HomeAppRow(app.name) { onEvent(HomeEvent.OpenApp(app.id)) }
                     }
                 }
             }.single().measure(Constraints.fixed(width, available))
             layout(width, height) {
                 visibleTop.placeRelative(0, 0)
-                apps.placeRelative(0, top.height)
+                apps.placeRelative(0, top.height + appTopGap)
                 visibleBottom.placeRelative(0, height - visibleBottom.height)
             }
         }

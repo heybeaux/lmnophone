@@ -30,6 +30,7 @@ data class AskForAppUiState(
     val canSend: Boolean = false,
     val charactersRemaining: Int? = null,
     val requests: List<AppRequestRow> = emptyList(),
+    val sending: Boolean = false,
 )
 data class AppRequestRow(val id: String, val message: String, val day: String, val status: AppRequestStatus)
 sealed interface AppRequestStatus {

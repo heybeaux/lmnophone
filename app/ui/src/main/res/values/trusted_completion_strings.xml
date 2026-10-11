@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Plainphone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <string name="admin_self_pin_title">Your PIN</string>
+    <string name="admin_self_pin_body">Enter your PIN to make changes on this phone.</string>
+    <string name="admin_recovery_wrong">That code isn\'t right. Check it against what you wrote down, and try again.</string>
+    <string name="admin_code_locked">Too many recovery code tries</string>
+    <string name="admin_code_locked_named">Too many tries for %1$s\'s recovery code</string>
+    <string name="admin_code_wait">Wait %1$s before trying the recovery code again. Then check it against the code you wrote down, one letter at a time.</string>
+    <string name="admin_code_help">Calls, texts and Emergency still work. If the code is lost, call %1$s.</string>
+    <string name="admin_code_pin_available">Your PIN still works, if you remember it.</string>
+    <string name="admin_code_named_pin_available">%1$s\'s PIN still works, if you remember it.</string>
+    <string name="admin_code_pin_waiting">You can try your PIN again in %1$s.</string>
+    <string name="admin_code_named_pin_waiting">You can try %1$s\'s PIN again in %2$s.</string>
+    <string name="admin_code_skip_waiting">Nothing was skipped. The change is still waiting.</string>
+    <string name="admin_code_other_available">%1$s\'s PIN still works.</string>
+    <string name="admin_enter_pin">Enter PIN instead</string>
+    <string name="admin_self_permissions">Choose what %1$s can use. %1$s won\'t ask you about these later. If you choose \"Don\'t allow\", the parts of %1$s that need it won\'t work.</string>
+    <string name="admin_self_permissions_later">To change these later, remove %1$s in \"Apps on this phone\", then add it again with \"Add a hidden app\". That takes a %2$d-minute wait and one opening. Your things in %1$s stay.</string>
+    <string name="app_self_permissions_later">To change these, remove %1$s, then add it again with \"Add a hidden app\" and choose again.</string>
+    <string name="app_self_remove">Remove %1$s</string>
+    <string name="app_self_remove_body">%1$s will disappear from the home screen straight away. Nothing is deleted: if you add it again with \"Add a hidden app\", your things in it will still be there.</string>
+    <string name="wait_stuck_self_start">Plainphone is trying to switch to %1$s looking after this phone, but Google\'s reset protection didn\'t accept %1$s\'s account yet. Plainphone keeps trying.</string>
+    <string name="wait_stuck_self_unchanged">Until this works, nothing changes: you still look after this phone, with the same PIN, waits and limits. Calls, texts and Emergency work.</string>
+    <string name="wait_stuck_self_unknown">Until this is fixed, we can\'t say whose Google account a wipe would ask for.</string>
+    <string name="wait_stop_self_body">Plainphone puts reset protection back for your Google account. %1$s\'s PIN and details are thrown away, and you keep looking after this phone.</string>
+    <string name="wait_stopped_self">Stopped. Nothing changed. You still look after this phone.</string>
+    <string name="wait_stop_to_self_body">Plainphone puts reset protection back for %1$s. %2$s\'s new PIN is thrown away.</string>
+</resources>

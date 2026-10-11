@@ -49,6 +49,9 @@ class HomeScreenshotTest(private val scale: Float) {
     @Test fun oneMinute() = snapshot(HomeNotice.OpeningUp(1))
     @Test fun twoMinutes() = snapshot(HomeNotice.OpeningUp(2))
     @Test fun oneTrustedPerson() = snapshot(HomeNotice.MonthlyCheck(listOf("Sam")))
+    @Test fun fourAppsWithMonthlyNotice() = snapshot(HomeNotice.MonthlyCheck(listOf("Sam")),
+        listOf(HomeApp("music", "Spotify"), HomeApp("chat", "Slack"),
+            HomeApp("camera", "Camera"), HomeApp("maps", "Maps")))
     @Test fun noTrustedPeople() = snapshot(HomeNotice.MonthlyCheck(emptyList()))
     @Test fun sameDay() = snapshot(HomeNotice.TurnOffWaiting("21:15",
         HomeNoticeDay(LocalDate.of(2026, 10, 8), 0)))
@@ -74,6 +77,6 @@ class HomeScreenshotTest(private val scale: Float) {
 
     companion object {
         @JvmStatic @Parameterized.Parameters(name = "fontScale={0}")
-        fun scales() = listOf(arrayOf(1.0f), arrayOf(2.0f))
+        fun scales() = listOf(1.0f, 1.3f, 1.5f, 1.8f, 2.0f).map { arrayOf(it) }
     }
 }
