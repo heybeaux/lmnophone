@@ -37,9 +37,10 @@ counts remain **in testing**. List every skipped step by number (including step 
 if a second owned number is unavailable). If a step disagrees, the next build
 turns off that count. The Messages count is never reduced to SMS alone.
 
-**Current spare status:** steps 0–8 have not been run for preview-4. Steps 1–7
-remain unverified on the spare. The optional RCS observation has not been made.
-A working SIM has not been confirmed for this candidate.
+**Current spare status:** the driver's part of step 0 is done (chat features off; the switch is
+left off for the tester). The spare has **no working SIM** (out of service), so steps 1–7 can't
+run until it has one. Steps 1–8 have not been run and remain unverified. The optional RCS
+observation has not been made.
 
 ## Coverage limits
 
@@ -64,23 +65,37 @@ APK SHA-256, test totals, signing comparison, and emulator read-back.
 Screenshots and the upgrade record are in [emulator/](evidence/emulator/).
 No physical device was used for preparation.
 
-## TODO(spare): driver completes after Lead review
+## Spare install and driver checks (D8 a)
 
-- Install time (UTC and America/Vancouver), exact APK SHA-256 and build head:
-  **TODO(spare)**. Use an in-place upgrade and preserve tester data/settings.
-  Run `app/tools/preview-4/upgrade-check.sh` with `PLAINPHONE_SPARE_DRIVER=1`
-  as the sole assigned spare driver. Never press Call.
-- D8(a): Phone/Messages role holders and versions; RCS state before changes:
-  **TODO(spare)**.
-- D8(a): permission restriction flags after install and after switching on:
-  **TODO(spare)**.
-- D8(a): switch off shows no numbers, with the same Home PID:
-  **TODO(spare)**.
-- D8(a): restart, no number before unlock, fresh reads after unlock:
-  **TODO(spare)**.
-- D8(a): Settings coverage and permission lines at 100% and 200%, redacted:
-  **TODO(spare)**.
-- Working SIM, tester D8(b) results and skipped steps: **TODO(spare)**.
+Installed in place on the spare on 2026-10-11 at **08:39:29 UTC (01:39:29 PDT)** by the sole
+spare driver (PLA-303). APK SHA-256
+`cbf8ad4a80f7cbb1a0eb3eb63b09a4f1d53e1b36de0a55e783db8fa31f4a5232`; build head `354bcc1`,
+candidate `release/preview-4` @ `5642080`. `upgrade-check.sh` (counts off) ended `exit=0`:
+preview-4 `versionCode=4`, Device Owner and lock task kept, first-install date unchanged (tester
+data kept), and both 9-1-1 routes asserted exactly `911` with zero calls. Call was never pressed.
+See [install read-back](evidence/spare/install-readback.txt) and
+[gate log](evidence/spare/upgrade-check.txt).
+
+All D8(a) checks pass ([results](evidence/spare/d8a-results.md)):
+
+- **Apps:** Phone (DIALER role) is Google Phone 241.0.991235506. Messages (SMS role) is Google
+  Messages messages.android_20261002_00_RC00.phone_dynamic.
+- **Chat features (RCS):** they were **on** (carrier status "Not supported"). The driver turned
+  them **off** for step 0. To reach Messages settings, the driver chose "Use Messages without an
+  account" on Messages' first-run screen. No account was added.
+- **Permissions:** after the install, both are not granted and are installer-allowlisted. After the
+  switch is turned on, both are granted and stay granted after it is turned off.
+- **Switch off:** no numbers, and Home did not restart (same process before and after on/off).
+  The spare's counts were zero, so no number showed even with the switch on.
+- **Restart:** no number before unlock, then fresh reads after unlock. The spare has no PIN, so
+  Android unlocks storage during boot. The locked Direct Boot case is covered on the emulator only.
+- **Screenshots:** Home and Phone settings at 100 % and 200 %, switch off and on
+  ([d8a/](evidence/spare/d8a/)). They show no names or numbers.
+- **The switch is left off**, so the tester turns it on as step 0.
+
+**No working SIM.** The spare's SIM is out of service ("No service"). Steps 1–7 need calls
+and texts to reach the spare, so the counts stay **in testing** until the tester has a working
+SIM and reports steps 1–7. Tester results and skipped steps: **none reported yet.**
 
 ## Known gaps carried from preview-3
 
@@ -95,8 +110,8 @@ No physical device was used for preparation.
 - Preview restrictions do not prevent safe mode or factory reset. Android's
   Device Owner defaults still apply. This remains an incomplete preview.
 - The spare had no PIN in preview-3, so no lock-screen Emergency button there;
-  swipe up and use Phone or More > Emergency. This candidate's spare state
-  still needs the driver's read-back. Never press Call during an agent check.
+  swipe up and use Phone or More > Emergency. On preview-4 the spare still
+  has no lock credential (read back 2026-10-11). Never press Call during an agent check.
 - Five known `Pla241ReviewTest` failures are carried from preview-3. They cover
   emergency-floor recovery after journal failure, locked-boot flip failure,
   preservation of an earlier flip failure, enabled-state changes during setup,
