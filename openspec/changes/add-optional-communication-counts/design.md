@@ -114,6 +114,8 @@ Unchanged from revision 1, and built and reviewed in PLA-292 (`mvp/home-counts-u
 **Not counted, or not verified:**
 - **Chat (RCS) messages: not verified.** No RCS account could be set up on the emulator. Google Messages normally keeps RCS chats in its own storage. A separate, managed "archival" mode can copy RCS into the public store, but it isn't enabled and doesn't promise correct read flags. So we don't claim RCS is counted, and we don't claim it never appears.
 - Messages from any other app (WhatsApp, Signal and so on).
+- A picture message that hasn't been downloaded yet. LMNOPhone isn't the default SMS app, so the provider hides download notices from it (D1).
+- An emergency-number text on a subscription outside the user's filter (D1, rare).
 - Carrier edge cases not tested on the emulator: real MMS download and retry, MMS notification swipe and "Mark as read", and carrier voicemail.
 
 Settings text (one resource, PLA-295 finding 5): "Counts texts and picture messages. Chat (RCS) messages and other apps aren't supported, so they may be missing from the number." This doesn't claim RCS rows can never be counted. It says RCS isn't supported, so the number may leave them out. The final wording and the permission note go into `communication_counts.xml`, the Phone settings screen and `docs/ux/flows-user.md`, with large-text screenshots reviewed (task 2.2b). A second line covers the permission: "LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say."

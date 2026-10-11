@@ -1,4 +1,4 @@
-**Status:** revision 5 (Lead, PLA-287; Verifier APPROVE WITH CHANGES on revision 4, PLA-301, items applied). Previously revision 4 ( resolves PLA-297 findings 1–3, after PLA-295 findings 1–6 in revision 3). Previously revision 2 (Lead, PLA-287). Scope approved by Beaux (Telegram 3152, recorded in TEAM-POLICY.md); no separate concept approval is needed. Spike PLA-291 answered C1–C7: feasible for SMS/MMS and missed calls; RCS not verified. UI built and reviewed (PLA-292). Next: cross-model review of this delta, host slice, then preview.
+**Status:** revision 5 (Lead, PLA-287; Verifier APPROVE WITH CHANGES on revision 4, PLA-301, items applied). Previously revision 4 (resolves PLA-297 findings 1–3, after PLA-295 findings 1–6 in revision 3). Previously revision 2 (Lead, PLA-287). Scope approved by Beaux (Telegram 3152, recorded in TEAM-POLICY.md); no separate concept approval is needed. Spike PLA-291 answered C1–C7: feasible for SMS/MMS and missed calls; RCS not verified. UI built and reviewed (PLA-292). Next: cross-model review of this delta, host slice, then preview.
 
 ## Why
 
