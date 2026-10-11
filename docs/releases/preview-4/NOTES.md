@@ -1,8 +1,8 @@
-# preview-4: draft build notes
+# preview-4: build notes
 
-**Counts are in testing.** This candidate adds optional Home counts to preview-3.
-It is prepared for Lead review and the spare's driver; a built APK and an emulator
-install do not establish an install on the spare.
+**Counts are in testing.** This build adds optional Home counts to preview-3.
+It is installed in place on the spare (2026-10-11 08:39 UTC; see "Spare install
+and driver checks" below). The counts switch is left off for the tester to turn on.
 
 ## What's new
 
@@ -45,8 +45,9 @@ observation has not been made.
 ## Coverage limits
 
 The counts work with the phone's standard Google Phone and Google Messages apps.
-A different app means no number. This emulator's exact app versions are recorded
-in the evidence; the spare's driver must record its versions before testing.
+A different app means no number. The emulator's and the spare's exact app versions
+are recorded in the evidence (spare: Phone 241.0.991235506, Messages
+messages.android_20261002_00_RC00).
 Later app updates may change what gets counted.
 
 Messages counts texts (SMS) and picture messages (MMS) saved in Android's shared
