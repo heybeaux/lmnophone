@@ -110,7 +110,8 @@ class CommunicationCountsTest {
         listOf(1f, 1.3f, 1.5f, 1.8f, 2f).forEach { value ->
             compose.runOnIdle { scale.value = value }
             listOf("Show missed calls and unread texts on Home",
-                "Counts texts and picture messages. Chat messages (RCS) may not be counted.",
+                "Counts texts and picture messages. Chat messages (RCS) and other apps are not counted.",
+                "LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say.",
                 "LMNOPhone can't read missed calls right now", "LMNOPhone can't read unread texts right now")
                 .forEach { label ->
                     val node = compose.onNodeWithText(label, useUnmergedTree = true)
