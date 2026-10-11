@@ -59,13 +59,13 @@ Each number SHALL:
 
 When a count can't be read (switch off, permission missing, phone not unlocked since boot, any read error or timeout, or the Phone or Messages role holder isn't the supported app), that number SHALL NOT be shown.
 
-Each time Home becomes visible it SHALL start with no numbers, and SHALL show a number only from a read that started after it became visible and finished before anything changed it. When the call log or text store changes while Home is visible, an old number SHALL be hidden if a fresh one is not shown within 1 second.
+Each time Home becomes visible it SHALL start with no numbers, and SHALL show a number only from a read that started after it became visible and finished before LMNOPhone received any change notice. When LMNOPhone receives a change notice while Home is visible, an old number SHALL be hidden if a fresh one is not shown within 1 second of that notice. Independently, while Home is visible, no number SHALL be shown that comes from a read started more than 13 seconds ago.
 
 For this feature LMNOPhone SHALL read only row IDs and the type, new, read and message-box fields. It SHALL NOT read, log, store or send message text, phone numbers, contact names or dates.
 
 The Settings screen SHALL state under the switch that texts and picture messages are counted, that chat (RCS) messages and other apps aren't supported and may be missing, and that LMNOPhone keeps permission to check calls and texts after the switch is turned off.
 
-The Messages number SHALL come from SMS and MMS reads that agree with each other. If either read fails, or they don't come from the same moment, the Messages number SHALL NOT be shown; a partial or mixed sum is never shown.
+The Messages number SHALL come from one read that covers SMS and MMS together at a single moment. If that read fails, the Messages number SHALL NOT be shown. A number added up from separate reads SHALL NEVER be shown.
 
 The accessibility name of the Phone and Messages rows SHALL include the count when one is shown (for example "Phone, 2 missed calls"). Touch targets and large-text behaviour SHALL stay as they are.
 
@@ -79,7 +79,7 @@ The accessibility name of the Phone and Messages rows SHALL include the count wh
 
 #### Scenario: Messages changes during a read
 - **WHEN** texts are marked read and picture messages arrive while LMNOPhone is reading the two stores
-- **THEN** Messages shows no number until a read where both stores agree, and never shows a total that didn't exist
+- **THEN** Messages shows only a total that existed at one moment, because SMS and MMS are counted in one read
 
 #### Scenario: Different Messages app
 - **WHEN** the default text app is changed to another app, or the standard Messages app is disabled
@@ -90,8 +90,12 @@ The accessibility name of the Phone and Messages rows SHALL include the count wh
 - **THEN** Phone shows "1" while Home is visible, without restarting LMNOPhone
 
 #### Scenario: Refresh too slow
-- **WHEN** Phone shows "2" and a change arrives, but the new read hasn't finished after 1 second
+- **WHEN** Phone shows "2" and LMNOPhone receives a change notice, but the new read hasn't finished 1 second after the notice
 - **THEN** the number is hidden until a fresh read finishes
+
+#### Scenario: Change notice late or missing
+- **WHEN** the call log changes while Home is visible, and Android delivers the change notice late or not at all
+- **THEN** within 13 seconds Home shows the new number or no number
 
 #### Scenario: Missed call acknowledged
 - **WHEN** the user views the missed call in the Phone app's call history, taps or swipes the missed-call notification, or calls back, and returns Home

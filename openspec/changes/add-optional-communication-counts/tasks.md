@@ -3,7 +3,8 @@
 - [x] 1.1 Answer C1–C7 in `design.md` on API 35 and 36 emulators under `spikes/communication-counts/` (throwaway). Evidence: commands, `dumpsys` excerpts, observer logs with counts only.
 - [x] 1.2 Lead folds the spike answers into `design.md` (revision 2). No blocking product limit; RCS is disclosed.
 - [x] 1.3 Cross-model review of revision 2 (Verifier, PLA-295): REQUEST CHANGES, findings 1–6 resolved in revision 3.
-- [ ] 1.4 Cross-model re-review of revision 3 (Verifier).
+- [x] 1.4 Cross-model re-review of revision 3 (Verifier, PLA-297): REQUEST CHANGES, findings 1–3 resolved in revision 4.
+- [ ] 1.5 Cross-model re-review of revision 4 (Verifier).
 
 ## 2. Build
 

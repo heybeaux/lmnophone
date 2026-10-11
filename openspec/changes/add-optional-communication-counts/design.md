@@ -1,5 +1,7 @@
 # Design: optional missed-call and unread-text counts
 
+**Revision 4** (Lead, PLA-287). Resolves the Verifier's REQUEST CHANGES on revision 3 (PLA-297, findings 1–3). Messages now uses one SQL statement, and the double-read fallback is removed (D1). The 1 s deadline is measured from the received invalidation, and a periodic re-read bounds age (D3). D8 (b) gets a baseline, exact expected numbers, MMS swipe and "Mark as read" steps, and an RCS-off condition. Revision 3 is `78cbbee`.
+
 **Revision 3** (Lead, PLA-287). Resolves the Verifier's REQUEST CHANGES on revision 2 (PLA-295, findings 1–6): publication fencing and a refresh deadline (D3), a stable combined Messages read (D1, D4), a supported-app gate (D4), a two-part spare check with Beaux's test as the release gate (D8), qualified coverage wording (D7), and the default-versus-update scenario (spec). Revision 2 is `a16e60e`.
 
 **Revision 2** (Lead, PLA-287). The spike PLA-291 (`spike/communication-counts` @ `983e6f1`, `spikes/communication-counts/RESULT.md`) answered C1–C7 on Google APIs API 35 and 36 emulators, with Google Phone and Google Messages as the role holders. Its verdict is **feasible**, with the limits listed under Coverage. Revision 1 is commit `091243b`.
@@ -15,16 +17,21 @@ Beaux (Telegram 3152) wants missed-call and unread-message counts on Home, as an
 | Count | URI | Projection | Selection |
 |---|---|---|---|
 | Missed calls | `content://call_log/calls` | `_id` | `type = 3 AND new = 1 AND is_read IS NOT 1` |
-| Unread SMS | `content://sms` | `_id` | `type = 1 AND read = 0` |
-| Unread MMS | `content://mms` | `_id` | `msg_box = 1 AND read = 0` |
+| Unread texts (SMS + MMS, one statement) | `content://mms-sms/complete-conversations` | `_id`, `transport_type` | `read = 0` |
+
+The revision 2 per-table queries (`content://sms`: `type = 1 AND read = 0`; `content://mms`: `msg_box = 1 AND read = 0`) are kept **only as the test oracle** for parity checks. They are never added together for display.
 
 - **Messages count = unread SMS rows + unread MMS rows.** We count messages, not conversations. A group MMS is one row (the spike's group fixture counted 1, not 3).
-- **The two message reads must agree with each other** (PLA-295 finding 2). Two separate queries can each succeed and still add up to a total that never existed, if messages change between them. The host uses one of two methods:
-  - **(a) Preferred: a single SQL statement.** Use one statement through `content://mms-sms/` if the host engineer proves on the emulator that it uses only the D1 flag columns and returns exactly the two-query total on the spike fixtures. One SQLite statement reads one snapshot.
-  - **(b) Otherwise: a stable double read.** Read SMS, then MMS, then both again. Publish only if both pairs match and the generation (D3) didn't change. Retry up to 3 times, then treat the count as unavailable.
+- **One statement, one snapshot** (PLA-295 finding 2, PLA-297 finding 1). Two separate reads can add up to a total that never existed, and comparing repeated counts can't detect that: the Verifier built a `[5,7,5,7]` schedule with delayed callbacks that publishes 12 when the real total never went above 7. So the Messages number comes from **one** query, and the double read is removed. Source (AOSP `MmsSmsProvider`, android15-release):
+  - `complete-conversations` → `getCompleteConversations` → `buildConversationQuery`, run as **one** `rawQuery`: a `UNION` of an `sms` sub-select and a `pdu` sub-select. SQLite runs one statement against one read snapshot. `getCount()` fills the first cursor window with `countAllRows`, which steps that single statement once.
+  - The caller's selection is added to both sub-selects, so it may use only columns both tables have. `read` is one of them; `type` and `msg_box` aren't.
+  - The provider itself excludes drafts in both tables, and limits MMS to sent, received and download-notification PDUs (`MMS_CONVERSATION_CONSTRAINT`).
+  - `SmsProvider` and `MmsProvider` both set `read = 1` on insert for every non-inbox message ("Mark all non-inbox messages read"). So `read = 0` selects unread inbox messages, which is what the oracle counts.
+  - The projection must include `transport_type` (the `sms`/`mms` discriminator). The union is `DISTINCT`, so an SMS and an MMS with the same `_id` would otherwise merge into one.
+  - The same subscription filter (`ProviderUtil.getSelectionBySubIds`, which always includes `sub_id = -1` for the main user) applies here as it does to the per-table queries.
   
-  Any change between the reads also fires a `content://mms-sms/` callback while Home is visible (C4), which bumps the generation, so an interleaved total is thrown away rather than shown. **Residual risk, accepted by the Lead:** a change that is made and undone inside one read window, with its callback lost. Nothing in the spike suggests foreground callbacks get lost.
-- No other column is requested. No sort order. The count is `Cursor.getCount()`, and no cursor value is ever read, not even `_id`. A unit test asserts the exact URI, projection and selection strings.
+  **Host proof required (PLA-294):** on the emulator, (i) parity with the oracle on the spike fixtures; (ii) sent and outbox messages and drafts are not counted; (iii) an SMS and an MMS with equal `_id` count as 2; (iv) it works for a `READ_SMS` holder that isn't the default SMS app. If this query fails, returns null or isn't supported, **the Messages number is hidden**. There is no fallback. **Residual:** a non-inbox row that some app later sets back to `read = 0` would be counted. Neither provider nor the tested Messages app does that.
+- No other column is requested (`transport_type` is the provider's fixed `sms`/`mms` label, not message data). No sort order. The count is `Cursor.getCount()`, and no cursor value is ever read, not even `_id`. A unit test asserts the exact URI, projection and selection strings.
 - **Missed-call selection.** In both tested Google Phone versions, acknowledging a missed call sets `NEW=0` and `IS_READ=1` together. Acknowledging means leaving call history, swiping the notification, tapping it, or calling back. The extra `is_read IS NOT 1` matches AOSP Dialer's own notification query (`CallLogNotificationsQueryHelper`) and excludes rows that are read but still `NEW=1`. `IS NOT 1` also handles NULL.
 - A declined call is `TYPE=5` and voicemail is `TYPE=4`; neither is counted. A voicemail that comes with its own missed-call row (`TYPE=3`) is counted, because the Phone app shows that row as missed too.
 - **Notification swipes.** Swiping a missed-call notification *acknowledges* the call in Google Phone, so the count drops; this matches what the Phone app shows. Swiping a text notification does *not* mark it read, so the count stays; this matches Messages, which still shows the conversation as unread. "Mark as read" from the notification marks it read, and the count drops. In every case the count follows the app's own record.
@@ -45,11 +52,13 @@ A `NotificationListenerService` could count Phone and Messages notifications. It
   - the package for either role holder is added, replaced, removed, enabled or disabled;
   - any observer callback.
 
-  Each read carries the generation it started with. It may publish only if that generation is still current when the read finishes **and** every D4 gate still passes, checked again right before publishing. Otherwise its result is thrown away, and a new read is scheduled.
-- **Refresh deadline.** When a callback arrives while Home is visible, the affected number may stay for at most **1 s** while a new read runs. If no fresh result is published by then, the number is hidden until one is. Bursts of callbacks are merged into one read 200 ms after the last callback, and the 1 s deadline still applies from the first callback.
+  Each read carries the generation it started with. It may publish only if that generation is still current when the read finishes (meaning **no invalidation was received** during the read; this doesn't prove the data didn't change) **and** every D4 gate still passes, checked again right before publishing. Otherwise its result is thrown away, and a new read is scheduled.
+- **Refresh deadline.** When LMNOPhone **receives** a change callback while Home is visible, the affected number may stay for at most **1 s** after that callback while a new read runs. If no fresh result is published by then, the number is hidden until one is. Bursts are merged into one read 200 ms after the last callback; the 1 s still runs from the first callback.
+- **Age bound** (PLA-297 finding 2). The 1 s deadline can't cover Android's own delay in delivering the callback. That delay is extra, and this mechanism doesn't limit it. So, independently, Home re-reads both counts **every 10 s while it is visible**. A shown number must come from a read that **started at most 13 s ago** (10 s period plus the 3 s timeout); otherwise it is hidden. This is the strict bound: a change to the record shows on Home, or the number disappears, within about 13 s at most, and usually within about 1.2 s (callback about 0.05–0.16 s, then a read).
 - **Query timeout.** If a read takes longer than 3 s, that count is unavailable for this attempt, and it is hidden. The next callback or visible interval tries again. Queries run off the UI thread (one API 36 query took 610 ms).
 - **No count is ever saved to storage.**
-- **Measurement limit.** Observer latency was measured, not guaranteed. The spike saw about 50–160 ms in the foreground and about 10 s in the background. While Home is visible, a change can be reflected late only within the 1 s deadline, after which the number is hidden. If a change ever produced no callback while Home was visible (the spike never saw this), it would be fixed at the next visible interval. Controlled-scheduler tests cover:
+- **Measurement limit.** Observer latency was measured, not guaranteed. The spike saw about 50–160 ms in the foreground and about 10 s in the background. The guarantee is the age bound above, not callback speed. Controlled-scheduler tests cover:
+  - a callback delivered late (1.5 s after the change), and no callback at all: the periodic re-read corrects or hides the number within 13 s;
   - a callback during a read;
   - a delayed completion after a newer generation;
   - off → on;
@@ -65,7 +74,7 @@ Each count is computed separately and hidden on its own. A count is hidden when:
 - `checkSelfPermission` for its permission is not granted;
 - the user hasn't unlocked since boot (`UserManager.isUserUnlocked() == false`). Before unlock the spike saw null cursors for calls and MMS and a `SQLiteException` for SMS;
 - the cursor is null, or the query throws (`SecurityException`, `SQLiteException`, `IllegalArgumentException`, any other);
-- for Messages, **either** the SMS or the MMS query fails, or the stable read (D1) doesn't settle. A partial or interleaved sum is never shown;
+- for Messages, the single combined query (D1) fails, returns null or times out. No partial, per-table or summed number is ever shown;
 - **the app behind the Home entry isn't a supported one** (PLA-295 finding 3; see below).
 
 **Supported-app gate.** A count's meaning depends on the app that writes the flags:
@@ -113,28 +122,35 @@ Settings text (one resource, PLA-295 finding 5): "Counts texts and picture messa
 The emulator gate (PLA-294) covers these: unavailable sources, a partial or interleaved message read, permission loss, the generation fence, the supported-app gate, restart and Direct Boot. The spare adds two parts.
 
 **(a) Driver checks.** The spare's sole driver does these with no calls or texts:
-- read back the DIALER and SMS role holders and both apps' versions;
+- read back the DIALER and SMS role holders and both apps' versions, and whether chat features (RCS) are on in Messages;
 - read back the `dumpsys package` restriction flags for both permissions, after the in-place install and after the switch is turned on;
 - switch off: no numbers, and the same PID (no Home restart);
 - restart: no number before unlock, then a fresh read after unlock;
 - Settings coverage and permission lines, screenshots at 100 % and 200 %, redacted.
 
-**(b) Beaux's test (the release gate for calling a count supported).** In the preview notes' how-to-test, Beaux uses only his own phones; agents never call or text anyone:
-1. Missed call → `1`. Swipe the notification → gone.
-2. Two texts → `2`. Swipe → still `2`. "Mark as read" on one → `1`. Open the conversation → gone.
-3. A picture message → `1`. Open it → gone.
-4. A group picture message to the spare and one other of his numbers → `1`, not one per person.
-5. Turn the switch off and on again.
+**(b) Beaux's test (the release gate for calling a count supported).** In the preview notes' how-to-test, Beaux uses only his own phones; agents never call or text anyone. Spike evidence gives the expected result for each step (PLA-297 finding 3):
 
-He replies with what he saw. Until he does, the notes call the counts "in testing". If a step fails, the next build turns off that count; a partial SMS-only number is never shown under the SMS and MMS promise. If the spare has no working SIM, the notes say so, and the counts stay "in testing".
+0. **Setup.** The driver turns off chat features (RCS) in the spare's Messages app, so test texts arrive as SMS or MMS. The driver records whether RCS was on before this. **Baseline:** open Phone's call history and every unread conversation in Messages until Home shows no numbers with the switch on.
+1. Missed call from his phone → Phone `1`. Swipe the missed-call notification → no number.
+2. Two texts from his phone (one conversation) → Messages `2`. Swipe the notification → still `2`. Tap "Mark as read" on the next notification after a third text → no number. "Mark as read" marks the whole conversation read (spike C3).
+3. One text → `1`. Open that conversation → no number.
+4. A picture message → `1`. Swipe its notification → still `1`. Send a second picture message, and tap "Mark as read" → no number.
+5. A picture message → `1`. Open the conversation → no number.
+6. If Beaux has a second number of his own: a group picture message to the spare and that number → `1`, not one per person. Open it → no number.
+7. Turn the switch off → both numbers gone at once. Turn it on → numbers come back only for items still unread.
+8. Optional, for his judgement: turn chat features back on and send a chat. That chat is **not** counted (D7). This shows how useful the Messages number is if most of his chats are RCS.
+
+He replies with what he saw. Until he does, the notes call the counts "in testing". If any step disagrees with its expected result, the next build turns off that count; a partial SMS-only number is never shown under the SMS and MMS promise. If the spare has no working SIM, the notes say so, and the counts stay "in testing". **Any step he can't run (for example step 6) is listed as not verified in the notes.**
 
 **Not verified, and disclosed in the notes:**
+- any step from (b) that wasn't run, by number. This includes the MMS notification swipe and "Mark as read" (step 4), which stay unverified until Beaux runs them;
 - MMS download failure and retry, and pending downloads (the spare's own record is still what's counted);
 - carrier voicemail;
 - RCS.
 
 ## Risks
 
+- **Provider route.** `complete-conversations` is a provider URI, not a public SDK constant. If a later Android or provider changes it, the query fails and the Messages number is hidden. It is never replaced with a two-query sum.
 - **Holding `READ_SMS` and `READ_CALL_LOG` widens what LMNOPhone could read.** Mitigations: a single query site, a projection test, no cursor value reads, grants made only when the user first turns counts on, and disclosure in Settings.
 - **RCS gap.** If most messages between Beaux and Deanna are RCS chats, the Messages count will often be low or zero. This is disclosed in Settings. Beaux decides after testing on the spare whether it is useful, and this is called out in the release notes.
 - **Dialer and Messages versions.** The flags were proven only on the tested versions. D8 checks the spare's versions.
