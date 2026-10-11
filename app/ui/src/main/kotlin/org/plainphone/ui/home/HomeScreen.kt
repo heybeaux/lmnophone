@@ -4,6 +4,9 @@
 package org.plainphone.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,7 +65,7 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
         var inlineClock = false
         fun bottom() = subcompose("measure-bottom") {
             // Probes must never contribute duplicate controls to the semantics tree.
-            Box(Modifier.clearAndSetSemantics {}) { HomeBottom(onEvent = {}) }
+            Box(Modifier.clearAndSetSemantics {}) { HomeBottom(state, exposeTags = false, onEvent = {}) }
         }.single().measure(natural)
         fun top(lines: Int, inline: Boolean) = subcompose("measure-top-$lines-$inline") {
             Box(Modifier.clearAndSetSemantics {}) {
@@ -92,7 +95,7 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
                             HomeAppRow(app.name) { onEvent(HomeEvent.OpenApp(app.id)) }
                         }
                     }
-                    HomeBottom(onEvent)
+                    HomeBottom(state, onEvent = onEvent)
                 }
             }.single().measure(constraints)
             layout(width, height) { page.placeRelative(0, 0) }
@@ -101,7 +104,7 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
                 HomeTop(state, noticeLines, inlineClock, largeText, onEvent)
             }.single().measure(natural)
             val visibleBottom = subcompose("visible-bottom") {
-                HomeBottom(onEvent)
+                HomeBottom(state, onEvent = onEvent)
             }.single().measure(natural)
             val apps = subcompose("apps") {
                 LazyColumn(Modifier.fillMaxSize().testTag("home-apps"),
@@ -157,10 +160,12 @@ private fun HomeTop(state: HomeUiState, noticeLines: Int, inlineClock: Boolean,
 }
 
 @Composable
-private fun HomeBottom(onEvent: (HomeEvent) -> Unit) {
+private fun HomeBottom(state: HomeUiState, exposeTags: Boolean = true, onEvent: (HomeEvent) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = PlainphoneSpace.S3)) {
-        HomeAppRow(stringResource(R.string.home_messages)) { onEvent(HomeEvent.OpenMessages) }
-        HomeAppRow(stringResource(R.string.home_phone)) { onEvent(HomeEvent.OpenPhone) }
+        CommunicationRow(stringResource(R.string.home_messages), state.unreadTexts,
+            R.plurals.home_unread_texts, if (exposeTags) "home-messages" else null) { onEvent(HomeEvent.OpenMessages) }
+        CommunicationRow(stringResource(R.string.home_phone), state.missedCalls,
+            R.plurals.home_missed_calls, if (exposeTags) "home-phone" else null) { onEvent(HomeEvent.OpenPhone) }
         val shape = RoundedCornerShape(percent = 50)
         Box(Modifier.padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S2)
             .fillMaxWidth()
@@ -168,6 +173,30 @@ private fun HomeBottom(onEvent: (HomeEvent) -> Unit) {
             .heightIn(min = 64.dp).padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S2),
             contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.home_more), style = PlainphoneType.Row)
+        }
+    }
+}
+
+/** Label and number wrap together within one action; no count is inferred or retained. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CommunicationRow(name: String, count: Int?, spokenPlural: Int, tag: String?, onClick: () -> Unit) {
+    val positive = count?.takeIf { it > 0 }
+    val spoken = positive?.let { pluralStringResource(spokenPlural, it, it) }
+    Box(Modifier.fillMaxWidth().then(if (tag == null) Modifier else Modifier.testTag(tag))
+        .plainphoneAction(onClick = onClick).heightIn(min = 56.dp)
+        .padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S1),
+        contentAlignment = Alignment.CenterStart) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4),
+            modifier = if (spoken == null) Modifier else Modifier.clearAndSetSemantics {
+                contentDescription = spoken
+            }) {
+            Text(name, style = PlainphoneType.App)
+            positive?.let {
+                Text(if (it > 99) stringResource(R.string.home_count_overflow)
+                    else stringResource(R.string.home_count, it),
+                    style = PlainphoneType.App.copy(fontWeight = FontWeight.Normal, fontFeatureSettings = "tnum"))
+            }
         }
     }
 }
