@@ -1,0 +1,30 @@
+preview-4 spare install read-back (ZY22KW6P9J, moto g power 5G 2024, Android 15)
+Driver: Android Platform Engineer (sole driver), PLA-303.
+Candidate: release/preview-4 @ 564208086b41ee8f17068c3345a1f8019745dc1f (APK built from source head 354bcc1; later commits are tools/docs only).
+APK: Lead attachment 607da07d (gzip), decompressed SHA-256 cbf8ad4a80f7cbb1a0eb3eb63b09a4f1d53e1b36de0a55e783db8fa31f4a5232 (matches recorded digest).
+
+Before install (2026-10-11 08:39:08 UTC):
+  versionCode=3 versionName=0.1.0-preview-3 lastUpdateTime=2026-10-10 21:50:49 (device local, PDT)
+  firstInstallTime=2026-10-09 10:26:07
+  Device Owner: org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+  mLockTaskModeState=LOCKED; keyguard credential: none (locksettings verify succeeds with no credential)
+  DIALER role: com.google.android.dialer; SMS role: com.google.android.apps.messaging
+
+Install: upgrade-check.sh ran `adb install -r -t` (no --restrict-permissions) at 2026-10-11 08:39:29 UTC
+  (01:39:29 PDT); gate ended exit=0 at 08:41:35 UTC. See upgrade-check.txt.
+
+After install (2026-10-11 08:41:46 UTC):
+  versionCode=4 versionName=0.1.0-preview-4 lastUpdateTime=2026-10-11 01:39:29 (PDT)
+  firstInstallTime=2026-10-09 10:26:07 (unchanged: in-place upgrade, data kept)
+  flags include TEST_ONLY
+  Device Owner: org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated (retained)
+  mLockTaskModeState=LOCKED
+  android.permission.READ_SMS: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+  android.permission.READ_CALL_LOG: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+  -> both restricted permissions installer-allowlisted (design D5); not granted while the switch is off.
+
+App versions:
+  com.google.android.dialer versionName=241.0.991235506 versionCode=20129558
+  com.google.android.apps.messaging versionName=messages.android_20261002_00_RC00.phone_dynamic versionCode=324451063
+
+Gate screenshots (more-emergency-911.png, phone-911.png): dial field shows only 911; no names or numbers. Call never pressed.
