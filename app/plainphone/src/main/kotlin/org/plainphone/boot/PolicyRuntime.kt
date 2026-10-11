@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import org.plainphone.PlainphoneAdminReceiver
 import org.plainphone.core.PackageName
 import org.plainphone.device.DpmPort
+import org.plainphone.device.KeyguardFirst
 import org.plainphone.device.SerialDispatcher
 import org.plainphone.device.boot.BootOutcome
 import org.plainphone.device.boot.BootReapply
@@ -70,10 +71,17 @@ class PolicyRuntime private constructor(private val context: Context) {
     @Volatile private var checkingHeld = false
     private val noticeState = MutableStateFlow<HomeNotice?>(null)
     private val packageEventQueued = AtomicBoolean(false)
+    private val runsState = MutableStateFlow(0)
+    private val home = PackageName(context.packageName)
 
     val gate: StateFlow<HomeGate> = gateState
     /** The Home notice from the last unlocked re-apply ([homeNotice]). */
     val notice: StateFlow<HomeNotice?> = noticeState
+    /** Counts finished re-apply runs, locked ones included: Home retries lock-task entry after each. */
+    val runs: StateFlow<Int> = runsState
+
+    /** Keyguard first: true only while the features read back with KEYGUARD and Home is on the list. */
+    fun mayEnterLockTask(): Boolean = KeyguardFirst.mayEnterLockTask(port, home)
 
     /** Queues one re-apply; [done] runs on the dispatcher after it. */
     fun reapply(reason: String, done: () -> Unit = {}) = dispatcher.post {
@@ -121,6 +129,7 @@ class PolicyRuntime private constructor(private val context: Context) {
         }
         log(reason, outcome, SystemClock.elapsedRealtime() - started)
         BuildControl.control.afterReapply(context, dpm, admin)
+        runsState.value++
         // A locked run never opens Home: the full plan has not run yet.
         if (!locked) {
             noticeState.value = homeNotice(outcome)

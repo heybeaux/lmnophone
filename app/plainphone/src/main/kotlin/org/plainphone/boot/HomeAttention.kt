@@ -11,3 +11,10 @@ import org.plainphone.ui.home.HomeNotice
  * whether Home shows; calls stay reachable.
  */
 fun homeNotice(outcome: BootOutcome?): HomeNotice? = if (outcome?.needsAttention != false) HomeNotice.NeedsAttention else null
+
+/**
+ * The checking screen says "LMNOPhone needs attention" when an unlocked re-apply finished not ready
+ * with an attention notice, for example lock-task features that do not read back (Keyguard first):
+ * Home then stays out of lock task and cannot draw, so its own notice would never show.
+ */
+fun checkingShowsAttention(gate: HomeGate, notice: HomeNotice?): Boolean = gate == HomeGate.NOT_READY && notice != null
