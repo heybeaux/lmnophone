@@ -15,8 +15,8 @@
 #   and tap the notification.
 # reapply: kill, relaunch Home, kill again 0.15 s into the new process's start re-apply, then
 #   `am start` Settings.
-# Samples every 0.25 s for 15 s. Pass: lock task is LOCKED with Home on top by the end, and a centre
-# tap afterwards does not reach Settings. Prints how long Settings was top-resumed (the window).
+# Samples every 0.25 s for 15 s. Pass: lock task is LOCKED by the end with Home (or Android's lock-task
+# block screen) on top, and a centre tap afterwards does not reach Settings. Prints how long Settings was top-resumed (the window).
 set -euo pipefail
 variant=${1:?explicit|notification|reapply}
 out=${2:-.}
@@ -29,6 +29,7 @@ top() { sh dumpsys activity activities | sed -n 's/.*topResumedActivity=Activity
 now() { python3 -c 'import time;print(time.time())'; }
 
 : > "$out/$name.txt"
+sh cmd statusbar collapse
 sh am force-stop com.android.settings
 sh am start -n org.plainphone/.MainActivity >/dev/null 2>&1
 sleep 2
@@ -60,16 +61,17 @@ first=""; last=""
 for i in $(seq 1 60); do
     s=$(lock_state); t=$(top); el=$(python3 -c "print(round($(now)-$t0,2))")
     log "t=+${el}s lockTask=$s top=$t pid=$(sh pidof org.plainphone || true)"
-    case $t in com.android.settings/*) [ -z "$first" ] && first=$el; last=$el;; esac
+    case $t in ""|org.plainphone/*|android/com.android.internal.app.BlockedAppActivity) ;; *) [ -z "$first" ] && first=$el; last=$el;; esac
     sleep 0.25
 done
-log "settings top-resumed from +${first:-never}s to +${last:-never}s"
+log "unapproved activity top-resumed from +${first:-never}s to +${last:-never}s"
 sh input tap 540 1200; sleep 1
 s=$(lock_state); t=$(top)
 log "after centre tap: lockTask=$s top=$t"
 adb exec-out screencap -p > "$out/$name.png"
-adb logcat -d -s PlainphoneBoot | grep -E "reapply reason=|brought forward|home shown" > "$out/$name-logcat.txt" || true
+adb logcat -d | grep -E "PlainphoneBoot: (reapply reason=|lock task not running|home shown)|ActivityTaskManager: START" > "$out/$name-logcat.txt" || true
 fail=0
 [ "$s" = LOCKED ] || fail=1
-case $t in org.plainphone/*) ;; *) fail=1;; esac
+# Android's own lock-task block screen counts as contained: the unapproved app is not usable.
+case $t in org.plainphone/*|android/com.android.internal.app.BlockedAppActivity) ;; *) fail=1;; esac
 [ "$fail" = 0 ] && log "PASS $name" || { log "FAIL $name"; exit 1; }
