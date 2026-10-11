@@ -5,7 +5,7 @@ This is pre-device preparation for PLA-306. No physical phone was addressed.
 
 ## Source and artifact
 
-- Branch: `release/preview-4`; exact base `ac2d56d1d6d515ef5d0e54bb162e4ea226fe46d2`.
+- Branch: `release/preview-4`; original exact base `ac2d56d1d6d515ef5d0e54bb162e4ea226fe46d2`.
 - Build source: `354bcc109e985cb80ccb606c7fbebc072c8e3ed9`; later commits contain evidence, notes and the
   emulator check script only.
 - Feature source: `feature/home-counts-host` at `6ba747d`.
@@ -73,8 +73,9 @@ No commands addressed reserved emulators 5590, 5604 or 5742.
    [setup-preview3.txt](emulator/setup-preview3.txt) records Device Owner, Home,
    starter-list plan and LOCKED read-back.
 2. Run `app/tools/preview-4/upgrade-check.sh emulator-5860 <preview-4.apk> <out-dir>`.
-   This preparation wrapper refuses physical and reserved serials. It derives
-   from the existing preview-3 check and only opens dialers, never calls.
+   The initial wrapper was emulator-only. The round-2 replacement permits the
+   approved spare only with the sole driver's explicit opt-in, refuses other
+   physical/reserved devices, and asserts both dialer routes without calling.
 3. `install -r -t` ran at **05:29:47–05:29:48 UTC** with no uninstall, data clear,
    reset or reprovision during upgrade, and no `--restrict-permissions`.
 4. Read-back: version **3 → 4**, same Device Owner, `TEST_ONLY`, lock task
@@ -134,3 +135,20 @@ new runs of this candidate. This run adds only console missed-call/SMS events,
 not real MMS download, swipe, mark-read, retry, carrier voicemail or RCS evidence.
 D8(a) spare results and D8(b) steps remain TODO in the draft notes. Counts stay
 **in testing** until the tester supplies the required spare results.
+
+## Lead review round 2: stronger dialer gate
+
+The initial screenshots showed 911, but the initial script only printed the
+field and Telecom state. They were observations, not machine assertions.
+The corrected gate and its rerun are in [round2/](emulator/round2/).
+It requires exactly one XML digits node, exact prefill/typed text, a cleared
+field read back empty, and an empty current-call section in Telecom. Historical
+calls are excluded. Every failed command/read/tap/assert stops with `FAIL` and a
+non-zero exit; the shell wrapper preserves that result through `tee`.
+
+The notes-only `21416e8` base update was merged without rebasing pushed history.
+`git diff 354bcc1 HEAD -- app ':!app/tools'` is empty. The APK remains exactly
+`cbf8ad4a80f7cbb1a0eb3eb63b09a4f1d53e1b36de0a55e783db8fa31f4a5232`;
+no rebuild or app retest was needed. The seven tooling regression tests were
+written first and pass. The accepted app tests, installation, counts and
+large-text checks above carry forward unchanged.

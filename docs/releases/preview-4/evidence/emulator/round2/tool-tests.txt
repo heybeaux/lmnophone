@@ -1,0 +1,25 @@
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: read exactly one Telecom current-call section
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+.PASS: read exactly one dial field
+PASS: read exactly one dial field
+.PASS: dial field empty (raw text='')
+PASS: dial field empty (raw text='Phone Number')
+....PASS: owned emulator serial
+PASS: spare requires sole-driver opt-in
+PASS: negative control is emulator-only
+PASS: spare requires sole-driver opt-in
+PASS: owned emulator serial
+PASS: owned emulator serial
+PASS: EXPECT_DIAL requires emulator self-test opt-in
+PASS: negative control expects only 912; typed digits stay 911
+.
+----------------------------------------------------------------------
+Ran 7 tests in 0.184s
+
+OK
