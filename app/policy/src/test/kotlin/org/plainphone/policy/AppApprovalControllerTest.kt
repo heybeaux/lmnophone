@@ -83,6 +83,7 @@ class AppApprovalControllerTest {
         listOf(FloorIdentity(dialer, FloorRole.SYSTEM_DIALER, IdentitySource.OS_MANAGED)), inventory,
         installedIdentities = listOf(binding))
     private var inputAvailable = true
+    private var pla313InputThrows = false
     private var battery = BatteryState(50, false)
     private var permissionReadback = mapOf(camera to PermissionReadback.GRANTED)
     private var hidden = true
@@ -158,7 +159,7 @@ class AppApprovalControllerTest {
     }
     private var id = 0
     private fun controller() = AppApprovalController(store, { credentials }, vault, sessions, clock,
-        { policy.takeIf { inputAvailable } }, { manifest }, { battery }, effects, AppApprovalIdSource { "approval-${++id}" })
+        { if (pla313InputThrows) error("facts unavailable"); policy.takeIf { inputAvailable } }, { manifest }, { battery }, effects, AppApprovalIdSource { "approval-${++id}" })
     private var controller = controller()
     private lateinit var play: PlaySessionState
     private fun setup() {
@@ -1316,6 +1317,165 @@ class AppApprovalControllerTest {
             f.battery = BatteryState(50, false)
             assertEquals(if (edit) AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.APPROVED, f.controller.resume())
             assertTrue(extra in f.appliedLockTask && extra in f.appliedHome)
+        }
+    }
+
+
+    @Test fun pla313ThrowingFactsMustStillContain() {
+        val skipped = mutableListOf<Boolean>()
+        for (restart in listOf(false, true)) {
+            val f = AppApprovalControllerTest(); f.failedActivationAndContainment(false)
+            f.pla313InputThrows = true
+            val result = if (restart) f.controller().onStart() else f.controller.resume()
+            assertEquals(AppApprovalOutcome.NOT_READY, result)
+            println("throwing facts restart=$restart hidden=${f.hidden} lock=${f.app in f.appliedLockTask} home=${f.app in f.appliedHome} containment=${f.containmentRequests}")
+            if (f.containmentRequests.isEmpty()) skipped += restart
+        }
+        assertTrue(skipped.isEmpty(), "facts exception skipped containment: restart=$skipped")
+    }
+
+    @Test fun pla313WithdrawalMustNotDropPendingContainment() {
+        failedActivationAndContainment(false)
+        val r = assertNotNull(controller.prepareWithdrawal(person)); val a = withdrawalAuth(r)
+        inputAvailable = false
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.withdrawPending(r, r.approvalId, a))
+        assertEquals(AppApprovalPhase.WITHDRAWING, state!!.pending!!.phase)
+        println("withdrawal hidden=$hidden lock=${app in appliedLockTask} home=${app in appliedHome} containment=$containmentRequests")
+        inputAvailable = true; failure = "revoke"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller().onStart())
+        println("withdrawal restart hidden=$hidden lock=${app in appliedLockTask} home=${app in appliedHome} containment=$containmentRequests")
+        assertFalse(app in appliedLockTask, "withdrawal must preserve pending containment across missing facts and restart")
+    }
+
+    @Test fun `editing hide failure still attempts independent containment on edit retry and start`() {
+        val failures = mutableListOf<String>()
+        for (entry in listOf("edit", "retry", "start")) for (throwing in listOf(false, true)) {
+            val f = AppApprovalControllerTest(); val action = f.windowAction(true)
+            f.failure = "hide"
+            f.atEvent = { if (it == "hide" && throwing) error("hide unavailable") }
+            val first = runCatching { action() }
+            if (entry != "edit") {
+                f.hidden = false; f.appliedLockTask += f.app; f.appliedHome += f.app
+                f.events.clear(); f.containmentRequests.clear()
+            }
+            val result = when (entry) {
+                "retry" -> runCatching { f.controller.resume() }
+                "start" -> runCatching { f.controller().onStart() }
+                else -> first
+            }
+            try {
+                assertEquals(AppApprovalOutcome.NOT_READY, result.getOrNull())
+                assertEquals(AppApprovalPhase.EDITING, f.state!!.pending!!.phase)
+                assertTrue(f.containmentRequests.isNotEmpty())
+                assertFalse(f.app in f.appliedLockTask || f.app in f.appliedHome)
+            } catch (e: AssertionError) { failures += "$entry throwing=$throwing: ${e.message}" }
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    // Private recovery seams are invoked to exercise their own entry guard, independently of resume.
+    private fun recoverySeam(name: String): AppApprovalOutcome {
+        val method = AppApprovalController::class.java.getDeclaredMethod(name,
+            AppApprovalState::class.java, AppApprovalOperation::class.java)
+        method.isAccessible = true
+        return method.invoke(controller, state!!, state!!.pending!!) as AppApprovalOutcome
+    }
+
+    @Test fun `pending target containment matrix across entries phases and failed recovery gates`() {
+        val failures = mutableListOf<String>()
+        var cases = 0
+        for (entry in listOf("resume", "finishPermissionEdit", "onStart", "withdraw"))
+            for (phase in listOf(AppApprovalPhase.COMMITTED, AppApprovalPhase.EDITING, AppApprovalPhase.WITHDRAWING))
+                for (fault in listOf("facts-null", "facts-throw", "hide", "revoke", "plan", "battery")) {
+                    val f = AppApprovalControllerTest(); f.failedActivationAndContainment(true)
+                    val op = f.state!!.pending!!
+                    val receipt = AppApprovalReceipt("matrix-withdraw", f.person, mapOf(f.person to 0L),
+                        AppApprovalReceiptKind.WITHDRAWN, op.record.id)
+                    f.state = f.state!!.replacing(pending = AppApprovalOperation(op.record, op.receipt, phase,
+                        receipt.takeIf { phase == AppApprovalPhase.WITHDRAWING }))
+                    val extra = f.addUnrelatedApprovedApp()
+                    val request = if (entry == "withdraw" && phase != AppApprovalPhase.WITHDRAWING)
+                        assertNotNull(f.controller.prepareWithdrawal(f.person)) else null
+                    val auth = request?.let { f.withdrawalAuth(it) }
+                    when (fault) {
+                        "facts-null" -> f.inputAvailable = false
+                        "facts-throw" -> f.pla313InputThrows = true
+                        "hide" -> f.failure = "hide"
+                        "revoke" -> f.failure = "revoke"
+                        "plan" -> f.policy = f.policy.copy(lockedBoot = true)
+                        "battery" -> f.battery = BatteryState(4, false)
+                    }
+                    // A non-sticking target hide is part of containment in every phase.
+                    // The fake still removes independent lock-task/Home access before reporting failure.
+                    if (fault == "hide") f.atEvent = { if (it == "contain-readback") f.failure = "contain-readback" }
+                    val receipts = f.state!!.receipts
+                    f.events.clear(); f.containmentRequests.clear()
+                    val result = runCatching {
+                        when (entry) {
+                            "onStart" -> f.controller().onStart()
+                            "finishPermissionEdit" -> f.recoverySeam("finishPermissionEdit")
+                            "withdraw" -> if (request != null) f.controller.withdrawPending(request, request.approvalId, auth!!)
+                                else f.recoverySeam("finishWithdrawal") // already-authorized durable withdrawal
+                            else -> f.controller.resume()
+                        }
+                    }
+                    try {
+                        assertTrue(result.getOrNull() in setOf(AppApprovalOutcome.NOT_READY, AppApprovalOutcome.LOW_BATTERY))
+                        assertEquals("contain", f.events.firstOrNull())
+                        assertTrue(f.containmentRequests.isNotEmpty())
+                        assertTrue(f.containmentRequests.all { it == setOf(f.app) })
+                        assertNotNull(f.state!!.pending)
+                        assertEquals(receipts, f.state!!.receipts)
+                        assertTrue(extra in f.appliedLockTask && extra in f.appliedHome)
+                        assertTrue(extra in f.state!!.apps)
+                    } catch (e: AssertionError) { failures += "$entry/$phase/$fault: ${e.message}" }
+                    cases++
+                }
+        assertEquals(72, cases)
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    private fun addUnrelatedApprovedApp(): PackageName {
+        val extra = PackageName("test.unrelated")
+        val identity = ApprovalBinding(extra, setOf(signer))
+        val extraManifest = PermissionManifest(identity, 1, "build", emptyList())
+        val record = AppApprovalRecord("unrelated-approval", PermissionSelection(extraManifest, emptyMap()))
+        state = state!!.replacing(apps = state!!.apps + (extra to record))
+        policy = policy.copy(installed = policy.installed + InstalledPackage(extra, false, 1),
+            installedIdentities = policy.installedIdentities + identity)
+        appliedLockTask += extra; appliedHome += extra
+        return extra
+    }
+
+    @Test fun `withdrawn edit restores approved access only after verified completion`() {
+        for (fault in listOf("facts", "session", "battery", "permissions", "readback", "save")) {
+            val f = AppApprovalControllerTest(); f.failedActivationAndContainment(true)
+            val r = assertNotNull(f.controller.prepareWithdrawal(f.person)); val a = f.withdrawalAuth(r)
+            when (fault) {
+                "facts" -> f.inputAvailable = false
+                "session" -> f.failure = "revoke"
+                "battery" -> f.battery = BatteryState(4, false)
+                "permissions" -> f.actualPermissions = emptyMap()
+                "readback" -> f.failure = "policy-readback"
+                "save" -> f.failure = "save-finished"
+            }
+            val result = f.controller.withdrawPending(r, r.approvalId, a)
+            assertTrue(result in setOf(AppApprovalOutcome.NOT_READY, AppApprovalOutcome.LOW_BATTERY), fault)
+            assertNotNull(f.state!!.pending); assertTrue(f.hidden)
+            assertFalse(f.app in f.appliedLockTask || f.app in f.appliedHome, fault)
+            f.inputAvailable = true; f.failure = null; f.battery = BatteryState(50, false)
+            f.actualPermissions = f.state!!.pending!!.record.permissions.writes.associate {
+                it.permission to if (it.choice == PermissionChoice.ALLOW) PermissionReadback.GRANTED else PermissionReadback.DENIED
+            }
+            // A session failure before the withdrawal intent saves needs fresh withdrawal authority.
+            if (f.state!!.pending!!.phase != AppApprovalPhase.WITHDRAWING) {
+                val retry = assertNotNull(f.controller.prepareWithdrawal(f.person))
+                assertEquals(AppApprovalOutcome.WITHDRAWN, f.controller.withdrawPending(retry, retry.approvalId, f.withdrawalAuth(retry)))
+            } else assertEquals(AppApprovalOutcome.WITHDRAWN, f.controller().onStart())
+            assertNull(f.state!!.pending); assertTrue(f.app in f.state!!.apps)
+            assertFalse(f.hidden); assertTrue(f.app in f.appliedLockTask && f.app in f.appliedHome)
+            assertEquals(AppApprovalReceiptKind.WITHDRAWN, f.state!!.receipts.last().kind)
+            assertFalse(f.app in f.state!!.removedApps)
         }
     }
 
