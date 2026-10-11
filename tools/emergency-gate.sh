@@ -95,62 +95,160 @@ gate_apk() {
 sha() { shasum -a 256 "$1" | cut -d' ' -f1; }
 
 # ---- device state the cleanup must undo ----
-NUMBER_ADDED=0; PIN_SET=0; HOLD_ON=0; KILL_ON=0; CLEANED=0
+# A flag is cleared only when its state is read back as restored, so the EXIT cleanup tries again.
+NUMBER_ADDED=0; PIN_SET=0; HOLD_ON=0; KILL_ON=0; CLEANED=0; RESTORED=0
 
 call_state() { sh_ dumpsys telephony.registry | grep -m1 -o 'mCallState=[0-9]' | cut -d= -f2; }
 
-# Ends any live call through the gate's hang-up (KEYCODE_ENDCALL does not end an emergency call).
-# The emulated modem keeps a call through an Android reboot, so nothing goes on until this succeeds.
-# Idle must hold: on API 36 a call read idle once, then came back (mCallState=2) a moment later.
-idle_stable() {
-    for _ in 1 2 3 4 5 6; do [ "$(call_state)" = 0 ] || return 1; sleep 0.5; done
-}
-hang_up() {
-    for _ in 1 2 3; do
-        idle_stable && return 0
-        instrument -e check hangup >/dev/null
-    done
-    idle_stable
+# Telecom's own call list (CallsManager `mCalls:`, not the history below it): "none live", "N live" (any
+# entry that is not DISCONNECTED) or "unreadable" (a failed dump or no mCalls section is never empty).
+telecom_calls() {
+    local out
+    out="$(sh_ dumpsys telecom)" || { echo unreadable; return; }
+    echo "$out" | awk '
+        !found && /^[ \t]*mCalls:[ \t]*$/ { found = 1; match($0, /^[ \t]*/); ind = RLENGTH; next }
+        found && !done {
+            if ($0 ~ /^[ \t]*$/) next
+            match($0, /^[ \t]*/); if (RLENGTH <= ind) { done = 1; next }
+            if ($0 !~ /state=DISCONNECTED/) live++
+        }
+        END { if (!found) print "unreadable"; else if (live) print live " live"; else print "none live" }'
 }
 
-# Before any check that can reach a dialer or a call: idle, or the whole matrix stops.
-guard_idle() {
-    [ "$(call_state)" = 0 ] && return 0
-    log "a call is live before $1; ending it"
-    hang_up && return 0
-    echo "GATE $1 ERROR a call is live and could not be ended (mCallState=$(call_state)); stopping the matrix"
+# The emulated modem's own call list (`adb emu gsm list`, the emulator console): "empty", "N listed", or
+# "unreadable" (a failed command or no console OK is never empty).
+modem_calls() {
+    local out n
+    out="$(a emu gsm list 2>&1 | tr -d '\r')" || { echo unreadable; return; }
+    echo "$out" | grep -qx 'OK' || { echo unreadable; return; }
+    n="$(echo "$out" | grep -cEv '^[[:space:]]*(OK)?[[:space:]]*$')"
+    if [ "$n" = 0 ]; then echo empty; else echo "$n listed"; fi
+}
+
+# When a call counts as ended (PLA-296 R2), the observation that bounds it: six mCallState reads 0.5 s
+# apart are all 0 (a 3 s hold: on API 36 a call read idle once, then came back), then Telecom's mCalls list
+# holds no live call and the modem's call list is empty, then mCallState is still 0 after both. That is an
+# observation over about 3.5 s, not proof that the modem never brings a call back later. The gate makes it
+# before every call-capable check, after the test call, and twice at cleanup (before and after the rest of
+# the cleanup), and a call seen after a full hold stops the run (exit 4). Sets CALL_EVIDENCE, and
+# CALL_RETURNED=1 when the hold passed but the read after it was not idle.
+CALL_EVIDENCE=""; CALL_RETURNED=0
+call_ended() {
+    local i st tel modem
+    CALL_RETURNED=0
+    for i in 1 2 3 4 5 6; do
+        st="$(call_state)"
+        if [ "$st" != 0 ]; then CALL_EVIDENCE="mCallState=${st:-unreadable} on hold read $i"; return 1; fi
+        sleep 0.5
+    done
+    tel="$(telecom_calls)"
+    modem="$(modem_calls)"
+    st="$(call_state)"
+    CALL_EVIDENCE="mCallState=0 held 3 s, Telecom mCalls $tel, modem call list $modem, mCallState=${st:-unreadable} after both"
+    [ "$st" = 0 ] || CALL_RETURNED=1
+    [ "$tel" = "none live" ] && [ "$modem" = empty ] && [ "$st" = 0 ]
+}
+
+# Ends any live call through the gate's hang-up (KEYCODE_ENDCALL does not end an emergency call).
+# The emulated modem keeps a call through an Android reboot, so nothing goes on until this succeeds.
+# Returns 0 when call_ended passes; 2 when the call came back after a full hold (never retried into a
+# success); 1 when it could not be ended.
+hang_up() {
+    local n
+    for n in 1 2 3; do
+        call_ended && return 0
+        [ "$CALL_RETURNED" = 1 ] && return 2
+        log "ending the call (attempt $n): $CALL_EVIDENCE"
+        instrument -e check hangup >/dev/null
+    done
+    call_ended && return 0
+    [ "$CALL_RETURNED" = 1 ] && return 2
+    return 1
+}
+
+# Prints the GATE ERROR line and stops the whole matrix; the cleanup ends any call and undoes the set-up.
+stop() {
+    echo "GATE $1 ERROR $2; stopping the matrix"
+    log "$1: $2; stopping the matrix"
     exit 4
 }
 
-number_listed() { sh_ su 0 cmd phone emergency-number-test-mode -p | tr '[], ' '\n\n\n\n' | grep -qx "$NUMBER"; }
+# Before any check that can reach a dialer or a call: the full end-of-call check, not one read. A call
+# that is live or unconfirmed here came back after it was ended (or was never ended): the run stops.
+guard_idle() {
+    call_ended || stop "$1" "a call is live or unconfirmed before $1 ($CALL_EVIDENCE)"
+}
+
+# The test number's state (PLA-296 R3): "listed", "absent", or "unknown (...)". A failed `-p` read and an
+# empty or unrecognised one are unknown, never absence.
+number_state() {
+    local out rc
+    out="$(sh_ su 0 cmd phone emergency-number-test-mode -p 2>&1)"; rc=$?
+    [ "$rc" = 0 ] || { echo "unknown (read failed, exit $rc)"; return; }
+    case "$out" in
+        \[*\]) ;;
+        *) echo "unknown (unrecognised read '$(echo "$out" | head -1 | cut -c1-60)')"; return ;;
+    esac
+    if echo "$out" | tr '[], ' '\n\n\n\n' | grep -qx "$NUMBER"; then echo listed; else echo absent; fi
+}
 
 # Runs in a command substitution: the caller sets NUMBER_ADDED first so the cleanup always clears it.
 register_number() {
-    local out
+    local out st
     out="$(sh_ su 0 cmd phone emergency-number-test-mode -a "$NUMBER" 2>&1)" || { echo "registration command failed: $out"; return 1; }
-    number_listed || { echo "$NUMBER is not in the test-mode list after registration"; return 1; }
+    st="$(number_state)"
+    [ "$st" = listed ] || { echo "$NUMBER is not in the test-mode list after registration ($st)"; return 1; }
 }
 
-# The list updates asynchronously (API 36 still listed it right after -c): poll for up to 10 s.
+# The list updates asynchronously (API 36 still listed it right after -c): poll for up to 10 s. Only a
+# confirmed absence clears the flag; a failed clear or an unknown read keeps it.
 clear_number() {
-    sh_ su 0 cmd phone emergency-number-test-mode -c >/dev/null 2>&1
+    local out st
+    out="$(sh_ su 0 cmd phone emergency-number-test-mode -c 2>&1)" || { log "the test number clear failed: $out"; return 1; }
     for _ in $(seq 1 20); do
-        if ! number_listed; then NUMBER_ADDED=0; return 0; fi
+        st="$(number_state)"
+        if [ "$st" = absent ]; then NUMBER_ADDED=0; return 0; fi
         sleep 0.5
     done
-    log "test number $NUMBER is still registered"; return 1
+    log "test number $NUMBER is not confirmed removed: $st"; return 1
+}
+
+# The lock-screen credential: "set", "cleared", or "unknown (...)" (a failed or empty read).
+pin_state() {
+    local out rc
+    out="$(sh_ locksettings get-disabled 2>&1)"; rc=$?
+    [ "$rc" = 0 ] || { echo "unknown (read failed, exit $rc)"; return; }
+    case "$out" in
+        true) echo cleared ;; false) echo set ;;
+        *) echo "unknown (unrecognised read '$(echo "$out" | head -1 | cut -c1-60)')" ;;
+    esac
 }
 
 set_pin() {
     sh_ locksettings set-pin "$PIN" >/dev/null 2>&1
     PIN_SET=1
-    [ "$(sh_ locksettings get-disabled)" = false ]
+    [ "$(pin_state)" = set ]
 }
 
+# The clear's own result is not trusted either way: the read-back decides.
 clear_pin() {
+    local st
     sh_ locksettings clear --old "$PIN" >/dev/null 2>&1
-    [ "$(sh_ locksettings get-disabled)" = true ] || return 1
+    st="$(pin_state)"
+    [ "$st" = cleared ] || { log "the PIN is not confirmed cleared: $st"; return 1; }
     PIN_SET=0
+}
+
+# Plainphone's Device Owner: "ours", "absent", or "unknown (...)" (a failed, empty or unrecognised read).
+owner_state() {
+    local out rc
+    out="$(sh_ dpm list-owners 2>&1)"; rc=$?
+    [ "$rc" = 0 ] || { echo "unknown (read failed, exit $rc)"; return; }
+    case "$out" in
+        *org.plainphone/*) echo ours ;;
+        "no owners") echo absent ;;
+        *) echo "unknown (unrecognised read '$(echo "$out" | head -1 | cut -c1-60)')" ;;
+    esac
 }
 
 hold() {
@@ -172,23 +270,47 @@ stop_kill_loop() {
     sleep 1
 }
 
-# Undoes everything the gate set up, checks each step, and stops with 4 if any of it is unconfirmed.
+# Undoes everything the gate set up and confirms it by read-back (PLA-296 R2, R3): the call by the full
+# end-of-call check before and after the rest of the cleanup, and the test number, the PIN and the Device
+# Owner by a successful read that shows them gone. A failed command, a failed read and an empty or
+# unrecognised read are unknown, never restored. Returns 1 unless every part is confirmed.
+restore() {
+    local ok=1 r calls num pin own
+    [ "$KILL_ON" = 1 ] && stop_kill_loop
+    hang_up; r=$?
+    if [ "$r" = 2 ]; then
+        ok=0; log "cleanup: the call came back after it read ended ($CALL_EVIDENCE); ending it"
+        hang_up || log "cleanup: the call is still live or unconfirmed ($CALL_EVIDENCE)"
+    elif [ "$r" != 0 ]; then
+        ok=0; log "cleanup: a call is still live or unconfirmed ($CALL_EVIDENCE)"
+    fi
+    if [ "$NUMBER_ADDED" = 1 ] && ! clear_number; then ok=0; fi
+    [ "$HOLD_ON" = 1 ] && hold false
+    if [ "$PIN_SET" = 1 ] && ! clear_pin; then ok=0; fi
+    own="$(owner_state)"
+    if [ "$own" = ours ]; then sh_ dpm remove-active-admin "$ADMIN" >/dev/null 2>&1; own="$(owner_state)"; fi
+    [ "$own" = absent ] || { ok=0; log "cleanup: the Device Owner is not confirmed removed: $own"; }
+    # The final read-back. The call check runs last, so a call back during the cleanup is never certified.
+    num="$(number_state)"; [ "$num" = absent ] || ok=0
+    pin="$(pin_state)"; [ "$pin" = cleared ] || ok=0
+    if call_ended; then calls="$CALL_EVIDENCE"; else
+        calls="$CALL_EVIDENCE"; ok=0; log "cleanup: the final end-of-call check failed ($calls); ending the call"
+        hang_up >/dev/null || log "cleanup: the call is still live or unconfirmed ($CALL_EVIDENCE)"
+    fi
+    log "cleanup ok=$ok: call: $calls; test number $NUMBER: $num; PIN: $pin; Device Owner: $own"
+    [ -n "$OUT" ] && [ -d "$OUT" ] && echo "# cleanup ok=$ok call: $calls; test number $NUMBER: $num; PIN: $pin; Device Owner: $own" >> "$OUT/cleanup.txt"
+    [ "$ok" = 1 ]
+}
+
+# The EXIT trap: a run that stops early (or a confirmed run whose restore failed) cleans up here. Any
+# unconfirmed part forces exit 4.
 cleanup() {
-    local rc=$? ok=1 state
+    local rc=$?
     [ "$CLEANED" = 1 ] && return
     CLEANED=1
     trap - EXIT INT TERM
-    [ "$KILL_ON" = 1 ] && stop_kill_loop
-    if ! hang_up; then ok=0; log "cleanup: a call is still live (mCallState=$(call_state))"; fi
-    if [ "$NUMBER_ADDED" = 1 ] && ! clear_number; then ok=0; fi
-    [ "$HOLD_ON" = 1 ] && hold false
-    if [ "$PIN_SET" = 1 ] && ! clear_pin; then ok=0; log "cleanup: the PIN could not be cleared"; fi
-    if sh_ dpm list-owners | grep -q "org.plainphone/"; then sh_ dpm remove-active-admin "$ADMIN" >/dev/null 2>&1; fi
-    sh_ dpm list-owners | grep -q "org.plainphone/" && { ok=0; log "cleanup: the Device Owner is still set"; }
-    state="mCallState=$(call_state) testNumbers=$(sh_ su 0 cmd phone emergency-number-test-mode -p) pinDisabled=$(sh_ locksettings get-disabled) owners=$(sh_ dpm list-owners | tr '\n' ' ')"
-    log "cleanup: $state"
-    [ -n "$OUT" ] && [ -d "$OUT" ] && echo "# cleanup ok=$ok $state" >> "$OUT/cleanup.txt"
-    if [ "$ok" = 0 ]; then log "cleanup could not be confirmed: check the emulator by hand"; exit 4; fi
+    [ "$RESTORED" = 1 ] && exit "$rc"
+    if ! restore; then log "cleanup could not be confirmed: check the emulator by hand"; exit 4; fi
     exit "$rc"
 }
 trap cleanup EXIT
@@ -304,9 +426,14 @@ run_build() {
     else
         echo "GATE telecom-emergency-call ERROR not dialed: $detail"
     fi
-    hang_up || { echo "GATE telecom-emergency-call ERROR the test call is still live (mCallState=$(call_state)); stopping the matrix"; exit 4; }
-    echo "# after telecom-emergency-call: mCallState=$(call_state)"
-    clear_number || { echo "GATE telecom-emergency-call ERROR could not remove the test number; stopping the matrix"; exit 4; }
+    hang_up
+    case $? in
+        0) ;;
+        2) stop telecom-emergency-call "the test call came back after it read ended ($CALL_EVIDENCE)" ;;
+        *) stop telecom-emergency-call "the test call is still live or unconfirmed ($CALL_EVIDENCE)" ;;
+    esac
+    echo "# after telecom-emergency-call: $CALL_EVIDENCE"
+    clear_number || stop telecom-emergency-call "could not confirm the test number removed"
 
     if [ "$QUICK" = 0 ]; then
         if set_pin; then
@@ -361,6 +488,11 @@ echo "Emergency gate, $RUN_LABEL, on $SERIAL: $FINGERPRINT, API $API, commit $CO
 echo "Debug builds keep adb; the release artifact is not tested here (DISALLOW_DEBUGGING_FEATURES ends adb)."
 # Not in a pipeline: run_build must run in this shell so its exit 4 stops the run and the cleanup sees its state.
 for b in $BUILDS; do run_build "$b" > "$OUT/$b.txt"; cat "$OUT/$b.txt" >&2; done
+# Undo and confirm the set-up before any result, so a call back during the cleanup is never certified.
+if restore; then RESTORED=1; else
+    echo "RESULT STOPPED: cleanup could not be confirmed (a call, the test number, the PIN or the Device Owner); see $OUT/cleanup.txt"
+    exit 4
+fi
 
 echo
 printf '%-24s' "check"; for b in $BUILDS; do printf '%-22s' "$b"; done; echo
