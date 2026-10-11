@@ -6,6 +6,7 @@ import java.security.MessageDigest
 import org.plainphone.core.CertDigest
 import org.plainphone.core.PackageName
 import org.plainphone.device.PackageFactsSource
+import org.plainphone.device.ReapplyTimings
 import org.plainphone.links.PackageFacts
 import org.plainphone.policy.ApprovalBinding
 import org.plainphone.policy.InstalledPackage
@@ -50,16 +51,23 @@ data class LivePackages(
  * fails closed on such duplicates, so contradicting facts confer neither system identity nor an
  * approval match. Its [PackageFacts] is not system and has no signers.
  */
-class LivePackageReader(private val port: PackageSystemPort) : PackageFactsSource {
+class LivePackageReader(
+    private val port: PackageSystemPort,
+    private val timings: ReapplyTimings = ReapplyTimings(),
+) : PackageFactsSource {
     override fun installedPackages(): List<PackageFacts> = read().facts
 
     fun read(between: () -> Unit = {}): LivePackages {
-        val first = port.packages().map(::fact)
-        val http = port.browsableHandlers(PROBE_HTTP)
-        val https = port.browsableHandlers(PROBE_HTTPS)
+        val first = timings.measure("livePackages.snapshot1") { port.packages().map(::fact) }
+        val (http, https) = timings.measure("livePackages.probes") {
+            port.browsableHandlers(PROBE_HTTP) to port.browsableHandlers(PROBE_HTTPS)
+        }
         between()
-        val second = port.packages().map(::fact)
+        val second = timings.measure("livePackages.snapshot2") { port.packages().map(::fact) }
+        return timings.measure("livePackages.merge") { merge(first, second, http, https) }
+    }
 
+    private fun merge(first: List<Fact>, second: List<Fact>, http: Set<String>, https: Set<String>): LivePackages {
         val byName = LinkedHashMap<String, MutableList<Fact>>()
         for (f in first + second) byName.getOrPut(f.name) { mutableListOf() }.let { if (f !in it) it += f }
 

@@ -50,7 +50,7 @@ class Preview2Device(private val context: Context) {
         lateinit var floor: FloorRead
         val port = AndroidPackageSystemPort(context)
         val read = timings.measure("livePackages") {
-            LivePackageReader(port).read {
+            LivePackageReader(port, timings).read {
                 floor = timings.measure("floorIdentities") { FloorIdentityReader(port).read() }
             }
         }
