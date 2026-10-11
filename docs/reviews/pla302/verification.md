@@ -75,6 +75,9 @@ the root content tool on the owned emulator; no app permission is widened.
   confirms the excluded rows exist and stay unread; neither query counts them.
   Excluded rows have no SMS address, so they cannot exercise the emergency-number
   exception. No emergency-number data or calls were used.
+- The MMS delete route also filters excluded subscriptions. Cleanup now returns
+  each created row to the included subscription, deletes it and verifies its
+  ID is absent from storage. Preliminary leftovers were removed the same way.
 - A test-only `_id` predicate on the combined route raised SQLiteException.
   Removed that predicate: the test now measures the exact production query's
   cumulative total and uses ID selection only for the per-table fixture oracle.
