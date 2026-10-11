@@ -35,7 +35,8 @@ class CommunicationCountsScreenshotTest(private val scale: Float) {
     }
     @Test fun settings() {
         listOf(PhoneSettingsUiState(), PhoneSettingsUiState(showCommunicationCounts = true),
-            PhoneSettingsUiState(true, missedCallsUnavailable = true, unreadTextsUnavailable = true))
+            PhoneSettingsUiState(true, missedCallsUnavailable = true, unreadTextsUnavailable = true),
+            PhoneSettingsUiState(true, unsupportedApps = true))
             .forEachIndexed { index, state ->
                 paparazzi.snapshot(name = "settings_$index") {
                     PlainphoneTheme { HomeTestFrame { PhoneSettingsScreen(state, {}) } }

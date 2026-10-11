@@ -103,16 +103,17 @@ class CommunicationCountsTest {
         compose.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(scale.value)) {
                 PlainphoneTheme { Box(Modifier.size(360.dp, 560.dp)) {
-                    PhoneSettingsScreen(PhoneSettingsUiState(true, true, true), {})
+                    PhoneSettingsScreen(PhoneSettingsUiState(true, true, true, unsupportedApps = true), {})
                 } }
             }
         }
         listOf(1f, 1.3f, 1.5f, 1.8f, 2f).forEach { value ->
             compose.runOnIdle { scale.value = value }
             listOf("Show missed calls and unread texts on Home",
-                "Counts texts and picture messages. Chat messages (RCS) and other apps are not counted.",
+                "Counts texts and picture messages. Chat (RCS) messages and other apps aren't supported, so they may be missing from the number.",
                 "LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say.",
-                "LMNOPhone can't read missed calls right now", "LMNOPhone can't read unread texts right now")
+                "LMNOPhone can't read missed calls right now", "LMNOPhone can't read unread texts right now",
+                "Counts work only with the phone's standard Phone and Messages apps.")
                 .forEach { label ->
                     val node = compose.onNodeWithText(label, useUnmergedTree = true)
                     node.performScrollTo().assertIsDisplayed()
