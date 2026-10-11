@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -82,5 +81,4 @@ private fun MenuRow(title: String, description: String, spokenText: String? = nu
         Text("›", style = PlainphoneType.Row.copy(color = PlainphoneColors.Ink3),
             modifier = Modifier.clearAndSetSemantics {})
     }
-    HorizontalDivider(color = PlainphoneColors.Fill2, thickness = 1.dp)
 }
