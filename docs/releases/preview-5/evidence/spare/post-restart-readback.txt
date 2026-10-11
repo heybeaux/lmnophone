@@ -1,0 +1,11 @@
+post-restart readback 2026-10-11T16:42:54Z device=<spare>
+versionCode=5 minSdk=30 targetSdk=36
+versionName=0.1.0-preview-5
+firstInstallTime=2026-10-09 10:26:07
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+topResumedActivity=ActivityRecord{2f53bae u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED
+font_scale=1.0
+count switch: <boolean name="show_communication_counts" value="true" />
+10-11 09:42:07.474reapply reason=package:PACKAGE_
+10-11 09:42:07.531home shown lockTask=1 at=51849

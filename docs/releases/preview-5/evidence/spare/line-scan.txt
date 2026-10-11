@@ -1,0 +1,7 @@
+Horizontal-line scan: rows y=130..2249 (status/nav bars excluded); a pixel counts if luminance < 250 (white=255); report runs >= 100 px contiguous. Grouped as (y_first, y_last, x_min, x_max).
+more-1.0.png [(218, 220, 60, 217), (1462, 1464, 352, 729)]
+more-2.0-after-scroll.png [(239, 243, 60, 323), (2031, 2035, 225, 855)]
+more-2.0.png [(239, 243, 60, 323), (2031, 2035, 225, 855)]
+home-1.0.png []
+home-2.0.png []
+phone-settings-1.0.png [(218, 220, 60, 197), (346, 347, 903, 1007), (408, 409, 903, 1007)]

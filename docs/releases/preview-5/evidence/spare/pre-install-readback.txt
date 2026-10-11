@@ -1,0 +1,12 @@
+pre-install readback 2026-10-11T16:30:17Z device=<spare> (moto g power 5G 2024, XT2415-1, Android 15)
+versionCode=4 minSdk=30 targetSdk=36
+versionName=0.1.0-preview-4
+flags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ]
+lastUpdateTime=2026-10-11 01:39:29
+pkgFlags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ]
+firstInstallTime=2026-10-09 10:26:07
+1 owner:
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+mLockTaskModeState=LOCKED
+font_scale=1.0
+count switch: <boolean name="show_communication_counts" value="true" />
