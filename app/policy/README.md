@@ -15,6 +15,23 @@ Application order is revoke journal, restrictions, floor, never-hide guard, hide
 
 Session access comes from `SessionController.access()` with a fresh boot reading. The engine validates the deadline and exact Play/inventoried Settings package set; expired, rebooted, corrupt-policy and locked-boot inputs add no session access. Hashing, persistence, and actual Android readback remain separate adapters.
 
+Minimum/inherited UI names leave the lock-task list only when lane D supplies fresh
+`confirmedAbsentPackages` evidence for the managed user. Missing facts, unreadable
+queries and null UIDs do not establish absence; hidden/disabled installed members
+remain installed. Positive installed evidence wins contradictions. Absence never
+removes never-hide protection or the repair obligations. The default empty evidence
+preserves existing behavior until the device adapter supplies verified facts.
+
+After an install, only a fresh policy pass with a matching inventory restores a
+dropped minimum-UI name; constructing/applying/reading a plan does not make later
+installs mutate that plan. A stale inventory on an unknown build cannot add it back.
+Before opening a permission window, the adapter must apply/read back the reduced
+list and resolve every remaining applied UID with the unchanged strict gate. It
+must close/revoke the window before applying a new policy that restores UI. See
+`docs/mvp/lanes.md` for the fact-collection and serialization contract. The install
+timing tests use a JVM contract model with distinct synthetic UIDs, not Android or
+the real device adapter; integration and shared-UID checks remain lane D work.
+
 ## Verification
 
 Core tests precede implementation in git history. Policy tests similarly ran red before implementation. Tests cover base tasks 4.2, 4.11 and the decision portion of 4.13: inventory/floor precedence, spoofed identities, every destructive guard operation, emergency UI membership, known/unknown/corrupt policy, changed packages, apply/readback order, locked boot, reapproval, and deterministic output. Device behavior and emergency release gates are not claimed by JVM tests.

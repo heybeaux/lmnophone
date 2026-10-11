@@ -56,12 +56,17 @@ object PolicyEngine {
         })
         // The last stored minimum UI may retain inherited membership after an OTA.
         // It does not add entries on an unknown build or enable stale inventory effects.
+        // Only positive absence evidence may remove minimum/inherited UI. Missing reads and
+        // disabled packages are not absence; any installed fact wins a contradictory report.
+        // This changes UI membership only: never-hide and repair obligations remain intact.
+        val absentUi = (input.inventory?.minimumUi.orEmpty() + input.previousLockTask)
+            .intersect(input.confirmedAbsentPackages) - input.installed.map { it.name }.toSet() - input.plainphone
         val ui = immutableSet(when {
             input.lockedBoot -> input.previousLockTask + floor.emergencyUi
             baseline -> setOf(input.plainphone, input.messages) + floor.emergencyUi + inventory?.minimumUi.orEmpty()
             unknown -> input.previousLockTask + floor.emergencyUi
             else -> setOf(input.plainphone) + approved + floor.emergencyUi + inventory.minimumUi
-        }.plus(input.plainphone).plus(session) - hidden - (invalidApprovals - floor.emergencyUi - input.inventory?.minimumUi.orEmpty() - input.plainphone - input.messages))
+        }.plus(input.plainphone).plus(session) - hidden - absentUi - (invalidApprovals - floor.emergencyUi - input.inventory?.minimumUi.orEmpty() - input.plainphone - input.messages))
         val unhidden = immutableSet(neverHide + if (input.lockedBoot) emptySet() else accessible - hidden)
         val restrictions = immutableSet(Restriction.entries)
         val features = immutableSet(LockTaskFeature.entries)
