@@ -1,0 +1,9 @@
+explicit: exit 0 PASS explicit
+explicit-kept: exit 0 PASS explicit-kept
+view: exit 0 PASS view
+view-kept: exit 0 PASS view-kept
+notification: exit 0 PASS notification
+notification-kept: exit 0 PASS notification-kept
+keyguard: exit 0 PASS keyguard
+keyguard-kept: exit 0 PASS keyguard-kept
+emergency-kept: PASS (lock-screen Emergency, run before the variants; see emergency-kept.txt)

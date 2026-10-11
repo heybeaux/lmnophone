@@ -1,0 +1,57 @@
+08:12:40 dropped: LockTaskPolicy {mPackages= com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 16 }
+08:13:01 locked: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED top=
+08:13:02 locked policy: LockTaskPolicy {mPackages= com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 119 }
+08:13:02 locked sample 1: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:02 locked sample 2: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:03 locked sample 3: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:03 locked sample 4: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:04 locked sample 5: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:05 locked sample 6: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:05 locked sample 7: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:06 locked sample 8: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:06 locked sample 9: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:07 locked sample 10: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:08 locked sample 11: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:08 locked sample 12: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:09 locked sample 13: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:09 locked sample 14: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:10 locked sample 15: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:11 locked sample 16: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:11 locked sample 17: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:12 locked sample 18: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:12 locked sample 19: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:13 locked sample 20: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:14 locked sample 21: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:14 locked sample 22: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:15 locked sample 23: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:15 locked sample 24: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:16 locked sample 25: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:17 locked sample 26: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:17 locked sample 27: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:18 locked sample 28: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:18 locked sample 29: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:19 locked sample 30: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:19 locked sample 31: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:20 locked sample 32: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:21 locked sample 33: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:21 locked sample 34: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:22 locked sample 35: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:22 locked sample 36: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:23 locked sample 37: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:24 locked sample 38: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:24 locked sample 39: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:25 locked sample 40: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED
+08:13:28 sample 1: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:29 sample 2: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:29 sample 3: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:30 sample 4: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:31 sample 5: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:31 sample 6: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:32 sample 7: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:33 sample 8: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:33 sample 9: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:34 sample 10: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:35 sample 11: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:35 sample 12: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:37 after centre tap: lockTask=LOCKED top=org.plainphone/.MainActivity
+08:13:37 PASS keyguard-kept

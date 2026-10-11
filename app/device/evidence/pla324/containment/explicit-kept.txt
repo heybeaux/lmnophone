@@ -1,0 +1,18 @@
+08:08:44 dropped: LockTaskPolicy {mPackages= com.google.android.dialer, com.android.server.telecom, com.google.android.apps.safetyhub, org.plainphone, com.google.android.apps.messaging, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 16 }
+08:09:05 locked: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED top=
+08:09:05 locked policy: LockTaskPolicy {mPackages= com.google.android.dialer, com.android.server.telecom, com.google.android.apps.safetyhub, org.plainphone, com.google.android.apps.messaging, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 119 }
+08:09:05 queue: Starting: Intent { cmp=com.android.settings/.Settings }
+08:09:09 sample 1: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:09 sample 2: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:10 sample 3: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:11 sample 4: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:11 sample 5: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:12 sample 6: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:13 sample 7: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:13 sample 8: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:14 sample 9: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:14 sample 10: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:15 sample 11: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:16 sample 12: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:18 after centre tap: lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:09:18 PASS explicit-kept
