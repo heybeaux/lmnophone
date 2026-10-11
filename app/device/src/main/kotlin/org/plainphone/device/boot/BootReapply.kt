@@ -64,7 +64,8 @@ data class BootOutcome(
  *
  * Unresolved flip failures are kept in [flipFailures] (PLA-241 finding 4). A save that is not
  * acknowledged (false or a throw) is retried on every later pass until one is (PLA-264 finding 2); an
- * unreadable record keeps attention until acknowledged (finding 3). Notice storage never stops a
+ * unreadable record keeps attention until acknowledged (finding 3), and a newly read unknown
+ * state is saved the same way (PLA-307 finding 3). Notice storage never stops a
  * repair. Enabled state is read for every expected package after the final readback (finding 5).
  *
  * Revoking a relaxation takes the package out of lock task and hides it, unless the plan's never-hide
@@ -129,13 +130,16 @@ class BootReapply(
 
     /**
      * Earlier unresolved failures plus this run's, minus packages whose flip read back this run. An
-     * unreadable store is unknown. Saved when it changed or an earlier save was not acknowledged.
+     * unreadable store is unknown. Saved when it changed, when an earlier save was not acknowledged, or
+     * when this process first reads unknown: a read that failed only this once must not let a restart
+     * read an empty record and drop the attention (PLA-307 finding 3).
      */
     private fun rememberFlipFailures(): FlipFailures {
+        val firstRead = unresolved == null
         val earlier = unresolved ?: attempt { flipFailures.read() } ?: FlipFailures.UNKNOWN
         val now = earlier.copy(names = earlier.names - runFlipped + runFlipFailures)
         unresolved = now
-        if (now != earlier || unsaved) save(now)
+        if (now != earlier || unsaved || (firstRead && now.unknown)) save(now)
         return now
     }
 
