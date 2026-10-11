@@ -1,0 +1,51 @@
+in-call-standin before: lockTask=LOCKED top=org.plainphone/.MainActivity t174 lockTasks=[]
++0.27s lockTask=NONE top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t172 lockTasks=[]
++0.56s lockTask=NONE top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t172 lockTasks=[]
++0.86s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++1.16s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++1.48s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++1.78s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++2.07s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++2.36s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++2.65s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++2.93s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++3.22s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++3.51s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++3.81s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++4.09s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++4.39s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++4.68s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++4.97s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++5.28s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++5.57s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++5.86s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++6.15s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++6.44s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++6.73s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++7.02s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++7.31s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++7.60s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++7.89s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++8.18s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++8.47s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++8.75s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++9.04s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++9.34s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++9.63s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++9.92s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++10.21s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++10.50s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++10.79s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++11.08s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++11.37s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
++11.66s lockTask=LOCKED top=org.plainphone/.MainActivity t175 lockTasks=[]
+screen text after: 8:03 AM | Sunday, October 11, 2026 | LMNOPhone needs attention | Messages | Phone | More | Ask for an app, settings, help
+--- logcat (PlainphoneBoot, ActivityTaskManager START)
+10-11 08:03:29.511 10440 10440 I PlainphoneBoot: test hook org.plainphone.test.IN_CALL lockTask=[com.android.phone, com.android.server.telecom, com.google.android.apps.messaging, com.google.android.apps.safetyhub, com.google.android.cellbroadcastreceiver, com.google.android.dialer, org.plainphone] features=119
+10-11 08:03:29.570   574  1379 I ActivityTaskManager: START u0 {act=android.intent.action.DIAL flg=0x10000000 cmp=com.google.android.dialer/com.android.dialer.main.impl.MainActivity} with LAUNCH_SINGLE_TASK from uid 2000 (BAL_ALLOW_PERMISSION) result code=2
+10-11 08:03:30.153 10440 10461 I PlainphoneBoot: reapply reason=start control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=NONE withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=648
+10-11 08:03:30.157   574  5401 I ActivityTaskManager: START u0 {flg=0x10020000 cmp=org.plainphone/.MainActivity} with LAUNCH_SINGLE_TASK from uid 10207 (BAL_ALLOW_ALLOWLISTED_COMPONENT) result code=0
+10-11 08:03:30.158 10440 10461 I PlainphoneBoot: lock task not running after start: Home brought forward at=3460699
+10-11 08:03:30.211 10440 10440 I PlainphoneBoot: reopening IN_CALL inside lock task at=3460752
+10-11 08:03:30.211 10440 10440 I PlainphoneBoot: in-call stand-in: showInCallScreen at=3460752
+10-11 08:03:30.527 10440 10440 I PlainphoneBoot: home shown lockTask=LOCKED at=3461068
