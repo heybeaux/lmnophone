@@ -1,0 +1,264 @@
+[
+  {
+    "step": "old-build-off-before-update",
+    "counts": [],
+    "status": [],
+    "switch": [],
+    "pid": "3539"
+  },
+  {
+    "step": "off-update-off",
+    "counts": [],
+    "status": [],
+    "switch": [],
+    "pid": "3702"
+  },
+  {
+    "step": "off-settings",
+    "counts": [],
+    "status": [],
+    "switch": [
+      "false"
+    ],
+    "pid": "3702"
+  },
+  {
+    "step": "on-settings",
+    "counts": [],
+    "status": [],
+    "switch": [
+      "true"
+    ],
+    "pid": "3702"
+  },
+  {
+    "step": "on-home",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "3702"
+  },
+  {
+    "step": "on-update-on",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "3993"
+  },
+  {
+    "step": "before-role-gate",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "3993"
+  },
+  {
+    "step": "messages-disabled-live",
+    "counts": [
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "3993"
+  },
+  {
+    "step": "unsupported-settings",
+    "counts": [],
+    "status": [
+      "Counts work only with the phone's standard Phone and Messages apps.",
+      "Plainphone (preview-2) can't read unread texts right now"
+    ],
+    "switch": [
+      "true"
+    ],
+    "pid": "3993"
+  },
+  {
+    "step": "unsupported-settings-1.0",
+    "counts": [],
+    "status": [
+      "Counts work only with the phone's standard Phone and Messages apps.",
+      "Plainphone (preview-2) can't read unread texts right now"
+    ],
+    "switch": [
+      "true"
+    ],
+    "pid": "3993"
+  },
+  {
+    "step": "unsupported-settings-2.0",
+    "counts": [],
+    "status": [
+      "Counts work only with the phone's standard Phone and Messages apps.",
+      "Plainphone (preview-2) can't read unread texts right now"
+    ],
+    "switch": [],
+    "pid": "3993"
+  },
+  {
+    "step": "messages-restored",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "3993"
+  },
+  {
+    "step": "records-cleared",
+    "counts": [],
+    "status": [],
+    "switch": [],
+    "pid": "3993"
+  },
+  {
+    "step": "two-live-texts",
+    "counts": [
+      "Messages, 2 unread texts"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "3993"
+  },
+  {
+    "step": "live-missed-call",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "3993"
+  },
+  {
+    "step": "after-text-swipe",
+    "counts": [],
+    "status": [],
+    "switch": [],
+    "pid": "4815"
+  },
+  {
+    "step": "after-text-swipe-restored-starter",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "4815"
+  },
+  {
+    "step": "after-call-notification-swipe",
+    "counts": [
+      "Messages, 2 unread texts"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "5336"
+  },
+  {
+    "step": "after-opening-conversation",
+    "counts": [],
+    "status": [],
+    "switch": [],
+    "pid": "5336"
+  },
+  {
+    "step": "final-build-both-counts",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "5769"
+  },
+  {
+    "step": "off-same-process",
+    "counts": [],
+    "status": [],
+    "switch": [
+      "false"
+    ],
+    "pid": "5769"
+  },
+  {
+    "step": "off-home",
+    "counts": [],
+    "status": [],
+    "switch": [],
+    "pid": "5769"
+  },
+  {
+    "step": "on-again",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "5769"
+  },
+  {
+    "step": "before-first-unlock",
+    "userState": "RUNNING_LOCKED",
+    "countQueryLogLines": 0
+  },
+  {
+    "step": "fresh-counts-after-first-unlock",
+    "counts": [],
+    "status": [],
+    "switch": [],
+    "pid": "912"
+  },
+  {
+    "step": "permission-revoked-after-restart",
+    "counts": [
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "2288"
+  },
+  {
+    "step": "revoked-permission-settings",
+    "counts": [],
+    "status": [
+      "Plainphone (preview-2) can't read unread texts right now"
+    ],
+    "switch": [
+      "true"
+    ],
+    "pid": "2288"
+  },
+  {
+    "step": "explicit-on-restores-read",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "2288"
+  },
+  {
+    "step": "second-reboot-fresh-after-unlock",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "status": [],
+    "switch": [],
+    "pid": "896"
+  }
+]

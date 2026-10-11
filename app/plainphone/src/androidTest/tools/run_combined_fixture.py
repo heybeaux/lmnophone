@@ -41,7 +41,11 @@ for recipients in [a,b,a+'&recipient='+b]:
  threads.append(int(re.search(r'_id=(\d+)',out).group(1)))
 insert('content://sms/inbox',_id=800001,thread_id=threads[0],read=0)
 insert('content://sms/inbox',_id=800002,thread_id=threads[1],read=0)
-insert('content://mms/inbox',_id=800001,thread_id=threads[2],read=0,m_type=132,v=18)
+insert('content://mms/inbox',_id=800001,thread_id=threads[2],read=0,m_type=132,v=18,
+       date=1791670000,ct_t='application/vnd.wap.multipart.related')
+for recipient,kind in [(a,137),(b,151)]:
+ insert('content://mms/800001/addr',address=recipient,type=kind,charset=106)
+insert('content://mms/800001/part',ct='text/plain',text='TEST',chset=106)
 evidence('two_sms_conversations_plus_group_pdu_and_id_collision',3)
 insert('content://sms/sent',_id=800003,thread_id=threads[0],read=0)
 insert('content://mms/sent',_id=800003,thread_id=threads[2],read=0,m_type=128,v=18)

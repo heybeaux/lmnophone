@@ -1,0 +1,14 @@
+[
+  {
+    "step": "two_sms_conversations_plus_group_pdu_and_id_collision",
+    "output": "INSTRUMENTATION_RESULT: counts=combined=3 oracleSms=2 oracleMms=1 expected=3 nonDefault=true\nINSTRUMENTATION_RESULT: outcome=PASS\nINSTRUMENTATION_CODE: -1\n"
+  },
+  {
+    "step": "sent_sms_sent_mms_sms_draft_mms_draft_excluded",
+    "output": "INSTRUMENTATION_RESULT: counts=combined=3 oracleSms=2 oracleMms=1 expected=3 nonDefault=true\nINSTRUMENTATION_RESULT: outcome=PASS\nINSTRUMENTATION_CODE: -1\n"
+  },
+  {
+    "step": "same_id_sms_and_mms_count_as_two",
+    "output": "INSTRUMENTATION_RESULT: counts=combined=2 oracleSms=1 oracleMms=1 expected=2 nonDefault=true\nINSTRUMENTATION_RESULT: outcome=PASS\nINSTRUMENTATION_CODE: -1\n"
+  }
+]

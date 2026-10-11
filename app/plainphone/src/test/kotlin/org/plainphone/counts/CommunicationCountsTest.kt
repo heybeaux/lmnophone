@@ -47,6 +47,20 @@ class CommunicationCountsTest {
             assertEquals(CommunicationCounts(1, null), CommunicationCountSource(p).read())
         }
     }
+    @Test fun alternatingAtomicProviderSnapshotsNeverProduceTheTwelveRowSum() {
+        val p = Port()
+        val source = CommunicationCountSource(p)
+        // The provider alternates whole database snapshots: (SMS=5,MMS=0), then
+        // (SMS=0,MMS=7). Its single statement returns the count from one snapshot.
+        for (snapshot in listOf(5, 7, 5, 7)) {
+            p.results["messages"] = snapshot
+            val value = source.read().unreadTexts
+            assertEquals(snapshot, value)
+            assertNotEquals(12, value)
+        }
+        assertEquals(4, p.queries.count { it.uri == "content://mms-sms/complete-conversations" })
+        assertFalse(p.queries.any { it.uri == "content://sms" || it.uri == "content://mms" })
+    }
     @Test fun callFailureDoesNotHideMessages() {
         val p = Port(); p.failure = "calls"
         assertEquals(CommunicationCounts(null, 5), CommunicationCountSource(p).read())
