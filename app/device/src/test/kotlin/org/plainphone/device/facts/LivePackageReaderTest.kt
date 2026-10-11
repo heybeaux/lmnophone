@@ -10,6 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.plainphone.core.CertDigest
 import org.plainphone.core.PackageName
+import org.plainphone.device.ReapplyTimings
 import org.plainphone.policy.ApprovalBinding
 import org.plainphone.policy.InstalledPackage
 
@@ -25,6 +26,20 @@ class LivePackageReaderTest {
     private fun digest(text: String) = CertDigest(
         MessageDigest.getInstance("SHA-256").digest(text.toByteArray()).joinToString("") { "%02x".format(it) })
     private fun name(n: String) = PackageName(n)
+
+    @Test fun substageTimingsPreserveTheFullReadAndBetweenOrder() {
+        var now = 0L
+        val timedPort = object : PackageSystemPort by port {
+            override fun packages(): List<RawPackage> { now += 3; return port.packages() }
+            override fun browsableHandlers(url: String): Set<String> { now += 2; return port.browsableHandlers(url) }
+        }
+        port.packages(raw("com.example.notes", false, 1, "keyA"))
+        val timings = ReapplyTimings { now }
+        val live = LivePackageReader(timedPort, timings).read { port.calls += "between"; now += 5 }
+        assertEquals(listOf("packages", "browsable", "browsable", "between", "packages"), port.calls)
+        assertEquals(1, live.identities.size)
+        assertEquals("livePackages.snapshot1=3,livePackages.probes=4,livePackages.snapshot2=3,livePackages.merge=0", timings.summary())
+    }
 
     @Test fun digestIsSha256OfTheEncodedCertificateInLowerCaseHex() {
         assertEquals(CertDigest("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"),
