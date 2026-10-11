@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.device.approval
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.plainphone.core.PackageName
@@ -86,4 +87,31 @@ class UnknownPriorStateTest {
     @Test fun anUnreadableVisibilityReadNeverShowsOnOpen() = check(Read.VISIBILITY, Call.OPEN)
     @Test fun anUnreadableVisibilityReadNeverShowsOnContainment() = check(Read.VISIBILITY, Call.CONTAIN)
     @Test fun anUnreadableVisibilityReadNeverShowsOnHide() = check(Read.VISIBILITY, Call.HIDE)
+
+    /** The partial-write side: after a read of true, a removal that throws may have taken effect, so it is given back. */
+    @Test fun aRemovalThatThrowsAfterAPositiveReadIsGivenBack() {
+        for (open in listOf(true, false)) ApprovalHarness().use { h ->
+            val base = h.neverHide()!!
+            var promoted = false
+            h.port.setHidden(h.target, false)
+            h.port.lockTask = h.port.lockTask + h.target
+            h.home.publish(h.port.lockTask)
+            val home = object : HomeAppList by h.home {
+                override fun remove(name: PackageName) {
+                    h.home.remove(name)
+                    promoted = true
+                    error("removal failed after it took effect")
+                }
+            }
+            val effects = DeviceApprovalEffects(h.dispatcher, h.port, h.grants, home,
+                { base + if (promoted) setOf(h.target) else emptySet() }) { null }
+            val result = h.dispatcher.run {
+                if (open) effects.openPermissionWindow(h.identity) else effects.containFailedActivation(setOf(h.target))
+            }
+            assertTrue("open=$open: removal ran", promoted)
+            assertFalse("open=$open: the call fails", result)
+            assertTrue("open=$open: listed again: ${h.state()}", h.home.lists(h.target))
+            assertTrue("open=$open: lock task given back: ${h.state()}", h.target in h.port.lockTask)
+        }
+    }
 }

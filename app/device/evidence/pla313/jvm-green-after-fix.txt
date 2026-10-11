@@ -31,3 +31,8 @@ lockTaskPackages() is non-null) and visibility (hide takes only packageState(...
 returns on a null state). The remaining "!= false" reads are verification reads that count unknown as
 still exposed (Home post-removal reads) or, for packageState null = not installed per DevicePolicyPort,
 as closed (hide readback); neither feeds a repair.
+
+Addendum, same command at the next commit (adds aRemovalThatThrowsAfterAPositiveReadIsGivenBack, which
+pins the kept partial-write handling for open and containment; passes against the fix):
+BUILD SUCCESSFUL in 48s; device: 601 tests, 0 failures; policy: 628 tests, 0 failures;
+:device:compileDebugAndroidTestKotlin compiled. Date: 2026-10-11T12:07Z
