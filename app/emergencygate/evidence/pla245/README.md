@@ -53,10 +53,10 @@ the end state (no call, test list back to `[112, 911]`, no PIN, no owner).
 
 ## Release artifact (D3)
 
-Not tested on the release artifact. The release build applies `DISALLOW_DEBUGGING_FEATURES` (the debug
+Release behaviour is untested. The release build applies `DISALLOW_DEBUGGING_FEATURES` (the debug
 build withholds it: `withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES]` in each re-apply line),
-which turns adb off, and the gate is an adb-started instrumentation. No emulator-safe route was found:
-the emulator console has no shell, UiAutomation is only given to an instrumentation started from the shell,
-and changing the release build's restrictions is out of bounds. Release APK at this commit:
+which turns adb off, so adb-based gating ends there: the gate is an adb-started instrumentation. The
+emulator's `-shell` option (a root serial-console shell that does not need adb) is a known, untested route
+(PLA-296 D3); it was not tried, and changing the release build's restrictions is out of bounds. Release APK at this commit:
 `plainphone-release-unsigned.apk` SHA-256 `ff3904563a6ae2476675dce8afe1603047783b1831fd6e5a97fe7b091cdaee4f`.
 "Release-artifact emergency check" is added to the real-device checks.
