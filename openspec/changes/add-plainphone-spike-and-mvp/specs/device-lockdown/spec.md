@@ -85,16 +85,24 @@ FRP does not reinstall LMNOPhone, and the disclosure SHALL say so.
 - **THEN** setup requires a listed account instead. This is test Q10, which needs a separate board-approved procedure on the device being tested.
 
 ### Requirement: No unapproved app can be opened from the first interactive frame
-After boot, the LMNOPhone home activity SHALL start lock task before it draws its first interactive frame.
+After boot, the LMNOPhone home activity SHALL start lock task before it draws its first interactive frame. The one exception is *Fallback containment* below: there, the home activity shows only the call-capable attention screen, and other apps are contained by suspension instead of lock task.
 
 **Keyguard first.** The home activity SHALL NOT be in lock task while the lock-task features lack `KEYGUARD`. Entering lock task without `KEYGUARD` makes Android dismiss the secure keyguard, even before the first unlock (PLA-242 spike and PLA-264 finding 1, API 35). So:
 - lock-task entry SHALL be explicit, from LMNOPhone's own code after the check below, and never automatic from the manifest, because Android can start an automatic lock task before LMNOPhone has restored lost features;
 - before the home activity enters lock task, and before LMNOPhone grants it lock-task membership, LMNOPhone SHALL write the lock-task features and read them back with `KEYGUARD` set;
 - if the features cannot be written or do not read back, the home activity SHALL stay out of lock task, the secure keyguard SHALL stay, and LMNOPhone SHALL show "LMNOPhone needs attention" after unlock. The lock-screen emergency call SHALL stay reachable.
 
+**Fallback containment.** When the features cannot be written or do not read back, LMNOPhone SHALL NOT enter lock task. It SHALL still contain other apps:
+- it SHALL suspend (`DevicePolicyManager.setPackagesSuspended`) every installed package that is not on the lock-task UI list, apart from the never-hide dependencies and the emergency floor, which are never suspended. It SHALL read the suspension back;
+- the home activity SHALL show only the attention screen: "LMNOPhone needs attention. You can still make calls.", with Phone and Emergency, and no app list;
+- the suspension SHALL be recorded in device-protected storage before it is applied, so that a later pass can lift exactly what it added. It SHALL be lifted only after lock task has started with `KEYGUARD` read back;
+- packages that Android refuses to suspend SHALL be logged and shown in the trusted person's attention details. If one of them can be opened from a notification, an explicit intent or a deep link, this requirement is not met until the board approves a disclosure for that route.
+
+**Lock task must actually be running.** After every policy pass that reports ready, and whenever the home activity is created or resumed, LMNOPhone SHALL read the live lock-task state. If lock task is not running, LMNOPhone SHALL bring the home activity to the front and start lock task (with the `KEYGUARD` check above). This includes the case where LMNOPhone's process died and another app reached the front before it restarted.
+
 Restrictions, hidden apps and lock-task package settings are kept by Android across reboots. LMNOPhone SHALL NOT clear them during recovery.
 
-From unlock until lock task starts, no unapproved app SHALL be openable from:
+From unlock until lock task starts, including during fallback containment and after LMNOPhone's process restarts, no unapproved app SHALL be openable from:
 - a notification
 - an explicit intent
 - a deep link
@@ -102,6 +110,16 @@ From unlock until lock task starts, no unapproved app SHALL be openable from:
 #### Scenario: Lock-task list kept, features lost
 - **WHEN** the lock-task list survives a reboot but the lock-task features lose `KEYGUARD`, and nobody enters the PIN
 - **THEN** the secure keyguard stays, the user stays locked, and the lock-screen emergency call opens the emergency dialer
+
+#### Scenario: Features never read back, after the PIN
+- **WHEN** the lock-task features cannot be written or never read back with `KEYGUARD`, and the user enters the PIN
+- **THEN** the home activity is not in lock task and shows only the attention screen with Phone and Emergency
+- **AND** an unapproved app does not open from a notification tap, an explicit intent or a deep link
+- **AND** the next time the screen turns off, the secure keyguard still needs the PIN
+
+#### Scenario: LMNOPhone's process dies while another app is opening
+- **WHEN** LMNOPhone's process dies and an explicit intent or a notification tap for an unapproved app arrives before it restarts
+- **THEN** once LMNOPhone restarts, lock task is running with the home activity in front, and the unapproved app cannot be used
 
 #### Scenario: Immediate unlock after reboot
 - **WHEN** the user unlocks right after a reboot and taps a queued notification from an unapproved app
