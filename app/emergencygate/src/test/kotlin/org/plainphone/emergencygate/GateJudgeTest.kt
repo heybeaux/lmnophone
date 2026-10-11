@@ -287,6 +287,49 @@ class GateJudgeTest {
         assertEquals(null, Dumpsys.hiddenFromLists("cb", all = "", visible = ""))
     }
 
+    // ---- PLA-296 R2: when a call counts as ended ----
+
+    private val idleTelecom = "CallsManager: \n  mCalls: \n  mCallAudioManager:\n    All calls:\n"
+    private val idleHold = List(GateJudge.HOLD_READS) { "0" }
+
+    @Test fun `Telecom's mCalls list is read from its own section`() {
+        assertEquals(emptyList<TelecomCall>(), Dumpsys.mCalls(idleTelecom))
+        val live = "CallsManager: \n  mCalls: \n    [Call id=TC@3, state=ACTIVE, tpac=x], voip=false\n  mCallAudioManager:\n" +
+            "  Historical Calls:\n    [Call id=TC@1, state=DISCONNECTED, tpac=x], voip=false\n"
+        assertEquals(listOf("TC@3" to "ACTIVE"), Dumpsys.mCalls(live)!!.map { it.id to it.state })
+        assertNull(Dumpsys.mCalls(""))
+        assertNull(Dumpsys.mCalls("Can't find service: telecom"))
+    }
+
+    @Test fun `a call is ended only after a full idle hold, no live Telecom call and an idle read after both`() {
+        assertTrue(GateJudge.callEnded(idleHold, Dumpsys.mCalls(idleTelecom), after = "0").ended)
+        val disconnected = "  mCalls: \n    [Call id=TC@1, state=DISCONNECTED, tpac=x], voip=false\n  mCallAudioManager:\n"
+        assertTrue(GateJudge.callEnded(idleHold, Dumpsys.mCalls(disconnected), after = "0").ended)
+    }
+
+    @Test fun `a failed hold never becomes ended from one later idle read`() {
+        val failed = idleHold.dropLast(1) + "2"
+        val end = GateJudge.callEnded(failed, Dumpsys.mCalls(idleTelecom), after = "0")
+        assertEquals(false, end.ended)
+        assertTrue(end.detail, "hold" in end.detail)
+    }
+
+    @Test fun `a short or unreadable hold is not ended`() {
+        assertEquals(false, GateJudge.callEnded(idleHold.drop(1), Dumpsys.mCalls(idleTelecom), after = "0").ended)
+        assertEquals(false, GateJudge.callEnded(idleHold.dropLast(1) + "?", Dumpsys.mCalls(idleTelecom), after = "0").ended)
+    }
+
+    @Test fun `a call back after the hold is not ended`() {
+        assertEquals(false, GateJudge.callEnded(idleHold, Dumpsys.mCalls(idleTelecom), after = "2").ended)
+        assertEquals(false, GateJudge.callEnded(idleHold, Dumpsys.mCalls(idleTelecom), after = "?").ended)
+    }
+
+    @Test fun `a live or unreadable Telecom list is not ended`() {
+        val live = "  mCalls: \n    [Call id=TC@3, state=DIALING, tpac=x], voip=false\n  mCallAudioManager:\n"
+        assertEquals(false, GateJudge.callEnded(idleHold, Dumpsys.mCalls(live), after = "0").ended)
+        assertEquals(false, GateJudge.callEnded(idleHold, telecom = null, after = "0").ended)
+    }
+
     @Test fun `gate lines parse back`() {
         val line = CheckResult("lock-screen", Verdict.FAIL, "foreground is a/b c").line()
         assertEquals(CheckResult("lock-screen", Verdict.FAIL, "foreground is a/b c"), CheckResult.parse(line))
