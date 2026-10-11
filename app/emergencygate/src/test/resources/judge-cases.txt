@@ -556,7 +556,7 @@ GATE home-phone PASS x
 GATE app-home-phone PASS x
 GATE more-emergency NOT_BUILT declared
 GATE alert-display-ready PASS x
-GATE alert-display-launch FAIL x
+GATE alert-display-launch FAIL unavailable: hidden (Error type 3) x
 GATE alert-shown INCONCLUSIVE x
 GATE telecom-emergency-call PASS x
 GATE lock-screen PASS x
@@ -577,7 +577,7 @@ GATE home-phone PASS x
 GATE app-home-phone PASS x
 GATE more-emergency NOT_BUILT declared
 GATE alert-display-ready FAIL x
-GATE alert-display-launch FAIL x
+GATE alert-display-launch FAIL unavailable: hidden (Error type 3) x
 GATE alert-shown INCONCLUSIVE x
 GATE telecom-emergency-call PASS x
 GATE lock-screen PASS x
@@ -619,7 +619,7 @@ GATE home-phone PASS x
 GATE app-home-phone PASS x
 GATE more-emergency NOT_BUILT declared
 GATE alert-display-ready FAIL x
-GATE alert-display-launch FAIL x
+GATE alert-display-launch FAIL blocked by lock task: android/com.android.internal.app.BlockedAppActivity x
 GATE alert-shown INCONCLUSIVE x
 GATE telecom-emergency-call PASS x
 GATE lock-screen PASS x
@@ -640,7 +640,7 @@ GATE home-phone PASS x
 GATE app-home-phone PASS x
 GATE more-emergency NOT_BUILT declared
 GATE alert-display-ready PASS x
-GATE alert-display-launch FAIL x
+GATE alert-display-launch FAIL blocked by lock task: android/com.android.internal.app.BlockedAppActivity x
 GATE alert-shown INCONCLUSIVE x
 GATE telecom-emergency-call PASS x
 GATE lock-screen PASS x
@@ -662,6 +662,132 @@ GATE app-home-phone PASS x
 GATE more-emergency NOT_BUILT declared
 GATE alert-display-ready PASS x
 GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert launch with empty output (PLA-296 R4)
+# control no-alert
+# expect ERROR
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: hidden
+GATE alert-display-launch ERROR unrecognised launch result exit=1 output=
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert launch service failure (PLA-296 R4)
+# control no-alert
+# expect ERROR
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: hidden
+GATE alert-display-launch ERROR launch command failed exit=255: java.lang.SecurityException: shell failed
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert unclassified launch FAIL is not detection (PLA-296 R4)
+# control no-alert
+# expect ERROR
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: hidden
+GATE alert-display-launch FAIL start refused: SecurityException: shell failed
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert empty launch FAIL is not detection (PLA-296 R4)
+# control no-alert
+# expect ERROR
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: hidden
+GATE alert-display-launch FAIL start refused:
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert established unavailable component stays detected (PLA-296 R4)
+# control no-alert
+# expect DETECTED
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: hidden
+GATE alert-display-launch FAIL unavailable: hidden (Error type 3) com.google.android.cellbroadcastreceiver
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert-lock-task unclassified launch FAIL is not detection (PLA-296 R4)
+# control no-alert-lock-task
+# expect ERROR
+GATE capabilities PASS control=no-alert-lock-task notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: not allowed in lock task
+GATE alert-display-launch FAIL start refused: SecurityException: shell failed
 GATE alert-shown INCONCLUSIVE x
 GATE telecom-emergency-call PASS x
 GATE lock-screen PASS x

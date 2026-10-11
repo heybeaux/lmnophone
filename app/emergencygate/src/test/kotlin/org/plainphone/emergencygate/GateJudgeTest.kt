@@ -156,6 +156,67 @@ class GateJudgeTest {
         assertEquals(Verdict.FAIL, GateJudge.inFront("alert-display-launch", other, setOf(dialog)).verdict)
     }
 
+    // ---- PLA-296 R4: the alert launch result, by exit status, output and the read-back fault ----
+
+    private val alertPkg = "com.google.android.cellbroadcastreceiver"
+    private val dialog = Activity(alertPkg, "com.android.cellbroadcastreceiver.CellBroadcastAlertDialog")
+    private val visible = AlertDisplay(alertPkg, found = true, enabled = true, hidden = false, suspended = false, allowedInLockTask = true)
+    private val hidden = visible.copy(hidden = true)
+
+    /** Recorded on the API 35 emulator (PLA-245 ctlNoAlert) and reproduced with `su 0 sh` (exit 1). */
+    private val error3 = """
+        |Starting: Intent { cmp=$alertPkg/com.android.cellbroadcastreceiver.CellBroadcastAlertDialog }
+        |Error type 3
+        |Error: Activity class {$alertPkg/com.android.cellbroadcastreceiver.CellBroadcastAlertDialog} does not exist.
+    """.trimMargin()
+
+    private fun launch(display: AlertDisplay, exit: Int?, out: String) = GateJudge.alertLaunched(display, exit, out, setOf(dialog))
+
+    @Test fun `the alert screen starting passes`() {
+        val out = "Starting: Intent { cmp=$alertPkg/com.android.cellbroadcastreceiver.CellBroadcastAlertDialog }\nStatus: ok\nActivity: $alertPkg/com.android.cellbroadcastreceiver.CellBroadcastAlertDialog\nComplete"
+        assertEquals(Verdict.PASS, launch(visible, 0, out).verdict)
+    }
+
+    @Test fun `lock task's blocked screen is a behavioural failure`() {
+        val out = "Status: ok\nActivity: android/com.android.internal.app.BlockedAppActivity\nComplete"
+        val result = launch(visible, 0, out)
+        assertEquals(Verdict.FAIL, result.verdict)
+        assertTrue(result.detail, result.detail.startsWith("blocked by lock task:"))
+    }
+
+    @Test fun `an unavailable component with the hidden state read back fails as unavailable`() {
+        val result = launch(hidden, 1, error3)
+        assertEquals(result.detail, Verdict.FAIL, result.verdict)
+        assertTrue(result.detail, result.detail.startsWith("unavailable:"))
+    }
+
+    @Test fun `an unavailable component with no fault read back is an error, not detection`() {
+        assertEquals(Verdict.ERROR, launch(visible, 1, error3).verdict)
+        assertEquals(Verdict.ERROR, launch(visible.copy(hidden = null), 1, error3).verdict)
+    }
+
+    @Test fun `empty output is an error`() {
+        assertEquals(Verdict.ERROR, launch(hidden, 0, "").verdict)
+        assertEquals(Verdict.ERROR, launch(hidden, 1, "").verdict)
+        assertEquals(Verdict.ERROR, launch(hidden, null, "").verdict)
+    }
+
+    @Test fun `a shell or service failure is an error`() {
+        assertEquals(Verdict.ERROR, launch(hidden, 255, "java.lang.SecurityException: shell failed").verdict)
+        assertEquals(Verdict.ERROR, launch(hidden, 20, "cmd: Can't find service: activity").verdict)
+        assertEquals(Verdict.ERROR, launch(hidden, 1, "$error3\njava.lang.SecurityException: Permission Denial").verdict)
+    }
+
+    @Test fun `no exit status or an exit status that contradicts the output is an error`() {
+        assertEquals(Verdict.ERROR, launch(hidden, null, error3).verdict)
+        assertEquals(Verdict.ERROR, launch(hidden, 0, error3).verdict)
+        assertEquals(Verdict.ERROR, launch(visible, 1, "Activity: ${dialog}").verdict)
+    }
+
+    @Test fun `unrecognised output is an error`() {
+        assertEquals(Verdict.ERROR, launch(hidden, 1, "Starting: Intent { }\nsomething else").verdict)
+    }
+
     @Test fun `an emergency call that Telecom is placing passes`() {
         for (state in listOf("CONNECTING", "DIALING", "ACTIVE")) {
             val result = GateJudge.emergencyCallPlaced(listOf(TelecomCall("TC@1", state, emergency = true)))
