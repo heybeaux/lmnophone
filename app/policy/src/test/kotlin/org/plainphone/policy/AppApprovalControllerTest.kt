@@ -857,7 +857,7 @@ class AppApprovalControllerTest {
             val withdrawal = assertNotNull(controller.prepareWithdrawal(other))
             failure = null; events.clear()
             assertEquals(AppApprovalOutcome.WITHDRAWN, controller.withdrawPending(withdrawal, withdrawal.approvalId, withdrawalAuth(withdrawal, other)))
-            assertTrue(app in state!!.apps); assertNull(state!!.pending); assertFalse("permission" in events); assertTrue("unhide" in events)
+            assertRestrictiveEditWithdrawal()
             assertEquals(listOf(AppApprovalReceiptKind.PERMISSIONS_CHANGED, AppApprovalReceiptKind.WITHDRAWN), state!!.receipts.map { it.kind })
         }
     }
@@ -878,17 +878,19 @@ class AppApprovalControllerTest {
     }
 
 
-    @Test fun `withdrawing a permission edit preserves approved access across restart`() {
+    @Test fun `withdrawing a permission edit preserves reapproval provenance across restart`() {
         activeApproval(true); val r = editRequest(); failure = "hide"
         assertEquals(AppApprovalOutcome.NOT_READY, controller.editPermissions(r, r.approvalId, editAuth(r)))
         val withdrawal = assertNotNull(controller.prepareWithdrawal(person)); failure = null
         modelPermissions = true
         assertEquals(AppApprovalOutcome.WITHDRAWN, controller.withdrawPending(withdrawal, withdrawal.approvalId, withdrawalAuth(withdrawal)))
-        assertEquals(binding, state!!.apps.getValue(app).identity)
-        assertFalse(app in state!!.removedApps)
+        assertFalse(app in state!!.apps)
+        assertEquals(binding, state!!.removedApps[app])
         controller = controller(); assertEquals(AppApprovalOutcome.READY, controller.onStart())
-        assertTrue(app in state!!.approvedPackages(policy.installed, policy.installedIdentities))
-        assertNotNull(controller.preparePermissionEdit(app, other, PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.DENY))))
+        assertFalse(app in state!!.approvedPackages(policy.installed, policy.installedIdentities))
+        val selection = PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.DENY))
+        assertNotNull(controller.prepareReapproval(app, other, selection))
+        assertNull(controller.preparePermissionEdit(app, other, selection))
     }
 
     @Test fun `active removal after permission edit preserves both action receipts`() {
@@ -1454,36 +1456,80 @@ class AppApprovalControllerTest {
         return extra
     }
 
-    @Test fun `withdrawn edit restores approved access only after verified completion`() {
+    private fun assertRestrictiveEditWithdrawal() {
+        assertNull(state!!.pending)
+        assertFalse(app in state!!.apps)
+        assertEquals(binding, state!!.removedApps[app])
+        assertTrue(hidden)
+        assertFalse(app in appliedLockTask || app in appliedHome)
+        assertFalse(app in state!!.approvedPackages(policy.installed, policy.installedIdentities))
+        assertEquals(AppApprovalReceiptKind.WITHDRAWN, state!!.receipts.last().kind)
+        assertFalse(events.any { it == "unhide" || it == "window-unhide" || it.startsWith("write-") })
+    }
+
+    @Test fun `withdrawn edit completes restrictively only after verified cleanup`() {
         for (fault in listOf("facts", "session", "battery", "permissions", "readback", "save")) {
             val f = AppApprovalControllerTest(); f.failedActivationAndContainment(true)
             val r = assertNotNull(f.controller.prepareWithdrawal(f.person)); val a = f.withdrawalAuth(r)
-            when (fault) {
-                "facts" -> f.inputAvailable = false
-                "session" -> f.failure = "revoke"
-                "battery" -> f.battery = BatteryState(4, false)
-                "permissions" -> f.failure = "permissions-readback"
-                "readback" -> f.failure = "policy-readback"
-                "save" -> f.failure = "save-finished"
+            val receipts = f.state!!.receipts
+            // Inject after durable authorization so every failure retains WITHDRAWING.
+            f.atEvent = { event ->
+                if (event == "after-save-withdrawing") when (fault) {
+                    "facts" -> f.inputAvailable = false
+                    "session" -> f.failure = "revoke"
+                    // Battery and permissions do not gate cleanup. Fail readback first,
+                    // then recover while these conditions remain present.
+                    "battery" -> { f.battery = BatteryState(4, false); f.failure = "policy-readback" }
+                    "permissions", "readback" -> f.failure = "policy-readback"
+                    "save" -> f.failure = "save-finished"
+                }
+                if (fault == "permissions" && event == "permissions-readback") error("permissions unavailable")
             }
-            val result = f.controller.withdrawPending(r, r.approvalId, a)
-            assertTrue(result in setOf(AppApprovalOutcome.NOT_READY, AppApprovalOutcome.LOW_BATTERY), fault)
-            assertNotNull(f.state!!.pending); assertTrue(f.hidden)
+            assertEquals(AppApprovalOutcome.NOT_READY, f.controller.withdrawPending(r, r.approvalId, a), fault)
+            assertEquals(AppApprovalPhase.WITHDRAWING, f.state!!.pending!!.phase)
+            assertEquals(receipts, f.state!!.receipts)
+            val intent = f.state!!.pending!!.withdrawalReceipt
+            assertTrue(f.hidden)
             assertFalse(f.app in f.appliedLockTask || f.app in f.appliedHome, fault)
-            f.inputAvailable = true; f.failure = null; f.battery = BatteryState(50, false)
-            f.actualPermissions = f.state!!.pending!!.record.permissions.writes.associate {
-                it.permission to if (it.choice == PermissionChoice.ALLOW) PermissionReadback.GRANTED else PermissionReadback.DENIED
-            }
-            // A session failure before the withdrawal intent saves needs fresh withdrawal authority.
-            if (f.state!!.pending!!.phase != AppApprovalPhase.WITHDRAWING) {
-                val retry = assertNotNull(f.controller.prepareWithdrawal(f.person))
-                assertEquals(AppApprovalOutcome.WITHDRAWN, f.controller.withdrawPending(retry, retry.approvalId, f.withdrawalAuth(retry)))
-            } else assertEquals(AppApprovalOutcome.WITHDRAWN, f.controller().onStart())
-            assertNull(f.state!!.pending); assertTrue(f.app in f.state!!.apps)
-            assertFalse(f.hidden); assertTrue(f.app in f.appliedLockTask && f.app in f.appliedHome)
-            assertEquals(AppApprovalReceiptKind.WITHDRAWN, f.state!!.receipts.last().kind)
-            assertFalse(f.app in f.state!!.removedApps)
+            assertFalse(f.events.any { it == "unhide" || it == "window-unhide" || it.startsWith("write-") }, fault)
+            f.inputAvailable = true; f.failure = null
+            assertEquals(AppApprovalOutcome.WITHDRAWN, f.controller().onStart(), fault)
+            f.assertRestrictiveEditWithdrawal()
+            assertEquals(receipts + assertNotNull(intent), f.state!!.receipts)
         }
+    }
+
+    @Test fun `withdrawing a loosened permission edit never writes ALLOW or exposes the app`() {
+        activeApproval(true)
+        val deny = editRequest()
+        permissionReadback = mapOf(camera to PermissionReadback.DENIED)
+        assertEquals(AppApprovalOutcome.PERMISSIONS_CHANGED, controller.editPermissions(deny, deny.approvalId, editAuth(deny)))
+        assertEquals(PermissionChoice.DENY, state!!.apps.getValue(app).permissions.choices[camera])
+        val allow = editRequest(choice = PermissionChoice.ALLOW)
+        failure = "hide"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.editPermissions(allow, allow.approvalId, editAuth(allow)))
+        assertEquals(PermissionChoice.ALLOW, state!!.pending!!.record.permissions.choices[camera])
+        val withdrawal = assertNotNull(controller.prepareWithdrawal(other))
+        failure = null; events.clear()
+        assertTrue(hidden)
+        atEvent = { assertTrue(hidden, "app visible at $it") }
+        assertEquals(AppApprovalOutcome.WITHDRAWN,
+            controller.withdrawPending(withdrawal, withdrawal.approvalId, withdrawalAuth(withdrawal, other)))
+        assertRestrictiveEditWithdrawal()
+        assertEquals(PermissionReadback.DENIED, actualPermissions[camera])
+        assertFalse(events.any { it.startsWith("write-ALLOW") })
+    }
+
+    @Test fun `low battery and unavailable permissions do not hold restrictive edit withdrawal`() {
+        activeApproval(true); val edit = editRequest(); failure = "hide"
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.editPermissions(edit, edit.approvalId, editAuth(edit)))
+        val withdrawal = assertNotNull(controller.prepareWithdrawal(person))
+        failure = null; battery = BatteryState(4, false); events.clear()
+        atEvent = { if (it == "permissions-readback") error("permissions unavailable") }
+        assertEquals(AppApprovalOutcome.WITHDRAWN,
+            controller.withdrawPending(withdrawal, withdrawal.approvalId, withdrawalAuth(withdrawal)))
+        assertRestrictiveEditWithdrawal()
+        assertFalse("permissions-readback" in events)
     }
 
 
