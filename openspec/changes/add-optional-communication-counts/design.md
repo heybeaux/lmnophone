@@ -63,5 +63,5 @@ If C1 fails for every install path we can use, or C2/C3 show the system flags do
 ## Risks
 
 - **Holding `READ_SMS` widens what LMNOPhone could read.** Mitigation: projection test, no content columns, hold only while on (if C5 allows), and disclose.
-- **RCS gap.** If most messages between Beaux and Deanna are RCS, the Messages count may often be low. Disclosed in Settings; Beaux decides after testing whether that's useful.
+- **RCS gap.** If most messages between the first two users are RCS, the Messages count may often be low. Disclosed in Settings; Beaux decides after testing whether that's useful.
 - **Dialer differences.** The spare's dialer may set flags differently from the AVD's. Verified on the spare during the preview that ships this.
