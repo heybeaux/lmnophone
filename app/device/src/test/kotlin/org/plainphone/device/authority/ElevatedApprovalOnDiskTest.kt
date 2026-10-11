@@ -224,6 +224,7 @@ class ElevatedApprovalOnDiskTest {
         val last = transactions
         assertTrue(last > first)
         var sawBothSides = setOf<Boolean>()
+        var sawCommittedRecovery = false
         for (k in first..last) for (point in WritePoint.entries) {
             dir.deleteRecursively(); id = 0; transactions = 0; crashAt = null
             enroll(); grant(ElevationTarget.Approve(a)); val again = request(a)
@@ -236,13 +237,25 @@ class ElevatedApprovalOnDiskTest {
             val committed = a.packageName in approval.apps && approval.pending?.phase != AppApprovalPhase.PREPARING
             assertEquals("transaction $k at $point", consumed, committed)
             sawBothSides = sawBothSides + consumed
+            events.clear()
             boot()
+            // A COMMITTED op is contained before any retry gate or activation write (PLA-278).
+            if (approval.pending?.phase == AppApprovalPhase.COMMITTED) {
+                sawCommittedRecovery = true
+                val contain = events.indexOf("contain")
+                assertTrue("transaction $k at $point: recovery contains first: $events", contain >= 0)
+                for (later in listOf("window-open", "permission", "apply", "policy-readback")) {
+                    val at = events.indexOf(later)
+                    assertTrue("transaction $k at $point: $later after contain: $events", at == -1 || at > contain)
+                }
+            }
             // Recovery never consumes again, never restores the grant and never adds a debit.
             assertNull(store.elevationStore.read()!!.state.grant)
             assertEquals(1, store.elevationStore.read()!!.state.ledger.debits.size)
             assertEquals(committed, a.packageName in store.approvals.read()!!.apps)
         }
         assertEquals(setOf(true, false), sawBothSides)
+        assertTrue("some crash left a COMMITTED op to recover", sawCommittedRecovery)
     }
 }
 

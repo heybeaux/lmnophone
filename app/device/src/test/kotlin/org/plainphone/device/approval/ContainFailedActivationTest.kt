@@ -169,6 +169,29 @@ class ContainFailedActivationTest {
         assertEquals(emptyList<String>(), h.port.ops)
     }
 
+    /*
+     * PLA-278: before its retry and startup gates, policy calls containment with the durable pending target
+     * alone, with no activation plan, and possibly with no policy facts to filter protected names out. The
+     * live floor guard is then the only guard. This adapter has never been given a plan.
+     */
+    @Test fun aProtectedSingletonWithNoPlanIsRefusedAndNeverTouched() {
+        assertFalse("never-hide Messages", contain(setOf(h.messages)))
+        assertFalse("emergency dialer", contain(setOf(h.dialer)))
+        assertFloorUntouched()
+        assertActive(target)
+        assertEquals(emptyList<String>(), h.port.ops)
+    }
+
+    @Test fun aSingletonTargetProtectedOnlyByTheLiveListIsRefusedAndNeverTouched() {
+        val before = h.neverHide()!!
+        liveNeverHide = { before + target }
+        assertFalse(contain(setOf(target)))
+        assertActive(target)
+        assertActive(sibling)
+        assertFloorUntouched()
+        assertEquals(emptyList<String>(), h.port.ops)
+    }
+
     @Test fun accessOutsideTheSetIsPreserved() {
         assertTrue(contain(setOf(target)))
         assertContained(target)
