@@ -132,6 +132,49 @@ class LockTaskRecoveryTest {
         assertNull(recovery.onHomeLockTaskState(LockTaskState.LOCKED).restore)
     }
 
+    /**
+     * PLA-324 AVD: tapping Home's Phone and killing Home's process at once drops lock task to NONE, and
+     * the restarted process brings Home forward over the dialer. The record of what LMNOPhone opened
+     * has to outlive the process that opened it.
+     */
+    @Test fun aScreenOpenedBeforeTheProcessDiedIsReopenedByTheNextProcess() {
+        val saved = MemoryRecord()
+        LockTaskRecovery({ state() }, { inCall() }, { forwards++ }, { clock }, saved).opened(CallingScreen.PHONE)
+        val next = LockTaskRecovery({ state() }, { inCall() }, { forwards++ }, { clock }, saved)
+        assertEquals(RecoveryAction.HOME_FORWARD, next.afterPass(locked = false, ready = true))
+        assertEquals(CallingScreen.PHONE, next.onHomeLockTaskState(LockTaskState.LOCKED).restore)
+    }
+
+    @Test fun leavingForHomeClearsTheSavedScreenToo() {
+        val saved = MemoryRecord()
+        LockTaskRecovery({ state() }, { inCall() }, { forwards++ }, { clock }, saved).apply {
+            opened(CallingScreen.EMERGENCY_KEYPAD)
+            homeResumed()
+        }
+        val next = LockTaskRecovery({ state() }, { inCall() }, { forwards++ }, { clock }, saved)
+        next.afterPass(locked = false, ready = true)
+        assertNull(next.onHomeLockTaskState(LockTaskState.LOCKED).restore)
+    }
+
+    @Test fun aRecordThatCannotBeReadOrSavedNeverThrowsAndKeepsTheInProcessRestore() {
+        val broken = object : OpenedScreenRecord {
+            override fun load(): CallingScreen? = throw IllegalStateException("unreadable")
+            override fun save(screen: CallingScreen?): Unit = throw IllegalStateException("disk full")
+        }
+        val recovery = LockTaskRecovery({ state() }, { inCall() }, { forwards++ }, { clock }, broken)
+        recovery.opened(CallingScreen.PHONE)
+        assertEquals(RecoveryAction.HOME_FORWARD, recovery.afterPass(locked = false, ready = true))
+        assertEquals(CallingScreen.PHONE, recovery.onHomeLockTaskState(LockTaskState.LOCKED).restore)
+    }
+
+    private class MemoryRecord : OpenedScreenRecord {
+        private var screen: CallingScreen? = null
+        override fun load() = screen
+        override fun save(screen: CallingScreen?) {
+            this.screen = screen
+        }
+    }
+
     @Test fun anUnidentifiedForeignScreenIsNotGuessed() {
         // No call and nothing LMNOPhone opened: Home comes forward and nothing is relaunched.
         recovery.afterPass(locked = false, ready = true)
