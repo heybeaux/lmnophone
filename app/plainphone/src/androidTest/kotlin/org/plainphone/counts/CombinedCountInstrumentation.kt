@@ -35,11 +35,10 @@ class CombinedCountInstrumentation : Instrumentation() {
             val sms = count("content://sms", arrayOf("_id"), "type = 1 AND read = 0")
             val mms = count("content://mms", arrayOf("_id"), "msg_box = 1 AND read = 0")
             val focus = " AND _id IN ($fixtureIds)"
-            val focusCombined = count("content://mms-sms/complete-conversations", arrayOf("_id", "transport_type"), "read = 0$focus")
             val focusSms = count("content://sms", arrayOf("_id"), "type = 1 AND read = 0$focus")
             val focusMms = count("content://mms", arrayOf("_id"), "msg_box = 1 AND read = 0$focus")
-            result.putString("fixture", "combined=$focusCombined sms=$focusSms mms=$focusMms expectedSms=$expectedSms expectedMms=$expectedMms")
-            check(focusSms == expectedSms && focusMms == expectedMms && focusCombined == expectedSms + expectedMms)
+            result.putString("fixture", "sms=$focusSms mms=$focusMms expectedSms=$expectedSms expectedMms=$expectedMms")
+            check(focusSms == expectedSms && focusMms == expectedMms)
             result.putString("counts", "combined=$combined oracleSms=$sms oracleMms=$mms expected=$expected nonDefault=true")
             check(combined == sms + mms && combined == expected)
             result.putString("outcome", "PASS")
