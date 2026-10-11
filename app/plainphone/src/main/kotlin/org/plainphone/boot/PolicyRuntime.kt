@@ -91,6 +91,7 @@ class PolicyRuntime private constructor(private val context: Context) {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
         },
         SystemClock::elapsedRealtime,
+        FileOpenedScreenRecord(File(protectedDir, "opened-screen"), SystemClock::elapsedRealtime),
     )
 
     /** Test builds only (debug `TestHook` IN_CALL; release never sets it): stands in for an ongoing call. */

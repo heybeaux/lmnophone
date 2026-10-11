@@ -3,6 +3,7 @@
 package org.plainphone.boot
 
 import android.app.ActivityManager
+import java.io.File
 
 /**
  * The live lock-task state, read at the Android boundary (PLA-322 finding 3). Only [LOCKED] is managed
@@ -31,6 +32,44 @@ enum class LockTaskState {
 /** A system calling screen (the emergency UI subset) that recovery may displace and brings back. */
 enum class CallingScreen { IN_CALL, PHONE, EMERGENCY_KEYPAD }
 
+/**
+ * Where [LockTaskRecovery] keeps the calling screen LMNOPhone opened, so it outlives the process that
+ * opened it: Home's process can die while that screen is still opening (PLA-324). Best effort; a
+ * record that can't be read or saved counts as nothing opened.
+ */
+interface OpenedScreenRecord {
+    fun load(): CallingScreen?
+    fun save(screen: CallingScreen?)
+
+    object None : OpenedScreenRecord {
+        override fun load(): CallingScreen? = null
+        override fun save(screen: CallingScreen?) = Unit
+    }
+}
+
+/**
+ * [OpenedScreenRecord] in a small file (device-protected storage on the phone): the screen and the
+ * uptime when it was saved. A record from an earlier boot (uptime is lower now) or one that can't be
+ * parsed loads as nothing opened.
+ */
+class FileOpenedScreenRecord(private val file: File, private val uptime: () -> Long) : OpenedScreenRecord {
+    override fun load(): CallingScreen? {
+        if (!file.exists()) return null
+        val parts = file.readText().trim().split(' ')
+        val screen = CallingScreen.entries.firstOrNull { it.name == parts.getOrNull(0) } ?: return null
+        val savedAt = parts.getOrNull(1)?.toLongOrNull() ?: return null
+        return screen.takeIf { savedAt <= uptime() }
+    }
+
+    override fun save(screen: CallingScreen?) {
+        if (screen == null) {
+            file.delete()
+        } else {
+            file.writeText("${screen.name} ${uptime()}")
+        }
+    }
+}
+
 enum class RecoveryAction { NOTHING, HOME_FORWARD, PINNED_ATTENTION }
 
 /** What Home does after reading its own lock-task state: reopen [restore], and ask for a pass. */
@@ -51,7 +90,8 @@ data class HomeFollowUp(val restore: CallingScreen?, val reapply: Boolean)
  * Bringing Home forward displaces whatever is on top. Android does not tell a Device Owner what that
  * is (other apps' tasks need `REAL_GET_TASKS`, usage events need the usage-stats app-op), so the
  * calling screen to bring back is identified from what can be known: an ongoing call (Telecom), or a
- * Phone or emergency keypad that LMNOPhone itself opened and the user has not left for Home since.
+ * Phone or emergency keypad that LMNOPhone itself opened and the user has not left for Home since,
+ * kept in [record] so the next process still knows it.
  * Home reopens it inside lock task as soon as LOCKED reads back ([onHomeLockTaskState]). A foreign
  * screen nobody can identify is not guessed: it stays behind Home in its own task, and Phone is one tap
  * from Home. Recovery never ends or touches a call.
@@ -64,8 +104,13 @@ class LockTaskRecovery(
     private val inCall: () -> Boolean,
     private val bringHomeForward: () -> Unit,
     private val now: () -> Long,
+    private val record: OpenedScreenRecord = OpenedScreenRecord.None,
 ) {
-    private var opened: CallingScreen? = null
+    private var opened: CallingScreen? = try {
+        record.load()
+    } catch (e: RuntimeException) {
+        null
+    }
     private var restore: CallingScreen? = null
     private var restoreAt = 0L
     private var pinned = false
@@ -73,11 +118,21 @@ class LockTaskRecovery(
     /** LMNOPhone opened [screen] (Home's or the checking screen's Phone or Emergency). */
     @Synchronized fun opened(screen: CallingScreen) {
         opened = screen
+        save(screen)
     }
 
     /** Home is in front again, so nothing it opened is still in front. */
     @Synchronized fun homeResumed() {
+        if (opened != null) save(null)
         opened = null
+    }
+
+    private fun save(screen: CallingScreen?) {
+        try {
+            record.save(screen)
+        } catch (e: RuntimeException) {
+            // The in-process record still works; only a later process loses it.
+        }
     }
 
     fun afterPass(locked: Boolean, ready: Boolean): RecoveryAction {
