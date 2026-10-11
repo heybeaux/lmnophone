@@ -12,6 +12,9 @@ data class HomeUiState(
     val shortDate: String,
     val apps: List<HomeApp> = emptyList(),
     val notice: HomeNotice? = null,
+    /** Fresh, reliable host values only; null hides unavailable or switched-off counts. */
+    val missedCalls: Int? = null,
+    val unreadTexts: Int? = null,
 )
 
 /** IDs should be unique. Duplicate IDs remain renderable and are returned unchanged to the host. */

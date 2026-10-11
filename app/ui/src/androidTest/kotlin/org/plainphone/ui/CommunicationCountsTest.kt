@@ -73,20 +73,57 @@ class CommunicationCountsTest {
             listOf("home-phone", "home-messages").forEach { tag ->
                 val row = compose.onNodeWithTag(tag).assertIsDisplayed()
                 val bounds = row.getUnclippedBoundsInRoot()
-                assertTrue("$case $tag", bounds.top >= 0.dp && bounds.bottom <= 560.dp && bounds.height >= 56.dp)
+                assertTrue("$case $tag", bounds.top >= 0.dp && bounds.bottom <= 560.dp && bounds.bottom - bounds.top >= 56.dp)
                 val textNodes = compose.onAllNodes(hasAnyAncestor(hasTestTag(tag)) and
                     SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
                 assertTrue(textNodes.fetchSemanticsNodes().isNotEmpty())
                 repeat(textNodes.fetchSemanticsNodes().size) { index ->
                     val results = mutableListOf<TextLayoutResult>()
                     textNodes[index].performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(results) }
-                    assertTrue("$case: text overflow", results.all { !it.hasVisualOverflow })
+                    // FlowRow can retain a full-width paragraph while Text reports its tight
+                    // measured width. Check rendered line extents, not that unused paragraph width.
+                    results.forEach { result ->
+                        assertFalse("$case: vertical overflow", result.didOverflowHeight)
+                        repeat(result.lineCount) { line ->
+                            assertFalse("$case: ellipsized text", result.isLineEllipsized(line))
+                            assertTrue("$case: line outside text bounds",
+                                result.getLineLeft(line) >= 0f &&
+                                result.getLineRight(line) <= result.size.width + 0.5f &&
+                                result.getLineBottom(line) <= result.size.height + 0.5f)
+                        }
+                    }
                     val tb = textNodes[index].getUnclippedBoundsInRoot()
                     assertTrue("$case: text outside row", tb.left >= bounds.left && tb.right <= bounds.right && tb.top >= bounds.top && tb.bottom <= bounds.bottom)
                 }
             }
         }
     }
+    @Test fun settingsLargeTextCanRevealEachStatusWithoutTextOverflow() {
+        val scale = mutableStateOf(1f)
+        compose.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(scale.value)) {
+                PlainphoneTheme { Box(Modifier.size(360.dp, 560.dp)) {
+                    PhoneSettingsScreen(PhoneSettingsUiState(true, true, true), {})
+                } }
+            }
+        }
+        listOf(1f, 1.3f, 1.5f, 1.8f, 2f).forEach { value ->
+            compose.runOnIdle { scale.value = value }
+            listOf("Show missed calls and unread texts on Home",
+                "Counts texts and picture messages. Chat messages (RCS) may not be counted.",
+                "LMNOPhone can't read missed calls right now", "LMNOPhone can't read unread texts right now")
+                .forEach { label ->
+                    val node = compose.onNodeWithText(label, useUnmergedTree = true)
+                    node.performScrollTo().assertIsDisplayed()
+                    val result = mutableListOf<TextLayoutResult>()
+                    node.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(result) }
+                    assertTrue("$value: $label", result.all { !it.hasVisualOverflow })
+                    val bounds = node.getUnclippedBoundsInRoot()
+                    assertTrue(bounds.top >= 0.dp && bounds.bottom <= 560.dp)
+                }
+        }
+    }
+
     @Test fun switchUsesHostStateAndMoreRoutesWithoutPin() {
         val state = mutableStateOf(PhoneSettingsUiState())
         val events = mutableListOf<PhoneSettingsEvent>()
