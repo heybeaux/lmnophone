@@ -74,6 +74,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         runtime.homeResumed()
+        runtime.onUserUnlocked()
         enterLockTask()
     }
 

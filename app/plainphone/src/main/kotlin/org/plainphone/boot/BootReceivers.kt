@@ -33,6 +33,30 @@ class BootReceiver : BroadcastReceiver() {
 }
 
 /**
+ * USER_UNLOCKED reaches context-registered receivers only, not manifest receivers. Register for
+ * the process lifetime before its startup pass; the dispatcher checks UserManager's current state.
+ * Home resume is the fallback if the process starts after the broadcast.
+ * https://developer.android.com/reference/android/content/Intent#ACTION_USER_UNLOCKED
+ */
+object UserUnlockEvents {
+    fun register(context: Context) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action != Intent.ACTION_USER_UNLOCKED) return
+                val pending = goAsync()
+                PolicyRuntime.get(context).onUserUnlocked { pending.finish() }
+            }
+        }
+        val filter = IntentFilter(Intent.ACTION_USER_UNLOCKED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            context.registerReceiver(receiver, filter)
+        }
+    }
+}
+
+/**
  * The 15-minute re-apply. Exact, with `setExactAndAllowWhileIdle`: a lost restriction or hide must not
  * wait for an inexact batch, and Doze would otherwise defer it for hours. USE_EXACT_ALARM (API 33+)
  * and SCHEDULE_EXACT_ALARM (API 30–32) cover it; if exact alarms are refused anyway it falls back to

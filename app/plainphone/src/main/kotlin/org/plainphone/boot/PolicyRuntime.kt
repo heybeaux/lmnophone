@@ -45,13 +45,16 @@ enum class HomeGate { CHECKING, READY, NOT_READY }
  * device-protected storage, and a locked run applies only the locked-boot plan.
  *
  * Re-apply triggers ([reapply]): boot (locked and unlocked), every Plainphone start, package events,
- * the 15-minute alarm and, from the wiring slice, [afterTrustedPersonAction]. Each run re-reads the
+ * user unlock, the 15-minute alarm and, from the wiring slice, [afterTrustedPersonAction]. Each run re-reads the
  * live phone; repeated runs are harmless.
  */
 class PolicyRuntime private constructor(private val context: Context) {
     private val dispatcher = SerialDispatcher()
     private val dpm = context.getSystemService(DevicePolicyManager::class.java)
     private val users = context.getSystemService(UserManager::class.java)
+    private val userUnlocked = UserUnlockedReapply(dispatcher, { users.isUserUnlocked }) {
+        run("user-unlocked")
+    }
     private val admin = ComponentName(context, PlainphoneAdminReceiver::class.java)
     private val port = DpmPort(context, admin, ComponentName(context, FlushMarker::class.java))
     private val protectedDir = context.createDeviceProtectedStorageContext().filesDir
@@ -143,6 +146,9 @@ class PolicyRuntime private constructor(private val context: Context) {
         }
     }
 
+    /** Unlock broadcast or Home resume: queue the full pass only if the last pass was locked/absent. */
+    fun onUserUnlocked(done: () -> Unit = {}) = userUnlocked.request(done)
+
     /** Package events come in bursts: at most one queued run for them. */
     fun onPackageEvent(reason: String) {
         if (packageEventQueued.compareAndSet(false, true)) dispatcher.post {
@@ -178,6 +184,7 @@ class PolicyRuntime private constructor(private val context: Context) {
             Log.e(TAG, "reapply $reason threw", e)
             null
         }
+        userUnlocked.recordPass(locked)
         log(reason, outcome, SystemClock.elapsedRealtime() - started)
         BuildControl.control.afterReapply(context, dpm, admin)
         runsState.value++
