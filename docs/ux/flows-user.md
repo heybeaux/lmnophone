@@ -366,7 +366,10 @@ always be found (trusted-person-controls, "Where Cancel is reachable"), whatever
 More → **Phone settings** offers one PIN-free switch, off by default:
 **Show missed calls and unread texts on Home**.
 
-Under it: **Counts texts and picture messages. Chat messages (RCS) and other apps are not counted.**
+Under it: **Counts texts and picture messages. Chat (RCS) messages and other apps aren't supported, so they may be missing from the number.**
+If either Home entry does not launch the installed, enabled standard role holder, show:
+**Counts work only with the phone's standard Phone and Messages apps.**
+
 When on but unavailable, show the applicable line(s):
 - **LMNOPhone can't read missed calls right now**
 - **LMNOPhone can't read unread texts right now**

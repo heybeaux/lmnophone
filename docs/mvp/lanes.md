@@ -135,3 +135,8 @@ READ_CALL_LOG and READ_SMS only. It never revokes. `:plainphone` independently
 checks each permission and a successful count query; a DPM return is not proof.
 The host owns a private `home_preferences` store (absent in preview-2), observation,
 cancellation and the PIN-free Phone settings route. Counts are never persisted.
+
+Revision 4 host freshness uses separate timer and query ports, a single combined
+Messages statement, and read-only role/package/Home-target gates.
+`PhoneSettingsUiState.unsupportedApps` carries the supported-app disclosure.
+No policy-engine, emergency-floor or permission-grant interface changed.
