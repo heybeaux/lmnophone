@@ -1,0 +1,67 @@
+07:55:45 before: lockTask=LOCKED top=org.plainphone/.MainActivity LockTaskPolicy {mPackages= com.google.android.dialer, com.android.server.telecom, com.google.android.apps.safetyhub, org.plainphone, com.google.android.apps.messaging, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 119 }
+07:55:46 before: ui_night_mode=1
+07:55:46 tapped Dark theme at +0.4s, top before the tap=com.android.settings/.Settings$DisplaySettingsActivity
+07:55:46 t=+0.64s lockTask=NONE top=com.android.settings/.Settings$DisplaySettingsActivity pid=8123
+07:55:47 t=+1.05s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:47 t=+1.44s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:47 t=+1.83s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:48 t=+2.2s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:48 t=+2.56s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:49 t=+2.93s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:49 t=+3.29s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:49 t=+3.65s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:50 t=+4.02s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:50 t=+4.39s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:50 t=+4.75s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:51 t=+5.1s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:51 t=+5.46s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:51 t=+5.82s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:52 t=+6.18s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:52 t=+6.53s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:53 t=+6.91s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:53 t=+7.28s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:53 t=+7.64s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:54 t=+7.99s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:54 t=+8.35s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:54 t=+8.71s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:55 t=+9.06s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:55 t=+9.42s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:55 t=+9.77s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:56 t=+10.14s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:56 t=+10.5s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:57 t=+10.86s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:57 t=+11.22s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:57 t=+11.59s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:58 t=+11.96s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:58 t=+12.34s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:58 t=+12.71s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:59 t=+13.07s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:59 t=+13.44s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:55:59 t=+13.82s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:00 t=+14.22s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:00 t=+14.58s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:01 t=+14.95s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:01 t=+15.32s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:01 t=+15.68s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:02 t=+16.05s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:02 t=+16.41s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:02 t=+16.78s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:03 t=+17.14s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:03 t=+17.51s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:04 t=+17.87s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:04 t=+18.24s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:04 t=+18.6s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:05 t=+18.98s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:05 t=+19.34s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:05 t=+19.71s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:06 t=+20.07s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:06 t=+20.44s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:06 t=+20.81s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:07 t=+21.17s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:07 t=+21.52s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:08 t=+21.89s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:08 t=+22.26s lockTask=LOCKED top=org.plainphone/.MainActivity pid=8123
+07:56:08 observed: unapproved activity top-resumed in samples from +0.64s to +0.64s
+07:56:09 after centre tap: lockTask=LOCKED top=org.plainphone/.MainActivity
+07:56:09 lasting effect: ui_night_mode 1 -> 2 (Dark theme changed during the window)
+07:56:10 EXPOSED race-tap-0.35: contained after recovery; the window had a lasting effect
