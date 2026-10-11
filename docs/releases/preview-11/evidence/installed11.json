@@ -1,0 +1,15 @@
+{
+  "versionCode": 11,
+  "versionName": "0.1.0-preview-11",
+  "sha256": "9ec7321905ddf09b5638acee03f19c8fba06d6473760529d8414dc0977ffaa2f",
+  "signerSha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "codeCommit": "f67a2fab2bcfa3804322b56fd14c7143e1089c37",
+  "installStartedUtc": "2026-10-11T23:42:49.581558+00:00",
+  "installedUtc": "2026-10-11T23:42:50.673281+00:00",
+  "readback": [
+    "versionCode=11 minSdk=30 targetSdk=36",
+    "versionName=0.1.0-preview-11",
+    "firstInstallTime=2026-10-11 14:05:10"
+  ],
+  "installedBytesMatch": true
+}

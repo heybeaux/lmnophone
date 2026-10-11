@@ -1,0 +1,32 @@
+test_current_calls_only (test_upgrade_check.GateTest.test_current_calls_only) ... PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: read exactly one Telecom current-call section
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+ok
+test_digits_exactly_one_node (test_upgrade_check.GateTest.test_digits_exactly_one_node) ... PASS: read exactly one dial field
+PASS: read exactly one dial field
+ok
+test_empty_dial_field_has_known_google_phone_hint (test_upgrade_check.GateTest.test_empty_dial_field_has_known_google_phone_hint) ... PASS: dial field empty (raw text='')
+PASS: dial field empty (raw text='Phone Number')
+ok
+test_exact_digits_do_not_normalize_duplicate_prefill (test_upgrade_check.GateTest.test_exact_digits_do_not_normalize_duplicate_prefill) ... ok
+test_failed_adb_survives_tee (test_upgrade_check.GateTest.test_failed_adb_survives_tee) ... ok
+test_safe_tap_selector (test_upgrade_check.GateTest.test_safe_tap_selector) ... ok
+test_serial_and_negative_control_guards (test_upgrade_check.GateTest.test_serial_and_negative_control_guards) ... PASS: owned emulator serial
+PASS: spare requires sole-driver opt-in
+PASS: negative control is emulator-only
+PASS: spare requires sole-driver opt-in
+PASS: owned emulator serial
+PASS: owned emulator serial
+PASS: EXPECT_DIAL requires emulator self-test opt-in
+PASS: negative control expects only 912; typed digits stay 911
+ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.240s
+
+OK
