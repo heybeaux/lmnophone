@@ -24,6 +24,12 @@ class GateTest(unittest.TestCase):
         with self.assertRaises(gate.GateFailure): gate.exact('911-911', '911', 'digits')
         with self.assertRaises(gate.GateFailure): gate.exact('\n911', '911', 'digits')
 
+    def test_empty_dial_field_has_known_google_phone_hint(self):
+        gate.empty_field('')
+        gate.empty_field('Phone Number')
+        for value in ['911', '911-911', 'Phone Number 911', 'unknown hint']:
+            with self.assertRaises(gate.GateFailure): gate.empty_field(value)
+
     def test_current_calls_only(self):
         empty = '  mCalls:\n  mCallAudioManager:\n    All calls:\n  Historical calls:\n    old call\n'
         gate.no_current_calls(empty)

@@ -43,6 +43,13 @@ def dialtext(xml):
     return matches[0].get('text')
 
 
+def empty_field(value):
+    # Google Phone's numeric EditText exposes its empty hint as text in UIAutomator.
+    # Keep dialtext() raw; accept only the observed English empty hint here, never
+    # during the exact 911 assertions. An unfamiliar/localized hint fails closed.
+    require(value in ('', 'Phone Number'), 'dial field empty (raw text='+repr(value)+')')
+
+
 def no_current_calls(text):
     # Telecom's current CallsManager mCalls section; never the historical call log.
     lines = text.splitlines()
@@ -127,8 +134,9 @@ class Gate:
     def clear(self):
         # Bounded to avoid endlessly tapping a broken delete control.
         for _ in range(32):
-            if self.digits() == '':
-                passed('dial field read back empty')
+            value = self.digits()
+            if value in ('', 'Phone Number'):
+                empty_field(value)
                 return
             self.tap(r'com\.google\.android\.dialer:id/deleteButton$')
         raise GateFailure('clear dial field within 32 deletes')
@@ -189,7 +197,7 @@ class Gate:
         self.calls_empty()
         self.shot('more-emergency-911.png')
         self.clear()
-        exact(self.digits(), '', 'More > Emergency cleared field exactly empty')
+        empty_field(self.digits())
         self.home()
         self.tap(r'^Phone(?:,.*)?$')
         time.sleep(2)
@@ -197,7 +205,7 @@ class Gate:
         if not any(n.get('resource-id') == 'com.google.android.dialer:id/nine' for n in nodes(xml)):
             self.tap(r'id/dialpad_fab$|^[Kk]ey ?pad$|^[Dd]ial ?pad$')
         self.clear()
-        exact(self.digits(), '', 'Phone field exactly empty before typing')
+        empty_field(self.digits())
         for key in ('nine', 'one', 'one'):
             self.tap(r'com\.google\.android\.dialer:id/'+key+'$')
         exact(self.digits(), expected, 'Phone typed field exactly '+expected)
