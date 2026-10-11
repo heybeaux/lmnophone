@@ -58,13 +58,24 @@ def gate(check, args):
         print("GATE more-emergency NOT_BUILT declared")
     elif check == "alert":
         for c in ("alert-display-ready", "alert-display-launch"):
-            print("GATE", c, verdict(c), "mock")
+            v, detail = verdict(c), "mock"
+            if c == "alert-display-launch" and v == "FAIL":  # the cause GateJudge.alertLaunched gives (PLA-296 R4)
+                detail = "unavailable: hidden (Error type 3) mock"
+                if control == "no-alert" and env("MOCK_ALERT_LAUNCH_ERROR"):
+                    detail = "start refused: SecurityException: shell failed"  # the PLA-296 review's line
+            print("GATE", c, v, detail)
         print("GATE alert-shown INCONCLUSIVE mock unsupported")
     elif check == "telecom-emergency-call":
         if env("MOCK_STUCK_CALL"):
             s["call"] = 2
         if env("MOCK_CALL_RETURNS") and not s.get("returned"):
             s["returns_in"] = 2  # reads idle twice, then the call is back (API 36, PLA-245)
+        if env("MOCK_RETURN_AT") and not s.get("returned"):
+            s["returns_in"] = int(env("MOCK_RETURN_AT"))  # back on the Nth telephony read after the call (PLA-296 R2)
+        if env("MOCK_MODEM_KEEPS_CALL"):
+            s["modem_call"] = True
+        if env("MOCK_TELECOM_KEEPS_CALL"):
+            s["telecom_call"] = True
         print("GATE telecom-emergency-call", verdict(check), "mock afterHangUp=mCallState=0")
     elif check == "hangup":
         if not env("MOCK_STUCK_CALL"):
@@ -74,7 +85,12 @@ def gate(check, args):
         print("GATE", check, verdict(check), "mock")
 
 a = sys.argv[3:]  # skip -s SERIAL
-if a[:1] == ["install"]:
+if a[:1] == ["emu"]:
+    if a[1:] == ["gsm", "list"]:  # the emulated modem's call list
+        if s["call"] or s.get("modem_call"):
+            print("outbound to  7357            : active")
+        print("OK")
+elif a[:1] == ["install"]:
     apk = a[-1]
     if env("MOCK_FAIL_INSTALL_CTL") and "plainphone-ctl" in apk:
         sys.exit(1)
@@ -93,24 +109,38 @@ elif a[:1] == ["shell"]:
         print({"ro.build.type": "userdebug", "ro.kernel.qemu": env("MOCK_QEMU", "1"), "ro.boot.qemu": env("MOCK_QEMU", "1"),
                "ro.build.version.sdk": "36", "ro.build.fingerprint": "mock-emulator", "sys.boot_completed": "1"}.get(c[1], ""))
     elif c[:2] == ["locksettings", "get-disabled"]:
-        print("false" if s["pin"] else "true")
+        if not (env("MOCK_PIN_READ_EMPTY") and s.get("pin_cleared")):
+            print("false" if s["pin"] else "true")
     elif c[:2] == ["locksettings", "set-pin"]:
         s["pin"] = True
     elif c[:2] == ["locksettings", "clear"]:
-        s["pin"] = False
+        s["pin"], s["pin_cleared"] = False, True
     elif c[:2] == ["dpm", "list-owners"]:
-        print("Device owner (User 0): org.plainphone/.PlainphoneAdminReceiver" if s["owner"] else "no owners")
+        if s.get("last_removed") and env("MOCK_OWNER_READ") == "fail":
+            save()
+            sys.exit(1)
+        if not (s.get("last_removed") and env("MOCK_OWNER_READ") == "empty"):
+            print("Device owner (User 0): org.plainphone/.PlainphoneAdminReceiver" if s["owner"] else "no owners")
     elif c[:2] == ["dpm", "set-device-owner"]:
         s["owner"] = True
         print("Success: Device owner set")
     elif c[:2] == ["dpm", "remove-active-admin"]:
         s["owner"] = False
+        if s["build"] == "ctlNoAlertLockTask":
+            s["last_removed"] = True
+            if env("MOCK_RETURN_AFTER_LAST_REMOVAL") and not s.get("returned"):
+                s["returns_in"] = int(env("MOCK_RETURN_AFTER_LAST_REMOVAL"))  # PLA-296 review fixture: 7
     elif c[:2] == ["dumpsys", "telephony.registry"]:
         if s.get("returns_in"):
             s["returns_in"] -= 1
             if s["returns_in"] == 0:
                 s["call"], s["returned"] = 2, True
         print(f"    mCallState={s['call']}")
+    elif c[:2] == ["dumpsys", "telecom"]:
+        print("CallsManager: \n  mCalls: ")
+        if s["call"] or s.get("telecom_call"):
+            print("    [Call id=TC@1, state=ACTIVE, tpac=ComponentInfo{com.android.phone/x}, handle=tel:**57], voip=false")
+        print("  mCallAudioManager:")
     elif c[:2] == ["dumpsys", "window"]:
         locked = s["pin"] and bool(env("MOCK_UNLOCK_FAIL"))
         print(f"isKeyguardShowing={'true' if locked else 'false'}")
@@ -123,9 +153,19 @@ elif a[:1] == ["shell"]:
         if "-a" in c and not env("MOCK_REG_FAIL"):
             s["numbers"].append(c[-1])
         elif "-c" in c:
-            s["numbers"] = []
+            if env("MOCK_CLEAR"):  # fail: the clear exits 1; read-fail/read-empty: it leaves 7357, and -p then fails
+                s["clear_failed"] = True
+                if env("MOCK_CLEAR") == "fail":
+                    save()
+                    sys.exit(1)
+            else:
+                s["numbers"] = []
         elif "-p" in c:
-            print("[" + ", ".join(["112", "911"] + s["numbers"]) + "]")
+            if s.get("clear_failed") and env("MOCK_CLEAR") == "read-fail":
+                save()
+                sys.exit(1)
+            if not (s.get("clear_failed") and env("MOCK_CLEAR") == "read-empty"):
+                print("[" + ", ".join(["112", "911"] + s["numbers"]) + "]")
     elif c[:1] == ["pidof"]:
         print("4242")
     elif c[:2] == ["am", "instrument"]:
@@ -298,6 +338,105 @@ class HostGateTest(unittest.TestCase):
         st = self.state()
         self.assertEqual((0, [], False, False), (st["call"], st["numbers"], st["pin"], st["owner"]))
         self.assertNotIn("plainphone-ctlNoPhone.apk", self.adb_log())
+
+    # ---- PLA-296 R4: an alert launch error is not a detected control ----
+
+    def test_review_repro_alert_launch_error_does_not_detect_the_control(self):
+        rc, out = self.run_gate(MOCK_ALERT_LAUNCH_ERROR="1")
+        self.assertEqual(1, rc, out)
+        self.assertIn("ctlNoAlert: ", out)
+        self.assertIn("FAIL without a recognised cause", out)
+        self.assertIn("RESULT NOT QUALIFIED", out)
+
+    # ---- PLA-296 R2: a call that comes back after it was confirmed ended ----
+
+    def cleanup_line(self):
+        return _read(os.path.join(self.dir, "out", "cleanup.txt"))
+
+    def assert_stopped(self, rc, out):
+        self.assertEqual(4, rc, out)
+        self.assertNotIn("RESULT QUALIFIED", out)
+
+    def test_call_ended_records_telecom_and_modem_evidence(self):
+        rc, out = self.run_gate()
+        self.assertEqual(5, rc, out)
+        self.assertIn("emu gsm list", self.adb_log())
+        self.assertIn("dumpsys telecom", self.adb_log())
+        debug = _read(os.path.join(self.dir, "out", "debug.txt"))
+        self.assertIn("# after telecom-emergency-call: mCallState=0 held 3 s, Telecom mCalls none live, "
+                      "modem call list empty, mCallState=0 after both", debug)
+        self.assertIn("# cleanup ok=1", self.cleanup_line())
+
+    def test_late_return_at_the_end_of_the_hold_stops_the_run(self):
+        # Six idle reads pass the hold; the call is back on the read right after it.
+        rc, out = self.run_gate(MOCK_RETURN_AT="7")
+        self.assert_stopped(rc, out)
+        self.assertIn("came back", out)
+        self.assertNotIn("plainphone-ctlNoPhone.apk", self.adb_log())
+        self.assertEqual(0, self.state()["call"])
+
+    def test_late_return_before_the_next_call_capable_step_stops_the_run(self):
+        # The hang-up was confirmed (seven reads); the call is back when lock-screen starts.
+        rc, out = self.run_gate(MOCK_RETURN_AT="8")
+        self.assert_stopped(rc, out)
+        self.assertIn("GATE lock-screen ERROR", _read(os.path.join(self.dir, "out", "debug.txt")))
+        self.assertNotIn("check lock-screen", self.adb_log())
+        self.assertEqual(0, self.state()["call"])
+
+    def test_review_repro_late_return_during_final_cleanup_is_not_certified(self):
+        # The PLA-296 fixture: the last owner removal schedules the call back on the seventh telephony read.
+        rc, out = self.run_gate(MOCK_RETURN_AFTER_LAST_REMOVAL="7")
+        self.assert_stopped(rc, out)
+        self.assertIn("# cleanup ok=0", self.cleanup_line())
+        self.assertEqual(0, self.state()["call"])
+
+    def test_late_return_on_the_final_cleanup_read_is_not_certified(self):
+        # The cleanup's own hang-up check passes (seven reads); the call is back on its very last read.
+        rc, out = self.run_gate(MOCK_RETURN_AFTER_LAST_REMOVAL="14")
+        self.assert_stopped(rc, out)
+        self.assertIn("# cleanup ok=0", self.cleanup_line())
+
+    def test_modem_still_listing_the_call_is_not_ended(self):
+        rc, out = self.run_gate(MOCK_MODEM_KEEPS_CALL="1")
+        self.assert_stopped(rc, out)
+        self.assertNotIn("plainphone-ctlNoPhone.apk", self.adb_log())
+
+    def test_telecom_still_holding_the_call_is_not_ended(self):
+        rc, out = self.run_gate(MOCK_TELECOM_KEEPS_CALL="1")
+        self.assert_stopped(rc, out)
+        self.assertNotIn("plainphone-ctlNoPhone.apk", self.adb_log())
+
+    # ---- PLA-296 R3: unreadable cleanup state is not restored state ----
+
+    def assert_number_cleanup_unconfirmed(self, rc, out):
+        self.assertEqual(4, rc, out)
+        self.assertIn("# cleanup ok=0", self.cleanup_line())
+        # The flag stayed set, so the EXIT cleanup tried the clear again.
+        self.assertGreaterEqual(self.adb_log().count("emergency-number-test-mode -c"), 2)
+
+    def test_clear_command_failure_is_not_absence(self):
+        self.assert_number_cleanup_unconfirmed(*self.run_gate("--quick", "--builds", "debug", MOCK_CLEAR="fail"))
+
+    def test_review_repro_failed_number_read_is_not_absence(self):
+        self.assert_number_cleanup_unconfirmed(*self.run_gate("--quick", "--builds", "debug", MOCK_CLEAR="read-fail"))
+
+    def test_empty_number_read_is_not_absence(self):
+        self.assert_number_cleanup_unconfirmed(*self.run_gate("--quick", "--builds", "debug", MOCK_CLEAR="read-empty"))
+
+    def test_failed_owner_read_is_not_absence(self):
+        rc, out = self.run_gate(MOCK_OWNER_READ="fail")
+        self.assert_stopped(rc, out)
+        self.assertIn("# cleanup ok=0", self.cleanup_line())
+
+    def test_empty_owner_read_is_not_absence(self):
+        rc, out = self.run_gate(MOCK_OWNER_READ="empty")
+        self.assert_stopped(rc, out)
+        self.assertIn("# cleanup ok=0", self.cleanup_line())
+
+    def test_empty_pin_read_is_not_cleared(self):
+        rc, out = self.run_gate(MOCK_PIN_READ_EMPTY="1")
+        self.assert_stopped(rc, out)
+        self.assertIn("# cleanup ok=0", self.cleanup_line())
 
 
 if __name__ == "__main__":
