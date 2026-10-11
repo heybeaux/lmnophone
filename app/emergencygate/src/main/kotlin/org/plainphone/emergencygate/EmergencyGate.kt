@@ -9,6 +9,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Rect
+import android.os.Build
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.os.SystemClock
@@ -235,6 +236,12 @@ class EmergencyGate : Instrumentation() {
         val name = alertPackage() ?: return GateJudge.alertDisplayReady(
             AlertDisplay("cellbroadcastreceiver", found = false, enabled = false, hidden = null, suspended = null, allowedInLockTask = false),
         )
+        val (display, componentState) = readAlertDisplay(name)
+        return GateJudge.alertDisplayReady(display).let { it.copy(detail = "${it.detail} componentState=$componentState lockTask=${lockTask()}") }
+    }
+
+    /** The alert-display package's state, and its alert screen's component state. */
+    private fun readAlertDisplay(name: String): Pair<AlertDisplay, Int> {
         // An unreadable hidden/suspended state stays null (unknown), which is never ready.
         val user = Dumpsys.userState(shell("dumpsys package $name"))
         val hidden = user.hidden ?: Dumpsys.hiddenFromLists(name, shell("pm list packages -u"), shell("pm list packages"))
@@ -252,27 +259,39 @@ class EmergencyGate : Instrumentation() {
             hidden = hidden, suspended = user.suspended,
             allowedInLockTask = !lockTaskOn || name in lockTaskList,
         )
-        return GateJudge.alertDisplayReady(display).let { it.copy(detail = "${it.detail} componentState=$componentState lockTask=${lockTask()}") }
+        return display to componentState
     }
 
     /**
      * Starts the alert screen directly (root): the closest the emulator gets to a received alert. With no
      * alert in the intent the screen closes itself at once, so the verdict is the activity that
      * `am start -W` reports starting: exactly the alert screen, or anything else (lock task's blocked
-     * screen) fails.
+     * screen) fails. The package state is read back first and the command's exit status is captured, so
+     * [GateJudge.alertLaunched] can tell the expected unavailable component from a harness failure.
      */
     private fun alertLaunch(): CheckResult {
         val check = "alert-display-launch"
-        val name = alertPackage() ?: return CheckResult(check, Verdict.FAIL, "no alert-display package")
+        val name = alertPackage() ?: return CheckResult(check, Verdict.ERROR, "no alert-display package to launch")
         home()?.let { return CheckResult(check, Verdict.ERROR, it) }
-        val out = shell("su 0 am start -W -n $name/$ALERT_DIALOG")
-        val started = Regex("""Activity: ([^/\s]+)/(\S+)""").find(out)?.let { m ->
-            val cls = m.groupValues[2]
-            Activity(m.groupValues[1], if (cls.startsWith(".")) m.groupValues[1] + cls else cls)
+        val (display, componentState) = readAlertDisplay(name)
+        val (exit, out) = rootShellWithExit("am start -W -n $name/$ALERT_DIALOG")
+        if (Dumpsys.startedActivity(out)?.className == GateJudge.BLOCKED_APP) shell("input keyevent KEYCODE_BACK")
+        return GateJudge.alertLaunched(display, exit, out, setOf(Activity(name, ALERT_DIALOG))).let {
+            it.copy(detail = "${it.detail} componentState=$componentState lockTask=${lockTask()}")
         }
-        if (started?.className == GateJudge.BLOCKED_APP) shell("input keyevent KEYCODE_BACK")
-        if (started == null) return CheckResult(check, Verdict.FAIL, "start refused: ${out.lines().filter { it.isNotBlank() }.joinToString(" | ")}")
-        return GateJudge.inFront(check, started, setOf(Activity(name, ALERT_DIALOG))).let { it.copy(detail = "${it.detail} lockTask=${lockTask()}") }
+    }
+
+    /**
+     * Runs [command] in a root shell fed on stdin (`executeShellCommand` does not parse quotes), with
+     * stderr folded in. Returns its exit status (null when the shell printed none) and its output.
+     */
+    private fun rootShellWithExit(command: String): Pair<Int?, String> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null to "executeShellCommandRw needs API 31"
+        val (read, write) = uiAutomation.executeShellCommandRw("su 0 sh")
+        ParcelFileDescriptor.AutoCloseOutputStream(write).use { it.write("$command 2>&1; echo $EXIT_MARK\$?\n".toByteArray()) }
+        val all = ParcelFileDescriptor.AutoCloseInputStream(read).use { it.readBytes().decodeToString() }
+        val exit = Regex("""(?m)^$EXIT_MARK(\d+)\s*$""").find(all)?.groupValues?.get(1)?.toIntOrNull()
+        return exit to all.lines().filterNot { it.startsWith(EXIT_MARK) }.joinToString("\n")
     }
 
     // ---- helpers ----
@@ -454,5 +473,6 @@ class EmergencyGate : Instrumentation() {
         const val EMERGENCY_CALL = "Emergency call"
         const val EMERGENCY_CB = "android.provider.action.SMS_EMERGENCY_CB_RECEIVED"
         const val ALERT_DIALOG = "com.android.cellbroadcastreceiver.CellBroadcastAlertDialog"
+        const val EXIT_MARK = "gate-exit="
     }
 }

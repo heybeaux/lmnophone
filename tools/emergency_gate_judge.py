@@ -16,12 +16,15 @@ RUN = ["home-phone", "app-home-phone", "more-emergency", "alert-display-ready", 
        "alert-shown", "telecom-emergency-call", "lock-screen", "locked-boot", "boot-checking"]
 REAL = ["capabilities"] + RUN + ["cannot-start"] + NOT_COVERED
 CONTROL = ["capabilities"] + RUN + NOT_COVERED
-# control: (checks that must FAIL, checks that may also fail because of the fault)
+# The alert launch FAILs the gate classifies as the build's behaviour (GateJudge.alertLaunched, PLA-296 R4).
+ALERT_LAUNCH_CAUSES = {"alert-display-launch": ("unavailable:", "blocked by lock task:")}
+# control: (checks that must FAIL, checks that may also fail because of the fault,
+#           causes a must-FAIL check's detail must start with for its FAIL to count as detection)
 CONTROLS = {
-    "no-phone": ({"home-phone", "app-home-phone"}, {"telecom-emergency-call", "boot-checking"}),
-    "no-dialer-lock-task": ({"home-phone", "app-home-phone"}, {"telecom-emergency-call", "boot-checking"}),
-    "no-alert": ({"alert-display-launch"}, {"alert-display-ready"}),
-    "no-alert-lock-task": ({"alert-display-ready", "alert-display-launch"}, set()),
+    "no-phone": ({"home-phone", "app-home-phone"}, {"telecom-emergency-call", "boot-checking"}, {}),
+    "no-dialer-lock-task": ({"home-phone", "app-home-phone"}, {"telecom-emergency-call", "boot-checking"}, {}),
+    "no-alert": ({"alert-display-launch"}, {"alert-display-ready"}, ALERT_LAUNCH_CAUSES),
+    "no-alert-lock-task": ({"alert-display-ready", "alert-display-launch"}, set(), ALERT_LAUNCH_CAUSES),
 }
 LINE = re.compile(r"^GATE (\S+) (PASS|FAIL|ERROR|INCONCLUSIVE|NOT_BUILT|NOT_COVERED) ?(.*)$")
 
@@ -94,8 +97,11 @@ def judge(control, results):
         if check not in required or check == "capabilities" or verdict == "ERROR":
             continue
         if spec and check in spec[0]:
+            causes = spec[2].get(check)
             if verdict != "FAIL":
                 failed.append(f"{check} {verdict}: the control's fault was not detected")
+            elif causes is not None and not detail.startswith(causes):
+                errors.append(f"{check} FAIL without a recognised cause: {detail}".strip())
             continue
         if spec and check in spec[1] and verdict == "FAIL":
             continue

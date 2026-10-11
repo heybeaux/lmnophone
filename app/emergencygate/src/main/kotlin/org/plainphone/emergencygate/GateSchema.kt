@@ -35,14 +35,21 @@ object GateSchema {
     val REAL = listOf("capabilities") + RUN + "cannot-start" + NOT_COVERED.keys
     val CONTROL = listOf("capabilities") + RUN + NOT_COVERED.keys
 
-    /** Each control's deliberate fault: checks that must FAIL, and checks that may also fail because of it. */
-    data class Control(val mustFail: Set<String>, val mayFail: Set<String> = emptySet())
+    /**
+     * Each control's deliberate fault: checks that must FAIL, and checks that may also fail because of it.
+     * [causes]: for these must-FAIL checks, a FAIL counts as detection only when its detail starts with
+     * one of the listed causes; any other FAIL is the harness failing (ERROR), never detection (PLA-296 R4).
+     */
+    data class Control(val mustFail: Set<String>, val mayFail: Set<String> = emptySet(), val causes: Map<String, List<String>> = emptyMap())
+
+    /** The alert launch FAILs the gate classifies as the build's behaviour (GateJudge.alertLaunched). */
+    val ALERT_LAUNCH_CAUSES = mapOf("alert-display-launch" to listOf("unavailable:", "blocked by lock task:"))
 
     val CONTROLS = mapOf(
         "no-phone" to Control(setOf("home-phone", "app-home-phone"), setOf("telecom-emergency-call", "boot-checking")),
         "no-dialer-lock-task" to Control(setOf("home-phone", "app-home-phone"), setOf("telecom-emergency-call", "boot-checking")),
-        "no-alert" to Control(setOf("alert-display-launch"), setOf("alert-display-ready")),
-        "no-alert-lock-task" to Control(setOf("alert-display-ready", "alert-display-launch")),
+        "no-alert" to Control(setOf("alert-display-launch"), setOf("alert-display-ready"), ALERT_LAUNCH_CAUSES),
+        "no-alert-lock-task" to Control(setOf("alert-display-ready", "alert-display-launch"), causes = ALERT_LAUNCH_CAUSES),
     )
 
     fun judge(control: String, results: List<CheckResult>): Judgement {
@@ -68,13 +75,15 @@ object GateSchema {
         if (twice.isNotEmpty()) incomplete += "reported twice: ${twice.joinToString()}"
 
         val byCheck = results.associateBy { it.check }
-        val errored = results.filter { it.verdict == Verdict.ERROR }.map { "${it.check} ERROR ${it.detail}".trim() }
+        val errored = results.filter { it.verdict == Verdict.ERROR }.map { "${it.check} ERROR ${it.detail}".trim() }.toMutableList()
         val failed = mutableListOf<String>()
         val inconclusive = mutableListOf<String>()
         for ((check, r) in byCheck) {
             if (check !in required || check == "capabilities" || r.verdict == Verdict.ERROR) continue
             if (spec != null && check in spec.mustFail) {
+                val causes = spec.causes[check]
                 if (r.verdict != Verdict.FAIL) failed += "$check ${r.verdict}: the control's fault was not detected"
+                else if (causes != null && causes.none { r.detail.startsWith(it) }) errored += "$check FAIL without a recognised cause: ${r.detail}".trim()
                 continue
             }
             if (spec != null && check in spec.mayFail && r.verdict == Verdict.FAIL) continue

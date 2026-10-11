@@ -72,6 +72,15 @@ object Dumpsys {
 
     fun lockTaskState(activities: String): String? = LOCK_TASK.find(activities)?.groupValues?.get(1)
 
+    private val STARTED = Regex("""(?m)^Activity: ([^/\s]+)/(\S+)""")
+
+    /** `am start -W`: the activity it reports starting, with a short class name expanded. */
+    fun startedActivity(amStart: String): Activity? = STARTED.find(amStart)?.let { m ->
+        val pkg = m.groupValues[1]
+        val cls = m.groupValues[2]
+        Activity(pkg, if (cls.startsWith(".")) pkg + cls else cls)
+    }
+
     /** `dumpsys telecom`: each call once, with the `isEmergency` flag from its own block. */
     fun calls(telecom: String): List<TelecomCall> {
         val emergency = BLOCK.findAll(telecom).associate { m ->
@@ -119,6 +128,41 @@ object GateJudge {
     fun dialPadUsable(labels: Collection<String>): Boolean {
         val keys = labels.mapNotNull { DIAL_KEY.find(it.trim())?.groupValues?.get(1) }.toSet()
         return keys.containsAll((0..9).map(Int::toString))
+    }
+
+    /**
+     * The alert screen's root launch (`am start -W`, [exit] its exit status, null when it was not read).
+     * The started activity is judged by [inFront]. A launch that started nothing is FAIL only for the
+     * expected unavailable-component result (`Error type 3 ... does not exist`, exit 1) and only when
+     * [display], read back before the launch, shows a fault that explains it (hidden, disabled or
+     * suspended). Anything else (empty output, an exception, a missing service, no exit status) is the
+     * harness failing: ERROR, which no control can count as detection.
+     */
+    fun alertLaunched(display: AlertDisplay, exit: Int?, output: String, expected: Set<Activity>): CheckResult {
+        val check = "alert-display-launch"
+        val text = output.lines().map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" | ")
+        val started = Dumpsys.startedActivity(output)
+        return when {
+            exit == null -> CheckResult(check, Verdict.ERROR, "launch command gave no exit status: $text")
+            "Exception" in output || "Can't find service" in output ->
+                CheckResult(check, Verdict.ERROR, "launch command failed exit=$exit: $text")
+            started != null && exit != 0 -> CheckResult(check, Verdict.ERROR, "launch exit=$exit contradicts the started activity: $text")
+            started != null -> inFront(check, started, expected)
+            exit != 1 || "Error type 3" !in output || "does not exist" !in output || expected.none { it.className in output } ->
+                CheckResult(check, Verdict.ERROR, "unrecognised launch result exit=$exit: $text")
+            else -> {
+                val faults = buildList {
+                    if (!display.enabled) add("disabled")
+                    if (display.hidden == true) add("hidden")
+                    if (display.suspended == true) add("suspended")
+                }
+                if (faults.isEmpty()) {
+                    CheckResult(check, Verdict.ERROR, "component unavailable, but no fault read back (hidden=${display.hidden} enabled=${display.enabled} suspended=${display.suspended}): $text")
+                } else {
+                    CheckResult(check, Verdict.FAIL, "unavailable: ${faults.joinToString(",")} (Error type 3, exit $exit) ${display.packageName}")
+                }
+            }
+        }
     }
 
     fun emergencyCallPlaced(calls: List<TelecomCall>): CheckResult {
