@@ -1,0 +1,41 @@
+PLA-279 green run: PLA-276 findings 2 and 3 after the fix
+Base: 1b29d7c (test-only commit) + the fix commit that adds this file
+Command (from app/): ./gradlew --offline --continue :device:testDebugUnitTest :policy:test :device:compileDebugAndroidTestKotlin
+Date: 2026-10-11T02:58Z, JVM unit tests and androidTest compile only, no emulator
+
+device: 566 tests, 1 failures, 0 errors, 0 skipped
+policy: 596 tests, 0 failures, 0 errors, 0 skipped
+:device:compileDebugAndroidTestKotlin: compiled (task succeeded; 0 failures)
+
+The one device failure is Pla264ReviewTest.featureReadbackMustPrecedeNewHomeMembership: the PLA-264 finding-1 probe,
+committed red in 2298656 and still open under PLA-269 (keyguard-first lock-task entry). It fails the same way with
+DeviceApprovalEffects.kt at 1b29d7c and does not touch the approval code. Gradle prints BUILD FAILED for that test only.
+
+Pla264ReviewTest > featureReadbackMustPrecedeNewHomeMembership FAILED
+566 tests completed, 1 failed
+> Task :device:testDebugUnitTest FAILED
+BUILD FAILED in 48s
+
+New tests (from build/test-results):
+Pla276ProbeTest 2 tests, 0 failed
+    pass floorPromotionAfterSnapshotMustKeepUiAccess
+    pass secondFailedApplyMustKeepUnresolvedExposure
+FloorConsistencyTest 11 tests, 0 failed
+    pass promotedBeforeTheLockTaskWriteIsNeverRemoved
+    pass promotedRightAfterTheHomeRemovalIsPutBack
+    pass windowOpenPromotedAfterItsLockTaskRemovalFailsAndPutsMembershipBack
+    pass promotedRightAfterTheLockTaskWriteIsPutBack
+    pass aFailedApplyThatMeetsAPromotionReportsItAndKeepsAccess
+    pass promotedRightAfterTheHideIsUnhiddenAndPutBack
+    pass closePromotedRightAfterItsHideUnhidesAndReturnsFalse
+    pass anUnreadableFloorMidCallStopsFurtherRemovalsWithoutRepair
+    pass promotedBetweenTheHomeStageAndTheHideIsNeverHiddenAndIsPutBack
+    pass onlyThePromotedNameIsRestored
+    pass aPromotedNameThisCallNeverListedIsNotAdded
+UnresolvedCarryForwardTest 6 tests, 0 failed
+    pass aRepeatedFailureRetriesTheCleanupAndClearsWhatNowReadsBackClosed
+    pass aLaterFailedPlanThatOmitsTheTargetRetriesItsCleanup
+    pass aSuccessfulApplyStillClearsTheReport
+    pass aLaterFailedPlanThatOmitsTheTargetStillReportsIt
+    pass aRepeatedFailureOfTheSamePlanKeepsTheReport
+    pass aSuccessfulPlanThatOmitsTheTargetClearsTheReport
