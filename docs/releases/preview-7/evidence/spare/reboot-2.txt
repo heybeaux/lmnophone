@@ -1,0 +1,27 @@
+# Sample 2 (adb reboot ~19:46Z, keyguard dismissed with wm dismiss-keyguard, screenshots every ~0.5 s).
+         1791748039.153  1867  1901 I uc_send_user_broadcast: [0,android.intent.action.LOCKED_BOOT_COMPLETED]
+         1791748040.015  1867  1910 I uc_finish_user_unlocked: 0
+         1791748040.120  1867  1910 I uc_send_user_broadcast: [0,android.intent.action.USER_UNLOCKED]
+         1791748040.175  1867  1910 I uc_finish_user_unlocked_completed: 0
+         1791748040.240  1867  1898 I uc_send_user_broadcast: [0,android.intent.action.BOOT_COMPLETED]
+# Sample 2 PlainphoneBoot lines as printed to the driver console at capture time (cut to 120 chars).
+# The device main log buffer rotated before the full file was re-read, so this is the only copy.
+         1791748044.033  2563  2663 I PlainphoneBoot: reapply reason=start control=none locked=true ready=true applied=[
+         1791748048.101  2563  2663 I PlainphoneBoot: reapply reason=user-unlocked control=none locked=false ready=true 
+         1791748048.475  2563  2563 I PlainphoneBoot: home shown lockTask=LOCKED at=32838
+## Frames (device epoch → top activity; checking screen identical frames)
+1791748040.423 b44b5e39
+1791748042.159 56c00103
+1791748042.671 fc519fd7
+1791748043.282 b7f742be
+1791748043.795 2262784a
+1791748044.304 9d3d551c
+1791748044.830 2438e9b4
+1791748045.475 2438e9b4
+1791748045.970 2438e9b4
+1791748046.451 2438e9b4
+1791748046.942 2438e9b4
+1791748047.438 2438e9b4
+1791748047.836 2438e9b4
+1791748048.256 027ad135
+Frames 1791748042.159–1791748047.836 show the checking screen (Phone / Emergency call); 1791748048.256 is blank Home drawing; home shown at 1791748048.475.
