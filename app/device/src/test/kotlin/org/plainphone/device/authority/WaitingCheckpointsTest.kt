@@ -214,4 +214,25 @@ class WaitingCheckpointsTest {
         assertNull(rig.checkpoints.pendingRequest())
         assertNull(rig.checkpoints.checkpoint())
     }
+
+    /**
+     * One instance per process keeps the controller's cancel latch: a cancel accepted while the record
+     * did not read still wins after the record returns, even if both intent files are later lost.
+     */
+    @Test fun theProcessCancelLatchSurvivesALostIntent() {
+        val rig = Rig()
+        rig.startTurnOff()
+        val waiting = rig.store.sectionBytesForTest(Section.WAITING)!!
+        assertTrue(rig.store.replaceSectionForTest(Section.WAITING, byteArrayOf(7, 7, 7)))
+        assertEquals(WaitingOutcome.NOT_READY, rig.checkpoints.cancel("wait-1"))
+        assertTrue(rig.store.replaceSectionForTest(Section.WAITING, waiting))
+        val hash = intentHash("wait-1")
+        val lost = File(rig.dir, "authority").listFiles()!!.filter { hash in it.name }
+        assertEquals("entry and marker: ${lost.map { it.name }}", 2, lost.size)
+        lost.forEach { assertTrue(it.delete()) }
+        assertEquals(CancelIntent.UNKNOWN, rig.store.cancelIntents.read("wait-1"))
+        rig.advance(day)
+        assertEquals(WaitingOutcome.CANCELLED, rig.checkpoints.checkpoint())
+        assertFalse(rig.phase() == WaitingPhase.COMMITTING)
+    }
 }
