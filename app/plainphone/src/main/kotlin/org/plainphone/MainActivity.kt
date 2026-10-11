@@ -20,6 +20,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.SideEffect
+import org.plainphone.counts.CommunicationEntryIntents
 import org.plainphone.counts.AndroidCommunicationCounts
 import org.plainphone.counts.CommunicationCounts
 import org.plainphone.shell.ShellRoute
@@ -179,9 +180,9 @@ class MainActivity : ComponentActivity() {
 
     private fun perform(effect: ShellEffect) {
         val intent = when (effect) {
-            ShellEffect.OpenDialer -> Intent(Intent.ACTION_DIAL)
+            ShellEffect.OpenDialer -> CommunicationEntryIntents.phone()
             ShellEffect.OpenMessages ->
-                Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MESSAGING)
+                CommunicationEntryIntents.messages()
             ShellEffect.OpenEmergencyDialer -> Intent(Intent.ACTION_DIAL, Uri.parse("tel:911"))
             is ShellEffect.OpenApp -> packageManager.getLaunchIntentForPackage(effect.id)
             ShellEffect.Finish -> null.also { finish() }
