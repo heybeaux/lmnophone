@@ -22,6 +22,8 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.SideEffect
 import org.plainphone.counts.CommunicationEntryIntents
 import org.plainphone.counts.AndroidCommunicationCounts
+import org.plainphone.counts.CountAvailability
+import org.plainphone.counts.CountKind
 import org.plainphone.counts.CommunicationCounts
 import org.plainphone.shell.ShellRoute
 import org.plainphone.ui.user.PhoneSettingsUiState
@@ -64,11 +66,15 @@ class MainActivity : ComponentActivity() {
     private lateinit var communication: AndroidCommunicationCounts
     private var resumed by mutableStateOf(false)
     private var counts by mutableStateOf(CommunicationCounts())
+    private var callsUnavailable by mutableStateOf(false)
+    private var messagesUnavailable by mutableStateOf(false)
     private var countsEnabled by mutableStateOf(false)
     private var unsupportedCountApps by mutableStateOf(false)
 
     private fun syncCounts() {
         counts = communication.controller.counts
+        callsUnavailable = communication.controller.availability(CountKind.CALLS) == CountAvailability.UNAVAILABLE
+        messagesUnavailable = communication.controller.availability(CountKind.MESSAGES) == CountAvailability.UNAVAILABLE
         countsEnabled = communication.controller.enabled
         unsupportedCountApps = communication.controller.unsupportedApps
     }
@@ -117,7 +123,7 @@ class MainActivity : ComponentActivity() {
             }
             PlainphoneShell(shell.state, snapshot, mapper, shell.navigator ?: return@setContent,
                 counts = counts,
-                settings = PhoneSettingsUiState(countsEnabled, counts.missedCalls == null, counts.unreadTexts == null, unsupportedCountApps),
+                settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps),
                 onSettings = { event ->
                     when (event) {
                         PhoneSettingsEvent.Back -> shell.state = shell.navigator!!.back(shell.state).state
