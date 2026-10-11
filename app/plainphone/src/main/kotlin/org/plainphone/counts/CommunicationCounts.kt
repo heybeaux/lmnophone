@@ -17,17 +17,17 @@ interface CountQueryPort {
 /** The only query plan. A cursor exposes its count and close, never row values. */
 class CommunicationCountSource(private val port: CountQueryPort,
     private val log: (String, String, String?) -> Unit = { _, _, _ -> }) {
-    fun read(): CommunicationCounts {
-        if (!runCatching { port.isUserUnlocked() }.getOrDefault(false)) return CommunicationCounts()
-        val calls = permitted("android.permission.READ_CALL_LOG") {
-            count(CountQuery("calls", "content://call_log/calls", listOf("_id"), "type = 3 AND new = 1 AND is_read IS NOT 1"))
+    fun read(): CommunicationCounts = CommunicationCounts(read(CountKind.CALLS), read(CountKind.MESSAGES))
+    fun read(kind: CountKind): Int? {
+        if (!runCatching { port.isUserUnlocked() }.getOrDefault(false)) return null
+        return permitted(kind.permission) {
+            count(when (kind) {
+                CountKind.CALLS -> CountQuery("calls", "content://call_log/calls", listOf("_id"),
+                    "type = 3 AND new = 1 AND is_read IS NOT 1")
+                CountKind.MESSAGES -> CountQuery("messages", "content://mms-sms/complete-conversations",
+                    listOf("_id", "transport_type"), "read = 0")
+            })
         }
-        val messages = permitted("android.permission.READ_SMS") {
-            val sms = count(CountQuery("sms", "content://sms", listOf("_id"), "type = 1 AND read = 0"))
-            val mms = count(CountQuery("mms", "content://mms", listOf("_id"), "msg_box = 1 AND read = 0"))
-            if (sms == null || mms == null) null else Math.addExact(sms, mms)
-        }
-        return CommunicationCounts(calls, messages)
     }
     private fun permitted(permission: String, read: () -> Int?): Int? = try {
         if (port.hasPermission(permission)) read() else null
@@ -54,75 +54,195 @@ class CountPreferences(private val store: CountPreferenceStore) {
 fun interface CountCancellation { fun cancel() }
 interface CountWork { fun schedule(delayMillis: Long, block: () -> Unit): CountCancellation }
 
-/** Serialized state transitions; reads run outside the monitor and stale completions are discarded. */
+enum class CountKind(val permission: String, val supportedPackage: String) {
+    CALLS("android.permission.READ_CALL_LOG", "com.google.android.dialer"),
+    MESSAGES("android.permission.READ_SMS", "com.google.android.apps.messaging"),
+}
+data class CountAccess(val unlocked: Boolean, val permissionGranted: Boolean,
+    val rolePackage: String?, val installedAndEnabled: Boolean, val homePackage: String?) {
+    fun supported(kind: CountKind) = installedAndEnabled && rolePackage == kind.supportedPackage && homePackage == kind.supportedPackage
+    fun allowed(kind: CountKind) = unlocked && permissionGranted && supported(kind)
+}
+fun interface CountReader {
+    /** Returns immediately. Completion must be delivered on the controller's scheduler. */
+    fun read(kind: CountKind, complete: (Int?) -> Unit): CountCancellation
+}
+
+/** Timers never share the query worker. All transitions run on one scheduler (Android main). */
 class CountController(
     private val preferences: CountPreferences,
     private val work: CountWork,
-    private val read: () -> CommunicationCounts,
+    private val reader: CountReader,
+    private val access: (CountKind) -> CountAccess,
+    private val elapsedRealtime: () -> Long,
     private val observe: (String, Boolean, () -> Unit) -> CountCancellation,
     private val grant: () -> Unit,
     private val changed: () -> Unit = {},
 ) {
-    @Volatile var counts = CommunicationCounts(); private set
-    @Volatile var enabled = preferences.enabled; private set
+    var counts = CommunicationCounts(); private set
+    var enabled = preferences.enabled; private set
+    var unsupportedApps = false; private set
     private var visible = false
     private var settingsVisible = false
     private var generation = 0L
     private var pending: CountCancellation? = null
+    private var periodic: CountCancellation? = null
+    private var gateCheck: CountCancellation? = null
+    private var deadline: CountCancellation? = null
     private val observers = mutableListOf<CountCancellation>()
-
-    @Synchronized fun setEnabled(value: Boolean) {
+    private val gates = mutableMapOf<CountKind, CountAccess>()
+    private class Slot {
+        var attempt = 0L
+        var running = false
+        var dirty = false
+        var query: CountCancellation? = null
+        var timeout: CountCancellation? = null
+        var expiry: CountCancellation? = null
+    }
+    private val slots = CountKind.entries.associateWith { Slot() }
+    private fun active() = enabled && (visible || settingsVisible)
+    private fun gate(kind: CountKind) = runCatching { access(kind) }.getOrElse {
+        CountAccess(false, false, null, false, null)
+    }
+    private fun put(kind: CountKind, value: Int?) {
+        counts = when (kind) {
+            CountKind.CALLS -> counts.copy(missedCalls = value)
+            CountKind.MESSAGES -> counts.copy(unreadTexts = value)
+        }
+        changed()
+    }
+    fun setEnabled(value: Boolean) {
         if (value == enabled) return
         preferences.enabled = value
         enabled = value
         stop()
         if (value) {
-            // Never called on startup/resume: a revoked permission stays unavailable.
+            // A fresh explicit on only. Startup/resume never restores a revoked grant.
             runCatching { grant() }
             start()
         }
         changed()
     }
-    @Synchronized fun setVisible(value: Boolean) {
+    fun setVisible(value: Boolean) {
         if (visible == value) return
-        visible = value
-        stop(); start()
+        visible = value; stop(); start()
     }
-    @Synchronized fun setSettingsVisible(value: Boolean) {
+    fun setSettingsVisible(value: Boolean) {
         if (settingsVisible == value) return
-        settingsVisible = value
-        stop(); start()
+        settingsVisible = value; stop(); start()
     }
     private fun start() {
-        if (!enabled || (!visible && !settingsVisible)) return
-        if (visible) {
-            for (uri in listOf("content://call_log/calls", "content://mms-sms/")) {
-                try { observers += observe(uri, true) { refresh(150) } }
-                catch (_: Exception) { /* Resume still performs a fresh read. */ }
+        if (!active()) return
+        // Registration precedes even the first read.
+        if (visible) for (uri in listOf("content://call_log/calls", "content://mms-sms/")) {
+            runCatching { observers += observe(uri, true, ::externalChange) }
+        }
+        refreshGates()
+        refresh(0)
+        schedulePeriodic()
+        scheduleGateCheck()
+    }
+    private fun refreshGates(): Boolean {
+        val next = CountKind.entries.associateWith(::gate)
+        val different = gates.isNotEmpty() && gates != next
+        gates.clear(); gates.putAll(next)
+        unsupportedApps = next.any { (kind, state) -> !state.supported(kind) }
+        next.filter { (kind, state) -> !state.allowed(kind) }.forEach { (kind, _) -> put(kind, null) }
+        changed()
+        return different
+    }
+    private fun scheduleGateCheck() {
+        gateCheck = work.schedule(1_000) {
+            if (active()) {
+                // SMS role-change broadcasts target only the old/new holders. Poll read-only gates.
+                if (refreshGates()) externalChange()
+                scheduleGateCheck()
             }
         }
-        refresh(0)
     }
-    @Synchronized private fun refresh(delay: Long) {
-        if (!enabled || (!visible && !settingsVisible)) return
+    private fun schedulePeriodic() {
+        periodic = work.schedule(10_000) {
+            if (active()) { refresh(0); schedulePeriodic() }
+        }
+    }
+    /** Package/role/permission changes and provider callbacks share the publication fence. */
+    fun externalChange() {
+        if (!enabled) return
+        ++generation
+        if (!active()) return
+        slots.values.forEach { it.dirty = true }
+        // Never postpone this deadline during a callback stream.
+        if (deadline == null) deadline = work.schedule(1_000) {
+            deadline = null
+            slots.forEach { (kind, slot) -> if (slot.dirty) put(kind, null) }
+        }
+        refreshGates()
+        refresh(150)
+    }
+    private fun cancelRead(slot: Slot) {
+        slot.running = false
+        slot.query?.cancel(); slot.query = null
+        slot.timeout?.cancel(); slot.timeout = null
+    }
+    private fun refresh(delay: Long) {
+        if (!active()) return
         pending?.cancel()
+        slots.values.forEach(::cancelRead)
         val request = ++generation
         pending = work.schedule(delay) {
-            val current = synchronized(this) { request == generation && enabled }
-            if (current) {
-                val result = try { read() } catch (_: Exception) { CommunicationCounts() }
-                synchronized(this) {
-                    if (request == generation && enabled) { counts = result; changed() }
+            if (request != generation || !active()) return@schedule
+            refreshGates()
+            CountKind.entries.forEach { kind -> begin(kind, request) }
+        }
+    }
+    private fun begin(kind: CountKind, request: Long) {
+        val slot = slots.getValue(kind)
+        if (!gate(kind).allowed(kind)) { put(kind, null); return }
+        val started = elapsedRealtime()
+        val attempt = ++slot.attempt
+        slot.running = true
+        slot.timeout = work.schedule(3_000) {
+            if (slot.running && slot.attempt == attempt && request == generation) {
+                cancelRead(slot); put(kind, null)
+            }
+        }
+        slot.query = reader.read(kind) { value ->
+            if (!active() || request != generation || !slot.running || slot.attempt != attempt) return@read
+            slot.running = false
+            slot.timeout?.cancel(); slot.timeout = null
+            val finalGate = gate(kind)
+            if (finalGate != gates[kind]) {
+                // A gate changed without a broadcast while this query ran.
+                externalChange()
+                return@read
+            }
+            val allowed = finalGate.allowed(kind)
+            // Recheck all gates at publication, even when no callback was received.
+            val valid = allowed && elapsedRealtime() - started <= 3_000
+            slot.expiry?.cancel()
+            slot.dirty = false
+            put(kind, value?.takeIf { valid && it >= 0 })
+            if (!allowed) {
+                refreshGates()
+            } else if (value != null && valid) {
+                slot.expiry = work.schedule((started + 13_000 - elapsedRealtime()).coerceAtLeast(0)) {
+                    put(kind, null)
                 }
             }
+            if (slots.values.none { it.dirty }) { deadline?.cancel(); deadline = null }
         }
     }
     private fun stop() {
         ++generation
         pending?.cancel(); pending = null
+        periodic?.cancel(); periodic = null
+        gateCheck?.cancel(); gateCheck = null
+        deadline?.cancel(); deadline = null
+        slots.values.forEach { cancelRead(it); it.expiry?.cancel(); it.expiry = null; it.dirty = false }
         observers.forEach { runCatching { it.cancel() } }; observers.clear()
+        gates.clear()
         counts = CommunicationCounts()
         changed()
     }
-    @Synchronized fun close() { visible = false; settingsVisible = false; stop() }
+    fun close() { visible = false; settingsVisible = false; stop() }
 }
