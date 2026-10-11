@@ -1,0 +1,16 @@
+event-before-ms=326500.0 after-ms=327290.0
+--------- beginning of main
+I/CountsProbe( 4400): t=338322 pid=4400 command=hist action=null
+I/CountsProbe( 4400): t=338358 pid=4400 query=call-2-1-null count=1 ms=2
+I/CountsProbe( 4400): t=338373 pid=4400 query=call-3-1-0 count=2 ms=3
+I/CountsProbe( 4400): t=338378 pid=4400 query=call-3-1-1 count=4 ms=4
+I/CountsProbe( 4400): t=338423 pid=4400 query=call-5-1-null count=1 ms=3
+I/CountsProbe( 4400): t=338479 pid=4400 query=sms-1-0-1 count=4 ms=8
+I/CountsProbe( 4400): t=338491 pid=4400 query=mms-1-0-1 count=1 ms=10
+I/CountsProbe( 4400): t=338516 pid=4400 query=sms-1-1-1 count=2 ms=7
+I/CountsProbe( 4400): t=338525 pid=4400 unlocked=true grants=[0, 0]
+I/CountsProbe( 4400): t=338530 pid=4400 query=calls-new count=6 ms=5
+I/CountsProbe( 4400): t=338534 pid=4400 query=calls-unacknowledged count=2 ms=4
+I/CountsProbe( 4400): t=338537 pid=4400 query=calls-unread count=2 ms=3
+I/CountsProbe( 4400): t=338553 pid=4400 query=sms-unread count=4 ms=15
+I/CountsProbe( 4400): t=338560 pid=4400 query=mms-unread count=1 ms=6

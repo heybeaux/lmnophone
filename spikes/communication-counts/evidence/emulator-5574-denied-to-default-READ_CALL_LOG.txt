@@ -1,0 +1,18 @@
+
+--------- beginning of main
+I/CountsProbe( 4782): t=215503 pid=4782 command=default action=null
+I/CountsProbe( 4782): t=215507 pid=4782 permission=READ_CALL_LOG state=0 before
+I/CountsProbe( 4782): t=215532 pid=4782 permission=READ_CALL_LOG result=true state=0
+I/CountsProbe( 4782): t=215534 pid=4782 unlocked=true grants=[-1, 0]
+I/CountsProbe( 4782): t=215535 pid=4782 query=calls-new error=SecurityException ms=1
+I/CountsProbe( 4782): t=215539 pid=4782 query=calls-unacknowledged error=SecurityException ms=4
+I/CountsProbe( 4782): t=215540 pid=4782 query=calls-unread error=SecurityException ms=1
+I/CountsProbe( 4782): t=215551 pid=4782 query=sms-unread count=4 ms=11
+I/CountsProbe( 4782): t=215558 pid=4782 query=mms-unread count=0 ms=6
+I/CountsProbe( 4782): t=215591 pid=4782 command=query action=null
+I/CountsProbe( 4782): t=215591 pid=4782 unlocked=true grants=[-1, 0]
+I/CountsProbe( 4782): t=215591 pid=4782 query=calls-new error=SecurityException ms=0
+I/CountsProbe( 4782): t=215592 pid=4782 query=calls-unacknowledged error=SecurityException ms=1
+I/CountsProbe( 4782): t=215592 pid=4782 query=calls-unread error=SecurityException ms=0
+I/CountsProbe( 4782): t=215598 pid=4782 query=sms-unread count=4 ms=6
+I/CountsProbe( 4782): t=215601 pid=4782 query=mms-unread count=0 ms=2

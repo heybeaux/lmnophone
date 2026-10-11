@@ -1,0 +1,16 @@
+
+--------- beginning of main
+I/CountsProbe( 6233): t=401586 pid=6233 command=hist action=null
+I/CountsProbe( 6233): t=401865 pid=6233 query=call-3-1-0 count=1 ms=1
+I/CountsProbe( 6233): t=402075 pid=6233 unlocked=true grants=[0, 0]
+I/CountsProbe( 6233): t=402098 pid=6233 query=calls-new count=1 ms=23
+I/CountsProbe( 6233): t=402106 pid=6233 query=calls-unread count=1 ms=8
+I/CountsProbe( 6233): t=402108 pid=6233 query=sms-unread count=0 ms=1
+I/CountsProbe( 6233): t=402117 pid=6233 query=mms-unread count=0 ms=9
+I/CountsProbe( 6233): t=404387 pid=6233 command=hist action=null
+I/CountsProbe( 6233): t=404472 pid=6233 query=call-3-1-0 count=1 ms=4
+I/CountsProbe( 6233): t=404606 pid=6233 unlocked=true grants=[0, 0]
+I/CountsProbe( 6233): t=404609 pid=6233 query=calls-new count=1 ms=3
+I/CountsProbe( 6233): t=404612 pid=6233 query=calls-unread count=1 ms=2
+I/CountsProbe( 6233): t=404619 pid=6233 query=sms-unread count=0 ms=6
+I/CountsProbe( 6233): t=404629 pid=6233 query=mms-unread count=0 ms=10

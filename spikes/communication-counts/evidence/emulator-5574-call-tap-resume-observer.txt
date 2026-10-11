@@ -1,0 +1,16 @@
+pid-before=4836 pid-after=4836 event-before-ms=492420.0
+--------- beginning of main
+I/CountsProbe( 4836): t=503336 pid=4836 observer=calls
+I/CountsProbe( 4836): t=503336 pid=4836 unlocked=true grants=[0, 0]
+I/CountsProbe( 4836): t=503340 pid=4836 query=calls-new count=0 ms=4
+I/CountsProbe( 4836): t=503343 pid=4836 query=calls-unacknowledged count=0 ms=2
+I/CountsProbe( 4836): t=503347 pid=4836 query=calls-unread count=0 ms=3
+I/CountsProbe( 4836): t=503355 pid=4836 query=sms-unread count=4 ms=7
+I/CountsProbe( 4836): t=503361 pid=4836 query=mms-unread count=0 ms=5
+I/CountsProbe( 4836): t=505254 pid=4836 command=query action=null
+I/CountsProbe( 4836): t=505254 pid=4836 unlocked=true grants=[0, 0]
+I/CountsProbe( 4836): t=505255 pid=4836 query=calls-new count=0 ms=1
+I/CountsProbe( 4836): t=505257 pid=4836 query=calls-unacknowledged count=0 ms=1
+I/CountsProbe( 4836): t=505262 pid=4836 query=calls-unread count=0 ms=5
+I/CountsProbe( 4836): t=505272 pid=4836 query=sms-unread count=4 ms=5
+I/CountsProbe( 4836): t=505285 pid=4836 query=mms-unread count=0 ms=7

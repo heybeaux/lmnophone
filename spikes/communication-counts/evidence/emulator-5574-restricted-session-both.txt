@@ -1,0 +1,29 @@
+INSTRUMENTATION_CODE: -1
+    installerPackageName=com.plainphone.spike.counts
+        android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+        android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+--------- beginning of main
+I/CountsProbe( 6215): t=382540 pid=6215 command=install action=null
+I/CountsProbe( 6215): t=382577 pid=6215 install=both committed
+I/CountsProbe( 6215): t=382577 pid=6215 unlocked=true grants=[-1, -1]
+I/CountsProbe( 6215): t=382578 pid=6215 query=calls-new error=SecurityException ms=1
+I/CountsProbe( 6215): t=382578 pid=6215 query=calls-unread error=SecurityException ms=0
+I/CountsProbe( 6215): t=382582 pid=6215 query=sms-unread error=SecurityException ms=4
+I/CountsProbe( 6215): t=382584 pid=6215 query=mms-unread error=SecurityException ms=2
+I/CountsProbe( 6233): t=382790 pid=6233 command=installed action=null
+I/CountsProbe( 6233): t=382790 pid=6233 install-status=0 legacy=1
+I/CountsProbe( 6233): t=382794 pid=6233 unlocked=true grants=[-1, -1]
+I/CountsProbe( 6233): t=382795 pid=6233 query=calls-new error=SecurityException ms=1
+I/CountsProbe( 6233): t=382795 pid=6233 query=calls-unread error=SecurityException ms=0
+I/CountsProbe( 6233): t=382802 pid=6233 query=sms-unread error=SecurityException ms=7
+I/CountsProbe( 6233): t=382804 pid=6233 query=mms-unread error=SecurityException ms=2
+I/CountsProbe( 6233): t=384627 pid=6233 command=grant action=null
+I/CountsProbe( 6233): t=384628 pid=6233 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 6233): t=384639 pid=6233 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 6233): t=384639 pid=6233 permission=READ_SMS state=1 before
+I/CountsProbe( 6233): t=384645 pid=6233 permission=READ_SMS result=true state=1
+I/CountsProbe( 6233): t=384646 pid=6233 unlocked=true grants=[0, 0]
+I/CountsProbe( 6233): t=384651 pid=6233 query=calls-new count=1 ms=5
+I/CountsProbe( 6233): t=384653 pid=6233 query=calls-unread count=1 ms=1
+I/CountsProbe( 6233): t=384659 pid=6233 query=sms-unread count=0 ms=5
+I/CountsProbe( 6233): t=384663 pid=6233 query=mms-unread count=0 ms=4

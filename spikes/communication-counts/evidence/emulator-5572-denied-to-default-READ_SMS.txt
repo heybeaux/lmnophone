@@ -1,0 +1,18 @@
+
+--------- beginning of main
+I/CountsProbe( 4400): t=153628 pid=4400 command=default action=null
+I/CountsProbe( 4400): t=153631 pid=4400 permission=READ_SMS state=0 before
+I/CountsProbe( 4400): t=153654 pid=4400 permission=READ_SMS result=true state=0
+I/CountsProbe( 4400): t=153657 pid=4400 unlocked=true grants=[0, -1]
+I/CountsProbe( 4400): t=153688 pid=4400 query=calls-new count=5 ms=31
+I/CountsProbe( 4400): t=153698 pid=4400 query=calls-unacknowledged count=1 ms=6
+I/CountsProbe( 4400): t=153705 pid=4400 query=calls-unread count=1 ms=6
+I/CountsProbe( 4400): t=153712 pid=4400 query=sms-unread error=SecurityException ms=3
+I/CountsProbe( 4400): t=153716 pid=4400 query=mms-unread error=SecurityException ms=4
+I/CountsProbe( 4400): t=153751 pid=4400 command=query action=null
+I/CountsProbe( 4400): t=153759 pid=4400 unlocked=true grants=[0, -1]
+I/CountsProbe( 4400): t=153767 pid=4400 query=calls-new count=5 ms=8
+I/CountsProbe( 4400): t=153774 pid=4400 query=calls-unacknowledged count=1 ms=5
+I/CountsProbe( 4400): t=153787 pid=4400 query=calls-unread count=1 ms=12
+I/CountsProbe( 4400): t=153790 pid=4400 query=sms-unread error=SecurityException ms=2
+I/CountsProbe( 4400): t=153792 pid=4400 query=mms-unread error=SecurityException ms=2

@@ -1,0 +1,32 @@
+INSTRUMENTATION_CODE: -1
+    installerPackageName=com.plainphone.spike.counts
+        android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|RESTRICTION_INSTALLER_EXEMPT]
+        android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|RESTRICTION_INSTALLER_EXEMPT]
+--------- beginning of main
+I/CountsProbe( 4422): t=136179 pid=4422 command=install action=null
+I/CountsProbe( 4422): t=136200 pid=4422 install=both committed
+I/CountsProbe( 4422): t=136200 pid=4422 unlocked=true grants=[-1, -1]
+I/CountsProbe( 4422): t=136201 pid=4422 query=calls-new error=SecurityException ms=1
+I/CountsProbe( 4422): t=136202 pid=4422 query=calls-unacknowledged error=SecurityException ms=1
+I/CountsProbe( 4422): t=136203 pid=4422 query=calls-unread error=SecurityException ms=1
+I/CountsProbe( 4422): t=136204 pid=4422 query=sms-unread error=SecurityException ms=1
+I/CountsProbe( 4422): t=136208 pid=4422 query=mms-unread error=SecurityException ms=3
+I/CountsProbe( 4443): t=136578 pid=4443 command=installed action=null
+I/CountsProbe( 4443): t=136582 pid=4443 install-status=0 legacy=1
+I/CountsProbe( 4443): t=136589 pid=4443 unlocked=true grants=[-1, -1]
+I/CountsProbe( 4443): t=136591 pid=4443 query=calls-new error=SecurityException ms=2
+I/CountsProbe( 4443): t=136591 pid=4443 query=calls-unacknowledged error=SecurityException ms=0
+I/CountsProbe( 4443): t=136592 pid=4443 query=calls-unread error=SecurityException ms=1
+I/CountsProbe( 4443): t=136605 pid=4443 query=sms-unread error=SecurityException ms=13
+I/CountsProbe( 4443): t=136614 pid=4443 query=mms-unread error=SecurityException ms=9
+I/CountsProbe( 4443): t=137284 pid=4443 command=grant action=null
+I/CountsProbe( 4443): t=137285 pid=4443 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 4443): t=137290 pid=4443 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 4443): t=137290 pid=4443 permission=READ_SMS state=1 before
+I/CountsProbe( 4443): t=137294 pid=4443 permission=READ_SMS result=true state=1
+I/CountsProbe( 4443): t=137295 pid=4443 unlocked=true grants=[0, 0]
+I/CountsProbe( 4443): t=137296 pid=4443 query=calls-new count=5 ms=1
+I/CountsProbe( 4443): t=137297 pid=4443 query=calls-unacknowledged count=1 ms=0
+I/CountsProbe( 4443): t=137298 pid=4443 query=calls-unread count=1 ms=0
+I/CountsProbe( 4443): t=137302 pid=4443 query=sms-unread count=1 ms=2
+I/CountsProbe( 4443): t=137302 pid=4443 query=mms-unread count=0 ms=0

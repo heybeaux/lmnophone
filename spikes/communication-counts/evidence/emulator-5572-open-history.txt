@@ -1,0 +1,16 @@
+
+--------- beginning of main
+I/CountsProbe( 5795): t=395808 pid=5795 command=hist action=null
+I/CountsProbe( 5795): t=396010 pid=5795 query=call-3-1-0 count=1 ms=10
+I/CountsProbe( 5795): t=396292 pid=5795 unlocked=true grants=[0, 0]
+I/CountsProbe( 5795): t=396305 pid=5795 query=calls-new count=1 ms=13
+I/CountsProbe( 5795): t=396311 pid=5795 query=calls-unread count=1 ms=3
+I/CountsProbe( 5795): t=396320 pid=5795 query=sms-unread count=0 ms=8
+I/CountsProbe( 5795): t=396326 pid=5795 query=mms-unread count=0 ms=5
+I/CountsProbe( 5795): t=398432 pid=5795 command=hist action=null
+I/CountsProbe( 5795): t=398479 pid=5795 query=call-3-1-0 count=1 ms=3
+I/CountsProbe( 5795): t=398583 pid=5795 unlocked=true grants=[0, 0]
+I/CountsProbe( 5795): t=398586 pid=5795 query=calls-new count=1 ms=3
+I/CountsProbe( 5795): t=398589 pid=5795 query=calls-unread count=1 ms=2
+I/CountsProbe( 5795): t=398595 pid=5795 query=sms-unread count=0 ms=6
+I/CountsProbe( 5795): t=398601 pid=5795 query=mms-unread count=0 ms=4

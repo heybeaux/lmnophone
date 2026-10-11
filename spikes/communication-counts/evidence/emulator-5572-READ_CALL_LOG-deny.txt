@@ -1,0 +1,12 @@
+pid-before=8237 pid-after=
+Broadcasting: Intent { flg=0x400020 cmp=com.plainphone.spike.counts/.Control (has extras) }
+Broadcast completed: result=0
+--------- beginning of main
+I/CountsProbe( 8237): t=829387 pid=8237 command=deny action=null
+I/CountsProbe( 8237): t=829387 pid=8237 permission=READ_CALL_LOG state=2 before
+I/CountsProbe( 8291): t=830345 pid=8291 command=query action=null
+I/CountsProbe( 8291): t=830346 pid=8291 unlocked=true grants=[-1, 0]
+I/CountsProbe( 8291): t=830346 pid=8291 query=calls-new error=SecurityException ms=0
+I/CountsProbe( 8291): t=830347 pid=8291 query=calls-unread error=SecurityException ms=1
+I/CountsProbe( 8291): t=830353 pid=8291 query=sms-unread count=1 ms=6
+I/CountsProbe( 8291): t=830356 pid=8291 query=mms-unread count=1 ms=2

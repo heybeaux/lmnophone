@@ -1,0 +1,9 @@
+
+--------- beginning of main
+I/CountsProbe( 4836): t=403521 pid=4836 command=query action=null
+I/CountsProbe( 4836): t=403521 pid=4836 unlocked=true grants=[0, 0]
+I/CountsProbe( 4836): t=403521 pid=4836 query=calls-new count=6 ms=0
+I/CountsProbe( 4836): t=403522 pid=4836 query=calls-unacknowledged count=0 ms=0
+I/CountsProbe( 4836): t=403523 pid=4836 query=calls-unread count=0 ms=0
+I/CountsProbe( 4836): t=403524 pid=4836 query=sms-unread count=4 ms=1
+I/CountsProbe( 4836): t=403530 pid=4836 query=mms-unread count=0 ms=3

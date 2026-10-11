@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 android {
+    sourceSets["main"].manifest.srcFile(if (findProperty("withoutCounts") == "true") "src/noCounts/AndroidManifest.xml" else "src/main/AndroidManifest.xml")
     namespace = "com.plainphone.spike.counts"
     compileSdk = 36
     defaultConfig {

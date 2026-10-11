@@ -1,0 +1,32 @@
+INSTRUMENTATION_CODE: -1
+    installerPackageName=com.plainphone.spike.counts
+        android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|RESTRICTION_INSTALLER_EXEMPT]
+        android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|RESTRICTION_INSTALLER_EXEMPT]
+--------- beginning of main
+I/CountsProbe( 4309): t=134137 pid=4309 command=install action=null
+I/CountsProbe( 4309): t=134157 pid=4309 install=default committed
+I/CountsProbe( 4309): t=134158 pid=4309 unlocked=true grants=[-1, -1]
+I/CountsProbe( 4309): t=134159 pid=4309 query=calls-new error=SecurityException ms=1
+I/CountsProbe( 4309): t=134160 pid=4309 query=calls-unacknowledged error=SecurityException ms=1
+I/CountsProbe( 4309): t=134160 pid=4309 query=calls-unread error=SecurityException ms=0
+I/CountsProbe( 4309): t=134161 pid=4309 query=sms-unread error=SecurityException ms=1
+I/CountsProbe( 4309): t=134164 pid=4309 query=mms-unread error=SecurityException ms=3
+I/CountsProbe( 4331): t=134381 pid=4331 command=installed action=null
+I/CountsProbe( 4331): t=134381 pid=4331 install-status=0 legacy=1
+I/CountsProbe( 4331): t=134383 pid=4331 unlocked=true grants=[-1, -1]
+I/CountsProbe( 4331): t=134390 pid=4331 query=calls-new error=SecurityException ms=7
+I/CountsProbe( 4331): t=134392 pid=4331 query=calls-unacknowledged error=SecurityException ms=2
+I/CountsProbe( 4331): t=134395 pid=4331 query=calls-unread error=SecurityException ms=3
+I/CountsProbe( 4331): t=134398 pid=4331 query=sms-unread error=SecurityException ms=3
+I/CountsProbe( 4331): t=134400 pid=4331 query=mms-unread error=SecurityException ms=2
+I/CountsProbe( 4331): t=135220 pid=4331 command=grant action=null
+I/CountsProbe( 4331): t=135221 pid=4331 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 4331): t=135225 pid=4331 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 4331): t=135226 pid=4331 permission=READ_SMS state=1 before
+I/CountsProbe( 4331): t=135228 pid=4331 permission=READ_SMS result=true state=1
+I/CountsProbe( 4331): t=135228 pid=4331 unlocked=true grants=[0, 0]
+I/CountsProbe( 4331): t=135229 pid=4331 query=calls-new count=5 ms=1
+I/CountsProbe( 4331): t=135230 pid=4331 query=calls-unacknowledged count=1 ms=0
+I/CountsProbe( 4331): t=135231 pid=4331 query=calls-unread count=1 ms=0
+I/CountsProbe( 4331): t=135237 pid=4331 query=sms-unread count=1 ms=6
+I/CountsProbe( 4331): t=135240 pid=4331 query=mms-unread count=0 ms=3

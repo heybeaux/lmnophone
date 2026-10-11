@@ -1,0 +1,14 @@
+
+--------- beginning of main
+I/CountsProbe( 1476): t=12483 pid=1476 command=query action=LOCKED_BOOT_COMPLETED
+I/CountsProbe( 1476): t=12505 pid=1476 unlocked=false grants=[0, 0]
+I/CountsProbe( 1476): t=12510 pid=1476 query=calls-new count=null ms=5
+I/CountsProbe( 1476): t=12513 pid=1476 query=calls-unread count=null ms=3
+I/CountsProbe( 1476): t=12539 pid=1476 query=sms-unread error=SQLiteException ms=26
+I/CountsProbe( 1476): t=12599 pid=1476 query=mms-unread count=null ms=60
+I/CountsProbe( 1476): t=24033 pid=1476 command=query action=null
+I/CountsProbe( 1476): t=24034 pid=1476 unlocked=false grants=[0, 0]
+I/CountsProbe( 1476): t=24034 pid=1476 query=calls-new count=null ms=0
+I/CountsProbe( 1476): t=24034 pid=1476 query=calls-unread count=null ms=0
+I/CountsProbe( 1476): t=24043 pid=1476 query=sms-unread error=SQLiteException ms=9
+I/CountsProbe( 1476): t=24047 pid=1476 query=mms-unread count=null ms=4

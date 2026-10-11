@@ -1,0 +1,39 @@
+
+--------- beginning of main
+I/CountsProbe( 6366): t=507715 pid=6366 command=watch action=null
+I/CountsProbe( 6366): t=507715 pid=6366 unlocked=true grants=[0, 0]
+I/CountsProbe( 6366): t=507717 pid=6366 query=calls-new count=0 ms=2
+I/CountsProbe( 6366): t=507718 pid=6366 query=calls-unread count=0 ms=1
+I/CountsProbe( 6366): t=507720 pid=6366 query=sms-unread count=0 ms=2
+I/CountsProbe( 6366): t=507722 pid=6366 query=mms-unread count=0 ms=2
+I/CountsProbe( 6366): t=507743 pid=6366 command=query action=null
+I/CountsProbe( 6366): t=507743 pid=6366 unlocked=true grants=[0, 0]
+I/CountsProbe( 6366): t=507745 pid=6366 query=calls-new count=0 ms=2
+I/CountsProbe( 6366): t=507746 pid=6366 query=calls-unread count=0 ms=1
+I/CountsProbe( 6366): t=507749 pid=6366 query=sms-unread count=0 ms=3
+I/CountsProbe( 6366): t=507751 pid=6366 query=mms-unread count=0 ms=2
+I/CountsProbe( 6366): t=509853 pid=6366 observer=calls
+I/CountsProbe( 6366): t=509853 pid=6366 unlocked=true grants=[0, 0]
+I/CountsProbe( 6366): t=509856 pid=6366 query=calls-new count=1 ms=3
+I/CountsProbe( 6366): t=509858 pid=6366 query=calls-unread count=1 ms=2
+I/CountsProbe( 6366): t=509862 pid=6366 query=sms-unread count=0 ms=4
+I/CountsProbe( 6366): t=509867 pid=6366 query=mms-unread count=0 ms=5
+I/CountsProbe( 6366): t=509907 pid=6366 observer=calls
+I/CountsProbe( 6366): t=509907 pid=6366 unlocked=true grants=[0, 0]
+I/CountsProbe( 6366): t=509908 pid=6366 query=calls-new count=1 ms=1
+I/CountsProbe( 6366): t=509910 pid=6366 query=calls-unread count=1 ms=2
+I/CountsProbe( 6366): t=509913 pid=6366 query=sms-unread count=0 ms=3
+I/CountsProbe( 6366): t=509916 pid=6366 query=mms-unread count=0 ms=2
+I/CountsProbe( 6366): t=515931 pid=6366 observer=calls
+I/CountsProbe( 6366): t=515931 pid=6366 unlocked=true grants=[0, 0]
+I/CountsProbe( 6366): t=515937 pid=6366 query=calls-new count=0 ms=6
+I/CountsProbe( 6366): t=515938 pid=6366 query=calls-unread count=0 ms=1
+I/CountsProbe( 6366): t=515943 pid=6366 query=sms-unread count=0 ms=5
+I/CountsProbe( 6366): t=515946 pid=6366 query=mms-unread count=0 ms=3
+I/CountsProbe( 6366): t=516942 pid=6366 command=hist action=null
+I/CountsProbe( 6366): t=516955 pid=6366 query=call-3-0-1 count=2 ms=1
+I/CountsProbe( 6366): t=516994 pid=6366 unlocked=true grants=[0, 0]
+I/CountsProbe( 6366): t=516994 pid=6366 query=calls-new count=0 ms=0
+I/CountsProbe( 6366): t=516995 pid=6366 query=calls-unread count=0 ms=1
+I/CountsProbe( 6366): t=516997 pid=6366 query=sms-unread count=0 ms=2
+I/CountsProbe( 6366): t=516999 pid=6366 query=mms-unread count=0 ms=2

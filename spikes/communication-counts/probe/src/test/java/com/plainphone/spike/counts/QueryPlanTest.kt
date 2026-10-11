@@ -11,6 +11,7 @@ class QueryPlanTest {
         assertEquals(listOf("_id"), QueryPlan.projection)
         assertEquals("type = 3 AND new = 1", QueryPlan.callsNew)
         assertEquals("type = 3 AND is_read = 0", QueryPlan.callsUnread)
+        assertEquals("type = 3 AND new = 1 AND is_read IS NOT 1", QueryPlan.callsUnacknowledged)
         assertEquals("type = 1 AND read = 0", QueryPlan.sms)
         assertEquals("msg_box = 1 AND read = 0", QueryPlan.mms)
     }

@@ -1,0 +1,17 @@
+pid-before=8567 pid-after=
+
+--------- beginning of main
+I/CountsProbe( 8567): t=842452 pid=8567 command=default action=null
+I/CountsProbe( 8567): t=842452 pid=8567 permission=READ_SMS state=0 before
+I/CountsProbe( 8567): t=842475 pid=8567 permission=READ_SMS result=true state=0
+I/CountsProbe( 8567): t=842475 pid=8567 unlocked=true grants=[0, 0]
+I/CountsProbe( 8567): t=842476 pid=8567 query=calls-new count=0 ms=1
+I/CountsProbe( 8567): t=842480 pid=8567 query=calls-unread count=0 ms=4
+I/CountsProbe( 8567): t=842487 pid=8567 query=sms-unread count=1 ms=4
+I/CountsProbe( 8567): t=842496 pid=8567 query=mms-unread count=1 ms=8
+I/CountsProbe( 8658): t=843559 pid=8658 command=query action=null
+I/CountsProbe( 8658): t=843561 pid=8658 unlocked=true grants=[0, -1]
+I/CountsProbe( 8658): t=843563 pid=8658 query=calls-new count=0 ms=2
+I/CountsProbe( 8658): t=843565 pid=8658 query=calls-unread count=0 ms=1
+I/CountsProbe( 8658): t=843568 pid=8658 query=sms-unread error=SecurityException ms=2
+I/CountsProbe( 8658): t=843568 pid=8658 query=mms-unread error=SecurityException ms=0

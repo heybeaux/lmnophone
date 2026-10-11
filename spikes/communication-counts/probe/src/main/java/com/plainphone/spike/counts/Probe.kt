@@ -52,6 +52,7 @@ object Probe {
     private fun snapshot(c: Context) {
         log("unlocked=${c.getSystemService(UserManager::class.java).isUserUnlocked} grants=${perms.map { c.checkSelfPermission(it) }}")
         count(c, "calls-new", "content://call_log/calls", QueryPlan.callsNew)
+        count(c, "calls-unacknowledged", "content://call_log/calls", QueryPlan.callsUnacknowledged)
         count(c, "calls-unread", "content://call_log/calls", QueryPlan.callsUnread)
         count(c, "sms-unread", "content://sms", QueryPlan.sms)
         count(c, "mms-unread", "content://mms", QueryPlan.mms)

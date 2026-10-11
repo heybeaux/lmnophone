@@ -1,0 +1,20 @@
+event-before-ms=113030.0 after-ms=113060.0
+--------- beginning of main
+I/CountsProbe( 1476): t=113188 pid=1476 observer=calls
+I/CountsProbe( 1476): t=113188 pid=1476 unlocked=true grants=[0, 0]
+I/CountsProbe( 1476): t=113209 pid=1476 query=calls-new count=5 ms=21
+I/CountsProbe( 1476): t=113229 pid=1476 query=calls-unread count=1 ms=14
+I/CountsProbe( 1476): t=113250 pid=1476 query=sms-unread count=1 ms=20
+I/CountsProbe( 1476): t=113270 pid=1476 query=mms-unread count=0 ms=19
+I/CountsProbe( 1476): t=113621 pid=1476 observer=calls
+I/CountsProbe( 1476): t=113621 pid=1476 unlocked=true grants=[0, 0]
+I/CountsProbe( 1476): t=113625 pid=1476 query=calls-new count=5 ms=4
+I/CountsProbe( 1476): t=113632 pid=1476 query=calls-unread count=1 ms=6
+I/CountsProbe( 1476): t=113648 pid=1476 query=sms-unread count=1 ms=12
+I/CountsProbe( 1476): t=113655 pid=1476 query=mms-unread count=0 ms=7
+I/CountsProbe( 1476): t=114097 pid=1476 command=query action=null
+I/CountsProbe( 1476): t=114097 pid=1476 unlocked=true grants=[0, 0]
+I/CountsProbe( 1476): t=114099 pid=1476 query=calls-new count=5 ms=2
+I/CountsProbe( 1476): t=114102 pid=1476 query=calls-unread count=1 ms=2
+I/CountsProbe( 1476): t=114105 pid=1476 query=sms-unread count=1 ms=2
+I/CountsProbe( 1476): t=114107 pid=1476 query=mms-unread count=0 ms=2

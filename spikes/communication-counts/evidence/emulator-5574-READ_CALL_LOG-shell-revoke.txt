@@ -1,0 +1,17 @@
+pid-before=6705 pid-after=
+
+--------- beginning of main
+I/CountsProbe( 6705): t=837664 pid=6705 command=default action=null
+I/CountsProbe( 6705): t=837664 pid=6705 permission=READ_CALL_LOG state=0 before
+I/CountsProbe( 6705): t=837669 pid=6705 permission=READ_CALL_LOG result=true state=0
+I/CountsProbe( 6705): t=837669 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=837670 pid=6705 query=calls-new count=0 ms=1
+I/CountsProbe( 6705): t=837671 pid=6705 query=calls-unread count=0 ms=0
+I/CountsProbe( 6705): t=837675 pid=6705 query=sms-unread count=1 ms=3
+I/CountsProbe( 6705): t=837678 pid=6705 query=mms-unread count=1 ms=3
+I/CountsProbe( 8511): t=838773 pid=8511 command=query action=null
+I/CountsProbe( 8511): t=838774 pid=8511 unlocked=true grants=[-1, 0]
+I/CountsProbe( 8511): t=838774 pid=8511 query=calls-new error=SecurityException ms=0
+I/CountsProbe( 8511): t=838774 pid=8511 query=calls-unread error=SecurityException ms=0
+I/CountsProbe( 8511): t=838776 pid=8511 query=sms-unread count=1 ms=2
+I/CountsProbe( 8511): t=838778 pid=8511 query=mms-unread count=1 ms=2

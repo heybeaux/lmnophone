@@ -1,0 +1,15 @@
+event-uptime-before-ms=871450.0 after-ms=872440.0
+
+--------- beginning of main
+I/CountsProbe( 8712): t=871601 pid=8712 observer=combined
+I/CountsProbe( 8712): t=871601 pid=8712 unlocked=true grants=[0, 0]
+I/CountsProbe( 8712): t=871604 pid=8712 query=calls-new count=4 ms=3
+I/CountsProbe( 8712): t=871609 pid=8712 query=calls-unread count=0 ms=4
+I/CountsProbe( 8712): t=871616 pid=8712 query=sms-unread count=0 ms=2
+I/CountsProbe( 8712): t=871620 pid=8712 query=mms-unread count=0 ms=4
+I/CountsProbe( 8712): t=872881 pid=8712 command=query action=null
+I/CountsProbe( 8712): t=872881 pid=8712 unlocked=true grants=[0, 0]
+I/CountsProbe( 8712): t=872886 pid=8712 query=calls-new count=4 ms=5
+I/CountsProbe( 8712): t=872889 pid=8712 query=calls-unread count=0 ms=2
+I/CountsProbe( 8712): t=872896 pid=8712 query=sms-unread count=0 ms=7
+I/CountsProbe( 8712): t=872900 pid=8712 query=mms-unread count=0 ms=4

@@ -1,0 +1,41 @@
+INSTRUMENTATION_CODE: -1
+    installerPackageName=com.plainphone.spike.counts
+        android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+        android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+--------- beginning of main
+I/CountsProbe( 6218): t=447024 pid=6218 command=install action=null
+I/CountsProbe( 6218): t=447043 pid=6218 install=default committed
+I/CountsProbe( 6218): t=447043 pid=6218 unlocked=true grants=[0, 0]
+I/CountsProbe( 6218): t=447045 pid=6218 query=calls-new count=1 ms=2
+I/CountsProbe( 6218): t=447046 pid=6218 query=calls-unread count=1 ms=1
+I/CountsProbe( 6218): t=447048 pid=6218 query=sms-unread count=0 ms=2
+I/CountsProbe( 6218): t=447056 pid=6218 query=mms-unread count=0 ms=7
+I/CountsProbe( 6236): t=447185 pid=6236 command=installed action=null
+I/CountsProbe( 6236): t=447186 pid=6236 install-status=0 legacy=1
+I/CountsProbe( 6236): t=447186 pid=6236 unlocked=true grants=[0, 0]
+I/CountsProbe( 6236): t=447188 pid=6236 query=calls-new count=1 ms=2
+I/CountsProbe( 6236): t=447190 pid=6236 query=calls-unread count=1 ms=1
+I/CountsProbe( 6236): t=447200 pid=6236 query=sms-unread count=0 ms=9
+I/CountsProbe( 6236): t=447224 pid=6236 query=mms-unread count=0 ms=19
+I/CountsProbe( 6274): t=448226 pid=6274 command=grant action=null
+I/CountsProbe( 6274): t=448227 pid=6274 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 6274): t=448235 pid=6274 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 6274): t=448235 pid=6274 permission=READ_SMS state=1 before
+I/CountsProbe( 6274): t=448249 pid=6274 permission=READ_SMS result=true state=1
+I/CountsProbe( 6274): t=448249 pid=6274 unlocked=true grants=[0, 0]
+I/CountsProbe( 6274): t=448251 pid=6274 query=calls-new count=1 ms=2
+I/CountsProbe( 6274): t=448256 pid=6274 query=calls-unread count=1 ms=5
+I/CountsProbe( 6274): t=448258 pid=6274 query=sms-unread count=0 ms=2
+I/CountsProbe( 6274): t=448260 pid=6274 query=mms-unread count=0 ms=2
+I/CountsProbe( 6274): t=448261 pid=6274 command=query action=LOCKED_BOOT_COMPLETED
+I/CountsProbe( 6274): t=448262 pid=6274 unlocked=true grants=[0, 0]
+I/CountsProbe( 6274): t=448272 pid=6274 query=calls-new count=1 ms=10
+I/CountsProbe( 6274): t=448274 pid=6274 query=calls-unread count=1 ms=1
+I/CountsProbe( 6274): t=448275 pid=6274 query=sms-unread count=0 ms=1
+I/CountsProbe( 6274): t=448276 pid=6274 query=mms-unread count=0 ms=1
+I/CountsProbe( 6274): t=448279 pid=6274 command=query action=BOOT_COMPLETED
+I/CountsProbe( 6274): t=448280 pid=6274 unlocked=true grants=[0, 0]
+I/CountsProbe( 6274): t=448281 pid=6274 query=calls-new count=1 ms=1
+I/CountsProbe( 6274): t=448282 pid=6274 query=calls-unread count=1 ms=0
+I/CountsProbe( 6274): t=448287 pid=6274 query=sms-unread count=0 ms=3
+I/CountsProbe( 6274): t=448293 pid=6274 query=mms-unread count=0 ms=5

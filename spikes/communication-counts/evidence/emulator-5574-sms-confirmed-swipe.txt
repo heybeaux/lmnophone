@@ -1,0 +1,78 @@
+conversation-notification-found=True
+--------- beginning of main
+I/CountsProbe( 6705): t=699821 pid=6705 observer=sms
+I/CountsProbe( 6705): t=699821 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=699822 pid=6705 query=calls-new count=0 ms=1
+I/CountsProbe( 6705): t=699828 pid=6705 query=calls-unread count=0 ms=6
+I/CountsProbe( 6705): t=699833 pid=6705 query=sms-unread count=1 ms=4
+I/CountsProbe( 6705): t=699835 pid=6705 query=mms-unread count=0 ms=1
+I/CountsProbe( 6705): t=699835 pid=6705 observer=combined
+I/CountsProbe( 6705): t=699835 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=699837 pid=6705 query=calls-new count=0 ms=2
+I/CountsProbe( 6705): t=699850 pid=6705 query=calls-unread count=0 ms=6
+I/CountsProbe( 6705): t=699852 pid=6705 query=sms-unread count=1 ms=2
+I/CountsProbe( 6705): t=699860 pid=6705 query=mms-unread count=0 ms=7
+I/CountsProbe( 6705): t=699861 pid=6705 observer=combined
+I/CountsProbe( 6705): t=699861 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=699863 pid=6705 query=calls-new count=0 ms=2
+I/CountsProbe( 6705): t=699866 pid=6705 query=calls-unread count=0 ms=2
+I/CountsProbe( 6705): t=699867 pid=6705 query=sms-unread count=1 ms=1
+I/CountsProbe( 6705): t=699877 pid=6705 query=mms-unread count=0 ms=8
+I/CountsProbe( 6705): t=699919 pid=6705 observer=sms
+I/CountsProbe( 6705): t=699919 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=699932 pid=6705 query=calls-new count=0 ms=13
+I/CountsProbe( 6705): t=699936 pid=6705 query=calls-unread count=0 ms=3
+I/CountsProbe( 6705): t=699951 pid=6705 query=sms-unread count=2 ms=14
+I/CountsProbe( 6705): t=699962 pid=6705 query=mms-unread count=0 ms=11
+I/CountsProbe( 6705): t=699963 pid=6705 observer=combined
+I/CountsProbe( 6705): t=699963 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=699969 pid=6705 query=calls-new count=0 ms=6
+I/CountsProbe( 6705): t=699980 pid=6705 query=calls-unread count=0 ms=11
+I/CountsProbe( 6705): t=699985 pid=6705 query=sms-unread count=2 ms=4
+I/CountsProbe( 6705): t=699986 pid=6705 query=mms-unread count=0 ms=1
+I/CountsProbe( 6705): t=699987 pid=6705 observer=combined
+I/CountsProbe( 6705): t=699987 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=699996 pid=6705 query=calls-new count=0 ms=9
+I/CountsProbe( 6705): t=699999 pid=6705 query=calls-unread count=0 ms=2
+I/CountsProbe( 6705): t=700019 pid=6705 query=sms-unread count=2 ms=15
+I/CountsProbe( 6705): t=700030 pid=6705 query=mms-unread count=0 ms=3
+I/CountsProbe( 6705): t=700274 pid=6705 observer=sms
+I/CountsProbe( 6705): t=700274 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=700277 pid=6705 query=calls-new count=0 ms=1
+I/CountsProbe( 6705): t=700280 pid=6705 query=calls-unread count=0 ms=2
+I/CountsProbe( 6705): t=700300 pid=6705 query=sms-unread count=2 ms=15
+I/CountsProbe( 6705): t=700315 pid=6705 query=mms-unread count=0 ms=13
+I/CountsProbe( 6705): t=700315 pid=6705 observer=combined
+I/CountsProbe( 6705): t=700316 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=700318 pid=6705 query=calls-new count=0 ms=2
+I/CountsProbe( 6705): t=700322 pid=6705 query=calls-unread count=0 ms=3
+I/CountsProbe( 6705): t=700336 pid=6705 query=sms-unread count=2 ms=4
+I/CountsProbe( 6705): t=700341 pid=6705 query=mms-unread count=0 ms=3
+I/CountsProbe( 6705): t=700341 pid=6705 observer=combined
+I/CountsProbe( 6705): t=700341 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=700345 pid=6705 query=calls-new count=0 ms=4
+I/CountsProbe( 6705): t=700347 pid=6705 query=calls-unread count=0 ms=1
+I/CountsProbe( 6705): t=700351 pid=6705 query=sms-unread count=2 ms=4
+I/CountsProbe( 6705): t=700355 pid=6705 query=mms-unread count=0 ms=3
+I/CountsProbe( 6705): t=700839 pid=6705 command=hist action=null
+I/CountsProbe( 6705): t=700862 pid=6705 query=call-2-1-null count=1 ms=4
+I/CountsProbe( 6705): t=700870 pid=6705 query=call-3-0-1 count=4 ms=4
+I/CountsProbe( 6705): t=700903 pid=6705 query=call-5-1-null count=1 ms=1
+I/CountsProbe( 6705): t=700963 pid=6705 query=sms-1-0-1 count=2 ms=9
+I/CountsProbe( 6705): t=700976 pid=6705 query=sms-1-1-1 count=2 ms=1
+I/CountsProbe( 6705): t=700977 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=700980 pid=6705 query=calls-new count=0 ms=3
+I/CountsProbe( 6705): t=700982 pid=6705 query=calls-unread count=0 ms=2
+I/CountsProbe( 6705): t=700987 pid=6705 query=sms-unread count=2 ms=4
+I/CountsProbe( 6705): t=700989 pid=6705 query=mms-unread count=0 ms=2
+I/CountsProbe( 6705): t=704664 pid=6705 command=hist action=null
+I/CountsProbe( 6705): t=704689 pid=6705 query=call-2-1-null count=1 ms=1
+I/CountsProbe( 6705): t=704692 pid=6705 query=call-3-0-1 count=4 ms=0
+I/CountsProbe( 6705): t=704730 pid=6705 query=call-5-1-null count=1 ms=1
+I/CountsProbe( 6705): t=704758 pid=6705 query=sms-1-0-1 count=2 ms=4
+I/CountsProbe( 6705): t=704772 pid=6705 query=sms-1-1-1 count=2 ms=3
+I/CountsProbe( 6705): t=704775 pid=6705 unlocked=true grants=[0, 0]
+I/CountsProbe( 6705): t=704777 pid=6705 query=calls-new count=0 ms=2
+I/CountsProbe( 6705): t=704779 pid=6705 query=calls-unread count=0 ms=2
+I/CountsProbe( 6705): t=704781 pid=6705 query=sms-unread count=2 ms=2
+I/CountsProbe( 6705): t=704784 pid=6705 query=mms-unread count=0 ms=2

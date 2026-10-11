@@ -1,0 +1,27 @@
+event-uptime-before-ms=866650.0 after-ms=867640.0
+
+--------- beginning of main
+I/CountsProbe( 8712): t=866792 pid=8712 observer=sms
+I/CountsProbe( 8712): t=866792 pid=8712 unlocked=true grants=[0, 0]
+I/CountsProbe( 8712): t=866795 pid=8712 query=calls-new count=4 ms=3
+I/CountsProbe( 8712): t=866800 pid=8712 query=calls-unread count=0 ms=2
+I/CountsProbe( 8712): t=866821 pid=8712 query=sms-unread count=5 ms=8
+I/CountsProbe( 8712): t=866830 pid=8712 query=mms-unread count=1 ms=8
+I/CountsProbe( 8712): t=866831 pid=8712 observer=combined
+I/CountsProbe( 8712): t=866831 pid=8712 unlocked=true grants=[0, 0]
+I/CountsProbe( 8712): t=866833 pid=8712 query=calls-new count=4 ms=2
+I/CountsProbe( 8712): t=866837 pid=8712 query=calls-unread count=0 ms=4
+I/CountsProbe( 8712): t=866839 pid=8712 query=sms-unread count=5 ms=1
+I/CountsProbe( 8712): t=866849 pid=8712 query=mms-unread count=1 ms=10
+I/CountsProbe( 8712): t=866850 pid=8712 observer=combined
+I/CountsProbe( 8712): t=866850 pid=8712 unlocked=true grants=[0, 0]
+I/CountsProbe( 8712): t=866857 pid=8712 query=calls-new count=4 ms=7
+I/CountsProbe( 8712): t=866864 pid=8712 query=calls-unread count=0 ms=4
+I/CountsProbe( 8712): t=866871 pid=8712 query=sms-unread count=5 ms=6
+I/CountsProbe( 8712): t=866874 pid=8712 query=mms-unread count=1 ms=3
+I/CountsProbe( 8712): t=868078 pid=8712 command=query action=null
+I/CountsProbe( 8712): t=868078 pid=8712 unlocked=true grants=[0, 0]
+I/CountsProbe( 8712): t=868081 pid=8712 query=calls-new count=4 ms=3
+I/CountsProbe( 8712): t=868082 pid=8712 query=calls-unread count=0 ms=1
+I/CountsProbe( 8712): t=868084 pid=8712 query=sms-unread count=5 ms=1
+I/CountsProbe( 8712): t=868086 pid=8712 query=mms-unread count=1 ms=1

@@ -1,0 +1,36 @@
+
+--------- beginning of main
+I/CountsProbe( 8434): t=858361 pid=8434 command=hist action=null
+I/CountsProbe( 8434): t=858381 pid=8434 query=call-2-1-null count=1 ms=1
+I/CountsProbe( 8434): t=858387 pid=8434 query=call-3-0-1 count=4 ms=2
+I/CountsProbe( 8434): t=858416 pid=8434 query=call-5-1-null count=1 ms=1
+I/CountsProbe( 8434): t=858430 pid=8434 query=mms-1-0-0 count=1 ms=2
+I/CountsProbe( 8434): t=858433 pid=8434 query=sms-1-0-1 count=1 ms=2
+I/CountsProbe( 8434): t=858442 pid=8434 query=sms-1-1-1 count=4 ms=2
+I/CountsProbe( 8434): t=858446 pid=8434 unlocked=true grants=[0, 0]
+I/CountsProbe( 8434): t=858447 pid=8434 query=calls-new count=0 ms=1
+I/CountsProbe( 8434): t=858449 pid=8434 query=calls-unread count=0 ms=1
+I/CountsProbe( 8434): t=858453 pid=8434 query=sms-unread count=1 ms=4
+I/CountsProbe( 8434): t=858455 pid=8434 query=mms-unread count=1 ms=2
+I/CountsProbe( 8434): t=863920 pid=8434 command=hist action=null
+I/CountsProbe( 8434): t=863945 pid=8434 query=call-2-1-null count=1 ms=2
+I/CountsProbe( 8434): t=863949 pid=8434 query=call-3-0-1 count=4 ms=2
+I/CountsProbe( 8434): t=863986 pid=8434 query=call-5-1-null count=1 ms=3
+I/CountsProbe( 8434): t=864006 pid=8434 query=mms-1-0-0 count=1 ms=4
+I/CountsProbe( 8434): t=864025 pid=8434 query=sms-1-1-1 count=5 ms=3
+I/CountsProbe( 8434): t=864028 pid=8434 unlocked=true grants=[0, 0]
+I/CountsProbe( 8434): t=864029 pid=8434 query=calls-new count=0 ms=1
+I/CountsProbe( 8434): t=864031 pid=8434 query=calls-unread count=0 ms=1
+I/CountsProbe( 8434): t=864035 pid=8434 query=sms-unread count=0 ms=3
+I/CountsProbe( 8434): t=864038 pid=8434 query=mms-unread count=1 ms=2
+I/CountsProbe( 8434): t=869542 pid=8434 command=hist action=null
+I/CountsProbe( 8434): t=869602 pid=8434 query=call-2-1-null count=1 ms=4
+I/CountsProbe( 8434): t=869610 pid=8434 query=call-3-0-1 count=4 ms=4
+I/CountsProbe( 8434): t=869658 pid=8434 query=call-5-1-null count=1 ms=2
+I/CountsProbe( 8434): t=869705 pid=8434 query=sms-1-1-1 count=5 ms=5
+I/CountsProbe( 8434): t=869709 pid=8434 query=mms-1-1-1 count=1 ms=4
+I/CountsProbe( 8434): t=869709 pid=8434 unlocked=true grants=[0, 0]
+I/CountsProbe( 8434): t=869712 pid=8434 query=calls-new count=0 ms=2
+I/CountsProbe( 8434): t=869714 pid=8434 query=calls-unread count=0 ms=2
+I/CountsProbe( 8434): t=869718 pid=8434 query=sms-unread count=0 ms=4
+I/CountsProbe( 8434): t=869722 pid=8434 query=mms-unread count=0 ms=4

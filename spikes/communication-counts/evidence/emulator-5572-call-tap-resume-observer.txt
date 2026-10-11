@@ -1,0 +1,23 @@
+pid-before=4400 pid-after=4400
+--------- beginning of main
+I/CountsProbe( 4400): t=414704 pid=4400 observer=calls
+I/CountsProbe( 4400): t=414704 pid=4400 unlocked=true grants=[0, 0]
+I/CountsProbe( 4400): t=414713 pid=4400 query=calls-new count=0 ms=9
+I/CountsProbe( 4400): t=414718 pid=4400 query=calls-unacknowledged count=0 ms=4
+I/CountsProbe( 4400): t=414722 pid=4400 query=calls-unread count=0 ms=3
+I/CountsProbe( 4400): t=414729 pid=4400 query=sms-unread count=4 ms=5
+I/CountsProbe( 4400): t=414735 pid=4400 query=mms-unread count=1 ms=5
+I/CountsProbe( 4400): t=416628 pid=4400 command=query action=null
+I/CountsProbe( 4400): t=416628 pid=4400 unlocked=true grants=[0, 0]
+I/CountsProbe( 4400): t=416631 pid=4400 query=calls-new count=0 ms=3
+I/CountsProbe( 4400): t=416636 pid=4400 query=calls-unacknowledged count=0 ms=4
+I/CountsProbe( 4400): t=416642 pid=4400 query=calls-unread count=0 ms=2
+I/CountsProbe( 4400): t=416645 pid=4400 query=sms-unread count=4 ms=3
+I/CountsProbe( 4400): t=416649 pid=4400 query=mms-unread count=1 ms=3
+I/CountsProbe( 4400): t=416663 pid=4400 observer=calls
+I/CountsProbe( 4400): t=416663 pid=4400 unlocked=true grants=[0, 0]
+I/CountsProbe( 4400): t=416664 pid=4400 query=calls-new count=0 ms=1
+I/CountsProbe( 4400): t=416670 pid=4400 query=calls-unacknowledged count=0 ms=6
+I/CountsProbe( 4400): t=416671 pid=4400 query=calls-unread count=0 ms=1
+I/CountsProbe( 4400): t=416674 pid=4400 query=sms-unread count=4 ms=3
+I/CountsProbe( 4400): t=416679 pid=4400 query=mms-unread count=1 ms=4

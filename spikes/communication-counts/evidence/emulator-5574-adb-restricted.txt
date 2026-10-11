@@ -1,0 +1,14 @@
+    installerPackageName=null
+        android.permission.READ_SMS: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|APPLY_RESTRICTION]
+        android.permission.READ_CALL_LOG: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|APPLY_RESTRICTION]
+--------- beginning of main
+I/CountsProbe( 6162): t=381723 pid=6162 command=grant action=null
+I/CountsProbe( 6162): t=381734 pid=6162 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 6162): t=381776 pid=6162 permission=READ_CALL_LOG result=true state=0
+I/CountsProbe( 6162): t=381776 pid=6162 permission=READ_SMS state=1 before
+I/CountsProbe( 6162): t=381781 pid=6162 permission=READ_SMS result=true state=0
+I/CountsProbe( 6162): t=381791 pid=6162 unlocked=true grants=[-1, -1]
+I/CountsProbe( 6162): t=381795 pid=6162 query=calls-new error=SecurityException ms=4
+I/CountsProbe( 6162): t=381803 pid=6162 query=calls-unread error=SecurityException ms=8
+I/CountsProbe( 6162): t=381805 pid=6162 query=sms-unread error=SecurityException ms=2
+I/CountsProbe( 6162): t=381806 pid=6162 query=mms-unread error=SecurityException ms=1

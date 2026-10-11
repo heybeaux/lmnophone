@@ -1,0 +1,62 @@
+event-before-ms=61780.0 after-ms=61820.0
+--------- beginning of main
+I/CountsProbe( 1284): t=61828 pid=1284 observer=sms
+I/CountsProbe( 1284): t=61828 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=61841 pid=1284 query=calls-new count=4 ms=13
+I/CountsProbe( 1284): t=61847 pid=1284 query=calls-unread count=0 ms=5
+I/CountsProbe( 1284): t=61852 pid=1284 query=sms-unread count=5 ms=5
+I/CountsProbe( 1284): t=61858 pid=1284 query=mms-unread count=1 ms=5
+I/CountsProbe( 1284): t=61859 pid=1284 observer=combined
+I/CountsProbe( 1284): t=61859 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=61862 pid=1284 query=calls-new count=4 ms=3
+I/CountsProbe( 1284): t=61866 pid=1284 query=calls-unread count=0 ms=3
+I/CountsProbe( 1284): t=61869 pid=1284 query=sms-unread count=5 ms=3
+I/CountsProbe( 1284): t=61874 pid=1284 query=mms-unread count=1 ms=4
+I/CountsProbe( 1284): t=61874 pid=1284 observer=combined
+I/CountsProbe( 1284): t=61874 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=61876 pid=1284 query=calls-new count=4 ms=2
+I/CountsProbe( 1284): t=61881 pid=1284 query=calls-unread count=0 ms=5
+I/CountsProbe( 1284): t=61889 pid=1284 query=sms-unread count=5 ms=4
+I/CountsProbe( 1284): t=61893 pid=1284 query=mms-unread count=1 ms=4
+I/CountsProbe( 1284): t=61957 pid=1284 observer=sms
+I/CountsProbe( 1284): t=61957 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=61959 pid=1284 query=calls-new count=4 ms=2
+I/CountsProbe( 1284): t=61961 pid=1284 query=calls-unread count=0 ms=2
+I/CountsProbe( 1284): t=61967 pid=1284 query=sms-unread count=6 ms=5
+I/CountsProbe( 1284): t=61970 pid=1284 query=mms-unread count=1 ms=2
+I/CountsProbe( 1284): t=61970 pid=1284 observer=combined
+I/CountsProbe( 1284): t=61970 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=61972 pid=1284 query=calls-new count=4 ms=2
+I/CountsProbe( 1284): t=61974 pid=1284 query=calls-unread count=0 ms=2
+I/CountsProbe( 1284): t=61980 pid=1284 query=sms-unread count=6 ms=6
+I/CountsProbe( 1284): t=61984 pid=1284 query=mms-unread count=1 ms=3
+I/CountsProbe( 1284): t=61985 pid=1284 observer=combined
+I/CountsProbe( 1284): t=61985 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=61988 pid=1284 query=calls-new count=4 ms=3
+I/CountsProbe( 1284): t=61990 pid=1284 query=calls-unread count=0 ms=2
+I/CountsProbe( 1284): t=61992 pid=1284 query=sms-unread count=6 ms=2
+I/CountsProbe( 1284): t=61997 pid=1284 query=mms-unread count=1 ms=4
+I/CountsProbe( 1284): t=62171 pid=1284 observer=sms
+I/CountsProbe( 1284): t=62171 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=62173 pid=1284 query=calls-new count=4 ms=2
+I/CountsProbe( 1284): t=62180 pid=1284 query=calls-unread count=0 ms=7
+I/CountsProbe( 1284): t=62188 pid=1284 query=sms-unread count=6 ms=7
+I/CountsProbe( 1284): t=62194 pid=1284 query=mms-unread count=1 ms=5
+I/CountsProbe( 1284): t=62195 pid=1284 observer=combined
+I/CountsProbe( 1284): t=62195 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=62197 pid=1284 query=calls-new count=4 ms=2
+I/CountsProbe( 1284): t=62201 pid=1284 query=calls-unread count=0 ms=3
+I/CountsProbe( 1284): t=62209 pid=1284 query=sms-unread count=6 ms=8
+I/CountsProbe( 1284): t=62215 pid=1284 query=mms-unread count=1 ms=5
+I/CountsProbe( 1284): t=62216 pid=1284 observer=combined
+I/CountsProbe( 1284): t=62216 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=62217 pid=1284 query=calls-new count=4 ms=1
+I/CountsProbe( 1284): t=62219 pid=1284 query=calls-unread count=0 ms=1
+I/CountsProbe( 1284): t=62223 pid=1284 query=sms-unread count=6 ms=4
+I/CountsProbe( 1284): t=62227 pid=1284 query=mms-unread count=1 ms=4
+I/CountsProbe( 1284): t=62861 pid=1284 command=query action=null
+I/CountsProbe( 1284): t=62861 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=62863 pid=1284 query=calls-new count=4 ms=2
+I/CountsProbe( 1284): t=62873 pid=1284 query=calls-unread count=0 ms=10
+I/CountsProbe( 1284): t=62893 pid=1284 query=sms-unread count=6 ms=18
+I/CountsProbe( 1284): t=62899 pid=1284 query=mms-unread count=1 ms=6

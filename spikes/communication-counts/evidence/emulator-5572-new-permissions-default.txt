@@ -1,0 +1,46 @@
+INSTRUMENTATION_CODE: -1
+    installerPackageName=com.plainphone.spike.counts
+        android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|RESTRICTION_INSTALLER_EXEMPT]
+        android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|RESTRICTION_INSTALLER_EXEMPT]
+--------- beginning of main
+I/CountsProbe( 3764): t=81847 pid=3764 command=query action=LOCKED_BOOT_COMPLETED
+I/CountsProbe( 3764): t=81864 pid=3764 unlocked=true grants=[-1, -1]
+I/CountsProbe( 3764): t=81866 pid=3764 query=calls-new error=SecurityException ms=2
+I/CountsProbe( 3764): t=81879 pid=3764 query=calls-unacknowledged error=SecurityException ms=13
+I/CountsProbe( 3764): t=81881 pid=3764 query=calls-unread error=SecurityException ms=2
+I/CountsProbe( 3764): t=81884 pid=3764 query=sms-unread error=SecurityException ms=3
+I/CountsProbe( 3764): t=81888 pid=3764 query=mms-unread error=SecurityException ms=3
+I/CountsProbe( 3764): t=81897 pid=3764 command=query action=BOOT_COMPLETED
+I/CountsProbe( 3764): t=81897 pid=3764 unlocked=true grants=[-1, -1]
+I/CountsProbe( 3764): t=81901 pid=3764 query=calls-new error=SecurityException ms=4
+I/CountsProbe( 3764): t=81901 pid=3764 query=calls-unacknowledged error=SecurityException ms=0
+I/CountsProbe( 3764): t=81901 pid=3764 query=calls-unread error=SecurityException ms=0
+I/CountsProbe( 3764): t=81901 pid=3764 query=sms-unread error=SecurityException ms=0
+I/CountsProbe( 3764): t=81904 pid=3764 query=mms-unread error=SecurityException ms=3
+I/CountsProbe( 3794): t=82199 pid=3794 command=install action=null
+I/CountsProbe( 3794): t=82319 pid=3794 install=default committed
+I/CountsProbe( 3794): t=82343 pid=3794 unlocked=true grants=[-1, -1]
+I/CountsProbe( 3794): t=82348 pid=3794 query=calls-new error=SecurityException ms=5
+I/CountsProbe( 3794): t=82349 pid=3794 query=calls-unacknowledged error=SecurityException ms=1
+I/CountsProbe( 3794): t=82349 pid=3794 query=calls-unread error=SecurityException ms=0
+I/CountsProbe( 3794): t=82357 pid=3794 query=sms-unread error=SecurityException ms=8
+I/CountsProbe( 3794): t=82360 pid=3794 query=mms-unread error=SecurityException ms=3
+I/CountsProbe( 3816): t=82694 pid=3816 command=installed action=null
+I/CountsProbe( 3816): t=82695 pid=3816 install-status=0 legacy=1
+I/CountsProbe( 3816): t=82696 pid=3816 unlocked=true grants=[-1, -1]
+I/CountsProbe( 3816): t=82697 pid=3816 query=calls-new error=SecurityException ms=1
+I/CountsProbe( 3816): t=82698 pid=3816 query=calls-unacknowledged error=SecurityException ms=0
+I/CountsProbe( 3816): t=82699 pid=3816 query=calls-unread error=SecurityException ms=1
+I/CountsProbe( 3816): t=82702 pid=3816 query=sms-unread error=SecurityException ms=3
+I/CountsProbe( 3816): t=82706 pid=3816 query=mms-unread error=SecurityException ms=4
+I/CountsProbe( 3816): t=83442 pid=3816 command=grant action=null
+I/CountsProbe( 3816): t=83443 pid=3816 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 3816): t=83453 pid=3816 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 3816): t=83453 pid=3816 permission=READ_SMS state=1 before
+I/CountsProbe( 3816): t=83460 pid=3816 permission=READ_SMS result=true state=1
+I/CountsProbe( 3816): t=83460 pid=3816 unlocked=true grants=[0, 0]
+I/CountsProbe( 3816): t=83468 pid=3816 query=calls-new count=5 ms=8
+I/CountsProbe( 3816): t=83473 pid=3816 query=calls-unacknowledged count=1 ms=4
+I/CountsProbe( 3816): t=83476 pid=3816 query=calls-unread count=1 ms=2
+I/CountsProbe( 3816): t=83484 pid=3816 query=sms-unread count=6 ms=7
+I/CountsProbe( 3816): t=83489 pid=3816 query=mms-unread count=1 ms=4

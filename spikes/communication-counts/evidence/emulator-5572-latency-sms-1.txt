@@ -1,0 +1,27 @@
+event-uptime-before-ms=904720.0 after-ms=905650.0
+
+--------- beginning of main
+I/CountsProbe( 8434): t=904811 pid=8434 observer=sms
+I/CountsProbe( 8434): t=904811 pid=8434 unlocked=true grants=[0, 0]
+I/CountsProbe( 8434): t=904813 pid=8434 query=calls-new count=4 ms=2
+I/CountsProbe( 8434): t=904815 pid=8434 query=calls-unread count=0 ms=2
+I/CountsProbe( 8434): t=904817 pid=8434 query=sms-unread count=0 ms=2
+I/CountsProbe( 8434): t=904822 pid=8434 query=mms-unread count=0 ms=4
+I/CountsProbe( 8434): t=904822 pid=8434 observer=combined
+I/CountsProbe( 8434): t=904822 pid=8434 unlocked=true grants=[0, 0]
+I/CountsProbe( 8434): t=904825 pid=8434 query=calls-new count=4 ms=3
+I/CountsProbe( 8434): t=904829 pid=8434 query=calls-unread count=0 ms=4
+I/CountsProbe( 8434): t=904832 pid=8434 query=sms-unread count=0 ms=2
+I/CountsProbe( 8434): t=904836 pid=8434 query=mms-unread count=0 ms=3
+I/CountsProbe( 8434): t=904836 pid=8434 observer=combined
+I/CountsProbe( 8434): t=904836 pid=8434 unlocked=true grants=[0, 0]
+I/CountsProbe( 8434): t=904839 pid=8434 query=calls-new count=4 ms=3
+I/CountsProbe( 8434): t=904845 pid=8434 query=calls-unread count=0 ms=4
+I/CountsProbe( 8434): t=904849 pid=8434 query=sms-unread count=0 ms=3
+I/CountsProbe( 8434): t=904855 pid=8434 query=mms-unread count=0 ms=4
+I/CountsProbe( 8434): t=906092 pid=8434 command=query action=null
+I/CountsProbe( 8434): t=906092 pid=8434 unlocked=true grants=[0, 0]
+I/CountsProbe( 8434): t=906095 pid=8434 query=calls-new count=4 ms=2
+I/CountsProbe( 8434): t=906097 pid=8434 query=calls-unread count=0 ms=1
+I/CountsProbe( 8434): t=906102 pid=8434 query=sms-unread count=0 ms=5
+I/CountsProbe( 8434): t=906107 pid=8434 query=mms-unread count=0 ms=5

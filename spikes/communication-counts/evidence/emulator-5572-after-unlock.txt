@@ -1,0 +1,26 @@
+
+--------- beginning of main
+I/CountsProbe( 1284): t=12114 pid=1284 command=query action=LOCKED_BOOT_COMPLETED
+I/CountsProbe( 1284): t=12122 pid=1284 unlocked=false grants=[0, 0]
+I/CountsProbe( 1284): t=12126 pid=1284 query=calls-new count=null ms=4
+I/CountsProbe( 1284): t=12137 pid=1284 query=calls-unread count=null ms=11
+I/CountsProbe( 1284): t=12171 pid=1284 query=sms-unread error=SQLiteException ms=34
+I/CountsProbe( 1284): t=12183 pid=1284 query=mms-unread count=null ms=12
+I/CountsProbe( 1284): t=16841 pid=1284 command=query action=null
+I/CountsProbe( 1284): t=16843 pid=1284 unlocked=false grants=[0, 0]
+I/CountsProbe( 1284): t=16844 pid=1284 query=calls-new count=null ms=1
+I/CountsProbe( 1284): t=16844 pid=1284 query=calls-unread count=null ms=0
+I/CountsProbe( 1284): t=16851 pid=1284 query=sms-unread error=SQLiteException ms=7
+I/CountsProbe( 1284): t=16857 pid=1284 query=mms-unread count=null ms=6
+I/CountsProbe( 1284): t=33107 pid=1284 command=query action=MAIN
+I/CountsProbe( 1284): t=33114 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=33326 pid=1284 query=calls-new count=4 ms=212
+I/CountsProbe( 1284): t=33352 pid=1284 query=calls-unread count=0 ms=2
+I/CountsProbe( 1284): t=33456 pid=1284 query=sms-unread count=5 ms=98
+I/CountsProbe( 1284): t=33459 pid=1284 query=mms-unread count=1 ms=2
+I/CountsProbe( 1284): t=33771 pid=1284 command=query action=null
+I/CountsProbe( 1284): t=33771 pid=1284 unlocked=true grants=[0, 0]
+I/CountsProbe( 1284): t=33801 pid=1284 query=calls-new count=4 ms=28
+I/CountsProbe( 1284): t=33815 pid=1284 query=calls-unread count=0 ms=9
+I/CountsProbe( 1284): t=33831 pid=1284 query=sms-unread count=5 ms=11
+I/CountsProbe( 1284): t=33871 pid=1284 query=mms-unread count=1 ms=26

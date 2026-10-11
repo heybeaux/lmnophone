@@ -1,0 +1,18 @@
+pid-before=6366 pid-after=6366
+Broadcasting: Intent { flg=0x400020 cmp=com.plainphone.spike.counts/.Control (has extras) }
+Broadcast completed: result=0
+--------- beginning of main
+I/CountsProbe( 6366): t=826445 pid=6366 command=default action=null
+I/CountsProbe( 6366): t=826445 pid=6366 permission=READ_CALL_LOG state=0 before
+I/CountsProbe( 6366): t=826455 pid=6366 permission=READ_CALL_LOG result=true state=0
+I/CountsProbe( 6366): t=826455 pid=6366 unlocked=true grants=[0, 0]
+I/CountsProbe( 6366): t=826456 pid=6366 query=calls-new count=0 ms=1
+I/CountsProbe( 6366): t=826458 pid=6366 query=calls-unread count=0 ms=1
+I/CountsProbe( 6366): t=826460 pid=6366 query=sms-unread count=1 ms=2
+I/CountsProbe( 6366): t=826463 pid=6366 query=mms-unread count=1 ms=3
+I/CountsProbe( 6366): t=827313 pid=6366 command=query action=null
+I/CountsProbe( 6366): t=827314 pid=6366 unlocked=true grants=[0, 0]
+I/CountsProbe( 6366): t=827316 pid=6366 query=calls-new count=0 ms=2
+I/CountsProbe( 6366): t=827318 pid=6366 query=calls-unread count=0 ms=2
+I/CountsProbe( 6366): t=827322 pid=6366 query=sms-unread count=1 ms=3
+I/CountsProbe( 6366): t=827326 pid=6366 query=mms-unread count=1 ms=4

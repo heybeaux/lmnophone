@@ -1,0 +1,29 @@
+INSTRUMENTATION_CODE: -1
+    installerPackageName=com.plainphone.spike.counts
+        android.permission.READ_SMS: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|APPLY_RESTRICTION]
+        android.permission.READ_CALL_LOG: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|APPLY_RESTRICTION]
+--------- beginning of main
+I/CountsProbe( 5923): t=374230 pid=5923 command=install action=null
+I/CountsProbe( 5923): t=374301 pid=5923 install=none committed
+I/CountsProbe( 5923): t=374305 pid=5923 unlocked=true grants=[-1, -1]
+I/CountsProbe( 5923): t=374311 pid=5923 query=calls-new error=SecurityException ms=6
+I/CountsProbe( 5923): t=374314 pid=5923 query=calls-unread error=SecurityException ms=3
+I/CountsProbe( 5923): t=374317 pid=5923 query=sms-unread error=SecurityException ms=3
+I/CountsProbe( 5923): t=374319 pid=5923 query=mms-unread error=SecurityException ms=2
+I/CountsProbe( 5945): t=374606 pid=5945 command=installed action=null
+I/CountsProbe( 5945): t=374607 pid=5945 install-status=0 legacy=1
+I/CountsProbe( 5945): t=374609 pid=5945 unlocked=true grants=[-1, -1]
+I/CountsProbe( 5945): t=374610 pid=5945 query=calls-new error=SecurityException ms=1
+I/CountsProbe( 5945): t=374610 pid=5945 query=calls-unread error=SecurityException ms=0
+I/CountsProbe( 5945): t=374612 pid=5945 query=sms-unread error=SecurityException ms=2
+I/CountsProbe( 5945): t=374614 pid=5945 query=mms-unread error=SecurityException ms=2
+I/CountsProbe( 5945): t=376533 pid=5945 command=grant action=null
+I/CountsProbe( 5945): t=376535 pid=5945 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 5945): t=376542 pid=5945 permission=READ_CALL_LOG result=true state=0
+I/CountsProbe( 5945): t=376542 pid=5945 permission=READ_SMS state=1 before
+I/CountsProbe( 5945): t=376549 pid=5945 permission=READ_SMS result=true state=0
+I/CountsProbe( 5945): t=376550 pid=5945 unlocked=true grants=[-1, -1]
+I/CountsProbe( 5945): t=376551 pid=5945 query=calls-new error=SecurityException ms=1
+I/CountsProbe( 5945): t=376555 pid=5945 query=calls-unread error=SecurityException ms=4
+I/CountsProbe( 5945): t=376557 pid=5945 query=sms-unread error=SecurityException ms=2
+I/CountsProbe( 5945): t=376557 pid=5945 query=mms-unread error=SecurityException ms=0

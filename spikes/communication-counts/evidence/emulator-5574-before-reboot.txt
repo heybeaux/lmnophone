@@ -1,0 +1,30 @@
+
+--------- beginning of main
+I/CountsProbe( 8712): t=871601 pid=8712 observer=combined
+I/CountsProbe( 8712): t=871601 pid=8712 unlocked=true grants=[0, 0]
+I/CountsProbe( 8712): t=871604 pid=8712 query=calls-new count=4 ms=3
+I/CountsProbe( 8712): t=871609 pid=8712 query=calls-unread count=0 ms=4
+I/CountsProbe( 8712): t=871616 pid=8712 query=sms-unread count=0 ms=2
+I/CountsProbe( 8712): t=871620 pid=8712 query=mms-unread count=0 ms=4
+I/CountsProbe( 8712): t=872881 pid=8712 command=query action=null
+I/CountsProbe( 8712): t=872881 pid=8712 unlocked=true grants=[0, 0]
+I/CountsProbe( 8712): t=872886 pid=8712 query=calls-new count=4 ms=5
+I/CountsProbe( 8712): t=872889 pid=8712 query=calls-unread count=0 ms=2
+I/CountsProbe( 8712): t=872896 pid=8712 query=sms-unread count=0 ms=7
+I/CountsProbe( 8712): t=872900 pid=8712 query=mms-unread count=0 ms=4
+I/CountsProbe( 8712): t=872995 pid=8712 command=grant action=null
+I/CountsProbe( 8712): t=872995 pid=8712 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 8712): t=873008 pid=8712 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 8712): t=873008 pid=8712 permission=READ_SMS state=1 before
+I/CountsProbe( 8712): t=873015 pid=8712 permission=READ_SMS result=true state=1
+I/CountsProbe( 8712): t=873015 pid=8712 unlocked=true grants=[0, 0]
+I/CountsProbe( 8712): t=873017 pid=8712 query=calls-new count=4 ms=2
+I/CountsProbe( 8712): t=873019 pid=8712 query=calls-unread count=0 ms=2
+I/CountsProbe( 8712): t=873022 pid=8712 query=sms-unread count=0 ms=3
+I/CountsProbe( 8712): t=873024 pid=8712 query=mms-unread count=0 ms=2
+I/CountsProbe( 8712): t=873049 pid=8712 command=query action=null
+I/CountsProbe( 8712): t=873049 pid=8712 unlocked=true grants=[0, 0]
+I/CountsProbe( 8712): t=873052 pid=8712 query=calls-new count=4 ms=2
+I/CountsProbe( 8712): t=873055 pid=8712 query=calls-unread count=0 ms=2
+I/CountsProbe( 8712): t=873058 pid=8712 query=sms-unread count=0 ms=3
+I/CountsProbe( 8712): t=873062 pid=8712 query=mms-unread count=0 ms=4

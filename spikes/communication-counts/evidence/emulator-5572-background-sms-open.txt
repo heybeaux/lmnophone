@@ -1,0 +1,30 @@
+event-before-ms=139840.0 after-ms=140600.0
+--------- beginning of main
+I/CountsProbe( 3961): t=150384 pid=3961 observer=combined
+I/CountsProbe( 3961): t=150385 pid=3961 unlocked=true grants=[0, 0]
+I/CountsProbe( 3961): t=150387 pid=3961 query=calls-new count=5 ms=2
+I/CountsProbe( 3961): t=150390 pid=3961 query=calls-unacknowledged count=1 ms=1
+I/CountsProbe( 3961): t=150392 pid=3961 query=calls-unread count=1 ms=1
+I/CountsProbe( 3961): t=150398 pid=3961 query=sms-unread count=4 ms=6
+I/CountsProbe( 3961): t=150402 pid=3961 query=mms-unread count=1 ms=3
+I/CountsProbe( 3961): t=150403 pid=3961 observer=sms
+I/CountsProbe( 3961): t=150403 pid=3961 unlocked=true grants=[0, 0]
+I/CountsProbe( 3961): t=150405 pid=3961 query=calls-new count=5 ms=2
+I/CountsProbe( 3961): t=150407 pid=3961 query=calls-unacknowledged count=1 ms=2
+I/CountsProbe( 3961): t=150408 pid=3961 query=calls-unread count=1 ms=1
+I/CountsProbe( 3961): t=150411 pid=3961 query=sms-unread count=4 ms=2
+I/CountsProbe( 3961): t=150416 pid=3961 query=mms-unread count=1 ms=4
+I/CountsProbe( 3961): t=150417 pid=3961 observer=combined
+I/CountsProbe( 3961): t=150417 pid=3961 unlocked=true grants=[0, 0]
+I/CountsProbe( 3961): t=150418 pid=3961 query=calls-new count=5 ms=1
+I/CountsProbe( 3961): t=150420 pid=3961 query=calls-unacknowledged count=1 ms=1
+I/CountsProbe( 3961): t=150421 pid=3961 query=calls-unread count=1 ms=1
+I/CountsProbe( 3961): t=150424 pid=3961 query=sms-unread count=4 ms=2
+I/CountsProbe( 3961): t=150427 pid=3961 query=mms-unread count=1 ms=3
+I/CountsProbe( 3961): t=151637 pid=3961 command=query action=null
+I/CountsProbe( 3961): t=151637 pid=3961 unlocked=true grants=[0, 0]
+I/CountsProbe( 3961): t=151640 pid=3961 query=calls-new count=5 ms=3
+I/CountsProbe( 3961): t=151642 pid=3961 query=calls-unacknowledged count=1 ms=1
+I/CountsProbe( 3961): t=151643 pid=3961 query=calls-unread count=1 ms=1
+I/CountsProbe( 3961): t=151647 pid=3961 query=sms-unread count=4 ms=3
+I/CountsProbe( 3961): t=151650 pid=3961 query=mms-unread count=1 ms=2

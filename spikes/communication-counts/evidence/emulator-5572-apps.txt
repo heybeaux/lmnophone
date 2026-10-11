@@ -1,0 +1,6 @@
+com.google.android.dialer
+versionCode=16046248 minSdk=29 targetSdk=34
+versionName=127.0.620688474
+com.google.android.apps.messaging
+versionCode=235003840 minSdk=34 targetSdk=35
+versionName=messages.android_20240528_00_RC01_alldpi.arm64-v8a.phone

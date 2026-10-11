@@ -1,0 +1,29 @@
+INSTRUMENTATION_CODE: -1
+    installerPackageName=com.plainphone.spike.counts
+        android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+        android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+--------- beginning of main
+I/CountsProbe( 6560): t=452313 pid=6560 command=install action=null
+I/CountsProbe( 6560): t=452327 pid=6560 install=default committed
+I/CountsProbe( 6560): t=452328 pid=6560 unlocked=true grants=[0, 0]
+I/CountsProbe( 6560): t=452330 pid=6560 query=calls-new count=1 ms=2
+I/CountsProbe( 6560): t=452331 pid=6560 query=calls-unread count=1 ms=1
+I/CountsProbe( 6560): t=452337 pid=6560 query=sms-unread count=0 ms=4
+I/CountsProbe( 6560): t=452339 pid=6560 query=mms-unread count=0 ms=2
+I/CountsProbe( 6580): t=452578 pid=6580 command=installed action=null
+I/CountsProbe( 6580): t=452581 pid=6580 install-status=0 legacy=1
+I/CountsProbe( 6580): t=452582 pid=6580 unlocked=true grants=[0, 0]
+I/CountsProbe( 6580): t=452589 pid=6580 query=calls-new count=1 ms=7
+I/CountsProbe( 6580): t=452590 pid=6580 query=calls-unread count=1 ms=0
+I/CountsProbe( 6580): t=452592 pid=6580 query=sms-unread count=0 ms=1
+I/CountsProbe( 6580): t=452597 pid=6580 query=mms-unread count=0 ms=3
+I/CountsProbe( 6622): t=453518 pid=6622 command=grant action=null
+I/CountsProbe( 6622): t=453520 pid=6622 permission=READ_CALL_LOG state=1 before
+I/CountsProbe( 6622): t=453524 pid=6622 permission=READ_CALL_LOG result=true state=1
+I/CountsProbe( 6622): t=453524 pid=6622 permission=READ_SMS state=1 before
+I/CountsProbe( 6622): t=453526 pid=6622 permission=READ_SMS result=true state=1
+I/CountsProbe( 6622): t=453527 pid=6622 unlocked=true grants=[0, 0]
+I/CountsProbe( 6622): t=453532 pid=6622 query=calls-new count=1 ms=5
+I/CountsProbe( 6622): t=453535 pid=6622 query=calls-unread count=1 ms=2
+I/CountsProbe( 6622): t=453538 pid=6622 query=sms-unread count=0 ms=3
+I/CountsProbe( 6622): t=453540 pid=6622 query=mms-unread count=0 ms=2

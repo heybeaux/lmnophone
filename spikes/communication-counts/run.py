@@ -11,7 +11,7 @@ def adb(serial,*args,check=True):
     if check and r.returncode: raise RuntimeError(r.stderr)
     return (r.stdout+r.stderr).strip()
 def command(serial,cmd,*extras,activity=False):
-    kind=['start','-n',PKG+'/.ProbeActivity'] if activity else ['broadcast','--include-stopped-packages','-n',PKG+'/.Control']
+    kind=['start','-W','-n',PKG+'/.ProbeActivity'] if activity else ['broadcast','--include-stopped-packages','-n',PKG+'/.Control']
     return adb(serial,'shell','am',*kind,'--es','cmd',cmd,*extras)
 def logs(serial):
     return adb(serial,'logcat','-d','-v','brief','-s','CountsProbe:I','*:S')

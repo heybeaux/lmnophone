@@ -1,0 +1,40 @@
+
+--------- beginning of main
+I/CountsProbe( 1476): t=39376 pid=1476 query=calls-new count=4 ms=57
+I/CountsProbe( 1476): t=39396 pid=1476 query=calls-unread count=0 ms=14
+I/CountsProbe( 1476): t=39432 pid=1476 query=sms-unread count=0 ms=35
+I/CountsProbe( 1476): t=39467 pid=1476 query=mms-unread count=1 ms=24
+I/CountsProbe( 1476): t=39662 pid=1476 command=hist action=null
+I/CountsProbe( 1476): t=39718 pid=1476 query=call-2-1-null count=1 ms=0
+I/CountsProbe( 1476): t=39726 pid=1476 query=call-3-1-1 count=4 ms=2
+I/CountsProbe( 1476): t=39768 pid=1476 query=call-5-1-null count=1 ms=6
+I/CountsProbe( 1476): t=39860 pid=1476 query=mms-1-0-0 count=1 ms=11
+I/CountsProbe( 1476): t=40324 pid=1476 query=sms-1-1-1 count=5 ms=8
+I/CountsProbe( 1476): t=40339 pid=1476 unlocked=true grants=[0, 0]
+I/CountsProbe( 1476): t=40342 pid=1476 query=calls-new count=4 ms=3
+I/CountsProbe( 1476): t=40345 pid=1476 query=calls-unread count=0 ms=3
+I/CountsProbe( 1476): t=40349 pid=1476 query=sms-unread count=0 ms=4
+I/CountsProbe( 1476): t=40352 pid=1476 query=mms-unread count=1 ms=3
+I/CountsProbe( 1476): t=47725 pid=1476 command=hist action=null
+I/CountsProbe( 1476): t=47794 pid=1476 query=call-2-1-null count=1 ms=7
+I/CountsProbe( 1476): t=47828 pid=1476 query=call-3-1-1 count=4 ms=8
+I/CountsProbe( 1476): t=47891 pid=1476 query=call-5-1-null count=1 ms=8
+I/CountsProbe( 1476): t=48747 pid=1476 query=sms-1-1-1 count=5 ms=25
+I/CountsProbe( 1476): t=48806 pid=1476 query=mms-1-1-1 count=1 ms=51
+I/CountsProbe( 1476): t=48808 pid=1476 unlocked=true grants=[0, 0]
+I/CountsProbe( 1476): t=48835 pid=1476 query=calls-new count=4 ms=27
+I/CountsProbe( 1476): t=48864 pid=1476 query=calls-unread count=0 ms=12
+I/CountsProbe( 1476): t=48905 pid=1476 query=sms-unread count=0 ms=32
+I/CountsProbe( 1476): t=48957 pid=1476 query=mms-unread count=0 ms=45
+I/CountsProbe( 1476): t=57391 pid=1476 observer=combined
+I/CountsProbe( 1476): t=57395 pid=1476 unlocked=true grants=[0, 0]
+I/CountsProbe( 1476): t=57431 pid=1476 query=calls-new count=4 ms=36
+I/CountsProbe( 1476): t=57462 pid=1476 query=calls-unread count=0 ms=27
+I/CountsProbe( 1476): t=57500 pid=1476 query=sms-unread count=0 ms=36
+I/CountsProbe( 1476): t=57512 pid=1476 query=mms-unread count=0 ms=12
+I/CountsProbe( 1476): t=59099 pid=1476 command=query action=null
+I/CountsProbe( 1476): t=59100 pid=1476 unlocked=true grants=[0, 0]
+I/CountsProbe( 1476): t=59159 pid=1476 query=calls-new count=4 ms=59
+I/CountsProbe( 1476): t=59161 pid=1476 query=calls-unread count=0 ms=1
+I/CountsProbe( 1476): t=59163 pid=1476 query=sms-unread count=0 ms=1
+I/CountsProbe( 1476): t=59164 pid=1476 query=mms-unread count=0 ms=1

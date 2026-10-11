@@ -1,0 +1,30 @@
+event-before-ms=202640.0 after-ms=203390.0
+--------- beginning of main
+I/CountsProbe( 4443): t=213543 pid=4443 observer=combined
+I/CountsProbe( 4443): t=213544 pid=4443 unlocked=true grants=[0, 0]
+I/CountsProbe( 4443): t=213546 pid=4443 query=calls-new count=5 ms=2
+I/CountsProbe( 4443): t=213547 pid=4443 query=calls-unacknowledged count=1 ms=1
+I/CountsProbe( 4443): t=213549 pid=4443 query=calls-unread count=1 ms=1
+I/CountsProbe( 4443): t=213554 pid=4443 query=sms-unread count=4 ms=4
+I/CountsProbe( 4443): t=213559 pid=4443 query=mms-unread count=0 ms=4
+I/CountsProbe( 4443): t=213559 pid=4443 observer=combined
+I/CountsProbe( 4443): t=213560 pid=4443 unlocked=true grants=[0, 0]
+I/CountsProbe( 4443): t=213562 pid=4443 query=calls-new count=5 ms=2
+I/CountsProbe( 4443): t=213564 pid=4443 query=calls-unacknowledged count=1 ms=1
+I/CountsProbe( 4443): t=213572 pid=4443 query=calls-unread count=1 ms=7
+I/CountsProbe( 4443): t=213575 pid=4443 query=sms-unread count=4 ms=2
+I/CountsProbe( 4443): t=213579 pid=4443 query=mms-unread count=0 ms=3
+I/CountsProbe( 4443): t=213579 pid=4443 observer=sms
+I/CountsProbe( 4443): t=213579 pid=4443 unlocked=true grants=[0, 0]
+I/CountsProbe( 4443): t=213581 pid=4443 query=calls-new count=5 ms=2
+I/CountsProbe( 4443): t=213596 pid=4443 query=calls-unacknowledged count=1 ms=14
+I/CountsProbe( 4443): t=213599 pid=4443 query=calls-unread count=1 ms=2
+I/CountsProbe( 4443): t=213603 pid=4443 query=sms-unread count=4 ms=4
+I/CountsProbe( 4443): t=213607 pid=4443 query=mms-unread count=0 ms=4
+I/CountsProbe( 4443): t=214456 pid=4443 command=query action=null
+I/CountsProbe( 4443): t=214456 pid=4443 unlocked=true grants=[0, 0]
+I/CountsProbe( 4443): t=214457 pid=4443 query=calls-new count=5 ms=1
+I/CountsProbe( 4443): t=214458 pid=4443 query=calls-unacknowledged count=1 ms=1
+I/CountsProbe( 4443): t=214458 pid=4443 query=calls-unread count=1 ms=0
+I/CountsProbe( 4443): t=214461 pid=4443 query=sms-unread count=4 ms=3
+I/CountsProbe( 4443): t=214464 pid=4443 query=mms-unread count=0 ms=2
