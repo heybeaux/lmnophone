@@ -100,7 +100,7 @@ After boot, the LMNOPhone home activity SHALL start lock task before it draws it
 
 **Lock task must actually be running.** After every unlocked policy pass whose writes read back, and whenever the home activity is created or resumed, LMNOPhone SHALL read the live lock-task state. Only `LOCK_TASK_MODE_LOCKED` counts as containment. `NONE`, `PINNED` and an unreadable state SHALL NOT be reported as contained or ready.
 - If the state is `NONE`, LMNOPhone SHALL bring the home activity to the front and start lock task, with the `KEYGUARD` check above, then read back `LOCKED`.
-- If the activity it displaced was the system Phone, in-call or emergency UI (the emergency UI subset), LMNOPhone SHALL bring that screen back inside lock task as soon as `LOCKED` reads back. Recovery SHALL NOT end a call. Locked-boot passes SHALL keep the keyguard and emergency access.
+- If the activity it displaced was a system Phone or emergency keypad screen that LMNOPhone itself opened, or the in-call UI, LMNOPhone SHALL bring that screen back inside lock task as soon as `LOCKED` reads back. A Phone or emergency keypad screen opened from outside LMNOPhone (another app, a notification or a shell) cannot be identified by a Device Owner. It is covered by the home activity, and Phone stays one tap away there. Recovery SHALL NOT end a call. Locked-boot passes SHALL keep the keyguard and emergency access.
 - If the state is `PINNED`, LMNOPhone SHALL report not ready and show "LMNOPhone needs attention". Emergency SHALL stay reachable.
 - This recovery covers the case where LMNOPhone's process died and another app reached the front before it restarted. Until recovery reads back `LOCKED`, that app can be used, and changes made in it stay. Test reports SHALL give the observed exposure times and SHALL NOT claim a fixed maximum.
 
@@ -128,7 +128,7 @@ From unlock until lock task starts, including during fallback containment, no un
 - **AND** the system Phone, in-call and emergency UI stay reachable
 
 #### Scenario: Recovery while the dialer is open
-- **WHEN** LMNOPhone's process dies while the system Phone or emergency keypad is opening, and recovery runs
+- **WHEN** LMNOPhone's process dies while a system Phone or emergency keypad screen that LMNOPhone opened is opening, and recovery runs
 - **THEN** lock task reads `LOCKED`, and the same calling screen is in front again, inside lock task
 
 #### Scenario: Immediate unlock after reboot
