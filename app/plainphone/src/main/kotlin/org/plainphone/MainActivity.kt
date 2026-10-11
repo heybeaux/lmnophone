@@ -86,6 +86,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private val runtime by lazy { PolicyRuntime.get(this) }
+    private val callingActions by lazy {
+        CallingScreenActions(runtime::opened, ::openPhone, ::openEmergency, { runtime.showInCallScreen() }) { action, uri ->
+            launch(Intent(action, uri?.let(Uri::parse)))
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val paper = PlainphoneColors.Paper.toArgb()
@@ -196,11 +201,7 @@ class MainActivity : ComponentActivity() {
     /** Brings back a displaced calling screen, now inside lock task. Never ends or touches a call. */
     private fun reopen(screen: CallingScreen) {
         Log.i(PolicyRuntime.TAG, "reopening $screen inside lock task at=${SystemClock.elapsedRealtime()}")
-        when (screen) {
-            CallingScreen.IN_CALL -> runtime.showInCallScreen()
-            CallingScreen.PHONE -> openPhone()
-            CallingScreen.EMERGENCY_KEYPAD -> openEmergency()
-        }
+        callingActions.reopen(screen)
     }
 
     private fun openPhone() {
@@ -216,16 +217,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun perform(effect: ShellEffect) {
-        if (effect == ShellEffect.OpenDialer) {
-            openPhone()
-            return
-        }
-        if (effect == ShellEffect.OpenEmergencyDialer) runtime.opened(CallingScreen.PHONE)
+        if (callingActions.perform(effect)) return
         val intent = when (effect) {
-            ShellEffect.OpenDialer -> CommunicationEntryIntents.phone()
+            ShellEffect.OpenDialer, ShellEffect.OpenEmergencyDialer -> null // Handled above.
             ShellEffect.OpenMessages ->
                 CommunicationEntryIntents.messages()
-            ShellEffect.OpenEmergencyDialer -> Intent(Intent.ACTION_DIAL, Uri.parse("tel:911"))
             is ShellEffect.OpenApp -> packageManager.getLaunchIntentForPackage(effect.id)
             ShellEffect.Finish -> null.also { finish() }
         } ?: return

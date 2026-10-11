@@ -31,7 +31,7 @@ enum class LockTaskState {
 }
 
 /** A system calling screen (the emergency UI subset) that recovery may displace and brings back. */
-enum class CallingScreen { IN_CALL, PHONE, EMERGENCY_KEYPAD }
+enum class CallingScreen { IN_CALL, PHONE, EMERGENCY_KEYPAD, EMERGENCY_911 }
 
 /**
  * Where [LockTaskRecovery] keeps the calling screen LMNOPhone opened, so it outlives the process that
