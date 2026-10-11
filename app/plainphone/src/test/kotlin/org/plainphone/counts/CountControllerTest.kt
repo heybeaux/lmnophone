@@ -53,6 +53,56 @@ class CountControllerTest {
         }
         fun notifyChange() = callbacks.last().invoke()
     }
+    @Test fun settingsSlowFirstReadShowsNoUnavailableLine() {
+        val f = Fixture(); f.c.setEnabled(true); f.c.setSettingsVisible(true)
+        for (kind in CountKind.entries) assertEquals(CountAvailability.UNKNOWN, f.c.availability(kind))
+        f.time.advance(2_999)
+        for (kind in CountKind.entries) assertFalse(f.c.availability(kind) == CountAvailability.UNAVAILABLE)
+        f.finish()
+        for (kind in CountKind.entries) assertEquals(CountAvailability.AVAILABLE, f.c.availability(kind))
+    }
+    @Test fun settingsFailedReadShowsOnlyFailedSourceLineUntilSuccessfulRetry() {
+        val f = Fixture(); f.c.setEnabled(true); f.c.setSettingsVisible(true); f.time.advance(0)
+        f.finish(null, 0)
+        assertEquals(CountAvailability.UNAVAILABLE, f.c.availability(CountKind.CALLS))
+        assertEquals(CountAvailability.AVAILABLE, f.c.availability(CountKind.MESSAGES))
+        f.c.setSettingsVisible(false); f.c.setSettingsVisible(true); f.time.advance(0)
+        assertEquals(CountAvailability.UNAVAILABLE, f.c.availability(CountKind.CALLS))
+        f.finish(0, 0)
+        assertEquals(CountAvailability.AVAILABLE, f.c.availability(CountKind.CALLS))
+    }
+    @Test fun settingsTimeoutShowsLineAndLateCompletionCannotClearIt() {
+        val f = Fixture(); f.c.setEnabled(true); f.c.setSettingsVisible(true); f.time.advance(0)
+        f.reads.first().done(0); f.time.advance(3_000)
+        assertEquals(CountAvailability.AVAILABLE, f.c.availability(CountKind.CALLS))
+        assertEquals(CountAvailability.UNAVAILABLE, f.c.availability(CountKind.MESSAGES))
+        f.reads.last().done(2)
+        assertEquals(CountAvailability.UNAVAILABLE, f.c.availability(CountKind.MESSAGES))
+    }
+    @Test fun settingsDisallowedGateShowsLineWithoutStartingRead() {
+        for (kind in CountKind.entries) {
+            val f = Fixture()
+            f.access[kind] = f.access.getValue(kind).copy(permissionGranted = false)
+            f.c.setEnabled(true); f.c.setSettingsVisible(true); f.time.advance(0)
+            assertEquals(CountAvailability.UNAVAILABLE, f.c.availability(kind))
+            assertFalse(f.reads.any { it.kind == kind })
+            f.access[kind] = f.access.getValue(kind).copy(permissionGranted = true)
+            f.c.externalChange(); f.time.advance(150)
+            assertEquals(CountAvailability.UNKNOWN, f.c.availability(kind))
+        }
+    }
+    @Test fun oneSecondHideIsNotAReadFailure() {
+        val f = Fixture(); f.start(); f.finish(); f.notifyChange(); f.time.advance(1_000)
+        assertEquals(CommunicationCounts(), f.c.counts)
+        for (kind in CountKind.entries) assertEquals(CountAvailability.AVAILABLE, f.c.availability(kind))
+        f.time.advance(3_150)
+        for (kind in CountKind.entries) assertEquals(CountAvailability.UNAVAILABLE, f.c.availability(kind))
+    }
+    @Test fun switchOffClearsAvailabilityAndStaleFailuresCannotRestoreIt() {
+        val f = Fixture(); f.start(); f.finish(null, null); f.c.setEnabled(false)
+        f.finish(null, null)
+        for (kind in CountKind.entries) assertEquals(CountAvailability.UNKNOWN, f.c.availability(kind))
+    }
     @Test fun registersBeforeReadAndStartsEveryVisibleIntervalEmpty() {
         val f = Fixture(); f.start()
         assertEquals(listOf("content://call_log/calls" to true, "content://mms-sms/" to true), f.observed)
