@@ -20,6 +20,10 @@ import org.plainphone.device.ReadbackPolicyApplier
 import org.plainphone.device.ResetProtectionEffects
 import org.plainphone.device.ResetProtectionPort
 import org.plainphone.device.ResetProtectionReading
+import org.plainphone.device.boot.BootReapply
+import org.plainphone.device.boot.RestrictionFilter
+import org.plainphone.device.storage.FileJournalStore
+import org.plainphone.policy.Restriction
 import org.plainphone.policy.CredentialState
 import org.plainphone.policy.ElevationRecord
 import org.plainphone.policy.FloorIdentity
@@ -105,6 +109,7 @@ class DeviceReconciliationTest {
         var revoked: () -> Boolean = { true },
         var owner: () -> Boolean = { true },
         fresh: Boolean = true,
+        filter: RestrictionFilter = RestrictionFilter.NONE,
     ) {
         val order = mutableListOf<String>()
         val effects = DeviceReconciliationEffects(
@@ -113,6 +118,7 @@ class DeviceReconciliationTest {
             applier = ReadbackPolicyApplier(dpm),
             reset = ResetProtectionEffects(reset),
             store = store,
+            filter = filter,
         )
         val reconciler = store.waitingReconciler({ input }, effects, PersonAuthorityConsumer { _, _, _ -> true })
         init { if (fresh) assertTrue(store.initialize(credentials(), WaitingState(storageGeneration = "live"), ElevationRecord())) }
@@ -707,5 +713,102 @@ class DeviceReconciliationTest {
         assertNull(rig.store.waitingStore.read())
         rig.reset.throwOn = null
         assertEquals(ReconcileOutcome.RECOVERED, pass.reconcileIfLost()?.outcome)
+    }
+
+    // PLA-350 R1: reconciliation applies, reads back and repairs through the build's restriction filter.
+    private fun reviewBoot(rig: Rig) = BootReapply(
+        FileJournalStore(tmp.newFolder(), null, "model", "build"),
+        rig.dpm, emptySet(),
+        { locked -> PolicyEngine.decide(input.copy(lockedBoot = locked, waitingOperation = rig.pass().waitingOperation())) },
+        RestrictionFilter.TEST_BUILD.forSdk(35),
+    )
+
+    /** The Verifier's probe; the only change is the Rig's filter, which PolicyRuntime now passes to both. */
+    @Test fun reviewLostRecordMustPreserveDebugRestrictionFilter() {
+        val rig = Rig(filter = RestrictionFilter.TEST_BUILD.forSdk(35))
+        rig.lose()
+        val boot = reviewBoot(rig)
+        assertTrue(boot.run(false).ready)
+        val withheld = RestrictionFilter.TEST_BUILD.withheld
+        assertTrue(rig.dpm.restrictionSet.intersect(withheld).isEmpty())
+        rig.revoked = { boot.sessions.onStart() }
+        assertEquals(ReconcileOutcome.RECOVERED, rig.pass().reconcileIfLost()?.outcome)
+        assertTrue("Reconciliation applied withheld restrictions: ${rig.dpm.restrictionSet.intersect(withheld)}",
+            rig.dpm.restrictionSet.intersect(withheld).isEmpty())
+    }
+
+    /** The effects themselves: the write leaves withheld keys out, and the readback does not expect them. */
+    @Test fun policyEffectsWriteAndReadBackThroughTheFilter() {
+        val filter = RestrictionFilter.TEST_BUILD.forSdk(33)
+        val rig = Rig(filter = filter)
+        val plan = PolicyEngine.decide(input)
+        assertTrue(Restriction.DISALLOW_CONFIG_DEFAULT_APPS in filter.withheld)
+        assertTrue(plan.restrictions.containsAll(filter.withheld))
+        assertTrue(rig.effects.applyPolicy(plan))
+        assertTrue("withheld: ${rig.dpm.restrictionSet.intersect(filter.withheld)}", rig.dpm.restrictionSet.intersect(filter.withheld).isEmpty())
+        assertEquals(plan.restrictions - filter.withheld, rig.dpm.restrictionSet)
+        assertTrue("readback of the filtered plan", rig.effects.readBackPolicy(plan))
+    }
+
+    /** A held reconciliation's floor repair also stays inside the filter. */
+    @Test fun aHeldReconciliationNeverAppliesWithheldRestrictions() {
+        val rig = Rig(filter = RestrictionFilter.TEST_BUILD.forSdk(35))
+        rig.lose()
+        rig.reset.throwOn = "set"
+        assertEquals(ReconcileFailure.RESET_APPLY, rig.pass().reconcileIfLost()?.failure)
+        assertTrue(rig.dpm.restrictionSet.intersect(RestrictionFilter.TEST_BUILD.withheld).isEmpty())
+    }
+
+    // PLA-350 R2: an initialized store that cannot be read carries attention on its own.
+    /** The Verifier's probe, asserting the separate attention signal: no reconciliation can start here. */
+    @Test fun reviewUnreadableInitializedAuthorityMustShowAttention() {
+        val rig = Rig()
+        File(rig.dir, "authority-a.rec").writeBytes(byteArrayOf(1))
+        File(rig.dir, "authority-b.rec").writeBytes(byteArrayOf(1))
+        val pass = rig.pass()
+        assertNull(pass.waitingOperation())
+        assertFalse(pass.turnOffCommitting())
+        assertNull(rig.store.credentials.read())
+        assertNull(rig.store.reconciliation.lostRecord())
+        assertNull("nothing to reconcile from", pass.reconcileIfLost())
+        assertTrue("Unreadable initialized authority produces no held/attention signal", pass.needsAttention())
+        assertTrue(rig.dpm.ops.isEmpty())
+    }
+
+    @Test fun aFreshOrReadablePhoneNeedsNoAttention() {
+        assertFalse(Rig(fresh = false).pass().needsAttention())
+        assertFalse(Rig().pass().needsAttention())
+    }
+
+    /** Copies gone, fences left: initialized, unreadable. */
+    @Test fun fencesWithoutCopiesNeedAttention() {
+        val rig = Rig()
+        assertTrue(File(rig.dir, "authority-a.rec").delete())
+        assertTrue(File(rig.dir, "authority-b.rec").delete())
+        assertTrue(rig.pass().needsAttention())
+    }
+
+    /** A loss needs attention until it is reconciled, and not after. */
+    @Test fun aLossNeedsAttentionUntilRecovered() {
+        val rig = Rig()
+        rig.lose()
+        val pass = rig.pass()
+        assertTrue(pass.needsAttention())
+        rig.reset.throwOn = "set"
+        assertEquals(ReconcileOutcome.NEEDS_ATTENTION, pass.reconcileIfLost()?.outcome)
+        assertTrue(pass.needsAttention())
+        rig.reset.throwOn = null
+        assertEquals(ReconcileOutcome.RECOVERED, pass.reconcileIfLost()?.outcome)
+        assertFalse(pass.needsAttention())
+    }
+
+    /** A lost waiting section whose recovery section is damaged too cannot start a reconciliation, but still needs attention. */
+    @Test fun aLossThatCannotStartReconciliationStillNeedsAttention() {
+        val rig = Rig()
+        rig.lose()
+        assertTrue(rig.store.replaceSectionForTest(Section.RECOVERY, byteArrayOf(9, 9)))
+        val pass = rig.pass()
+        assertNull(pass.reconcileIfLost())
+        assertTrue(pass.needsAttention())
     }
 }
