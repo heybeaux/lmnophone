@@ -1,0 +1,209 @@
+Activity Resolver Table:
+  Non-Data Actions:
+      android.intent.action.MAIN:
+        4cd03ec org.plainphone/.MainActivity filter 704c3b5
+          Action: "android.intent.action.MAIN"
+          Category: "android.intent.category.LAUNCHER"
+        4cd03ec org.plainphone/.MainActivity filter 3a6aa4a
+          Action: "android.intent.action.MAIN"
+          Category: "android.intent.category.HOME"
+          Category: "android.intent.category.DEFAULT"
+
+Receiver Resolver Table:
+  Non-Data Actions:
+      org.plainphone.test.RELAX:
+        5153dbb org.plainphone/.boot.TestHook filter c7c72d8
+          Action: "org.plainphone.test.RELAX"
+          Action: "org.plainphone.test.NOTIFY"
+          Action: "org.plainphone.test.DROP"
+      androidx.profileinstaller.action.SAVE_PROFILE:
+        50fa933 org.plainphone/androidx.profileinstaller.ProfileInstallReceiver filter 93f3cee
+          Action: "androidx.profileinstaller.action.SAVE_PROFILE"
+      org.plainphone.preview.SET_STARTER:
+        2cffa97 org.plainphone/.preview.SetupCommandReceiver filter 8b1e484
+          Action: "org.plainphone.preview.SET_STARTER"
+          Action: "org.plainphone.preview.APPLY"
+      android.intent.action.LOCKED_BOOT_COMPLETED:
+        70ae631 org.plainphone/.boot.BootReceiver filter cad2116
+          Action: "android.intent.action.LOCKED_BOOT_COMPLETED"
+          Action: "android.intent.action.BOOT_COMPLETED"
+          Action: "android.intent.action.MY_PACKAGE_REPLACED"
+      android.app.action.DEVICE_ADMIN_ENABLED:
+        976b46d org.plainphone/.PlainphoneAdminReceiver filter bd238a2
+          Action: "android.app.action.DEVICE_ADMIN_ENABLED"
+      androidx.profileinstaller.action.INSTALL_PROFILE:
+        50fa933 org.plainphone/androidx.profileinstaller.ProfileInstallReceiver filter daac4f0
+          Action: "androidx.profileinstaller.action.INSTALL_PROFILE"
+      androidx.profileinstaller.action.SKIP_FILE:
+        50fa933 org.plainphone/androidx.profileinstaller.ProfileInstallReceiver filter b572a69
+          Action: "androidx.profileinstaller.action.SKIP_FILE"
+      org.plainphone.test.NOTIFY:
+        5153dbb org.plainphone/.boot.TestHook filter c7c72d8
+          Action: "org.plainphone.test.RELAX"
+          Action: "org.plainphone.test.NOTIFY"
+          Action: "org.plainphone.test.DROP"
+      androidx.profileinstaller.action.BENCHMARK_OPERATION:
+        50fa933 org.plainphone/androidx.profileinstaller.ProfileInstallReceiver filter 291a58f
+          Action: "androidx.profileinstaller.action.BENCHMARK_OPERATION"
+      android.intent.action.BOOT_COMPLETED:
+        70ae631 org.plainphone/.boot.BootReceiver filter cad2116
+          Action: "android.intent.action.LOCKED_BOOT_COMPLETED"
+          Action: "android.intent.action.BOOT_COMPLETED"
+          Action: "android.intent.action.MY_PACKAGE_REPLACED"
+      org.plainphone.preview.APPLY:
+        2cffa97 org.plainphone/.preview.SetupCommandReceiver filter 8b1e484
+          Action: "org.plainphone.preview.SET_STARTER"
+          Action: "org.plainphone.preview.APPLY"
+      android.intent.action.MY_PACKAGE_REPLACED:
+        70ae631 org.plainphone/.boot.BootReceiver filter cad2116
+          Action: "android.intent.action.LOCKED_BOOT_COMPLETED"
+          Action: "android.intent.action.BOOT_COMPLETED"
+          Action: "android.intent.action.MY_PACKAGE_REPLACED"
+      org.plainphone.test.DROP:
+        5153dbb org.plainphone/.boot.TestHook filter c7c72d8
+          Action: "org.plainphone.test.RELAX"
+          Action: "org.plainphone.test.NOTIFY"
+          Action: "org.plainphone.test.DROP"
+
+Preferred Activities User 0:
+  Non-Data Actions:
+      android.intent.action.MAIN:
+        bd16c4e org.plainphone/.MainActivity
+         mMatch=0x100000 mAlways=true
+          Selected from:
+            com.google.android.apps.nexuslauncher/.NexusLauncherActivity
+            org.plainphone/.MainActivity
+            com.android.settings/.FallbackHome
+          Action: "android.intent.action.MAIN"
+          Category: "android.intent.category.HOME"
+          Category: "android.intent.category.DEFAULT"
+
+Domain verification status:
+
+Permissions:
+  Permission [org.plainphone.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION] (f00182):
+    sourcePackage=org.plainphone
+    uid=10207 gids=[] type=0 prot=signature
+    perm=PermissionInfo{fd76957 org.plainphone.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION}
+    flags=0x0
+
+Registered ContentProviders:
+  org.plainphone/androidx.startup.InitializationProvider:
+    Provider{11a8c44 org.plainphone/androidx.startup.InitializationProvider}
+
+ContentProvider Authorities:
+  [org.plainphone.androidx-startup]:
+    Provider{11a8c44 org.plainphone/androidx.startup.InitializationProvider}
+      applicationInfo=ApplicationInfo{3327093 org.plainphone}
+
+Key Set Manager:
+  [org.plainphone]
+      Signing KeySets: 59
+
+Packages:
+  Package [org.plainphone] (b288662):
+    appId=10207
+    pkg=Package{aff43f3 org.plainphone}
+    codePath=/data/app/~~ZCkvYhtZGeVCdHR0gySAfA==/org.plainphone-6BpTWEd-cg0B-ozM6GvEcA==
+    resourcePath=/data/app/~~ZCkvYhtZGeVCdHR0gySAfA==/org.plainphone-6BpTWEd-cg0B-ozM6GvEcA==
+    legacyNativeLibraryDir=/data/app/~~ZCkvYhtZGeVCdHR0gySAfA==/org.plainphone-6BpTWEd-cg0B-ozM6GvEcA==/lib
+    extractNativeLibs=false
+    primaryCpuAbi=arm64-v8a
+    secondaryCpuAbi=null
+    cpuAbiOverride=null
+    versionCode=5 minSdk=30 targetSdk=36
+    minExtensionVersions=[]
+    versionName=0.1.0-preview-5
+    hiddenApiEnforcementPolicy=2
+    usesNonSdkApi=false
+    splits=[base]
+    apkSigningVersion=2
+    flags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ]
+    privateFlags=[ PRIVATE_FLAG_ACTIVITIES_RESIZE_MODE_RESIZEABLE_VIA_SDK_VERSION ALLOW_AUDIO_PLAYBACK_CAPTURE PARTIALLY_DIRECT_BOOT_AWARE PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING ]
+    forceQueryable=false
+    queriesPackages=[com.google.android.dialer, com.google.android.apps.messaging]
+    queriesIntents=[Intent { act=android.intent.action.DIAL }, Intent { act=android.intent.action.MAIN cat=[android.intent.category.APP_MESSAGING] }, Intent { act=android.provider.Telephony.SMS_DELIVER }, Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] }]
+    scannedAsStoppedSystemApp=false
+    supportsScreens=[small, medium, large, xlarge, resizeable, anyDensity]
+    timeStamp=2026-10-11 09:20:57
+    lastUpdateTime=2026-10-11 09:20:57
+    installerPackageName=null
+    installerPackageUid=-1
+    initiatingPackageName=com.android.shell
+    originatingPackageName=null
+    packageSource=1
+    appMetadataFilePath=null
+    appMetadataSource=0
+    signatures=PackageSignatures{65628b0 version:2, signatures:[d8996629], past signatures:[]}
+    installPermissionsFixed=false
+    pkgFlags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ]
+    privatePkgFlags=[ PRIVATE_FLAG_ACTIVITIES_RESIZE_MODE_RESIZEABLE_VIA_SDK_VERSION ALLOW_AUDIO_PLAYBACK_CAPTURE PARTIALLY_DIRECT_BOOT_AWARE PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING ]
+    apexModuleName=null
+    declared permissions:
+      org.plainphone.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION: prot=signature
+    requested permissions:
+      android.permission.READ_SMS
+      android.permission.POST_NOTIFICATIONS
+      android.permission.READ_CALL_LOG
+      android.permission.RECEIVE_BOOT_COMPLETED
+      android.permission.USE_EXACT_ALARM
+      org.plainphone.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+      android.permission.QUERY_ALL_PACKAGES
+    install permissions:
+      android.permission.RECEIVE_BOOT_COMPLETED: granted=true
+      android.permission.USE_EXACT_ALARM: granted=true
+      org.plainphone.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION: granted=true
+      android.permission.QUERY_ALL_PACKAGES: granted=true
+    User 0: ceDataInode=352870 deDataInode=57945 installed=true hidden=false suspended=false distractionFlags=0 stopped=false notLaunched=false enabled=0 instant=false virtual=false quarantined=false
+      installReason=0
+      dataDir=/data/user/0/org.plainphone
+      firstInstallTime=2026-10-10 22:29:07
+      uninstallReason=0
+      overlay paths:
+        /product/overlay/EmulationPixel6/EmulationPixel6Overlay.apk
+        /product/overlay/NavigationBarModeGestural/NavigationBarModeGesturalOverlay.apk
+      legacy overlay paths:
+        /product/overlay/EmulationPixel6/EmulationPixel6Overlay.apk
+        /product/overlay/NavigationBarModeGestural/NavigationBarModeGesturalOverlay.apk
+      runtime permissions:
+        android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+        android.permission.POST_NOTIFICATIONS: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+        android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]
+
+Queries:
+  system apps queryable: false
+  queries via forceQueryable:
+  queries via package name:
+    org.plainphone:
+      com.google.android.dialer
+      com.google.android.apps.messaging
+  queries via component:
+    com.google.android.settings.intelligence:
+      org.plainphone
+    com.android.wallpaper:
+      org.plainphone
+    com.google.android.apps.wallpaper:
+      org.plainphone
+  queryable via interaction:
+    User 0:
+      [com.android.dynsystem,com.android.DeviceAsWebcam,android,com.android.keychain,com.android.location.fused,com.android.inputdevices,com.android.emulator.multidisplay,com.android.server.telecom,com.android.localtransport,com.android.settings,com.android.providers.settings]:
+        org.plainphone
+      [com.android.mms.service,com.android.phone,com.android.ons,com.android.providers.telephony,com.android.stk]:
+        org.plainphone
+      [com.android.providers.blockednumber,com.android.providers.contactkeys,com.android.providers.userdictionary,com.android.calllogbackup,com.android.providers.contacts]:
+        org.plainphone
+      com.google.android.inputmethod.latin:
+        org.plainphone
+      org.plainphone:
+        com.google.android.webview
+  queryable via uses-library:
+
+Dexopt state:
+  [org.plainphone]
+    path: /data/app/~~ZCkvYhtZGeVCdHR0gySAfA==/org.plainphone-6BpTWEd-cg0B-ozM6GvEcA==/base.apk
+      arm64: [status=verify] [reason=install] [primary-abi]
+        [location is /data/app/~~ZCkvYhtZGeVCdHR0gySAfA==/org.plainphone-6BpTWEd-cg0B-ozM6GvEcA==/oat/arm64/base.odex]
+
+Compiler stats:
+  [org.plainphone]
+    (No recorded stats)

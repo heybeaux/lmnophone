@@ -1,0 +1,14 @@
+home-phone-open-kill before: lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t8 lockTasks=[]
++0.04s lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t8 lockTasks=[]
++0.31s lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t8 lockTasks=[]
++0.60s lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t8 lockTasks=[]
+...
+--- logcat (PlainphoneBoot, ActivityTaskManager START)
++10.92s lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t8 lockTasks=[]
+Traceback (most recent call last):
+  File "<workspace>/docs/releases/preview-6/evidence/recovery_probe.py", line 37, in <module>
+    assert kill_result['new_pid'] and kill_result['new_pid'] != kill_result['old_pid']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+The extra wrapper requirement that the app must restart within 10 seconds was stricter than the assigned scenario. Phone remained top and LOCKED throughout. The corrected wrapper requires actual process death and the requested retained/restored top screen and LOCKED result; it records restart separately.

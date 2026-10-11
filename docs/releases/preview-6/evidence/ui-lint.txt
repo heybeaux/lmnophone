@@ -1,0 +1,104 @@
+<workspace>/app/ui/src/main/kotlin/org/plainphone/ui/components/TaskScroll.kt:28: Warning: Avoid passing null as the view root (needed to resolve layout parameters on the inflated layout's root element) [InflateParams]
+        AndroidView(factory = { LayoutInflater.from(it).inflate(R.layout.task_scroll_indicator, null, false) as NativeScrollIndicator },
+                                                                                                ~~~~
+
+   Explanation for issues of type "InflateParams":
+   When inflating a layout, avoid passing in null as the parent view, since
+   otherwise any layout parameters on the root of the inflated layout will be
+   ignored.
+
+   https://www.bignerdranch.com/blog/understanding-androids-layoutinflater-inflate/
+
+<workspace>/app/ui/src/main/res/values/trusted_extra_strings.xml:46: Warning: Formatting %d followed by words ("minutes"): This should probably be a plural rather than a string [PluralsCandidate]
+    <string name="opening_before_body">First there\'s a %1$d-minute wait. Then you tap Start, and %2$s is open for %3$d minutes. This uses 1 of your %4$d openings left today. Restarting the phone stops the wait, and nothing is used up.</string>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/src/main/res/values/trusted_extra_strings.xml:48: Warning: Formatting %d followed by words ("minutes"): This should probably be a plural rather than a string [PluralsCandidate]
+    <string name="opening_countdown">Opening up in %1$d minutes</string>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/src/main/res/values/trusted_extra_strings.xml:50: Warning: Formatting %d followed by words ("minutes"): This should probably be a plural rather than a string [PluralsCandidate]
+    <string name="opening_countdown_app">Adding %1$s in %2$d minutes</string>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/src/main/res/values/trusted_extra_strings.xml:52: Warning: Formatting %d followed by words ("minutes"): This should probably be a plural rather than a string [PluralsCandidate]
+    <string name="opening_countdown_update">Update in %1$d minutes</string>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/src/main/res/values/trusted_extra_strings.xml:62: Warning: Formatting %d followed by words ("minutes"): This should probably be a plural rather than a string [PluralsCandidate]
+    <string name="opening_ready_body">Tap Start within %1$d minutes. This uses 1 of your %2$d openings left today.</string>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/src/main/res/values/trusted_extra_strings.xml:63: Warning: Formatting %d followed by words ("openings"): This should probably be a plural rather than a string [PluralsCandidate]
+    <string name="opening_ready_body_one">Tap Start within 1 minute. This uses 1 of your %1$d openings left today.</string>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/src/main/res/values/trusted_extra_strings.xml:66: Warning: Formatting %d followed by words ("openings"): This should probably be a plural rather than a string [PluralsCandidate]
+    <string name="opening_none_body">You\'ve used your %1$d openings. The next one is available after about %2$s, if the phone stays on. Restarting the phone doesn\'t change this.</string>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "PluralsCandidate":
+   This lint check looks for potential errors in internationalization where
+   you have translated a message which involves a quantity and it looks like
+   other parts of the string may need grammatical changes.
+
+   For example, rather than something like this:
+     <string name="try_again">Try again in %d seconds.</string>
+   you should be using a plural:
+      <plurals name="try_again">
+           <item quantity="one">Try again in %d second</item>
+           <item quantity="other">Try again in %d seconds</item>
+       </plurals>
+   This will ensure that in other languages the right set of translations are
+   provided for the different quantity classes.
+
+   (This check depends on some heuristics, so it may not accurately determine
+   whether a string really should be a quantity. You can use tools:ignore to
+   filter out false positives.
+
+   https://developer.android.com/guide/topics/resources/string-resource.html#Plurals
+
+<workspace>/app/ui/src/main/res/values/user_strings.xml:11: Warning: Replace "-" with an "en dash" character (–, &#8211;) ? [TypographyDashes]
+    <string name="more_emergency_spoken">Emergency 9-1-1. Opens the dialer with 9-1-1 typed in.</string>
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "TypographyDashes":
+   The "n dash" (u2013, &#8211;) and the "m dash" (u2014, &#8212;) characters
+   are used for ranges (n dash) and breaks (m dash). Using these instead of
+   plain hyphens can make text easier to read and your application will look
+   more polished.
+
+   https://en.wikipedia.org/wiki/Dash
+
+<workspace>/app/ui/build.gradle.kts:28: Warning: Use the existing version catalog reference (libs.compose.bom) instead [UseTomlInstead]
+    implementation(platform("androidx.compose:compose-bom:2025.06.01"))
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/build.gradle.kts:29: Warning: Use version catalog instead [UseTomlInstead]
+    implementation("androidx.compose.foundation:foundation")
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/build.gradle.kts:30: Warning: Use version catalog instead [UseTomlInstead]
+    implementation("androidx.compose.material3:material3")
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/build.gradle.kts:31: Warning: Use version catalog instead [UseTomlInstead]
+    implementation("androidx.compose.ui:ui-tooling-preview")
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/build.gradle.kts:32: Warning: Use version catalog instead [UseTomlInstead]
+    debugImplementation("androidx.compose.ui:ui-tooling")
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/build.gradle.kts:33: Warning: Use the existing version catalog reference (libs.junit4) instead [UseTomlInstead]
+    testImplementation("junit:junit:4.13.2")
+                       ~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/build.gradle.kts:34: Warning: Use the existing version catalog reference (libs.compose.bom) instead [UseTomlInstead]
+    androidTestImplementation(platform("androidx.compose:compose-bom:2025.06.01"))
+                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/build.gradle.kts:35: Warning: Use version catalog instead [UseTomlInstead]
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/build.gradle.kts:36: Warning: Use version catalog instead [UseTomlInstead]
+    androidTestImplementation("androidx.test:runner:1.6.2")
+                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<workspace>/app/ui/build.gradle.kts:37: Warning: Use version catalog instead [UseTomlInstead]
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "UseTomlInstead":
+   If your project is using a libs.versions.toml file, you should place all
+   Gradle dependencies in the TOML file. This lint check looks for version
+   declarations outside of the TOML file and suggests moving them (and in the
+   IDE, provides a quickfix to performing the operation automatically).
+
+0 errors, 19 warnings

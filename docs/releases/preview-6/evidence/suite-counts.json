@@ -1,0 +1,52 @@
+{
+  "plainphone": {
+    "tests": 115,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_names": []
+  },
+  "ui": {
+    "tests": 191,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_names": []
+  },
+  "device": {
+    "tests": 606,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_names": []
+  },
+  "policy": {
+    "tests": 636,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failed_names": []
+  },
+  "upgrade_tool": {
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": {
+    "plainphone": {
+      "Error": 0,
+      "Warning": 8
+    },
+    "ui": {
+      "Error": 0,
+      "Warning": 19
+    },
+    "device": {
+      "Error": 0,
+      "Warning": 3
+    }
+  },
+  "paparazzi": "verifyPaparazziDebug PASS",
+  "tracked_golden_files": 2111
+}

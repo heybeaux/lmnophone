@@ -1,0 +1,50 @@
+checking-emergency-kill before: lockTask=LOCKED top=org.plainphone/.MainActivity t2 lockTasks=[]
++0.14s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t9 lockTasks=[]
++0.46s lockTask=NONE top=? lockTasks=[]
++0.78s lockTask=NONE top=? lockTasks=[]
++1.09s lockTask=NONE top=? lockTasks=[]
++1.37s lockTask=NONE top=? lockTasks=[]
++1.65s lockTask=LOCKED top=? lockTasks=[]
++1.95s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++2.32s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++2.64s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++2.99s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++3.28s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++3.56s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++3.91s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++4.20s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++4.49s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++4.78s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++5.08s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++5.37s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++5.66s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++5.94s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++6.21s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++6.50s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++6.79s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++7.07s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++7.35s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++7.63s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++7.91s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++8.19s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++8.46s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++8.75s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++9.02s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++9.30s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++9.59s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++9.87s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++10.15s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++10.44s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++10.72s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++10.99s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++11.27s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
++11.55s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
+screen text after: Owner | Emergency information | 1 | 2 | ABC | 3 | DEF | 4 | GHI | 5 | JKL | 6
+--- logcat (PlainphoneBoot, ActivityTaskManager START)
+10-11 10:22:52.631   569  2131 I ActivityTaskManager: START u0 {act=com.android.phone.EmergencyDialer.DIAL flg=0x10000000 cmp=com.android.phone/.EmergencyDialer} with LAUNCH_MULTIPLE from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+10-11 10:22:54.011  3847  3861 I PlainphoneBoot: reapply reason=start control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=NONE withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=677
+10-11 10:22:54.078   569  1075 I ActivityTaskManager: START u0 {flg=0x10020000 cmp=org.plainphone/.MainActivity} with LAUNCH_SINGLE_TASK from uid 10207 (BAL_ALLOW_ALLOWLISTED_COMPONENT) result code=0
+10-11 10:22:54.078  3847  3861 I PlainphoneBoot: lock task not running after start: Home brought forward at=124650
+10-11 10:22:54.240  3847  3847 I PlainphoneBoot: reopening EMERGENCY_KEYPAD inside lock task at=124811
+10-11 10:22:54.243   569  1075 I ActivityTaskManager: START u0 {act=com.android.phone.EmergencyDialer.DIAL flg=0x10000000 cmp=com.android.phone/.EmergencyDialer} with LAUNCH_MULTIPLE from uid 10207 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+10-11 10:22:55.309  3847  3847 I PlainphoneBoot: home shown lockTask=LOCKED at=125881

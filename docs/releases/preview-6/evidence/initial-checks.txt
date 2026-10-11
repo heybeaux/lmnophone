@@ -1,0 +1,496 @@
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:processResources NO-SOURCE
+> Task :policy:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :policy:processResources NO-SOURCE
+> Task :links:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :links:processResources
+> Task :device:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:preBuild UP-TO-DATE
+> Task :device:preDebugBuild UP-TO-DATE
+> Task :device:generateDebugResValues
+> Task :device:generateDebugResources
+> Task :device:packageDebugResources
+> Task :plainphone:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:javaPreCompileDebug
+> Task :device:parseDebugLocalResources
+> Task :device:compileDebugLibraryResources
+> Task :plainphone:preBuild UP-TO-DATE
+> Task :plainphone:preDebugBuild UP-TO-DATE
+> Task :ui:preBuild UP-TO-DATE
+> Task :ui:preDebugBuild UP-TO-DATE
+> Task :device:writeDebugAarMetadata
+> Task :ui:writeDebugAarMetadata
+> Task :device:generateDebugRFile
+> Task :plainphone:generateDebugResValues
+> Task :ui:generateDebugResValues
+> Task :ui:generateDebugResources
+> Task :plainphone:checkDebugAarMetadata
+> Task :ui:packageDebugResources
+> Task :plainphone:mapDebugSourceSetPaths
+> Task :plainphone:generateDebugResources
+> Task :core:compileKotlin
+> Task :core:compileJava NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar
+> Task :plainphone:mergeDebugResources
+> Task :plainphone:packageDebugResources
+> Task :plainphone:parseDebugLocalResources
+> Task :plainphone:createDebugCompatibleScreenManifests
+> Task :device:extractDeepLinksDebug
+> Task :plainphone:extractDeepLinksDebug
+> Task :device:processDebugManifest
+> Task :ui:extractDeepLinksDebug
+> Task :ui:processDebugManifest
+> Task :ui:compileDebugLibraryResources
+> Task :ui:parseDebugLocalResources
+> Task :plainphone:processDebugMainManifest
+> Task :plainphone:processDebugManifest
+> Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ui:javaPreCompileDebug
+> Task :plainphone:preDebugUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileDebug
+> Task :ui:generateDebugUnitTestAssets UP-TO-DATE
+> Task :plainphone:javaPreCompileDebugUnitTest
+> Task :ui:generateDebugRFile
+> Task :ui:mergeDebugShaders
+> Task :ui:compileDebugShaders NO-SOURCE
+> Task :ui:generateDebugAssets UP-TO-DATE
+> Task :ui:mergeDebugAssets
+> Task :ui:preDebugUnitTestBuild UP-TO-DATE
+> Task :ui:mergeDebugUnitTestAssets
+> Task :ui:generateDebugUnitTestResValues
+> Task :ui:checkDebugUnitTestAarMetadata
+> Task :ui:mapDebugUnitTestSourceSetPaths
+> Task :ui:generateDebugUnitTestResources
+> Task :ui:processDebugUnitTestManifest
+> Task :links:compileKotlin
+> Task :ui:preparePaparazziDebugResources
+> Task :links:compileJava NO-SOURCE
+> Task :links:classes
+> Task :links:jar
+> Task :plainphone:processDebugManifestForPackage
+> Task :device:preDebugUnitTestBuild UP-TO-DATE
+> Task :ui:javaPreCompileDebugUnitTest
+> Task :policy:processTestResources NO-SOURCE
+> Task :device:javaPreCompileDebugUnitTest
+> Task :device:generateDebugUnitTestStubRFile
+> Task :ui:mergeDebugJniLibFolders
+> Task :ui:mergeDebugNativeLibs NO-SOURCE
+> Task :ui:stripDebugDebugSymbols NO-SOURCE
+> Task :ui:copyDebugJniLibsProjectAndLocalJars
+> Task :ui:extractDeepLinksForAarDebug
+> Task :ui:prepareDebugArtProfile
+> Task :ui:preDebugAndroidTestBuild UP-TO-DATE
+> Task :ui:prepareLintJarForPublish
+> Task :ui:generateDebugAndroidTestResValues
+> Task :ui:mergeDebugUnitTestResources
+> Task :ui:writeDebugLintModelMetadata
+> Task :ui:extractProguardFiles
+> Task :device:mergeDebugJniLibFolders
+> Task :device:mergeDebugNativeLibs NO-SOURCE
+> Task :device:stripDebugDebugSymbols NO-SOURCE
+> Task :device:copyDebugJniLibsProjectAndLocalJars
+> Task :device:extractDeepLinksForAarDebug
+> Task :device:mergeDebugShaders
+> Task :device:compileDebugShaders NO-SOURCE
+> Task :device:generateDebugAssets UP-TO-DATE
+> Task :device:mergeDebugAssets
+> Task :device:prepareDebugArtProfile
+> Task :device:preDebugAndroidTestBuild UP-TO-DATE
+> Task :device:prepareLintJarForPublish
+> Task :device:generateDebugAndroidTestResValues
+> Task :device:writeDebugLintModelMetadata
+> Task :device:extractProguardFiles
+> Task :plainphone:preDebugAndroidTestBuild SKIPPED
+> Task :plainphone:generateDebugAndroidTestResValues
+> Task :plainphone:extractProguardFiles
+> Task :plainphone:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :plainphone:mergeDebugShaders
+> Task :plainphone:compileDebugShaders NO-SOURCE
+> Task :plainphone:generateDebugAssets UP-TO-DATE
+> Task :plainphone:mergeDebugAssets
+> Task :plainphone:compressDebugAssets
+> Task :plainphone:desugarDebugFileDependencies
+> Task :device:copyDebugJniLibsProjectOnly
+> Task :plainphone:mergeDebugJniLibFolders
+> Task :ui:copyDebugJniLibsProjectOnly
+> Task :plainphone:validateSigningDebug
+> Task :plainphone:writeDebugAppMetadata
+> Task :plainphone:writeDebugSigningConfigVersions
+> Task :plainphone:checkDebugDuplicateClasses
+> Task :ui:processDebugUnitTestResources
+> Task :plainphone:processDebugResources
+> Task :ui:packageDebugUnitTestForUnitTest
+> Task :ui:generateDebugUnitTestConfig
+> Task :policy:compileKotlin
+> Task :policy:compileJava NO-SOURCE
+> Task :policy:classes UP-TO-DATE
+> Task :policy:jar
+> Task :plainphone:mergeDebugNativeLibs
+
+> Task :plainphone:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so. Run with --info option to learn more.
+
+> Task :ui:compileDebugKotlin
+> Task :ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :ui:processDebugJavaRes
+> Task :ui:bundleLibRuntimeToJarDebug
+> Task :ui:bundleLibCompileToJarDebug
+> Task :ui:extractDebugAnnotations
+> Task :ui:mergeDebugGeneratedProguardFiles
+> Task :ui:mergeDebugConsumerProguardFiles
+> Task :ui:mergeDebugJavaResource
+> Task :ui:createFullJarDebug
+> Task :ui:syncDebugLibJars
+> Task :ui:bundleDebugLocalLintAar
+> Task :ui:generateDebugLintReportModel
+> Task :plainphone:mergeExtDexDebug
+> Task :ui:generateDebugAndroidTestLintModel
+> Task :ui:generateDebugUnitTestLintModel
+> Task :ui:generateDebugLintModel
+> Task :ui:bundleLibRuntimeToDirDebug
+> Task :ui:compileDebugUnitTestKotlin
+> Task :ui:processDebugUnitTestJavaRes
+> Task :ui:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :ui:transformDebugUnitTestClassesWithAsm
+
+> Task :device:compileDebugKotlin
+w: file://<workspace>/app/device/src/main/kotlin/org/plainphone/device/DpmPort.kt:148:69 'static field DISALLOW_ADD_MANAGED_PROFILE: String' is deprecated. Deprecated in Java.
+w: file://<workspace>/app/device/src/main/kotlin/org/plainphone/device/storage/RecordFile.kt:75:108 Java type mismatch: inferred type is 'File?', but 'File' was expected.
+
+> Task :ui:lintAnalyzeDebugUnitTest
+> Task :policy:compileTestKotlin
+> Task :ui:lintAnalyzeDebugAndroidTest
+> Task :ui:lintAnalyzeDebug
+
+> Task :ui:testDebugUnitTest
+
+HomeScreenshotTest > fourAppsWithMonthlyNotice[fontScale=1] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > longestWaitingNotice[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > laterDate[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > oneApp[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > overdueMonthlyCheck[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > attention[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > firstLook[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > eightApps[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > zeroApps[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > duplicateIds[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > pendingTurnOff[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > weekday[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > twoMinutes[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > fourAppsWithMonthlyNotice[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > selfManagedReady[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > oneMinute[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > oneTrustedPerson[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > noTrustedPeople[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > sameDay[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > cancelling[fontScale=1.3] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > longestWaitingNotice[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > laterDate[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > oneApp[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > overdueMonthlyCheck[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > attention[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > firstLook[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > eightApps[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > zeroApps[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > duplicateIds[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > pendingTurnOff[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > weekday[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > twoMinutes[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > fourAppsWithMonthlyNotice[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > selfManagedReady[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > oneMinute[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > oneTrustedPerson[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > noTrustedPeople[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > sameDay[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > cancelling[fontScale=1.5] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > longestWaitingNotice[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > laterDate[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > oneApp[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > overdueMonthlyCheck[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > attention[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > firstLook[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > eightApps[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > zeroApps[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > duplicateIds[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > pendingTurnOff[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > weekday[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > twoMinutes[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > fourAppsWithMonthlyNotice[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > selfManagedReady[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > oneMinute[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > oneTrustedPerson[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > noTrustedPeople[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > sameDay[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > cancelling[fontScale=1.8] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+HomeScreenshotTest > fourAppsWithMonthlyNotice[fontScale=2] FAILED
+    java.lang.AssertionError at HomeScreenshotTest.kt:65
+
+UserScreensScreenshotTest > confirmSending[fontScale=1] FAILED
+    java.lang.AssertionError at UserScreensScreenshotTest.kt:61
+
+UserScreensScreenshotTest > confirmSending[fontScale=2] FAILED
+    java.lang.AssertionError at UserScreensScreenshotTest.kt:61
+
+191 tests completed, 61 failed
+
+> Task :ui:testDebugUnitTest FAILED
+> Task :device:compileDebugJavaWithJavac NO-SOURCE
+> Task :device:processDebugJavaRes
+> Task :policy:compileTestJava NO-SOURCE
+> Task :policy:testClasses UP-TO-DATE
+> Task :device:bundleLibRuntimeToJarDebug
+> Task :device:bundleLibCompileToJarDebug
+> Task :policy:test
+
+> Task :ui:lintReportDebug
+Wrote HTML report to file://<workspace>/app/ui/build/reports/lint-results-debug.html
+
+> Task :device:extractDebugAnnotations
+> Task :ui:lintDebug
+> Task :ui:lint
+> Task :device:mergeDebugGeneratedProguardFiles
+> Task :device:mergeDebugConsumerProguardFiles
+> Task :device:mergeDebugJavaResource
+> Task :device:createFullJarDebug
+> Task :device:syncDebugLibJars
+> Task :device:bundleDebugLocalLintAar
+> Task :device:generateDebugLintReportModel
+> Task :device:generateDebugLintModel
+> Task :device:generateDebugAndroidTestLintModel
+> Task :device:generateDebugUnitTestLintModel
+> Task :device:bundleLibRuntimeToDirDebug
+> Task :plainphone:mergeLibDexDebug
+> Task :plainphone:compileDebugKotlin
+> Task :plainphone:compileDebugJavaWithJavac NO-SOURCE
+> Task :plainphone:processDebugJavaRes
+> Task :plainphone:bundleDebugClassesToCompileJar
+> Task :plainphone:bundleDebugClassesToRuntimeJar
+> Task :plainphone:generateDebugLintReportModel
+> Task :plainphone:generateDebugAndroidTestLintModel
+> Task :plainphone:generateDebugUnitTestLintModel
+> Task :plainphone:dexBuilderDebug
+> Task :plainphone:mergeDebugGlobalSynthetics
+> Task :plainphone:mergeProjectDexDebug
+> Task :device:lintAnalyzeDebugAndroidTest
+> Task :plainphone:mergeDebugJavaResource
+> Task :plainphone:packageDebug
+> Task :plainphone:createDebugApkListingFileRedirect
+> Task :plainphone:assembleDebug
+> Task :plainphone:compileDebugUnitTestKotlin
+> Task :plainphone:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:processDebugUnitTestJavaRes
+> Task :plainphone:lintAnalyzeDebugAndroidTest
+> Task :plainphone:testDebugUnitTest
+
+> Task :device:compileDebugUnitTestKotlin
+w: file://<workspace>/app/device/src/test/kotlin/org/plainphone/device/authority/LegacyMigrationTest.kt:37:9 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<workspace>/app/device/src/test/kotlin/org/plainphone/device/authority/MigrationJournalTest.kt:39:9 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<workspace>/app/device/src/test/kotlin/org/plainphone/device/authority/PeopleTransactionsTest.kt:601:100 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<workspace>/app/device/src/test/kotlin/org/plainphone/device/authority/PeopleTransactionsTest.kt:624:135 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<workspace>/app/device/src/test/kotlin/org/plainphone/device/update/UpdateDownloadTest.kt:67:41 Java type mismatch: inferred type is 'File?', but 'File' was expected.
+w: file://<workspace>/app/device/src/test/kotlin/org/plainphone/device/update/UpdateStagingTest.kt:30:41 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+
+> Task :device:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :device:processDebugUnitTestJavaRes
+> Task :device:lintAnalyzeDebug
+> Task :plainphone:lintAnalyzeDebugUnitTest
+> Task :device:lintAnalyzeDebugUnitTest
+> Task :device:testDebugUnitTest
+
+> Task :device:lintReportDebug
+Wrote HTML report to file://<workspace>/app/device/build/reports/lint-results-debug.html
+
+> Task :device:lintDebug
+> Task :device:lint
+> Task :plainphone:lintAnalyzeDebug
+
+> Task :plainphone:lintReportDebug
+Wrote HTML report to file://<workspace>/app/plainphone/build/reports/lint-results-debug.html
+Lint found 2 errors and 8 warnings. First failure:
+<workspace>/app/plainphone/src/main/kotlin/org/plainphone/boot/PolicyRuntime.kt:126: Error: Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with checkPermission) or explicitly handle a potential SecurityException [MissingPermission]
+        phoneStateReadable().also { if (it) telecom.showInCallScreen(false) }
+                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+> Task :plainphone:lintDebug FAILED
+Lint found 2 errors, 8 warnings. First failure:
+
+<workspace>/app/plainphone/src/main/kotlin/org/plainphone/boot/PolicyRuntime.kt:126: Error: Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with checkPermission) or explicitly handle a potential SecurityException [MissingPermission]
+        phoneStateReadable().also { if (it) telecom.showInCallScreen(false) }
+                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The full lint text report is located at:
+  <workspace>/app/plainphone/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+
+[Incubating] Problems report is available at: file://<workspace>/app/build/reports/problems/problems-report.html
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':ui:testDebugUnitTest'.
+> There were failing tests. See the report at: file://<workspace>/app/ui/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':plainphone:lintDebug'.
+> Lint found errors in the project; aborting build.
+
+  Fix the issues identified by lint, or create a baseline to see only new errors.
+  To create a baseline, run `gradlew updateLintBaseline` after adding the following to the module's build.gradle file:
+  ```
+  android {
+      lint {
+          baseline = file("lint-baseline.xml")
+      }
+  }
+  ```
+  For more details, see https://developer.android.com/studio/write/lint#snapshot
+
+  Lint found 2 errors, 8 warnings. First failure:
+
+  <workspace>/app/plainphone/src/main/kotlin/org/plainphone/boot/PolicyRuntime.kt:126: Error: Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with checkPermission) or explicitly handle a potential SecurityException [MissingPermission]
+          phoneStateReadable().also { if (it) telecom.showInCallScreen(false) }
+                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The full lint text report is located at:
+    <workspace>/app/plainphone/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 1m 43s
+165 actionable tasks: 165 executed

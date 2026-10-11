@@ -1,0 +1,9 @@
+{
+  "old_pid": "3847",
+  "exit_code": 0,
+  "method": "su 0 kill -9",
+  "new_pid": "",
+  "after": "lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t13 lockTasks=[]",
+  "process_restarted_during_sample": false,
+  "current_calls": 0
+}

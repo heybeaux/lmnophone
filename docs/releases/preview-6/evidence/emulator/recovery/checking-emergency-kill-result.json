@@ -1,0 +1,9 @@
+{
+  "old_pid": "3765",
+  "exit_code": 0,
+  "method": "su 0 kill -9",
+  "new_pid": "3847",
+  "after": "lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]",
+  "current_calls": 0,
+  "process_restarted_during_sample": true
+}

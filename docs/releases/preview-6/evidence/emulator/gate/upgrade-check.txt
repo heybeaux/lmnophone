@@ -1,0 +1,193 @@
+PASS: arguments: serial APK output-directory [label]
+PASS: owned emulator serial
+preview-6 gate 2026-10-11T17:20:42.760918+00:00
+Install skipped; earlier in-place install evidence carried forward.
+PASS: read package version
+PASS: version is preview-6
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: restart
+PASS: wait for device
+PASS: read boot status
+PASS: read boot status
+PASS: read boot status
+PASS: read boot status
+PASS: read boot status
+PASS: read boot status
+PASS: wake screen
+PASS: dismiss no-PIN keyguard
+PASS: swipe unlock
+PASS: read boot gate log
+PASS: Home after full read-back
+full read-back=10-11 10:21:08.912; home shown=10-11 10:21:09.159
+PASS: read package version
+PASS: version is preview-6
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: press Home
+PASS: press Home
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^More$
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Emergency 9-1-1
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: More > Emergency prefill exactly 911
+PASS: read Telecom current calls
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: capture more-emergency-911.png
+PASS: valid PNG more-emergency-911.png
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/deleteButton$
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/deleteButton$
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/deleteButton$
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dial field empty (raw text='Phone Number')
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dial field empty (raw text='Phone Number')
+PASS: press Home
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Phone(?:,.*)?$
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dial field empty (raw text='Phone Number')
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dial field empty (raw text='Phone Number')
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/nine$
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/one$
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/one$
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: Phone typed field exactly 911
+PASS: read Telecom current calls
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: capture phone-911.png
+PASS: valid PNG phone-911.png
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/deleteButton$
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/deleteButton$
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/deleteButton$
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dial field empty (raw text='Phone Number')
+PASS: press Home
+PASS: read package version
+PASS: version is preview-6
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: all upgrade gate checks
+exit=0

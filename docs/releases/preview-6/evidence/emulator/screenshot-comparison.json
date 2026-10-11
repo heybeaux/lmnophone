@@ -1,0 +1,52 @@
+{
+  "home-1.0.png": {
+    "compared_pixels": [
+      0,
+      520,
+      1080,
+      1840
+    ],
+    "difference_bbox": null,
+    "same": true
+  },
+  "home-2.0.png": {
+    "compared_pixels": [
+      0,
+      520,
+      1080,
+      1840
+    ],
+    "difference_bbox": null,
+    "same": true
+  },
+  "more-1.0.png": {
+    "compared_pixels": [
+      0,
+      100,
+      1080,
+      1840
+    ],
+    "difference_bbox": null,
+    "same": true
+  },
+  "more-2.0.png": {
+    "compared_pixels": [
+      0,
+      100,
+      1080,
+      1840
+    ],
+    "difference_bbox": null,
+    "same": true
+  },
+  "more-bottom-2.0.png": {
+    "compared_pixels": [
+      0,
+      100,
+      1080,
+      1840
+    ],
+    "difference_bbox": null,
+    "same": true
+  }
+}

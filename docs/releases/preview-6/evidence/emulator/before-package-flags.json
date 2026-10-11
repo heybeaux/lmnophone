@@ -1,0 +1,24 @@
+{
+  "hidden": [
+    "com.android.chrome",
+    "com.android.stk",
+    "com.android.vending",
+    "com.google.android.apps.docs",
+    "com.google.android.apps.photos",
+    "com.google.android.apps.youtube.music",
+    "com.google.android.calendar",
+    "com.google.android.contacts",
+    "com.google.android.deskclock",
+    "com.google.android.documentsui",
+    "com.google.android.gm",
+    "com.google.android.googlequicksearchbox",
+    "com.google.android.youtube"
+  ],
+  "suspended": [],
+  "disabled": [
+    "com.android.nfc",
+    "com.google.android.devicelockcontroller",
+    "com.google.android.gms.supervision"
+  ],
+  "packages_read": 244
+}

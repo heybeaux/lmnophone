@@ -1,0 +1,12 @@
+home-phone-open-kill before: lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t13 lockTasks=[]
++0.04s lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t13 lockTasks=[]
++0.32s lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t13 lockTasks=[]
++0.60s lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t13 lockTasks=[]
+...
+--- logcat (PlainphoneBoot, ActivityTaskManager START)
++10.84s lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t13 lockTasks=[]
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+{"old_pid": "3847", "exit_code": 0, "method": "su 0 kill -9", "new_pid": "", "after": "lockTask=LOCKED top=com.google.android.dialer/com.android.dialer.main.impl.MainActivity t13 lockTasks=[]", "process_restarted_during_sample": false, "current_calls": 0}

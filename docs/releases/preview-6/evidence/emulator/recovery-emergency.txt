@@ -1,0 +1,16 @@
+checking-emergency-kill before: lockTask=LOCKED top=org.plainphone/.MainActivity t2 lockTasks=[]
++0.14s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t9 lockTasks=[]
++0.46s lockTask=NONE top=? lockTasks=[]
++0.78s lockTask=NONE top=? lockTasks=[]
+...
+--- logcat (PlainphoneBoot, ActivityTaskManager START)
+10-11 10:22:54.011  3847  3861 I PlainphoneBoot: reapply reason=start control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=NONE withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=677
+10-11 10:22:54.078  3847  3861 I PlainphoneBoot: lock task not running after start: Home brought forward at=124650
+10-11 10:22:54.240  3847  3847 I PlainphoneBoot: reopening EMERGENCY_KEYPAD inside lock task at=124811
+10-11 10:22:55.309  3847  3847 I PlainphoneBoot: home shown lockTask=LOCKED at=125881
++11.55s lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+{"old_pid": "3765", "exit_code": 0, "method": "su 0 kill -9", "new_pid": "3847", "after": "lockTask=LOCKED top=com.android.phone/.EmergencyDialer t12 lockTasks=[]", "current_calls": 0}

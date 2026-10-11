@@ -1,0 +1,375 @@
+Current Device Policy Manager state:
+  Immutable state:
+    mHasFeature=true
+    mIsWatch=false
+    mIsAutomotive=false
+    mHasTelephonyFeature=true
+    mSafetyChecker=null
+  Device Owner:
+    admin=ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
+    package=org.plainphone
+    isOrganizationOwnedDevice=true
+    User ID: 0
+
+
+
+  Enabled Device Admins (User 0, provisioningState: 3):
+    org.plainphone/.PlainphoneAdminReceiver:
+      uid=10207
+      testOnlyAdmin=true
+      policies:
+      passwordQuality=0x0
+      minimumPasswordLength=0
+      passwordHistoryLength=0
+      minimumPasswordUpperCase=0
+      minimumPasswordLowerCase=0
+      minimumPasswordLetters=1
+      minimumPasswordNumeric=1
+      minimumPasswordSymbols=1
+      minimumPasswordNonLetter=0
+      maximumTimeToUnlock=0
+      strongAuthUnlockTimeout=0
+      maximumFailedPasswordsForWipe=0
+      specifiesGlobalProxy=false
+      passwordExpirationTimeout=0
+      passwordExpirationDate=0
+      encryptionRequested=false
+      disableCallerId=false
+      disableContactsSearch=false
+      disableBluetoothContactSharing=true
+      forceEphemeralUsers=false
+      isNetworkLoggingEnabled=false
+      disabledKeyguardFeatures=0
+      crossProfileWidgetProviders=null
+      organizationColor=-16746133
+      defaultEnabledRestrictionsAlreadySet={}
+      managedProfileCallerIdPolicy:
+      managedProfileContactsPolicy:
+      credentialManagerPolicy:
+      isParent=false
+      mCrossProfileCalendarPackages=[]
+      mCrossProfilePackages=[]
+      mSuspendPersonalApps=false
+      mProfileMaximumTimeOffMillis=0
+      mProfileOffDeadline=0
+      mAlwaysOnVpnPackage=null
+      mAlwaysOnVpnLockdown=false
+      mCommonCriteriaMode=false
+      mPasswordComplexity=0
+      mNearbyNotificationStreamingPolicy=3
+      mNearbyAppStreamingPolicy=3
+      mAdminCanGrantSensorsPermissions=true
+      mWifiMinimumSecurityLevel=0
+      mPreferentialNetworkServiceConfigs:
+        networkId=0
+        isEnabled=false
+        allowFallbackToDefaultConnection=true
+        blockNonMatchingNetworks=false
+        includedUids=[]
+        excludedUids=[]
+      mtePolicy=0
+      accountTypesWithManagementDisabled={}
+      mDialerPackage=null
+      mSmsPackage=null
+
+    mPasswordOwner=-1
+    mPasswordTokenHandle=0
+    mAppsSuspended=false
+    mUserSetupComplete=true
+    mAffiliationIds={}
+    mNewUserDisclaimer=null
+
+
+  Constants:
+    DAS_DIED_SERVICE_RECONNECT_BACKOFF_SEC: 3600
+    DAS_DIED_SERVICE_RECONNECT_BACKOFF_INCREASE: 2.0
+    DAS_DIED_SERVICE_RECONNECT_MAX_BACKOFF_SEC: 86400
+    DAS_DIED_SERVICE_STABLE_CONNECTION_THRESHOLD_SEC: 120
+
+  Stats:
+    LockGuard.guard(): count=12848, total=48.5ms, avg=0.004ms, max calls/s=3881 max dur/s=24.2ms max time=24.1ms
+
+  Local Policies:
+    User 0:
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.contacts}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      DefaultPolicyKey lockTask
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            LockTaskPolicy {mPackages= com.android.camera2, com.google.android.apps.maps, com.google.android.dialer, com.android.server.telecom, com.google.android.apps.safetyhub, org.plainphone, com.google.android.apps.messaging, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 53 }
+        Resolved Policy (TopPriority):
+          LockTaskPolicy {mPackages= com.android.camera2, com.google.android.apps.maps, com.google.android.dialer, com.android.server.telecom, com.google.android.apps.safetyhub, org.plainphone, com.google.android.apps.messaging, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 53 }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.apps.photos}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.googlequicksearchbox}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.gm}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.android.stk}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.android.vending}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.deskclock}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.documentsui}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.android.chrome}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      IntentFilterPolicyKey{mKey= persistentPreferredActivity; mFilter= android.content.IntentFilter@a989f4a}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            ComponentNamePolicyValue { mValue= ComponentInfo{org.plainphone/org.plainphone.MainActivity} }
+        Resolved Policy (TopPriority):
+          ComponentNamePolicyValue { mValue= ComponentInfo{org.plainphone/org.plainphone.MainActivity} }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.apps.youtube.music}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.apps.docs}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.youtube}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+      PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.calendar}
+        Per-admin Policy:
+          EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
+            BooleanPolicyValue { mValue= true }
+        Resolved Policy (MostRestrictive):
+          BooleanPolicyValue { mValue= true }
+
+
+  Global Policies:
+
+  Default admin policy size limit: -1
+  Current admin policy size limit: -1
+  Admin Policies size:
+  User 0:
+    Admin : EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false } : 1956
+
+Encryption Status: per-user
+Logout user: -10000
+
+no pending user created callback tokens
+
+Device policy cache:
+  Screen capture disallowed users: []
+  Password quality: {0=0}
+  Permission policy: {0=0}
+  Content protection policy: {}
+  Admin can grant sensors permission: true
+  Shortcuts overrides: {}
+
+Device state cache:
+  Device provisioned: true
+  Device Owner Type: 0
+  Has PO:
+
+PersonalAppsSuspensionHelper
+  critical packages: 7 apps
+    0: com.google.android.apps.wellbeing
+    1: com.android.vending
+    2: com.google.android.gms
+    3: com.android.systemui
+    4: com.android.settings
+    5: com.google.android.apps.pixelmigrate
+    6: com.google.android.apps.restore
+  launcher packages: 2 apps
+    0: com.google.android.apps.nexuslauncher
+    1: com.android.settings
+  accessibility services: empty
+  input method packages: 2 apps
+    0: com.google.android.inputmethod.latin
+    1: com.google.android.tts
+  SMS package: com.google.android.apps.messaging
+  Settings package: com.android.settings
+  Packages subject to suspension: 3 apps
+    0: com.google.android.apps.safetyhub
+    1: com.android.camera2
+    2: com.google.android.apps.maps
+Subscription changed listener : null
+DPM global setting ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS : null
+OverlayPackagesProvider
+  required_apps_managed_device: 10 apps
+    0: com.android.documentsui
+    1: com.android.providers.downloads
+    2: com.android.providers.downloads.ui
+    3: com.android.contacts
+    4: com.android.stk
+    5: com.android.webview
+    6: com.android.cellbroadcastreceiver
+    7: com.android.dialer
+    8: com.android.settings
+    9: com.android.systemui
+  required_apps_managed_user: 9 apps
+    0: com.android.documentsui
+    1: com.android.providers.downloads
+    2: com.android.providers.downloads.ui
+    3: com.android.contacts
+    4: com.android.stk
+    5: com.android.webview
+    6: com.android.dialer
+    7: com.android.settings
+    8: com.android.systemui
+  required_apps_managed_profile: 7 apps
+    0: com.android.documentsui
+    1: com.android.providers.downloads
+    2: com.android.providers.downloads.ui
+    3: com.android.contacts
+    4: com.android.webview
+    5: com.android.settings
+    6: com.android.systemui
+  disallowed_apps_managed_device: empty
+  disallowed_apps_managed_user: empty
+  disallowed_apps_managed_device: empty
+  vendor_required_apps_managed_device: 27 apps
+    0: com.google.android.googlequicksearchbox
+    1: com.android.launcher
+    2: com.google.android.apps.messaging
+    3: com.google.android.trichromelibrary
+    4: com.google.android.apps.safetyhub
+    5: com.android.vending
+    6: com.google.android.apps.accessibility.voiceaccess
+    7: com.google.android.launcher
+    8: com.android.settings.intelligence
+    9: com.google.android.apps.searchlite
+    10: com.google.android.setupwizard
+    11: com.google.android.apps.wellbeing
+    12: com.google.android.dialer
+    13: com.google.android.apps.nbu.files
+    14: com.google.android.apps.tips
+    15: com.google.android.webview
+    16: com.google.android.contacts
+    17: com.google.android.gms
+    18: com.google.android.apps.nexuslauncher
+    19: com.google.android.documentsui
+    20: com.google.android.apps.internal.betterbug
+    21: com.google.android.settings.intelligence
+    22: com.google.android.projection.gearhead
+    23: com.google.android.apps.tycho
+    24: com.google.android.apps.assistant
+    25: com.google.android.cellbroadcastreceiver
+    26: com.google.android.GoogleCamera
+  vendor_required_apps_managed_user: 14 apps
+    0: com.google.android.googlequicksearchbox
+    1: com.android.launcher
+    2: com.google.android.apps.messaging
+    3: com.google.android.trichromelibrary
+    4: com.android.vending
+    5: com.google.android.apps.accessibility.voiceaccess
+    6: com.google.android.launcher
+    7: com.google.android.apps.wellbeing
+    8: com.google.android.dialer
+    9: com.google.android.apps.nbu.files
+    10: com.google.android.webview
+    11: com.google.android.contacts
+    12: com.google.android.gms
+    13: com.google.android.documentsui
+  vendor_required_apps_managed_profile: 22 apps
+    0: com.google.android.googlequicksearchbox
+    1: com.google.android.trichromelibrary
+    2: com.google.android.apps.internal.nexusuploader
+    3: com.google.inputmethod.ink.strokes.showcase
+    4: com.android.vending
+    5: com.google.android.apps.accessibility.voiceaccess
+    6: com.google.android.as
+    7: com.android.ramdump
+    8: com.google.android.apps.searchlite
+    9: com.google.android.netgrapher
+    10: com.google.android.volta
+    11: com.google.android.apps.wellbeing
+    12: com.google.android.apps.nbu.files
+    13: com.google.android.apps.overlay
+    14: com.google.android.webview
+    15: com.google.android.contacts
+    16: com.google.android.gms
+    17: com.google.android.documentsui
+    18: com.google.android.apps.internal.betterbug
+    19: com.google.android.projection.gearhead
+    20: com.google.android.apps.assistant
+    21: com.google.mds
+  vendor_disallowed_apps_managed_user: 1 app
+    0: com.google.android.apps.healthdata
+  vendor_disallowed_apps_managed_device: 1 app
+    0: com.google.android.apps.healthdata
+  vendor_disallowed_apps_managed_profile: 2 apps
+    0: com.google.android.apps.stargate
+    1: com.google.android.apps.healthdata
+
+Other overlayable app resources
+  cross_profile_apps: empty
+  vendor_cross_profile_apps: 5 apps
+    0: com.google.android.googlequicksearchbox
+    1: com.google.android.inputmethod.latin
+    2: com.google.android.projection.gearhead
+    3: com.google.android.inputmethod.latin.dev
+    4: com.google.android.inputmethod.latin.canary
+  config_packagesExemptFromSuspension: 7 apps
+    0: com.google.android.apps.wellbeing
+    1: com.android.vending
+    2: com.google.android.gms
+    3: com.android.systemui
+    4: com.android.settings
+    5: com.google.android.apps.pixelmigrate
+    6: com.google.android.apps.restore
+  policy_exempt_apps: empty
+  vendor_policy_exempt_apps: empty
+
