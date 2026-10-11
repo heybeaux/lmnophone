@@ -25,6 +25,9 @@
       preview-2 (PLA-144): Device Owner and Home. testOnly so `dpm remove-active-admin` stays the way out
       until Q7 is proven on the spare.
     -->
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+
     <application
         android:name=".PlainphoneApp"
         android:allowBackup="false"

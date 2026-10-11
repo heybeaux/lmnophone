@@ -34,9 +34,9 @@ class ShellNavigatorTest {
     }
 
     @Test fun unwiredDestinationsStayPut() {
-        // Notice details, settings, trusted-person and About screens are later slices.
+        // Notice details, trusted-person and About screens are later slices.
         assertEquals(Step(ShellState()), nav.onHome(ShellState(), HomeEvent.OpenNotice))
-        for (e in listOf(MoreEvent.OpenPhoneSettings, MoreEvent.AddApp, MoreEvent.OpenTrustedPerson,
+        for (e in listOf(MoreEvent.AddApp, MoreEvent.OpenTrustedPerson,
             MoreEvent.OpenSelfManagedSettings, MoreEvent.OpenAbout)) {
             assertEquals(Step(at(ShellRoute.More)), nav.onMore(at(ShellRoute.More), e))
         }

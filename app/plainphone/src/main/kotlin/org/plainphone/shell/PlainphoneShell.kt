@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import org.plainphone.ui.user.PhoneSettingsScreen
+import org.plainphone.ui.user.PhoneSettingsUiState
+import org.plainphone.ui.user.PhoneSettingsEvent
+import org.plainphone.counts.CommunicationCounts
 import org.plainphone.ui.home.HomeScreen
 import org.plainphone.ui.theme.PlainphoneColors
 import org.plainphone.ui.theme.PlainphoneTheme
@@ -27,6 +31,9 @@ fun PlainphoneShell(
     snapshot: PhoneSnapshot,
     mapper: ShellUiMapper,
     navigator: ShellNavigator,
+    counts: CommunicationCounts,
+    settings: PhoneSettingsUiState,
+    onSettings: (PhoneSettingsEvent) -> Unit,
     onStep: (Step) -> Unit,
 ) {
     BackHandler { onStep(navigator.back(state)) }
@@ -34,7 +41,8 @@ fun PlainphoneShell(
         // The :ui screens expect the safe content area; the request screen handles the keyboard itself.
         Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).systemBarsPadding().displayCutoutPadding()) {
             when (val route = state.current) {
-                ShellRoute.Home -> HomeScreen(mapper.home(snapshot)) { onStep(navigator.onHome(state, it)) }
+                ShellRoute.Home -> HomeScreen(mapper.home(snapshot).copy(missedCalls = counts.missedCalls, unreadTexts = counts.unreadTexts)) { onStep(navigator.onHome(state, it)) }
+                ShellRoute.PhoneSettings -> PhoneSettingsScreen(settings, onSettings)
                 ShellRoute.More -> MoreScreen(mapper.more(snapshot)) { onStep(navigator.onMore(state, it)) }
                 ShellRoute.AskForApp ->
                     AskForAppScreen(mapper.ask(snapshot, state.draft)) { onStep(navigator.onAsk(state, it)) }

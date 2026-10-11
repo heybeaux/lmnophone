@@ -16,6 +16,7 @@ import org.plainphone.ui.user.WifiProblem
 sealed interface ShellRoute {
     data object Home : ShellRoute
     data object More : ShellRoute
+    data object PhoneSettings : ShellRoute
     data object AskForApp : ShellRoute
     data class RequestResult(val result: AppRequestResult) : ShellRoute
     /**
@@ -93,7 +94,8 @@ class ShellNavigator(
         MoreEvent.Back -> back(s)
         MoreEvent.OpenEmergencyDialer -> Step(s, ShellEffect.OpenEmergencyDialer)
         MoreEvent.AskForApp -> if (testBuild) notInBuild(s) else push(s.copy(draft = ""), ShellRoute.AskForApp)
-        MoreEvent.OpenPhoneSettings, MoreEvent.AddApp, MoreEvent.OpenTrustedPerson,
+        MoreEvent.OpenPhoneSettings -> push(s, ShellRoute.PhoneSettings)
+        MoreEvent.AddApp, MoreEvent.OpenTrustedPerson,
         MoreEvent.OpenSelfManagedSettings, MoreEvent.OpenAbout -> if (testBuild) notInBuild(s) else Step(s)
     }
 

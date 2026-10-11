@@ -127,3 +127,11 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 - The skeleton (D0) and lanes A, B and C don't wait for the go/no-go gate (PLA-14).
 - Lane D's device integration (D1) waits for PLA-14, as Beaux directed. Any change to that is his call, asked on PLA-14.
 - The Android Platform Engineer is the only one who drives the spare Motorola.
+
+### Optional Home count host seam (preview branch)
+
+`:device` exports `CommunicationCountPermissions.grant()` for the calling app's
+READ_CALL_LOG and READ_SMS only. It never revokes. `:plainphone` independently
+checks each permission and a successful count query; a DPM return is not proof.
+The host owns a private `home_preferences` store (absent in preview-2), observation,
+cancellation and the PIN-free Phone settings route. Counts are never persisted.

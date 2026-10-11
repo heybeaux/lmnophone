@@ -19,6 +19,12 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.SideEffect
+import org.plainphone.counts.AndroidCommunicationCounts
+import org.plainphone.counts.CommunicationCounts
+import org.plainphone.shell.ShellRoute
+import org.plainphone.ui.user.PhoneSettingsUiState
+import org.plainphone.ui.user.PhoneSettingsEvent
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,6 +60,15 @@ import org.plainphone.ui.theme.PlainphoneTheme
  */
 class MainActivity : ComponentActivity() {
     private val shell: ShellViewModel by viewModels()
+    private lateinit var communication: AndroidCommunicationCounts
+    private var resumed by mutableStateOf(false)
+    private var counts by mutableStateOf(CommunicationCounts())
+    private var countsEnabled by mutableStateOf(false)
+
+    private fun syncCounts() {
+        counts = communication.controller.counts
+        countsEnabled = communication.controller.enabled
+    }
 
     private val dpm by lazy { getSystemService(DevicePolicyManager::class.java) }
     private val activities by lazy { getSystemService(ActivityManager::class.java) }
@@ -62,6 +77,8 @@ class MainActivity : ComponentActivity() {
         val paper = PlainphoneColors.Paper.toArgb()
         enableEdgeToEdge(SystemBarStyle.light(paper, paper), SystemBarStyle.light(paper, paper))
         super.onCreate(savedInstanceState)
+        communication = AndroidCommunicationCounts(this, ::syncCounts)
+        syncCounts()
         enterLockTask()
         val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         shell.start(if (debuggable) intent.getStringExtra(EXTRA_PREVIEW_SCREEN) else null)
@@ -71,6 +88,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val gate by runtime.gate.collectAsState()
             val refresh by runtime.refresh.collectAsState()
+            val homeVisible = resumed && gate == HomeGate.READY && shell.phone != null && shell.state.current == ShellRoute.Home
+            val settingsVisible = resumed && gate == HomeGate.READY && shell.phone != null && shell.state.current == ShellRoute.PhoneSettings
+            SideEffect {
+                communication.controller.setVisible(homeVisible)
+                communication.controller.setSettingsVisible(settingsVisible)
+            }
             if (gate != HomeGate.READY || !enterLockTask()) {
                 PlainphoneTheme { CheckingScreen(onPhone = { perform(ShellEffect.OpenDialer) }, onEmergency = ::openEmergency) }
                 return@setContent
@@ -89,7 +112,18 @@ class MainActivity : ComponentActivity() {
                     delay(1_000)
                 }
             }
-            PlainphoneShell(shell.state, snapshot, mapper, shell.navigator ?: return@setContent) { step ->
+            PlainphoneShell(shell.state, snapshot, mapper, shell.navigator ?: return@setContent,
+                counts = counts,
+                settings = PhoneSettingsUiState(countsEnabled, counts.missedCalls == null, counts.unreadTexts == null),
+                onSettings = { event ->
+                    when (event) {
+                        PhoneSettingsEvent.Back -> shell.state = shell.navigator!!.back(shell.state).state
+                        is PhoneSettingsEvent.ShowCommunicationCountsChanged -> {
+                            communication.controller.setEnabled(event.enabled)
+                            syncCounts()
+                        }
+                    }
+                }) { step ->
                 shell.state = step.state
                 step.effect?.let(::perform)
             }
@@ -104,7 +138,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        resumed = true
         enterLockTask()
+    }
+
+    override fun onPause() {
+        resumed = false
+        communication.controller.setVisible(false)
+        communication.controller.setSettingsVisible(false)
+        syncCounts()
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        communication.close()
+        super.onDestroy()
     }
 
     /** True when this task is in lock task, starting it first if the package is allowed. */
