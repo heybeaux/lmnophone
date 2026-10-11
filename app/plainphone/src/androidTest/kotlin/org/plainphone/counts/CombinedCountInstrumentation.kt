@@ -12,9 +12,16 @@ import android.provider.Telephony
 /** Owned-emulator fixture oracle. Reads count only, under the target app's own UID/grant. */
 class CombinedCountInstrumentation : Instrumentation() {
     private var expected = 0
+    private var expectedSms = 0
+    private var expectedMms = 0
+    private var fixtureIds = ""
     override fun onCreate(arguments: Bundle) {
         super.onCreate(arguments)
         expected = arguments.getString("expected")!!.toInt()
+        expectedSms = arguments.getString("expectedSms")!!.toInt()
+        expectedMms = arguments.getString("expectedMms")!!.toInt()
+        fixtureIds = arguments.getString("fixtureIds")!!
+        require(fixtureIds.matches(Regex("[0-9]+(,[0-9]+)*")))
         start()
     }
     override fun onStart() {
@@ -27,6 +34,12 @@ class CombinedCountInstrumentation : Instrumentation() {
             val combined = count("content://mms-sms/complete-conversations", arrayOf("_id", "transport_type"), "read = 0")
             val sms = count("content://sms", arrayOf("_id"), "type = 1 AND read = 0")
             val mms = count("content://mms", arrayOf("_id"), "msg_box = 1 AND read = 0")
+            val focus = " AND _id IN ($fixtureIds)"
+            val focusCombined = count("content://mms-sms/complete-conversations", arrayOf("_id", "transport_type"), "read = 0$focus")
+            val focusSms = count("content://sms", arrayOf("_id"), "type = 1 AND read = 0$focus")
+            val focusMms = count("content://mms", arrayOf("_id"), "msg_box = 1 AND read = 0$focus")
+            result.putString("fixture", "combined=$focusCombined sms=$focusSms mms=$focusMms expectedSms=$expectedSms expectedMms=$expectedMms")
+            check(focusSms == expectedSms && focusMms == expectedMms && focusCombined == expectedSms + expectedMms)
             result.putString("counts", "combined=$combined oracleSms=$sms oracleMms=$mms expected=$expected nonDefault=true")
             check(combined == sms + mms && combined == expected)
             result.putString("outcome", "PASS")
