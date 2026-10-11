@@ -1,0 +1,19 @@
+# preview-3 upgrade check on emulator-5850 pla267-a35 (API 35, google_apis), release/preview-2 @ f33cd44, 2026-10-11T04:37:40Z. No call key, no Call tap.
+## Before
+version: versionCode=1 minSdk=30 targetSdk=36 versionName=0.1.0-dev 
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+mLockTaskModeState=LOCKED
+home shows: text="9:37" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" text="Ask for an app, settings, help" 
+## Install in place (install -r, no uninstall)
+apk sha256: ec3e05bb28f1de9fa7858d42a8083849dada0a300e6edbcd54b135d329f720cb
+install started: 2026-10-11T04:37:42Z
+Performing Streamed Install
+Success
+install finished: 2026-10-11T04:37:43Z
+## Read back after install
+version: versionCode=3 minSdk=30 targetSdk=36 versionName=0.1.0-preview-3 
+TEST_ONLY
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+mLockTaskModeState=LOCKED
+topResumedActivity=ActivityRecord{2d6e538 u0 org.plainphone/.MainActivity t82}
+(run stopped here under set -e; continued in upgrade-check.txt with SKIP_INSTALL=1)

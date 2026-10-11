@@ -1,0 +1,52 @@
+# preview-3 upgrade check on emulator-5850 pla267-a35 (API 35, google_apis), release/preview-2 @ f33cd44, after the install in upgrade-install.txt, 2026-10-11T04:47:24Z. No call key, no Call tap.
+## Before
+version: versionCode=3 minSdk=30 targetSdk=36 versionName=0.1.0-preview-3 
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+mLockTaskModeState=LOCKED
+home shows: text="9:47" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" 
+## Read back after install
+version: versionCode=3 minSdk=30 targetSdk=36 versionName=0.1.0-preview-3 
+TEST_ONLY
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+mLockTaskModeState=LOCKED
+topResumedActivity=ActivityRecord{6985f7 u0 org.plainphone/.MainActivity t5}
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+home shows: text="9:47" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" 
+More text bounds=[469, 2196, 611, 2268] centre_x=540 screen_width=1080 offset_px=+0
+## One restart
+boot completed: 2026-10-11T04:47:53Z
+10-10 21:47:53.226   938  1006 I PlainphoneBoot: reapply reason=start control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disa
+10-10 21:47:56.507   938  1006 I PlainphoneBoot: reapply reason=locked-boot control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING
+10-10 21:47:56.957   938   938 I PlainphoneBoot: home shown lockTask=1 at=16514
+10-10 21:47:57.366   938   938 I PlainphoneBoot: home shown lockTask=1 at=16923
+10-10 21:47:57.751   938   938 I PlainphoneBoot: home shown lockTask=1 at=17308
+10-10 21:47:59.665   938  1006 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:<pkg> control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, 
+10-10 21:47:59.783   938   938 I PlainphoneBoot: home shown lockTask=1 at=19333
+10-10 21:48:00.275   938  1006 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:<pkg> control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, 
+first full read-back: 10-10 21:47:56.507; first home shown: 10-10 21:47:56.957
+ORDER OK: Home drawn after the full read-back
+version: versionCode=3 minSdk=30 targetSdk=36 versionName=0.1.0-preview-3 
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+mLockTaskModeState=LOCKED
+topResumedActivity=ActivityRecord{139aa0a u0 org.plainphone/.MainActivity t5}
+home shows: text="9:48" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" 
+More text bounds=[469, 2196, 611, 2268] centre_x=540 screen_width=1080 offset_px=+0
+## Check 1a: Home > More > Emergency
+more shows: text="‹ Home" text="More" text="Phone settings" text="Wi-Fi, sound, text size" text="Ask for an app" text="Sam adds apps with you" text="For Sam and Jo" text="Where Sam or Jo add apps, with a PIN" text="About this phone" 
+topResumedActivity=ActivityRecord{139aa0a u0 org.plainphone/.MainActivity t5}
+tapped: Emergency 9-1-1
+topResumedActivity=ActivityRecord{b7cf2cf u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t7}
+mLockTaskModeState=LOCKED
+dial pad: 
+911
+calls:   mCalls:    mCallAudioManager:     All calls: 
+topResumedActivity=ActivityRecord{139aa0a u0 org.plainphone/.MainActivity t5}
+## Check 1b: Home > Phone, open the dial pad, tap 9 1 1
+topResumedActivity=ActivityRecord{b7cf2cf u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t7}
+mLockTaskModeState=LOCKED
+dial pad: 
+911-911
+calls:   mCalls:    mCallAudioManager:     All calls: 
+topResumedActivity=ActivityRecord{139aa0a u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED
+## End 2026-10-11T04:48:39Z
