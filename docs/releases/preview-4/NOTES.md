@@ -68,6 +68,8 @@ No physical device was used for preparation.
 
 - Install time (UTC and America/Vancouver), exact APK SHA-256 and build head:
   **TODO(spare)**. Use an in-place upgrade and preserve tester data/settings.
+  Run `app/tools/preview-4/upgrade-check.sh` with `PLAINPHONE_SPARE_DRIVER=1`
+  as the sole assigned spare driver. Never press Call.
 - D8(a): Phone/Messages role holders and versions; RCS state before changes:
   **TODO(spare)**.
 - D8(a): permission restriction flags after install and after switching on:
@@ -109,3 +111,12 @@ No physical device was used for preparation.
 
 The prior Device Owner removal, unhide save-flip and power-cut results remain
 historical evidence from preview-2/3, not reruns for preview-4.
+
+## Recovery
+
+The assigned driver names the approved device on both commands:
+
+```sh
+adb -s <spare> shell dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver
+adb -s <spare> uninstall org.plainphone
+```
