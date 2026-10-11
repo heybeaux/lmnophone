@@ -136,11 +136,11 @@ interface AppApprovalEffects {
      * Preserve all access outside the supplied target set. Failed/throwing/unverified containment
      * returns NOT_READY and retains the journal and receipts. Refused authorization is non-mutating.
      *
-     * PREPARING drop, REMOVING and WITHDRAWING share this pre-gate obligation. A withdrawn edit is
-     * already approved: only its verified completion may restore access, after checking the durable
-     * saved permission choices. No prior-permission snapshot or rollback is implied. Failed final
-     * activation (including edit-withdrawal restoration) contains the attempted plan's discretionary
-     * set and retains its journal. applyPolicy must contain its own partial failures;
+     * PREPARING drop, REMOVING and WITHDRAWING share this pre-gate obligation and complete
+     * restrictively. Edit withdrawal removes approval and leaves a removedApps marker for fresh
+     * reapproval; it never writes permissions or activates the app. No prior-permission snapshot
+     * exists, so no rollback is implied. Failed final activation contains the attempted plan's
+     * discretionary set and retains its journal. applyPolicy must contain its own partial failures;
      * readBackPolicy remains read-only.
      */
     fun containFailedActivation(packages: Set<PackageName>): Boolean
@@ -389,11 +389,9 @@ class AppApprovalController(
      * Known protected targets are refused here too. Containment independently removes lock task/Home
      * before an EDITING/PREPARING hide retry: a failed hide must never skip those boundaries.
      *
-     * Withdrawal retains this obligation through plan/session recovery. Withdrawing an edit concerns
-     * an already-approved app: restore its approved access only in the verified completion path,
-     * never here. Its durable record holds the saved permission choices, not a prior-permission
-     * snapshot; those choices must be applied and verified before restoring access. No permission
-     * rollback or reconstruction of old choices is claimed.
+     * Withdrawal retains this obligation through plan/session recovery and completes restrictively.
+     * An edit has no prior-permission snapshot: completion removes approval and saves a removedApps
+     * marker for fresh reapproval, without writing permissions or restoring access.
      */
     private inline fun withPendingContainment(op: AppApprovalOperation,
         recover: () -> AppApprovalOutcome): AppApprovalOutcome = try {
@@ -561,21 +559,13 @@ class AppApprovalController(
     private fun finishWithdrawal(state: AppApprovalState, op: AppApprovalOperation): AppApprovalOutcome {
         return withPendingContainment(op) {
             if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
-            if (op.phase == AppApprovalPhase.WITHDRAWING && op.receipt?.kind == AppApprovalReceiptKind.PERMISSIONS_CHANGED) {
-                if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
-                if (planFor(op.record, state) == null) return AppApprovalOutcome.NOT_READY
-                if (!permissionsMatch(op.record) && !writePermissionsInWindow(op.record, state)) return AppApprovalOutcome.NOT_READY
-                if (!permissionsMatch(op.record) || !battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.NOT_READY
-                val finished = state.replacing(pending = null, receipts = state.receipts + checkNotNull(op.withdrawalReceipt))
-                return activatePending(state, op, finished, AppApprovalOutcome.WITHDRAWN)
-            }
             val checked = withdrawalPlan(state, op) ?: return AppApprovalOutcome.NOT_READY
             if (!effects.applyPolicy(checked.plan) || !effects.readBackPolicy(checked.plan)) return AppApprovalOutcome.NOT_READY
             // Facts can change even when the resulting policy sets are identical.
             if (withdrawalPlan(state, op) != checked) return AppApprovalOutcome.NOT_READY
             val finished = state.replacing(apps = state.apps - op.record.identity.packageName, pending = null,
                 receipts = state.receipts + checkNotNull(op.withdrawalReceipt),
-                removedApps = if (op.phase == AppApprovalPhase.REMOVING)
+                removedApps = if (op.phase == AppApprovalPhase.REMOVING || op.receipt?.kind == AppApprovalReceiptKind.PERMISSIONS_CHANGED)
                     state.removedApps + (op.record.identity.packageName to op.record.identity) else state.removedApps)
             if (!store.compareAndSet(state, finished, null)) return AppApprovalOutcome.NOT_READY
             return if (op.phase == AppApprovalPhase.REMOVING) AppApprovalOutcome.REMOVED else AppApprovalOutcome.WITHDRAWN
