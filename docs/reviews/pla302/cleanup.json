@@ -1,0 +1,12 @@
+{
+  "emulator-5572": {
+    "unreadSmsAfterCleanup": 0,
+    "unreadMmsAfterCleanup": 0,
+    "everyCreatedIdAbsent": true
+  },
+  "emulator-5574": {
+    "unreadSmsAfterCleanup": 0,
+    "unreadMmsAfterCleanup": 0,
+    "everyCreatedIdAbsent": true
+  }
+}

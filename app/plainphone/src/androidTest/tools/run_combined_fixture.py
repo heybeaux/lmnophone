@@ -118,4 +118,9 @@ try:
   nonInbox.append(mms('drafts' if box=='draft' else box,sub_id=included,m_type=128))
  evidence('sent_draft_outbox_excluded',4,','.join(map(str,nonInbox)),0,0)
 finally:
- for uri in reversed(created): content('delete','--uri',uri)
+ for uri in reversed(created):
+  # MmsProvider delete applies the subscription filter too. Return our synthetic
+  # row to the included subscription before removal; update accepts this metadata.
+  content('update','--uri',uri,'--bind',f'sub_id:i:{included}')
+  content('delete','--uri',uri)
+  assert int(uri.rsplit('/',1)[1]) not in ids(uri.rsplit('/',1)[0]), 'Fixture cleanup failed'
