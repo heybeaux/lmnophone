@@ -5,6 +5,7 @@ package org.plainphone.device.authority
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -644,5 +645,67 @@ class DeviceReconciliationTest {
         other!!.join(5000)
         assertTrue("the direct call waited and wrote nothing during the run", waited)
         assertEquals(true, otherResult.get())
+    }
+
+    // Wiring slice 1: what every policy pass reads from the one authority store (AuthorityPass).
+    private fun turnOff(phase: org.plainphone.policy.WaitingPhase) = org.plainphone.policy.WaitingOperation(
+        org.plainphone.policy.WaitingIdentity("wait-1", "synthetic-cancel"), anna, 1, 0, Mode.TRUSTED,
+        org.plainphone.core.RunningTime("epoch", 0), phase, mapOf(anna to 1L, ben to 2L),
+        recipientContacts = mapOf(anna to null, ben to null))
+
+    private fun Rig.pass() = AuthorityPass(store, reconciler)
+
+    /** A phone that never set up trusted people has no store: normal policy, no reconciliation, nothing written. */
+    @Test fun aFreshPhoneHasNoWaitingOperationAndWritesNothing() {
+        val rig = Rig(fresh = false)
+        val pass = rig.pass()
+        assertNull(pass.waitingOperation())
+        assertFalse(pass.turnOffCommitting())
+        assertNull(pass.reconcileIfLost())
+        assertTrue("nothing written: ${files(rig.dir).keys}", files(rig.dir).isEmpty())
+        assertTrue(rig.dpm.ops.isEmpty())
+        assertTrue(rig.reset.ops.isEmpty())
+    }
+
+    /** Each read is fresh: a turn-off that moves to COMMITTING selects the floor-only plan on the next pass. */
+    @Test fun aCommittingTurnOffIsReadFreshOnEveryPass() {
+        val rig = Rig()
+        val pass = rig.pass()
+        val vacant = rig.store.waitingStore.read()!!
+        val pending = WaitingState(1, turnOff(org.plainphone.policy.WaitingPhase.PENDING), emptyList(), "live")
+        assertTrue(rig.store.waitingStore.compareAndSet(vacant, pending))
+        assertEquals(org.plainphone.policy.WaitingPhase.PENDING, pass.waitingOperation()?.phase)
+        assertFalse(pass.turnOffCommitting())
+        assertTrue(PolicyEngine.decide(input.copy(waitingOperation = pass.waitingOperation())).restrictions.isNotEmpty())
+        val committing = WaitingState(2, turnOff(org.plainphone.policy.WaitingPhase.COMMITTING), emptyList(), "live")
+        assertTrue(rig.store.waitingStore.compareAndSet(rig.store.waitingStore.read()!!, committing))
+        assertTrue(pass.turnOffCommitting())
+        val plan = PolicyEngine.decide(input.copy(waitingOperation = pass.waitingOperation()))
+        assertTrue("floor only: ${plan.restrictions}", plan.restrictions.isEmpty())
+        assertNull(pass.reconcileIfLost())
+    }
+
+    /** A damaged waiting record is not a committing turn-off: normal lockdown, and the loss is reconciled without a PIN. */
+    @Test fun aConfirmedLossReconcilesAutomatically() {
+        val rig = Rig()
+        rig.lose()
+        val pass = rig.pass()
+        assertNull(pass.waitingOperation())
+        assertFalse(pass.turnOffCommitting())
+        assertEquals(ReconcileOutcome.RECOVERED, pass.reconcileIfLost()?.outcome)
+        assertNotNull(rig.store.waitingStore.read())
+        assertNull("recovered: nothing lost on the next pass", pass.reconcileIfLost())
+    }
+
+    /** A failed automatic reconciliation keeps the slot held and is retried on the next pass. */
+    @Test fun aFailedAutomaticReconciliationIsRetriedOnTheNextPass() {
+        val rig = Rig()
+        rig.lose()
+        val pass = rig.pass()
+        rig.reset.throwOn = "set"
+        assertEquals(ReconcileFailure.RESET_APPLY, pass.reconcileIfLost()?.failure)
+        assertNull(rig.store.waitingStore.read())
+        rig.reset.throwOn = null
+        assertEquals(ReconcileOutcome.RECOVERED, pass.reconcileIfLost()?.outcome)
     }
 }
