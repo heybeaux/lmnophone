@@ -34,10 +34,12 @@ data class BootOutcome(
     val disabledFloor: Set<PackageName> = emptySet(),
     /** [PolicyPlan.needsAttention]: baseline after corrupt policy, no system dialer, and similar. */
     val planNeedsAttention: Boolean = false,
+    /** The saved flip-failure record could not be read ([FlipFailures.unknown]). */
+    val flipRecordUnknown: Boolean = false,
 ) {
     /** Show "Plainphone needs attention" (Home still draws when [ready]). */
     val needsAttention: Boolean get() =
-        planNeedsAttention || apply?.needsAttention != false || disabledFloor.isNotEmpty()
+        planNeedsAttention || apply?.needsAttention != false || disabledFloor.isNotEmpty() || flipRecordUnknown
     /** Setup must not finish while a floor package is disabled. */
     val setupMayFinish: Boolean get() = ready && disabledFloor.isEmpty()
 }
@@ -60,8 +62,10 @@ data class BootOutcome(
  * features and the floor from OS sources only ([floor]). It unhides and re-adds lock-task membership
  * and never hides. During a committing turn-off, or when that cannot be read, it repairs only the floor.
  *
- * Unresolved flip failures are kept in [flipFailures] (PLA-241 finding 4). Enabled state is read for
- * every expected package after the final readback (finding 5).
+ * Unresolved flip failures are kept in [flipFailures] (PLA-241 finding 4). A save that is not
+ * acknowledged (false or a throw) is retried on every later pass until one is (PLA-264 finding 2); an
+ * unreadable record keeps attention until acknowledged (finding 3). Notice storage never stops a
+ * repair. Enabled state is read for every expected package after the final readback (finding 5).
  *
  * Revoking a relaxation takes the package out of lock task and hides it, unless the plan's never-hide
  * list names it. With no plan the packages still leave lock task, and the run is not ready.
@@ -88,7 +92,10 @@ class BootReapply(
     private var applied: ApplyResult? = null
     private val runFlipFailures = mutableSetOf<PackageName>()
     private val runFlipped = mutableSetOf<PackageName>()
-    private var unresolved: Set<PackageName>? = null
+    /** The flip-failure state this process knows; null until the store is first read. */
+    private var unresolved: FlipFailures? = null
+    /** [unresolved] has not been acknowledged durable by [flipFailures] yet. */
+    private var unsaved = false
 
     val sessions = SessionController(journal, Effects(), { null }, null, { _, _ -> false })
 
@@ -109,24 +116,31 @@ class BootReapply(
         val nowDisabled = attempt { applier.disabled(repairPlan) }.orEmpty()
         val disabledFloor = (applied?.unrepairable.orEmpty() + nowDisabled) intersect floorPackages
         return BootOutcome(
-            ready, locked, applied?.copy(flipFailures = failures), filter.withheld, disabledFloor,
-            plan?.needsAttention ?: true,
+            ready, locked, applied?.copy(flipFailures = failures.names), filter.withheld, disabledFloor,
+            plan?.needsAttention ?: true, failures.unknown,
         )
     }
 
     /** The trusted person saw the flip-failure notice: clear it (the wiring slice calls this). */
     fun acknowledgeFlipFailures() {
-        unresolved = emptySet()
-        attempt { flipFailures.save(emptySet()) }
+        unresolved = FlipFailures.NONE
+        save(FlipFailures.NONE)
     }
 
-    /** Earlier unresolved failures plus this run's, minus packages whose flip read back this run. */
-    private fun rememberFlipFailures(): Set<PackageName> {
-        val earlier = unresolved ?: attempt { flipFailures.read() }.orEmpty()
-        val now = earlier - runFlipped + runFlipFailures
+    /**
+     * Earlier unresolved failures plus this run's, minus packages whose flip read back this run. An
+     * unreadable store is unknown. Saved when it changed or an earlier save was not acknowledged.
+     */
+    private fun rememberFlipFailures(): FlipFailures {
+        val earlier = unresolved ?: attempt { flipFailures.read() } ?: FlipFailures.UNKNOWN
+        val now = earlier.copy(names = earlier.names - runFlipped + runFlipFailures)
         unresolved = now
-        if (now != earlier) attempt { flipFailures.save(now) }
+        if (now != earlier || unsaved) save(now)
         return now
+    }
+
+    private fun save(state: FlipFailures) {
+        unsaved = attempt { flipFailures.save(state) } != true
     }
 
     private fun record(result: ApplyResult) {
