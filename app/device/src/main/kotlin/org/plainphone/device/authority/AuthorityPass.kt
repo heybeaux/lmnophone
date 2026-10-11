@@ -17,6 +17,10 @@ import org.plainphone.policy.WaitingPhase
  *   floor-only plan.
  * - [reconcileIfLost] runs [reconciliation] only when [store] confirms the loss. It needs no PIN.
  *   A failure keeps the slot held, and the next pass tries again.
+ * - [needsAttention] is separate from reconciliation (PLA-350 R2): a store that was set up but whose
+ *   credentials or waiting record does not read needs attention, whether or not a reconciliation can
+ *   start. That includes a wholly unreadable record, which is never a confirmed loss. A phone that
+ *   never set up trusted people needs none.
  *
  * Nothing here writes to a store that does not exist yet.
  */
@@ -34,4 +38,8 @@ class AuthorityPass(
     /** The automatic reconciliation of a confirmed loss; null when nothing is lost. */
     fun reconcileIfLost(): ReconcileResult? =
         if (store.reconciliation.lostRecord() == null) null else reconciliation.reconcile()
+
+    /** True when the store was set up and its credentials or waiting record does not read. */
+    fun needsAttention(): Boolean =
+        store.recordPresent() && (store.credentials.read() == null || store.waitingStore.read() == null)
 }

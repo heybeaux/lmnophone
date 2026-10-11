@@ -805,6 +805,12 @@ class JointAuthorityStore internal constructor(
         save(current, Snapshot(current.sequence + 1, current.with(section, bytes).sections))
     }
 
+    /**
+     * True when any record copy or fence exists, in any schema: the store was set up, so a record that
+     * does not read is damaged, not absent. A refused coordinator counts as present (fail toward attention).
+     */
+    fun recordPresent(): Boolean = coordinator.run(true) { copyA.exists() || copyB.exists() || fenceA.exists() || fenceB.exists() }
+
     /** Recovery receipt addresses, kept as a permanent audit. Null when the record is unreadable. */
     fun recoveryAddresses(): List<StoredRecoveryAddresses>? = section(Section.RECOVERY)?.let(AuthorityCodec::decodeRecovery)?.audit
 

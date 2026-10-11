@@ -248,7 +248,7 @@ class DeviceReconciliationTest {
         rig.lose()
         val other = Rig()
         val crossed = DeviceReconciliationEffects({ true }, DeviceOwnerReader { true }, ReadbackPolicyApplier(dpm()),
-            ResetProtectionEffects(ResetPort()), other.store)
+            ResetProtectionEffects(ResetPort()), other.store, RestrictionFilter.NONE)
         assertFalse("effects bound to another store are refused", runCatching {
             rig.store.waitingReconciler({ input }, crossed, PersonAuthorityConsumer { _, _, _ -> true })
         }.isSuccess)
@@ -292,7 +292,7 @@ class DeviceReconciliationTest {
         rig.dpm.flipsIgnored = 100
         var reported: org.plainphone.device.ApplyResult? = null
         val effects = DeviceReconciliationEffects({ true }, DeviceOwnerReader { true },
-            ReadbackPolicyApplier(rig.dpm), ResetProtectionEffects(rig.reset), rig.store,
+            ReadbackPolicyApplier(rig.dpm), ResetProtectionEffects(rig.reset), rig.store, RestrictionFilter.NONE,
             onApplied = { reported = it })
         val reconciler = rig.store.waitingReconciler({ input }, effects, PersonAuthorityConsumer { _, _, _ -> true })
         assertEquals(ReconcileOutcome.RECOVERED, reconciler.reconcile().outcome)

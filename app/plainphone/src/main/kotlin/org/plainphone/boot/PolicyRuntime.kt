@@ -74,6 +74,8 @@ class PolicyRuntime private constructor(private val context: Context) {
         packagesPort, FilePolicyStore(File(protectedDir, "policy")), emptyList(),
         PackageName(context.packageName), MESSAGES,
     )
+    /** One build/SDK restriction filter for every policy write: the boot re-apply and reconciliation (PLA-350 R1). */
+    private val restrictionFilter = BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT)
     /** Credentials, the waiting operation and its reconciliation, in device-protected storage. */
     private val authorityStore = JointAuthorityStore(File(protectedDir, "authority"))
     private val authority: AuthorityPass by lazy {
@@ -86,6 +88,7 @@ class PolicyRuntime private constructor(private val context: Context) {
                 applier = ReadbackPolicyApplier(port),
                 reset = ResetProtectionEffects(DpmResetProtectionPort(context, admin)),
                 store = authorityStore,
+                filter = restrictionFilter,
             ),
             // PIN Repair is not wired yet, so no grant is ever accepted. Automatic reconciliation needs none.
             PersonAuthorityConsumer { _, _, _ -> false },
@@ -95,7 +98,7 @@ class PolicyRuntime private constructor(private val context: Context) {
         FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT),
         port, SESSION_PACKAGES,
         { locked -> PolicyEngine.decide(assembler.assemble().input.copy(lockedBoot = locked, waitingOperation = authority.waitingOperation())) },
-        BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT),
+        restrictionFilter,
         { stage, error -> Log.w(TAG, "stage $stage failed: ${error ?: "readback mismatch"}", error) },
         floor = { osFloor(packagesPort) },
         home = PackageName(context.packageName),
@@ -215,6 +218,13 @@ class PolicyRuntime private constructor(private val context: Context) {
             Log.e(TAG, "lost-record reconciliation threw", e)
             null
         }
+        // Set up but unreadable needs attention even when no reconciliation can start (PLA-350 R2).
+        val authorityAttention = !locked && try {
+            authority.needsAttention()
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "authority attention check threw", e)
+            true
+        }
         BuildControl.control.afterReapply(context, dpm, admin)
         runsState.value++
         // A locked run never opens Home: the full plan has not run yet.
@@ -222,7 +232,8 @@ class PolicyRuntime private constructor(private val context: Context) {
             val action = recovery.afterPass(locked, outcome?.ready == true)
             // PINNED is not containment (PLA-322 finding 3): not ready, and needs attention.
             val pinned = action == RecoveryAction.PINNED_ATTENTION
-            val held = reconciled?.outcome == ReconcileOutcome.NEEDS_ATTENTION
+            // Only the notice: Home and calling stay available either way.
+            val held = reconciled?.outcome == ReconcileOutcome.NEEDS_ATTENTION || authorityAttention
             noticeState.value = if (pinned || held) HomeNotice.NeedsAttention else homeNotice(outcome)
             lastGate = if (outcome?.ready == true && !pinned) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
