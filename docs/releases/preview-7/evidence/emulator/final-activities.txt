@@ -159,7 +159,7 @@ ActivityTaskSupervisor state:
         * Task{c07d0d0 #3 type=undefined U=0 rootTaskId=2 visible=false visibleRequested=false mode=multi-window translucent=true sz=0}
           bounds=[0,0][1080,2400]
 
-  no ScreenRotationAnimation 
+  no ScreenRotationAnimation
 
   rootHomeTask=Task=1
 

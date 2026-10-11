@@ -88,7 +88,7 @@ Number of listeners for
 
 User types version: 0
 User types (11 types):
-    android.os.usertype.profile.TEST: 
+    android.os.usertype.profile.TEST:
         mName: android.os.usertype.profile.TEST
         mBaseType: PROFILE
         mEnabled: true
@@ -114,7 +114,7 @@ User types (11 types):
             mCrossProfileContentSharingStrategy=0
             mProfileApiVisibility=0
             mItemsRestrictedOnHomeScreen=false
-        mDefaultRestrictions: 
+        mDefaultRestrictions:
             no_fun
             no_wallpaper
         mIconBadge: 17302963
@@ -125,7 +125,7 @@ User types (11 types):
         mBadgeColors.length: 3
         mDarkThemeBadgeColors.length: 3
         mLabels.length: 3
-    android.os.usertype.profile.COMMUNAL: 
+    android.os.usertype.profile.COMMUNAL:
         mName: android.os.usertype.profile.COMMUNAL
         mBaseType: PROFILE
         mEnabled: false
@@ -151,7 +151,7 @@ User types (11 types):
             mCrossProfileContentSharingStrategy=0
             mProfileApiVisibility=0
             mItemsRestrictedOnHomeScreen=false
-        mDefaultRestrictions: 
+        mDefaultRestrictions:
             no_wallpaper
         mIconBadge: 17302963
         mBadgePlain: 17302961
@@ -161,7 +161,7 @@ User types (11 types):
         mBadgeColors.length: 3
         mDarkThemeBadgeColors.length: 3
         mLabels.length: 1
-    android.os.usertype.profile.PRIVATE: 
+    android.os.usertype.profile.PRIVATE:
         mName: android.os.usertype.profile.PRIVATE
         mBaseType: PROFILE
         mEnabled: true
@@ -187,7 +187,7 @@ User types (11 types):
             mCrossProfileContentSharingStrategy=1
             mProfileApiVisibility=1
             mItemsRestrictedOnHomeScreen=true
-        mDefaultRestrictions: 
+        mDefaultRestrictions:
             no_bluetooth_sharing
             no_wallpaper
         mIconBadge: 17302903
@@ -198,7 +198,7 @@ User types (11 types):
         mBadgeColors.length: 1
         mDarkThemeBadgeColors.length: 1
         mLabels.length: 1
-    android.os.usertype.full.GUEST: 
+    android.os.usertype.full.GUEST:
         mName: android.os.usertype.full.GUEST
         mBaseType: FULL
         mEnabled: true
@@ -224,7 +224,7 @@ User types (11 types):
             mCrossProfileContentSharingStrategy=0
             mProfileApiVisibility=0
             mItemsRestrictedOnHomeScreen=false
-        mDefaultRestrictions: 
+        mDefaultRestrictions:
             no_sms
             no_install_unknown_sources
             no_config_wifi
@@ -238,7 +238,7 @@ User types (11 types):
         mBadgeColors.length: 0(null)
         mDarkThemeBadgeColors.length: 0(null)
         mLabels.length: 0(null)
-    android.os.usertype.profile.MANAGED: 
+    android.os.usertype.profile.MANAGED:
         mName: android.os.usertype.profile.MANAGED
         mBaseType: PROFILE
         mEnabled: true
@@ -264,7 +264,7 @@ User types (11 types):
             mCrossProfileContentSharingStrategy=0
             mProfileApiVisibility=0
             mItemsRestrictedOnHomeScreen=false
-        mDefaultRestrictions: 
+        mDefaultRestrictions:
             no_wallpaper
         mIconBadge: 17302477
         mBadgePlain: 17302472
@@ -274,7 +274,7 @@ User types (11 types):
         mBadgeColors.length: 3
         mDarkThemeBadgeColors.length: 3
         mLabels.length: 3
-    android.os.usertype.system.HEADLESS: 
+    android.os.usertype.system.HEADLESS:
         mName: android.os.usertype.system.HEADLESS
         mBaseType: SYSTEM
         mEnabled: true
@@ -300,7 +300,7 @@ User types (11 types):
             mCrossProfileContentSharingStrategy=0
             mProfileApiVisibility=0
             mItemsRestrictedOnHomeScreen=false
-        config_defaultFirstUserRestrictions: 
+        config_defaultFirstUserRestrictions:
             none
         mIconBadge: 0
         mBadgePlain: 0
@@ -310,7 +310,7 @@ User types (11 types):
         mBadgeColors.length: 0(null)
         mDarkThemeBadgeColors.length: 0(null)
         mLabels.length: 0(null)
-    android.os.usertype.full.SYSTEM: 
+    android.os.usertype.full.SYSTEM:
         mName: android.os.usertype.full.SYSTEM
         mBaseType: FULL|SYSTEM
         mEnabled: true
@@ -336,7 +336,7 @@ User types (11 types):
             mCrossProfileContentSharingStrategy=0
             mProfileApiVisibility=0
             mItemsRestrictedOnHomeScreen=false
-        config_defaultFirstUserRestrictions: 
+        config_defaultFirstUserRestrictions:
             none
         mIconBadge: 0
         mBadgePlain: 0
@@ -346,7 +346,7 @@ User types (11 types):
         mBadgeColors.length: 0(null)
         mDarkThemeBadgeColors.length: 0(null)
         mLabels.length: 0(null)
-    android.os.usertype.full.SECONDARY: 
+    android.os.usertype.full.SECONDARY:
         mName: android.os.usertype.full.SECONDARY
         mBaseType: FULL
         mEnabled: true
@@ -372,7 +372,7 @@ User types (11 types):
             mCrossProfileContentSharingStrategy=0
             mProfileApiVisibility=0
             mItemsRestrictedOnHomeScreen=false
-        mDefaultRestrictions: 
+        mDefaultRestrictions:
             no_sms
             no_outgoing_calls
         mIconBadge: 0
@@ -383,7 +383,7 @@ User types (11 types):
         mBadgeColors.length: 0(null)
         mDarkThemeBadgeColors.length: 0(null)
         mLabels.length: 0(null)
-    android.os.usertype.full.RESTRICTED: 
+    android.os.usertype.full.RESTRICTED:
         mName: android.os.usertype.full.RESTRICTED
         mBaseType: FULL
         mEnabled: true
@@ -409,7 +409,7 @@ User types (11 types):
             mCrossProfileContentSharingStrategy=0
             mProfileApiVisibility=0
             mItemsRestrictedOnHomeScreen=false
-        mDefaultRestrictions: 
+        mDefaultRestrictions:
             null
         mIconBadge: 0
         mBadgePlain: 0
@@ -419,7 +419,7 @@ User types (11 types):
         mBadgeColors.length: 0(null)
         mDarkThemeBadgeColors.length: 0(null)
         mLabels.length: 0(null)
-    android.os.usertype.full.DEMO: 
+    android.os.usertype.full.DEMO:
         mName: android.os.usertype.full.DEMO
         mBaseType: FULL
         mEnabled: true
@@ -445,7 +445,7 @@ User types (11 types):
             mCrossProfileContentSharingStrategy=0
             mProfileApiVisibility=0
             mItemsRestrictedOnHomeScreen=false
-        mDefaultRestrictions: 
+        mDefaultRestrictions:
             null
         mIconBadge: 0
         mBadgePlain: 0
@@ -455,7 +455,7 @@ User types (11 types):
         mBadgeColors.length: 0(null)
         mDarkThemeBadgeColors.length: 0(null)
         mLabels.length: 0(null)
-    android.os.usertype.profile.CLONE: 
+    android.os.usertype.profile.CLONE:
         mName: android.os.usertype.profile.CLONE
         mBaseType: PROFILE
         mEnabled: true
@@ -481,7 +481,7 @@ User types (11 types):
             mCrossProfileContentSharingStrategy=1
             mProfileApiVisibility=0
             mItemsRestrictedOnHomeScreen=false
-        mDefaultRestrictions: 
+        mDefaultRestrictions:
             null
         mIconBadge: 17302453
         mBadgePlain: 17302452
@@ -507,91 +507,91 @@ Whitelisted packages per user type
     9 -> android.os.usertype.profile.TEST
     10 -> android.os.usertype.system.HEADLESS
   85 packages:
-    com.android.internal.display.cutout.emulation.corner: 0 1 2 3 4 
-    com.android.internal.display.cutout.emulation.double: 0 1 2 3 4 
-    com.android.theme.color.amethyst: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon.pebble: 0 1 2 3 4 5 6 7 8 9 
-    com.android.internal.systemui.navbar.gestural_wide_back: 0 1 2 3 4 
-    com.android.theme.color.sand: 0 1 2 3 4 5 6 7 8 9 
-    com.android.wallpapercropper: 0 1 2 3 4 
-    com.android.theme.icon.vessel: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.color.cinnamon: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.victor.settings: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.rounded.systemui: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon.taperedrect: 0 1 2 3 4 5 6 7 8 9 
-    com.android.documentsui: 0 1 2 3 4 6 7 8 9 10 
-    com.android.quicksearchbox: 0 1 2 3 4 6 7 9 10 
-    com.android.messaging: 0 1 2 3 4 6 7 9 
-    com.android.theme.icon_pack.rounded.android: 0 1 2 3 4 5 6 7 8 9 
-    com.android.internal.systemui.onehanded.gestural: 0 1 2 3 4 
-    com.android.theme.icon_pack.victor.systemui: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.circular.themepicker: 0 1 2 3 4 5 6 7 8 9 
-    com.android.avatarpicker: 0 1 2 3 4 
-    com.android.theme.color.tangerine: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.color.aquamarine: 0 1 2 3 4 5 6 7 8 9 
-    com.android.internal.display.cutout.emulation.hole: 0 1 2 3 4 
-    com.android.internal.display.cutout.emulation.tall: 0 1 2 3 4 
-    com.android.theme.color.black: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.color.green: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.color.ocean: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.color.space: 0 1 2 3 4 5 6 7 8 9 
-    com.android.internal.systemui.navbar.threebutton: 0 1 2 3 4 
-    android: 0 1 2 3 4 5 6 7 8 9 10 
-    com.android.contacts: 0 1 2 3 4 6 7 8 9 
-    com.android.camera2: 0 1 2 3 4 6 7 8 9 
-    com.android.theme.icon_pack.rounded.launcher: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.kai.settings: 0 1 2 3 4 5 6 7 8 9 
-    com.android.stk: 0 1 2 3 4 6 7 9 10 
-    com.android.internal.systemui.navbar.twobutton: 0 1 2 3 4 
-    com.android.theme.icon_pack.sam.settings: 0 1 2 3 4 5 6 7 8 9 
-    com.android.calendar: 0 1 2 3 4 6 7 9 
-    com.android.internal.systemui.navbar.gestural_extra_wide_back: 0 1 2 3 4 
-    com.android.theme.icon_pack.kai.themepicker: 0 1 2 3 4 5 6 7 8 9 
-    com.android.providers.settings: 0 1 2 3 4 5 6 7 8 9 10 
-    com.android.theme.icon_pack.victor.launcher: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.filled.settings: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.kai.systemui: 0 1 2 3 4 5 6 7 8 9 
-    com.android.bips: 0 1 2 3 4 6 7 8 9 
-    com.android.theme.icon_pack.circular.settings: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.sam.systemui: 0 1 2 3 4 5 6 7 8 9 
-    com.google.android.avatarpicker: 0 1 2 3 4 
-    com.android.theme.icon.teardrop: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.rounded.themepicker: 0 1 2 3 4 5 6 7 8 9 
-    com.android.dialer: 0 1 2 3 4 6 7 9 10 
-    com.android.gallery3d: 0 1 2 3 4 6 7 9 
-    com.android.theme.icon_pack.filled.systemui: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.sam.android: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.font.notoserifsource: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.filled.android: 0 1 2 3 4 5 6 7 8 9 
-    com.android.internal.display.cutout.emulation.waterfall: 0 1 2 3 4 
-    com.android.theme.icon_pack.circular.systemui: 0 1 2 3 4 5 6 7 8 9 
-    com.android.inputmethod.latin: 0 1 2 3 4 5 6 7 8 9 10 
-    com.android.internal.systemui.navbar.transparent: 0 1 2 3 4 
-    com.android.theme.icon_pack.kai.android: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.kai.launcher: 0 1 2 3 4 5 6 7 8 9 
-    com.android.role.notes.enabled: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.sam.launcher: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon.squircle: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.victor.android: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.color.palette: 0 1 2 3 4 5 6 7 8 9 
-    com.android.settings: 0 1 2 3 4 5 6 7 8 9 10 
-    com.android.theme.icon_pack.filled.launcher: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.color.carbon: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.circular.launcher: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.filled.themepicker: 0 1 2 3 4 5 6 7 8 9 
-    com.android.wallpaperbackup: 0 1 2 3 4 
-    com.android.internal.systemui.navbar.gestural: 0 1 2 3 4 
-    com.android.theme.icon_pack.victor.themepicker: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.color.orchid: 0 1 2 3 4 5 6 7 8 9 
-    com.android.deskclock: 0 1 2 3 4 
-    com.android.theme.color.purple: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.sam.themepicker: 0 1 2 3 4 5 6 7 8 9 
-    com.android.bluetooth: 0 1 2 3 4 6 7 9 10 
-    com.android.wallpaperpicker: 0 1 2 3 4 
-    com.android.theme.icon.roundedrect: 0 1 2 3 4 5 6 7 8 9 
-    com.android.internal.systemui.navbar.gestural_narrow_back: 0 1 2 3 4 
-    com.android.theme.icon_pack.rounded.settings: 0 1 2 3 4 5 6 7 8 9 
-    com.android.theme.icon_pack.circular.android: 0 1 2 3 4 5 6 7 8 9 
+    com.android.internal.display.cutout.emulation.corner: 0 1 2 3 4
+    com.android.internal.display.cutout.emulation.double: 0 1 2 3 4
+    com.android.theme.color.amethyst: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon.pebble: 0 1 2 3 4 5 6 7 8 9
+    com.android.internal.systemui.navbar.gestural_wide_back: 0 1 2 3 4
+    com.android.theme.color.sand: 0 1 2 3 4 5 6 7 8 9
+    com.android.wallpapercropper: 0 1 2 3 4
+    com.android.theme.icon.vessel: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.color.cinnamon: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.victor.settings: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.rounded.systemui: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon.taperedrect: 0 1 2 3 4 5 6 7 8 9
+    com.android.documentsui: 0 1 2 3 4 6 7 8 9 10
+    com.android.quicksearchbox: 0 1 2 3 4 6 7 9 10
+    com.android.messaging: 0 1 2 3 4 6 7 9
+    com.android.theme.icon_pack.rounded.android: 0 1 2 3 4 5 6 7 8 9
+    com.android.internal.systemui.onehanded.gestural: 0 1 2 3 4
+    com.android.theme.icon_pack.victor.systemui: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.circular.themepicker: 0 1 2 3 4 5 6 7 8 9
+    com.android.avatarpicker: 0 1 2 3 4
+    com.android.theme.color.tangerine: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.color.aquamarine: 0 1 2 3 4 5 6 7 8 9
+    com.android.internal.display.cutout.emulation.hole: 0 1 2 3 4
+    com.android.internal.display.cutout.emulation.tall: 0 1 2 3 4
+    com.android.theme.color.black: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.color.green: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.color.ocean: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.color.space: 0 1 2 3 4 5 6 7 8 9
+    com.android.internal.systemui.navbar.threebutton: 0 1 2 3 4
+    android: 0 1 2 3 4 5 6 7 8 9 10
+    com.android.contacts: 0 1 2 3 4 6 7 8 9
+    com.android.camera2: 0 1 2 3 4 6 7 8 9
+    com.android.theme.icon_pack.rounded.launcher: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.kai.settings: 0 1 2 3 4 5 6 7 8 9
+    com.android.stk: 0 1 2 3 4 6 7 9 10
+    com.android.internal.systemui.navbar.twobutton: 0 1 2 3 4
+    com.android.theme.icon_pack.sam.settings: 0 1 2 3 4 5 6 7 8 9
+    com.android.calendar: 0 1 2 3 4 6 7 9
+    com.android.internal.systemui.navbar.gestural_extra_wide_back: 0 1 2 3 4
+    com.android.theme.icon_pack.kai.themepicker: 0 1 2 3 4 5 6 7 8 9
+    com.android.providers.settings: 0 1 2 3 4 5 6 7 8 9 10
+    com.android.theme.icon_pack.victor.launcher: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.filled.settings: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.kai.systemui: 0 1 2 3 4 5 6 7 8 9
+    com.android.bips: 0 1 2 3 4 6 7 8 9
+    com.android.theme.icon_pack.circular.settings: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.sam.systemui: 0 1 2 3 4 5 6 7 8 9
+    com.google.android.avatarpicker: 0 1 2 3 4
+    com.android.theme.icon.teardrop: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.rounded.themepicker: 0 1 2 3 4 5 6 7 8 9
+    com.android.dialer: 0 1 2 3 4 6 7 9 10
+    com.android.gallery3d: 0 1 2 3 4 6 7 9
+    com.android.theme.icon_pack.filled.systemui: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.sam.android: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.font.notoserifsource: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.filled.android: 0 1 2 3 4 5 6 7 8 9
+    com.android.internal.display.cutout.emulation.waterfall: 0 1 2 3 4
+    com.android.theme.icon_pack.circular.systemui: 0 1 2 3 4 5 6 7 8 9
+    com.android.inputmethod.latin: 0 1 2 3 4 5 6 7 8 9 10
+    com.android.internal.systemui.navbar.transparent: 0 1 2 3 4
+    com.android.theme.icon_pack.kai.android: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.kai.launcher: 0 1 2 3 4 5 6 7 8 9
+    com.android.role.notes.enabled: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.sam.launcher: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon.squircle: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.victor.android: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.color.palette: 0 1 2 3 4 5 6 7 8 9
+    com.android.settings: 0 1 2 3 4 5 6 7 8 9 10
+    com.android.theme.icon_pack.filled.launcher: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.color.carbon: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.circular.launcher: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.filled.themepicker: 0 1 2 3 4 5 6 7 8 9
+    com.android.wallpaperbackup: 0 1 2 3 4
+    com.android.internal.systemui.navbar.gestural: 0 1 2 3 4
+    com.android.theme.icon_pack.victor.themepicker: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.color.orchid: 0 1 2 3 4 5 6 7 8 9
+    com.android.deskclock: 0 1 2 3 4
+    com.android.theme.color.purple: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.sam.themepicker: 0 1 2 3 4 5 6 7 8 9
+    com.android.bluetooth: 0 1 2 3 4 6 7 9 10
+    com.android.wallpaperpicker: 0 1 2 3 4
+    com.android.theme.icon.roundedrect: 0 1 2 3 4 5 6 7 8 9
+    com.android.internal.systemui.navbar.gestural_narrow_back: 0 1 2 3 4
+    com.android.theme.icon_pack.rounded.settings: 0 1 2 3 4 5 6 7 8 9
+    com.android.theme.icon_pack.circular.android: 0 1 2 3 4 5 6 7 8 9
   No errors
   64 warnings
     com.android.theme.color.amethyst is allowlisted but not present.

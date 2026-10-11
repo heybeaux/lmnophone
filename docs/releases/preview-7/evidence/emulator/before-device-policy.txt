@@ -5,14 +5,14 @@ Current Device Policy Manager state:
     mIsAutomotive=false
     mHasTelephonyFeature=true
     mSafetyChecker=null
-  Device Owner: 
+  Device Owner:
     admin=ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
     package=org.plainphone
     isOrganizationOwnedDevice=true
     User ID: 0
-  
-  
-  
+
+
+
   Enabled Device Admins (User 0, provisioningState: 3):
     org.plainphone/.PlainphoneAdminReceiver:
       uid=10207
@@ -71,25 +71,25 @@ Current Device Policy Manager state:
       accountTypesWithManagementDisabled={}
       mDialerPackage=null
       mSmsPackage=null
-  
+
     mPasswordOwner=-1
     mPasswordTokenHandle=0
     mAppsSuspended=false
     mUserSetupComplete=true
     mAffiliationIds={}
     mNewUserDisclaimer=null
-  
-  
+
+
   Constants:
     DAS_DIED_SERVICE_RECONNECT_BACKOFF_SEC: 3600
     DAS_DIED_SERVICE_RECONNECT_BACKOFF_INCREASE: 2.0
     DAS_DIED_SERVICE_RECONNECT_MAX_BACKOFF_SEC: 86400
     DAS_DIED_SERVICE_STABLE_CONNECTION_THRESHOLD_SEC: 120
-  
+
   Stats:
     LockGuard.guard(): count=15985, total=22.2ms, avg=0.001ms, max calls/s=3266 max dur/s=7.2ms max time=6.3ms
-  
-  Local Policies: 
+
+  Local Policies:
     User 0:
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.contacts}
         Per-admin Policy:
@@ -97,111 +97,111 @@ Current Device Policy Manager state:
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       DefaultPolicyKey lockTask
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             LockTaskPolicy {mPackages= com.android.camera2, com.google.android.apps.maps, com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.android.phone, com.google.android.cellbroadcastreceiver; mFlags= 53 }
         Resolved Policy (TopPriority):
           LockTaskPolicy {mPackages= com.android.camera2, com.google.android.apps.maps, com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.android.phone, com.google.android.cellbroadcastreceiver; mFlags= 53 }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.apps.photos}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.googlequicksearchbox}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.gm}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.android.stk}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.android.vending}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.deskclock}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.documentsui}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.android.chrome}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       IntentFilterPolicyKey{mKey= persistentPreferredActivity; mFilter= android.content.IntentFilter@660163d}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             ComponentNamePolicyValue { mValue= ComponentInfo{org.plainphone/org.plainphone.MainActivity} }
         Resolved Policy (TopPriority):
           ComponentNamePolicyValue { mValue= ComponentInfo{org.plainphone/org.plainphone.MainActivity} }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.apps.youtube.music}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.apps.docs}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.youtube}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
+
       PackagePolicyKey{mPolicyKey= applicationHidden; mPackageName= com.google.android.calendar}
         Per-admin Policy:
           EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false }
             BooleanPolicyValue { mValue= true }
         Resolved Policy (MostRestrictive):
           BooleanPolicyValue { mValue= true }
-      
-  
-  Global Policies: 
-  
+
+
+  Global Policies:
+
   Default admin policy size limit: -1
   Current admin policy size limit: -1
-  Admin Policies size: 
+  Admin Policies size:
   User 0:
     Admin : EnforcingAdmin { mPackageName= org.plainphone, mComponentName= ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}, mAuthorities= [enterprise], mUserId= 0, mIsRoleAuthority= false } : 1956
 
@@ -372,4 +372,3 @@ Other overlayable app resources
     6: com.google.android.apps.restore
   policy_exempt_apps: empty
   vendor_policy_exempt_apps: empty
-
