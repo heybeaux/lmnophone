@@ -567,4 +567,82 @@ class DeviceReconciliationTest {
         assertEquals(ReconcileFailure.REVOCATION, reconciler.reconcile().failure)
         assertTrue("no plan in this run, so no DPM write: ${rig.dpm.ops}", rig.dpm.ops.isEmpty())
     }
+
+    // PLA-328 F1. The reviewer's two probes, kept except for a 150 ms coordinator wait: a direct effect call
+    // from another thread now waits for the running operation and is refused at the limit, so with the
+    // default 10 s wait the probe's 2 s join would end first.
+    @Test fun reviewConcurrentDirectApplyCannotReplaceReconcilePlan() = reviewConcurrentDirectApply(false)
+    @Test fun reviewConcurrentDirectApplyCannotReplacePinRepairPlan() = reviewConcurrentDirectApply(true)
+
+    private fun reviewConcurrentDirectApply(pinRepair: Boolean) {
+        val rig = Rig()
+        rig.lose()
+        val request = if (pinRepair) rig.reconciler.prepareRepair(anna)!! else null
+        // A separate pass with incomplete floor facts must not replace this run's known plan.
+        val otherPlan = PolicyEngine.decide(input.copy(identities = emptyList()))
+        val otherFailure = java.util.concurrent.atomic.AtomicReference<Throwable>()
+        val otherResult = java.util.concurrent.atomic.AtomicReference<Boolean>()
+        val old = JointAuthorityStore.coordinatorWaitMillis
+        try {
+            JointAuthorityStore.coordinatorWaitMillis = 150
+            rig.reset.onSet = {
+                val before = rig.dpm.ops.size
+                val other = Thread {
+                    try { otherResult.set(rig.effects.applyPolicy(otherPlan)) }
+                    catch (failure: Throwable) { otherFailure.set(failure) }
+                }
+                other.start()
+                other.join(2000)
+                assertFalse("direct effect completed while reconciliation still owns the boundary", other.isAlive)
+                assertNull(otherFailure.get())
+                assertEquals("refused, not run, during another thread's operation", false, otherResult.get())
+                assertEquals("the refused call wrote nothing", before, rig.dpm.ops.size)
+                hideDialer(rig)
+            }
+            rig.reset.throwOn = "set"
+            val result = if (pinRepair) rig.reconciler.repair(request!!, grant()) else rig.reconciler.reconcile()
+            assertEquals(ReconcileFailure.RESET_APPLY, result.failure)
+            assertNull(rig.store.waitingStore.read())
+            assertDialerRepaired(rig, "concurrent direct apply; PIN repair=$pinRepair")
+        } finally {
+            JointAuthorityStore.coordinatorWaitMillis = old
+        }
+    }
+
+    /** A direct call nested in the run's own effect (same thread) runs, but its plan never becomes the run's repair plan. */
+    @Test fun aNestedDirectApplyCannotReplaceTheRunsPlan() {
+        for (pinRepair in listOf(false, true)) {
+            val rig = Rig()
+            rig.lose()
+            val request = if (pinRepair) rig.reconciler.prepareRepair(anna)!! else null
+            val otherPlan = PolicyEngine.decide(input.copy(identities = emptyList()))
+            var nested: Boolean? = null
+            rig.reset.onSet = { nested = rig.effects.applyPolicy(otherPlan); hideDialer(rig) }
+            rig.reset.throwOn = "set"
+            val result = if (pinRepair) rig.reconciler.repair(request!!, grant()) else rig.reconciler.reconcile()
+            assertTrue("nested call ran", nested != null)
+            assertEquals(ReconcileFailure.RESET_APPLY, result.failure)
+            assertNull(rig.store.waitingStore.read())
+            assertDialerRepaired(rig, "nested direct apply; PIN repair=$pinRepair")
+        }
+    }
+
+    /** A direct effect call from another thread waits for the whole run, then runs. */
+    @Test fun aDirectEffectFromAnotherThreadWaitsForTheRun() {
+        val rig = Rig()
+        rig.lose()
+        val otherResult = java.util.concurrent.atomic.AtomicReference<Boolean?>()
+        var other: Thread? = null
+        var waited = false
+        rig.reset.onSet = {
+            val before = rig.dpm.ops.size
+            other = Thread { otherResult.set(rig.effects.applyPolicy(PolicyEngine.decide(input))) }.also { it.start() }
+            Thread.sleep(200)
+            waited = other!!.isAlive && rig.dpm.ops.size == before
+        }
+        assertEquals(ReconcileOutcome.RECOVERED, rig.reconciler.reconcile().outcome)
+        other!!.join(5000)
+        assertTrue("the direct call waited and wrote nothing during the run", waited)
+        assertEquals(true, otherResult.get())
+    }
 }

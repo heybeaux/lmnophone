@@ -373,6 +373,24 @@ class UpdateUseStoreTest {
         }
     }
 
+    /** PLA-328 reviewer probe, kept unchanged: ordinary final-check reads survive nested effects that refuse them. */
+    @Test fun reviewOrdinaryViewSurvivesNestedEffectRefusal() {
+        val store = initialized()
+        val expected = store.credentials.read()!!
+        assertTrue(store.serialized(false) {
+            commitSelf(store) {
+                assertEquals(expected.revision, store.credentials.read()!!.revision)
+                store.androidEffect {
+                    org.junit.Assert.assertNull(store.credentials.read())
+                    store.androidEffect { org.junit.Assert.assertNull(store.credentials.read()) }
+                    org.junit.Assert.assertNull(store.credentials.read())
+                }
+                assertEquals(expected.revision, store.credentials.read()!!.revision)
+                true
+            }
+        })
+    }
+
     @Test fun reviewAndroidEffectCannotReadTheTransactionView() {
         val store = initialized()
         var seen: org.plainphone.policy.CredentialState? = null
