@@ -203,7 +203,7 @@ class HostGateTest(unittest.TestCase):
         self.assertNotIn("instrument", self.adb_log())
 
     def test_physical_serial_is_refused(self):
-        p = subprocess.run(["bash", SCRIPT, "-s", "ZY22KW6P9J", "--no-build"], env=self.env, capture_output=True, text=True)
+        p = subprocess.run(["bash", SCRIPT, "-s", "ZZ00FAKE0000", "--no-build"], env=self.env, capture_output=True, text=True)
         self.assertEqual(2, p.returncode)
         self.assertEqual("", self.adb_log())
 
