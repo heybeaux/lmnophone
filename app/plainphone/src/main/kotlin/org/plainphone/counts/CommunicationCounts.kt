@@ -54,6 +54,9 @@ class CountPreferences(private val store: CountPreferenceStore) {
 fun interface CountCancellation { fun cancel() }
 interface CountWork { fun schedule(delayMillis: Long, block: () -> Unit): CountCancellation }
 
+/** Last completed read, independent of whether a fresh number is currently shown. */
+enum class CountAvailability { UNKNOWN, AVAILABLE, UNAVAILABLE }
+
 enum class CountKind(val permission: String, val supportedPackage: String) {
     CALLS("android.permission.READ_CALL_LOG", "com.google.android.dialer"),
     MESSAGES("android.permission.READ_SMS", "com.google.android.apps.messaging"),
@@ -92,6 +95,7 @@ class CountController(
     private val observers = mutableListOf<CountCancellation>()
     private val gates = mutableMapOf<CountKind, CountAccess>()
     private class Slot {
+        var availability = CountAvailability.UNKNOWN
         var attempt = 0L
         var running = false
         var dirty = false
@@ -100,6 +104,10 @@ class CountController(
         var expiry: CountCancellation? = null
     }
     private val slots = CountKind.entries.associateWith { Slot() }
+    fun availability(kind: CountKind): CountAvailability =
+        if (gates[kind]?.allowed(kind) == false) CountAvailability.UNAVAILABLE
+        else slots.getValue(kind).availability
+
     private fun active() = enabled && (visible || settingsVisible)
     private fun gate(kind: CountKind) = runCatching { access(kind) }.getOrElse {
         CountAccess(false, false, null, false, null)
@@ -197,12 +205,13 @@ class CountController(
     }
     private fun begin(kind: CountKind, request: Long) {
         val slot = slots.getValue(kind)
-        if (!gate(kind).allowed(kind)) { put(kind, null); return }
+        if (!gate(kind).allowed(kind)) { refreshGates(); put(kind, null); return }
         val started = elapsedRealtime()
         val attempt = ++slot.attempt
         slot.running = true
         slot.timeout = work.schedule(3_000) {
             if (slot.running && slot.attempt == attempt && request == generation) {
+                slot.availability = CountAvailability.UNAVAILABLE
                 cancelRead(slot); put(kind, null)
             }
         }
@@ -221,7 +230,9 @@ class CountController(
             val valid = allowed && elapsedRealtime() - started <= 3_000
             slot.expiry?.cancel()
             slot.dirty = false
-            put(kind, value?.takeIf { valid && it >= 0 })
+            val result = value?.takeIf { valid && it >= 0 }
+            slot.availability = if (result == null) CountAvailability.UNAVAILABLE else CountAvailability.AVAILABLE
+            put(kind, result)
             if (!allowed) {
                 refreshGates()
             } else if (value != null && valid) {
@@ -242,6 +253,7 @@ class CountController(
         observers.forEach { runCatching { it.cancel() } }; observers.clear()
         gates.clear()
         counts = CommunicationCounts()
+        if (!enabled) slots.values.forEach { it.availability = CountAvailability.UNKNOWN }
         changed()
     }
     fun close() { visible = false; settingsVisible = false; stop() }
