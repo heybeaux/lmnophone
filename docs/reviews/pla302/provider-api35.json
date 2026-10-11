@@ -1,0 +1,22 @@
+[
+  {
+    "step": "included_subscription_equal_id_equal_normalized_date",
+    "output": "INSTRUMENTATION_RESULT: counts=combined=2 oracleSms=1 oracleMms=1 expected=2 nonDefault=true\nINSTRUMENTATION_RESULT: fixture=sms=1 mms=1 expectedSms=1 expectedMms=1\nINSTRUMENTATION_RESULT: outcome=PASS\nINSTRUMENTATION_CODE: -1\n"
+  },
+  {
+    "step": "restored_subscription_minus_one",
+    "output": "INSTRUMENTATION_RESULT: counts=combined=4 oracleSms=2 oracleMms=2 expected=4 nonDefault=true\nINSTRUMENTATION_RESULT: fixture=sms=1 mms=1 expectedSms=1 expectedMms=1\nINSTRUMENTATION_RESULT: outcome=PASS\nINSTRUMENTATION_CODE: -1\n"
+  },
+  {
+    "step": "excluded_subscription_rows_exist_but_neither_query_counts_them",
+    "output": "INSTRUMENTATION_RESULT: counts=combined=4 oracleSms=2 oracleMms=2 expected=4 nonDefault=true\nINSTRUMENTATION_RESULT: fixture=sms=0 mms=0 expectedSms=0 expectedMms=0\nINSTRUMENTATION_RESULT: outcome=PASS\nINSTRUMENTATION_CODE: -1\n"
+  },
+  {
+    "step": "unread_inbox_download_notification_hidden_from_non_default_caller",
+    "output": "INSTRUMENTATION_RESULT: counts=combined=4 oracleSms=2 oracleMms=2 expected=4 nonDefault=true\nINSTRUMENTATION_RESULT: fixture=sms=0 mms=0 expectedSms=0 expectedMms=0\nINSTRUMENTATION_RESULT: outcome=PASS\nINSTRUMENTATION_CODE: -1\n"
+  },
+  {
+    "step": "sent_draft_outbox_excluded",
+    "output": "INSTRUMENTATION_RESULT: counts=combined=4 oracleSms=2 oracleMms=2 expected=4 nonDefault=true\nINSTRUMENTATION_RESULT: fixture=sms=0 mms=0 expectedSms=0 expectedMms=0\nINSTRUMENTATION_RESULT: outcome=PASS\nINSTRUMENTATION_CODE: -1\n"
+  }
+]
