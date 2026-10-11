@@ -1,0 +1,29 @@
+{
+  "plainphone": {
+    "tests": 83,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failedTests": []
+  },
+  "ui": {
+    "tests": 101,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "failedTests": []
+  },
+  "device": {
+    "tests": 493,
+    "failures": 5,
+    "errors": 0,
+    "skipped": 0,
+    "failedTests": [
+      "org.plainphone.device.Pla241ReviewTest.throwingJournalMustStillRepairEmergencyFloor",
+      "org.plainphone.device.Pla241ReviewTest.lockedBootFlipFailureMustReachFirstUnlockedHome",
+      "org.plainphone.device.Pla241ReviewTest.repairMustPreserveFlipFailureFromFirstAttempt",
+      "org.plainphone.device.Pla241ReviewTest.enabledStateChangingBeforeFinalReadbackMustBlockSetup",
+      "org.plainphone.device.Pla241ReviewTest.failedPlanMustStillRestoreFixedRestrictions"
+    ]
+  }
+}
