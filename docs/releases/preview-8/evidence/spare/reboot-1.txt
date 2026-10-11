@@ -1,0 +1,44 @@
+# Sample 1 (adb reboot 2026-10-11T21:00:01Z). Epoch seconds, device clock.
+## events (boot/user lifecycle)
+         1791752422.658  1107  1107 I boot_progress_start: 10003
+         1791752423.806  1107  1107 I boot_progress_preload_start: 11150
+         1791752425.217  1107  1107 I boot_progress_preload_end: 12561
+         1791752425.558  1865  1865 I boot_progress_system_run: 12902
+         1791752426.073  1865  1865 I boot_progress_pms_start: 13418
+         1791752426.345  1865  1865 I boot_progress_pms_system_scan_start: 13690
+         1791752428.454  1865  1865 I boot_progress_pms_data_scan_start: 15798
+         1791752428.859  1865  1865 I boot_progress_pms_scan_end: 16204
+         1791752429.082  1865  1865 I boot_progress_pms_ready: 16427
+         1791752431.277  1865  1865 I boot_progress_ams_ready: 18622
+         1791752432.079  1865  1865 I ssm_user_starting: 0
+         1791752432.236  1865  1865 I uc_send_user_broadcast: [0,android.intent.action.USER_STARTED]
+         1791752432.236  1865  1865 I uc_send_user_broadcast: [0,android.intent.action.USER_STARTING]
+         1791752432.238  1865  1865 I uc_send_user_broadcast: [0,android.intent.action.USER_FOREGROUND]
+         1791752432.238  1865  1865 I uc_send_user_broadcast: [0,android.intent.action.USER_SWITCHED]
+         1791752433.542  1865  1900 I boot_progress_enable_screen: 20887
+         1791752436.010  1241  1362 I sf_stop_bootanim: 23355
+         1791752436.012  1865  1900 I wm_boot_animation_done: 23356
+         1791752436.141  1865  1900 I uc_finish_user_boot: 0
+         1791752436.142  1865  1900 I am_user_state_changed: [0,1]
+         1791752436.146  1865  1900 I uc_send_user_broadcast: [0,android.intent.action.LOCKED_BOOT_COMPLETED]
+         1791752436.177  1865  1900 I uc_finish_user_unlocking: 0
+         1791752436.631  1865  1897 I am_user_state_changed: [0,2]
+         1791752436.632  1865  1910 I ssm_user_unlocking: 0
+         1791752436.886  1865  1910 I am_user_state_changed: [0,3]
+         1791752436.886  1865  1910 I uc_finish_user_unlocked: 0
+         1791752437.168  1865  1910 I uc_send_user_broadcast: [0,android.intent.action.USER_UNLOCKED]
+         1791752437.260  1865  1910 I uc_finish_user_unlocked_completed: 0
+         1791752437.265  1865  1910 I ssm_user_unlocked: 0
+         1791752437.484  1865  1897 I uc_send_user_broadcast: [0,android.intent.action.BOOT_COMPLETED]
+         1791752442.316  1865  1910 I ssm_user_completed_event: [0,2]
+## SystemServerTiming / ActivityManager
+         1791752436.146  1865  1900 D SystemServerTiming: broadcastIntent-0-android.intent.action.LOCKED_BOOT_COMPLETED
+         1791752437.258  1865  1910 D SystemServerTiming: broadcastIntent-0-android.intent.action.USER_UNLOCKED
+         1791752437.262  1865  1910 I ActivityManager: Posting BOOT_COMPLETED user #0
+         1791752437.484  1865  1897 D SystemServerTiming: broadcastIntent-0-android.intent.action.BOOT_COMPLETED
+## PlainphoneBoot (merged from repeated reads; the main log rotates)
+         1791752441.484  2601  2693 I PlainphoneBoot: reapply reason=start control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=8727
+         1791752448.518  2601  2693 I PlainphoneBoot: reapply reason=user-unlocked control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=7022
+         1791752449.727  2601  2601 I PlainphoneBoot: home shown lockTask=LOCKED at=37072
+         1791752458.626  2601  2693 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.android.systemui control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=10090
+         1791752458.786  2601  2601 I PlainphoneBoot: home shown lockTask=LOCKED at=46131

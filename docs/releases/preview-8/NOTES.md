@@ -21,5 +21,5 @@ Known limits:
 - The checking-screen emergency fallback is host-tested only; the spare has the
   preferred dialer. This is a test preview, not full D1 acceptance.
 
-VersionCode `8` (`0.1.0-preview-8`). Spare installation awaits the Lead’s review
-and the assigned device driver.
+VersionCode `8` (`0.1.0-preview-8`). 
+Spare: installed in place 2026-10-11T20:56:31Z, gate `exit=0`, safety readback unchanged from build 7; the crash recovery itself stays emulator-checked ([spare readback](evidence/spare/readback.md)).
