@@ -99,6 +99,81 @@ class ReadbackPolicyApplierTest {
         assertFalse("diagnostics must not expose package names", timings.summary().contains(chrome))
     }
 
+    @Test fun hiddenTargetsUseFreshNarrowQueriesForWriteReadAndVerifyOnEveryPass() {
+        val fake = port()
+        val queries = mutableListOf<PackageName>()
+        val narrow = object : DevicePolicyPort by fake {
+            override fun packageHidden(name: PackageName): Boolean? {
+                queries += name
+                return fake.packageState(name)?.hidden
+            }
+            override fun packageState(name: PackageName): PackageState? {
+                check(name !in names(chrome, maps)) { "hidden-only work read unrelated state" }
+                return fake.packageState(name)
+            }
+        }
+        val applier = ReadbackPolicyApplier(narrow)
+        repeat(2) {
+            queries.clear()
+            assertTrue(applier.apply(plan()).complete)
+            assertTrue(applier.readBack(plan()))
+            // Pre-write check, post-write readback and independent final verification.
+            assertEquals(listOf(chrome, maps, chrome, maps, chrome, maps).map(::PackageName), queries)
+            fake.state[PackageName(chrome)] = visible()
+        }
+    }
+
+    @Test fun allReadbackMismatchClassesStillFailAtApplyAndFinalVerification() {
+        for (failure in listOf("hidden", "shown", "hidden unreadable", "shown unreadable")) {
+            for (finalOnly in listOf(false, true)) {
+                val fake = port()
+                var fail = !finalOnly
+                var hiddenQueries = 0
+                var shownQueries = 0
+                val faulty = object : DevicePolicyPort by fake {
+                    override fun packageHidden(name: PackageName): Boolean? {
+                        if (name == PackageName(chrome) && fail && ++hiddenQueries > 1) {
+                            if (failure == "hidden unreadable") error("unreadable")
+                            if (failure == "hidden") return false
+                        }
+                        return fake.packageState(name)?.hidden
+                    }
+                    override fun packageState(name: PackageName): PackageState? {
+                        if (name == PackageName(camera) && fail && ++shownQueries > 1) {
+                            if (failure == "shown unreadable") error("unreadable")
+                            if (failure == "shown") return hiddenApp()
+                        }
+                        return fake.packageState(name)
+                    }
+                }
+                val applier = ReadbackPolicyApplier(faulty)
+                if (finalOnly) {
+                    assertTrue(applier.apply(plan()).complete)
+                    fail = true
+                    hiddenQueries = 1
+                    shownQueries = 1
+                    assertFalse(failure, applier.readBack(plan()))
+                } else {
+                    val result = applier.apply(plan())
+                    assertEquals(failure, ApplyStage.HIDES, result.failedStage)
+                    assertFalse(result.complete)
+                    assertNull(fake.homePackage)
+                }
+            }
+        }
+    }
+
+    @Test fun narrowHiddenQueryDistinguishesAbsentFromUnreadable() {
+        val fake = port()
+        assertEquals(false, fake.packageHidden(PackageName(chrome)))
+        assertTrue(ReadbackPolicyApplier(fake).apply(plan()).complete)
+        assertEquals(true, fake.packageHidden(PackageName(chrome)))
+        fake.state.remove(PackageName(chrome))
+        assertNull(fake.packageHidden(PackageName(chrome)))
+        // Null means confirmed absent, as before. Unreadable queries throw (tested above).
+        assertTrue(ReadbackPolicyApplier(fake).readBack(plan()))
+    }
+
     @Test fun appliesStepsTwoToSevenInPlanOrderAndReadsEachBack() {
         val port = port(dialer, camera)
         val result = ReadbackPolicyApplier(port).apply(plan())
