@@ -166,3 +166,23 @@ inspection. Shell-injected touch events may bypass accessibility exploration;
 this check used the dedicated emulator's native touch events. No physical phone
 was used. This verifies traversal/scrolling in the stated fixture, not every
 TalkBack version or an end-to-end integrated launcher.
+## Optional communication counts
+
+`HomeUiState.missedCalls` and `unreadTexts` accept fresh reliable host values.
+Pass null when switched off or unavailable. Zero (and defensive negative input)
+shows no number; positive values show 1–99 or 99+. TalkBack receives the full
+count through plural resources, in one row action. Other apps cannot take counts.
+The measured bottom zone includes any wrapped number before layout fallbacks.
+
+Route `MoreEvent.OpenPhoneSettings` to `PhoneSettingsScreen`. Its state defaults
+off; `ShowCommunicationCountsChanged(enabled)` requests a host update and `Back`
+returns to More. No local toggle/count persistence or data reads. The host feeds
+back saved state and availability; flags only show explanatory lines when on.
+No PIN is involved. This minimal screen contains only Back, the switch, coverage
+and optional status lines; broader settings remain later work.
+
+`CommunicationCountsTest` checks boundary values, exact spoken plurals, one
+control per row, host-owned switch events, More navigation, and actual text/row
+bounds across 100/130/150/180/200% × no/long notice × off/both 99+.
+`CommunicationCountsScreenshotTest` adds 65 goldens on 360×640 with system-bar
+space: 50 Home states and 15 settings states. See `evidence/pla292-counts.md`.

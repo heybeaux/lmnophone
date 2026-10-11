@@ -405,3 +405,14 @@ sign-in page, "For Sam", home on the smallest supported screen at 200% (frame 10
 The mockups are drawn in a browser. The 200% frames use Android 15's real 200% sizes, but they are illustrative: they
 show the layout rules, not proof that Android lays it out the same way. The proof is on the phone, in the MVP build
 ([PLA-15](/PLA/issues/PLA-15)) and the final review ([PLA-16](/PLA/issues/PLA-16)).
+
+## Optional communication counts (approved exception)
+
+The approved `add-optional-communication-counts` change permits counts only on
+Home's Phone and Messages rows. A positive reliable count appears to the right
+of its label, regular Lexend with tabular figures, in the same ink and app size.
+Use 1–99, then 99+. No shape, border, subtitle, divider or animation. At large
+text, wrap the whole number below the label within the same touch target;
+measure that row before choosing the existing Home compact-layout fallbacks.
+Each row remains one accessible action. Zero or unavailable counts disappear.
+The switch and coverage/status copy are in U7 of `flows-user.md`.

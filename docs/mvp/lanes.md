@@ -68,6 +68,15 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 **`:ui` (lane B) exports:** one `@Composable` per screen, with this shape:
 - `XScreen(state: XUiState, onEvent: (XEvent) -> Unit)`.
 - `XUiState` and `XEvent` are plain Kotlin types owned by lane B.
+- Optional communication-count UI: `HomeUiState.missedCalls` / `unreadTexts` are
+  nullable host-supplied integers. Host passes null immediately when off or
+  unavailable; UI shows only positive values, capped visually at 99+.
+- `PhoneSettingsScreen(PhoneSettingsUiState, onEvent)` is the PIN-free destination
+  for `MoreEvent.OpenPhoneSettings`. State has `showCommunicationCounts = false`,
+  `missedCallsUnavailable = false`, `unreadTextsUnavailable = false`; events are
+  `Back` and `ShowCommunicationCountsChanged(enabled)`. Host owns navigation,
+  saved preference, permission handling and fresh count reads. Unavailable
+  status lines show only while enabled. This slice adds no data source.
 - Covers: home (with the single notice line), More, ask for an app, blocked link, Wi-Fi messages, the trusted-person screens ("Who are you?", PIN, approvals, permissions, people, waits and cancel), Plainphone settings, setup, turning off, About, and "What Plainphone can't stop".
 
 **`:device` / `:plainphone` (lane D):** implements `JournalStore`, `PolicyStore` and `KeyDerivation`. It also provides:
