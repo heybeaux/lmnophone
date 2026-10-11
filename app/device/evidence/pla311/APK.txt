@@ -1,0 +1,1 @@
+apk sha256 0b5a53ee849ebe9b40b7561428c5b437525a877b2753813b85b8b4ebb6d75be0 (built from bfa822d, installed on own AVD pla242-a35 emulator-5824, API 35)
