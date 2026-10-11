@@ -1,0 +1,31 @@
+{
+  "serial": "emulator-5860",
+  "avd": "pla306-policy-a35",
+  "api": "35",
+  "fingerprint": "google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+  "installation": "install -r -t; no --restrict-permissions",
+  "permissionsAfterInstall": [
+    "android.permission.READ_SMS: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]",
+    "android.permission.READ_CALL_LOG: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]"
+  ],
+  "apps": {
+    "DIALER": {
+      "holder": "com.google.android.dialer",
+      "version": [
+        "versionCode=16046248 minSdk=29 targetSdk=34",
+        "versionName=127.0.620688474"
+      ]
+    },
+    "SMS": {
+      "holder": "com.google.android.apps.messaging",
+      "version": [
+        "versionCode=235003840 minSdk=34 targetSdk=35",
+        "versionName=messages.android_20240528_00_RC01_alldpi.arm64-v8a.phone"
+      ]
+    }
+  },
+  "lockTaskPolicy": [
+    "LockTaskPolicy {mPackages= com.android.camera2, com.google.android.apps.maps, com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.android.phone, com.google.android.cellbroadcastreceiver; mFlags= 53 }",
+    "LockTaskPolicy {mPackages= com.android.camera2, com.google.android.apps.maps, com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.android.phone, com.google.android.cellbroadcastreceiver; mFlags= 53 }"
+  ]
+}

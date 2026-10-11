@@ -1,0 +1,28 @@
+Performing Streamed Install
+Success
+Success: Device owner set to package org.plainphone/.PlainphoneAdminReceiver
+Active admin set to component org.plainphone/.PlainphoneAdminReceiver
+starter list: com.google.android.dialer,com.google.android.apps.messaging,com.android.camera2,com.google.android.apps.maps
+Broadcasting: Intent { act=org.plainphone.preview.SET_STARTER flg=0x400000 cmp=org.plainphone/.preview.SetupCommandReceiver (has extras) }
+Broadcast completed: result=0
+apply: 10-10 22:29:11.264  4188  4223 I PlainphoneBoot: reapply reason=setup control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=1274
+10-10 22:29:10.489  4188  4223 I Plainphone: PREVIEW2 PLAN hidden=12 lockTask=[com.android.camera2, com.android.phone, com.android.server.telecom, com.google.android.apps.maps, com.google.android.apps.messaging, com.google.android.apps.safetyhub, com.google.android.cellbroadcastreceiver, com.google.android.dialer, org.plainphone] floorUnreadable=[]
+--- read back
+1 owner:
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+home: org.plainphone/.MainActivity
+lock task state: mLockTaskModeState=LOCKED
+hidden or uninstalled: com.android.chrome
+hidden or uninstalled: com.android.stk
+hidden or uninstalled: com.android.vending
+hidden or uninstalled: com.google.android.apps.docs
+hidden or uninstalled: com.google.android.apps.photos
+hidden or uninstalled: com.google.android.apps.youtube.music
+hidden or uninstalled: com.google.android.calendar
+hidden or uninstalled: com.google.android.contacts
+hidden or uninstalled: com.google.android.deskclock
+hidden or uninstalled: com.google.android.documentsui
+hidden or uninstalled: com.google.android.gm
+hidden or uninstalled: com.google.android.googlequicksearchbox
+hidden or uninstalled: com.google.android.youtube
+testOnly: TEST_ONLY

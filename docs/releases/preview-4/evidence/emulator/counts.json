@@ -1,0 +1,141 @@
+{
+  "defaultHome": [
+    "10:31",
+    "Saturday 10 October",
+    "Maps",
+    "Camera",
+    "Messages",
+    "Phone",
+    "More"
+  ],
+  "pidInitial": "942",
+  "defaultSettings": [
+    "\u2039 More",
+    "Show missed calls and unread texts on Home",
+    "Counts texts and picture messages. Chat (RCS) messages and other apps aren't supported, so they may be missing from the number.",
+    "LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say."
+  ],
+  "defaultSwitch": [
+    {
+      "index": "1",
+      "text": "",
+      "resource-id": "",
+      "class": "android.view.View",
+      "package": "org.plainphone",
+      "content-desc": "",
+      "checkable": "true",
+      "checked": "false",
+      "clickable": "true",
+      "enabled": "true",
+      "focusable": "true",
+      "focused": "false",
+      "scrollable": "false",
+      "long-clickable": "false",
+      "password": "false",
+      "selected": "false",
+      "bounds": "[63,317][1017,487]"
+    }
+  ],
+  "pidAfterOn": "942",
+  "permissionsAfterOn": [
+    "android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]",
+    "android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]"
+  ],
+  "settingsOn": [
+    "\u2039 More",
+    "Show missed calls and unread texts on Home",
+    "Counts texts and picture messages. Chat (RCS) messages and other apps aren't supported, so they may be missing from the number.",
+    "LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say."
+  ],
+  "homeOnEmpty": [
+    "10:32",
+    "Saturday 10 October",
+    "Maps",
+    "Camera",
+    "Messages",
+    "Phone",
+    "More"
+  ],
+  "pidHomeOn": "942",
+  "oneMissedCall": [
+    "10:32",
+    "Saturday 10 October",
+    "Maps",
+    "Camera",
+    "Messages",
+    "Phone, 1 missed call",
+    "More"
+  ],
+  "pidAfterMissedCall": "942",
+  "oneCallTwoSms": [
+    "10:32",
+    "Saturday 10 October",
+    "Maps",
+    "Camera",
+    "Messages, 2 unread texts",
+    "Phone, 1 missed call",
+    "More"
+  ],
+  "pidAfterSms": "942",
+  "pidAfterOff": "942",
+  "permissionsAfterOff": [
+    "android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]",
+    "android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]"
+  ],
+  "offWithPositiveRecords": [
+    "10:33",
+    "Saturday 10 October",
+    "Maps",
+    "Camera",
+    "Messages",
+    "Phone",
+    "More"
+  ],
+  "onAgain": [
+    "10:33",
+    "Saturday 10 October",
+    "Maps",
+    "Camera",
+    "Messages, 2 unread texts",
+    "Phone, 1 missed call",
+    "More"
+  ],
+  "fontScale200": "2.0",
+  "homeOn200": [
+    "10:33",
+    "Sat 10 Oct",
+    "Maps",
+    "Camera",
+    "Messages, 2 unread texts",
+    "Phone, 1 missed call",
+    "More"
+  ],
+  "settingsOn200": [
+    "\u2039 More",
+    "Show missed calls and unread texts on Home",
+    "Counts texts and picture messages. Chat (RCS) messages and other apps aren't supported, so they may be missing from the number.",
+    "LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say."
+  ],
+  "settingsOn200Scrolled": [
+    "\u2039 More",
+    "Show missed calls and unread texts on Home",
+    "Counts texts and picture messages. Chat (RCS) messages and other apps aren't supported, so they may be missing from the number.",
+    "LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say."
+  ],
+  "pidAfterOff200": "942",
+  "homeOff200": [
+    "10:34",
+    "Sat 10 Oct",
+    "Maps",
+    "Camera",
+    "Messages",
+    "Phone",
+    "More"
+  ],
+  "finalFontScale": "1.0",
+  "finalPid": "942",
+  "finalPermissions": [
+    "android.permission.READ_SMS: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]",
+    "android.permission.READ_CALL_LOG: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|RESTRICTION_INSTALLER_EXEMPT]"
+  ]
+}
