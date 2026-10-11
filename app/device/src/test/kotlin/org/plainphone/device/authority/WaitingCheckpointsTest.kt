@@ -45,8 +45,8 @@ class WaitingCheckpointsTest {
         SecretVerifier(ByteArray(16) { seed.toByte() }, ByteArray(32) { seed.toByte() }, 600_000),
         SecretVerifier(ByteArray(16) { (seed + 8).toByte() }, ByteArray(32) { (seed + 8).toByte() }, 600_000),
         generation = generation, contact = PersonContact("synthetic-$seed", "synthetic-number-$seed"))
-    private fun credentials(benGeneration: Long = 2) = CredentialState(Mode.TRUSTED,
-        mapOf(anna to person(1), ben to person(2, benGeneration)), 0)
+    private fun credentials(annaGeneration: Long = 1, benGeneration: Long = 2) = CredentialState(Mode.TRUSTED,
+        mapOf(anna to person(1, annaGeneration), ben to person(2, benGeneration)), 0)
 
     private inner class Rig(fresh: Boolean = true) {
         val dir: File = tmp.newFolder()
@@ -188,11 +188,19 @@ class WaitingCheckpointsTest {
         assertFalse(rig.phase() == WaitingPhase.COMMITTING)
     }
 
-    /** A credential change the wait depends on cancels it at the next checkpoint (the after-change check). */
-    @Test fun aDependencyChangeCancelsAtTheNextCheckpoint() {
+    /** A turn-off depends on its starter only: a recipient's credential change keeps it pending. */
+    @Test fun aRecipientChangeKeepsTheWait() {
         val rig = Rig()
         rig.startTurnOff()
         assertTrue(rig.store.credentials.compareAndSet(rig.store.credentials.read()!!, credentials(benGeneration = 3)))
+        assertEquals(WaitingOutcome.PENDING, rig.checkpoints.checkpoint())
+    }
+
+    /** A change to the starter's credential cancels the wait at the next checkpoint (the after-change check). */
+    @Test fun aDependencyChangeCancelsAtTheNextCheckpoint() {
+        val rig = Rig()
+        rig.startTurnOff()
+        assertTrue(rig.store.credentials.compareAndSet(rig.store.credentials.read()!!, credentials(annaGeneration = 3)))
         assertEquals(WaitingOutcome.CANCELLED, rig.checkpoints.checkpoint())
         assertNull(rig.checkpoints.pendingRequest())
     }
