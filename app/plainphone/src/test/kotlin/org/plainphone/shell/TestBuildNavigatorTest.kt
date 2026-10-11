@@ -19,12 +19,19 @@ class TestBuildNavigatorTest {
     private fun at(vararg routes: ShellRoute) = ShellState(listOf(ShellRoute.Home, *routes))
 
     @Test fun everyUnwiredMoreRowSaysNotInThisTestBuild() {
-        for (e in listOf(MoreEvent.AskForApp, MoreEvent.OpenPhoneSettings, MoreEvent.AddApp,
+        for (e in listOf(MoreEvent.AskForApp, MoreEvent.AddApp,
             MoreEvent.OpenTrustedPerson, MoreEvent.OpenSelfManagedSettings, MoreEvent.OpenAbout)) {
             val step = nav.onMore(at(ShellRoute.More), e)
             assertEquals(e.toString(), at(ShellRoute.More, ShellRoute.NotInBuild), step.state)
             assertNull(step.effect)
         }
+    }
+
+    @Test fun phoneSettingsOpensWithoutPinAndBackReturnsToMore() {
+        val step = nav.onMore(at(ShellRoute.More), MoreEvent.OpenPhoneSettings)
+        assertEquals(at(ShellRoute.More, ShellRoute.PhoneSettings), step.state)
+        assertNull(step.effect)
+        assertEquals(at(ShellRoute.More), nav.back(step.state).state)
     }
 
     @Test fun emergencyStillOpensTheDialerWithTheNumberTypedIn() {
