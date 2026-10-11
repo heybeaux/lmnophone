@@ -112,6 +112,14 @@ class CountControllerTest {
         old.forEach { it.done(12) }; assertEquals(CommunicationCounts(5, 7), f.c.counts)
         assertEquals(2, f.grants)
     }
+    @Test fun offStopsObserversTimersAndAllFutureReads() {
+        val f = Fixture(); f.start(); f.finish(); f.c.setEnabled(false)
+        val readCount = f.reads.size
+        f.notifyChange(); f.c.externalChange(); f.time.advance(30_000)
+        assertEquals(readCount, f.reads.size)
+        assertEquals(2, f.unregistered)
+        assertEquals(CommunicationCounts(), f.c.counts)
+    }
     @Test fun everyPermissionUnlockAndSupportedAppGateIsRecheckedAtPublication() {
         val changes: List<(CountAccess) -> CountAccess> = listOf(
             { it.copy(permissionGranted = false) }, { it.copy(unlocked = false) },
