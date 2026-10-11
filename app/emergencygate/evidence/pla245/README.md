@@ -58,5 +58,5 @@ build withholds it: `withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATUR
 which turns adb off, and the gate is an adb-started instrumentation. No emulator-safe route was found:
 the emulator console has no shell, UiAutomation is only given to an instrumentation started from the shell,
 and changing the release build's restrictions is out of bounds. Release APK at this commit:
-`plainphone-release-unsigned.apk` SHA-256 `499273002f08913b03913fb950f5272e3465de72f5713398c9f98e5164f67f96`.
+`plainphone-release-unsigned.apk` SHA-256 `ff3904563a6ae2476675dce8afe1603047783b1831fd6e5a97fe7b091cdaee4f`.
 "Release-artifact emergency check" is added to the real-device checks.
