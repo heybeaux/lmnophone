@@ -13,7 +13,18 @@ import org.plainphone.policy.InstalledPackage
 object CertDigests {
     /** SHA-256 of one DER-encoded certificate: the digest `apksigner verify --print-certs` prints. */
     fun sha256(der: ByteArray): CertDigest =
-        CertDigest(MessageDigest.getInstance("SHA-256").digest(der).joinToString("") { "%02x".format(it) })
+        CertDigest(hex(MessageDigest.getInstance("SHA-256").digest(der)))
+
+    /** Same lowercase bytes as %02x, without constructing a Formatter for each byte. */
+    internal fun hex(bytes: ByteArray): String = buildString(bytes.size * 2) {
+        for (byte in bytes) {
+            val unsigned = byte.toInt() and 0xff
+            append(HEX[unsigned ushr 4])
+            append(HEX[unsigned and 0x0f])
+        }
+    }
+
+    private const val HEX = "0123456789abcdef"
 }
 
 /**
