@@ -24,6 +24,7 @@ data class PhoneSettingsUiState(
     val showCommunicationCounts: Boolean = false,
     val missedCallsUnavailable: Boolean = false,
     val unreadTextsUnavailable: Boolean = false,
+    val unsupportedApps: Boolean = false,
 )
 
 sealed interface PhoneSettingsEvent {
@@ -52,6 +53,7 @@ fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEven
         Text(stringResource(R.string.settings_counts_coverage), style = PlainphoneType.Small)
         Text(stringResource(R.string.settings_counts_permission), style = PlainphoneType.Small)
         if (state.showCommunicationCounts) {
+            if (state.unsupportedApps) Text(stringResource(R.string.settings_counts_supported_apps), style = PlainphoneType.Small)
             if (state.missedCallsUnavailable) Text(stringResource(R.string.settings_calls_unavailable,
                 stringResource(R.string.app_name)), style = PlainphoneType.Small)
             if (state.unreadTextsUnavailable) Text(stringResource(R.string.settings_texts_unavailable,

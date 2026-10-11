@@ -65,10 +65,12 @@ class MainActivity : ComponentActivity() {
     private var resumed by mutableStateOf(false)
     private var counts by mutableStateOf(CommunicationCounts())
     private var countsEnabled by mutableStateOf(false)
+    private var unsupportedCountApps by mutableStateOf(false)
 
     private fun syncCounts() {
         counts = communication.controller.counts
         countsEnabled = communication.controller.enabled
+        unsupportedCountApps = communication.controller.unsupportedApps
     }
 
     private val dpm by lazy { getSystemService(DevicePolicyManager::class.java) }
@@ -115,7 +117,7 @@ class MainActivity : ComponentActivity() {
             }
             PlainphoneShell(shell.state, snapshot, mapper, shell.navigator ?: return@setContent,
                 counts = counts,
-                settings = PhoneSettingsUiState(countsEnabled, counts.missedCalls == null, counts.unreadTexts == null),
+                settings = PhoneSettingsUiState(countsEnabled, counts.missedCalls == null, counts.unreadTexts == null, unsupportedCountApps),
                 onSettings = { event ->
                     when (event) {
                         PhoneSettingsEvent.Back -> shell.state = shell.navigator!!.back(shell.state).state
