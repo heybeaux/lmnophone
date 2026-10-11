@@ -390,4 +390,22 @@ class DeviceReconciliationTest {
         assertEquals(ReconcileOutcome.RECOVERED, rig.reconciler.reconcile().outcome)
         assertTrue(wrote)
     }
+    /** Revocation runs inside the boundary but outside effect mode: a reconciliation started from it is still refused, not run nested. */
+    @Test fun aReconciliationStartedFromTheRevocationIsRefused() {
+        val rig = Rig()
+        rig.lose()
+        var nested: org.plainphone.policy.ReconcileResult? = null
+        rig.revoked = { if (nested == null) nested = rig.reconciler.reconcile(); true }
+        assertEquals(ReconcileOutcome.RECOVERED, rig.reconciler.reconcile().outcome)
+        assertEquals(DeviceWaitingReconciliation.NOT_RUN, nested)
+    }
+
+    /** The policy effect on its own: a failed stage still runs the emergency repair of the same plan, and reports false. */
+    @Test fun aFailedPolicyApplyRepairsTheFloorInTheEffectItself() {
+        val rig = Rig()
+        hideDialer(rig)
+        rig.dpm.throwOnWrite = "restrictions"
+        assertFalse(rig.effects.applyPolicy(PolicyEngine.decide(input)))
+        assertDialerRepaired(rig, "effect")
+    }
 }
