@@ -23,4 +23,5 @@
     <string name="notice_time_day">%1$s %2$s</string>
     <string name="notice_short_date_format">EEE d MMM</string>
     <string name="lexend_notice">Lexend – SIL Open Font License 1.1</string>
+    <string name="settings_counts_permission">LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say.</string>
 </resources>

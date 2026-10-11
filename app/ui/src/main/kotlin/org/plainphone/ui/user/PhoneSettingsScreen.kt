@@ -50,6 +50,7 @@ fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEven
             Switch(checked = state.showCommunicationCounts, onCheckedChange = null)
         }
         Text(stringResource(R.string.settings_counts_coverage), style = PlainphoneType.Small)
+        Text(stringResource(R.string.settings_counts_permission), style = PlainphoneType.Small)
         if (state.showCommunicationCounts) {
             if (state.missedCallsUnavailable) Text(stringResource(R.string.settings_calls_unavailable,
                 stringResource(R.string.app_name)), style = PlainphoneType.Small)

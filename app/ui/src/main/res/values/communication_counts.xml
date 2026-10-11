@@ -13,7 +13,7 @@
         <item quantity="other">Messages, %1$d unread texts</item>
     </plurals>
     <string name="settings_communication_counts">Show missed calls and unread texts on Home</string>
-    <string name="settings_counts_coverage">Counts texts and picture messages. Chat messages (RCS) may not be counted.</string>
+    <string name="settings_counts_coverage">Counts texts and picture messages. Chat messages (RCS) and other apps are not counted.</string>
     <string name="settings_calls_unavailable">%1$s can\'t read missed calls right now</string>
     <string name="settings_texts_unavailable">%1$s can\'t read unread texts right now</string>
 </resources>
