@@ -61,7 +61,9 @@ When a count can't be read (switch off, permission missing, phone not unlocked s
 
 For this feature LMNOPhone SHALL read only row IDs and the type, new, read and message-box fields. It SHALL NOT read, log, store or send message text, phone numbers, contact names or dates.
 
-The Settings screen SHALL state under the switch which messages are counted and which are not (chat/RCS messages that Messages keeps only in its own storage, and other apps).
+The Settings screen SHALL state under the switch which messages are counted and which are not (chat/RCS messages and other apps), and that LMNOPhone keeps permission to check calls and texts after the switch is turned off.
+
+If either the SMS or the MMS read fails, the Messages number SHALL NOT be shown; a partial sum is never shown.
 
 The accessibility name of the Phone and Messages rows SHALL include the count when one is shown (for example "Phone, 2 missed calls"). Touch targets and large-text behaviour SHALL stay as they are.
 
@@ -74,8 +76,8 @@ The accessibility name of the Phone and Messages rows SHALL include the count wh
 - **THEN** Phone shows "1" while Home is visible, without restarting LMNOPhone
 
 #### Scenario: Missed call acknowledged
-- **WHEN** the user opens the Phone app's call history (or the action the spike shows clears the Phone app's own missed state) and returns Home
-- **THEN** Phone shows no number
+- **WHEN** the user views the missed call in the Phone app's call history, taps or swipes the missed-call notification, or calls back, and returns Home
+- **THEN** Phone shows no number for that call
 
 #### Scenario: Declined call or voicemail
 - **WHEN** the user declines a call, or a caller leaves voicemail without a missed-call entry
@@ -91,7 +93,7 @@ The accessibility name of the Phone and Messages rows SHALL include the count wh
 
 #### Scenario: Switch off
 - **WHEN** the user turns the switch off
-- **THEN** both numbers disappear at once and LMNOPhone stops reading the call log and text store
+- **THEN** both numbers disappear at once, LMNOPhone stops reading the call log and text store, and Home does not restart
 
 #### Scenario: Permission lost
 - **WHEN** counts are on and LMNOPhone loses access to the call log or text store
