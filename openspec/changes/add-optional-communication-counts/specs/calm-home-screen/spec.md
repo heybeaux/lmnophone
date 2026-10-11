@@ -61,7 +61,7 @@ When a count can't be read (switch off, permission missing, phone not unlocked s
 
 Each time Home becomes visible it SHALL start with no numbers, and SHALL show a number only from a read that started after it became visible and finished before LMNOPhone received any change notice. When LMNOPhone receives a change notice while Home is visible, an old number SHALL be hidden if a fresh one is not shown within 1 second of that notice. Independently, while Home is visible, no number SHALL be shown that comes from a read started more than 13 seconds ago.
 
-For this feature LMNOPhone SHALL read only row IDs and the type, new, read and message-box fields. It SHALL NOT read, log, store or send message text, phone numbers, contact names or dates.
+For this feature LMNOPhone SHALL query only row IDs, the provider's fixed SMS/MMS transport label, and the type, new, read and message-box fields, and SHALL use only the number of rows returned, never a row's values. It SHALL NOT read, log, store or send message text, phone numbers, contact names or dates.
 
 The Settings screen SHALL state under the switch that texts and picture messages are counted, that chat (RCS) messages and other apps aren't supported and may be missing, and that LMNOPhone keeps permission to check calls and texts after the switch is turned off.
 

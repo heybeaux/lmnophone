@@ -4,7 +4,7 @@
 - [x] 1.2 Lead folds the spike answers into `design.md` (revision 2). No blocking product limit; RCS is disclosed.
 - [x] 1.3 Cross-model review of revision 2 (Verifier, PLA-295): REQUEST CHANGES, findings 1–6 resolved in revision 3.
 - [x] 1.4 Cross-model re-review of revision 3 (Verifier, PLA-297): REQUEST CHANGES, findings 1–3 resolved in revision 4.
-- [ ] 1.5 Cross-model re-review of revision 4 (Verifier).
+- [x] 1.5 Cross-model re-review of revision 4 (Verifier, PLA-301): APPROVE WITH CHANGES; items 1–4 applied in revision 5.
 
 ## 2. Build
 
