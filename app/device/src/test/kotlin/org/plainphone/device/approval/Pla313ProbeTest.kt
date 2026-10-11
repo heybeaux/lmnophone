@@ -5,10 +5,12 @@ package org.plainphone.device.approval
 import org.junit.Assert.*
 import org.junit.Test
 import org.plainphone.core.PackageName
+import org.plainphone.policy.AppApprovalOutcome
+import org.plainphone.policy.AppApprovalPhase
 
 /**
- * The reviewer's PLA-313 `:device` probes, verbatim (finding 4, and the passing floor-repair check).
- * `editingHideFailureMustStillRemoveLockTaskAndHome` (findings 1–3) is `:policy` and lands with that fix.
+ * The reviewer's PLA-313 `:device` probes, verbatim (finding 4, the passing floor-repair check, and
+ * `editingHideFailureMustStillRemoveLockTaskAndHome` for findings 1–3, fixed in `:policy` by PLA-314).
  */
 class Pla313ProbeTest {
     private fun unreadableHome(open: Boolean) = ApprovalHarness().use { h ->
@@ -54,5 +56,23 @@ class Pla313ProbeTest {
         assertFalse(h.dispatcher.run { effects.containFailedActivation(setOf(h.target)) })
         assertFalse(h.home.lists(h.target))
         assertTrue(h.target in h.port.lockTask)
+    }
+
+    @Test fun editingHideFailureMustStillRemoveLockTaskAndHome() {
+        val exposed = mutableListOf<String>()
+        for (path in listOf("edit", "resume", "restart")) for (throwing in listOf(false, true)) ApprovalHarness().use { h ->
+            assertEquals(AppApprovalOutcome.APPROVED, h.approve())
+            if (throwing) h.port.throwOnWrite = "packages" else h.port.hidesStick = false
+            val initial = runCatching { h.edit() }
+            val result = when (path) {
+                "resume" -> runCatching { h.resume() }
+                "restart" -> runCatching { h.dispatcher.run { h.controller.onStart() } }
+                else -> initial
+            }
+            println("$path throwing=$throwing: ${h.state()} pending=${h.approvals.pending?.phase} result=$result")
+            assertEquals(AppApprovalPhase.EDITING, h.approvals.pending?.phase)
+            if (h.target in h.port.lockTask || h.home.lists(h.target)) exposed += "$path throwing=$throwing"
+        }
+        assertTrue("failed hide skipped containment: $exposed", exposed.isEmpty())
     }
 }
