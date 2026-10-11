@@ -24,7 +24,15 @@ import org.plainphone.PlainphoneAdminReceiver
 import org.plainphone.core.PackageName
 import org.plainphone.device.DpmPort
 import org.plainphone.device.KeyguardFirst
+import org.plainphone.device.DpmResetProtectionPort
+import org.plainphone.device.ReadbackPolicyApplier
+import org.plainphone.device.ResetProtectionEffects
 import org.plainphone.device.SerialDispatcher
+import org.plainphone.device.authority.AuthorityPass
+import org.plainphone.device.authority.DeviceReconciliationEffects
+import org.plainphone.device.authority.DpmDeviceOwnerReader
+import org.plainphone.device.authority.JointAuthorityStore
+import org.plainphone.device.authority.waitingReconciler
 import org.plainphone.device.boot.BootOutcome
 import org.plainphone.device.boot.BootReapply
 import org.plainphone.device.facts.AndroidPackageSystemPort
@@ -33,7 +41,9 @@ import org.plainphone.device.facts.osFloor
 import org.plainphone.device.storage.FileFlipFailureStore
 import org.plainphone.device.storage.FileJournalStore
 import org.plainphone.device.storage.FilePolicyStore
+import org.plainphone.policy.PersonAuthorityConsumer
 import org.plainphone.policy.PolicyEngine
+import org.plainphone.policy.ReconcileOutcome
 import org.plainphone.ui.home.HomeNotice
 
 /** What Home may show. Only [READY] lets Home draw; the others show the neutral checking screen. */
@@ -47,6 +57,10 @@ enum class HomeGate { CHECKING, READY, NOT_READY }
  * Re-apply triggers ([reapply]): boot (locked and unlocked), every Plainphone start, package events,
  * the 15-minute alarm and, from the wiring slice, [afterTrustedPersonAction]. Each run re-reads the
  * live phone; repeated runs are harmless.
+ *
+ * Every run also reads the current waiting operation fresh from the one authority store ([authority])
+ * and, once unlocked, reconciles a confirmed lost waiting record without a PIN. Nothing writes that
+ * store until trusted people are set up, so on a phone without them both read nothing and change nothing.
  */
 class PolicyRuntime private constructor(private val context: Context) {
     private val dispatcher = SerialDispatcher()
@@ -60,17 +74,32 @@ class PolicyRuntime private constructor(private val context: Context) {
         packagesPort, FilePolicyStore(File(protectedDir, "policy")), emptyList(),
         PackageName(context.packageName), MESSAGES,
     )
+    /** Credentials, the waiting operation and its reconciliation, in device-protected storage. */
+    private val authorityStore = JointAuthorityStore(File(protectedDir, "authority"))
+    private val authority: AuthorityPass by lazy {
+        AuthorityPass(authorityStore, authorityStore.waitingReconciler(
+            { assembler.assemble().input },
+            DeviceReconciliationEffects(
+                // The common startup revocation: the session journal's revoke and protected-state check.
+                revoke = { boot.sessions.onStart() },
+                owner = DpmDeviceOwnerReader(context),
+                applier = ReadbackPolicyApplier(port),
+                reset = ResetProtectionEffects(DpmResetProtectionPort(context, admin)),
+                store = authorityStore,
+            ),
+            // PIN Repair is not wired yet, so no grant is ever accepted. Automatic reconciliation needs none.
+            PersonAuthorityConsumer { _, _, _ -> false },
+        ))
+    }
     private val boot = BootReapply(
         FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT),
         port, SESSION_PACKAGES,
-        { locked -> PolicyEngine.decide(assembler.assemble().input.copy(lockedBoot = locked)) },
+        { locked -> PolicyEngine.decide(assembler.assemble().input.copy(lockedBoot = locked, waitingOperation = authority.waitingOperation())) },
         BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT),
         { stage, error -> Log.w(TAG, "stage $stage failed: ${error ?: "readback mismatch"}", error) },
         floor = { osFloor(packagesPort) },
         home = PackageName(context.packageName),
-        // No waiting-change store is wired yet, so no turn-off can be committing. The wiring slice
-        // that adds turn-off passes its committing read here.
-        turnOffCommitting = { false },
+        turnOffCommitting = { authority.turnOffCommitting() },
         flipFailures = FileFlipFailureStore(File(protectedDir, "flip-failures")),
     )
     private val gateState = MutableStateFlow(HomeGate.CHECKING)
@@ -179,6 +208,13 @@ class PolicyRuntime private constructor(private val context: Context) {
             null
         }
         log(reason, outcome, SystemClock.elapsedRealtime() - started)
+        // Full policy input exists only after unlock, so a lost record is reconciled only then.
+        val reconciled = if (locked) null else try {
+            authority.reconcileIfLost()?.also { Log.i(TAG, "lost waiting record: outcome=${it.outcome} failure=${it.failure}") }
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "lost-record reconciliation threw", e)
+            null
+        }
         BuildControl.control.afterReapply(context, dpm, admin)
         runsState.value++
         // A locked run never opens Home: the full plan has not run yet.
@@ -186,7 +222,8 @@ class PolicyRuntime private constructor(private val context: Context) {
             val action = recovery.afterPass(locked, outcome?.ready == true)
             // PINNED is not containment (PLA-322 finding 3): not ready, and needs attention.
             val pinned = action == RecoveryAction.PINNED_ATTENTION
-            noticeState.value = if (pinned) HomeNotice.NeedsAttention else homeNotice(outcome)
+            val held = reconciled?.outcome == ReconcileOutcome.NEEDS_ATTENTION
+            noticeState.value = if (pinned || held) HomeNotice.NeedsAttention else homeNotice(outcome)
             lastGate = if (outcome?.ready == true && !pinned) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
             when (action) {
