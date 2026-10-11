@@ -1,0 +1,93 @@
+[
+  {
+    "module": "core",
+    "task": "test",
+    "tests": 10,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "module": "policy",
+    "task": "test",
+    "tests": 588,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "module": "links",
+    "task": "test",
+    "tests": 36,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "module": "ui",
+    "task": "testDebugUnitTest",
+    "tests": 101,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "module": "ui",
+    "task": "testReleaseUnitTest",
+    "tests": 101,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "task": "testCtlNoAlertLockTaskUnitTest",
+    "tests": 69,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "task": "testCtlNoAlertUnitTest",
+    "tests": 69,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "task": "testCtlNoDialerLockTaskUnitTest",
+    "tests": 69,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "task": "testCtlNoPhoneUnitTest",
+    "tests": 69,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "task": "testDebugUnitTest",
+    "tests": 69,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "task": "testReleaseUnitTest",
+    "tests": 69,
+    "failures": 0,
+    "skipped": 0
+  },
+  {
+    "module": "device",
+    "task": "testDebugUnitTest",
+    "tests": 493,
+    "failures": 5,
+    "skipped": 0
+  },
+  {
+    "module": "device",
+    "task": "testReleaseUnitTest",
+    "tests": 493,
+    "failures": 5,
+    "skipped": 0
+  }
+]
