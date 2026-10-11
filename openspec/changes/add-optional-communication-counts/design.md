@@ -157,6 +157,6 @@ He replies with what he saw. Until he does, the notes call the counts "in testin
 
 - **Provider route.** `complete-conversations` is a provider URI, not a public SDK constant. If a later Android or provider changes it, the query fails and the Messages number is hidden. It is never replaced with a two-query sum.
 - **Holding `READ_SMS` and `READ_CALL_LOG` widens what LMNOPhone could read.** Mitigations: a single query site, a projection test, no cursor value reads, grants made only when the user first turns counts on, and disclosure in Settings.
-- **RCS gap.** If most messages between Beaux and Deanna are RCS chats, the Messages count will often be low or zero. This is disclosed in Settings. Beaux decides after testing on the spare whether it is useful, and this is called out in the release notes.
+- **RCS gap.** If most messages between the first two users are RCS chats, the Messages count will often be low or zero. This is disclosed in Settings. Beaux decides after testing on the spare whether it is useful, and this is called out in the release notes.
 - **Dialer and Messages versions.** The flags were proven only on the tested versions. D8 checks the spare's versions.
 - **Self-update allowlist.** A future in-app updater could silently break the grant by passing an empty allowlist (D5). The host slice adds a test or a code comment wherever a `SessionParams` is built.
