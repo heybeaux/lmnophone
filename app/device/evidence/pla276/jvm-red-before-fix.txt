@@ -1,0 +1,32 @@
+PLA-279 red run: PLA-276 findings 2 and 3, new tests against unchanged src/main
+Base: 34f9156 (mvp/device; contains the reviewed 3bc7690)
+Working tree: base + the test-only commit that adds this file (no src/main change)
+Command (from app/): ./gradlew --offline :device:testDebugUnitTest --tests '*Pla276ProbeTest' --tests '*FloorConsistencyTest' --tests '*UnresolvedCarryForwardTest'
+Date: 2026-10-11T02:34Z, JVM unit tests only, no emulator
+Pla276ProbeTest holds the reviewer's two :device probes verbatim; lowBatteryRetryMustRetryFailedContainment (finding 1, :policy) is left for the PLA-278 merge (PLA-288).
+
+19 tests completed, 17 failed. BUILD FAILED
+
+Per test (from build/test-results):
+Pla276ProbeTest 2 tests, 2 failed
+    FAIL floorPromotionAfterSnapshotMustKeepUiAccess - java.lang.AssertionError: a package newly protected before the first write must retain UI access
+    FAIL secondFailedApplyMustKeepUnresolvedExposure - java.lang.AssertionError: a second failed apply must not forget open access expected:<[VISIBLE, LOCK_TASK]> but was:<null>
+FloorConsistencyTest 11 tests, 11 failed
+    FAIL promotedBeforeTheLockTaskWriteIsNeverRemoved - java.lang.AssertionError: in lock task: hidden=false permitted=false home=false
+    FAIL promotedRightAfterTheHomeRemovalIsPutBack - java.lang.AssertionError: in lock task: hidden=false permitted=false home=false
+    FAIL windowOpenPromotedAfterItsLockTaskRemovalFailsAndPutsMembershipBack - java.lang.AssertionError
+    FAIL promotedRightAfterTheLockTaskWriteIsPutBack - java.lang.AssertionError: in lock task: hidden=false permitted=false home=false
+    FAIL aFailedApplyThatMeetsAPromotionReportsItAndKeepsAccess - java.lang.AssertionError: in lock task: hidden=false permitted=false home=false
+    FAIL promotedRightAfterTheHideIsUnhiddenAndPutBack - java.lang.AssertionError
+    FAIL closePromotedRightAfterItsHideUnhidesAndReturnsFalse - java.lang.AssertionError
+    FAIL anUnreadableFloorMidCallStopsFurtherRemovalsWithoutRepair - java.lang.AssertionError: no Home removal after the floor became unreadable
+    FAIL promotedBetweenTheHomeStageAndTheHideIsNeverHiddenAndIsPutBack - java.lang.AssertionError: in lock task: hidden=false permitted=false home=false
+    FAIL onlyThePromotedNameIsRestored - java.lang.AssertionError: in lock task: hidden=false permitted=false home=false
+    FAIL aPromotedNameThisCallNeverListedIsNotAdded - java.lang.AssertionError: in lock task: hidden=false permitted=false home=false
+UnresolvedCarryForwardTest 6 tests, 4 failed
+    FAIL aRepeatedFailureRetriesTheCleanupAndClearsWhatNowReadsBackClosed - java.lang.AssertionError: hidden: hidden=false permitted=true home=true
+    FAIL aLaterFailedPlanThatOmitsTheTargetRetriesItsCleanup - java.lang.AssertionError: hidden: hidden=false permitted=false home=false
+    pass aSuccessfulApplyStillClearsTheReport 
+    FAIL aLaterFailedPlanThatOmitsTheTargetStillReportsIt - java.lang.AssertionError: expected:<{test.target=[VISIBLE, LOCK_TASK]}> but was:<{}>
+    FAIL aRepeatedFailureOfTheSamePlanKeepsTheReport - java.lang.AssertionError: expected:<{test.target=[VISIBLE, LOCK_TASK]}> but was:<{}>
+    pass aSuccessfulPlanThatOmitsTheTargetClearsTheReport 

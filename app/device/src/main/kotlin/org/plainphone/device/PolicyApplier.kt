@@ -30,6 +30,8 @@ data class ApplyResult(
      * reported, not failed: hidden and suspended are still applied and read back.
      */
     val unrepairable: Set<PackageName> = emptySet(),
+    /** Unhides whose flip did read back: a defined repair of an earlier flip failure for that package. */
+    val flipped: Set<PackageName> = emptySet(),
 ) {
     val complete: Boolean get() = failedStage == null
     /** Show "Plainphone needs attention". */

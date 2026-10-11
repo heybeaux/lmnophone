@@ -8,7 +8,13 @@ import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.File
 import java.io.IOException
+import java.nio.channels.FileChannel
+import java.nio.channels.FileLock
+import java.nio.file.StandardOpenOption
 import java.security.SecureRandom
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 import org.plainphone.core.BootTime
@@ -41,21 +47,51 @@ object SecureEntropy : SecretEntropy {
 }
 
 /**
- * The [ClockStateStore] for [org.plainphone.policy.ProvenRunningClock]: a checksummed record with a
- * last-known-good copy in device-protected storage. Falling back to the older copy can only make the
- * proven time shorter, never longer, so it never opens a wait early. False is "not acknowledged":
- * the clock then grants no reading, and the next checkpoint reads again.
+ * The [ClockStateStore] for [org.plainphone.policy.ProvenRunningClock]: one checksummed record in
+ * device-protected storage, replaced by synced rename so a power cut leaves the old or the new
+ * tuple. There is no fallback copy. A missing or damaged record reads null, so the clock repairs it
+ * to a fresh zero epoch; an older copy could restore a retired epoch whose total would mature a
+ * newer wait at once (PLA-248). A `clock.lkg` left by an earlier build is ignored.
+ *
+ * Every instance for one directory, including symlinked aliases, shares one lock keyed by the
+ * canonical path, and each compare-and-set also holds an OS lock on `clock.lock` against another
+ * process. The comparison, the write and its readback all run under both. A writer waits at most
+ * [lockWaitMillis] and is then refused. False is "not acknowledged": the clock then grants no
+ * reading, and the next checkpoint reads again.
  */
 class FileClockStateStore(dir: File) : ClockStateStore {
-    private val file = RecordFile(dir, "clock", SCHEMA)
+    private val file = RecordFile(dir, "clock", SCHEMA, keepLastKnownGood = false)
+    private val lockFile = File(dir, "clock.lock")
+    private val lock = locks.computeIfAbsent(canonical(dir)) { ReentrantLock() }
 
-    @Synchronized
-    override fun read(): ClockRecord? = (file.readPrimary()?.let(::decode) ?: file.readLastKnownGood()?.let(::decode))
+    override fun read(): ClockRecord? = file.readPrimary()?.let(::decode)
 
-    @Synchronized
     override fun compareAndSet(expected: ClockRecord?, replacement: ClockRecord): Boolean {
-        if (read() != expected) return false
-        return file.save(encode(replacement))
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(lockWaitMillis)
+        try {
+            if (!lock.tryLock(lockWaitMillis, TimeUnit.MILLISECONDS)) return false
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt(); return false
+        }
+        try {
+            return FileChannel.open(lockFile.toPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE).use { channel ->
+                val held = processLock(channel, deadline) ?: return false
+                held.use { read() == expected && file.save(encode(replacement)) && read() == replacement }
+            }
+        } catch (_: IOException) {
+            return false
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    /** Polls for the OS lock until [deadline]; null when another process still holds it. */
+    private fun processLock(channel: FileChannel, deadline: Long): FileLock? {
+        while (true) {
+            channel.tryLock()?.let { return it }
+            if (System.nanoTime() >= deadline) return null
+            try { Thread.sleep(10) } catch (_: InterruptedException) { Thread.currentThread().interrupt(); return null }
+        }
     }
 
     private fun encode(r: ClockRecord): ByteArray = ByteArrayOutputStream().also { bytes ->
@@ -75,5 +111,16 @@ class FileClockStateStore(dir: File) : ClockStateStore {
         null
     }
 
-    private companion object { const val SCHEMA = 1 }
+    companion object {
+        /** Longest wait for another writer's compare-and-set before this one is refused. */
+        @Volatile internal var lockWaitMillis: Long = 10_000
+        private const val SCHEMA = 1
+        private val locks = ConcurrentHashMap<String, ReentrantLock>()
+        /** Creates [dir] if needed so symlinks resolve; falls back to the normalized absolute path. */
+        private fun canonical(dir: File): String = try {
+            dir.mkdirs(); dir.canonicalPath
+        } catch (_: IOException) {
+            dir.absoluteFile.normalize().path
+        }
+    }
 }

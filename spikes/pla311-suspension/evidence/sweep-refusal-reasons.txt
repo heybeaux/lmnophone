@@ -1,0 +1,11 @@
+"com.android.DeviceAsWebcam": has OP_SYSTEM_EXEMPT_FROM_SUSPENSION set
+"com.android.dynsystem": has OP_SYSTEM_EXEMPT_FROM_SUSPENSION set
+"com.android.emulator.multidisplay": has OP_SYSTEM_EXEMPT_FROM_SUSPENSION set
+"com.android.inputdevices": has OP_SYSTEM_EXEMPT_FROM_SUSPENSION set
+"com.android.keychain": has OP_SYSTEM_EXEMPT_FROM_SUSPENSION set
+"com.android.localtransport": has OP_SYSTEM_EXEMPT_FROM_SUSPENSION set
+"com.android.location.fused": has OP_SYSTEM_EXEMPT_FROM_SUSPENSION set
+"com.android.providers.settings": has OP_SYSTEM_EXEMPT_FROM_SUSPENSION set
+"com.android.settings": has OP_SYSTEM_EXEMPT_FROM_SUSPENSION set
+"com.google.android.packageinstaller": required for package installation
+"com.google.android.permissioncontroller": required for permissions management

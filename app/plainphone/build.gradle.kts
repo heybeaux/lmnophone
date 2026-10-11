@@ -32,8 +32,8 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         testInstrumentationRunner = "org.plainphone.counts.CombinedCountInstrumentation"
-        versionCode = 5
-        versionName = "0.1.0-preview-5"
+        versionCode = 6
+        versionName = "0.1.0-preview-6"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
@@ -55,6 +55,8 @@ android {
     sourceSets {
         getByName("debug").kotlin.srcDir("src/noControl/kotlin")
         getByName("release").kotlin.srcDir("src/noControl/kotlin")
+        // :device's fake port, for boot-to-Home integration tests.
+        getByName("test").kotlin.srcDir("../device/src/testShared/kotlin")
         for (control in NEGATIVE_CONTROLS) {
             getByName(control) {
                 kotlin.srcDir("src/debug/kotlin")

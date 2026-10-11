@@ -23,12 +23,17 @@ object BuildControl {
             val receivers = context.packageManager.queryBroadcastReceivers(
                 Intent(EMERGENCY_CB), PackageManager.MATCH_SYSTEM_ONLY,
             ).map { it.activityInfo.packageName }.toSet()
+            hiding = receivers
             for (name in receivers) {
                 val hidden = dpm.setApplicationHidden(admin, name, true)
                 Log.w(PolicyRuntime.TAG, "negative control ${this.name}: hide $name -> $hidden")
             }
         }
+
+        override fun ignoresPackageEvent(packageName: String?) = packageName in hiding
     }
+
+    @Volatile private var hiding: Set<String> = emptySet()
 
     private const val EMERGENCY_CB = "android.provider.action.SMS_EMERGENCY_CB_RECEIVED"
 }

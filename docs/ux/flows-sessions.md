@@ -1,8 +1,8 @@
-# Supervised sessions, the monthly check, and Plainphone updates
+# Supervised sessions, the monthly check, and LMNOPhone updates
 
 Words, rules and placeholders are in [README.md](README.md).
 
-A **supervised session** is the only time Plainphone opens up the phone (trusted-person-controls, "Supervised
+A **supervised session** is the only time LMNOPhone opens up the phone (trusted-person-controls, "Supervised
 sessions follow one custody contract"; design D2). On screen it is never called a "session". It is called what it
 does: "Open the Play Store for 10 minutes" or "Open full phone settings for 5 minutes".
 
@@ -10,7 +10,7 @@ The idea the copy must get across, in this order:
 1. The phone is open for a short time, so **stay with it**.
 2. It closes by itself if you put it down, a call comes in, or time runs out.
 3. Some pages in there can show the web.
-4. Plainphone checks everything before you hand it back.
+4. LMNOPhone checks everything before you hand it back.
 
 ---
 
@@ -22,8 +22,8 @@ The idea the copy must get across, in this order:
 |---|---|---|
 | **Title** | Open the Play Store for 10 minutes | Open full phone settings for 5 minutes |
 | **Body, block 1** | Stay with the phone until you tap Done. | Stay with the phone until you tap Done. |
-| **Body, block 1b** (right under it) | Keep the phone in your hands. Don't give it to {user} while the Play Store is open: it can show web pages, so the phone isn't simple for these minutes. | Keep the phone in your hands. Don't give it to {user} while settings are open: they can show web pages and change things Plainphone relies on. |
-| **Body, block 2** | Search for the app, tap **Install**, and wait until it says **Open**. Then go back to the home screen (swipe up from the bottom of the screen). Plainphone checks the phone, then shows **Done**. | Make the change, then go back to the home screen (swipe up from the bottom of the screen). Plainphone checks the phone, then shows **Done**. |
+| **Body, block 1b** (right under it) | Keep the phone in your hands. Don't give it to {user} while the Play Store is open: it can show web pages, so the phone isn't simple for these minutes. | Keep the phone in your hands. Don't give it to {user} while settings are open: they can show web pages and change things LMNOPhone relies on. |
+| **Body, block 2** | Search for the app, tap **Install**, and wait until it says **Open**. Then go back to the home screen (swipe up from the bottom of the screen). LMNOPhone checks the phone, then shows **Done**. | Make the change, then go back to the home screen (swipe up from the bottom of the screen). LMNOPhone checks the phone, then shows **Done**. |
 | **Body, block 2b** | The Play Store also closes if the screen turns off, a call comes in, or after 10 minutes. | Settings also closes if the screen turns off, a call comes in, or after 5 minutes. |
 | **Body, block 4** (only for Settings) | — | Some changes get put back afterwards, such as the texting app or the keyboard. Ordinary changes, like ringtone or Wi-Fi, are kept. |
 | **Primary** | Open the Play Store | Open settings |
@@ -40,7 +40,7 @@ For the monthly check, P1's Play Store version is replaced by [P3b](#p3b-start-t
 
 ## P2. During a session
 
-Plainphone cannot draw over the Play Store or Settings, so it uses one ongoing notification:
+LMNOPhone cannot draw over the Play Store or Settings, so it uses one ongoing notification:
 
 - **Notification:** "Play Store open · Keep the phone with you · {n} min left · Tap here to finish" (or
   "Settings open · …"). The first draft
@@ -48,7 +48,7 @@ Plainphone cannot draw over the Play Store or Settings, so it uses one ongoing n
 - At 2 minutes left, the same notification updates to: "Play Store closes in 2 minutes".
 - Tapping it, or pressing Home, ends the session and goes to P4.
 
-The notification is the only way Plainphone talks during a session. No sounds. The AE confirms in Q1 that the
+The notification is the only way LMNOPhone talks during a session. No sounds. The AE confirms in Q1 that the
 notification shows while lock task is on ([Open question 5](README.md#open-questions-for-the-lead)).
 
 ## P3. Monthly check
@@ -58,7 +58,7 @@ design D3.
 
 ### P3a. What starts it
 
-- The text on the due date ([texts table](README.md#texts-plainphone-sends)).
+- The text on the due date ([texts table](README.md#texts-lmnophone-sends)).
 - "Check for updates – due" in "Needs you" on the front page (T2), from the due date.
 - The user's home line "Ask {tp} to do the monthly phone check", shown only when the check is due (see
   [U1](flows-user.md#the-notice-line)).
@@ -72,7 +72,7 @@ updates arrive on their own; the screens then keep this one path.
 
 - **Title:** Check for updates
 - **Body:**
-  You'll open the Play Store's list of updates and update anything that's waiting. Afterwards, Plainphone asks
+  You'll open the Play Store's list of updates and update anything that's waiting. Afterwards, LMNOPhone asks
   which apps didn't update. About 10 minutes. Updates carry on even after the Play Store closes.
   **Stay with the phone until you tap Done.**
   In the Play Store: tap your Google picture or initial at the top right, then **Manage apps & device**, then
@@ -125,7 +125,7 @@ updates arrive on their own; the screens then keep this one path.
 
 - **Title:** Everything is back in place
 - **Body:** The Play Store is closed again. You can hand the phone back to {user}.
-  If anything was put back, one line per item, for example: "The texting app was changed, so Plainphone put
+  If anything was put back, one line per item, for example: "The texting app was changed, so LMNOPhone put
   Messages back. Your other changes were kept."
 - **Primary:** Done
 - **Notes:** this is the "Done" that the session copy refers to. Tapping it returns to the home screen. If the
@@ -135,11 +135,11 @@ Plain names for restored items (from the protected-state table):
 
 | Invariant | Line on P4b |
 |---|---|
-| Default SMS | "The texting app was changed, so Plainphone put Messages back." |
-| Permitted input methods | "A keyboard was added, so Plainphone switched it off. The usual keyboard still works." |
-| Permitted accessibility services | "An accessibility app was switched on, so Plainphone switched it off." |
-| Approved apps' permissions | "{app}'s permissions were changed, so Plainphone set them back to what you chose." |
-| Plainphone `SEND_SMS` | "Plainphone's permission to text you was changed. It's been put back." (if repair fails: T8) |
+| Default SMS | "The texting app was changed, so LMNOPhone put Messages back." |
+| Permitted input methods | "A keyboard was added, so LMNOPhone switched it off. The usual keyboard still works." |
+| Permitted accessibility services | "An accessibility app was switched on, so LMNOPhone switched it off." |
+| Approved apps' permissions | "{app}'s permissions were changed, so LMNOPhone set them back to what you chose." |
+| LMNOPhone `SEND_SMS` | "LMNOPhone's permission to text you was changed. It's been put back." (if repair fails: T8) |
 | Browser role, restrictions, lock task, never-hide, alerts | Never shown on P4b. If repaired silently, nothing to say; if repair fails, P5. |
 
 ## P5. Not ready to hand back
@@ -174,24 +174,24 @@ Plain names for restored items (from the protected-state table):
 - **Secondary:** Details for {helper} → the failed rows by name (this is the one screen where invariant names
   such as "Lock-task packages" may appear, under a heading "For {helper}").
 - **Notes:** this screen comes back after every unlock until a check passes. Home still goes to the home screen
-  (Emergency must always be reachable), but the home screen shows "Plainphone needs attention". If the emergency
+  (Emergency must always be reachable), but the home screen shows "LMNOPhone needs attention". If the emergency
   alert readback is unavailable on this build, the helper details say "Emergency alert settings can't be checked
   on this phone software" and the phone is held by the helper; it is never shown as passing.
 
 When `{helper}` and `{tp}` are the same person, the body reads "Keep the phone with you. You'll need a computer to
 fix this; see the setup guide, 'When something goes wrong'."
 
-## P6. Install a Plainphone update
+## P6. Install an LMNOPhone update
 
-**Spec:** trusted-person-controls ("Plainphone updates come from the helper's computer over local Wi-Fi…";
+**Spec:** trusted-person-controls ("LMNOPhone updates come from the helper's computer over local Wi-Fi…";
 "No rollback"); design D6.
 
 ### P6a. Before you start
 
-- **Title:** Install a Plainphone update
+- **Title:** Install an LMNOPhone update
 - **Body:**
   {helper} needs to be here with a computer on the same Wi-Fi. {helper} will tell you the address to type.
-  Plainphone checks that the update really comes from the Plainphone team before installing it.
+  LMNOPhone checks that the update really comes from the LMNOPhone team before installing it.
   If an update goes badly wrong, there's no undo. The fix is the last-resort reset in the setup guide.
 - **Primary:** Next
 - **Then:** PIN (fresh).
@@ -212,15 +212,15 @@ fix this; see the setup guide, 'When something goes wrong'."
 | Failure | Message |
 |---|---|
 | Can't reach the address, timeout, redirect | "Couldn't get the update from that address. Check it with {helper}. Nothing has changed." |
-| Too big (over 100 MB) | "That file is too big to be a Plainphone update. Nothing has changed." |
-| Wrong package, bad signature, wrong signer | "That file isn't a genuine Plainphone update, so it wasn't installed. Nothing has changed. Tell {helper}." |
+| Too big (over 100 MB) | "That file is too big to be an LMNOPhone update. Nothing has changed." |
+| Wrong package, bad signature, wrong signer | "That file isn't a genuine LMNOPhone update, so it wasn't installed. Nothing has changed. Tell {helper}." |
 | Same or older version | "This phone already has that version or a newer one. Nothing has changed." |
 
 ### P6d. Install
 
 - **Title:** Install update {version}?
-- **Body:** This update is from the Plainphone team. The phone will be busy for a minute. Calls and Emergency
+- **Body:** This update is from the LMNOPhone team. The phone will be busy for a minute. Calls and Emergency
   still work.
 - **Primary:** Install
-- **Then:** "Installing…" → Plainphone restarts → the handover self-check runs → "Plainphone is up to date"
-  with **Done**, or P5 / "Plainphone needs attention" if the self-check fails.
+- **Then:** "Installing…" → LMNOPhone restarts → the handover self-check runs → "LMNOPhone is up to date"
+  with **Done**, or P5 / "LMNOPhone needs attention" if the self-check fails.

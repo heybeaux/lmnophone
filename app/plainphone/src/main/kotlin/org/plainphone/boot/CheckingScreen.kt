@@ -25,15 +25,21 @@ import org.plainphone.ui.theme.PlainphoneColors
 import org.plainphone.ui.theme.PlainphoneSpace
 import org.plainphone.ui.theme.PlainphoneType
 
-/** The neutral state before the re-apply reads back: no apps, only Phone and Emergency. */
+/**
+ * The neutral state before the re-apply reads back: no apps, only Phone and Emergency. With
+ * [attention] it says LMNOPhone needs attention instead of "This takes a moment" ([checkingShowsAttention]).
+ */
 @Composable
-fun CheckingScreen(onPhone: () -> Unit, onEmergency: () -> Unit) {
+fun CheckingScreen(onPhone: () -> Unit, onEmergency: () -> Unit, attention: Boolean = false) {
     Column(
         Modifier.fillMaxSize().background(PlainphoneColors.Paper).safeDrawingPadding().padding(PlainphoneSpace.S6),
         verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4),
     ) {
         BasicText(stringResource(R.string.checking_title, stringResource(R.string.app_name)), style = PlainphoneType.Title)
-        BasicText(stringResource(R.string.checking_body), style = PlainphoneType.Body, modifier = Modifier.weight(1f))
+        BasicText(
+            stringResource(if (attention) R.string.checking_attention else R.string.checking_body, stringResource(R.string.app_name)),
+            style = PlainphoneType.Body, modifier = Modifier.weight(1f),
+        )
         Action(stringResource(R.string.checking_phone), onPhone)
         Action(stringResource(R.string.checking_emergency), onEmergency)
     }

@@ -103,8 +103,8 @@ At most one line shows. When several apply, the **first** in this table wins:
 
 | # | Line (exact text) | When | Tapping it opens |
 |---|---|---|---|
-| 1 | **Plainphone needs attention** | Anything device-lockdown or approved-apps says shows it: a hide that failed, the safe fallback in use, a failed post-update check, a damaged running-time record, and (recommended) unknown phone software | U3 (which also shows a waiting change, if there is one) |
-| 2 | **Plainphone will turn off after {time}. Tap to cancel.** | Turning off is a waiting change (24 hours of the phone being on) | U9 |
+| 1 | **LMNOPhone needs attention** | Anything device-lockdown or approved-apps says shows it: a hide that failed, the safe fallback in use, a failed post-update check, a damaged running-time record, and (recommended) unknown phone software | U3 (which also shows a waiting change, if there is one) |
+| 2 | **LMNOPhone will turn off after {time}. Tap to cancel.** | Turning off is a waiting change (24 hours of the phone being on) | U9 |
 | 2 | **A change to trusted people is waiting. Tap to cancel.** | Adding, handing over or removing a trusted person is waiting | U9 |
 | 2 | **A change to how this phone is set up is waiting. Tap to cancel.** | Switching mode, or (self-managed) shortening the countdown or raising the daily limit, is waiting. Exact text from the spec ([PLA-39](/PLA/issues/PLA-39)). | U9 |
 | 3 | **Opening up in {n} minutes** · **Ready – tap to start** | Self-managed mode only: an elevation countdown is running, or has ended and is waiting for Start | U10 |
@@ -119,7 +119,7 @@ are labels with no full stop. The waiting-change lines keep the spec's sentence 
 **Examples of the order:**
 - A turn-off is waiting and the monthly check is due: only the turn-off line shows (spec scenario "Turn-off pending
   and monthly check overdue").
-- A turn-off is waiting and Plainphone needs attention: "Plainphone needs attention" shows. U3 shows the waiting
+- A turn-off is waiting and LMNOPhone needs attention: "LMNOPhone needs attention" shows. U3 shows the waiting
   turn-off with its Cancel (spec scenario "Turn-off pending under 'needs attention'"). The waiting change and its
   Cancel are also always in Phone settings (U7).
 - From the moment the wait ends and the change is actually being made, the line reads **Already in progress** and
@@ -142,27 +142,27 @@ The packet now says when it appears.
 - **Primary:** OK
 - **Notes:** No PIN. No link to Play. Back and OK both return home.
 
-## U3. "Plainphone needs attention" (from the notice line)
+## U3. "LMNOPhone needs attention" (from the notice line)
 
 **Spec:** calm-home-screen notice; device-lockdown (baseline, unknown build); approved-apps (hide failed).
 
 - **Title:** Something needs checking
 - **Body:**
-  Plainphone, the program that keeps this phone simple, needs {tp} or {helper} to look at it. {reason}
+  LMNOPhone, the program that keeps this phone simple, needs {tp} or {helper} to look at it. {reason}
   Your phone is fine to use: calls, texts, Emergency and your apps all work. You haven't done anything wrong.
 - `{reason}` is one plain sentence, from this list (the first that applies):
 
   | Cause | `{reason}` |
   |---|---|
-  | Unknown phone software (recommended, Open question 3) | "The phone updated its own software, and Plainphone hasn't been checked with it yet." |
+  | Unknown phone software (recommended, Open question 3) | "The phone updated its own software, and LMNOPhone hasn't been checked with it yet." |
   | A hide failed | "An app on this phone couldn't be tidied away." |
   | Failed post-update check | "A check after an update didn't finish." |
-  | Safe fallback in use | "Plainphone is running in a simpler, safer way until it's looked at." |
-  | Running-time record couldn't be saved (trusted-person-controls, "Damaged, missing or inconsistent P") | "Plainphone couldn't save its timer, so any waiting change is paused." |
-  | A change is stuck, or Plainphone needs repair ([M4](flows-people-modes-and-waits.md#m4-a-change-is-stuck)) | "Plainphone is finishing a change and needs {helper} to look at it." |
+  | Safe fallback in use | "LMNOPhone is running in a simpler, safer way until it's looked at." |
+  | Running-time record couldn't be saved (trusted-person-controls, "Damaged, missing or inconsistent P") | "LMNOPhone couldn't save its timer, so any waiting change is paused." |
+  | A change is stuck, or LMNOPhone needs repair ([M4](flows-people-modes-and-waits.md#m4-a-change-is-stuck)) | "LMNOPhone is finishing a change and needs {helper} to look at it." |
 - **If a change is waiting** (it's hidden from the home screen while this screen's line shows): a grey box under
   the body, the same box as on U9:
-  **"Waiting: {what}"** (`{what}` as on U9: "Plainphone will turn off after {time}", "A change to trusted people",
+  **"Waiting: {what}"** (`{what}` as on U9: "LMNOPhone will turn off after {time}", "A change to trusted people",
   "A change to how this phone is set up"), with the text link **Cancel this change** → U9b. No PIN. Once the change
   is being made, the box reads "Already in progress" and has no link.
 - **Primary:** OK
@@ -242,7 +242,7 @@ Beaux asked: "I don't know if he got it or not." So each saved request shows its
 
 ### U5c. Didn't send
 
-**Spec:** "If an SMS fails, Plainphone SHALL say so and keep the request listed."
+**Spec:** "If an SMS fails, LMNOPhone SHALL say so and keep the request listed."
 
 - **Title:** This didn't send
 - **Body:** The phone may have no signal right now. Your request is saved, and {tp} will see it on this phone.
@@ -324,7 +324,7 @@ Opens when the user taps a web link that doesn't belong to an added app, from Me
 ### U6b. Confirm sending
 
 - **Title:** Look at this link with {tp}?
-- **Body:** {tp} will get this text: then the exact SMS text from the [texts table](README.md#texts-plainphone-sends),
+- **Body:** {tp} will get this text: then the exact SMS text from the [texts table](README.md#texts-lmnophone-sends),
   shown in a grey box, including `{host}{path}` with the userinfo, query and fragment already removed.
 - **Primary:** Send
 - **Secondary:** Don't send
@@ -341,7 +341,7 @@ Opens when the user taps a web link that doesn't belong to an added app, from Me
   "Look at this link with Sam and Jo?" may take 3 lines at 200%; that's allowed (see `title` in
   [design-tokens.md](design-tokens.md#type-scale)).
 
-## U7. Phone settings (Plainphone's own)
+## U7. Phone settings (LMNOPhone's own)
 
 **Spec:** calm-home-screen ("Built-in basic settings without Android Settings"); web-containment (Wi-Fi sign-in).
 
@@ -358,7 +358,7 @@ always be found (trusted-person-controls, "Where Cancel is reachable"), whatever
 | Bluetooth | "Paired with: {device}". "Pair a new device" lists nearby devices. | Pair (on the device screen) |
 | Sound | Ring volume, media volume (large slider with − and + buttons), "Ringtone" chooser | Done |
 | Brightness | One slider with − and + buttons; "Adjust automatically" on/off | Done |
-| Text size | A sample sentence, then − and + buttons, then "Bigger text may push some apps' words off the edge. Plainphone's own screens will still fit." | Done |
+| Text size | A sample sentence, then − and + buttons, then "Bigger text may push some apps' words off the edge. LMNOPhone's own screens will still fit." | Done |
 | Battery | "Battery: 64%". "Charging" or "Not charging". No graphs. | (none: information page, Back only) |
 
 ### Optional Home counts (approved communication-counts slice)
@@ -388,7 +388,7 @@ permissions and count sources; the other settings remain separate work.
 
 | When | Message | Action |
 |---|---|---|
-| The network reports a sign-in page | **This Wi-Fi needs a sign-in page, which Plainphone doesn't allow. Use mobile data or another Wi-Fi.** | Primary: **Forget this network** · Secondary: OK |
+| The network reports a sign-in page | **This Wi-Fi needs a sign-in page, which LMNOPhone doesn't allow. Use mobile data or another Wi-Fi.** | Primary: **Forget this network** · Secondary: OK |
 | Connected, but no internet and no sign-in page detected | **This Wi-Fi isn't reaching the internet.** | Primary: **Forget this network** · Secondary: OK |
 
 **Layout, in this order** (the spec sentence stays exactly as written; only what's around it changed):
@@ -410,13 +410,13 @@ mandates it. It restates facts already in the design (no monitoring, no servers,
 
 - **Title:** About this phone
 - **Body:**
-  Plainphone is the program that keeps this phone simple. {tp} helps choose which apps are on it, together with
+  LMNOPhone is the program that keeps this phone simple. {tp} helps choose which apps are on it, together with
   you, with the phone in {tp}'s hands. "For {tp}" needs {tp}'s PIN so that nobody else can change your phone.
-  {tp} can't read your messages, see where you are, or see what you do in your apps. Plainphone has no server of
+  {tp} can't read your messages, see where you are, or see what you do in your apps. LMNOPhone has no server of
   its own, no analytics and no account. It connects to {helper}'s computer over home Wi-Fi only to update itself.
-  Plainphone sends {tp} a text only when you choose to ask for an app or share a link, when the monthly check is
-  due, when Plainphone needs a check or a phone update is coming, when {tp}'s PIN is used to change something on
-  this phone, when a big change (like turning Plainphone off) starts, is cancelled or finishes, or if {tp}'s PIN is
+  LMNOPhone sends {tp} a text only when you choose to ask for an app or share a link, when the monthly check is
+  due, when LMNOPhone needs a check or a phone update is coming, when {tp}'s PIN is used to change something on
+  this phone, when a big change (like turning LMNOPhone off) starts, is cancelled or finishes, or if {tp}'s PIN is
   typed wrongly many times (so {tp} knows if someone is guessing it).
   The phone keeps a list of changes from the last 90 days. It doesn't include your messages, websites or what you
   do in apps.
@@ -427,17 +427,17 @@ mandates it. It restates facts already in the design (no monitoring, no servers,
   - From the lock screen, tap **Emergency call**.
   - {sos_line}
   `{sos_line}` is "Or press the power button 5 times quickly." **only if** feasibility question Q14 confirms the
-  Emergency SOS gesture works on this phone while Plainphone is running. Otherwise the line is left out.
+  Emergency SOS gesture works on this phone while LMNOPhone is running. Otherwise the line is left out.
 - **Two trusted people:** `{tp}` is "Sam and Jo" throughout, and one line is added after the first sentence:
   "Sam and Jo are equals: either can add apps with you."
-- **Self-managed version of the body:** Plainphone is the program that keeps this phone simple. You hold its PIN.
+- **Self-managed version of the body:** LMNOPhone is the program that keeps this phone simple. You hold its PIN.
   It adds waits before you can open things up, so that distraction takes effort. It's friction, not a lock.
-  Plainphone has no server of its own, no analytics and no account. It connects to {helper}'s computer over home
+  LMNOPhone has no server of its own, no analytics and no account. It connects to {helper}'s computer over home
   Wi-Fi only to update itself. It sends a text to {helper} only if the phone needs fixing. (No helper: "It doesn't
   send texts.")
 - **Secondary:** Who to call for help → "{helper}: {helper phone}. {tp}: {tp phone}."
 - **Notes:** if any approved app is itself a tracking app (for example a family-location app), this screen does
-  not cover it; that app's own notice applies. Plainphone makes no claim about what other apps send.
+  not cover it; that app's own notice applies. LMNOPhone makes no claim about what other apps send.
 
 ## U9. A change is waiting
 
@@ -454,7 +454,7 @@ name ("Sam", or "Sam and Jo"). `{change}` is one of these (the full list, with t
 
 | Kind | `{change}` |
 |---|---|
-| Turning off | turn Plainphone off |
+| Turning off | turn LMNOPhone off |
 | Adding a trusted person | add {name} as a trusted person |
 | Handing a role over | hand {name}'s place to {new} |
 | Removing a trusted person | remove {other} as a trusted person |
@@ -464,7 +464,7 @@ name ("Sam", or "Sam and Jo"). `{change}` is one of these (the full list, with t
 
 ### U9a. The waiting change
 
-- **Title:** Plainphone will turn off (for turning off) · A change is waiting (for everything else)
+- **Title:** LMNOPhone will turn off (for turning off) · A change is waiting (for everything else)
 - **Box** (grey): **{Change}.** Second line: "Started with {name}'s PIN, {day} at {time}." (Self-managed:
   "You started this {day} at {time}.")
 - **Why not "{name} asked":** a PIN shows that someone knew it, not who typed it (design C1, "Authority is a
@@ -476,7 +476,7 @@ name ("Sam", or "Sam and Jo"). `{change}` is one of these (the full list, with t
   Anyone holding this phone can cancel it. No PIN is needed. {everyone} will get a text either way.
 - **Primary:** Cancel this change → U9b
 - **Secondary:** Keep it waiting → back
-- **Notes:** for turning off, add one line before "Anyone…": "Until then, Plainphone works as usual." Only one
+- **Notes:** for turning off, add one line before "Anyone…": "Until then, LMNOPhone works as usual." Only one
   waiting change can exist, so this screen never lists two.
 
 ### U9b. Confirm
@@ -495,7 +495,7 @@ The spec forbids showing "Cancelled" before it is saved. While saving, the prima
 and can't be pressed. If saving fails:
 
 - **Title:** Still cancelling
-- **Body:** Plainphone couldn't save this yet and is trying again. The change won't happen while this is
+- **Body:** LMNOPhone couldn't save this yet and is trying again. The change won't happen while this is
   unfinished.
 - **Primary:** OK → home. The notice line now reads "Cancelling…" and opens this screen until it's saved.
 
@@ -509,15 +509,15 @@ and can't be pressed. If saving fails:
 
 ### U9e. Already in progress
 
-From the moment the wait ends and Plainphone starts making the change, Cancel is no longer offered.
+From the moment the wait ends and LMNOPhone starts making the change, Cancel is no longer offered.
 
 - **Title:** Already in progress
 - **Body:** This change is being made now. It can't be cancelled at this point.
-  For turning off: "Plainphone is turning off now. It can't be cancelled at this point. Calls, texts and Emergency
+  For turning off: "LMNOPhone is turning off now. It can't be cancelled at this point. Calls, texts and Emergency
   keep working."
 - **Primary:** OK
 
-**If Plainphone cancels it itself** (for example, a PIN it depended on was changed), the notice line simply goes
+**If LMNOPhone cancels it itself** (for example, a PIN it depended on was changed), the notice line simply goes
 away and everyone is texted, as the spec says. The user sees nothing else.
 
 ## U10. Opening up (self-managed mode only)
@@ -527,7 +527,7 @@ away and everyone is texted, as the spec says. The user sees nothing else.
 
 These are the two screens behind the home-screen line while a countdown runs. How the user starts an opening (PIN,
 choosing what to open) is [M7b](flows-people-modes-and-waits.md#m7b-before-opening-up). `{kind}` is "the Play Store",
-"full phone settings", "adding {app}" or "a Plainphone update". `{left}` is how many openings are left today.
+"full phone settings", "adding {app}" or "an LMNOPhone update". `{left}` is how many openings are left today.
 For adding a hidden app and for an update, the titles read "Adding {app} in {n} minutes" / "Ready to add {app}" and
 "Update in {n} minutes" / "Ready to install the update", and the first sentence of U10a reads "You can add {app}
 when the countdown ends." / "You can install the update when the countdown ends." The home lines stay as the spec

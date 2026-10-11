@@ -33,11 +33,12 @@ class ElevatedAppApprovalTest {
     private var approvals = AppApprovalState()
     private var hook: ((String) -> Unit)? = null
     private var failure: String? = null
+    private class SimulatedProcessDeath : Error()
     private var crash: String? = null
     private val events = mutableListOf<String>()
     private fun event(name: String): Boolean {
         events += name; hook?.invoke(name)
-        if (crash == name) error("process death")
+        if (crash == name) throw SimulatedProcessDeath()
         return failure != name
     }
     private val elevationStore = object : ElevationStore() {
@@ -109,6 +110,7 @@ class ElevatedAppApprovalTest {
             if (event("permissions-readback")) mapOf(camera to PermissionReadback.GRANTED) else emptyMap()
         override fun applyPolicy(plan: PolicyPlan) = event("apply")
         override fun readBackPolicy(plan: PolicyPlan) = event("policy-readback")
+        override fun containFailedActivation(packages: Set<PackageName>) = event("contain")
     }
     private var id = 0
     private val ids = AppApprovalIdSource { "id-${++id}" }
@@ -220,7 +222,7 @@ class ElevatedAppApprovalTest {
         val removal = assertNotNull(controller.prepareRemoval(a.packageName, person))
         val fresh = assertIs<PinResult.Authorized>(vault.authenticate(person, pin, removal.action)).authority
         crash = "after-REMOVING"
-        assertFailsWith<IllegalStateException> { controller.removeApproved(removal, removal.approvalId, fresh) }
+        assertFailsWith<SimulatedProcessDeath> { controller.removeApproved(removal, removal.approvalId, fresh) }
         crash = null
         elevations = elevations(); controller = controller()
         assertEquals(ElevationOutcome.IDLE, elevations.onStart())
@@ -322,7 +324,7 @@ class ElevatedAppApprovalTest {
         for (target in listOf(ElevationTarget.Play, ElevationTarget.Approve(a))) {
             for (stage in listOf("before-atomic", "after-atomic")) {
                 val f = ElevatedAppApprovalTest(); f.setup(target); val r = f.request(); f.crash = stage
-                assertFailsWith<IllegalStateException> { f.controller.approveElevated(r) }
+                assertFailsWith<SimulatedProcessDeath> { f.controller.approveElevated(r) }
                 val committed = stage == "after-atomic"
                 assertEquals(committed, f.approvals.apps.isNotEmpty())
                 if (committed) {

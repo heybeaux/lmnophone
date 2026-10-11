@@ -85,16 +85,74 @@ class VaultRuntimeTest {
         assertFalse(FileClockStateStore(dir).compareAndSet(first, second))
     }
 
-    @Test fun aDamagedClockFallsBackOnlyToAnOlderReadingNeverAhead() {
+    /** A damaged or missing primary reads null, even with an older good copy beside it, so the clock repairs to a fresh epoch. */
+    @Test fun aDamagedClockReadsNullAndNeverFallsBackToAnOlderCopy() {
         val dir = tmp.newFolder()
         val store = FileClockStateStore(dir)
         val first = ClockRecord(RunningTime("epoch-a", 0), BootTime("boot-1", 10))
         val second = ClockRecord(RunningTime("epoch-a", 500), BootTime("boot-1", 510))
         assertTrue(store.compareAndSet(null, first)); assertTrue(store.compareAndSet(first, second))
+        val good = File(dir, "clock.rec").readBytes()
+        File(dir, "clock.lkg").writeBytes(good)
         File(dir, "clock.rec").writeBytes(byteArrayOf(1, 2, 3))
-        assertEquals(first, FileClockStateStore(dir).read())
-        File(dir, "clock.lkg").writeBytes(byteArrayOf(1, 2, 3))
         assertNull(FileClockStateStore(dir).read())
+        File(dir, "clock.rec").delete()
+        assertNull(FileClockStateStore(dir).read())
+        val fresh = ClockRecord(RunningTime("epoch-b", 0), BootTime("boot-1", 600))
+        assertFalse(store.compareAndSet(second, fresh))
+        assertTrue(store.compareAndSet(null, fresh))
+        assertEquals(fresh, FileClockStateStore(dir).read())
+    }
+
+    /** Two instances for one directory, one reached through a symlink, share one lock: the slower writer sees the faster one's record. */
+    @Test fun storesForOneDirectoryShareOneCompareAndSet() {
+        val dir = tmp.newFolder()
+        val alias = File(tmp.root, "alias")
+        java.nio.file.Files.createSymbolicLink(alias.toPath(), dir.toPath())
+        val a = FileClockStateStore(dir); val b = FileClockStateStore(alias)
+        val original = ClockRecord(RunningTime("epoch-a", 0), BootTime("boot-1", 0))
+        val next = ClockRecord(RunningTime("epoch-a", 100), BootTime("boot-1", 100))
+        assertTrue(a.compareAndSet(null, original))
+        val results = java.util.Collections.synchronizedList(mutableListOf<Boolean>())
+        val start = java.util.concurrent.CountDownLatch(1)
+        val writers = List(8) { i ->
+            val store = if (i % 2 == 0) a else b
+            Thread { start.await(); results += store.compareAndSet(original, next.copy(proven = RunningTime("epoch-a", 100L + i))) }
+        }
+        writers.forEach { it.start() }; start.countDown(); writers.forEach { it.join(10_000) }
+        assertEquals(1, results.count { it })
+        assertEquals(7, results.count { !it })
+        assertEquals(a.read(), b.read())
+    }
+
+    /** Another process holding `clock.lock` (a child JVM here) refuses the compare-and-set until it lets go. */
+    @Test fun anotherProcessHoldingTheLockRefusesTheWrite() {
+        val dir = tmp.newFolder()
+        val store = FileClockStateStore(dir)
+        val original = ClockRecord(RunningTime("epoch-a", 0), BootTime("boot-1", 0))
+        val next = ClockRecord(RunningTime("epoch-a", 100), BootTime("boot-1", 100))
+        assertTrue(store.compareAndSet(null, original))
+        val holder = File(tmp.newFolder(), "Hold.java")
+        holder.writeText(
+            "import java.nio.channels.*; import java.nio.file.*;\n" +
+                "public class Hold { public static void main(String[] a) throws Exception {\n" +
+                "  try (FileChannel c = FileChannel.open(Paths.get(a[0]), StandardOpenOption.CREATE, StandardOpenOption.WRITE); FileLock l = c.lock()) {\n" +
+                "    System.out.println(\"locked\"); System.out.flush(); System.in.read(); } } }\n",
+        )
+        val javaBin = File(System.getProperty("java.home"), "bin/java").path
+        val child = ProcessBuilder(javaBin, holder.path, File(dir, "clock.lock").path).redirectErrorStream(true).start()
+        try {
+            assertEquals("locked", child.inputStream.bufferedReader().readLine())
+            FileClockStateStore.lockWaitMillis = 300
+            assertFalse(store.compareAndSet(original, next))
+            assertEquals(original, store.read())
+        } finally {
+            FileClockStateStore.lockWaitMillis = 10_000
+            child.outputStream.close()
+            child.waitFor(10, java.util.concurrent.TimeUnit.SECONDS)
+        }
+        assertTrue(store.compareAndSet(original, next))
+        assertEquals(next, FileClockStateStore(dir).read())
     }
 
     @Test fun provenClockAdvancesWithinABootAndCreditsOnlyTheNewBootAfterARestart() {

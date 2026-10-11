@@ -1,0 +1,1 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.plainphone.spike311"><uses-sdk android:minSdkVersion="30" android:targetSdkVersion="36"/><application android:label="PLA-311 suspension spike" android:debuggable="true"/><instrumentation android:name="org.plainphone.spike311.SuspendSpike" android:targetPackage="org.plainphone"/></manifest>

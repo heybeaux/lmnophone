@@ -1,0 +1,26 @@
+check                   debug                 ctlNoPhone            ctlNoDialerLockTask   ctlNoAlert            ctlNoAlertLockTask    
+capabilities            PASS                  PASS                  PASS                  PASS                  PASS                  
+sos                     NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           
+setup                   NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           
+pin-lockout             NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           
+supervised-session      NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           
+updater                 NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           
+turn-off                NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           NOT_COVERED           
+home-phone              PASS                  FAIL                  FAIL                  PASS                  PASS                  
+app-home-phone          PASS                  FAIL                  FAIL                  PASS                  PASS                  
+more-emergency          NOT_BUILT             NOT_BUILT             NOT_BUILT             NOT_BUILT             NOT_BUILT             
+alert-display-ready     PASS                  PASS                  PASS                  FAIL                  FAIL                  
+alert-display-launch    PASS                  PASS                  PASS                  FAIL                  FAIL                  
+alert-shown             INCONCLUSIVE          INCONCLUSIVE          INCONCLUSIVE          INCONCLUSIVE          INCONCLUSIVE          
+telecom-emergency-call  PASS                  FAIL                  FAIL                  PASS                  PASS                  
+lock-screen             PASS                  PASS                  PASS                  PASS                  PASS                  
+locked-boot             PASS                  PASS                  PASS                  PASS                  PASS                  
+boot-checking           PASS                  FAIL                  FAIL                  PASS                  PASS                  
+cannot-start            PASS                                                                                                          
+BUILD                   INCONCLUSIVE          DETECTED              DETECTED              DETECTED              DETECTED              
+  debug: alert-shown INCONCLUSIVE
+Real build: PASS, or INCONCLUSIVE only for alert-shown. Each control: DETECTED (its named checks FAIL, every other check as the real build).
+Raw lines: <scratch>/final-api36
+RESULT QUALIFIED EXCEPT alert-shown INCONCLUSIVE (debug qualification run; the board decides the alert-shown exception)
+[gate 17:19:54] cleanup: mCallState=0 testNumbers=[112, 911] pinDisabled=true owners=no owners 
+exit=5

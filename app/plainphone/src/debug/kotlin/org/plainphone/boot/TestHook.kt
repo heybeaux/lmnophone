@@ -19,12 +19,17 @@ import org.plainphone.PlainphoneAdminReceiver
  * policy itself. Shell-only (`android.permission.DUMP`). Neither action triggers a re-apply.
  *
  * - `org.plainphone.test.RELAX --es package P`: adds P to the lock-task list, as an open session would.
- * - `org.plainphone.test.DROP --es restriction R [--ei features F]`: clears user restriction R and the
- *   whole lock-task list, as a power cut that lost both writes would; with `features`, also sets the
- *   lock-task feature mask to F (PLA-233: F=16 drops BLOCK_ACTIVITY_START_IN_TASK).
+ * - `org.plainphone.test.DROP --es restriction R [--ei features F] [--ez keepList true]`: clears user
+ *   restriction R and the whole lock-task list, as a power cut that lost both writes would; with
+ *   `features`, also sets the lock-task feature mask to F (PLA-233: F=16 drops BLOCK_ACTIVITY_START_IN_TASK).
+ *   `keepList` keeps the list, so membership survives while the features are lost (PLA-264 finding 1).
  * - `org.plainphone.test.NOTIFY --es component C`: posts a notification whose tap opens activity C, an
  *   unapproved app. Android clears notifications on reboot and the shell cannot attach a tap intent,
  *   so this stands in for an unapproved app's notification right after boot. Works before unlock.
+ * - `org.plainphone.test.HOLD --ez hold true|false`: holds (or releases) the checking screen, so the
+ *   emergency gate can test its Phone (PLA-245; the real checking screen lasts under a second).
+ * - `org.plainphone.test.IN_CALL --ez on true|false`: stands in for an ongoing call in recovery's call
+ *   check (PLA-322 finding 1), so the in-call restore path runs without placing a call.
  */
 class TestHook : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -38,9 +43,11 @@ class TestHook : BroadcastReceiver() {
             "org.plainphone.test.DROP" -> {
                 val restriction = intent.getStringExtra("restriction") ?: return
                 dpm.clearUserRestriction(admin, restriction)
-                dpm.setLockTaskPackages(admin, emptyArray())
+                if (!intent.getBooleanExtra("keepList", false)) dpm.setLockTaskPackages(admin, emptyArray())
                 if (intent.hasExtra("features")) dpm.setLockTaskFeatures(admin, intent.getIntExtra("features", 0))
             }
+            "org.plainphone.test.HOLD" -> PolicyRuntime.get(context).holdChecking(intent.getBooleanExtra("hold", false))
+            "org.plainphone.test.IN_CALL" -> PolicyRuntime.get(context).inCallStandIn = intent.getBooleanExtra("on", false).takeIf { it }
             "org.plainphone.test.NOTIFY" -> {
                 val target = intent.getStringExtra("component")?.let(ComponentName::unflattenFromString) ?: return
                 val notifications = context.getSystemService(NotificationManager::class.java)

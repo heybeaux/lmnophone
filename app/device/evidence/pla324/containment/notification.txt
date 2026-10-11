@@ -1,0 +1,19 @@
+08:10:24 dropped: LockTaskPolicy {mPackages= ; mFlags= 16 }
+08:10:44 locked: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED top=
+08:10:45 locked policy: LockTaskPolicy {mPackages= com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.android.phone, com.google.android.cellbroadcastreceiver; mFlags= 119 }
+08:10:45 queue: notification posted
+08:10:48 sample 1: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:10:49 sample 2: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:10:49 sample 3: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:10:50 sample 4: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:10:51 sample 5: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:10:51 sample 6: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:10:52 sample 7: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:10:53 sample 8: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:10:53 sample 9: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:10:54 sample 10: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:10:54 sample 11: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:10:55 sample 12: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+08:11:02 after tap: lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:11:03 after centre tap: lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+08:11:03 PASS notification

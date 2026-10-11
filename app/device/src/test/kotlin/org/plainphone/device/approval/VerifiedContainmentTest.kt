@@ -56,7 +56,9 @@ class VerifiedContainmentTest {
             h.port.setHidden(name, hidden)
         }
     }
-    private val effects = DeviceApprovalEffects(h.dispatcher, port, h.grants, home, h.neverHide) { null }
+    /** Names the live never-hide list protects on top of the harness facts (facts changed since the plan). */
+    private var protectedSincePlan = emptySet<PackageName>()
+    private val effects = DeviceApprovalEffects(h.dispatcher, port, h.grants, home, { h.neverHide()?.plus(protectedSincePlan) }) { null }
 
     @After fun stop() = h.close()
 
@@ -113,6 +115,17 @@ class VerifiedContainmentTest {
         assertTrue("the failure is real: ${state()}", target in h.port.lockTask)
         assertFalse("Home removal still verified", target in listed)
         assertEquals(mapOf(target to setOf(Exposure.VISIBLE, Exposure.LOCK_TASK)), unresolved())
+        assertFloorUntouched()
+    }
+
+    @Test fun aNameProtectedSinceThePlanIsNotTouchedAndIsReported() {
+        prepare()
+        protectedSincePlan = setOf(target)
+        val ops = h.port.ops.size
+        assertFalse(apply())
+        assertTrue("left as the apply made it: ${state()}", !h.port.hidden(target.value) && target in h.port.lockTask)
+        assertTrue("containment wrote nothing for it: ${h.port.ops.drop(ops)}", h.port.ops.drop(ops).none { it == "hide test.target" })
+        assertEquals(mapOf(target to Exposure.entries.toSet()), unresolved())
         assertFloorUntouched()
     }
 

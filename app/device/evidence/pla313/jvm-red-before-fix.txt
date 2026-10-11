@@ -1,0 +1,27 @@
+PLA-315 red run: PLA-313 finding 4, new tests against unchanged src/main
+Base: 556a48a (mvp/device; PLA-298 work already pushed, tree clean)
+Working tree: base + the test-only commit that adds this file (no src/main change)
+Command (from app/): ./gradlew --offline --continue :device:testDebugUnitTest --tests '*Pla313ProbeTest' --tests '*UnknownPriorStateTest'
+Date: 2026-10-11T11:52Z, JVM unit tests only, no emulator
+Pla313ProbeTest holds the reviewer's two finding-4 probes and aFailedFloorRepairReturnsFalse verbatim;
+editingHideFailureMustStillRemoveLockTaskAndHome (findings 1-3, :policy) is left for the merge of that fix.
+UnknownPriorStateTest: each prior-state read (Home, lock task, visibility) x (null, throwing) x each call.
+lockTaskPackages() is non-null, so lock task has the throwing case only. Every case asserts the unreadable
+read actually happened, so the passing lock-task and visibility cases are not vacuous: those reads already
+need positive evidence (name in a read set; packageState(...)?.hidden == false) before taking anything.
+
+10 tests completed, 4 failed. BUILD FAILED
+
+Per test (from build/test-results):
+Pla313ProbeTest 3 tests, 2 failed
+    FAIL windowOpenMustNotRelistAnAbsentHomeEntry - java.lang.AssertionError: repair must not invent Home membership from an unreadable prior state
+    pass aFailedFloorRepairReturnsFalse
+    FAIL containmentMustNotRelistAnAbsentHomeEntry - java.lang.AssertionError: repair must not invent Home membership from an unreadable prior state
+UnknownPriorStateTest 7 tests, 2 failed
+    pass anUnreadableLockTaskReadNeverPermitsOnContainment
+    FAIL anUnreadableHomeReadNeverListsOnOpen - java.lang.AssertionError: HOME NULL OPEN: [listed on Home] (hidden=false permitted=true home=true) | HOME THROWS OPEN: [listed on Home] (hidden=false permitted=true home=true)
+    pass anUnreadableVisibilityReadNeverShowsOnHide
+    pass anUnreadableVisibilityReadNeverShowsOnOpen
+    pass anUnreadableVisibilityReadNeverShowsOnContainment
+    pass anUnreadableLockTaskReadNeverPermitsOnOpen
+    FAIL anUnreadableHomeReadNeverListsOnContainment - java.lang.AssertionError: HOME NULL CONTAIN: [listed on Home] (hidden=false permitted=true home=true) | HOME THROWS CONTAIN: [listed on Home] (hidden=false permitted=true home=true)

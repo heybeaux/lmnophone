@@ -11,6 +11,7 @@ import org.plainphone.device.runtime.AndroidRuntimeFacts
 import org.plainphone.device.runtime.FileClockStateStore
 import org.plainphone.device.runtime.Pbkdf2KeyDerivation
 import org.plainphone.device.runtime.SecureEntropy
+import org.plainphone.policy.ClockRecord
 import org.plainphone.policy.CredentialState
 import org.plainphone.policy.ElevationRecord
 import org.plainphone.policy.PinResult
@@ -22,7 +23,8 @@ import org.plainphone.policy.WaitingState
 /**
  * On-device check of the vault runtime, run as `-e phase vault` (no Device Owner needed): live boot
  * time and battery facts, the proven clock in device-protected storage, and a real PinVault with
- * PBKDF2 at 600,000 iterations on this hardware, timed. The PIN is synthetic. The folder is removed at the end.
+ * PBKDF2 at 600,000 iterations on this hardware, timed. It also checks the clock compare-and-set
+ * across two store instances and the fresh-epoch repair of a damaged clock record (PLA-248). The PIN is synthetic. The folder is removed at the end.
  */
 class VaultRuntimeCheck(private val ctx: Context, private val log: (String) -> Unit) {
     fun check() {
@@ -43,6 +45,15 @@ class VaultRuntimeCheck(private val ctx: Context, private val log: (String) -> U
             val second = clock.checkpoint()
             expect(second != null && second.proven.epoch == first!!.proven.epoch &&
                 second.proven.totalMillis - first.proven.totalMillis in 1_000..10_000, "clock advanced ~1 s (${second?.proven?.totalMillis})")
+            val other = FileClockStateStore(File(dir, "clock"))
+            val held = other.read()
+            expect(held != null && held.proven == second!!.proven, "second store instance reads the same record")
+            expect(other.compareAndSet(held, held!!), "compare-and-set through the second instance (OS lock on clock.lock) succeeds")
+            expect(!other.compareAndSet(ClockRecord(first!!.proven, first.boot), held), "stale compare-and-set refused")
+            File(dir, "clock/clock.rec").writeBytes(byteArrayOf(1, 2, 3))
+            val repaired = clock.checkpoint()
+            expect(repaired != null && repaired.proven.epoch != first!!.proven.epoch && repaired.proven.totalMillis == 0L,
+                "damaged clock record repaired to a fresh zero epoch (${repaired?.proven?.totalMillis})")
             val vault = PinVault(store.credentials, Pbkdf2KeyDerivation, SecureEntropy, clock)
             val person = TrustedPersonId("synthetic")
             var started = SystemClock.elapsedRealtime()

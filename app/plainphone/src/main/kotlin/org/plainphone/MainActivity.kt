@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone
 
-import android.app.ActivityManager
-import android.app.admin.DevicePolicyManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -38,6 +36,10 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import kotlin.concurrent.thread
 import kotlinx.coroutines.delay
+import org.plainphone.boot.BuildControl
+import org.plainphone.boot.CallingScreen
+import org.plainphone.boot.LockTaskState
+import org.plainphone.boot.checkingShowsAttention
 import org.plainphone.boot.CheckingScreen
 import org.plainphone.boot.HomeGate
 import org.plainphone.boot.PolicyRuntime
@@ -55,11 +57,15 @@ import org.plainphone.ui.theme.PlainphoneColors
 import org.plainphone.ui.theme.PlainphoneTheme
 
 /**
- * preview-2 (PLA-144): Home and Device Owner. The manifest's `lockTaskMode="if_whitelisted"` puts this
- * task in lock task as it launches. Home draws only when [PolicyRuntime.gate] is READY (the starter-list
- * plan re-applied and read back) and the task is in lock task; until then the neutral checking screen
- * shows, with only Phone and Emergency. Screens still read [PreviewPhone] for everything except the app
- * list, and every unwired action says "Not in this test build yet".
+ * Plainphone Home. Keyguard first (PLA-264 finding 1): the manifest never starts lock task; Home calls
+ * `startLockTask()` itself, and only when [PolicyRuntime.mayEnterLockTask] reads the features back with
+ * KEYGUARD. It tries on create, resume, new intent (the boot receiver's relaunch) and after every
+ * re-apply run. Home draws only when [PolicyRuntime.gate] is READY (the full re-apply read back) and
+ * the task is in lock task; until then the neutral checking screen shows, with only Phone and Emergency.
+ * Lock task must actually be running (PLA-307 finding 2): create and resume read the live state, and
+ * the runtime brings Home forward after a ready pass that finds it not running ([LockTaskRecovery]).
+ * Only LOCKED counts; PINNED is not lock task (PLA-322 finding 3). Once LOCKED reads back, Home reopens
+ * the calling screen recovery displaced, inside lock task (PLA-322 finding 1).
  */
 class MainActivity : ComponentActivity() {
     private val shell: ShellViewModel by viewModels()
@@ -79,8 +85,7 @@ class MainActivity : ComponentActivity() {
         unsupportedCountApps = communication.controller.unsupportedApps
     }
 
-    private val dpm by lazy { getSystemService(DevicePolicyManager::class.java) }
-    private val activities by lazy { getSystemService(ActivityManager::class.java) }
+    private val runtime by lazy { PolicyRuntime.get(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val paper = PlainphoneColors.Paper.toArgb()
@@ -91,20 +96,22 @@ class MainActivity : ComponentActivity() {
         enterLockTask()
         val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         shell.start(if (debuggable) intent.getStringExtra(EXTRA_PREVIEW_SCREEN) else null)
-        val runtime = PolicyRuntime.get(this)
         val device = Preview2Device(applicationContext)
         val mapper = ShellUiMapper(resources.configuration.locales[0], DateFormat.is24HourFormat(this))
         setContent {
             val gate by runtime.gate.collectAsState()
             val refresh by runtime.refresh.collectAsState()
+            val runs by runtime.runs.collectAsState()
+            val notice by runtime.notice.collectAsState()
+            LaunchedEffect(runs) { enterLockTask() }
             val homeVisible = resumed && gate == HomeGate.READY && shell.phone != null && shell.state.current == ShellRoute.Home
             val settingsVisible = resumed && gate == HomeGate.READY && shell.phone != null && shell.state.current == ShellRoute.PhoneSettings
             SideEffect {
                 communication.controller.setVisible(homeVisible)
                 communication.controller.setSettingsVisible(settingsVisible)
             }
-            if (gate != HomeGate.READY || !enterLockTask()) {
-                PlainphoneTheme { CheckingScreen(onPhone = { perform(ShellEffect.OpenDialer) }, onEmergency = ::openEmergency) }
+            if (gate != HomeGate.READY || !enterLockTask(followUp = false)) {
+                PlainphoneTheme { CheckingScreen(onPhone = ::openPhone, onEmergency = ::openEmergency, attention = checkingShowsAttention(gate, notice)) }
                 return@setContent
             }
             // Each ready read-back run refreshes the app list and the attention notice.
@@ -112,7 +119,7 @@ class MainActivity : ComponentActivity() {
             // Nothing but paper until the app list is read.
             val phone = shell.phone ?: return@setContent
             LaunchedEffect(phone) {
-                Log.i(PolicyRuntime.TAG, "home shown lockTask=${activities.lockTaskModeState} at=${SystemClock.elapsedRealtime()}")
+                Log.i(PolicyRuntime.TAG, "home shown lockTask=${runtime.lockTaskState()} at=${SystemClock.elapsedRealtime()}")
             }
             var snapshot by remember(phone) { mutableStateOf(phone.snapshot()) }
             LaunchedEffect(shell.state, phone) {
@@ -143,11 +150,13 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.hasCategory(Intent.CATEGORY_HOME)) shell.state = ShellState()
+        enterLockTask()
     }
 
     override fun onResume() {
         super.onResume()
         resumed = true
+        runtime.homeResumed()
         enterLockTask()
     }
 
@@ -164,29 +173,51 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    /** True when this task is in lock task, starting it first if the package is allowed. */
-    private fun enterLockTask(): Boolean {
-        if (activities.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE) return true
-        if (!dpm.isLockTaskPermitted(packageName)) return false
-        return try {
-            startLockTask()
-            activities.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
-        } catch (e: RuntimeException) {
-            Log.w(PolicyRuntime.TAG, "lock task not started", e)
-            false
+    /**
+     * True when lock task is LOCKED, starting it first only if Keyguard first allows it now. PINNED is
+     * someone else's pin, not ours to start over. With [followUp], a LOCKED read reopens the calling
+     * screen recovery displaced; never from composition.
+     */
+    private fun enterLockTask(followUp: Boolean = true): Boolean {
+        var state = runtime.lockTaskState()
+        if ((state == LockTaskState.NONE || state == LockTaskState.UNREADABLE) && runtime.mayEnterLockTask()) {
+            try {
+                startLockTask()
+            } catch (e: RuntimeException) {
+                // Read below: still not LOCKED.
+            }
+            state = runtime.lockTaskState()
+        }
+        if (followUp) runtime.onHomeLockTaskState(state)?.let(::reopen)
+        return state.contained
+    }
+
+    /** Brings back a displaced calling screen, now inside lock task. Never ends or touches a call. */
+    private fun reopen(screen: CallingScreen) {
+        Log.i(PolicyRuntime.TAG, "reopening $screen inside lock task at=${SystemClock.elapsedRealtime()}")
+        when (screen) {
+            CallingScreen.IN_CALL -> runtime.showInCallScreen()
+            CallingScreen.PHONE -> openPhone()
+            CallingScreen.EMERGENCY_KEYPAD -> openEmergency()
         }
     }
 
-    /** The emergency-dialer screen of `com.android.phone` (PLA-5 A3), from the checking screen. */
+    private fun openPhone() {
+        runtime.opened(CallingScreen.PHONE)
+        launch(BuildControl.control.phoneIntent(Intent(Intent.ACTION_DIAL)))
+    }
+
     private fun openEmergency() {
-        try {
-            startActivity(Intent(EMERGENCY_DIAL).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        } catch (_: ActivityNotFoundException) {
-            perform(ShellEffect.OpenEmergencyDialer)
-        }
+        runtime.opened(CallingScreen.EMERGENCY_KEYPAD)
+        launch(Intent(EMERGENCY_DIAL))
     }
 
     private fun perform(effect: ShellEffect) {
+        if (effect == ShellEffect.OpenDialer) {
+            openPhone()
+            return
+        }
+        if (effect == ShellEffect.OpenEmergencyDialer) runtime.opened(CallingScreen.PHONE)
         val intent = when (effect) {
             ShellEffect.OpenDialer -> CommunicationEntryIntents.phone()
             ShellEffect.OpenMessages ->
@@ -195,6 +226,10 @@ class MainActivity : ComponentActivity() {
             is ShellEffect.OpenApp -> packageManager.getLaunchIntentForPackage(effect.id)
             ShellEffect.Finish -> null.also { finish() }
         } ?: return
+        launch(intent)
+    }
+
+    private fun launch(intent: Intent) {
         try {
             startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         } catch (_: ActivityNotFoundException) {
