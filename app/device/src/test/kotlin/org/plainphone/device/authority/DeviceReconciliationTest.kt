@@ -69,8 +69,11 @@ class DeviceReconciliationTest {
         val ops = mutableListOf<String>()
         var throwOn: String? = null
         var sticks = true
+        /** Runs inside set: lets a test change Android state after the policy apply. */
+        var onSet: () -> Unit = {}
         override fun setPolicy(accounts: List<String>) {
             ops += "set $accounts"
+            onSet()
             if (throwOn == "set") throw UnsupportedOperationException("no persistent data block")
             if (sticks) policy = ResetProtectionReading(accounts, true)
         }
@@ -205,7 +208,10 @@ class DeviceReconciliationTest {
             ReconcileFailure.OWNER_READ to { it.owner = { throw SecurityException("no binder") } },
             ReconcileFailure.POLICY_APPLY to { it.dpm.throwOnWrite = "restrictions" },
             ReconcileFailure.RESET_APPLY to { it.reset.throwOn = "broadcast" },
-            ReconcileFailure.POLICY_READBACK to { it.dpm.restrictionsStick = false },
+            // A restriction that will not stick already fails the apply's own per-step readback.
+            ReconcileFailure.POLICY_APPLY to { it.dpm.restrictionsStick = false },
+            // The final readback catches a restriction lost after the apply (here, during the reset write).
+            ReconcileFailure.POLICY_READBACK to { rig -> rig.reset.onSet = { rig.dpm.restrictionSet.clear() } },
             ReconcileFailure.RESET_READBACK to { it.reset.sticks = false },
         )
         for ((expected, fault) in cases) {
