@@ -1,0 +1,16 @@
+{
+  "time_utc": "2026-10-11T20:11:33.078378+00:00",
+  "version": 8,
+  "target": "<emulator>",
+  "kill": "su 0 kill -9 <LMNOPhone pid>",
+  "timing": "immediate after tap",
+  "before_digits": "911",
+  "record": "EMERGENCY_911",
+  "process_replaced": true,
+  "recovery_observed_seconds": 6.28,
+  "after_digits_raw": "911",
+  "current_calls": 0,
+  "reopen_log": [
+    "10-11 13:11:27.558  3799  3799 I PlainphoneBoot: reopening EMERGENCY_911 inside lock task at=119105"
+  ]
+}

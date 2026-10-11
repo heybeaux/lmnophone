@@ -1,0 +1,38 @@
+{
+  "plainphone": {
+    "tests": 137,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "lint": {
+      "Error": 0,
+      "Warning": 7
+    }
+  },
+  "ui": {
+    "tests": 191,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "lint": {
+      "Error": 0,
+      "Warning": 23
+    }
+  },
+  "device": {
+    "tests": 632,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "lint": {
+      "Error": 0,
+      "Warning": 3
+    }
+  },
+  "policy": {
+    "tests": 636,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

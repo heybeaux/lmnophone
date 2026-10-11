@@ -1,0 +1,12 @@
+{
+  "readback_utc": "2026-10-11T20:10:10.872795+00:00",
+  "target": "<emulator>",
+  "sha256": "eca349611bb75566ed1e9f1dfb9b45f70085b94070ed66f9c40a98b19230715f",
+  "package_readback": [
+    "versionCode=8 minSdk=30 targetSdk=36",
+    "versionName=0.1.0-preview-8",
+    "lastUpdateTime=2026-10-11 13:09:17",
+    "pkgFlags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ]",
+    "firstInstallTime=2026-10-11 12:12:01"
+  ]
+}

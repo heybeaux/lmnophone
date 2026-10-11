@@ -1,0 +1,10 @@
+{
+  "version_code": 8,
+  "version_name": "0.1.0-preview-8",
+  "application_id": "org.plainphone",
+  "test_only": true,
+  "sha256": "eca349611bb75566ed1e9f1dfb9b45f70085b94070ed66f9c40a98b19230715f",
+  "signer_sha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "attachment_id": "e8417827-7cbc-4dc7-97d0-81f5cdc2ed92",
+  "code_head": "4159241"
+}

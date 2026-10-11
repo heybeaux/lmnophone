@@ -1,0 +1,5 @@
+--------- beginning of main
+10-11 13:08:55.724  3781  3796 I PlainphoneBoot: reapply reason=start control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=NONE withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=622
+10-11 13:08:55.740  3781  3796 I PlainphoneBoot: lock task not running after start: Home brought forward at=219345
+10-11 13:08:55.799  3781  3781 I PlainphoneBoot: reopening PHONE inside lock task at=219405
+10-11 13:08:56.195  3781  3781 I PlainphoneBoot: home shown lockTask=LOCKED at=219801

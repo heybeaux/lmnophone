@@ -1,0 +1,13 @@
+{
+  "time_utc": "2026-10-11T20:13:10.641140+00:00",
+  "version": 8,
+  "target": "<emulator>",
+  "timing": "after settled 911 keypad",
+  "kill": "su 0 kill -9 <LMNOPhone pid>",
+  "before_digits": "911",
+  "record": "EMERGENCY_911",
+  "recovery_observed": false,
+  "observation_seconds": 45,
+  "after_digits_raw": "911",
+  "current_calls": 0
+}
