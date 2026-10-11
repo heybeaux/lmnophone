@@ -1,0 +1,19 @@
+         1791752765.873   566   566 I uc_send_user_broadcast: [0,android.intent.action.USER_STARTED]
+         1791752765.873   566   566 I uc_send_user_broadcast: [0,android.intent.action.USER_STARTING]
+         1791752765.873   566   566 I uc_send_user_broadcast: [0,android.intent.action.USER_FOREGROUND]
+         1791752765.873   566   566 I uc_send_user_broadcast: [0,android.intent.action.USER_SWITCHED]
+         1791752766.933   566   590 I uc_send_user_broadcast: [0,android.intent.action.LOCKED_BOOT_COMPLETED]
+         1791752766.935   566   590 I uc_finish_user_unlocking: 0
+         1791752768.591   566  1126 I uc_finish_user_unlocking: 0
+         1791752768.642   566   598 I ssm_user_unlocking: 0
+         1791752768.717   566   598 I uc_finish_user_unlocked: 0
+         1791752768.725   566   598 I uc_send_user_broadcast: [0,android.intent.action.USER_UNLOCKED]
+         1791752768.768   566   598 I uc_finish_user_unlocked_completed: 0
+         1791752768.774   566   587 I uc_send_user_broadcast: [0,android.intent.action.BOOT_COMPLETED]
+         1791752768.801   566   598 I ssm_user_unlocked: 0
+--------- beginning of main
+         1791752767.125   924  1084 I PlainphoneBoot: reapply reason=start control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=897
+         1791752767.590   924  1084 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:android control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=311
+         1791752767.800   924  1084 I PlainphoneBoot: reapply reason=locked-boot control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=208
+         1791752770.565   924  1084 I PlainphoneBoot: reapply reason=user-unlocked control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=1604
+         1791752770.766   924   924 I PlainphoneBoot: home shown lockTask=LOCKED at=14308

@@ -1,0 +1,36 @@
+PASS: arguments: serial APK output-directory [label]
+PASS: owned emulator serial
+preview-9 gate 2026-10-11T21:11:26.251738+00:00
+Install skipped; earlier in-place install evidence carried forward.
+PASS: read package version
+PASS: version is preview-9
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: restart
+PASS: wait for device
+PASS: read boot status
+PASS: read boot status
+PASS: read boot status
+PASS: wake screen
+PASS: dismiss no-PIN keyguard
+PASS: swipe unlock
+PASS: read boot gate log
+PASS: read boot gate log
+PASS: Home after full read-back
+full read-back=10-11 14:11:45.242; home shown=10-11 14:11:45.465
+PASS: read package version
+PASS: version is preview-9
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: press Home
+PASS: press Home
+PASS: dump UI
+PASS: UI dump completed
+FAIL: read UI XML
+exit=1

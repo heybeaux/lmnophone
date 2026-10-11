@@ -1,0 +1,13 @@
+{
+  "versionCode": 9,
+  "versionName": "0.1.0-preview-9",
+  "install_time_utc": "2026-10-11T21:09:25.511671+00:00",
+  "apk_sha256": "0a8f5e48e0a031cb0286862c372ffbf75da17d6b0c43966845871d0d398db7f6",
+  "installed_hash_matches": true,
+  "readback": [
+    "versionCode=9 minSdk=30 targetSdk=36",
+    "versionName=0.1.0-preview-9",
+    "lastUpdateTime=2026-10-11 14:09:24",
+    "firstInstallTime=2026-10-11 14:05:10"
+  ]
+}
