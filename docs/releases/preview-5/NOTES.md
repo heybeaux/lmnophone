@@ -5,6 +5,10 @@ unfinished-feature explanation and shared-link text preview. The calm Home,
 centered More control and optional missed-call/unread-text setting are unchanged.
 An in-place upgrade keeps the existing setting.
 
+## What's new
+
+- More has no lines between rows.
+
 ## Try this
 
 1. Confirm the LMNOPhone name where shown.
@@ -29,6 +33,9 @@ No emergency call is part of this test.
 - Five established device unit-test failures remain; see evidence/verification.md.
 
 ## Delivery state
+
+APK SHA-256: `f43b93978c8994bc25b44ec66bc8d40532a79cead43becd69fed87b3e048204c`.
+Candidate source: `28506e3e0f077a49a90deb719d9fbae82cc1cfb4`.
 
 Built and installed on the owned API 35 emulator. Physical-device installation
 and exercise are pending the Lead’s review and the assigned driver.

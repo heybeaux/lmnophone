@@ -1,6 +1,6 @@
 {
-  "candidate_commit": "9cfd253a24f941e3ab5a13eaec95b346ded9b1a5",
-  "apk_sha256": "192e6cde91523b385d55c04eeb52cdedf0688f074712f65ce6aa618f26a1298a",
+  "candidate_commit": "28506e3e0f077a49a90deb719d9fbae82cc1cfb4",
+  "apk_sha256": "f43b93978c8994bc25b44ec66bc8d40532a79cead43becd69fed87b3e048204c",
   "signer_sha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
   "application_id": "org.plainphone",
   "version_code": 5,

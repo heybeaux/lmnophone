@@ -3,7 +3,13 @@
 Date: 2026-10-11 UTC. Author: UI Engineer. Review owner: Plainphone Lead on
 [PLA-333](/PLA/issues/PLA-333). Work: [PLA-335](/PLA/issues/PLA-335).
 
-## Candidate
+## Divider correction — current candidate
+
+The branding evidence below is retained from the accepted build. The current
+APK and repeat upgrade evidence are in [divider-correction/verification.md](divider-correction/verification.md).
+Only More row dividers and their eight goldens changed.
+
+## Prior branding candidate
 
 - Branch: `release/preview-5`, pinned base `4fed6cd`.
 - Test-first checkpoint: `066152e`; 12 navigation tests, one expected old-name

@@ -1,0 +1,13 @@
+app/plainphone/src/main/kotlin/org/plainphone/shell/NotInBuildScreen.kt:39:        Box(
+app/plainphone/src/main/kotlin/org/plainphone/boot/CheckingScreen.kt:45:    Box(
+app/plainphone/src/main/kotlin/org/plainphone/shell/PlainphoneShell.kt:42:        Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).systemBarsPadding().displayCutoutPadding()) {
+app/ui/src/main/kotlin/org/plainphone/ui/components/TaskScreen.kt:56:            Box(Modifier.fillMaxWidth().background(
+app/ui/src/main/kotlin/org/plainphone/ui/components/TaskScreen.kt:71:    Box(Modifier.fillMaxWidth().plainphoneAction(enabled = enabled, onClick = onClick).heightIn(min = 48.dp)
+app/ui/src/main/kotlin/org/plainphone/ui/components/TaskScreen.kt:81:internal fun ScreenBox(content: @Composable ColumnScope.() -> Unit) {
+app/ui/src/main/kotlin/org/plainphone/ui/home/HomeScreen.kt:67:            Box(Modifier.clearAndSetSemantics {}) { HomeBottom(state, exposeTags = false, onEvent = {}) }
+app/ui/src/main/kotlin/org/plainphone/ui/home/HomeScreen.kt:70:            Box(Modifier.clearAndSetSemantics {}) {
+app/ui/src/main/kotlin/org/plainphone/ui/home/HomeScreen.kt:168:        Box(Modifier.padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S2)
+app/ui/src/main/kotlin/org/plainphone/ui/home/HomeScreen.kt:184:    Box(Modifier.fillMaxWidth().then(if (tag == null) Modifier else Modifier.testTag(tag))
+app/ui/src/main/kotlin/org/plainphone/ui/home/HomeScreen.kt:204:    Box(Modifier.fillMaxWidth().plainphoneAction(onClick = onClick)
+app/ui/src/main/kotlin/org/plainphone/ui/home/HomeScreen.kt:233:        Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).padding(top = 32.dp, bottom = 48.dp)) {
+app/ui/src/main/kotlin/org/plainphone/ui/user/AskForAppScreen.kt:44:                    .border(if (focused) PlainphoneSpace.Focus else PlainphoneSpace.Border,

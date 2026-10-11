@@ -1,0 +1,82 @@
+> Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ui:preBuild UP-TO-DATE
+> Task :ui:preDebugBuild UP-TO-DATE
+> Task :ui:generateDebugResValues UP-TO-DATE
+> Task :ui:generateDebugResources UP-TO-DATE
+> Task :ui:packageDebugResources UP-TO-DATE
+> Task :ui:parseDebugLocalResources UP-TO-DATE
+> Task :ui:generateDebugRFile UP-TO-DATE
+> Task :ui:javaPreCompileDebug UP-TO-DATE
+> Task :ui:generateDebugUnitTestAssets UP-TO-DATE
+> Task :ui:mergeDebugShaders UP-TO-DATE
+> Task :ui:compileDebugShaders NO-SOURCE
+> Task :ui:generateDebugAssets UP-TO-DATE
+> Task :ui:mergeDebugAssets UP-TO-DATE
+> Task :ui:preDebugUnitTestBuild UP-TO-DATE
+> Task :ui:mergeDebugUnitTestAssets UP-TO-DATE
+> Task :ui:writeDebugAarMetadata UP-TO-DATE
+> Task :ui:checkDebugUnitTestAarMetadata UP-TO-DATE
+> Task :ui:compileDebugLibraryResources UP-TO-DATE
+> Task :ui:generateDebugUnitTestResValues UP-TO-DATE
+> Task :ui:mapDebugUnitTestSourceSetPaths UP-TO-DATE
+> Task :ui:generateDebugUnitTestResources UP-TO-DATE
+> Task :ui:mergeDebugUnitTestResources UP-TO-DATE
+> Task :ui:extractDeepLinksDebug UP-TO-DATE
+> Task :ui:processDebugManifest UP-TO-DATE
+> Task :ui:processDebugUnitTestManifest UP-TO-DATE
+> Task :ui:processDebugUnitTestResources UP-TO-DATE
+> Task :ui:packageDebugUnitTestForUnitTest UP-TO-DATE
+> Task :ui:generateDebugUnitTestConfig UP-TO-DATE
+> Task :ui:preparePaparazziDebugResources UP-TO-DATE
+> Task :ui:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :ui:compileDebugKotlin
+> Task :ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :ui:processDebugJavaRes UP-TO-DATE
+> Task :ui:bundleLibRuntimeToJarDebug
+> Task :ui:bundleLibCompileToJarDebug
+> Task :ui:compileDebugUnitTestKotlin UP-TO-DATE
+> Task :ui:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :ui:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :ui:transformDebugUnitTestClassesWithAsm
+
+> Task :ui:testDebugUnitTest
+
+UserScreensScreenshotTest > moreSelfManaged[fontScale=1] FAILED
+    java.lang.AssertionError at UserScreensScreenshotTest.kt:59
+
+UserScreensScreenshotTest > moreTwoPeople[fontScale=1] FAILED
+    java.lang.AssertionError at UserScreensScreenshotTest.kt:59
+
+UserScreensScreenshotTest > moreOneMinute[fontScale=1] FAILED
+    java.lang.AssertionError at UserScreensScreenshotTest.kt:59
+
+UserScreensScreenshotTest > moreOnePerson[fontScale=1] FAILED
+    java.lang.AssertionError at UserScreensScreenshotTest.kt:59
+
+UserScreensScreenshotTest > moreSelfManaged[fontScale=2] FAILED
+    java.lang.AssertionError at UserScreensScreenshotTest.kt:59
+
+UserScreensScreenshotTest > moreTwoPeople[fontScale=2] FAILED
+    java.lang.AssertionError at UserScreensScreenshotTest.kt:59
+
+UserScreensScreenshotTest > moreOneMinute[fontScale=2] FAILED
+    java.lang.AssertionError at UserScreensScreenshotTest.kt:59
+
+UserScreensScreenshotTest > moreOnePerson[fontScale=2] FAILED
+    java.lang.AssertionError at UserScreensScreenshotTest.kt:59
+
+8 tests completed, 8 failed
+
+> Task :ui:testDebugUnitTest FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':ui:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///Users/beauxwalton/projects/plainphone-preview5/app/ui/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 4s
+32 actionable tasks: 5 executed, 27 up-to-date

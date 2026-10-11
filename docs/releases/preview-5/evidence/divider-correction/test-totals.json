@@ -1,0 +1,14 @@
+{
+  "ui": {
+    "tests": 110,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "plainphone": {
+    "tests": 84,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

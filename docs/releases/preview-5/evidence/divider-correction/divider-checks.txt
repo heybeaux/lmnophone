@@ -1,0 +1,183 @@
+> Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ui:preBuild UP-TO-DATE
+> Task :ui:preDebugBuild UP-TO-DATE
+> Task :ui:generateDebugResValues UP-TO-DATE
+> Task :ui:generateDebugResources UP-TO-DATE
+> Task :ui:packageDebugResources UP-TO-DATE
+> Task :ui:parseDebugLocalResources UP-TO-DATE
+> Task :ui:generateDebugRFile UP-TO-DATE
+> Task :ui:compileDebugKotlin UP-TO-DATE
+> Task :ui:javaPreCompileDebug UP-TO-DATE
+> Task :ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :ui:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :ui:generateDebugUnitTestAssets UP-TO-DATE
+> Task :ui:mergeDebugShaders UP-TO-DATE
+> Task :ui:compileDebugShaders NO-SOURCE
+> Task :ui:generateDebugAssets UP-TO-DATE
+> Task :ui:mergeDebugAssets UP-TO-DATE
+> Task :ui:preDebugUnitTestBuild UP-TO-DATE
+> Task :ui:mergeDebugUnitTestAssets UP-TO-DATE
+> Task :ui:writeDebugAarMetadata UP-TO-DATE
+> Task :ui:checkDebugUnitTestAarMetadata UP-TO-DATE
+> Task :ui:compileDebugLibraryResources UP-TO-DATE
+> Task :ui:generateDebugUnitTestResValues UP-TO-DATE
+> Task :ui:mapDebugUnitTestSourceSetPaths UP-TO-DATE
+> Task :ui:generateDebugUnitTestResources UP-TO-DATE
+> Task :ui:mergeDebugUnitTestResources UP-TO-DATE
+> Task :ui:extractDeepLinksDebug UP-TO-DATE
+> Task :ui:processDebugManifest UP-TO-DATE
+> Task :ui:processDebugUnitTestManifest UP-TO-DATE
+> Task :ui:processDebugUnitTestResources UP-TO-DATE
+> Task :ui:packageDebugUnitTestForUnitTest UP-TO-DATE
+> Task :ui:generateDebugUnitTestConfig UP-TO-DATE
+> Task :ui:preparePaparazziDebugResources UP-TO-DATE
+> Task :ui:processDebugJavaRes UP-TO-DATE
+> Task :ui:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :ui:compileDebugUnitTestKotlin UP-TO-DATE
+> Task :ui:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :ui:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :ui:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :ui:transformDebugUnitTestClassesWithAsm UP-TO-DATE
+> Task :ui:mergeDebugJniLibFolders UP-TO-DATE
+> Task :ui:mergeDebugNativeLibs NO-SOURCE
+> Task :ui:stripDebugDebugSymbols NO-SOURCE
+> Task :ui:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :ui:extractDebugAnnotations
+> Task :ui:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :ui:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :ui:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :ui:prepareDebugArtProfile UP-TO-DATE
+> Task :ui:prepareLintJarForPublish UP-TO-DATE
+> Task :ui:mergeDebugJavaResource UP-TO-DATE
+> Task :ui:syncDebugLibJars
+> Task :ui:bundleDebugLocalLintAar
+> Task :ui:createFullJarDebug
+> Task :ui:preDebugAndroidTestBuild UP-TO-DATE
+> Task :ui:generateDebugAndroidTestResValues UP-TO-DATE
+> Task :ui:writeDebugLintModelMetadata UP-TO-DATE
+> Task :ui:extractProguardFiles UP-TO-DATE
+> Task :ui:generateDebugLintReportModel
+
+> Task :ui:testDebugUnitTest
+See the Paparazzi report at: file:///Users/beauxwalton/projects/plainphone-preview5/app/ui/build/reports/paparazzi/debug/index.html
+
+> Task :ui:verifyPaparazziDebug
+> Task :ui:generateDebugAndroidTestLintModel
+> Task :ui:generateDebugUnitTestLintModel
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:compileKotlin UP-TO-DATE
+> Task :core:compileJava NO-SOURCE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :policy:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :policy:compileKotlin UP-TO-DATE
+> Task :policy:compileJava NO-SOURCE
+> Task :policy:processResources NO-SOURCE
+> Task :policy:classes UP-TO-DATE
+> Task :policy:jar UP-TO-DATE
+> Task :links:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :links:compileKotlin UP-TO-DATE
+> Task :links:compileJava NO-SOURCE
+> Task :links:processResources UP-TO-DATE
+> Task :links:classes UP-TO-DATE
+> Task :links:jar UP-TO-DATE
+> Task :device:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:preBuild UP-TO-DATE
+> Task :device:preDebugBuild UP-TO-DATE
+> Task :device:generateDebugResValues UP-TO-DATE
+> Task :device:generateDebugResources UP-TO-DATE
+> Task :device:packageDebugResources UP-TO-DATE
+> Task :device:parseDebugLocalResources UP-TO-DATE
+> Task :device:generateDebugRFile UP-TO-DATE
+> Task :device:compileDebugKotlin UP-TO-DATE
+> Task :device:javaPreCompileDebug UP-TO-DATE
+> Task :device:compileDebugJavaWithJavac NO-SOURCE
+> Task :device:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :device:processDebugJavaRes UP-TO-DATE
+> Task :device:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :plainphone:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:compileDebugLibraryResources UP-TO-DATE
+> Task :device:writeDebugAarMetadata UP-TO-DATE
+> Task :plainphone:preBuild UP-TO-DATE
+> Task :plainphone:preDebugBuild UP-TO-DATE
+> Task :plainphone:checkDebugAarMetadata UP-TO-DATE
+> Task :plainphone:generateDebugResValues UP-TO-DATE
+> Task :plainphone:mapDebugSourceSetPaths UP-TO-DATE
+> Task :plainphone:generateDebugResources UP-TO-DATE
+> Task :plainphone:mergeDebugResources UP-TO-DATE
+> Task :plainphone:packageDebugResources UP-TO-DATE
+> Task :plainphone:parseDebugLocalResources UP-TO-DATE
+> Task :plainphone:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :device:extractDeepLinksDebug UP-TO-DATE
+> Task :device:processDebugManifest UP-TO-DATE
+> Task :plainphone:extractDeepLinksDebug UP-TO-DATE
+> Task :plainphone:processDebugMainManifest UP-TO-DATE
+> Task :plainphone:processDebugManifest UP-TO-DATE
+> Task :plainphone:processDebugManifestForPackage UP-TO-DATE
+> Task :plainphone:processDebugResources UP-TO-DATE
+> Task :plainphone:compileDebugKotlin UP-TO-DATE
+> Task :plainphone:javaPreCompileDebug UP-TO-DATE
+> Task :plainphone:compileDebugJavaWithJavac NO-SOURCE
+> Task :plainphone:bundleDebugClassesToRuntimeJar UP-TO-DATE
+> Task :plainphone:bundleDebugClassesToCompileJar UP-TO-DATE
+> Task :plainphone:compileDebugUnitTestKotlin UP-TO-DATE
+> Task :plainphone:preDebugUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :plainphone:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:processDebugJavaRes UP-TO-DATE
+> Task :plainphone:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :plainphone:testDebugUnitTest
+> Task :plainphone:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :device:mergeDebugShaders UP-TO-DATE
+> Task :device:compileDebugShaders NO-SOURCE
+> Task :device:generateDebugAssets UP-TO-DATE
+> Task :device:mergeDebugAssets UP-TO-DATE
+> Task :plainphone:mergeDebugShaders UP-TO-DATE
+> Task :plainphone:compileDebugShaders NO-SOURCE
+> Task :plainphone:generateDebugAssets UP-TO-DATE
+> Task :plainphone:mergeDebugAssets UP-TO-DATE
+> Task :plainphone:compressDebugAssets UP-TO-DATE
+> Task :plainphone:desugarDebugFileDependencies UP-TO-DATE
+> Task :plainphone:dexBuilderDebug UP-TO-DATE
+> Task :plainphone:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :plainphone:mergeDebugJavaResource UP-TO-DATE
+> Task :plainphone:checkDebugDuplicateClasses UP-TO-DATE
+> Task :plainphone:mergeExtDexDebug UP-TO-DATE
+> Task :device:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :plainphone:mergeProjectDexDebug UP-TO-DATE
+> Task :device:mergeDebugJniLibFolders UP-TO-DATE
+> Task :device:mergeDebugNativeLibs NO-SOURCE
+> Task :device:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :plainphone:mergeDebugJniLibFolders UP-TO-DATE
+> Task :ui:bundleLibRuntimeToDirDebug
+> Task :ui:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :plainphone:mergeDebugNativeLibs UP-TO-DATE
+> Task :plainphone:stripDebugDebugSymbols UP-TO-DATE
+> Task :plainphone:validateSigningDebug UP-TO-DATE
+> Task :plainphone:writeDebugAppMetadata UP-TO-DATE
+> Task :plainphone:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :ui:lintAnalyzeDebugUnitTest
+> Task :plainphone:mergeLibDexDebug
+> Task :plainphone:packageDebug
+> Task :plainphone:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :plainphone:assembleDebug
+> Task :ui:lintAnalyzeDebugAndroidTest
+> Task :ui:lintAnalyzeDebug
+
+> Task :ui:lintReportDebug
+Wrote HTML report to file:///Users/beauxwalton/projects/plainphone-preview5/app/ui/build/reports/lint-results-debug.html
+
+> Task :ui:lintDebug
+> Task :ui:lint
+
+[Incubating] Problems report is available at: file:///Users/beauxwalton/projects/plainphone-preview5/app/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 9s
+124 actionable tasks: 17 executed, 107 up-to-date
