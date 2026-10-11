@@ -132,7 +132,7 @@ The emulator gate (PLA-294) covers these: unavailable sources, a partial or inte
 
 0. **Setup.** The driver turns off chat features (RCS) in the spare's Messages app, so test texts arrive as SMS or MMS. The driver records whether RCS was on before this. **Baseline:** open Phone's call history and every unread conversation in Messages until Home shows no numbers with the switch on.
 1. Missed call from his phone → Phone `1`. Swipe the missed-call notification → no number.
-2. Two texts from his phone (one conversation) → Messages `2`. Swipe the notification → still `2`. Tap "Mark as read" on the next notification after a third text → no number. "Mark as read" marks the whole conversation read (spike C3).
+2. Two texts from his phone (one conversation) → Messages `2`. Swipe the notification → still `2`. A third text → `3`. Tap "Mark as read" on its notification → no number. "Mark as read" marks the whole conversation read (spike C3).
 3. One text → `1`. Open that conversation → no number.
 4. A picture message → `1`. Swipe its notification → still `1`. Send a second picture message, and tap "Mark as read" → no number.
 5. A picture message → `1`. Open the conversation → no number.
