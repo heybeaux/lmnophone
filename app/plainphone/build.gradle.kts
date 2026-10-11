@@ -31,6 +31,7 @@ android {
         applicationId = "org.plainphone"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
+        testInstrumentationRunner = "org.plainphone.counts.CombinedCountInstrumentation"
         versionCode = 3
         versionName = "0.1.0-preview-3"
     }
