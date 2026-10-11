@@ -1,0 +1,92 @@
+[
+  {
+    "step": "two-texts-live",
+    "counts": [
+      "Messages, 2 unread texts"
+    ],
+    "unavailable": [],
+    "switch": [],
+    "pid": "4614"
+  },
+  {
+    "step": "after-text-notification-swipe",
+    "counts": [
+      "Messages, 2 unread texts"
+    ],
+    "unavailable": [],
+    "switch": [],
+    "pid": "5246"
+  },
+  {
+    "step": "after-opening-conversation",
+    "counts": [],
+    "unavailable": [],
+    "switch": [],
+    "pid": "5246"
+  },
+  {
+    "step": "both-counts-before-off",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "unavailable": [],
+    "switch": [],
+    "pid": "5246"
+  },
+  {
+    "step": "switch-off-same-pid",
+    "counts": [],
+    "unavailable": [],
+    "switch": [
+      "false"
+    ],
+    "pid": "5246"
+  },
+  {
+    "step": "off-home-same-pid",
+    "counts": [],
+    "unavailable": [],
+    "switch": [],
+    "pid": "5246"
+  },
+  {
+    "step": "before-first-unlock",
+    "userState": "RUNNING_LOCKED",
+    "countQueryLogLines": 0
+  },
+  {
+    "step": "after-first-unlock",
+    "counts": [
+      "Messages, 2 unread texts",
+      "Phone, 1 missed call"
+    ],
+    "unavailable": [],
+    "switch": [],
+    "pid": "996"
+  },
+  {
+    "step": "after-pm-revoke-SMS",
+    "counts": [
+      "Phone, 1 missed call"
+    ],
+    "unavailable": [],
+    "switch": [],
+    "pid": "3176"
+  },
+  {
+    "step": "permission-loss-settings",
+    "counts": [],
+    "unavailable": [
+      "Plainphone (preview-2) can't read unread texts right now"
+    ],
+    "switch": [
+      "true"
+    ],
+    "pid": "3176"
+  },
+  {
+    "step": "off-no-reads",
+    "queryLogDelta": 0
+  }
+]
