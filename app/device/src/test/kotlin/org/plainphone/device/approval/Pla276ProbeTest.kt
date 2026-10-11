@@ -7,12 +7,13 @@ import org.junit.Test
 import org.plainphone.core.PackageName
 import org.plainphone.device.DevicePolicyPort
 import org.plainphone.policy.AppApprovalOutcome
+import org.plainphone.policy.BatteryState
 import org.plainphone.policy.PolicyPlan
 
 /**
- * The PLA-276 reviewer's probes for findings 2 and 3, copied verbatim from the review evidence (pinned at
- * `3bc7690`). `lowBatteryRetryMustRetryFailedContainment` (finding 1) is in `:policy` and arrives with the
- * PLA-278 merge (PLA-288).
+ * The PLA-276 reviewer's three probes, copied verbatim from the review evidence (pinned at `3bc7690`).
+ * Findings 2 and 3 were fixed in `:device` (PLA-279); `lowBatteryRetryMustRetryFailedContainment` (finding 1)
+ * is fixed in `:policy` and arrives with the PLA-278 merge (PLA-288).
  */
 class Pla276ProbeTest {
     @Test fun secondFailedApplyMustKeepUnresolvedExposure() = ApprovalHarness().use { h ->
@@ -52,6 +53,25 @@ class Pla276ProbeTest {
             println("second apply: hidden=${h.port.hidden(h.target.value)} permitted=${h.target in h.port.lockTask} home=${h.target in listed} unresolved=${effects.unresolvedCleanup}")
             assertEquals("a second failed apply must not forget open access", setOf(Exposure.VISIBLE, Exposure.LOCK_TASK), effects.unresolvedCleanup[h.target])
         }
+    }
+
+    @Test fun lowBatteryRetryMustRetryFailedContainment() = RoundTwoHarness().use { h ->
+        h.beforeReadBack = {
+            h.port.restrictionSet.clear()
+            h.port.lockTaskSticks = false
+            h.port.hidesStick = false
+        }
+        assertEquals(AppApprovalOutcome.NOT_READY, h.approve())
+        assertTrue(h.visibleAndPermitted())
+        println("failed activation/containment: ${h.state()} pending=${h.approvals.pending?.phase}")
+        h.beforeReadBack = {}
+        h.port.lockTaskSticks = true
+        h.port.hidesStick = true
+        h.battery = BatteryState(4, false)
+        val before = h.port.ops.size
+        assertEquals(AppApprovalOutcome.LOW_BATTERY, h.resume())
+        println("low battery retry: ${h.state()} pending=${h.approvals.pending?.phase} newWrites=${h.port.ops.drop(before)}")
+        assertFalse("cleanup must still run when discretionary unhide is battery gated", h.visibleAndPermitted())
     }
 
     @Test fun floorPromotionAfterSnapshotMustKeepUiAccess() = ApprovalHarness().use { h ->

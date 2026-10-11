@@ -1,0 +1,21 @@
+PLA-288 red run: PLA-276 finding 1 probe on mvp/device before the PLA-278 merge
+Base: ca664c6 (mvp/device; PLA-279 round 3 pushed) + the test-only commit that adds this file (no src/main change)
+Probe: Pla276ProbeTest.lowBatteryRetryMustRetryFailedContainment, copied verbatim from the PLA-276 review evidence (pinned 3bc7690)
+Command (from app/): ./gradlew --offline :device:testDebugUnitTest --tests '*Pla276ProbeTest'
+Date: 2026-10-11T07:05Z, JVM unit tests only, no emulator
+
+3 tests completed, 1 failed. BUILD FAILED
+
+Per test (from build/test-results):
+Pla276ProbeTest 3 tests, 1 failed
+    pass floorPromotionAfterSnapshotMustKeepUiAccess (finding 3, fixed in PLA-279)
+    pass secondFailedApplyMustKeepUnresolvedExposure (finding 2, fixed in PLA-279)
+    FAIL lowBatteryRetryMustRetryFailedContainment - java.lang.AssertionError: cleanup must still run when discretionary unhide is battery gated
+
+Probe stdout:
+failed activation/containment: hidden=false permitted=true home=false pending=COMMITTED
+low battery retry: hidden=false permitted=true home=false pending=COMMITTED newWrites=[]
+
+Reading: the PLA-279 :device changes do not cover finding 1. With a COMMITTED op whose containment failed, a
+low-battery resume() returns LOW_BATTERY before any write, so the target stays visible and lock-task permitted.
+The fix is in :policy (AppApprovalController contains before the battery gate) and arrives with the main merge.
