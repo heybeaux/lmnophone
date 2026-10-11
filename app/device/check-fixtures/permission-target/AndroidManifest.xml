@@ -10,5 +10,5 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
-    <application android:hasCode="false" android:label="Plainphone permission target" />
+    <application android:hasCode="false" android:label="LMNOPhone permission target" />
 </manifest>

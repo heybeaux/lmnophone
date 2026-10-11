@@ -76,6 +76,7 @@ data class Step(val state: ShellState, val effect: ShellEffect? = null)
 class ShellNavigator(
     private val phone: PhoneSource,
     private val outbox: RequestOutbox,
+    private val productName: String,
     private val testBuild: Boolean = false,
 ) {
 
@@ -119,7 +120,7 @@ class ShellNavigator(
         return when (e) {
             BlockedLinkEvent.GoBack, BlockedLinkEvent.Ok -> back(s)
             BlockedLinkEvent.ReviewSharing -> stage(BlockedLinkUiState.Confirm(snapshot.requestRecipient,
-                ShareLinkText.format(snapshot.userName, link.sanitizedTarget)))
+                ShareLinkText.format(productName, snapshot.userName, link.sanitizedTarget)))
             BlockedLinkEvent.DontSend -> stage(link.first)
             // Preview: nothing is sent and the link isn't kept.
             BlockedLinkEvent.Send ->
@@ -147,6 +148,6 @@ class ShellNavigator(
 
 /** The text a trusted person gets for a shared link (docs/ux/README.md, "Texts Plainphone sends"). */
 object ShareLinkText {
-    fun format(user: String, sanitizedTarget: String) =
-        "Plainphone: $user would like to look at this link with you: $sanitizedTarget"
+    fun format(productName: String, user: String, sanitizedTarget: String) =
+        "$productName: $user would like to look at this link with you: $sanitizedTarget"
 }

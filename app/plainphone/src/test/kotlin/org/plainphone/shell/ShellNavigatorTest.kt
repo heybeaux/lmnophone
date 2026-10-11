@@ -17,7 +17,7 @@ import org.plainphone.ui.user.WifiProblem
 
 class ShellNavigatorTest {
     private val phone = PreviewPhone(PreviewPhone.sample())
-    private val nav = ShellNavigator(phone, phone)
+    private val nav = ShellNavigator(phone, phone, "LMNOPhone")
 
     private fun at(vararg routes: ShellRoute) = ShellState(listOf(ShellRoute.Home, *routes))
 

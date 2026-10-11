@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
                 return@setContent
             }
             // Each ready read-back run refreshes the app list and the attention notice.
-            LaunchedEffect(refresh) { shell.prepare(device, attention = refresh.notice != null) }
+            LaunchedEffect(refresh) { shell.prepare(device, attention = refresh.notice != null, productName = getString(R.string.product_name)) }
             // Nothing but paper until the app list is read.
             val phone = shell.phone ?: return@setContent
             LaunchedEffect(phone) {
@@ -224,7 +224,7 @@ class ShellViewModel : ViewModel() {
      * Reads the starter apps off the main thread, after the runtime has re-applied and read back the
      * policy, then shows Home with the real app list. The latest call wins.
      */
-    fun prepare(device: Preview2Device, attention: Boolean) {
+    fun prepare(device: Preview2Device, attention: Boolean, productName: String) {
         val generation = ++prepared
         thread(name = "preview2-home") {
             val apps = runCatching { device.homeApps() }.getOrDefault(emptyList()).map { (id, label) -> ApprovedApp(id, label) }
@@ -232,7 +232,7 @@ class ShellViewModel : ViewModel() {
             val ready = PreviewPhone(sample.copy(apps = apps, notices = NoticeInput(sample.mode, needsAttention = attention)))
             Handler(Looper.getMainLooper()).post {
                 if (generation != prepared) return@post
-                navigator = ShellNavigator(ready, ready, testBuild = true)
+                navigator = ShellNavigator(ready, ready, productName, testBuild = true)
                 phone = ready
             }
         }
