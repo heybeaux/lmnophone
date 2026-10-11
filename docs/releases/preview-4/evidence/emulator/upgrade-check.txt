@@ -1,9 +1,9 @@
 # preview-4 upgrade check on emulator-5860 pla306-policy-a35 (API 35 Google APIs), 2026-10-11T05:29:44Z. No call key, no Call tap.
 ## Before
-version: versionCode=3 minSdk=30 targetSdk=36 versionName=0.1.0-preview-3 
+version: versionCode=3 minSdk=30 targetSdk=36 versionName=0.1.0-preview-3
 User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
 mLockTaskModeState=LOCKED
-home shows: text="10:29" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" 
+home shows: text="10:29" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More"
 ## Install in place (install -r, no uninstall)
 apk sha256: cbf8ad4a80f7cbb1a0eb3eb63b09a4f1d53e1b36de0a55e783db8fa31f4a5232
 install started: 2026-10-11T05:29:47Z
@@ -11,13 +11,13 @@ Performing Streamed Install
 Success
 install finished: 2026-10-11T05:29:48Z
 ## Read back after install
-version: versionCode=4 minSdk=30 targetSdk=36 versionName=0.1.0-preview-4 
+version: versionCode=4 minSdk=30 targetSdk=36 versionName=0.1.0-preview-4
 TEST_ONLY
 User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
 mLockTaskModeState=LOCKED
 topResumedActivity=ActivityRecord{24c8d53 u0 org.plainphone/.MainActivity t60}
 Warning: Activity not started, intent has been delivered to currently running top-most instance.
-home shows: text="10:29" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" 
+home shows: text="10:29" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More"
 More text bounds=[469, 2196, 611, 2268] centre_x=540 screen_width=1080 offset_px=+0
 ## One restart
 boot completed: 2026-10-11T05:30:21Z
@@ -26,34 +26,34 @@ boot completed: 2026-10-11T05:30:21Z
 10-10 22:30:23.158   942   942 I PlainphoneBoot: home shown lockTask=1 at=15713
 10-10 22:30:24.539   942   942 I PlainphoneBoot: home shown lockTask=1 at=17094
 10-10 22:30:24.660   942   942 I PlainphoneBoot: home shown lockTask=1 at=17215
-10-10 22:30:26.277   942  1016 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:<pkg> control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, 
+10-10 22:30:26.277   942  1016 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:<pkg> control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET,
 10-10 22:30:26.319   942   942 I PlainphoneBoot: home shown lockTask=1 at=18874
 10-10 22:30:27.306   942  1016 I PlainphoneBoot: reapply reason=boot control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATUR
 10-10 22:30:27.491   942   942 I PlainphoneBoot: home shown lockTask=1 at=20046
 first full read-back: 10-10 22:30:22.970; first home shown: 10-10 22:30:23.158
 ORDER OK: Home drawn after the full read-back
-version: versionCode=4 minSdk=30 targetSdk=36 versionName=0.1.0-preview-4 
+version: versionCode=4 minSdk=30 targetSdk=36 versionName=0.1.0-preview-4
 User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
 mLockTaskModeState=LOCKED
 topResumedActivity=ActivityRecord{49aa775 u0 org.plainphone/.MainActivity t2}
-home shows: text="10:30" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More" 
+home shows: text="10:30" text="Saturday 10 October" text="Maps" text="Camera" text="Messages" text="Phone" text="More"
 More text bounds=[469, 2196, 611, 2268] centre_x=540 screen_width=1080 offset_px=+0
 ## Check 1a: Home > More > Emergency
-more shows: text="‹ Home" text="More" text="Phone settings" text="Wi-Fi, sound, text size" text="Ask for an app" text="Sam adds apps with you" text="For Sam and Jo" text="Where Sam or Jo add apps, with a PIN" text="About this phone" 
+more shows: text="‹ Home" text="More" text="Phone settings" text="Wi-Fi, sound, text size" text="Ask for an app" text="Sam adds apps with you" text="For Sam and Jo" text="Where Sam or Jo add apps, with a PIN" text="About this phone"
 topResumedActivity=ActivityRecord{49aa775 u0 org.plainphone/.MainActivity t2}
 tapped: Emergency 9-1-1
 topResumedActivity=ActivityRecord{abd41cf u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t9}
 mLockTaskModeState=LOCKED
-dial pad: 
+dial pad:
 911
-calls:   mCalls:    mCallAudioManager:     All calls: 
+calls:   mCalls:    mCallAudioManager:     All calls:
 topResumedActivity=ActivityRecord{49aa775 u0 org.plainphone/.MainActivity t2}
 ## Check 1b: Home > Phone, open the dial pad, tap 9 1 1
 topResumedActivity=ActivityRecord{abd41cf u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t9}
 mLockTaskModeState=LOCKED
-dial pad: 
+dial pad:
 911
-calls:   mCalls:    mCallAudioManager:     All calls: 
+calls:   mCalls:    mCallAudioManager:     All calls:
 topResumedActivity=ActivityRecord{49aa775 u0 org.plainphone/.MainActivity t2}
 mLockTaskModeState=LOCKED
 ## End 2026-10-11T05:31:20Z

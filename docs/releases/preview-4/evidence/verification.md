@@ -89,7 +89,7 @@ No commands addressed reserved emulators 5590, 5604 or 5742.
    used. The two screenshots are distinct captures.
 
 See [upgrade-check.txt](emulator/upgrade-check.txt). Emulator log times use the
-AVD's America/Los_Angeles clock; the script's install times are UTC.
+AVD's America/Vancouver clock; the script's install times are UTC.
 
 ## Counts and permission read-back
 

@@ -27,5 +27,6 @@
   "lockTaskPolicy": [
     "LockTaskPolicy {mPackages= com.android.camera2, com.google.android.apps.maps, com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.android.phone, com.google.android.cellbroadcastreceiver; mFlags= 53 }",
     "LockTaskPolicy {mPackages= com.android.camera2, com.google.android.apps.maps, com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.android.phone, com.google.android.cellbroadcastreceiver; mFlags= 53 }"
-  ]
+  ],
+  "timezone": "America/Vancouver"
 }
