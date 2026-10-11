@@ -39,7 +39,9 @@ class AndroidCommunicationCounts(context: Context, changed: () -> Unit) : AutoCl
     private val app = context.applicationContext
     private val main = Handler(Looper.getMainLooper())
     // At most two blocked queries, with no queued backlog. A later trigger retries when a worker frees.
-    private val executor = ThreadPoolExecutor(2, 2, 0, TimeUnit.MILLISECONDS, SynchronousQueue<Runnable>())
+    private val executors = CountKind.entries.associateWith {
+        ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, SynchronousQueue<Runnable>())
+    }
     private val cancellations = Executors.newFixedThreadPool(2)
     private val cancellation = ThreadLocal<CancellationSignal>()
     private val prefs = app.createDeviceProtectedStorageContext().getSharedPreferences("home_preferences", Context.MODE_PRIVATE)
@@ -93,7 +95,7 @@ class AndroidCommunicationCounts(context: Context, changed: () -> Unit) : AutoCl
         CountReader { kind, complete ->
             val signal = CancellationSignal()
             val future = try {
-                executor.submit {
+                executors.getValue(kind).submit {
                     cancellation.set(signal)
                     try {
                         val result = if (!signal.isCanceled && runCatching { access(kind).allowed(kind) }.getOrDefault(false)) source.read(kind) else null
@@ -134,6 +136,6 @@ class AndroidCommunicationCounts(context: Context, changed: () -> Unit) : AutoCl
     }
     override fun close() {
         app.unregisterReceiver(packages)
-        controller.close(); executor.shutdownNow(); cancellations.shutdown()
+        controller.close(); executors.values.forEach { it.shutdownNow() }; cancellations.shutdown()
     }
 }
