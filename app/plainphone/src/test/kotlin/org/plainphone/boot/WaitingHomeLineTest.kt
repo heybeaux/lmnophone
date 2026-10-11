@@ -67,4 +67,12 @@ class WaitingHomeLineTest {
             assertEquals("$o", WaitingStage.StillCancelling, cancelStage(o))
         assertNull("a request that is no longer current closes the screen", cancelStage(WaitingOutcome.IGNORED))
     }
+
+    /** The checking screen's "needs attention" is for the attention line only, never a waiting line. */
+    @Test fun aWaitingLineIsNotCheckingAttention() {
+        org.junit.Assert.assertTrue(checkingShowsAttention(HomeGate.NOT_READY, HomeNotice.NeedsAttention))
+        org.junit.Assert.assertFalse(checkingShowsAttention(HomeGate.NOT_READY, HomeNotice.PeopleChangeWaiting))
+        org.junit.Assert.assertFalse(checkingShowsAttention(HomeGate.NOT_READY,
+            HomeNotice.TurnOffWaiting("21:30", HomeNoticeDay(LocalDate.of(2026, 10, 12), 1))))
+    }
 }

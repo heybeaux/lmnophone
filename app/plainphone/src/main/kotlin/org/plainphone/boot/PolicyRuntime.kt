@@ -16,6 +16,9 @@ import android.os.UserManager
 import android.telecom.TelecomManager
 import android.util.Log
 import java.io.File
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,9 +48,14 @@ import org.plainphone.device.storage.FileFlipFailureStore
 import org.plainphone.device.storage.FileJournalStore
 import org.plainphone.device.storage.FilePolicyStore
 import org.plainphone.policy.PersonAuthorityConsumer
+import org.plainphone.core.Mode
+import org.plainphone.policy.NoticeInput
+import org.plainphone.policy.NoticeLine
+import org.plainphone.policy.NoticeTap
 import org.plainphone.policy.PolicyEngine
 import org.plainphone.policy.ProvenRunningClock
 import org.plainphone.policy.ReconcileOutcome
+import org.plainphone.policy.WaitingNotice
 import org.plainphone.policy.WaitingOutcome
 import org.plainphone.ui.home.HomeNotice
 
@@ -134,6 +142,8 @@ class PolicyRuntime private constructor(private val context: Context) {
     @Volatile private var lastGate = HomeGate.CHECKING
     @Volatile private var checkingHeld = false
     private val noticeState = MutableStateFlow<HomeNotice?>(null)
+    private val noticeTapState = MutableStateFlow<NoticeTap?>(null)
+    private val waitingNoticeState = MutableStateFlow<WaitingNotice?>(null)
     private val packageEventQueued = AtomicBoolean(false)
     private val runsState = MutableStateFlow(0)
     private val home = PackageName(context.packageName)
@@ -157,6 +167,10 @@ class PolicyRuntime private constructor(private val context: Context) {
     val gate: StateFlow<HomeGate> = gateState
     /** The Home notice from the last unlocked re-apply ([homeNotice]). */
     val notice: StateFlow<HomeNotice?> = noticeState
+    /** What tapping [notice] does (policy `NoticeLine`); controllers re-check before any effect. */
+    val noticeTap: StateFlow<NoticeTap?> = noticeTapState
+    /** The current waiting operation as the last unlocked re-apply read it; null with none. */
+    val waitingNotice: StateFlow<WaitingNotice?> = waitingNoticeState
     /** Counts finished re-apply runs, locked ones included: Home retries lock-task entry after each. */
     val runs: StateFlow<Int> = runsState
 
@@ -293,7 +307,23 @@ class PolicyRuntime private constructor(private val context: Context) {
             val pinned = action == RecoveryAction.PINNED_ATTENTION
             // Only the notice: Home and calling stay available either way.
             val held = reconciled?.outcome == ReconcileOutcome.NEEDS_ATTENTION || authorityAttention
-            noticeState.value = if (pinned || held) HomeNotice.NeedsAttention else homeNotice(outcome)
+            val attention = pinned || held || homeNotice(outcome) != null
+            // One line, in the spec's order (policy NoticeLine): attention, then the pending change (wiring 3).
+            val wait = try {
+                waiting.notice()
+            } catch (e: RuntimeException) {
+                Log.e(TAG, "waiting notice threw", e)
+                null
+            }
+            val mode = if (wait == null) Mode.TRUSTED else try {
+                authorityStore.credentials.read()?.mode
+            } catch (_: RuntimeException) {
+                null
+            } ?: Mode.TRUSTED
+            val line = NoticeLine.decide(NoticeInput(mode, attention, wait)).line
+            waitingNoticeState.value = wait
+            noticeTapState.value = line?.tap
+            noticeState.value = homeLine(line, ZonedDateTime.now(), DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
             lastGate = if (outcome?.ready == true && !pinned) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
             when (action) {
