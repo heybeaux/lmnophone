@@ -58,6 +58,21 @@ class ReadbackPolicyApplierTest {
 
     private fun firstIndex(ops: List<String>, prefix: String) = ops.indexOfFirst { it.startsWith(prefix) }
 
+    @Test fun timingSeparatesWritesReadbacksAndFinalVerificationWithoutChangingResults() {
+        var now = 0L
+        val timing = ReapplyTimings { now++ }
+        val measuredPort = port(dialer, camera)
+        val baselinePort = port(dialer, camera)
+        val measured = ReadbackPolicyApplier(measuredPort, timings = timing)
+        assertEquals(ReadbackPolicyApplier(baselinePort).apply(plan()), measured.apply(plan()))
+        assertEquals(baselinePort.ops, measuredPort.ops)
+        assertTrue(measured.readBack(plan()))
+        val expected = ApplyStage.entries.drop(1).flatMap {
+            listOf("write.$it=1", "read.$it=1")
+        } + ApplyStage.entries.map { "verify.$it=1" }
+        assertEquals(expected.joinToString(","), timing.summary())
+    }
+
     @Test fun appliesStepsTwoToSevenInPlanOrderAndReadsEachBack() {
         val port = port(dialer, camera)
         val result = ReadbackPolicyApplier(port).apply(plan())
