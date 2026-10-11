@@ -19,6 +19,13 @@ class FileOpenedScreenRecordTest {
         assertEquals(CallingScreen.EMERGENCY_KEYPAD, FileOpenedScreenRecord(file) { clock }.load())
     }
 
+    @Test fun anUnknownOrObsoleteScreenNameIsIgnored() {
+        for (name in listOf("UNKNOWN", "EMERGENCY")) {
+            file.writeText("$name 1000")
+            assertNull(FileOpenedScreenRecord(file) { clock }.load())
+        }
+    }
+
     @Test fun clearingRemovesIt() {
         val record = FileOpenedScreenRecord(file) { clock }
         record.save(CallingScreen.PHONE)
