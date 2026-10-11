@@ -130,19 +130,19 @@ interface AppApprovalEffects {
      * false or an exception means containment is unverified, never permission to hand back the phone.
      * After an activation attempt, policy supplies an immutable (plan.unhide intersect plan.lockTaskPackages)
      * minus plan.neverHide and plan.emergencyUi, including other discretionary apps it could expose.
-     * Before retry/startup gates, policy supplies only the COMMITTED/EDITING journal target, excluding
-     * known protected packages, even when no activation plan is available. Enforce
-     * the live never-hide/emergency-floor guard too: never hide or remove access from a protected
-     * package, even if facts changed since the plan. Preserve all access outside the target set.
+     * Every pending phase carries a target-only containment obligation until verified completion.
+     * Every effectful recovery entry attempts that singleton before hide, session, battery, permission
+     * or plan gates, even with null or throwing facts. Known protected packages are excluded; enforce
+     * the live never-hide/emergency-floor guard too, including when policy facts are unavailable.
+     * Preserve all access outside the supplied target set. Failed/throwing/unverified containment
+     * returns NOT_READY and retains the journal and receipts. Refused authorization is non-mutating.
      *
-     * Called before COMMITTED/EDITING recovery gates and after every unsuccessful final approval/edit
-     * activation attempt, including apply failure.
-     * finishPermissionEdit commits its choices and delegates activation to resume, so shares this
-     * contract. finishWithdrawal and onStart's PREPARING drop do not use this port: their plans exclude
-     * the pending app and remove its access, rather than activate it. They retain their pending journal
-     * on failed readback/CAS and retry the restrictive plan; containing its other already-approved apps
-     * would not repair a failed removal of the pending app. applyPolicy must contain its own partial
-     * failure, and readBackPolicy remains read-only.
+     * PREPARING drop, REMOVING and WITHDRAWING share this pre-gate obligation and complete
+     * restrictively. Edit withdrawal removes approval and leaves a removedApps marker for fresh
+     * reapproval; it never writes permissions or activates the app. No prior-permission snapshot
+     * exists, so no rollback is implied. Failed final activation contains the attempted plan's
+     * discretionary set and retains its journal. applyPolicy must contain its own partial failures;
+     * readBackPolicy remains read-only.
      */
     fun containFailedActivation(packages: Set<PackageName>): Boolean
 }
@@ -225,11 +225,11 @@ class AppApprovalController(
         initialized = false; requests.clear(); withdrawals.clear(); removals.clear(); edits.clear()
         val state = store.read()
         val op = state?.pending
-        // A process can die inside the permission window. Close it before even session/battery gates.
-        if (op?.phase in setOf(AppApprovalPhase.PREPARING, AppApprovalPhase.EDITING) &&
-            !effects.hideAndReadBack(checkNotNull(op).record.identity)) return AppApprovalOutcome.NOT_READY
-        if (op?.phase in setOf(AppApprovalPhase.COMMITTED, AppApprovalPhase.EDITING) &&
-            !containPendingActivation(checkNotNull(op))) return AppApprovalOutcome.NOT_READY
+        return if (op != null) withPendingContainment(op) { startRecovery(state) } else startRecovery(state)
+    }
+
+    private fun startRecovery(state: AppApprovalState?): AppApprovalOutcome {
+        val op = state?.pending
         if (!sessions.onStart() || state == null) return AppApprovalOutcome.NOT_READY
         if (op?.phase == AppApprovalPhase.PREPARING) {
             // Never resume pre-commit PIN authority after process death. The ordinary policy excludes it.
@@ -320,54 +320,63 @@ class AppApprovalController(
         val op = AppApprovalOperation(request.record, receipt, AppApprovalPhase.PREPARING)
         val preparing = state.replacing(pending = op)
         if (!store.compareAndSet(state, preparing, current)) return AppApprovalOutcome.NOT_READY
-        if (!effects.hideAndReadBack(request.record.identity)) return AppApprovalOutcome.NOT_READY
-        if (!battery().allowsDiscretionaryUnhide || planFor(request.record, preparing) == null ||
-            !writePermissionsInWindow(request.record, preparing)) return AppApprovalOutcome.NOT_READY
-        if (!permissionsMatch(request.record)) return AppApprovalOutcome.NOT_READY
-        val atCommit = matchingCredentials(request) ?: return AppApprovalOutcome.NOT_READY
-        if (!sameBoot(request) || !battery().allowsDiscretionaryUnhide || planFor(request.record, preparing) == null) return AppApprovalOutcome.NOT_READY
-        val committed = preparing.replacing(apps = preparing.apps + (request.record.identity.packageName to request.record),
-            pending = AppApprovalOperation(request.record, receipt, AppApprovalPhase.COMMITTED), receipts = preparing.receipts + receipt,
-            removedApps = preparing.removedApps - request.record.identity.packageName)
-        val binding = request.elevation
-        val saved = if (binding == null) store.compareAndSet(preparing, committed, atCommit)
-        else elevations?.commitApproval(binding, store, preparing, committed, atCommit) {
-            permissionsMatch(request.record) && matchingCredentials(request) != null && sameBoot(request) &&
-                battery().allowsDiscretionaryUnhide && planFor(request.record, preparing) != null
-        } == true
-        if (!saved) return AppApprovalOutcome.NOT_READY
-        return resume()
+        return withPendingContainment(op) {
+            if (!battery().allowsDiscretionaryUnhide || planFor(request.record, preparing) == null ||
+                !writePermissionsInWindow(request.record, preparing)) return AppApprovalOutcome.NOT_READY
+            if (!permissionsMatch(request.record)) return AppApprovalOutcome.NOT_READY
+            val atCommit = matchingCredentials(request) ?: return AppApprovalOutcome.NOT_READY
+            if (!sameBoot(request) || !battery().allowsDiscretionaryUnhide || planFor(request.record, preparing) == null) return AppApprovalOutcome.NOT_READY
+            val committed = preparing.replacing(apps = preparing.apps + (request.record.identity.packageName to request.record),
+                pending = AppApprovalOperation(request.record, receipt, AppApprovalPhase.COMMITTED), receipts = preparing.receipts + receipt,
+                removedApps = preparing.removedApps - request.record.identity.packageName)
+            val binding = request.elevation
+            val saved = if (binding == null) store.compareAndSet(preparing, committed, atCommit)
+            else elevations?.commitApproval(binding, store, preparing, committed, atCommit) {
+                permissionsMatch(request.record) && matchingCredentials(request) != null && sameBoot(request) &&
+                    battery().allowsDiscretionaryUnhide && planFor(request.record, preparing) != null
+            } == true
+            if (!saved) return AppApprovalOutcome.NOT_READY
+            return resume()
+        }
     }
 
     @Synchronized
     fun resume(): AppApprovalOutcome {
-        if (!initialized) return AppApprovalOutcome.NOT_READY
         val state = store.read() ?: return AppApprovalOutcome.NOT_READY
-        val op = state.pending ?: return AppApprovalOutcome.READY
-        if (op.phase == AppApprovalPhase.EDITING) return finishPermissionEdit(state, op)
-        if (op.phase == AppApprovalPhase.COMMITTED && !containPendingActivation(op)) return AppApprovalOutcome.NOT_READY
-        if (state.revision == Long.MAX_VALUE) return AppApprovalOutcome.NOT_READY
-        if (op.phase == AppApprovalPhase.WITHDRAWING || op.phase == AppApprovalPhase.REMOVING) return finishWithdrawal(state, op)
-        if (op.phase != AppApprovalPhase.COMMITTED) return AppApprovalOutcome.NOT_READY
-        if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
-        if (!permissionsMatch(op.record)) return AppApprovalOutcome.NOT_READY
+        val op = state.pending ?: return if (initialized) AppApprovalOutcome.READY else AppApprovalOutcome.NOT_READY
+        return withPendingContainment(op) {
+            if (!initialized) return AppApprovalOutcome.NOT_READY
+            if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
+            if (op.phase == AppApprovalPhase.EDITING) return finishPermissionEdit(state, op)
+            if (state.revision == Long.MAX_VALUE) return AppApprovalOutcome.NOT_READY
+            if (op.phase == AppApprovalPhase.WITHDRAWING || op.phase == AppApprovalPhase.REMOVING) return finishWithdrawal(state, op)
+            if (op.phase != AppApprovalPhase.COMMITTED) return AppApprovalOutcome.NOT_READY
+            if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
+            if (!permissionsMatch(op.record)) return AppApprovalOutcome.NOT_READY
+            return activatePending(state, op, state.replacing(pending = null),
+                if (op.receipt?.kind == AppApprovalReceiptKind.PERMISSIONS_CHANGED)
+                    AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.APPROVED)
+        }
+    }
+
+    private fun activatePending(state: AppApprovalState, op: AppApprovalOperation,
+        finished: AppApprovalState, outcome: AppApprovalOutcome): AppApprovalOutcome {
         val plan = planFor(op.record, state) ?: return AppApprovalOutcome.NOT_READY
         val discretionary = immutableSet(plan.unhide.intersect(plan.lockTaskPackages) - plan.neverHide - plan.emergencyUi)
         var activated = false
         try {
             if (!effects.applyPolicy(plan) || !effects.readBackPolicy(plan)) return AppApprovalOutcome.NOT_READY
             if (planFor(op.record, state) == null || !permissionsMatch(op.record)) return AppApprovalOutcome.NOT_READY
-            if (!store.compareAndSet(state, state.replacing(pending = null), null)) return AppApprovalOutcome.NOT_READY
+            if (!store.compareAndSet(state, finished, null)) return AppApprovalOutcome.NOT_READY
             activated = true
-            return if (op.receipt?.kind == AppApprovalReceiptKind.PERMISSIONS_CHANGED)
-                AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.APPROVED
+            return outcome
         } catch (_: Exception) {
             return AppApprovalOutcome.NOT_READY
         } finally {
             if (!activated) {
                 try {
                     // Neither a true result nor an unverified attempt completes the pending operation.
-                    // Retain COMMITTED so resume retries the full activation, with no new receipt.
+                    // Retain the pending direction so retry verifies full activation, with no new receipt.
                     effects.containFailedActivation(discretionary)
                 } catch (_: Exception) {
                     // Containment is unverified. The outcome remains NOT_READY.
@@ -377,26 +386,34 @@ class AppApprovalController(
     }
 
     /**
-     * COMMITTED/EDITING is itself the durable cleanup obligation: approvedPackages excludes its target
-     * until activation completes. Reconstruct that singleton on every retry/start, without a plan or
-     * a new journal field. Never include other approved apps here merely because activation is gated.
-     * Post-activation failure containment may already have hidden them; only a battery-gated successful
-     * activation restores them. No cleanup result clears the pending operation or changes receipts.
+     * Every pending phase is a durable target-only containment obligation until its outcome is verified
+     * and durably completed. Every effectful recovery entry uses this guard before any gate. Refused
+     * authorization is non-mutating and must be checked before entering it. Never include unrelated
+     * approved apps merely because recovery is gated. No cleanup changes the journal or receipts.
      *
-     * Exclude currently known protected packages even when activation facts are invalid. If facts are
-     * unavailable, the adapter's mandatory live floor guard still applies to the journal-derived target.
-     * A refusal, exception or failed readback is NOT_READY, never evidence of verified containment.
+     * Missing OR throwing policy facts still reach the adapter, whose live floor guard is mandatory.
+     * Known protected targets are refused here too. Containment independently removes lock task/Home
+     * before an EDITING/PREPARING hide retry: a failed hide must never skip those boundaries.
+     *
+     * Withdrawal retains this obligation through plan/session recovery and completes restrictively.
+     * An edit has no prior-permission snapshot: completion removes approval and saves a removedApps
+     * marker for fresh reapproval, without writing permissions or restoring access.
      */
-    private fun containPendingActivation(op: AppApprovalOperation): Boolean = try {
+    private inline fun withPendingContainment(op: AppApprovalOperation,
+        recover: () -> AppApprovalOutcome): AppApprovalOutcome = try {
         val name = op.record.identity.packageName
-        val input = policyInput()
+        val input = try { policyInput() } catch (_: Exception) { null }
         val protected = input?.let {
             val floor = EmergencyFloor.compute(it.installed, it.identities)
             floor.neverHide + floor.emergencyUi + it.inventory?.neverHide?.packages.orEmpty() + it.plainphone + it.messages
         }.orEmpty()
-        name !in protected && effects.containFailedActivation(immutableSet(setOf(name)))
+        if (name in protected) AppApprovalOutcome.NOT_READY
+        else if (!effects.containFailedActivation(immutableSet(setOf(name)))) AppApprovalOutcome.NOT_READY
+        else if (op.phase in setOf(AppApprovalPhase.PREPARING, AppApprovalPhase.EDITING) &&
+            !effects.hideAndReadBack(op.record.identity)) AppApprovalOutcome.NOT_READY
+        else recover()
     } catch (_: Exception) {
-        false
+        AppApprovalOutcome.NOT_READY
     }
 
     /** Review the exact stuck approval/edit; no stale-manifest guess or old PIN can withdraw it. */
@@ -426,14 +443,16 @@ class AppApprovalController(
             state.apps.values.any { it.id == request.receiptId }) return AppApprovalOutcome.REFUSED
         if (matchingCredentials(request) == null || !sameBoot(request.preparedAt)) return AppApprovalOutcome.REFUSED
         if (!authority.consumeFor(fresh, request.action, request.person)) return AppApprovalOutcome.REFUSED
-        if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
-        val current = matchingCredentials(request) ?: return AppApprovalOutcome.NOT_READY
-        if (!sameBoot(request.preparedAt)) return AppApprovalOutcome.NOT_READY
-        val receipt = AppApprovalReceipt(request.receiptId, request.person, current.people.mapValues { it.value.generation },
-            AppApprovalReceiptKind.WITHDRAWN, request.approvalId)
-        val withdrawing = state.replacing(pending = AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.WITHDRAWING, receipt))
-        if (!store.compareAndSet(state, withdrawing, current)) return AppApprovalOutcome.NOT_READY
-        return resume()
+        return withPendingContainment(op) {
+            if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
+            val current = matchingCredentials(request) ?: return AppApprovalOutcome.NOT_READY
+            if (!sameBoot(request.preparedAt)) return AppApprovalOutcome.NOT_READY
+            val receipt = AppApprovalReceipt(request.receiptId, request.person, current.people.mapValues { it.value.generation },
+                AppApprovalReceiptKind.WITHDRAWN, request.approvalId)
+            val withdrawing = state.replacing(pending = AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.WITHDRAWING, receipt))
+            if (!store.compareAndSet(state, withdrawing, current)) return AppApprovalOutcome.NOT_READY
+            return resume()
+        }
     }
 
     @Synchronized
@@ -488,16 +507,17 @@ class AppApprovalController(
     }
 
     private fun finishPermissionEdit(state: AppApprovalState, op: AppApprovalOperation): AppApprovalOutcome {
-        // EDITING is durable intent: every retry must close an interrupted window before any gate.
-        if (!effects.hideAndReadBack(op.record.identity) || !containPendingActivation(op)) return AppApprovalOutcome.NOT_READY
-        if (state.revision > Long.MAX_VALUE - 2) return AppApprovalOutcome.NOT_READY
-        if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
-        if (planFor(op.record, state) == null || !writePermissionsInWindow(op.record, state)) return AppApprovalOutcome.NOT_READY
-        if (!permissionsMatch(op.record) || !battery().allowsDiscretionaryUnhide || planFor(op.record, state) == null)
-            return AppApprovalOutcome.NOT_READY
-        val committed = state.replacing(pending = AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.COMMITTED))
-        if (!store.compareAndSet(state, committed, null)) return AppApprovalOutcome.NOT_READY
-        return resume()
+        return withPendingContainment(op) {
+            if (op.phase != AppApprovalPhase.EDITING || !sessions.onStart()) return AppApprovalOutcome.NOT_READY
+            if (state.revision > Long.MAX_VALUE - 2) return AppApprovalOutcome.NOT_READY
+            if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
+            if (planFor(op.record, state) == null || !writePermissionsInWindow(op.record, state)) return AppApprovalOutcome.NOT_READY
+            if (!permissionsMatch(op.record) || !battery().allowsDiscretionaryUnhide || planFor(op.record, state) == null)
+                return AppApprovalOutcome.NOT_READY
+            val committed = state.replacing(pending = AppApprovalOperation(op.record, op.receipt, AppApprovalPhase.COMMITTED))
+            if (!store.compareAndSet(state, committed, null)) return AppApprovalOutcome.NOT_READY
+            return resume()
+        }
     }
 
     @Synchronized
@@ -543,16 +563,19 @@ class AppApprovalController(
     }
 
     private fun finishWithdrawal(state: AppApprovalState, op: AppApprovalOperation): AppApprovalOutcome {
-        val checked = withdrawalPlan(state, op) ?: return AppApprovalOutcome.NOT_READY
-        if (!effects.applyPolicy(checked.plan) || !effects.readBackPolicy(checked.plan)) return AppApprovalOutcome.NOT_READY
-        // Facts can change even when the resulting policy sets are identical.
-        if (withdrawalPlan(state, op) != checked) return AppApprovalOutcome.NOT_READY
-        val finished = state.replacing(apps = state.apps - op.record.identity.packageName, pending = null,
-            receipts = state.receipts + checkNotNull(op.withdrawalReceipt),
-            removedApps = if (op.phase == AppApprovalPhase.REMOVING || op.receipt?.kind == AppApprovalReceiptKind.PERMISSIONS_CHANGED)
-                state.removedApps + (op.record.identity.packageName to op.record.identity) else state.removedApps)
-        if (!store.compareAndSet(state, finished, null)) return AppApprovalOutcome.NOT_READY
-        return if (op.phase == AppApprovalPhase.REMOVING) AppApprovalOutcome.REMOVED else AppApprovalOutcome.WITHDRAWN
+        return withPendingContainment(op) {
+            if (!sessions.onStart()) return AppApprovalOutcome.NOT_READY
+            val checked = withdrawalPlan(state, op) ?: return AppApprovalOutcome.NOT_READY
+            if (!effects.applyPolicy(checked.plan) || !effects.readBackPolicy(checked.plan)) return AppApprovalOutcome.NOT_READY
+            // Facts can change even when the resulting policy sets are identical.
+            if (withdrawalPlan(state, op) != checked) return AppApprovalOutcome.NOT_READY
+            val finished = state.replacing(apps = state.apps - op.record.identity.packageName, pending = null,
+                receipts = state.receipts + checkNotNull(op.withdrawalReceipt),
+                removedApps = if (op.phase == AppApprovalPhase.REMOVING || op.receipt?.kind == AppApprovalReceiptKind.PERMISSIONS_CHANGED)
+                    state.removedApps + (op.record.identity.packageName to op.record.identity) else state.removedApps)
+            if (!store.compareAndSet(state, finished, null)) return AppApprovalOutcome.NOT_READY
+            return if (op.phase == AppApprovalPhase.REMOVING) AppApprovalOutcome.REMOVED else AppApprovalOutcome.WITHDRAWN
+        }
     }
 
     private data class WithdrawalPlan(val plan: PolicyPlan, val installed: InstalledPackage?,
