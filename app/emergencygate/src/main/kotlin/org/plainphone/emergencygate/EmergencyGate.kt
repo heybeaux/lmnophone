@@ -110,7 +110,10 @@ class EmergencyGate : Instrumentation() {
         if (!waitFor(10_000) { top()?.packageName == MESSAGES }) {
             return CheckResult(check, Verdict.FAIL, "approved app $MESSAGES did not open: top=${top()}")
         }
-        return phoneFromHome(check).let { it.copy(detail = "from $MESSAGES: ${it.detail}") }
+        // Let the app finish starting: on API 36 Messages opens a sign-in prompt a moment later.
+        SystemClock.sleep(3_000)
+        val opened = top()
+        return phoneFromHome(check).let { it.copy(detail = "from $opened homePresses=$homePresses: ${it.detail}") }
     }
 
     /** NOT_BUILT only when the build declares it; a declared-built route with no entry fails. */
@@ -339,12 +342,26 @@ class EmergencyGate : Instrumentation() {
         return labels
     }
 
-    /** Presses Home and waits for Plainphone. Returns a failure detail, or null. */
+    /**
+     * Presses Home until Plainphone is in front and stays there for [STAY_MS], up to three presses (an
+     * app may put a screen back over Home once, as a person would press Home again). Records the
+     * presses in [homePresses]. Returns a failure detail, or null.
+     */
     private fun home(): String? {
         shell("input keyevent KEYCODE_WAKEUP")
-        shell("input keyevent KEYCODE_HOME")
-        return if (waitFor(10_000) { top()?.packageName == PLAINPHONE }) null else "Home is not Plainphone: top=${top()}"
+        for (press in 1..3) {
+            shell("input keyevent KEYCODE_HOME")
+            homePresses = press
+            if (waitFor(10_000) { top()?.packageName == PLAINPHONE } &&
+                (1..STAY_SAMPLES).all { SystemClock.sleep(STAY_MS / STAY_SAMPLES); top()?.packageName == PLAINPHONE }
+            ) {
+                return null
+            }
+        }
+        return "Home is not Plainphone after 3 presses: top=${top()}"
     }
+
+    private var homePresses = 0
 
     /** Ends the test call from the in-call screen (`KEYCODE_ENDCALL` does not end an emergency call). */
     private fun hangUp(): String {
