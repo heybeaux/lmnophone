@@ -1,0 +1,10 @@
+{
+  "candidate_commit": "9cfd253a24f941e3ab5a13eaec95b346ded9b1a5",
+  "apk_sha256": "192e6cde91523b385d55c04eeb52cdedf0688f074712f65ce6aa618f26a1298a",
+  "signer_sha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "application_id": "org.plainphone",
+  "version_code": 5,
+  "version_name": "0.1.0-preview-5",
+  "app_label": "LMNOPhone (preview)",
+  "test_only": true
+}

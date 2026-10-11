@@ -1,0 +1,305 @@
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:compileKotlin UP-TO-DATE
+> Task :core:compileJava NO-SOURCE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :policy:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :policy:compileKotlin UP-TO-DATE
+> Task :policy:compileJava NO-SOURCE
+> Task :policy:processResources NO-SOURCE
+> Task :policy:classes UP-TO-DATE
+> Task :policy:jar UP-TO-DATE
+> Task :links:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :links:compileKotlin UP-TO-DATE
+> Task :links:compileJava NO-SOURCE
+> Task :links:processResources UP-TO-DATE
+> Task :links:classes UP-TO-DATE
+> Task :links:jar UP-TO-DATE
+> Task :device:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:preBuild UP-TO-DATE
+> Task :device:preDebugBuild UP-TO-DATE
+> Task :device:generateDebugResValues UP-TO-DATE
+> Task :device:generateDebugResources UP-TO-DATE
+> Task :device:packageDebugResources UP-TO-DATE
+> Task :device:parseDebugLocalResources UP-TO-DATE
+> Task :device:generateDebugRFile UP-TO-DATE
+> Task :device:compileDebugKotlin UP-TO-DATE
+> Task :device:javaPreCompileDebug UP-TO-DATE
+> Task :device:compileDebugJavaWithJavac NO-SOURCE
+> Task :device:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :device:processDebugJavaRes UP-TO-DATE
+> Task :device:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :plainphone:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:compileDebugLibraryResources UP-TO-DATE
+> Task :device:writeDebugAarMetadata UP-TO-DATE
+> Task :plainphone:preBuild UP-TO-DATE
+> Task :plainphone:preDebugBuild UP-TO-DATE
+> Task :ui:preBuild UP-TO-DATE
+> Task :ui:preDebugBuild UP-TO-DATE
+> Task :ui:writeDebugAarMetadata UP-TO-DATE
+> Task :plainphone:checkDebugAarMetadata UP-TO-DATE
+> Task :plainphone:generateDebugResValues UP-TO-DATE
+> Task :ui:generateDebugResValues UP-TO-DATE
+> Task :ui:generateDebugResources UP-TO-DATE
+> Task :ui:packageDebugResources UP-TO-DATE
+> Task :plainphone:mapDebugSourceSetPaths UP-TO-DATE
+> Task :plainphone:generateDebugResources UP-TO-DATE
+> Task :plainphone:mergeDebugResources UP-TO-DATE
+> Task :plainphone:packageDebugResources UP-TO-DATE
+> Task :plainphone:parseDebugLocalResources UP-TO-DATE
+> Task :plainphone:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :device:extractDeepLinksDebug UP-TO-DATE
+> Task :device:processDebugManifest UP-TO-DATE
+> Task :plainphone:extractDeepLinksDebug UP-TO-DATE
+> Task :ui:extractDeepLinksDebug UP-TO-DATE
+> Task :ui:processDebugManifest UP-TO-DATE
+> Task :plainphone:processDebugMainManifest UP-TO-DATE
+> Task :plainphone:processDebugManifest UP-TO-DATE
+> Task :plainphone:processDebugManifestForPackage UP-TO-DATE
+> Task :ui:compileDebugLibraryResources UP-TO-DATE
+> Task :ui:parseDebugLocalResources UP-TO-DATE
+> Task :ui:generateDebugRFile UP-TO-DATE
+> Task :plainphone:processDebugResources UP-TO-DATE
+> Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ui:compileDebugKotlin UP-TO-DATE
+> Task :ui:javaPreCompileDebug UP-TO-DATE
+> Task :ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :ui:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :plainphone:javaPreCompileDebug UP-TO-DATE
+> Task :plainphone:preDebugUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :ui:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :ui:processDebugJavaRes UP-TO-DATE
+> Task :ui:generateDebugUnitTestAssets UP-TO-DATE
+> Task :ui:mergeDebugShaders UP-TO-DATE
+> Task :ui:compileDebugShaders NO-SOURCE
+> Task :ui:generateDebugAssets UP-TO-DATE
+> Task :ui:mergeDebugAssets UP-TO-DATE
+> Task :ui:preDebugUnitTestBuild UP-TO-DATE
+> Task :ui:mergeDebugUnitTestAssets UP-TO-DATE
+> Task :ui:checkDebugUnitTestAarMetadata UP-TO-DATE
+> Task :ui:generateDebugUnitTestResValues UP-TO-DATE
+> Task :ui:mapDebugUnitTestSourceSetPaths UP-TO-DATE
+> Task :ui:generateDebugUnitTestResources UP-TO-DATE
+> Task :ui:mergeDebugUnitTestResources UP-TO-DATE
+> Task :ui:processDebugUnitTestManifest UP-TO-DATE
+> Task :ui:processDebugUnitTestResources UP-TO-DATE
+> Task :ui:packageDebugUnitTestForUnitTest UP-TO-DATE
+> Task :ui:generateDebugUnitTestConfig UP-TO-DATE
+> Task :ui:preparePaparazziDebugResources UP-TO-DATE
+> Task :ui:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :device:preDebugUnitTestBuild UP-TO-DATE
+> Task :device:javaPreCompileDebugUnitTest
+> Task :device:generateDebugUnitTestStubRFile
+> Task :ui:mergeDebugJniLibFolders
+> Task :ui:mergeDebugNativeLibs NO-SOURCE
+> Task :ui:stripDebugDebugSymbols NO-SOURCE
+> Task :ui:copyDebugJniLibsProjectAndLocalJars
+> Task :ui:extractDebugAnnotations
+> Task :ui:extractDeepLinksForAarDebug
+> Task :ui:mergeDebugGeneratedProguardFiles
+> Task :ui:mergeDebugConsumerProguardFiles
+> Task :ui:compileDebugUnitTestKotlin
+> Task :ui:prepareDebugArtProfile
+> Task :ui:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :ui:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :ui:prepareLintJarForPublish
+> Task :ui:mergeDebugJavaResource
+> Task :ui:createFullJarDebug
+> Task :ui:transformDebugUnitTestClassesWithAsm
+> Task :ui:syncDebugLibJars
+> Task :plainphone:compileDebugKotlin
+
+> Task :device:compileDebugUnitTestKotlin
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/LegacyMigrationTest.kt:37:9 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/MigrationJournalTest.kt:39:9 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/PeopleTransactionsTest.kt:601:100 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/PeopleTransactionsTest.kt:624:135 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/UpdateDownloadTest.kt:67:41 Java type mismatch: inferred type is 'File?', but 'File' was expected.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/UpdateStagingTest.kt:30:41 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+
+> Task :ui:testDebugUnitTest
+See the Paparazzi report at: file://<worktree>/app/ui/build/reports/paparazzi/debug/index.html
+
+> Task :plainphone:compileDebugJavaWithJavac NO-SOURCE
+> Task :plainphone:processDebugJavaRes UP-TO-DATE
+> Task :ui:verifyPaparazziDebug
+> Task :device:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:bundleDebugClassesToCompileJar
+> Task :plainphone:bundleDebugClassesToRuntimeJar
+> Task :device:processDebugUnitTestJavaRes
+> Task :plainphone:compileDebugUnitTestKotlin
+
+> Task :device:testDebugUnitTest
+
+Pla241ReviewTest > throwingJournalMustStillRepairEmergencyFloor FAILED
+    java.lang.AssertionError at Pla241ReviewTest.kt:43
+
+Pla241ReviewTest > lockedBootFlipFailureMustReachFirstUnlockedHome FAILED
+    java.lang.AssertionError at Pla241ReviewTest.kt:55
+
+Pla241ReviewTest > repairMustPreserveFlipFailureFromFirstAttempt FAILED
+    java.lang.AssertionError at Pla241ReviewTest.kt:82
+
+Pla241ReviewTest > enabledStateChangingBeforeFinalReadbackMustBlockSetup FAILED
+    java.lang.AssertionError at Pla241ReviewTest.kt:67
+
+Pla241ReviewTest > failedPlanMustStillRestoreFixedRestrictions FAILED
+    java.lang.AssertionError at Pla241ReviewTest.kt:35
+
+493 tests completed, 5 failed
+
+> Task :device:testDebugUnitTest FAILED
+> Task :plainphone:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :plainphone:testDebugUnitTest
+> Task :ui:bundleDebugLocalLintAar
+> Task :ui:preDebugAndroidTestBuild UP-TO-DATE
+> Task :ui:generateDebugAndroidTestResValues
+> Task :ui:writeDebugLintModelMetadata
+> Task :ui:extractProguardFiles
+> Task :ui:generateDebugLintReportModel
+> Task :ui:generateDebugAndroidTestLintModel
+> Task :ui:generateDebugUnitTestLintModel
+> Task :device:mergeDebugJniLibFolders
+> Task :device:mergeDebugNativeLibs NO-SOURCE
+> Task :device:stripDebugDebugSymbols NO-SOURCE
+> Task :device:copyDebugJniLibsProjectAndLocalJars
+> Task :device:extractDebugAnnotations
+> Task :device:extractDeepLinksForAarDebug
+> Task :device:mergeDebugShaders
+> Task :device:compileDebugShaders NO-SOURCE
+> Task :device:generateDebugAssets UP-TO-DATE
+> Task :device:mergeDebugAssets
+> Task :device:mergeDebugGeneratedProguardFiles
+> Task :device:mergeDebugConsumerProguardFiles
+> Task :device:prepareDebugArtProfile
+> Task :device:prepareLintJarForPublish
+> Task :device:mergeDebugJavaResource
+> Task :device:createFullJarDebug
+> Task :device:syncDebugLibJars
+> Task :device:bundleDebugLocalLintAar
+> Task :device:preDebugAndroidTestBuild UP-TO-DATE
+> Task :device:generateDebugAndroidTestResValues
+> Task :device:writeDebugLintModelMetadata
+> Task :device:extractProguardFiles
+> Task :device:generateDebugLintModel
+> Task :plainphone:preDebugAndroidTestBuild SKIPPED
+> Task :plainphone:generateDebugAndroidTestResValues
+> Task :plainphone:extractProguardFiles
+> Task :ui:generateDebugLintModel
+> Task :device:generateDebugAndroidTestLintModel
+> Task :device:generateDebugUnitTestLintModel
+> Task :plainphone:generateDebugAndroidTestLintModel
+> Task :plainphone:generateDebugLintReportModel
+> Task :plainphone:generateDebugUnitTestLintModel
+> Task :ui:lintAnalyzeDebugUnitTest
+> Task :ui:lintAnalyzeDebugAndroidTest
+> Task :device:lintAnalyzeDebugAndroidTest
+> Task :ui:lintAnalyzeDebug
+
+> Task :ui:lintReportDebug
+Wrote HTML report to file://<worktree>/app/ui/build/reports/lint-results-debug.html
+
+> Task :ui:lintDebug
+> Task :ui:lint
+> Task :plainphone:lintAnalyzeDebugAndroidTest
+> Task :plainphone:lintAnalyzeDebugUnitTest
+> Task :device:lintAnalyzeDebug
+> Task :plainphone:lintAnalyzeDebug
+> Task :device:lintAnalyzeDebugUnitTest
+
+> Task :plainphone:lintReportDebug
+Wrote HTML report to file://<worktree>/app/plainphone/build/reports/lint-results-debug.html
+Lint found 1 error and 8 warnings. First failure:
+<worktree>/app/plainphone/src/main/AndroidManifest.xml:37: Error: Permission exists without corresponding hardware <uses-feature android:name="android.hardware.telephony" required="false"> tag [PermissionImpliesUnsupportedChromeOsHardware]
+    <uses-permission android:name="android.permission.READ_SMS" />
+     ~~~~~~~~~~~~~~~
+
+
+> Task :plainphone:lintDebug FAILED
+Lint found 1 error, 8 warnings. First failure:
+
+<worktree>/app/plainphone/src/main/AndroidManifest.xml:37: Error: Permission exists without corresponding hardware <uses-feature android:name="android.hardware.telephony" required="false"> tag [PermissionImpliesUnsupportedChromeOsHardware]
+    <uses-permission android:name="android.permission.READ_SMS" />
+     ~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "PermissionImpliesUnsupportedChromeOsHardware":
+   The <uses-permission> element should not require a permission that implies
+   an unsupported large screen hardware feature. Google Play assumes that
+   certain hardware related permissions indicate that the underlying hardware
+   features are required by default. To fix the issue, consider declaring the
+   corresponding <uses-feature> element with required="false" attribute.
+
+   https://developer.android.com/topic/arc/manifest.html#implied-features
+
+
+The full lint text report is located at:
+  <worktree>/app/plainphone/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+
+[Incubating] Problems report is available at: file://<worktree>/app/build/reports/problems/problems-report.html
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':device:testDebugUnitTest'.
+> There were failing tests. See the report at: file://<worktree>/app/device/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':plainphone:lintDebug'.
+> Lint found errors in the project; aborting build.
+  
+  Fix the issues identified by lint, or create a baseline to see only new errors.
+  To create a baseline, run `gradlew updateLintBaseline` after adding the following to the module's build.gradle file:
+  ```
+  android {
+      lint {
+          baseline = file("lint-baseline.xml")
+      }
+  }
+  ```
+  For more details, see https://developer.android.com/studio/write/lint#snapshot
+  
+  Lint found 1 error, 8 warnings. First failure:
+  
+  <worktree>/app/plainphone/src/main/AndroidManifest.xml:37: Error: Permission exists without corresponding hardware <uses-feature android:name="android.hardware.telephony" required="false"> tag [PermissionImpliesUnsupportedChromeOsHardware]
+      <uses-permission android:name="android.permission.READ_SMS" />
+       ~~~~~~~~~~~~~~~
+  
+     Explanation for issues of type "PermissionImpliesUnsupportedChromeOsHardware":
+     The <uses-permission> element should not require a permission that implies
+     an unsupported large screen hardware feature. Google Play assumes that
+     certain hardware related permissions indicate that the underlying hardware
+     features are required by default. To fix the issue, consider declaring the
+     corresponding <uses-feature> element with required="false" attribute.
+  
+     https://developer.android.com/topic/arc/manifest.html#implied-features
+  
+  
+  The full lint text report is located at:
+    <worktree>/app/plainphone/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 55s
+137 actionable tasks: 70 executed, 67 up-to-date

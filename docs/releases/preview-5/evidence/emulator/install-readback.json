@@ -1,0 +1,35 @@
+{
+  "install_time_utc": "2026-10-11T16:06:13+00:00",
+  "before": {
+    "package": [
+      "versionCode=4 minSdk=30 targetSdk=36",
+      "versionName=0.1.0-preview-4",
+      "lastUpdateTime=2026-10-10 22:29:47",
+      "pkgFlags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ]",
+      "firstInstallTime=2026-10-10 22:29:07"
+    ],
+    "owner": "1 owner:\nUser  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated",
+    "lock": [
+      "mLockTaskModeState=LOCKED"
+    ],
+    "counts_switch": true
+  },
+  "after": {
+    "package": [
+      "versionCode=5 minSdk=30 targetSdk=36",
+      "versionName=0.1.0-preview-5",
+      "lastUpdateTime=2026-10-11 09:06:13",
+      "pkgFlags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ]",
+      "firstInstallTime=2026-10-10 22:29:07"
+    ],
+    "owner": "1 owner:\nUser  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated",
+    "lock": [
+      "mLockTaskModeState=LOCKED"
+    ]
+  },
+  "counts_preference": true,
+  "preference_mtime_utc": "2026-10-11T16:04:31+00:00",
+  "preference_untouched_since_before_install": true,
+  "counts_switch_readback": true,
+  "note": "Initial evidence read used credential-encrypted path and failed; corrected to device-protected path. Preference mtime precedes install, proving no post-install rewrite."
+}

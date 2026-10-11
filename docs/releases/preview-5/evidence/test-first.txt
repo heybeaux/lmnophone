@@ -1,0 +1,18 @@
+> Task :plainphone:testDebugUnitTest FAILED
+
+ShellNavigatorTest > blockedLinkReviewConfirmSendAndOk FAILED
+    java.lang.AssertionError at ShellNavigatorTest.kt:96
+
+12 tests completed, 1 failed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':plainphone:testDebugUnitTest'.
+> There were failing tests. See the report at: file://<worktree>/app/plainphone/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 6s
+57 actionable tasks: 57 executed
