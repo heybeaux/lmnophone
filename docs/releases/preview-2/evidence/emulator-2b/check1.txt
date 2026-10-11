@@ -59,4 +59,5 @@ PIN disabled: false
   attempt's taps failed.
 - The retry ran after the PIN had already been used (screen off, lock screen), so the user was RUNNING_UNLOCKED. It shows
   9-1-1 typed on the lock-screen dial pad, not before the first unlock.
-- So typing 9-1-1 before the first unlock is unverified here.
+- So typing 9-1-1 before the first unlock is unverified here. It was verified later on a fresh AVD (pla267-a35):
+  ../emulator-3/check1-prelock.txt.

@@ -1,0 +1,37 @@
+# Finding 1 (PLA-266): 9-1-1 typed before the first unlock. emulator-5850 pla267-a35 (API 35), release/preview-2 build sha256 d5696eb7adb873d1…, 2026-10-11T01:05:15Z. Emulator only: temporary PIN 1590, cleared at the end. Call is never pressed.
+Pin set to '1590'
+## After the restart, before any unlock
+mLockTaskModeState=LOCKED
+10-10 18:05:30.609   971  1033 I PlainphoneBoot: reapply reason=start control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLOW_FACT
+10-10 18:05:30.877   971  1033 I PlainphoneBoot: reapply reason=locked-boot control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 withheld=[DISALLO
+10-10 18:05:31.223   971  1033 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:android control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures
+10-10 18:05:34.717   971  1033 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:android control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures
+## PIN bouncer before unlock (f1-0-bouncer-before-unlock.png)
+## Tap Emergency on the PIN bouncer (540,2147)
+user: RUNNING_LOCKED
+    topResumedActivity=ActivityRecord{f705d82 u0 com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity t6}
+mLockTaskModeState=LOCKED
+## Type 9 1 1 (key centres from the UI dump: 9 at 872,1873; 1 at 207,1493). Call (y 2200-2347) is never touched.
+user: RUNNING_LOCKED
+digits field: text="" resource-id="com.google.android.apps.safetyhub:id/digits_view_container" text="911" resource-id="com.google.android.apps.safetyhub:id/digits_view" text="" resource-id="com.google.android.apps.safetyhub:id/digits_bottom_divider" text="" resource-id="com.google.android.apps.safetyhub:id/dial_pad_digits" 
+telecom:  mCalls: mCallAudioManager: All calls: 
+telephony call state:     mCallState=0
+    topResumedActivity=ActivityRecord{f705d82 u0 com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity t6}
+mLockTaskModeState=LOCKED
+## Leave the dial pad (Back), then unlock with the temporary PIN
+telecom after leaving:  mCalls: mCallAudioManager: All calls: 
+user: RUNNING_UNLOCKED
+10-10 18:11:46.206   971  1033 I PlainphoneBoot: reapply reason=boot control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0
+10-10 18:11:46.319   971   971 I PlainphoneBoot: home shown lockTask=1 at=384865
+10-10 18:11:47.066   971  1033 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.google.android.apps.wellbeing control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUAR
+      topResumedActivity=ActivityRecord{199967c u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED
+## Clear the temporary PIN
+Lock credential cleared
+lock screen disabled (get-disabled): true
+    CredentialType: NONE
+## Reading
+- After a restart with a PIN, before any unlock (user RUNNING_LOCKED), the bouncer's Emergency button opened the
+  SafetyHub dial pad in lock task, and 9-1-1 typed into it (digits_view text="911").
+- Telecom had no calls (mCalls empty, mCallState=0) with 9-1-1 typed and after leaving. Call was never pressed.
+- This closes the PLA-266 finding 1 gap: typing 9-1-1 before the first unlock is verified on the emulator (API 35).

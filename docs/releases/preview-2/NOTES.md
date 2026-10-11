@@ -31,7 +31,7 @@ preview-2a (tag `preview-2a`) was installed on 2026-10-10 at 00:51 UTC (Fri 9 Oc
 ## Safety checks (evidence in `evidence/`; preview-2b in `emulator-2b/` and `spare-2b/`)
 | Check | Emulator (API 35) | Spare |
 |---|---|---|
-| 1. 9-1-1 typed in, no call placed | 2a and 2b: More, Phone, lock-screen button (temporary PIN). 2b: after a locked restart the Emergency dial pad opened before unlock; typing 9-1-1 before the first unlock is **unverified** (the retry typed it after the PIN had been used, `check1.txt`) | 2a and 2b: More, Phone; lock screen has no button without a PIN |
+| 1. 9-1-1 typed in, no call placed | 2a and 2b: More, Phone, lock-screen button (temporary PIN). 2b: after a locked restart, before the first unlock, 9-1-1 typed on the lock-screen dial pad with no call (`emulator-3/check1-prelock.txt`, PLA-267; the first 2b run never typed it before unlock, `check1.txt`) | 2a and 2b: More, Phone; lock screen has no button without a PIN |
 | 2. `remove-active-admin` removes Plainphone, hidden apps come back | 2a: 13 of 13; 2b: 15 of 15 | 2a: 70 of 70; 2b: 42 of 42 |
 | 3. Each unhide followed at once by its save flip (mitigation B, best effort) | 2a and 2b: unhide and flip in the file before the apply reported (the hide control was also prompt) | 2a and 2b: flip ran and read back straight after the unhide; storage not observable without root |
 
@@ -50,6 +50,10 @@ the spare may be erased from recovery if it gets stuck (1A consent). preview-2b 
 restart, the full re-apply and read-back run before Home shows, so an app whose unhide was lost should be unhidden again
 then. The emulator power-cut test shows the end state (the app visible, Home only after the full read-back); it does not
 show the unhide was actually lost and redone, which is inferred. It does not remove the boot-loop worst case.
+
+## Fixed after preview-2 (ships in the next build)
+- Home did not re-read its app list after a second healthy setup run when the notice stayed the same (PLA-266 finding 2).
+  Fixed on `release/preview-2` at `ba4014a`; emulator before/after in `emulator-3/check-home-refresh.txt` (PLA-267).
 
 ## Way out
 `adb -s <spare> shell dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver`. This brings back every app
