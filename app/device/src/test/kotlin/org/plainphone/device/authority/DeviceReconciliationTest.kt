@@ -408,4 +408,151 @@ class DeviceReconciliationTest {
         assertFalse(rig.effects.applyPolicy(PolicyEngine.decide(input)))
         assertDialerRepaired(rig, "effect")
     }
+
+    // The PLA-323 review probes, kept as regressions unchanged.
+    @Test fun reviewKnownPlanStillRepairsIfTheSecondInputReadReturnsNull() = reviewKnownPlan(false)
+    @Test fun reviewKnownPlanStillRepairsIfTheSecondInputReadThrows() = reviewKnownPlan(true)
+    @Test fun reviewKnownPlanControlWithStableInput() = reviewKnownPlan(false, true)
+
+    private fun reviewKnownPlan(throws: Boolean, stable: Boolean = false) {
+        run {
+            val rig = Rig()
+            rig.lose()
+            var reads = 0
+            val reconciler = rig.store.waitingReconciler({
+                reads++
+                if (reads == 1 || stable) input else if (throws) throw java.io.IOException("synthetic input failure") else null
+            }, rig.effects, PersonAuthorityConsumer { _, _, _ -> true })
+            rig.reset.onSet = { hideDialer(rig) }
+            rig.reset.throwOn = "set"
+            val result = reconciler.reconcile()
+            assertEquals(ReconcileOutcome.NEEDS_ATTENTION, result.outcome)
+            assertEquals(ReconcileFailure.RESET_APPLY, result.failure)
+            assertNull(rig.store.waitingStore.read())
+            assertDialerRepaired(rig, "already built plan; second read throws=$throws")
+        }
+    }
+
+    @Test fun reviewEffectsRefuseCapturedWritesAcrossStoreInstances() {
+        val rig = Rig()
+        rig.lose()
+        val alias = JointAuthorityStore(rig.dir)
+        val before = alias.approvals.read()!!
+        val creds = alias.credentials.read()!!
+        var ran = false
+        rig.reset.onSet = {
+            ran = true
+            assertNull(alias.credentials.read())
+            assertNull(alias.approvals.read())
+            assertNull(alias.elevationStore.read())
+            assertNull(alias.update.readUpdate())
+            assertNull(alias.reconciliation.lostRecord())
+            assertFalse(alias.approvals.compareAndSet(before,
+                org.plainphone.policy.AppApprovalState(revision = before.revision + 1), creds))
+            assertFalse(alias.cancelIntents.initialize("review-synthetic"))
+            assertFalse(alias.cancelIntents.request("review-synthetic"))
+            assertNull(rig.reconciler.prepareRepair(anna))
+        }
+        assertEquals(ReconcileOutcome.RECOVERED, rig.reconciler.reconcile().outcome)
+        assertTrue(ran)
+        assertEquals(before.revision, alias.approvals.read()!!.revision)
+    }
+
+    @Test fun reviewOperationTimeoutRefusesWithoutAcknowledging() {
+        val rig = Rig()
+        rig.lose()
+        val before = rig.store.approvals.read()!!
+        val creds = rig.store.credentials.read()!!
+        val entered = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val old = JointAuthorityStore.coordinatorWaitMillis
+        val result = java.util.concurrent.atomic.AtomicReference<org.plainphone.policy.ReconcileResult>()
+        val worker = Thread { result.set(rig.reconciler.reconcile()) }
+        try {
+            JointAuthorityStore.coordinatorWaitMillis = 150
+            rig.reset.onSet = { entered.countDown(); check(release.await(5, java.util.concurrent.TimeUnit.SECONDS)) }
+            worker.start()
+            assertTrue(entered.await(5, java.util.concurrent.TimeUnit.SECONDS))
+            val alias = JointAuthorityStore(rig.dir)
+            assertFalse(alias.approvals.compareAndSet(before,
+                org.plainphone.policy.AppApprovalState(revision = before.revision + 1), creds))
+            assertEquals(DeviceWaitingReconciliation.NOT_RUN, rig.reconciler.reconcile())
+            release.countDown()
+            worker.join(5000)
+            assertFalse(worker.isAlive)
+            assertEquals(ReconcileOutcome.RECOVERED, result.get().outcome)
+            assertEquals(before.revision, rig.store.approvals.read()!!.revision)
+        } finally {
+            release.countDown()
+            worker.join(5000)
+            JointAuthorityStore.coordinatorWaitMillis = old
+        }
+    }
+
+    @Test fun reviewOperationCannotDeadlockAnOutsideMonitor() {
+        val rig = Rig()
+        val monitor = Object()
+        val monitorHeld = java.util.concurrent.CountDownLatch(1)
+        val insideOperation = java.util.concurrent.CountDownLatch(1)
+        val old = JointAuthorityStore.coordinatorWaitMillis
+        val refusedRead = java.util.concurrent.atomic.AtomicBoolean(false)
+        val worker = Thread {
+            synchronized(monitor) {
+                monitorHeld.countDown()
+                check(insideOperation.await(5, java.util.concurrent.TimeUnit.SECONDS))
+                refusedRead.set(rig.store.credentials.read() == null)
+            }
+        }
+        try {
+            JointAuthorityStore.coordinatorWaitMillis = 150
+            worker.start()
+            assertTrue(monitorHeld.await(5, java.util.concurrent.TimeUnit.SECONDS))
+            assertTrue(rig.store.serialized(false) {
+                insideOperation.countDown()
+                synchronized(monitor) { true }
+            })
+            worker.join(5000)
+            assertFalse(worker.isAlive)
+            assertTrue(refusedRead.get())
+            assertTrue(rig.store.credentials.read() != null)
+        } finally {
+            insideOperation.countDown()
+            worker.join(5000)
+            JointAuthorityStore.coordinatorWaitMillis = old
+        }
+    }
+
+    /** A grant for the always-true test authority; FreshAuthority's constructor is internal to :policy. */
+    private fun grant(): org.plainphone.policy.FreshAuthority =
+        org.plainphone.policy.FreshAuthority::class.java.getDeclaredConstructor().apply { isAccessible = true }.newInstance()
+
+    /** PIN Repair runs the same entry point: a failure after the plan was applied repairs from that plan, even when input then fails. */
+    @Test fun pinRepairRepairsTheFloorFromTheRunsOwnPlan() {
+        val rig = Rig()
+        rig.lose()
+        var reads = 0
+        val reconciler = rig.store.waitingReconciler({ if (++reads == 1) input else null }, rig.effects, PersonAuthorityConsumer { _, _, _ -> true })
+        val request = reconciler.prepareRepair(anna)!!
+        rig.reset.onSet = { hideDialer(rig) }
+        rig.reset.throwOn = "set"
+        val result = reconciler.repair(request, grant())
+        assertEquals(ReconcileFailure.RESET_APPLY, result.failure)
+        assertDialerRepaired(rig, "PIN Repair")
+        assertNull(rig.store.waitingStore.read())
+    }
+
+    /** The plan of one run is never used by the next: a later run with no input repairs nothing. */
+    @Test fun aRunsPlanIsNotCarriedIntoTheNextRun() {
+        val rig = Rig()
+        rig.lose()
+        var available = true
+        val reconciler = rig.store.waitingReconciler({ if (available) input else null }, rig.effects, PersonAuthorityConsumer { _, _, _ -> true })
+        rig.reset.throwOn = "set"
+        assertEquals(ReconcileFailure.RESET_APPLY, reconciler.reconcile().failure)
+        available = false
+        rig.revoked = { false }
+        rig.dpm.ops.clear()
+        assertEquals(ReconcileFailure.REVOCATION, reconciler.reconcile().failure)
+        assertTrue("no plan, so no DPM write: ${rig.dpm.ops}", rig.dpm.ops.isEmpty())
+    }
 }

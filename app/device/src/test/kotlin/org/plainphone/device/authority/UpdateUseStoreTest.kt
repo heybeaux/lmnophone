@@ -373,6 +373,18 @@ class UpdateUseStoreTest {
         }
     }
 
+    @Test fun reviewAndroidEffectCannotReadTheTransactionView() {
+        val store = initialized()
+        var seen: org.plainphone.policy.CredentialState? = null
+        assertTrue(store.serialized(false) {
+            commitSelf(store) {
+                store.androidEffect { seen = store.credentials.read() }
+                true
+            }
+        })
+        org.junit.Assert.assertNull("Android effect must not bypass refusal through the transaction view", seen)
+    }
+
     @Test fun schema4RecordMigratesWithAnEmptyUpdateRecordAndKeepsEverySection() {
         val sections = listOf(AuthorityCodec.encodeCredentials(credentials())!!, AuthorityCodec.encodeWaiting(WaitingState(storageGeneration = "g"))!!,
             AuthorityCodec.encodeElevation(granted)!!, AuthorityCodec.encodeReceipts(emptyList())!!,
