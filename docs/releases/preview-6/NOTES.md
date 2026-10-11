@@ -1,4 +1,4 @@
-# LMNOPhone preview 6 — candidate
+# LMNOPhone preview 6 — installed on the spare
 
 Build 6 adds crash recovery for the Phone and emergency keypad opened from
 LMNOPhone. If LMNOPhone restarts while one of those screens is open, it brings
@@ -17,14 +17,23 @@ Known limits:
 - The A1 correction is included: a failed calling-screen record read or write
   no longer stops startup or opening Phone/Emergency. If saving fails, only
   the current process retains which calling screen it opened.
+- If LMNOPhone restarts while the More → Emergency keypad is showing, recovery
+  brings back the plain Phone keypad, without 911 already typed.
+- After a restart, the "checking the phone" screen (with Phone and Emergency
+  call) can show for about 20 seconds after unlock on the spare, until Android
+  delivers its boot-completed signal.
 - This remains a test preview. Trusted-person controls and other unwired actions
   retain the build-5 explanation. Counts cover the supported Phone and SMS/MMS
   data, not RCS or other apps.
 
-This candidate is emulator-only. The Lead reviews the frozen candidate once;
-the assigned device driver owns any subsequent physical installation.
+Installed in place on the spare (moto g power 5G 2024) on 2026-10-11 at
+18:37 UTC. Device Owner, lock task, first install time, the count switch and
+font scale were kept. No new restriction and no newly hidden, suspended or
+disabled package. Both 9-1-1 dial routes reached 911 without a call. The spare
+has no working SIM, so counts and calls were not exercised on it. Details:
+[spare readback](evidence/spare/readback.md).
 
-[Download the candidate test build (gzip)](/api/attachments/045ed326-dcb5-4b6b-8633-ceae82a6beba/content).
+[Download the test build (gzip)](/api/attachments/045ed326-dcb5-4b6b-8633-ceae82a6beba/content).
 Build and emulator details: [verification](evidence/verification.md).
 
 VersionCode: `6` (`0.1.0-preview-6`).

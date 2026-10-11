@@ -1,0 +1,11 @@
+## adb reboot 2026-10-11T18:44:57Z
+boot_completed 2026-10-11T18:45:33Z
+topResumedActivity=ActivityRecord{177db7e u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED
+10-11 11:45:38.205 reapply reason=start control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] 
+count switch:
+    <boolean name="show_communication_counts" value="true" />
+font_scale=1.0
+adb state=device
+topResumedActivity=ActivityRecord{177db7e u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED

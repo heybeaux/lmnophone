@@ -1,0 +1,27 @@
+## Phone opened from Home 2026-10-11T18:43:27Z
+topResumedActivity=ActivityRecord{f54e058 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivityDialAlias t413}
+mLockTaskModeState=LOCKED
+pid before=2583
+## run-as kill -9 at 2026-10-11T18:43:27Z
+kill rc=0
+## +1 s 2026-10-11T18:43:28Z
+pidof=
+topResumedActivity=ActivityRecord{f54e058 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivityDialAlias t413}
+mLockTaskModeState=LOCKED
+## +10 s 2026-10-11T18:43:37Z
+pidof=
+topResumedActivity=ActivityRecord{f54e058 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivityDialAlias t413}
+mLockTaskModeState=LOCKED
+## Home pressed 2026-10-11T18:44:19Z
+pidof=7143
+topResumedActivity=ActivityRecord{3030e13 u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED
+## lock-task task list
+* Task{82e11fd #1 type=undefined U=0 visible=true visibleRequested=true mode=fullscreen translucent=false sz=1}
+* Task{b344205 #5 type=undefined A=10448:org.plainphone U=0 rootTaskId=1 visible=true visibleRequested=true mode=fullscreen translucent=false sz=1}
+* Task{dbf6617 #413 type=standard A=10233:com.google.android.dialer U=0 visible=false visibleRequested=false mode=fullscreen translucent=true sz=1}
+* Task{342fcfe #2 type=undefined U=0 visible=false visibleRequested=false mode=fullscreen translucent=true sz=2}
+* Task{becc672 #4 type=undefined U=0 rootTaskId=2 visible=false visibleRequested=false mode=multi-window translucent=true sz=0}
+* Task{4f2ebb0 #3 type=undefined U=0 rootTaskId=2 visible=false visibleRequested=false mode=multi-window translucent=true sz=0}
+* Task{82e11fd #1 type=undefined U=0 visible=true visibleRequested=true mode=fullscreen translucent=false sz=1}
+* Task{b344205 #5 type=undefined A=10448:org.plainphone U=0 rootTaskId=1 visible=true visibleRequested=true mode=fullscreen translucent=false sz=1}

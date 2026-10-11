@@ -1,0 +1,42 @@
+priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true
+ActivityInfo:
+  name=com.android.phone.EmergencyDialer
+  packageName=com.android.phone
+  labelRes=0x7f110301 nonLocalizedLabel=null icon=0x0 banner=0x0
+  enabled=true exported=true directBootAware=true
+  taskAffinity=com.android.phone targetActivity=null persistableMode=PERSIST_ROOT_ONLY
+  launchMode=LAUNCH_MULTIPLE flags=0x810200 privateFlags=0x2 theme=0x7f120161
+  screenOrientation=1 configChanges=0x3 softInputMode=0x0
+  lockTaskLaunchMode=LOCK_TASK_LAUNCH_MODE_DEFAULT
+  resizeMode=RESIZE_MODE_UNRESIZEABLE
+  knownActivityEmbeddingCerts={}
+  requireContentUriPermissionFromCaller=CONTENT_URI_PERMISSION_NONE
+  ApplicationInfo:
+    name=com.android.phone.PhoneApp
+    packageName=com.android.phone
+    labelRes=0x7f110534 nonLocalizedLabel=null icon=0x7f0f0001 banner=0x0
+    className=com.android.phone.PhoneApp
+    processName=com.android.phone
+    taskAffinity=com.android.phone
+    uid=1001 flags=0x38c83e4d privateFlags=0x8c501168 theme=0x0
+    requiresSmallestWidthDp=0 compatibleWidthLimitDp=0 largestWidthLimitDp=0
+    sourceDir=/system/priv-app/TeleService/TeleService.apk
+    resourceDirs=[/product/overlay/NavigationBarMode3Button/NavigationBarMode3ButtonOverlay.apk, /product/overlay/FontRookeryRegular/FontRookeryRegularOverlay.apk, /product/overlay/TeleServiceCarrierSettingsRRO.apk, /product/overlay/TelephonyResCommonMtk.apk, /product/overlay/TelephonyResMotCommon.apk]
+    overlayPaths=[/product/overlay/NavigationBarMode3Button/NavigationBarMode3ButtonOverlay.apk, /data/resource-cache/com.android.systemui-neutral-Q5kh.frro, /product/overlay/FontRookeryRegular/FontRookeryRegularOverlay.apk, /data/resource-cache/com.android.systemui-accent-SbuK.frro, /data/resource-cache/com.android.systemui-dynamic-IdgF.frro, /product/overlay/TeleServiceCarrierSettingsRRO.apk, /product/overlay/TelephonyResCommonMtk.apk, /product/overlay/TelephonyResMotCommon.apk]
+    seinfo=platform:privapp:targetSdkVersion=34:partition=system
+    seinfoUser=:complete
+    dataDir=/data/user_de/0/com.android.phone
+    deviceProtectedDataDir=/data/user_de/0/com.android.phone
+    credentialProtectedDataDir=/data/user/0/com.android.phone
+    sharedLibraryFiles=[/system/framework/moto-telephony.jar, /system/framework/moto-settings.jar, /system/framework/moto-ims-ext.jar, /system/framework/org.apache.http.legacy.jar, /system/framework/moto-core_services.jar, /system_ext/framework/androidx.window.extensions.jar, /system_ext/framework/androidx.window.sidecar.jar]
+    enabled=true minSdkVersion=35 targetSdkVersion=35 versionCode=35 targetSandboxVersion=1
+    supportsRtl=true
+    fullBackupContent=true
+    crossProfile=false
+    HiddenApiEnforcementPolicy=0
+    usesNonSdkApi=true
+    allowsPlaybackCapture=true
+    nativeHeapZeroInitialized=0
+    enableOnBackInvokedCallback=false
+    allowCrossUidActivitySwitchFromBelow=true
+    createTimestamp=238825
