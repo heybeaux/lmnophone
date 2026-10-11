@@ -555,4 +555,16 @@ class DeviceReconciliationTest {
         assertEquals(ReconcileFailure.REVOCATION, reconciler.reconcile().failure)
         assertTrue("no plan, so no DPM write: ${rig.dpm.ops}", rig.dpm.ops.isEmpty())
     }
+
+    /** A plan left by a direct effect call outside any run is not used by the next run either. */
+    @Test fun aPlanFromOutsideARunIsNotUsedByTheNextRun() {
+        val rig = Rig()
+        rig.lose()
+        assertTrue(rig.effects.applyPolicy(PolicyEngine.decide(input)))
+        val reconciler = rig.store.waitingReconciler({ null }, rig.effects, PersonAuthorityConsumer { _, _, _ -> true })
+        rig.revoked = { false }
+        rig.dpm.ops.clear()
+        assertEquals(ReconcileFailure.REVOCATION, reconciler.reconcile().failure)
+        assertTrue("no plan in this run, so no DPM write: ${rig.dpm.ops}", rig.dpm.ops.isEmpty())
+    }
 }
