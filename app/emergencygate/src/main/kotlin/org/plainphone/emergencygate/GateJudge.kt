@@ -108,9 +108,9 @@ object GateJudge {
         if (samples.isEmpty()) return CheckResult(check, Verdict.FAIL, "no foreground sample")
         val first = inFront(check, samples.first(), expected)
         if (first.verdict != Verdict.PASS) return first
-        samples.drop(1).firstOrNull { inFront(check, it, expected).verdict != Verdict.PASS }?.let { gone ->
-            return CheckResult(check, Verdict.FAIL, "${samples.first()} did not stay in front: then ${gone ?: "nothing"}")
-        }
+        // By index, not firstOrNull: a missing (null) sample is itself a failing sample.
+        val gone = samples.indexOfFirst { inFront(check, it, expected).verdict != Verdict.PASS }
+        if (gone >= 0) return CheckResult(check, Verdict.FAIL, "${samples.first()} did not stay in front: then ${samples[gone] ?: "nothing"}")
         if (!dialPadUsable(labels)) return CheckResult(check, Verdict.FAIL, "${samples.first()} shows no usable dial pad")
         return first
     }
