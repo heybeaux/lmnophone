@@ -1,0 +1,801 @@
+# Shared verdict table for the emergency gate's judge (GateSchema.kt and judge_build in
+# tools/emergency-gate.sh). Both test suites run every case; the two judges must agree.
+
+# case real build, only alert-shown inconclusive
+# control none
+# expect INCONCLUSIVE
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case real build, alert seen
+# control none
+# expect PASS
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown PASS x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case real build, every route inconclusive (review finding 4)
+# control none
+# expect INCOMPLETE
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone INCONCLUSIVE x
+GATE app-home-phone INCONCLUSIVE x
+GATE more-emergency INCONCLUSIVE declared
+GATE alert-display-ready INCONCLUSIVE x
+GATE alert-display-launch INCONCLUSIVE x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call INCONCLUSIVE x
+GATE lock-screen INCONCLUSIVE x
+GATE locked-boot INCONCLUSIVE x
+GATE boot-checking INCONCLUSIVE screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case real build, every route not built (review finding 4)
+# control none
+# expect INCOMPLETE
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone NOT_BUILT x
+GATE app-home-phone NOT_BUILT x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready NOT_BUILT x
+GATE alert-display-launch NOT_BUILT x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call NOT_BUILT x
+GATE lock-screen NOT_BUILT x
+GATE locked-boot NOT_BUILT x
+GATE boot-checking NOT_BUILT screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case only a passing home-phone (review finding 4)
+# control none
+# expect INCOMPLETE
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+
+# case home-phone plus a not-built locked-boot (review finding 4)
+# control none
+# expect INCOMPLETE
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE locked-boot NOT_BUILT x
+
+# case a lone not-built line (review: shell said PASS)
+# control none
+# expect ERROR
+GATE home-phone NOT_BUILT missing
+
+# case not built but not declared optional
+# control none
+# expect INCOMPLETE
+GATE capabilities PASS control=none notBuilt=-
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case declared optional route that is built and passes
+# control none
+# expect INCONCLUSIVE
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency PASS declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case sos must never pass
+# control none
+# expect INCOMPLETE
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos PASS x
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case a non-alert inconclusive
+# control none
+# expect INCOMPLETE
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen INCONCLUSIVE x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case a behavioural failure
+# control none
+# expect FAIL
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot FAIL x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case an infrastructure error
+# control none
+# expect ERROR
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call ERROR x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case a failure outranks an error
+# control none
+# expect FAIL
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call ERROR x
+GATE lock-screen FAIL x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case a check reported twice
+# control none
+# expect INCOMPLETE
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+GATE home-phone PASS again
+
+# case an unknown check
+# control none
+# expect INCOMPLETE
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+GATE coffee PASS x
+
+# case no capabilities line
+# control none
+# expect ERROR
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case real build reporting a control
+# control none
+# expect ERROR
+GATE capabilities PASS control=no-phone notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE cannot-start PASS x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case an empty result file
+# control none
+# expect ERROR
+
+
+# case can't-start route missing from the real build
+# control none
+# expect INCOMPLETE
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-phone detected
+# control no-phone
+# expect DETECTED
+GATE capabilities PASS control=no-phone notBuilt=more-emergency
+GATE home-phone FAIL x
+GATE app-home-phone FAIL x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call FAIL x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking FAIL screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-phone detected while its may-fail checks pass
+# control no-phone
+# expect DETECTED
+GATE capabilities PASS control=no-phone notBuilt=more-emergency
+GATE home-phone FAIL x
+GATE app-home-phone FAIL x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-phone missed on one named check
+# control no-phone
+# expect NOT_DETECTED
+GATE capabilities PASS control=no-phone notBuilt=more-emergency
+GATE home-phone FAIL x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case control install failure (review finding 3)
+# control no-phone
+# expect ERROR
+GATE provision ERROR could not install plainphone-ctlNoPhone.apk
+
+# case control prerequisite failed
+# control no-phone
+# expect ERROR
+GATE capabilities PASS control=no-phone notBuilt=more-emergency
+GATE home-phone FAIL x
+GATE app-home-phone FAIL x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen FAIL x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case control named check errored
+# control no-phone
+# expect ERROR
+GATE capabilities PASS control=no-phone notBuilt=more-emergency
+GATE home-phone ERROR x
+GATE app-home-phone FAIL x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case control whose fault was not applied
+# control no-phone
+# expect ERROR
+GATE capabilities PASS control=none notBuilt=more-emergency
+GATE home-phone FAIL x
+GATE app-home-phone FAIL x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case control with a missing check
+# control no-dialer-lock-task
+# expect INCOMPLETE
+GATE capabilities PASS control=no-dialer-lock-task notBuilt=more-emergency
+GATE home-phone FAIL x
+GATE app-home-phone FAIL x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-dialer-lock-task detected
+# control no-dialer-lock-task
+# expect DETECTED
+GATE capabilities PASS control=no-dialer-lock-task notBuilt=more-emergency
+GATE home-phone FAIL x
+GATE app-home-phone FAIL x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call FAIL x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking FAIL screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert detected by launch alone
+# control no-alert
+# expect DETECTED
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch FAIL unavailable: hidden (Error type 3) x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert detected by both alert checks
+# control no-alert
+# expect DETECTED
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x
+GATE alert-display-launch FAIL unavailable: hidden (Error type 3) x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert missed
+# control no-alert
+# expect NOT_DETECTED
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert-lock-task detected
+# control no-alert-lock-task
+# expect DETECTED
+GATE capabilities PASS control=no-alert-lock-task notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x
+GATE alert-display-launch FAIL blocked by lock task: android/com.android.internal.app.BlockedAppActivity x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert-lock-task missed on readiness
+# control no-alert-lock-task
+# expect NOT_DETECTED
+GATE capabilities PASS control=no-alert-lock-task notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch FAIL blocked by lock task: android/com.android.internal.app.BlockedAppActivity x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case unknown control
+# control no-coffee
+# expect ERROR
+GATE capabilities PASS control=no-coffee notBuilt=more-emergency
+GATE home-phone FAIL x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready PASS x
+GATE alert-display-launch PASS x
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert launch with empty output (PLA-296 R4)
+# control no-alert
+# expect ERROR
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: hidden
+GATE alert-display-launch ERROR unrecognised launch result exit=1 output=
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert launch service failure (PLA-296 R4)
+# control no-alert
+# expect ERROR
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: hidden
+GATE alert-display-launch ERROR launch command failed exit=255: java.lang.SecurityException: shell failed
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert unclassified launch FAIL is not detection (PLA-296 R4)
+# control no-alert
+# expect ERROR
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: hidden
+GATE alert-display-launch FAIL start refused: SecurityException: shell failed
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert empty launch FAIL is not detection (PLA-296 R4)
+# control no-alert
+# expect ERROR
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: hidden
+GATE alert-display-launch FAIL start refused:
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert established unavailable component stays detected (PLA-296 R4)
+# control no-alert
+# expect DETECTED
+GATE capabilities PASS control=no-alert notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: hidden
+GATE alert-display-launch FAIL unavailable: hidden (Error type 3) com.google.android.cellbroadcastreceiver
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented
+
+# case no-alert-lock-task unclassified launch FAIL is not detection (PLA-296 R4)
+# control no-alert-lock-task
+# expect ERROR
+GATE capabilities PASS control=no-alert-lock-task notBuilt=more-emergency
+GATE home-phone PASS x
+GATE app-home-phone PASS x
+GATE more-emergency NOT_BUILT declared
+GATE alert-display-ready FAIL x: not allowed in lock task
+GATE alert-display-launch FAIL start refused: SecurityException: shell failed
+GATE alert-shown INCONCLUSIVE x
+GATE telecom-emergency-call PASS x
+GATE lock-screen PASS x
+GATE locked-boot PASS x
+GATE boot-checking PASS screen=checking x
+GATE sos NOT_COVERED by design
+GATE setup NOT_COVERED not yet implemented
+GATE pin-lockout NOT_COVERED not yet implemented
+GATE supervised-session NOT_COVERED not yet implemented
+GATE updater NOT_COVERED not yet implemented
+GATE turn-off NOT_COVERED not yet implemented

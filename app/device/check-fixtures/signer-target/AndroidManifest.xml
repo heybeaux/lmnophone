@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Plainphone contributors. SPDX-License-Identifier: Apache-2.0 -->
+<!--
+  Test target for PackageFactsCheck (PLA-132). No code. A user app that declares the emergency-dialer
+  and cell-broadcast filters and handles both web probes, so the check can show that MATCH_SYSTEM_ONLY
+  keeps it off the floor while the probe still sees it. build.sh sets the version and the signers.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.plainphone.testtarget">
+    <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="35" />
+    <application android:hasCode="false" android:label="Plainphone check target">
+        <activity android:name=".Emergency" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL_EMERGENCY" />
+                <action android:name="com.android.phone.EmergencyDialer.DIAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.CALL_EMERGENCY" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="tel" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_CB_RECEIVED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+            </intent-filter>
+        </activity>
+        <receiver android:name=".Broadcast" android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_CB_RECEIVED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

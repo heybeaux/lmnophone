@@ -1,0 +1,6 @@
+08:05:57 dropped: LockTaskPolicy {mPackages= com.google.android.dialer, com.android.server.telecom, com.google.android.apps.safetyhub, org.plainphone, com.google.android.apps.messaging, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 16 }
+08:06:18 locked: user=RUNNING_LOCKED mKeyguardShowing=true mLockTaskModeState=LOCKED
+08:06:25 Emergency button bounds="[368,2084][712,2210]"
+08:06:27 after Emergency tap: user=RUNNING_LOCKED topResumedActivity=ActivityRecord{ca1ea80 u0 com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity t6} mKeyguardShowing=true mLockTaskModeState=LOCKED
+08:06:28 after back: user=RUNNING_LOCKED mKeyguardShowing=true mLockTaskModeState=LOCKED
+08:06:28 no number dialled, no call placed

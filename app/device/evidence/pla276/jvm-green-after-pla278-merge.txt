@@ -1,0 +1,24 @@
+PLA-288 green run: mvp/device after merging main (PLA-278 containment before retry gates)
+Head: d60b01f (probe aa61e5c, merge cf956f2 of main 4c749bf incl. b289767, tests a6245df, KDoc d60b01f)
+Command (from app/): ./gradlew --offline :device:testDebugUnitTest :policy:test :device:compileDebugAndroidTestKotlin
+Date: 2026-10-11T07:25Z, JVM unit tests and androidTest compile only, no emulator
+
+BUILD SUCCESSFUL, 36 actionable tasks
+:device:testDebugUnitTest   585 tests, 0 failures, 0 errors, 0 skipped
+:policy:test                628 tests, 0 failures, 0 errors, 0 skipped
+:device:compileDebugAndroidTestKotlin  compiled
+
+Pla276ProbeTest 3 tests, 0 failed
+    pass floorPromotionAfterSnapshotMustKeepUiAccess
+    pass secondFailedApplyMustKeepUnresolvedExposure
+    pass lowBatteryRetryMustRetryFailedContainment
+
+Probe stdout (low-battery lines):
+failed activation/containment: hidden=false permitted=true home=false pending=COMMITTED
+low battery retry: hidden=true permitted=false home=false pending=COMMITTED newWrites=[lockTask org.plainphone,test.dialer,test.messages, hide test.target]
+
+Reading: the LOW_BATTERY resume now takes the target out of lock task and hides it before returning; the
+journal keeps COMMITTED for the full retry. The merge needed no :device fake changes (583 tests, 0 failures
+straight after cf956f2). a6245df adds two plan-less singleton floor-guard tests and a contain-first
+recovery-order check; that check fails on the pre-merge controller (aa61e5c): transaction 8 at
+AFTER_COPY_B recovered as [revoke, revoke, permissions-readback, apply, policy-readback, permissions-readback].

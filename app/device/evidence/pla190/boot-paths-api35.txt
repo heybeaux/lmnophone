@@ -1,0 +1,114 @@
+PLA-190 boot paths, AVD pla190-a35 (emulator-5790), API 35, google_apis_playstore image.
+Build: :plainphone debug (testOnly), Device Owner via
+  adb -s emulator-5790 install -t -r plainphone-debug.apk
+  adb -s emulator-5790 shell dpm set-device-owner org.plainphone/.PlainphoneAdminReceiver
+Restrictions withheld by the debug RestrictionFilter: DISALLOW_DEBUGGING_FEATURES, DISALLOW_FACTORY_RESET.
+AVD lock PIN used during the scenarios: 1590 (cleared at the end, see "Clean-up").
+Session packages compiled in: com.android.vending. No build inventory for this model, so the
+engine sweeps user apps only (SweepMode.USER_APPS_ONLY).
+
+== Provisioning and first Home ==
+Log after set-device-owner (process start, then the boot broadcasts the system delivered):
+  reapply reason=start locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] ms=563
+After reinstall (MY_PACKAGE_REPLACED):
+  reapply reason=updated locked=false ready=true ...
+adb shell input keyevent KEYCODE_HOME
+  topResumedActivity=org.plainphone/.MainActivity, mLockTaskModeState=LOCKED
+  home shown lockTask=1
+Lock-task list read back from dumpsys device_policy:
+  com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom,
+  org.plainphone, com.google.android.apps.messaging, com.android.phone; mFlags=119
+
+== Scenario 1: damaged journal at locked boot ==
+adb shell locksettings set-pin 1590
+adb shell am broadcast -a org.plainphone.test.RELAX -n org.plainphone/.boot.TestHook --es package com.android.vending
+  test hook RELAX lockTask=[..., com.android.vending, ...]      (Play joined lock task, as in an open session)
+Journal before (valid empty record, 46 bytes), last line of xxd: ... f967 4420 21d3
+Flipped byte 45 (0xd3 -> 0x2c), copied back with run-as; readback: ... f967 4420 212c
+dumpsys device_policy before reboot: mPackages include com.android.vending
+adb reboot   (23:24:56)
+Before unlock: dumpsys user -> State: RUNNING_LOCKED
+  23:25:12.795 reapply reason=start locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] ms=483
+  23:25:12.982 reapply reason=locked-boot locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] ms=186
+  LockTaskPolicy {mPackages= com.google.android.dialer, com.google.android.apps.safetyhub,
+    com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.android.phone}
+  -> com.android.vending (the only session package) is out of lock task before unlock. PASS
+  pm list packages (visible) has no com.android.vending: still hidden.
+  Locked runs applied only spec steps 1-3; HIDES, LOCK_TASK and HOME did not run.
+Unlock (PIN 1590):
+  23:25:29.009 reapply reason=boot locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] ms=819
+  23:25:29.083 home shown lockTask=1
+  Journal after: ... f967 4420 21d3 (the valid empty record again; the damaged one was replaced)
+
+== Scenario 2: restriction and lock-task list lost in a power cut ==
+adb shell am broadcast -a org.plainphone.test.DROP -n org.plainphone/.boot.TestHook --es restriction no_safe_boot
+  test hook DROP lockTask=[]
+  dumpsys user | grep -c no_safe_boot -> 0;  mLockTaskModeState=NONE;  no lockTask policy key in dumpsys device_policy
+adb reboot   (23:29:08)
+Before unlock (State: RUNNING_LOCKED):
+  23:29:24.504 reapply reason=start locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] ms=455
+  23:29:24.667 reapply reason=locked-boot locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] ms=163
+  dumpsys user | grep -c no_safe_boot -> 2 (restored before unlock)
+  LockTaskPolicy {mPackages= com.google.android.dialer, com.google.android.apps.safetyhub,
+    com.android.server.telecom, com.android.phone; mFlags= 16 }   (emergency floor only)
+Unlock (PIN 1590):
+  23:29:35.010 reapply reason=boot locked=false ready=true applied=[..., HIDES, LOCK_TASK, HOME] ms=712
+  23:29:35.043 home shown lockTask=1      (33 ms after the readback passed)
+  dumpsys user | grep -c no_safe_boot -> 2;  mLockTaskModeState=LOCKED
+  LockTaskPolicy {mPackages= com.google.android.dialer, com.android.server.telecom,
+    com.google.android.apps.safetyhub, org.plainphone, com.google.android.apps.messaging,
+    com.android.phone; mFlags= 119 }
+  -> both read back before Home was drawn. PASS
+
+== Scenario 3: immediate unlock after reboot, tap an unapproved app's notification ==
+Notifications do not survive a reboot, and `cmd notification post -c ...` is refused for the shell
+("Permission Denial: getIntentSender() ... not allowed to send as package android"). So the debug
+TestHook (Direct Boot aware) posts it right after the locked boot:
+  adb shell am broadcast -a org.plainphone.test.NOTIFY -n org.plainphone/.boot.TestHook \
+    --es component com.android.chrome/com.google.android.apps.chrome.Main
+The tap target, Chrome, is unapproved and not hidden here (a system app; USER_APPS_ONLY sweep), so
+only lock task stands between the tap and Chrome. (An unapproved user app is hidden by the sweep and
+gets no boot broadcasts, so it cannot post at boot.)
+Run 3a (tap ~13 s after PIN): 23:37:47.019 START com.android.chrome/...Main -> topResumedActivity =
+  android/com.android.internal.app.BlockedAppActivity, dialog "Chrome is not available right now.",
+  mLockTaskModeState=LOCKED. PASS
+Run 3b (tap as soon as keyguard left, scripted on the device; lock-task list intact):
+  23:39:35.476 PIN entered
+  23:39:35.979 START org.plainphone/.MainActivity (Home, checking screen)
+  23:39:37.584 notification tapped
+  23:39:37.591 START com.android.chrome/...Main -> BlockedAppActivity (blocked)
+  23:39:38.595 reapply reason=boot ready=true      (readback passed ~1 s after the tap)
+  23:39:38.749 home shown lockTask=1
+  -> the checking screen was already in lock task (if_whitelisted + the persisted list), so the
+     tap before the readback was blocked. PASS
+
+== Finding: checking screen is not in lock task after a lost lock-task list ==
+Scenario 2 state (TestHook DROP: lock-task list cleared), reboot, unlock straight away:
+  23:41:53.687 PIN entered
+  23:41:54.008 START org.plainphone/.MainActivity (checking screen)
+  23:41:55.591 keyguard gone, focus MainActivity, mLockTaskModeState=NONE
+  23:41:56.009 still mLockTaskModeState=NONE
+  23:41:56.539 reapply reason=boot ready=true
+  23:41:56.649 home shown lockTask=1
+The locked-boot plan restores only the emergency floor's lock-task members (dialer, telecom, phone,
+safetyhub), not Plainphone, so MainActivity cannot start lock task until the full re-apply's
+LOCK_TASK step. For ~1 s the shade and other apps are reachable. My scripted taps hit the shade while
+it was still sliding in, so no Chrome start was observed in this state; the open window is what is
+shown. Fix option (needs a spec/engine call): the locked-boot plan also keeps Plainphone (Home) in
+the lock-task list. Only reachable after both the list is lost and a reboot.
+
+== Re-apply triggers ==
+Package events (context-registered, not exported), seen during boots:
+  reapply reason=package:PACKAGE_CHANGED:com.android.stk ... ready=true
+  reapply reason=package:PACKAGE_CHANGED:com.google.android.gms ... ready=true
+App update: reapply reason=updated (MY_PACKAGE_REPLACED). Every process start: reason=start.
+15-minute alarm, dumpsys alarm:
+  ELAPSED_WAKEUP tag=*walarm*:org.plainphone/.boot.ReapplyAlarm origWhen=+14m42s window=0
+  exactAllowReason=policy_permission  (exact, via USE_EXACT_ALARM)
+Trusted-person hook: PolicyRuntime.afterTrustedPersonAction() (not called until the wiring slice).
+
+== Clean-up ==
+adb shell locksettings clear --old 1590            -> Lock credential cleared; get-disabled -> true
+adb shell dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver -> Success
+adb shell dpm list-owners                          -> no owners
+After removal: mLockTaskModeState=NONE, com.android.vending visible again, no_safe_boot count 0.

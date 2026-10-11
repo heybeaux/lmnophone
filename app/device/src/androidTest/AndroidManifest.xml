@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Plainphone contributors. SPDX-License-Identifier: Apache-2.0 -->
+<!--
+  The check runs before the first unlock. Android 15 refused to start instrumentation for this
+  package ("not encryption aware") with only the application-level flag, so a Direct Boot aware
+  component is declared as well.
+
+  PLA-117: the test APK is also a testOnly Device Owner for DpmPortCheck, so `dpm
+  remove-active-admin` can undo it. It brings a Home activity and a no-op flush component.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- PLA-167: UpdateInstallerCheck downloads its fixtures from the host (10.0.2.2). Test APK only. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- PLA-219: WindowContainmentCheck posts a notification whose tap targets the window's app. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <application android:directBootAware="true" android:testOnly="true">
+        <receiver
+            android:name="org.plainphone.device.storage.DirectBootMarker"
+            android:directBootAware="true"
+            android:exported="false" />
+        <receiver
+            android:name="org.plainphone.device.apply.CheckAdmin"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/check_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="org.plainphone.device.apply.FlushMarker"
+            android:exported="false" />
+        <activity
+            android:name="org.plainphone.device.apply.CheckHome"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

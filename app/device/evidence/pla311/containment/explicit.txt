@@ -1,0 +1,18 @@
+04:27:17 dropped: LockTaskPolicy {mPackages= ; mFlags= 16 }
+04:27:38 locked: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED top=
+04:27:38 locked policy: LockTaskPolicy {mPackages= com.google.android.dialer, com.android.server.telecom, com.google.android.apps.safetyhub, org.plainphone, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 119 }
+04:27:38 queue: Starting: Intent { cmp=com.android.settings/.Settings }
+04:27:42 sample 1: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:43 sample 2: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:44 sample 3: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:44 sample 4: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:45 sample 5: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:45 sample 6: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:46 sample 7: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:47 sample 8: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:47 sample 9: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:48 sample 10: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:49 sample 11: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:49 sample 12: user=RUNNING_UNLOCKED lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:51 after centre tap: lockTask=LOCKED top=android/com.android.internal.app.BlockedAppActivity
+04:27:51 PASS explicit

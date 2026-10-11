@@ -1,0 +1,5 @@
+10-11 04:25:13.207 12028 12055 I PlainphoneBoot: reapply reason=start control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=1051
+10-11 04:25:13.222   577  1965 I ActivityTaskManager: START u0 {flg=0x10020000 cmp=org.plainphone/.MainActivity} with LAUNCH_SINGLE_TASK from uid 10207 (BAL_ALLOW_ALLOWLISTED_COMPONENT) result code=0
+10-11 04:25:13.223 12028 12055 I PlainphoneBoot: lock task not running after start: Home brought forward at=21883765
+10-11 04:25:13.998 12028 12028 I PlainphoneBoot: home shown lockTask=1 at=21884541
+10-11 04:25:37.031   577   933 I ActivityTaskManager: START u0 {act=android.settings.WIFI_DETAILS_SETTINGS flg=0x14000000 cmp=com.android.settings/.Settings$WifiDetailsSettingsActivity (has extras)} with LAUNCH_MULTIPLE from uid 10178 (BAL_ALLOW_VISIBLE_WINDOW) result code=0

@@ -64,6 +64,7 @@ abstract class ElevationStore(internal val waitingChanges: WaitingChangeStore? =
      * Compare the whole record revision and, when supplied, credential revision in the same transaction.
      * Null expected is a repair CAS against the exact missing/damaged observation, never unconditional overwrite.
      * All JournalStore/credential/operation writers share this coordinator and preserve each other's fields.
+     * False is not acknowledged (see [CredentialStore.compareAndSet]).
      */
     abstract fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean
 }
@@ -75,7 +76,7 @@ class ElevationRequest internal constructor(val id: String, val target: Elevatio
 /**
  * Serialized, non-reentrant coordinator shared with PinVault, session, waiting, approval and updater writes.
  * Play/Approve consumption requires the optional combined approval store. Update remains unavailable
- * until the installer boundary is integrated. Candidate data is not an approval capability.
+ * until both the policy protocol and device adapter pass cross-model review. Candidate data is not an approval capability.
  */
 class ElevationController(
     private val store: ElevationStore,
@@ -89,6 +90,10 @@ class ElevationController(
     private val ids: AppApprovalIdSource,
     private val approvalStore: ElevationApprovalStore? = null,
 ) {
+    // No public configuration enables this seam. Only the policy module's protocol tests wire it.
+    internal var updateProtocol: UpdateProtocol? = null
+    private var submittingUpdate = false
+    private val supervisedUpdates = mutableSetOf<SupervisedUpdateRequest>()
     private var initialized = false
     private var recoveryRequired = false
     private var ownedId: String? = null
@@ -99,6 +104,7 @@ class ElevationController(
 
     /** Before any access or other controller work, including Direct Boot. No credential read is needed. */
     @Synchronized fun onStart(): ElevationOutcome {
+        updateProtocol?.invalidate(); supervisedUpdates.clear()
         initialized = false; recoveryRequired = true; ownedId = null; requests.clear(); play = null; closing = null
         store.revocationPending = true
         val before = store.read()
@@ -116,6 +122,7 @@ class ElevationController(
 
     @Synchronized fun prepare(person: TrustedPersonId, target: ElevationTarget): ElevationRequest? {
         if (!initialized || closing != null || store.revocationPending || !supported(target)) return null
+        if (target is ElevationTarget.Update && updateProtocol?.available() == null) return null
         val current = credentials() ?: return null
         if (current.mode != Mode.SELF_MANAGED) return null
         val credential = current.people[person] ?: return null
@@ -165,7 +172,7 @@ class ElevationController(
             return proposal.outcome
         }
         val grant = proposal.state.grant!!
-        if (confirmedTarget is ElevationTarget.Approve) {
+        if (confirmedTarget is ElevationTarget.Approve || confirmedTarget is ElevationTarget.Update) {
             if (!save(before, proposal.state, SessionJournal.Empty, before.person, current)) return ElevationOutcome.NOT_READY
             return ElevationOutcome.STARTED
         }
@@ -265,13 +272,23 @@ class ElevationController(
         return ApprovalElevation(before.state.grant!!.id, identity, before.person!!)
     }
 
-    @Synchronized internal fun closeForApproval(binding: ApprovalElevation): Boolean {
-        if (!initialized || closing != null || store.revocationPending) return false
-        val before = store.read() ?: return false
+    /**
+     * True when package access is closed and the grant still matches. False refuses: the grant no
+     * longer matches or is not live. Null is not ready: the close was not acknowledged (its write may
+     * have landed, PLA-160) or the record could not be read, so the caller reads again next time.
+     */
+    @Synchronized internal fun closeForApproval(binding: ApprovalElevation): Boolean? {
+        if (!initialized || closing != null || store.revocationPending) return null
+        val before = store.read() ?: return null
         if (!matchesApproval(before, binding) || !live(before)) return false
-        if (before.state.grant!!.packageAccessOpen &&
-            endPackageAccess(binding.grantId, SessionEnd.LEFT_PACKAGES) != ElevationOutcome.ACCESS_CLOSED) return false
-        val closed = store.read() ?: return false
+        if (before.state.grant!!.packageAccessOpen) {
+            when (endPackageAccess(binding.grantId, SessionEnd.LEFT_PACKAGES)) {
+                ElevationOutcome.ACCESS_CLOSED -> Unit
+                ElevationOutcome.NOT_READY -> return null
+                else -> return false
+            }
+        }
+        val closed = store.read() ?: return null
         return closed.journal == SessionJournal.Empty && matchesApproval(closed, binding) && live(closed)
     }
 
@@ -300,6 +317,135 @@ class ElevationController(
         } && checked
     }
 
+    /** Last journaled Update self-check failed. Read-only; the adapter owns UI and notice delivery. */
+    @Synchronized fun updateNeedsAttention(): Boolean = updateProtocol?.needsAttention() == true
+
+    /** The caller supplies no grant, grant ID, session ID or staged facts. */
+    @Synchronized fun submitUpdate(): UpdateOutcome {
+        val protocol = updateProtocol ?: return UpdateOutcome.REFUSED
+        if (!updateReady(protocol)) return UpdateOutcome.REFUSED
+        submittingUpdate = true
+        try {
+            val before = store.read() ?: return UpdateOutcome.REFUSED
+            val grant = before.state.grant ?: return UpdateOutcome.REFUSED
+            val target = grant.target as? ElevationTarget.Update ?: return UpdateOutcome.REFUSED
+            if (ownedId != grant.id || before.revision == Long.MAX_VALUE || !live(before) ||
+                before.journal != SessionJournal.Empty || !closeUpdatePackages()) return UpdateOutcome.REFUSED
+            val current = credentials() ?: return UpdateOutcome.REFUSED
+            val update = protocol.available() ?: return UpdateOutcome.REFUSED
+            val facts = protocol.installer.finalFacts() ?: return UpdateOutcome.REFUSED
+            val proposal = UpdateCommitPolicy.propose(before, grant.id, current, protocol.pinnedSelf,
+                facts.installedVersionCode, facts.staged, clock.checkpoint())
+            if (proposal.outcome != ElevationOutcome.CONSUMED) return UpdateOutcome.REFUSED
+            val next = before.replacing(proposal.state, person = null)
+            val actor = before.person!!
+            val receipt = UpdateReceipt(grant.id, actor.person, actor.generation, current.people.mapValues { it.value.generation })
+            val submission = UpdateSubmission(facts.sessionId, target.staged.sha256, target.staged.versionCode, receipt, grant.deadline)
+            var checks = 0
+            var passed = false
+            val committed = protocol.store.commitUpdateUse(before, next, current, update, submission) {
+                checks++
+                if (checks != 1) false else {
+                    // Hash again after the store's blocking work; then check live ownership/time.
+                    val finalFacts = protocol.installer.finalFacts()
+                    passed = finalFacts == facts && updateReady(protocol, inFlight = true) &&
+                        ownedId == grant.id && live(before) &&
+                        UpdateCommitPolicy.propose(before, grant.id, credentials(), protocol.pinnedSelf,
+                            finalFacts!!.installedVersionCode, finalFacts.staged, clock.checkpoint()).outcome == ElevationOutcome.CONSUMED
+                    passed
+                }
+            }
+            if (!committed && checks == 1 && passed) {
+                // Not acknowledged after a passing final check: SUBMITTED may have landed (PLA-160).
+                // Same as an ambiguous storage failure: no retry path; startup reads what landed.
+                ownedId = null; protocol.invalidate()
+                return UpdateOutcome.NOT_READY
+            }
+            if (!committed || checks != 1 || !passed) return UpdateOutcome.REFUSED
+            ownedId = null // Process-local invalidation only; no adapter work between joint use and commit.
+            return protocol.commit(submission)
+        } catch (_: Exception) {
+            // An ambiguous storage failure cannot leave a process-local retry path.
+            ownedId = null; protocol.invalidate()
+            return UpdateOutcome.NOT_READY
+        } finally { submittingUpdate = false }
+    }
+
+    @Synchronized fun prepareSupervisedUpdate(person: TrustedPersonId, staged: StagedUpdateBinding): SupervisedUpdateRequest? {
+        val protocol = updateProtocol ?: return null
+        if (!updateReady(protocol)) return null
+        val current = credentials() ?: return null
+        if (current.mode != Mode.TRUSTED) return null
+        val credential = current.people[person] ?: return null
+        val before = store.read() ?: return null
+        if (before.state.countdown != null || before.state.grant != null || before.revision == Long.MAX_VALUE ||
+            before.journal != SessionJournal.Empty || packages(ElevationTarget.Update(staged)) == null ||
+            protocol.available() == null) return null
+        // An open supervised session must finish through SessionController's normal CLOSING path.
+        val now = clock.checkpoint() ?: return null
+        val id = ids.next().takeIf { it.isNotBlank() } ?: return null
+        return SupervisedUpdateRequest(id, staged, person, credential.generation, current.structureGeneration, now.boot)
+            .also { supervisedUpdates.add(it) }
+    }
+
+    @Synchronized fun submitSupervisedUpdate(request: SupervisedUpdateRequest, fresh: FreshAuthority): UpdateOutcome {
+        val protocol = updateProtocol ?: return UpdateOutcome.REFUSED
+        if (!updateReady(protocol) || !supervisedUpdates.remove(request)) return UpdateOutcome.REFUSED
+        submittingUpdate = true
+        try {
+            val before = store.read() ?: return UpdateOutcome.REFUSED
+            val current = credentials() ?: return UpdateOutcome.REFUSED
+            if (!supervisedUpdateLive(request, before, current) || !closeUpdatePackages()) return UpdateOutcome.REFUSED
+            val update = protocol.available() ?: return UpdateOutcome.REFUSED
+            val facts = protocol.installer.finalFacts() ?: return UpdateOutcome.REFUSED
+            if (!protocol.valid(facts, request.staged)) return UpdateOutcome.REFUSED
+            val receipt = UpdateReceipt(request.id, request.person, request.generation, current.people.mapValues { it.value.generation })
+            val submission = UpdateSubmission(facts.sessionId, request.staged.sha256, request.staged.versionCode, receipt)
+            var checks = 0
+            var passed = false
+            val committed = protocol.store.commitUpdateUse(before, before, current, update, submission) {
+                checks++
+                if (checks != 1) false else {
+                    val finalFacts = protocol.installer.finalFacts()
+                    passed = finalFacts == facts && protocol.valid(finalFacts, request.staged) &&
+                        updateReady(protocol, inFlight = true) && supervisedUpdateLive(request, before, credentials()) &&
+                        authority.consumeFor(fresh, request.action, request.person) &&
+                        supervisedUpdateLive(request, before, credentials())
+                    passed
+                }
+            }
+            if (!committed && checks == 1 && passed) {
+                // Not acknowledged after the PIN was used: SUBMITTED may have landed (PLA-160).
+                protocol.invalidate(); supervisedUpdates.clear()
+                return UpdateOutcome.NOT_READY
+            }
+            if (!committed || checks != 1 || !passed) return UpdateOutcome.REFUSED
+            supervisedUpdates.clear()
+            return protocol.commit(submission)
+        } catch (_: Exception) {
+            protocol.invalidate(); supervisedUpdates.clear()
+            return UpdateOutcome.NOT_READY
+        } finally { submittingUpdate = false }
+    }
+
+    private fun updateReady(protocol: UpdateProtocol, inFlight: Boolean = false) =
+        updateProtocol === protocol && protocol.ready && protocol.store.elevationStore === store &&
+            initialized && closing == null && !store.revocationPending && (inFlight || !submittingUpdate)
+
+    private fun closeUpdatePackages(): Boolean {
+        store.revocationPending = true
+        if (!effects.revokeAllRelaxations() || !effects.protectedStateCheck() || !effects.readBackPolicy()) return false
+        store.revocationPending = false
+        return !store.revocationPending
+    }
+
+    private fun supervisedUpdateLive(request: SupervisedUpdateRequest, before: ElevationRecord, current: CredentialState?): Boolean {
+        if (!request.matches(current) || before.state.countdown != null || before.state.grant != null ||
+            before.journal != SessionJournal.Empty || packages(ElevationTarget.Update(request.staged)) == null) return false
+        val now = clock.checkpoint() ?: return false
+        return now.boot.bootId == request.boot.bootId && now.boot.elapsedMillis >= request.boot.elapsedMillis
+    }
+
     private fun matchesApproval(record: ElevationRecord, binding: ApprovalElevation): Boolean =
         record.state.grant?.id == binding.grantId && record.person == binding.person && approvalMatches(record, binding.identity)
 
@@ -322,7 +468,8 @@ class ElevationController(
         return input.installedIdentities?.filter { it.packageName == packageName }?.singleOrNull()
     }
     private fun supported(target: ElevationTarget) = target == ElevationTarget.Play || target == ElevationTarget.Settings ||
-        (target is ElevationTarget.Approve && approvalStore?.elevationStore === store)
+        (target is ElevationTarget.Approve && approvalStore?.elevationStore === store) ||
+        (target is ElevationTarget.Update && updateProtocol?.let { it.ready && it.store.elevationStore === store } == true)
     private fun packages(target: ElevationTarget, preparing: AppApprovalState? = null): Set<PackageName>? {
         if (!supported(target)) return null
         val input = policyInput() ?: return null
@@ -331,6 +478,7 @@ class ElevationController(
             input.waitingOperation?.phase in setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)) return null
         val inventory = input.inventory?.takeIf { it.model == input.model && it.fingerprint == input.fingerprint } ?: return null
         if (!EmergencyFloor.compute(input.installed, input.identities).hasSystemDialer) return null
+        if (target is ElevationTarget.Update) return emptySet()
         if (target is ElevationTarget.Approve) {
             if (installedIdentity(target.identity.packageName) != target.identity) return null
             val plan = PolicyEngine.decide(input.copy(sessionAccess = null))

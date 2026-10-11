@@ -1,0 +1,1 @@
+ topResumedActivity=ActivityRecord{f3bd040 u0 com.android.settings/.Settings t9}  mLockTaskModeState=NONE 

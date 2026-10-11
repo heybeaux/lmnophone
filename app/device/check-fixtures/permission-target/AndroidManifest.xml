@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Plainphone contributors. SPDX-License-Identifier: Apache-2.0 -->
+<!--
+  Test target for HiddenPermissionCheck (PLA-86). No code. A user app that requests two sensor and one
+  non-sensor runtime permission, so the check can write and read back fixed grant states while the app is hidden.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.plainphone.permtarget">
+    <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="35" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <application android:hasCode="false" android:label="Plainphone permission target" />
+</manifest>

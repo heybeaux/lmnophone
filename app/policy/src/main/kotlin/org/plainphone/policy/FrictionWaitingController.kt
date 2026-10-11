@@ -15,7 +15,8 @@ interface FrictionWaitingStore : FrictionSettingsStore {
      * journal plus fixed-recipient completion receipt/audit together. Preserve every other credential
      * field and the ENTIRE elevation record, including expired/foreign-epoch debits and boot deadlines.
      * Do not restore starter credentials: post-COMMITTING PIN recovery remains current.
-     * False changes nothing; crash exposes old+COMMITTING or target+COMPLETED+receipt, never a mix.
+     * False is not acknowledged (see [CredentialStore.compareAndSet]); the completion may have landed.
+     * A crash exposes old+COMMITTING or target+COMPLETED+receipt, never a mix.
      * Fence stale copies across all stores before acknowledging; reads cannot return older replicas.
      * Atomic terminal activation itself is the replay marker; no intermediate credential-only patch.
      */

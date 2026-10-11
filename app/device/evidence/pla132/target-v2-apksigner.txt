@@ -1,0 +1,2 @@
+Signer (minSdkVersion=33, maxSdkVersion=2147483647) certificate SHA-256 digest: 44bc10b245d31e8d116375a554aa4df2aeca0a3a2aad76a58b40e1ad77c66088
+Signer (minSdkVersion=24, maxSdkVersion=32) certificate SHA-256 digest: 60fba8a5a57c2dcaf4dff03142be11c31725bbfc700d2ea0656b5fb39320294a

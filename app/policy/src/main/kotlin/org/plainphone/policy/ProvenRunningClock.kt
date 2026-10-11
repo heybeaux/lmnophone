@@ -9,7 +9,7 @@ data class ClockRecord(val proven: RunningTime, val checkpoint: BootTime)
 interface ClockStateStore {
     /** Missing, damaged, or invalid tuples return null. */
     fun read(): ClockRecord?
-    /** Compare the durable record/revision; false leaves it unchanged and grants no time authority. */
+    /** Compare the durable record/revision. False grants no time authority and is not acknowledged; the next reading reads again. */
     fun compareAndSet(expected: ClockRecord?, replacement: ClockRecord): Boolean
 }
 

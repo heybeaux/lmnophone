@@ -1,0 +1,6 @@
+10-11 07:55:46.294   574  1380 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=org.plainphone/.MainActivity (has extras)} with LAUNCH_SINGLE_TASK from uid 0 (BAL_ALLOW_ALLOWLISTED_UID) result code=0
+10-11 07:55:46.313   574  1380 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.android.settings/.Settings$DisplaySettingsActivity} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+10-11 07:55:47.199  8123  8156 I PlainphoneBoot: reapply reason=start control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=NONE withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=792
+10-11 07:55:47.205   574   643 I ActivityTaskManager: START u0 {flg=0x10020000 cmp=org.plainphone/.MainActivity} with LAUNCH_SINGLE_TASK from uid 10207 (BAL_ALLOW_ALLOWLISTED_COMPONENT) result code=2
+10-11 07:55:47.207  8123  8156 I PlainphoneBoot: lock task not running after start: Home brought forward at=2997748
+10-11 07:55:47.556  8123  8123 I PlainphoneBoot: home shown lockTask=LOCKED at=2998097

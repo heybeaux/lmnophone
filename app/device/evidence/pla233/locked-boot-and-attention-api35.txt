@@ -1,0 +1,58 @@
+PLA-233 AVD evidence, 2026-10-10. AVD pla190-a35 (emulator-5790), API 35,
+google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.036/12592187:user/release-keys.
+Build: :plainphone debug (testOnly) at 9f160b4 plus earlier PLA-233 commits; Device Owner
+org.plainphone/.PlainphoneAdminReceiver (still provisioned on the AVD after the run).
+AVD lock PIN used: 1590, cleared at the end (locksettings clear --old 1590 -> "Lock credential cleared";
+get-disabled -> true).
+
+== Fresh install, no policy file: Home shows the attention notice (finding 8)
+adb -s emulator-5790 uninstall org.plainphone
+adb -s emulator-5790 install -t plainphone-debug.apk
+adb -s emulator-5790 shell dpm set-device-owner org.plainphone/.PlainphoneAdminReceiver
+run-as org.plainphone ls /data/user_de/0/org.plainphone/files/        -> journal
+run-as org.plainphone ls /data/user_de/0/org.plainphone/files/policy  -> No such file or directory
+reapply reason=start locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 attention=true disabledFloor=[]
+uiautomator dump of Home (mLockTaskModeState=LOCKED, top org.plainphone/.MainActivity):
+  "6:23 AM" "Saturday, October 10, 2026" "Plainphone needs attention" "Messages" "Phone" "More"
+  "Ask for an app, settings, help"
+
+== Locked boot after the list, the feature mask and no_safe_boot were lost (findings 4, 9)
+adb shell locksettings set-pin 1590
+adb shell am broadcast -a org.plainphone.test.DROP -n org.plainphone/.boot.TestHook --es restriction no_safe_boot --ei features 16
+  test hook org.plainphone.test.DROP lockTask=[] features=16
+  dumpsys user | grep -c no_safe_boot -> 0
+  LockTaskPolicy {mPackages= ; mFlags= 16 }     mLockTaskModeState=NONE
+
+-- First attempt (before 9f160b4): FAILED, a new defect.
+  Every re-apply, locked and unlocked, reported failed=EMERGENCY_FLOOR and lock task stayed off:
+  LockTaskPolicy {mPackages= ; mFlags= 16 } and mLockTaskModeState=NONE after unlock.
+  The new onFailure log showed the cause:
+    stage EMERGENCY_FLOOR failed: java.lang.IllegalArgumentException: Failed requirement.
+      at org.plainphone.core.PackageName.constructor-impl(Identity.kt:6)
+      at org.plainphone.device.DpmPort.lockTaskPackages(DpmPort.kt:97)
+  getLockTaskPackages returned an entry that is not a package name in this state. Fixed in 9f160b4
+  (lockTaskPackageNames drops such entries); after reinstall the next run was ready, mFlags=119.
+
+-- Second attempt (9f160b4), same setup:
+reboot at 06:39:49, boot_completed at 06:40:04
+Before unlock (dumpsys user: State: RUNNING_LOCKED):
+  06:40:04.542 reapply reason=start locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null
+  06:40:04.695 reapply reason=locked-boot locked=true ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null
+  LockTaskPolicy {mPackages= com.google.android.dialer, com.android.server.telecom, com.google.android.apps.safetyhub, org.plainphone, com.android.phone; mFlags= 119 }
+  dumpsys user | grep -c no_safe_boot -> 2 (restored before unlock)
+PIN entered at 06:40:08.079; samples of dumpsys activity + device_policy straight after:
+  sample 1 06:40:08.095 mLockTaskModeState=NONE   mFlags=119 top=(no resumed activity yet)
+  sample 2 06:40:08.185 mLockTaskModeState=NONE   mFlags=119 top=(no resumed activity yet)
+  sample 3 06:40:08.289 mLockTaskModeState=NONE   mFlags=119 top=(no resumed activity yet)
+  sample 4 06:40:08.438 mLockTaskModeState=LOCKED mFlags=119 top=org.plainphone/.MainActivity
+  samples 5-8 to 06:40:09.000: LOCKED, mFlags=119, org.plainphone/.MainActivity
+  mFlags includes 64 (BLOCK_ACTIVITY_START_IN_TASK) in every sample. No activity other than
+  Plainphone was resumed in any sample; the first resumed activity was already in lock task.
+Verifier's route (PLA-232 finding 9): Home -> Phone (dial pad) -> Back -> More options -> Settings
+  (DialerSettingsActivity) -> Sounds and vibration:
+  topResumedActivity=android/com.android.internal.app.BlockedAppActivity t7, mLockTaskModeState=LOCKED
+  UI: "App is not available" / "Settings is not available right now." / "OK"
+  LockTaskPolicy {mPackages= com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.android.phone; mFlags= 119 }
+No setting was changed; no number was dialled.
+
+No API 30-33 system image is installed (android-34, 35, 36, 37.0 only), so no pre-34 apply was run.

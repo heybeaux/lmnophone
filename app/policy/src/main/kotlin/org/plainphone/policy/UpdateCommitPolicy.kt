@@ -2,7 +2,7 @@
 package org.plainphone.policy
 
 /**
- * Adapter observations of the exact immutable bytes bound to the installer session, obtained again
+ * Adapter observations of the verified staged bytes matching the installer session, obtained again
  * at its final commit boundary. The adapter verifies the APK signature and hashes the actual bytes.
  * These are facts, not an authorization capability; never accept them from UI/intent parameters.
  */
@@ -13,7 +13,7 @@ data class StagedApkFacts(val identity: ApprovalBinding, val binding: StagedUpda
  * durably or call an installer. Even CONSUMED means only "proposed consumed state". A runtime adapter
  * must additionally prove this controller owns the live PIN-bound grant, compare durable revisions,
  * and join use-up to the actual installer commit without an intervening retry/yield. An intent record
- * alone is insufficient. ElevationController deliberately refuses Update until that integration lands.
+ * alone is insufficient. ElevationController keeps production Update disabled pending both reviews.
  */
 object UpdateCommitPolicy {
     fun propose(record: ElevationRecord, ownedGrantId: String, credentials: CredentialState?,

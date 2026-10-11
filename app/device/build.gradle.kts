@@ -25,7 +25,11 @@ android {
     compileSdk = libs.versions.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
+        // A plain Instrumentation, so it can run before the first unlock with no test libraries.
+        testInstrumentationRunner = "org.plainphone.device.storage.DirectBootJournalCheck"
     }
+    // The fake port is shared with :plainphone's unit tests.
+    sourceSets.getByName("test").kotlin.srcDir("src/testShared/kotlin")
     compileOptions {
         sourceCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
         targetCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())

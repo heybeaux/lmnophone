@@ -1,0 +1,3 @@
+text="Blocked by work policy"
+text="For more info, contact your IT admin"
+text="Close"

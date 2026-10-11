@@ -11,7 +11,8 @@ interface ElevationApprovalStore : AppApprovalStore {
      * transaction on the shared non-reentrant coordinator. Compare both full record revisions and the
      * credential revision; preserve every unrelated field. Invoke finalCheck synchronously, once, at
      * the final write boundary after any blocking work, then compare again and write without yielding.
-     * A false check or CAS leaves BOTH records unchanged. Never implement as consume-then-approve.
+     * A false check refuses before any write. Any other false is not acknowledged (see
+     * [CredentialStore.compareAndSet]): the pair may have landed. Never implement as consume-then-approve.
      * Crash recovery exposes either the original pair or the complete replacement pair. A committed
      * approval resumes activation without calling this method again. Storage durability is an adapter
      * obligation; this port and JVM fakes do not prove Android atomicity.

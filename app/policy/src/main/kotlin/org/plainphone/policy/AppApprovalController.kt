@@ -101,6 +101,7 @@ interface AppApprovalStore {
      * Durable CAS of revision plus (when supplied) the current credential revision. Shared serialized
      * coordinator with PinVault, package events and every policy writer. Preserve fixed receipt delivery
      * identities and audit alongside state/outbox. A returned false cannot authorize visibility.
+     * False is not acknowledged (see [CredentialStore.compareAndSet]).
      */
     fun compareAndSet(expected: AppApprovalState, replacement: AppApprovalState, expectedCredentials: CredentialState?): Boolean
 }
@@ -305,7 +306,12 @@ class AppApprovalController(
         if (!battery().allowsDiscretionaryUnhide) return AppApprovalOutcome.LOW_BATTERY
         if (planFor(request.record, state) == null || !sameBoot(request)) return AppApprovalOutcome.REFUSED
         // Ordinary approval closes package access only. Startup would revoke the grant and its history.
-        if (elevations?.closeForApproval(binding) != true) return AppApprovalOutcome.REFUSED
+        val controller = elevations ?: return AppApprovalOutcome.REFUSED
+        when (controller.closeForApproval(binding)) {
+            true -> Unit
+            false -> return AppApprovalOutcome.REFUSED
+            null -> return AppApprovalOutcome.NOT_READY
+        }
         return finishApproval(request, state, current)
     }
 

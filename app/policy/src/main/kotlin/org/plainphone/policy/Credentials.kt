@@ -75,7 +75,16 @@ class CredentialState(val mode: Mode, people: Map<TrustedPersonId, PersonCredent
 interface CredentialStore {
     /** Null means missing/invalid. The vault must not guess or enroll over it. */
     fun read(): CredentialState?
-    /** Compare the durable revision and replace the entire record atomically, or leave it unchanged. */
+    /**
+     * Compare the durable revision and replace the entire record atomically.
+     *
+     * The result contract for every Boolean store write in this module (PLA-160): true means
+     * acknowledged, so the replacement reads back. False means not acknowledged: storage may hold the
+     * expected record or the replacement, for example when the store's directory became unreadable
+     * after the commit point. A caller must read again before acting. It never treats false as
+     * "unchanged" or as a definite refusal, never retries with the same expected value, takes no
+     * permissive action, and reports not ready (fail closed).
+     */
     fun compareAndSet(expected: CredentialState, replacement: CredentialState): Boolean
 }
 

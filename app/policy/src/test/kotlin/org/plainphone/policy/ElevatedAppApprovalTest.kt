@@ -28,6 +28,8 @@ class ElevatedAppApprovalTest {
         java.security.MessageDigest.getInstance("SHA-256").digest(chars.concatToString().toByteArray() + salt)
     }, SecretEntropy { n -> ByteArray(n) { (++entropy).toByte() } }, clock)
     private var elevation = ElevationRecord()
+    /** PLA-160: the next N elevation writes land but are not acknowledged. */
+    private var unacknowledgedElevationWrites = 0
     private var approvals = AppApprovalState()
     private var hook: ((String) -> Unit)? = null
     private var failure: String? = null
@@ -43,7 +45,9 @@ class ElevatedAppApprovalTest {
         override fun read() = elevation
         override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean {
             if (elevation !== expected || (expectedCredentials != null && credentials !== expectedCredentials)) return false
-            elevation = replacement; return true
+            elevation = replacement
+            if (unacknowledgedElevationWrites > 0) { unacknowledgedElevationWrites--; return false }
+            return true
         }
     }
     private val store = object : ElevationApprovalStore {
@@ -333,6 +337,20 @@ class ElevatedAppApprovalTest {
                 assertEquals(AppApprovalOutcome.REFUSED, f.controller.approveElevated(r))
             }
         }
+    }
+
+    // PLA-160: closing package access before an ordinary approval writes the elevation record. When
+    // that write lands unacknowledged the person is told NOT_READY, never "refused", access stays
+    // closed, nothing is approved, and the next attempt starts from a fresh read.
+    @Test fun `unacknowledged package close before approval is not ready and never refused`() {
+        setup(); val r = request()
+        assertTrue(elevation.state.grant!!.packageAccessOpen)
+        unacknowledgedElevationWrites = 1
+        assertEquals(AppApprovalOutcome.NOT_READY, controller.approveElevated(r))
+        assertFalse(physicallyOpen)
+        assertTrue(approvals.apps.isEmpty()); assertNull(approvals.pending); assertTrue(approvals.receipts.isEmpty())
+        restart()
+        assertTrue(approvals.apps.isEmpty()); assertEquals(1, elevation.state.ledger.debits.size)
     }
 
     @Test fun `failed committed readback resumes without consuming again`() {

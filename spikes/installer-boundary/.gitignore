@@ -1,0 +1,4 @@
+out/
+app/build/
+app/.gradle/
+app/pad/

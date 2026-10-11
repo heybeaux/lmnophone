@@ -1,0 +1,6 @@
+after 'am task lock stop' and starting Home:
+mLockTaskModeState=LOCKED
+    isKeyguardShowing=true
+10-11 08:04:55.479 11022 11049 I PlainphoneBoot: reapply reason=pin-ended control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=773
+10-11 08:04:55.547 11022 11022 I PlainphoneBoot: home shown lockTask=LOCKED at=3546088
+after unlock: topResumedActivity=ActivityRecord{830bb0b u0 org.plainphone/.MainActivity t178} mLockTaskModeState=LOCKED

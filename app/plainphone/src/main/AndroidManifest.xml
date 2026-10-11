@@ -5,19 +5,64 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Recovery reads whether a call is ongoing and reopens its screen (PLA-322 finding 1). The Device
+         Owner grants it to itself; it never reads numbers or call details. -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- The 15-minute re-apply is an exact alarm (ReapplyAlarm). -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+
     <application
+        android:name=".PlainphoneApp"
         android:allowBackup="false"
         android:label="@string/app_name"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
+        <!-- Home. lockTaskMode="normal": Home starts lock task itself, only once the lock-task features
+             read back with KEYGUARD (Keyguard first, PLA-264 finding 1). if_whitelisted would let
+             Android enter lock task before the re-apply restored KEYGUARD and drop the keyguard. -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:directBootAware="true"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:lockTaskMode="normal">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
+
+        <!-- Direct Boot aware: the locked-boot re-apply runs before the first unlock. -->
+        <receiver
+            android:name=".boot.BootReceiver"
+            android:directBootAware="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".boot.ReapplyAlarm"
+            android:directBootAware="true"
+            android:exported="false" />
+
+        <receiver
+            android:name=".boot.FlushMarker"
+            android:enabled="false"
+            android:exported="false" />
 
         <receiver
             android:name=".PlainphoneAdminReceiver"
@@ -32,5 +77,9 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
+        <!-- Routes this build does not have yet; the emergency gate accepts NOT_BUILT only for these. -->
+        <meta-data
+            android:name="org.plainphone.gate.notBuilt"
+            android:value="more-emergency" />
     </application>
 </manifest>

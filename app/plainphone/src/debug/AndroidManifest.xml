@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Plainphone contributors. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Test build: testOnly, so `dpm remove-active-admin` can remove the Device Owner (TEAM-POLICY gate 2). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <application android:testOnly="true">
+        <!-- Scenario set-up for adb (TestHook). Shell holds DUMP; apps do not. -->
+        <receiver
+            android:name=".boot.TestHook"
+            android:directBootAware="true"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="org.plainphone.test.RELAX" />
+                <action android:name="org.plainphone.test.DROP" />
+                <action android:name="org.plainphone.test.NOTIFY" />
+                <action android:name="org.plainphone.test.HOLD" />
+                <action android:name="org.plainphone.test.IN_CALL" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

@@ -1,0 +1,38 @@
+PLA-315 green run: PLA-313 finding 4 after the fix
+Base: 8b26b4d (test-only commit) + the fix commit that adds this file
+Command (from app/): ./gradlew --offline :device:testDebugUnitTest :policy:test :device:compileDebugAndroidTestKotlin
+Date: 2026-10-11T11:59Z, JVM unit tests only, no emulator
+Result: BUILD SUCCESSFUL in 51s; :device:compileDebugAndroidTestKotlin ran and compiled
+
+Totals (from build/test-results):
+device: 600 tests, 0 failures, 0 errors, 0 skipped
+policy: 628 tests, 0 failures, 0 errors, 0 skipped
+
+The PLA-313 tests:
+Pla313ProbeTest 3 tests, 0 failed
+    pass windowOpenMustNotRelistAnAbsentHomeEntry
+    pass aFailedFloorRepairReturnsFalse
+    pass containmentMustNotRelistAnAbsentHomeEntry
+UnknownPriorStateTest 7 tests, 0 failed
+    pass anUnreadableLockTaskReadNeverPermitsOnContainment
+    pass anUnreadableHomeReadNeverListsOnOpen
+    pass anUnreadableVisibilityReadNeverShowsOnHide
+    pass anUnreadableVisibilityReadNeverShowsOnOpen
+    pass anUnreadableVisibilityReadNeverShowsOnContainment
+    pass anUnreadableLockTaskReadNeverPermitsOnOpen
+    pass anUnreadableHomeReadNeverListsOnContainment
+
+Reads changed (DeviceApprovalEffects): the prior Home-membership read in openPermissionWindow and in
+contain. Each records a Home removal only after the read returns true. Unreadable (null or throwing):
+open fails before any Home write; containment skips the removal and reports Exposure.HOME. A removal that
+throws after a positive read stays recorded (partial-write handling kept).
+Reads checked, unchanged: lock-task (open and contain take only names in a successfully read list;
+lockTaskPackages() is non-null) and visibility (hide takes only packageState(...)?.hidden == false; open
+returns on a null state). The remaining "!= false" reads are verification reads that count unknown as
+still exposed (Home post-removal reads) or, for packageState null = not installed per DevicePolicyPort,
+as closed (hide readback); neither feeds a repair.
+
+Addendum, same command at the next commit (adds aRemovalThatThrowsAfterAPositiveReadIsGivenBack, which
+pins the kept partial-write handling for open and containment; passes against the fix):
+BUILD SUCCESSFUL in 48s; device: 601 tests, 0 failures; policy: 628 tests, 0 failures;
+:device:compileDebugAndroidTestKotlin compiled. Date: 2026-10-11T12:07Z

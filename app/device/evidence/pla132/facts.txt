@@ -1,0 +1,44 @@
+INSTRUMENTATION_RESULT: stream=api=35 model=sdk_gphone64_arm64 fingerprint=google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys
+ok   this APK is Device Owner
+packages listed=241 installed entries=241 bindings=241 health=BOTH_INVALID inventory=null
+floor SYSTEM_DIALER (OS_MANAGED): [com.google.android.dialer]
+floor DEFAULT_DIALER (OS_MANAGED): [com.google.android.dialer]
+floor EMERGENCY_DIALER (SYSTEM_ONLY_QUERY): [com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub]
+floor IN_CALL_UI (OS_MANAGED): [com.google.android.dialer]
+floor SMS (OS_MANAGED): [com.google.android.apps.messaging]
+floor CELL_BROADCAST_RECEIVER (SYSTEM_ONLY_QUERY): [com.google.android.cellbroadcastreceiver]
+floor CELL_BROADCAST_DISPLAY (SYSTEM_ONLY_QUERY): [com.google.android.cellbroadcastreceiver]
+floor WEBVIEW (OS_MANAGED): [com.google.android.webview]
+floor KEYBOARD (OS_MANAGED): [com.google.android.inputmethod.latin, com.google.android.tts]
+floor PERMISSION_CONTROLLER (SYSTEM_ONLY_QUERY): [com.google.android.permissioncontroller]
+unreadable floor roles=[]
+EmergencyFloor neverHide=[com.android.phone, com.android.server.telecom, com.google.android.apps.messaging, com.google.android.apps.safetyhub, com.google.android.cellbroadcastreceiver, com.google.android.dialer, com.google.android.inputmethod.latin, com.google.android.permissioncontroller, com.google.android.tts, com.google.android.webview]
+EmergencyFloor emergencyUi=[com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub, com.google.android.dialer] hasSystemDialer=true
+ok   no floor source refused
+ok   system dialer is com.google.android.dialer and in the floor
+ok   com.android.phone is an emergency dialer in the UI subset
+ok   every identity carries its role's source
+signers org.plainphone.testtarget system=false http=true https=true: [60fba8a5a57c2dcaf4dff03142be11c31725bbfc700d2ea0656b5fb39320294a]
+signers com.google.android.dialer system=true http=false https=false: [5859f2ff42b831b87bd78002e2b8de35ea0fc35adb57813fc10f2b9b87d7ada9]
+signers com.android.phone system=true http=false https=false: [301aa3cb081134501c45f1422abc66c24224fd5ded5fdc8f17e697176fd866aa]
+signers org.plainphone.device.test system=false http=false https=false: [99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd]
+ok   target live digest equals apksigner's 60fba8a5a57c2dcaf4dff03142be11c31725bbfc700d2ea0656b5fb39320294a
+ok   target binding is the same signer set
+ok   target is a user app that answers both probes
+control: DIAL_EMERGENCY without MATCH_SYSTEM_ONLY resolves to [com.android.phone, com.google.android.apps.safetyhub, org.plainphone.testtarget]
+ok   control: the target does declare the emergency filter
+ok   target is not a floor identity
+ok   target is not in the floor
+ok   target hidden (DPM readback)
+ok   control: a plain getPackageInfo no longer sees the hidden target
+hidden target: facts=[60fba8a5a57c2dcaf4dff03142be11c31725bbfc700d2ea0656b5fb39320294a] installed=[InstalledPackage(name=org.plainphone.testtarget, isSystem=false, versionCode=1)]
+ok   hidden target still listed with the same digest
+ok   hidden target still has its binding
+ok   safetyhub hidden (DPM readback)
+ok   control: a plain getPackageInfo no longer sees hidden safetyhub
+hidden safetyhub: emergency dialers=[com.android.phone, com.android.server.telecom, com.google.android.apps.safetyhub]
+ok   hidden safetyhub is still an emergency dialer in the floor UI subset
+cleanup: hidden left=[]
+RESULT PASS phase=facts
+
+INSTRUMENTATION_CODE: -1

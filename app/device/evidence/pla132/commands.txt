@@ -1,0 +1,26 @@
+PLA-132 on-AVD check. AVD pla113-a35 (emulator-5742), sdk_gphone64_arm64, API 35,
+fingerprint google/sdk_gphone64_arm64/emu64a:15/AE3A.240806.043/12960925:userdebug/dev-keys. 2026-10-09.
+
+cd app && ./gradlew :device:assembleDebugAndroidTest
+bash device/check-fixtures/signer-target/build.sh <scratch>/target      # key A, key B, lineage A->B, prints certs
+adb -s emulator-5742 install -r -t device/build/outputs/apk/androidTest/debug/device-debug-androidTest.apk
+adb -s emulator-5742 install <scratch>/target/target-v1.apk
+adb -s emulator-5742 shell dpm set-device-owner org.plainphone.device.test/org.plainphone.device.apply.CheckAdmin
+
+adb -s emulator-5742 shell am instrument -w -r -e phase facts \
+  -e expect 60fba8a5a57c2dcaf4dff03142be11c31725bbfc700d2ea0656b5fb39320294a \
+  org.plainphone.device.test/org.plainphone.device.storage.DirectBootJournalCheck            # -> facts.txt, RESULT PASS
+
+apksigner verify --print-certs <scratch>/target/target-v1.apk                               # -> target-v1-apksigner.txt
+adb -s emulator-5742 pull /product/priv-app/GoogleDialer/GoogleDialer.apk && apksigner verify --print-certs GoogleDialer.apk
+                                                                                            # -> dialer-apksigner.txt (= live digest in facts.txt)
+apksigner verify --print-certs <scratch>/target/target-v2.apk                               # -> target-v2-apksigner.txt
+adb -s emulator-5742 install -r <scratch>/target/target-v2.apk                              # -> install-v2.txt (versionCode 2, v3 rotation)
+
+adb -s emulator-5742 shell am instrument -w -r -e phase rotated \
+  -e before 60fba8a5a57c2dcaf4dff03142be11c31725bbfc700d2ea0656b5fb39320294a \
+  -e expect 44bc10b245d31e8d116375a554aa4df2aeca0a3a2aad76a58b40e1ad77c66088 \
+  org.plainphone.device.test/org.plainphone.device.storage.DirectBootJournalCheck            # -> rotated.txt, RESULT PASS
+
+Cleanup: dpm remove-active-admin ...CheckAdmin; uninstall org.plainphone.testtarget and org.plainphone.device.test;
+dpm list-owners -> "no owners". No lock-screen PIN was set.

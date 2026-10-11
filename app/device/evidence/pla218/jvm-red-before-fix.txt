@@ -1,0 +1,44 @@
+# PLA-219 JVM tests. Red: test-only commit d46b1b0 on top of b5a119f (contains cfb8d91), before the fix.
+# ./gradlew --offline :device:testDebugUnitTest --tests '*VerifierWindowProbeTest' --tests '*SharedUidExclusionTest' --tests '*FinalFlushContainmentTest' --tests '*WindowOwnershipTest' --tests '*DeviceApprovalEffectsTest'
+# 25 tests, 12 failed (each on its intended assertion). Parsed from JUnit XML:
+pass DeviceApprovalEffectsTest.permissionsAreWrittenOnlyInsideTheWindowAndReadBackHidden 
+pass DeviceApprovalEffectsTest.closeRehidesAfterEveryPartialOpenAndNeverRestoresAccess 
+pass DeviceApprovalEffectsTest.offDispatcherCallsFailClosedAndTouchNothing 
+pass DeviceApprovalEffectsTest.aFailedExclusionNeverUnhides 
+pass DeviceApprovalEffectsTest.packageAddedDuringTheWindowWaitsUntilTheWindowCloses 
+pass DeviceApprovalEffectsTest.editExcludesLockTaskBeforeTheUnhide 
+pass DeviceApprovalEffectsTest.openExcludesLockTaskAndHomeAndReadsThemBackBeforeTheUnhide 
+pass DeviceApprovalEffectsTest.neverHideGuardRefusesOpenCloseAndHideForFloorPackages 
+pass DeviceApprovalEffectsTest.packageAddedHidesOnlyUnapprovedNonFloorPackages 
+pass DeviceApprovalEffectsTest.hideAndReadBackHidesAnApprovedVisibleAppForAnEditFirst 
+pass DeviceApprovalEffectsTest.applyPolicyDelegatesAndPublishesHomeAndReadBackOnlyReads 
+pass DeviceApprovalEffectsTest.aHandlerOutsideTheDispatcherWouldBreakTheWindow 
+FAIL FinalFlushContainmentTest.aFloorFlipFailureKeepsTheFloorRepairAndContainsTheCandidate 
+    java.lang.AssertionError: floor flip failure: hidden=false permitted=true home=false
+FAIL FinalFlushContainmentTest.aCandidateFlipFailureLeavesTheCandidateContained 
+    java.lang.AssertionError: approval: hidden=false permitted=true home=false
+FAIL FinalFlushContainmentTest.aCandidateFlipFailureAfterAnEditLeavesTheCandidateContained 
+    java.lang.AssertionError: edit: hidden=false permitted=true home=false
+FAIL SharedUidExclusionTest.anApprovalIsRefusedBeforeTheUnhideWhileASharedUidSiblingIsAllowed 
+    java.lang.AssertionError: expected:<NOT_READY> but was:<APPROVED>
+FAIL SharedUidExclusionTest.anEditIsRefusedBeforeTheUnhideWhileASharedUidSiblingIsAllowed 
+    java.lang.AssertionError: expected:<NOT_READY> but was:<PERMISSIONS_CHANGED>
+FAIL SharedUidExclusionTest.anUnreadableUidIsRefusedBeforeTheUnhide 
+    java.lang.AssertionError: unreadable test.target
+pass SharedUidExclusionTest.theControlWithADifferentUidStillOpensAndApproves 
+FAIL VerifierWindowProbeTest.failedFinalFlushMustNotLeaveCandidateVisibleAndPermitted 
+    java.lang.AssertionError: failed apply left candidate visible AND lock-task permitted
+FAIL VerifierWindowProbeTest.publicHandlerMustNotWriteOutsideDispatcher 
+    java.lang.AssertionError: the queued entry and the receiver are the only public ways in expected:<[onPackageAdded, register]> but was:<[register, onPackageAdded, handle]>
+FAIL VerifierWindowProbeTest.aSecondWindowMustNotOrphanTheFirstVisiblePackage 
+    java.lang.AssertionError: second window accepted while the first app remains visible
+    stdout: PROBE flush: hidden=false permitted=true home=false | PROBE nested: secondOpened=true firstHidden=false secondHidden=true
+FAIL WindowOwnershipTest.aSecondOpenIsRefusedAndTheFirstWindowStaysIntactAndClosable 
+    java.lang.AssertionError: second identity
+FAIL WindowOwnershipTest.aPartlyOpenedWindowStaysOwnedUntilItsOwnerCloses 
+    java.lang.AssertionError: no second window while the first app is visible
+FAIL WindowOwnershipTest.aWrongIdentityCloseLeavesTheOpenWindowOwnedAndUsable 
+    java.lang.AssertionError: not the owner
+
+# Green after the fix, at the head of this commit: ./gradlew --offline :device:testDebugUnitTest :policy:test
+# device 411 tests, policy 579 tests, 0 failures, 0 errors, 0 skipped (device was 407 at 91ff952; PLA-220 added 4).

@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:testOnly="${testOnly}" android:label="PLA-86 updater spike" android:name=".SpikeApp">
+        <receiver android:name=".Admin" android:exported="true" android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin" android:resource="@xml/admin"/>
+            <intent-filter><action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/></intent-filter>
+        </receiver>
+        <receiver android:name=".Command" android:exported="true">
+            <intent-filter><action android:name="org.plainphone.spike.updater.RUN"/></intent-filter>
+        </receiver>
+        <receiver android:name=".Status" android:exported="false"/>
+        <receiver android:name=".Replaced" android:exported="false">
+            <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED"/></intent-filter>
+        </receiver>
+    </application>
+</manifest>
