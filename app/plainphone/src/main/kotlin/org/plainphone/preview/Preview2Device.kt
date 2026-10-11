@@ -12,9 +12,6 @@ import java.io.File
 import org.plainphone.core.PackageName
 import org.plainphone.device.ReapplyTimings
 import org.plainphone.device.facts.AndroidPackageSystemPort
-import org.plainphone.device.facts.FloorIdentityReader
-import org.plainphone.device.facts.FloorRead
-import org.plainphone.device.facts.LivePackageReader
 import org.plainphone.policy.PolicyPlan
 
 /**
@@ -47,15 +44,7 @@ class Preview2Device(private val context: Context) {
      * the checking screen.
      */
     fun plan(locked: Boolean, timings: ReapplyTimings = ReapplyTimings()): PolicyPlan {
-        lateinit var floor: FloorRead
-        val port = AndroidPackageSystemPort(context)
-        val read = timings.measure("livePackages") {
-            LivePackageReader(port, timings).read {
-                floor = timings.measure("floorIdentities") { FloorIdentityReader(port).read() }
-            }
-        }
-        val floorNames = floor.identities.map { it.name }.toSet()
-        val installed = read.installed.filter { it.name !in read.disabled || it.name in floorNames }
+        val (installed, floor) = PreviewPackageInput.read(AndroidPackageSystemPort(context), timings)
         if (locked) return Preview2Plan.decideLocked(plainphone, installed, floor.identities)
         val starter = starter()
         check(starter.isNotEmpty()) { "no starter list yet" }

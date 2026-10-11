@@ -30,8 +30,13 @@ class AndroidPackageSystemPort(private val context: Context) : PackageSystemPort
     override fun model(): String = Build.MODEL
     override fun fingerprint(): String = Build.FINGERPRINT
 
-    override fun packages(): List<RawPackage> =
-        installedPackages(PackageManager.GET_SIGNING_CERTIFICATES.toLong() or HIDDEN_AND_DISABLED).mapNotNull { info ->
+    override fun packages(): List<RawPackage> = readPackages(includeSigners = true)
+
+    override fun packageStates(): List<PackageState> = readPackages(includeSigners = false).map { it.state() }
+
+    private fun readPackages(includeSigners: Boolean): List<RawPackage> =
+        installedPackages(HIDDEN_AND_DISABLED or
+            if (includeSigners) PackageManager.GET_SIGNING_CERTIFICATES.toLong() else 0L).mapNotNull { info ->
             val app = info.applicationInfo ?: return@mapNotNull null
             if (app.flags and ApplicationInfo.FLAG_INSTALLED == 0) return@mapNotNull null
             RawPackage(
@@ -39,7 +44,7 @@ class AndroidPackageSystemPort(private val context: Context) : PackageSystemPort
                 system = app.flags and ApplicationInfo.FLAG_SYSTEM != 0,
                 versionCode = info.longVersionCode,
                 // Current signers only; signingCertificateHistory is deliberately not read.
-                signers = info.signingInfo?.apkContentsSigners?.map { it.toByteArray() },
+                signers = if (includeSigners) info.signingInfo?.apkContentsSigners?.map { it.toByteArray() } else null,
                 enabled = app.enabled,
             )
         }

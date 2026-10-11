@@ -16,6 +16,11 @@ class RawPackage(
     val enabled: Boolean = true,
 )
 
+/** The preview's package projection. It cannot carry signer or browser approval evidence. */
+data class PackageState(val name: String, val system: Boolean, val versionCode: Long, val enabled: Boolean)
+
+internal fun RawPackage.state() = PackageState(name, system, versionCode, enabled)
+
 /**
  * The live OS reads behind a policy pass. Every package-level answer includes hidden and disabled
  * packages of the calling user. Package names are returned exactly as Android reports them.
@@ -28,6 +33,8 @@ interface PackageSystemPort {
 
     /** Every package installed for this user, hidden and disabled ones included. */
     fun packages(): List<RawPackage>
+    /** Same live user/package coverage without signing info. Default preserves existing ports. */
+    fun packageStates(): List<PackageState> = packages().map { it.state() }
     /** Packages with an activity for `ACTION_VIEW` + `BROWSABLE` on [url] (`MATCH_ALL`, hidden included). Never fetched. */
     fun browsableHandlers(url: String): Set<String>
 

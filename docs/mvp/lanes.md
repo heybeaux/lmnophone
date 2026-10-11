@@ -98,6 +98,14 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 
 **`:device` / `:plainphone` (lane D):** implements `JournalStore`, `PolicyStore` and `KeyDerivation`. It also provides:
 - `PolicyApplier`, which applies a `PolicyPlan` through DPM and reads it back;
+  `PackageSystemPort.packageStates()` supplies the same live installed-user coverage as
+  `packages()` without signer data; the Android port omits `GET_SIGNING_CERTIFICATES`
+  and keeps all hidden/disabled flags and the installed-user filter. The preview
+  uses `LivePackageReader.readInstalled()` (typed installed/disabled data only),
+  with two snapshots bracketing the same floor queries. Its projection preserves
+  all existing merge/order/disabled rules. Full `read()` retains signers and probes
+  for links/approval. An optional `ReapplyTimings` constructor parameter records
+  fixed snapshot1/probes/snapshot2/merge labels; probes is absent in the light read.
   `ReadbackPolicyApplier` and `BootReapply` accept an optional `ReapplyTimings`
   collector for elapsed-time diagnostics. The preview runtime shares one collector
   through input assembly, writes, readbacks and the post-reapply hook, resetting

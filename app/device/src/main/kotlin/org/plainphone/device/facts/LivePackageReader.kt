@@ -42,6 +42,9 @@ data class LivePackages(
     val disabled: Set<PackageName> = emptySet(),
 )
 
+/** Only the installed/disabled projection; deliberately not usable for link classification or approval. */
+data class LiveInstalledPackages(val installed: List<InstalledPackage>, val disabled: Set<PackageName>)
+
 /**
  * Reads package facts from the live OS, hidden packages included. Nothing here is cached: a digest
  * is a fact for this pass only and never grants access by itself (PLA-46).
@@ -56,6 +59,24 @@ class LivePackageReader(
     private val timings: ReapplyTimings = ReapplyTimings(),
 ) : PackageFactsSource {
     override fun installedPackages(): List<PackageFacts> = read().facts
+
+    /** Two live snapshots around floor queries, with the full reader's installed/disabled merge rules. */
+    fun readInstalled(between: () -> Unit = {}): LiveInstalledPackages {
+        val first = timings.measure("livePackages.snapshot1") { port.packageStates() }
+        between()
+        val second = timings.measure("livePackages.snapshot2") { port.packageStates() }
+        return timings.measure("livePackages.merge") {
+            val byName = (first + second).groupBy { it.name }
+            val installed = mutableListOf<InstalledPackage>()
+            val disabled = mutableSetOf<PackageName>()
+            for ((name, variants) in byName) {
+                val pkg = PackageName(name)
+                variants.map { InstalledPackage(pkg, it.system, it.versionCode) }.distinct().forEach { installed += it }
+                if (variants.none { it.enabled }) disabled += pkg
+            }
+            LiveInstalledPackages(installed, disabled)
+        }
+    }
 
     fun read(between: () -> Unit = {}): LivePackages {
         val first = timings.measure("livePackages.snapshot1") { port.packages().map(::fact) }
