@@ -93,6 +93,25 @@ class GateJudgeTest {
         assertTrue(result.detail, result.detail.contains("did not stay"))
     }
 
+    // PLA-296 R1: a missing sample is a failing sample, wherever it falls.
+    @Test fun `a missing middle sample fails`() {
+        val result = reached(home, listOf(dialPad, null, dialPad))
+        assertEquals(result.detail, Verdict.FAIL, result.verdict)
+        assertTrue(result.detail, result.detail.contains("then nothing"))
+    }
+
+    @Test fun `a missing final sample fails`() {
+        val result = reached(home, listOf(dialPad, dialPad, null))
+        assertEquals(result.detail, Verdict.FAIL, result.verdict)
+    }
+
+    @Test fun `a missing sample followed by a blocked or wrong screen fails`() {
+        val blocked = Activity("android", GateJudge.BLOCKED_APP)
+        val wrong = Activity("com.google.android.dialer", "com.android.dialer.SomethingElse")
+        assertEquals(Verdict.FAIL, reached(home, listOf(dialPad, null, blocked)).verdict)
+        assertEquals(Verdict.FAIL, reached(home, listOf(dialPad, null, wrong)).verdict)
+    }
+
     @Test fun `a tap that changed nothing fails even with the dial pad in front`() {
         val result = reached(dialPad, listOf(dialPad, dialPad))
         assertEquals(Verdict.FAIL, result.verdict)
