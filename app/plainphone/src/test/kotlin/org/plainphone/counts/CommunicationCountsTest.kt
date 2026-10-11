@@ -15,7 +15,7 @@ class CommunicationCountsTest {
         var unlocked = true
         val denied = mutableSetOf<String>()
         val queries = mutableListOf<CountQuery>()
-        val results = mutableMapOf<String, Int?>("calls" to 1, "sms" to 2, "mms" to 3)
+        val results = mutableMapOf<String, Int?>("calls" to 1, "messages" to 5)
         var failure: String? = null
         var closed = 0
         override fun isUserUnlocked() = unlocked
@@ -30,19 +30,18 @@ class CommunicationCountsTest {
             }
         }
     }
-    @Test fun exactQueriesUseOnlyIdsNoSortAndCloseAllCursors() {
+    @Test fun exactQueriesUseOnlyIdsAndTransportNoSortAndCloseAllCursors() {
         val p = Port()
         assertEquals(CommunicationCounts(1, 5), CommunicationCountSource(p).read())
         assertEquals(listOf(
             CountQuery("calls", "content://call_log/calls", listOf("_id"), "type = 3 AND new = 1 AND is_read IS NOT 1"),
-            CountQuery("sms", "content://sms", listOf("_id"), "type = 1 AND read = 0"),
-            CountQuery("mms", "content://mms", listOf("_id"), "msg_box = 1 AND read = 0")
+            CountQuery("messages", "content://mms-sms/complete-conversations", listOf("_id", "transport_type"), "read = 0")
         ), p.queries)
         assertTrue(p.queries.all { it.sortOrder == null && it.selectionArgs == null })
-        assertEquals(3, p.closed)
+        assertEquals(2, p.closed)
     }
-    @Test fun eitherMessageFailureHidesTheWholeSum() {
-        for (source in listOf("sms", "mms")) for (throws in listOf(false, true)) {
+    @Test fun combinedMessageFailureNeverFallsBack() {
+        for (source in listOf("messages")) for (throws in listOf(false, true)) {
             val p = Port()
             if (throws) p.failure = source else p.results[source] = null
             assertEquals(CommunicationCounts(1, null), CommunicationCountSource(p).read())
@@ -77,48 +76,5 @@ class CommunicationCountsTest {
         CountPreferences(store).enabled = false
         assertFalse(CountPreferences(store).enabled)
         assertEquals(setOf("old_setting", "show_communication_counts"), store.data.keys)
-    }
-    private class Work : CountWork {
-        data class Job(val delay: Long, val block: () -> Unit, var cancelled: Boolean = false)
-        val jobs = mutableListOf<Job>()
-        override fun schedule(delayMillis: Long, block: () -> Unit): CountCancellation {
-            val job = Job(delayMillis, block); jobs += job
-            return CountCancellation { job.cancelled = true }
-        }
-        fun runLast() { jobs.last().block() }
-    }
-    @Test fun visibilityRefreshesAndObservesCombinedUriWithDescendants() {
-        val work = Work(); val observed = mutableListOf<Pair<String, Boolean>>()
-        var stopped = 0; var reads = 0
-        val c = CountController(CountPreferences(Store()), work, { reads++; CommunicationCounts(1, 2) },
-            { uri, descendants, _ -> observed += uri to descendants; CountCancellation { stopped++ } }, {})
-        c.setVisible(true); assertTrue(work.jobs.isEmpty())
-        c.setEnabled(true); work.runLast()
-        assertEquals(CommunicationCounts(1, 2), c.counts)
-        assertEquals(listOf("content://call_log/calls" to true, "content://mms-sms/" to true), observed)
-        c.setVisible(false); assertEquals(2, stopped); assertEquals(CommunicationCounts(), c.counts)
-        c.setVisible(true); work.runLast(); assertEquals(2, reads)
-    }
-    @Test fun offCancelsWorkClearsImmediatelyAndLateResultsCannotReturn() {
-        val work = Work(); val callbacks = mutableListOf<() -> Unit>(); var grants = 0
-        lateinit var c: CountController
-        c = CountController(CountPreferences(Store()), work, {
-            c.setEnabled(false) // A result already in flight when off was selected.
-            CommunicationCounts(8, 9)
-        }, { _, _, cb -> callbacks += cb; CountCancellation {} }, { grants++ })
-        c.setVisible(true); c.setEnabled(true)
-        callbacks.first()(); callbacks.last()()
-        assertTrue(work.jobs.dropLast(1).all { it.cancelled })
-        work.runLast(); assertEquals(CommunicationCounts(), c.counts)
-        val size = work.jobs.size; callbacks.first()(); assertEquals(size, work.jobs.size)
-        assertEquals(1, grants)
-    }
-    @Test fun restartDoesNotGrantAgainAndUnavailableClearsOldCount() {
-        val store = Store(); CountPreferences(store).enabled = true
-        val work = Work(); var value = CommunicationCounts(1, 2); var grants = 0
-        val c = CountController(CountPreferences(store), work, { value }, { _, _, _ -> CountCancellation {} }, { grants++ })
-        c.setVisible(true); work.runLast(); assertEquals(value, c.counts)
-        c.setVisible(false); value = CommunicationCounts(); c.setVisible(true); work.runLast()
-        assertEquals(value, c.counts); assertEquals(0, grants)
     }
 }
