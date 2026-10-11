@@ -73,6 +73,31 @@ class ReadbackPolicyApplierTest {
         assertEquals(expected.joinToString(","), timing.summary())
     }
 
+    @Test fun packageQueryTimingsSeparateHiddenAndShownReadbackWork() {
+        var now = 0L
+        val fake = port()
+        val timedPort = object : DevicePolicyPort by fake {
+            override fun packageState(name: PackageName): PackageState? {
+                now += 7
+                return fake.packageState(name)
+            }
+        }
+        val timings = ReapplyTimings { now }
+        val applier = ReadbackPolicyApplier(timedPort, timings = timings)
+        assertTrue(applier.apply(plan()).complete)
+        assertTrue(applier.readBack(plan()))
+        val stages = timings.summary().split(",").associate {
+            val (label, elapsed) = it.split("=")
+            label to elapsed.toLong()
+        }
+        for (phase in listOf("read", "verify")) {
+            assertEquals(14L, stages["$phase.HIDES.hiddenPackages"])
+            assertEquals(35L, stages["$phase.HIDES.shownPackages"])
+            assertEquals(28L, stages["$phase.NEVER_HIDE_GUARD.shownPackages"])
+        }
+        assertFalse("diagnostics must not expose package names", timings.summary().contains(chrome))
+    }
+
     @Test fun appliesStepsTwoToSevenInPlanOrderAndReadsEachBack() {
         val port = port(dialer, camera)
         val result = ReadbackPolicyApplier(port).apply(plan())
