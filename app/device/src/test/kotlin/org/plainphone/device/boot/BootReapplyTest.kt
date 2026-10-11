@@ -256,7 +256,7 @@ class BootReapplyTest {
         port.flushComponent = false
         val repaired = withStore(store).run(locked = false)
         assertFalse(PackageName(dialer) in repaired.apply!!.flipFailures)
-        assertTrue(store.read().isEmpty())
+        assertEquals(FlipFailures.NONE, store.read())
     }
 
     @Test fun acknowledgingClearsTheFlipFailure() {
@@ -267,7 +267,7 @@ class BootReapplyTest {
         val boot = withStore(store)
         boot.run(locked = true)
         boot.acknowledgeFlipFailures()
-        assertTrue(store.read().isEmpty())
+        assertEquals(FlipFailures.NONE, store.read())
         assertTrue(boot.run(locked = false).apply!!.flipFailures.isEmpty())
     }
 
