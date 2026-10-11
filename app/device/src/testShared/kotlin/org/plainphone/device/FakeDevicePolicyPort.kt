@@ -31,6 +31,7 @@ class FakeDevicePolicyPort(
     val unknownRestrictions = mutableSetOf<Restriction>()
     var hidesStick = true
     var lockTaskSticks = true
+    var featuresStick = true
     /** How many flip calls in a row are ignored (the state does not change). */
     var flipsIgnored = 0
     /** Areas whose reads or writes throw, to prove a step never touched them. */
@@ -88,7 +89,8 @@ class FakeDevicePolicyPort(
     }
     override fun lockTaskFeatures(): Set<LockTaskFeature> { touch("features"); return features }
     override fun setLockTaskFeatures(features: Set<LockTaskFeature>) {
-        write("features", "features ${features.size}"); this.features = features.toSet()
+        write("features", "features ${features.size}")
+        if (featuresStick) this.features = features.toSet()
     }
 
     override fun home(): PackageName? { touch("home"); return homePackage }
