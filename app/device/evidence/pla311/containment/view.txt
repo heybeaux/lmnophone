@@ -1,0 +1,18 @@
+04:27:52 dropped: LockTaskPolicy {mPackages= ; mFlags= 16 }
+04:28:13 locked: user=RUNNING_LOCKED keyguard=true lockTask=LOCKED top=
+04:28:13 locked policy: LockTaskPolicy {mPackages= com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.android.phone, com.google.android.cellbroadcastreceiver; mFlags= 119 }
+04:28:13 queue: Starting: Intent { act=android.intent.action.VIEW dat=https://example.invalid/... }
+04:28:16 sample 1: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:16 sample 2: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:17 sample 3: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:18 sample 4: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:18 sample 5: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:19 sample 6: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:20 sample 7: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:20 sample 8: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:21 sample 9: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:22 sample 10: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:22 sample 11: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:23 sample 12: user=RUNNING_UNLOCKED lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:25 after centre tap: lockTask=LOCKED top=org.plainphone/.MainActivity
+04:28:25 PASS view
