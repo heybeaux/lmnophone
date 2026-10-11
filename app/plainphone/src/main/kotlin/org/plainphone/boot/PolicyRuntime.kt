@@ -25,6 +25,7 @@ import org.plainphone.core.PackageName
 import org.plainphone.device.DpmPort
 import org.plainphone.device.KeyguardFirst
 import org.plainphone.device.SerialDispatcher
+import org.plainphone.device.ReapplyTimings
 import org.plainphone.device.boot.BootOutcome
 import org.plainphone.device.boot.BootReapply
 import org.plainphone.device.facts.AndroidPackageSystemPort
@@ -59,10 +60,11 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val packagesPort = AndroidPackageSystemPort(context)
     // Preserve the preview starter list and restriction-free plan during this in-place upgrade.
     private val preview = Preview2Device(context)
+    private val timings = ReapplyTimings(SystemClock::elapsedRealtime)
     private val boot = BootReapply(
         FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT),
         port, SESSION_PACKAGES,
-        { locked -> preview.plan(locked) },
+        { locked -> preview.plan(locked, timings) },
         BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT),
         { stage, error -> Log.w(TAG, "stage $stage failed: ${error ?: "readback mismatch"}", error) },
         floor = { osFloor(packagesPort) },
@@ -71,6 +73,7 @@ class PolicyRuntime private constructor(private val context: Context) {
         // that adds turn-off passes its committing read here.
         turnOffCommitting = { false },
         flipFailures = FileFlipFailureStore(File(protectedDir, "flip-failures")),
+        timings = timings,
     )
     private val gateState = MutableStateFlow(HomeGate.CHECKING)
     @Volatile private var lastGate = HomeGate.CHECKING
@@ -178,6 +181,7 @@ class PolicyRuntime private constructor(private val context: Context) {
             return
         }
         val locked = !users.isUserUnlocked
+        timings.reset()
         val started = SystemClock.elapsedRealtime()
         val outcome = try {
             boot.run(locked)
@@ -186,8 +190,12 @@ class PolicyRuntime private constructor(private val context: Context) {
             null
         }
         userUnlocked.recordPass(locked)
-        log(reason, outcome, SystemClock.elapsedRealtime() - started)
-        BuildControl.control.afterReapply(context, dpm, admin)
+        val bootMillis = SystemClock.elapsedRealtime() - started
+        try {
+            timings.measure("afterReapply") { BuildControl.control.afterReapply(context, dpm, admin) }
+        } finally {
+            log(reason, outcome, bootMillis, SystemClock.elapsedRealtime() - started)
+        }
         runsState.value++
         // A locked run never opens Home: the full plan has not run yet.
         if (!locked) {
@@ -230,11 +238,11 @@ class PolicyRuntime private constructor(private val context: Context) {
         }
     }
 
-    private fun log(reason: String, outcome: BootOutcome?, millis: Long) {
+    private fun log(reason: String, outcome: BootOutcome?, millis: Long, totalMillis: Long) {
         val apply = outcome?.apply
         Log.i(TAG, "reapply reason=$reason control=${BuildControl.control.name} locked=${outcome?.locked} ready=${outcome?.ready} " +
             "applied=${apply?.applied} failed=${apply?.failedStage} flipFailures=${apply?.flipFailures?.size} " +
-            "lockTask=${lockTaskState()} withheld=${outcome?.withheld?.sorted()} attention=${outcome?.needsAttention} disabledFloor=${outcome?.disabledFloor} ms=$millis")
+            "lockTask=${lockTaskState()} withheld=${outcome?.withheld?.sorted()} attention=${outcome?.needsAttention} disabledFloor=${outcome?.disabledFloor} ms=$millis totalMs=$totalMillis timingsMs=${timings.summary()}")
     }
 
     companion object {

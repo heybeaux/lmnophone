@@ -36,6 +36,7 @@ class ReadbackPolicyApplier(
     private val port: DevicePolicyPort,
     /** Told about each failed stage: the exception, or null when the readback did not match. Diagnostics only. */
     private val onFailure: (ApplyStage, Throwable?) -> Unit = { _, _ -> },
+    private val timings: ReapplyTimings = ReapplyTimings(),
 ) : PolicyApplier {
 
     override fun apply(plan: PolicyPlan): ApplyResult {
@@ -44,8 +45,8 @@ class ReadbackPolicyApplier(
         for (step in plan.steps) {
             if (step.stage == ApplyStage.REVOKE_JOURNAL) continue
             val ok = try {
-                run.write(step.stage)
-                (!step.readbackRequired || run.readBack(step.stage)).also { if (!it) onFailure(step.stage, null) }
+                timings.measure("write.${step.stage}") { run.write(step.stage) }
+                (!step.readbackRequired || timings.measure("read.${step.stage}") { run.readBack(step.stage) }).also { if (!it) onFailure(step.stage, null) }
             } catch (e: Exception) {
                 onFailure(step.stage, e)
                 false
@@ -68,8 +69,8 @@ class ReadbackPolicyApplier(
         var failed: ApplyStage? = null
         for (stage in EMERGENCY_STAGES) {
             val ok = try {
-                run.write(stage)
-                run.readBack(stage).also { if (!it) onFailure(stage, null) }
+                timings.measure("repairWrite.$stage") { run.write(stage) }
+                timings.measure("repairRead.$stage") { run.readBack(stage) }.also { if (!it) onFailure(stage, null) }
             } catch (e: Exception) {
                 onFailure(stage, e)
                 false
@@ -83,7 +84,7 @@ class ReadbackPolicyApplier(
     fun readBack(plan: PolicyPlan): Boolean {
         val run = Run(plan)
         return plan.steps.all { step ->
-            !step.readbackRequired || try { run.readBack(step.stage) } catch (e: Exception) { false }
+            !step.readbackRequired || try { timings.measure("verify.${step.stage}") { run.readBack(step.stage) } } catch (e: Exception) { false }
         }
     }
 

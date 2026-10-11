@@ -10,6 +10,7 @@ import android.provider.Settings
 import android.util.Log
 import java.io.File
 import org.plainphone.core.PackageName
+import org.plainphone.device.ReapplyTimings
 import org.plainphone.device.facts.AndroidPackageSystemPort
 import org.plainphone.device.facts.FloorIdentityReader
 import org.plainphone.device.facts.FloorRead
@@ -45,10 +46,14 @@ class Preview2Device(private val context: Context) {
      * Unlocked, it throws when there is no starter list yet: the run is then not ready and Home stays on
      * the checking screen.
      */
-    fun plan(locked: Boolean): PolicyPlan {
+    fun plan(locked: Boolean, timings: ReapplyTimings = ReapplyTimings()): PolicyPlan {
         lateinit var floor: FloorRead
         val port = AndroidPackageSystemPort(context)
-        val read = LivePackageReader(port).read { floor = FloorIdentityReader(port).read() }
+        val read = timings.measure("livePackages") {
+            LivePackageReader(port).read {
+                floor = timings.measure("floorIdentities") { FloorIdentityReader(port).read() }
+            }
+        }
         val floorNames = floor.identities.map { it.name }.toSet()
         val installed = read.installed.filter { it.name !in read.disabled || it.name in floorNames }
         if (locked) return Preview2Plan.decideLocked(plainphone, installed, floor.identities)

@@ -98,6 +98,10 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 
 **`:device` / `:plainphone` (lane D):** implements `JournalStore`, `PolicyStore` and `KeyDerivation`. It also provides:
 - `PolicyApplier`, which applies a `PolicyPlan` through DPM and reads it back;
+  `ReadbackPolicyApplier` and `BootReapply` accept an optional `ReapplyTimings`
+  collector for elapsed-time diagnostics. The preview runtime shares one collector
+  through input assembly, writes, readbacks and the post-reapply hook, resetting
+  it per serialized pass. Timing does not change the plan or readback contract;
 - `PackageFactsSource`;
 - the SMS sender;
 - view-models mapping engine output to `XUiState`.

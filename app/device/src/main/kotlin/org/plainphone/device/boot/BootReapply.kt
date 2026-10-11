@@ -5,6 +5,7 @@ package org.plainphone.device.boot
 import org.plainphone.core.PackageName
 import org.plainphone.device.ApplyResult
 import org.plainphone.device.DevicePolicyPort
+import org.plainphone.device.ReapplyTimings
 import org.plainphone.device.ReadbackPolicyApplier
 import org.plainphone.policy.ApplyStage
 import org.plainphone.policy.ApplyStep
@@ -87,8 +88,9 @@ class BootReapply(
     /** Whether a turn-off is committing. A throw counts as yes: the fallback then repairs only the floor. */
     private val turnOffCommitting: () -> Boolean = { false },
     private val flipFailures: FlipFailureStore = InMemoryFlipFailureStore(),
+    private val timings: ReapplyTimings = ReapplyTimings(),
 ) {
-    private val applier = ReadbackPolicyApplier(port, onFailure)
+    private val applier = ReadbackPolicyApplier(port, onFailure, timings)
     private var plan: PolicyPlan? = null
     private var applied: ApplyResult? = null
     private val runFlipFailures = mutableSetOf<PackageName>()
@@ -104,17 +106,17 @@ class BootReapply(
         applied = null
         runFlipFailures.clear()
         runFlipped.clear()
-        plan = attempt { filter.apply(decide(locked)) }
-        val ready = attempt { sessions.onStart() } == true
+        plan = attempt { timings.measure("input") { filter.apply(decide(locked)) } }
+        val ready = attempt { timings.measure("sessionStart") { sessions.onStart() } } == true
         // Emergency repair does not depend on the revoke, on an earlier stage or on a plan. The journal
         // stays revoke-pending and the run stays not ready, so nothing is handed back.
         val repairPlan = plan ?: fallbackPlan()
         if (!ready && applied?.applied?.containsAll(ReadbackPolicyApplier.EMERGENCY_STAGES) != true) {
             attempt { applier.repairEmergency(repairPlan) }?.let(::record)
         }
-        val failures = rememberFlipFailures()
+        val failures = timings.measure("flipRecord") { rememberFlipFailures() }
         val floorPackages = repairPlan.emergencyUi + repairPlan.neverHide
-        val nowDisabled = attempt { applier.disabled(repairPlan) }.orEmpty()
+        val nowDisabled = attempt { timings.measure("disabledRead") { applier.disabled(repairPlan) } }.orEmpty()
         val disabledFloor = (applied?.unrepairable.orEmpty() + nowDisabled) intersect floorPackages
         return BootOutcome(
             ready, locked, applied?.copy(flipFailures = failures.names), filter.withheld, disabledFloor,
@@ -160,7 +162,7 @@ class BootReapply(
 
     /** Restrictions, floor and guard without the policy engine: fixed sets and OS-sourced floor only. */
     private fun fallbackPlan(): PolicyPlan {
-        val emergency = attempt { floor() }
+        val emergency = attempt { timings.measure("osFloor") { floor() } }
         val emergencyUi = emergency?.emergencyUi.orEmpty()
         val neverHide = emergency?.neverHide.orEmpty() + emergencyUi
         val lockdown = attempt { !turnOffCommitting() } == true
@@ -184,7 +186,7 @@ class BootReapply(
     }
 
     private inner class Effects : SessionEffects {
-        override fun revokeAllRelaxations(): Boolean = attempt {
+        override fun revokeAllRelaxations(): Boolean = timings.measure("revoke") { attempt {
             val keep = plan?.neverHide
             val inLockTask = port.lockTaskPackages()
             if (inLockTask.any { it in sessionPackages }) port.setLockTaskPackages(inLockTask - sessionPackages)
@@ -195,7 +197,7 @@ class BootReapply(
             }
             keep != null && port.lockTaskPackages().none { it in sessionPackages } &&
                 (sessionPackages - keep).all { port.packageState(it)?.hidden != false }
-        } == true
+        } == true }
 
         override fun open(access: SessionAccess): Boolean = false
 
