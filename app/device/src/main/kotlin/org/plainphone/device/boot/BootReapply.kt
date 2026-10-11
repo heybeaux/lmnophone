@@ -133,6 +133,11 @@ class BootReapply(
      * unreadable store is unknown. Saved when it changed, when an earlier save was not acknowledged, or
      * when this process first reads unknown: a read that failed only this once must not let a restart
      * read an empty record and drop the attention (PLA-307 finding 3).
+     *
+     * Durable once a save succeeds. Until then the running process keeps the record in memory, shows
+     * attention and retries the save on every pass. Known limit (copy-test spec, "The attention
+     * record"): if every save fails and the process dies first, the record is lost. Emergency repair
+     * never waits for it.
      */
     private fun rememberFlipFailures(): FlipFailures {
         val firstRead = unresolved == null
