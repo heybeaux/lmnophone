@@ -71,19 +71,24 @@ class DeviceReconciliationTest {
         var sticks = true
         /** Runs inside set: lets a test change Android state after the policy apply. */
         var onSet: () -> Unit = {}
+        /** The call ([throwOn]) that throws a checked exception instead of an unchecked one. */
+        var checked: String? = null
         override fun setPolicy(accounts: List<String>) {
             ops += "set $accounts"
             onSet()
+            if (checked == "set") throw java.io.IOException("synthetic set failure")
             if (throwOn == "set") throw UnsupportedOperationException("no persistent data block")
             if (sticks) policy = ResetProtectionReading(accounts, true)
         }
         override fun readPolicy(): ResetProtectionReading? {
             ops += "read"
+            if (checked == "read") throw java.io.IOException("synthetic read failure")
             if (throwOn == "read") throw IllegalStateException("unreadable")
             return policy
         }
         override fun sendConfigChanged() {
             ops += "broadcast"
+            if (checked == "broadcast") throw java.io.IOException("synthetic broadcast failure")
             if (throwOn == "broadcast") throw SecurityException("denied")
         }
     }
@@ -240,5 +245,404 @@ class DeviceReconciliationTest {
         assertFalse("effects bound to another store are refused", runCatching {
             rig.store.waitingReconciler({ input }, crossed, PersonAuthorityConsumer { _, _, _ -> true })
         }.isSuccess)
+    }
+    // The four PLA-308 review probes, kept as regressions unchanged.
+    @Test fun reviewRestrictionFailureStillRepairsEmergencyFloor() {
+        val rig = Rig()
+        rig.lose()
+        rig.dpm.state[dialer] = PackageState(hidden = true, suspended = true, enabled = true)
+        rig.dpm.throwOnWrite = "restrictions"
+        assertEquals(ReconcileFailure.POLICY_APPLY, rig.reconciler.reconcile().failure)
+        assertFalse("restriction failure must not skip dialer repair", rig.dpm.state.getValue(dialer).hidden)
+        assertFalse(rig.dpm.state.getValue(dialer).suspended)
+        assertTrue(dialer in rig.dpm.lockTask)
+    }
+
+    @Test fun reviewFactoryDoesNotAllowStoreWriteInsideAnEffect() {
+        val rig = Rig()
+        rig.lose()
+        var interleaved = false
+        rig.reset.onSet = {
+            val before = rig.store.approvals.read()!!
+            interleaved = rig.store.approvals.compareAndSet(before,
+                org.plainphone.policy.AppApprovalState(revision = before.revision + 1), rig.store.credentials.read())
+        }
+        val result = rig.reconciler.reconcile()
+        assertFalse("store write interleaved during reset effect; reconciliation returned $result", interleaved)
+    }
+
+    @Test fun reviewCheckedResetExceptionBecomesTypedFailure() {
+        val rig = Rig()
+        rig.lose()
+        rig.reset.onSet = { throw java.io.IOException("synthetic adapter failure") }
+        assertEquals(ReconcileFailure.RESET_APPLY, rig.reconciler.reconcile().failure)
+    }
+
+    @Test fun reviewDiagnosticsRemainReportedWithoutHoldingRecoveredSlot() {
+        val rig = Rig()
+        rig.lose()
+        rig.dpm.state[messages] = PackageState(hidden = true, suspended = false, enabled = false)
+        rig.dpm.flipsIgnored = 100
+        var reported: org.plainphone.device.ApplyResult? = null
+        val effects = DeviceReconciliationEffects({ true }, DeviceOwnerReader { true },
+            ReadbackPolicyApplier(rig.dpm), ResetProtectionEffects(rig.reset), rig.store,
+            onApplied = { reported = it })
+        val reconciler = rig.store.waitingReconciler({ input }, effects, PersonAuthorityConsumer { _, _, _ -> true })
+        assertEquals(ReconcileOutcome.RECOVERED, reconciler.reconcile().outcome)
+        assertTrue(reported!!.complete)
+        assertTrue(messages in reported!!.unrepairable)
+        assertTrue(messages in reported!!.flipFailures)
+        assertTrue(reported!!.needsAttention)
+    }
+
+    private fun hideDialer(rig: Rig) {
+        rig.dpm.state[dialer] = PackageState(hidden = true, suspended = true, enabled = true)
+        rig.dpm.lockTask = emptySet()
+    }
+    private fun assertDialerRepaired(rig: Rig, case: String) {
+        assertFalse("$case: dialer unhidden", rig.dpm.state.getValue(dialer).hidden)
+        assertFalse("$case: dialer unsuspended", rig.dpm.state.getValue(dialer).suspended)
+        assertTrue("$case: dialer in lock task", dialer in rig.dpm.lockTask)
+    }
+
+    /** A failure before the policy apply (revocation) or after it (reset) still repairs the emergency floor; the slot stays held. */
+    @Test fun everyNeedsAttentionResultRepairsTheEmergencyFloor() {
+        val cases = listOf<Pair<ReconcileFailure, (Rig) -> Unit>>(
+            ReconcileFailure.REVOCATION to { it.revoked = { false } },
+            ReconcileFailure.RESET_APPLY to { it.reset.throwOn = "set" },
+        )
+        for ((expected, fault) in cases) {
+            val rig = Rig()
+            rig.lose()
+            fault(rig)
+            rig.dpm.ops.clear()
+            hideDialer(rig)
+            assertEquals("$expected", expected, rig.reconciler.reconcile().failure)
+            assertDialerRepaired(rig, "$expected")
+            assertNull("$expected leaves the slot held", rig.store.waitingStore.read())
+        }
+    }
+
+    /** Checked exceptions from any reset-protection call are typed failures, never thrown out of reconcile. */
+    @Test fun aCheckedExceptionAtEveryResetCallIsATypedFailure() {
+        for ((call, expected) in listOf("set" to ReconcileFailure.RESET_APPLY, "broadcast" to ReconcileFailure.RESET_APPLY,
+                "read" to ReconcileFailure.RESET_READBACK)) {
+            val rig = Rig()
+            rig.lose()
+            rig.reset.checked = call
+            val result = rig.reconciler.reconcile()
+            assertEquals(call, ReconcileOutcome.NEEDS_ATTENTION, result.outcome)
+            assertEquals(call, expected, result.failure)
+        }
+    }
+
+    /** A writer on another thread waits for the whole reconciliation, then lands after it. */
+    @Test fun aCompetingWriterWaitsForTheWholeReconciliation() {
+        val rig = Rig()
+        rig.lose()
+        val inEffect = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        rig.reset.onSet = { inEffect.countDown(); check(release.await(10, java.util.concurrent.TimeUnit.SECONDS)) }
+        var result: org.plainphone.policy.ReconcileResult? = null
+        val a = Thread { result = rig.reconciler.reconcile() }
+        a.start()
+        assertTrue(inEffect.await(10, java.util.concurrent.TimeUnit.SECONDS))
+        var written: Boolean? = null
+        var recoveredFirst: Boolean? = null
+        val b = Thread {
+            val before = rig.store.approvals.read()!!
+            recoveredFirst = rig.store.waitingStore.read() != null
+            written = rig.store.approvals.compareAndSet(before,
+                org.plainphone.policy.AppApprovalState(revision = before.revision + 1), rig.store.credentials.read())
+        }
+        b.start()
+        Thread.sleep(300)
+        assertTrue("the competing writer waits during the effect", b.isAlive)
+        release.countDown()
+        a.join(10_000); b.join(10_000)
+        assertEquals(ReconcileOutcome.RECOVERED, result!!.outcome)
+        assertEquals(true, recoveredFirst)
+        assertEquals(true, written)
+    }
+
+    /** Reconciliation inside one of its own effects is refused, not run nested; the outer one still finishes. */
+    @Test fun aNestedReconciliationInsideAnEffectIsRefused() {
+        val rig = Rig()
+        rig.lose()
+        var nested: org.plainphone.policy.ReconcileResult? = null
+        rig.reset.onSet = { nested = rig.reconciler.reconcile() }
+        assertEquals(ReconcileOutcome.RECOVERED, rig.reconciler.reconcile().outcome)
+        assertEquals(ReconcileOutcome.NEEDS_ATTENTION, nested!!.outcome)
+        assertEquals(1, rig.store.waitingStore.read()!!.recoveryReceipts.size)
+    }
+
+    /** The startup revocation is a participating store writer: it may write inside the boundary. */
+    @Test fun revocationMayWriteTheStoreInsideTheBoundary() {
+        val rig = Rig()
+        rig.lose()
+        var wrote = false
+        rig.revoked = {
+            val before = rig.store.approvals.read()!!
+            wrote = rig.store.approvals.compareAndSet(before,
+                org.plainphone.policy.AppApprovalState(revision = before.revision + 1), rig.store.credentials.read())
+            wrote
+        }
+        assertEquals(ReconcileOutcome.RECOVERED, rig.reconciler.reconcile().outcome)
+        assertTrue(wrote)
+    }
+    /** Revocation runs inside the boundary but outside effect mode: a reconciliation started from it is still refused, not run nested. */
+    @Test fun aReconciliationStartedFromTheRevocationIsRefused() {
+        val rig = Rig()
+        rig.lose()
+        var nested: org.plainphone.policy.ReconcileResult? = null
+        rig.revoked = { if (nested == null) nested = rig.reconciler.reconcile(); true }
+        assertEquals(ReconcileOutcome.RECOVERED, rig.reconciler.reconcile().outcome)
+        assertEquals(DeviceWaitingReconciliation.NOT_RUN, nested)
+    }
+
+    /** The policy effect on its own: a failed stage still runs the emergency repair of the same plan, and reports false. */
+    @Test fun aFailedPolicyApplyRepairsTheFloorInTheEffectItself() {
+        val rig = Rig()
+        hideDialer(rig)
+        rig.dpm.throwOnWrite = "restrictions"
+        assertFalse(rig.effects.applyPolicy(PolicyEngine.decide(input)))
+        assertDialerRepaired(rig, "effect")
+    }
+
+    // The PLA-323 review probes, kept as regressions unchanged.
+    @Test fun reviewKnownPlanStillRepairsIfTheSecondInputReadReturnsNull() = reviewKnownPlan(false)
+    @Test fun reviewKnownPlanStillRepairsIfTheSecondInputReadThrows() = reviewKnownPlan(true)
+    @Test fun reviewKnownPlanControlWithStableInput() = reviewKnownPlan(false, true)
+
+    private fun reviewKnownPlan(throws: Boolean, stable: Boolean = false) {
+        run {
+            val rig = Rig()
+            rig.lose()
+            var reads = 0
+            val reconciler = rig.store.waitingReconciler({
+                reads++
+                if (reads == 1 || stable) input else if (throws) throw java.io.IOException("synthetic input failure") else null
+            }, rig.effects, PersonAuthorityConsumer { _, _, _ -> true })
+            rig.reset.onSet = { hideDialer(rig) }
+            rig.reset.throwOn = "set"
+            val result = reconciler.reconcile()
+            assertEquals(ReconcileOutcome.NEEDS_ATTENTION, result.outcome)
+            assertEquals(ReconcileFailure.RESET_APPLY, result.failure)
+            assertNull(rig.store.waitingStore.read())
+            assertDialerRepaired(rig, "already built plan; second read throws=$throws")
+        }
+    }
+
+    @Test fun reviewEffectsRefuseCapturedWritesAcrossStoreInstances() {
+        val rig = Rig()
+        rig.lose()
+        val alias = JointAuthorityStore(rig.dir)
+        val before = alias.approvals.read()!!
+        val creds = alias.credentials.read()!!
+        var ran = false
+        rig.reset.onSet = {
+            ran = true
+            assertNull(alias.credentials.read())
+            assertNull(alias.approvals.read())
+            assertNull(alias.elevationStore.read())
+            assertNull(alias.update.readUpdate())
+            assertNull(alias.reconciliation.lostRecord())
+            assertFalse(alias.approvals.compareAndSet(before,
+                org.plainphone.policy.AppApprovalState(revision = before.revision + 1), creds))
+            assertFalse(alias.cancelIntents.initialize("review-synthetic"))
+            assertFalse(alias.cancelIntents.request("review-synthetic"))
+            assertNull(rig.reconciler.prepareRepair(anna))
+        }
+        assertEquals(ReconcileOutcome.RECOVERED, rig.reconciler.reconcile().outcome)
+        assertTrue(ran)
+        assertEquals(before.revision, alias.approvals.read()!!.revision)
+    }
+
+    @Test fun reviewOperationTimeoutRefusesWithoutAcknowledging() {
+        val rig = Rig()
+        rig.lose()
+        val before = rig.store.approvals.read()!!
+        val creds = rig.store.credentials.read()!!
+        val entered = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val old = JointAuthorityStore.coordinatorWaitMillis
+        val result = java.util.concurrent.atomic.AtomicReference<org.plainphone.policy.ReconcileResult>()
+        val worker = Thread { result.set(rig.reconciler.reconcile()) }
+        try {
+            JointAuthorityStore.coordinatorWaitMillis = 150
+            rig.reset.onSet = { entered.countDown(); check(release.await(5, java.util.concurrent.TimeUnit.SECONDS)) }
+            worker.start()
+            assertTrue(entered.await(5, java.util.concurrent.TimeUnit.SECONDS))
+            val alias = JointAuthorityStore(rig.dir)
+            assertFalse(alias.approvals.compareAndSet(before,
+                org.plainphone.policy.AppApprovalState(revision = before.revision + 1), creds))
+            assertEquals(DeviceWaitingReconciliation.NOT_RUN, rig.reconciler.reconcile())
+            release.countDown()
+            worker.join(5000)
+            assertFalse(worker.isAlive)
+            assertEquals(ReconcileOutcome.RECOVERED, result.get().outcome)
+            assertEquals(before.revision, rig.store.approvals.read()!!.revision)
+        } finally {
+            release.countDown()
+            worker.join(5000)
+            JointAuthorityStore.coordinatorWaitMillis = old
+        }
+    }
+
+    @Test fun reviewOperationCannotDeadlockAnOutsideMonitor() {
+        val rig = Rig()
+        val monitor = Object()
+        val monitorHeld = java.util.concurrent.CountDownLatch(1)
+        val insideOperation = java.util.concurrent.CountDownLatch(1)
+        val old = JointAuthorityStore.coordinatorWaitMillis
+        val refusedRead = java.util.concurrent.atomic.AtomicBoolean(false)
+        val worker = Thread {
+            synchronized(monitor) {
+                monitorHeld.countDown()
+                check(insideOperation.await(5, java.util.concurrent.TimeUnit.SECONDS))
+                refusedRead.set(rig.store.credentials.read() == null)
+            }
+        }
+        try {
+            JointAuthorityStore.coordinatorWaitMillis = 150
+            worker.start()
+            assertTrue(monitorHeld.await(5, java.util.concurrent.TimeUnit.SECONDS))
+            assertTrue(rig.store.serialized(false) {
+                insideOperation.countDown()
+                synchronized(monitor) { true }
+            })
+            worker.join(5000)
+            assertFalse(worker.isAlive)
+            assertTrue(refusedRead.get())
+            assertTrue(rig.store.credentials.read() != null)
+        } finally {
+            insideOperation.countDown()
+            worker.join(5000)
+            JointAuthorityStore.coordinatorWaitMillis = old
+        }
+    }
+
+    /** A grant for the always-true test authority; FreshAuthority's constructor is internal to :policy. */
+    private fun grant(): org.plainphone.policy.FreshAuthority =
+        org.plainphone.policy.FreshAuthority::class.java.getDeclaredConstructor().apply { isAccessible = true }.newInstance()
+
+    /** PIN Repair runs the same entry point: a failure after the plan was applied repairs from that plan, even when input then fails. */
+    @Test fun pinRepairRepairsTheFloorFromTheRunsOwnPlan() {
+        val rig = Rig()
+        rig.lose()
+        var reads = 0
+        val reconciler = rig.store.waitingReconciler({ if (++reads == 1) input else null }, rig.effects, PersonAuthorityConsumer { _, _, _ -> true })
+        val request = reconciler.prepareRepair(anna)!!
+        rig.reset.onSet = { hideDialer(rig) }
+        rig.reset.throwOn = "set"
+        val result = reconciler.repair(request, grant())
+        assertEquals(ReconcileFailure.RESET_APPLY, result.failure)
+        assertDialerRepaired(rig, "PIN Repair")
+        assertNull(rig.store.waitingStore.read())
+    }
+
+    /** The plan of one run is never used by the next: a later run with no input repairs nothing. */
+    @Test fun aRunsPlanIsNotCarriedIntoTheNextRun() {
+        val rig = Rig()
+        rig.lose()
+        var available = true
+        val reconciler = rig.store.waitingReconciler({ if (available) input else null }, rig.effects, PersonAuthorityConsumer { _, _, _ -> true })
+        rig.reset.throwOn = "set"
+        assertEquals(ReconcileFailure.RESET_APPLY, reconciler.reconcile().failure)
+        available = false
+        rig.revoked = { false }
+        rig.dpm.ops.clear()
+        assertEquals(ReconcileFailure.REVOCATION, reconciler.reconcile().failure)
+        assertTrue("no plan, so no DPM write: ${rig.dpm.ops}", rig.dpm.ops.isEmpty())
+    }
+
+    /** A plan left by a direct effect call outside any run is not used by the next run either. */
+    @Test fun aPlanFromOutsideARunIsNotUsedByTheNextRun() {
+        val rig = Rig()
+        rig.lose()
+        assertTrue(rig.effects.applyPolicy(PolicyEngine.decide(input)))
+        val reconciler = rig.store.waitingReconciler({ null }, rig.effects, PersonAuthorityConsumer { _, _, _ -> true })
+        rig.revoked = { false }
+        rig.dpm.ops.clear()
+        assertEquals(ReconcileFailure.REVOCATION, reconciler.reconcile().failure)
+        assertTrue("no plan in this run, so no DPM write: ${rig.dpm.ops}", rig.dpm.ops.isEmpty())
+    }
+
+    // PLA-328 F1. The reviewer's two probes, kept except for a 150 ms coordinator wait: a direct effect call
+    // from another thread now waits for the running operation and is refused at the limit, so with the
+    // default 10 s wait the probe's 2 s join would end first.
+    @Test fun reviewConcurrentDirectApplyCannotReplaceReconcilePlan() = reviewConcurrentDirectApply(false)
+    @Test fun reviewConcurrentDirectApplyCannotReplacePinRepairPlan() = reviewConcurrentDirectApply(true)
+
+    private fun reviewConcurrentDirectApply(pinRepair: Boolean) {
+        val rig = Rig()
+        rig.lose()
+        val request = if (pinRepair) rig.reconciler.prepareRepair(anna)!! else null
+        // A separate pass with incomplete floor facts must not replace this run's known plan.
+        val otherPlan = PolicyEngine.decide(input.copy(identities = emptyList()))
+        val otherFailure = java.util.concurrent.atomic.AtomicReference<Throwable>()
+        val otherResult = java.util.concurrent.atomic.AtomicReference<Boolean>()
+        val old = JointAuthorityStore.coordinatorWaitMillis
+        try {
+            JointAuthorityStore.coordinatorWaitMillis = 150
+            rig.reset.onSet = {
+                val before = rig.dpm.ops.size
+                val other = Thread {
+                    try { otherResult.set(rig.effects.applyPolicy(otherPlan)) }
+                    catch (failure: Throwable) { otherFailure.set(failure) }
+                }
+                other.start()
+                other.join(2000)
+                assertFalse("direct effect completed while reconciliation still owns the boundary", other.isAlive)
+                assertNull(otherFailure.get())
+                assertEquals("refused, not run, during another thread's operation", false, otherResult.get())
+                assertEquals("the refused call wrote nothing", before, rig.dpm.ops.size)
+                hideDialer(rig)
+            }
+            rig.reset.throwOn = "set"
+            val result = if (pinRepair) rig.reconciler.repair(request!!, grant()) else rig.reconciler.reconcile()
+            assertEquals(ReconcileFailure.RESET_APPLY, result.failure)
+            assertNull(rig.store.waitingStore.read())
+            assertDialerRepaired(rig, "concurrent direct apply; PIN repair=$pinRepair")
+        } finally {
+            JointAuthorityStore.coordinatorWaitMillis = old
+        }
+    }
+
+    /** A direct call nested in the run's own effect (same thread) runs, but its plan never becomes the run's repair plan. */
+    @Test fun aNestedDirectApplyCannotReplaceTheRunsPlan() {
+        for (pinRepair in listOf(false, true)) {
+            val rig = Rig()
+            rig.lose()
+            val request = if (pinRepair) rig.reconciler.prepareRepair(anna)!! else null
+            val otherPlan = PolicyEngine.decide(input.copy(identities = emptyList()))
+            var nested: Boolean? = null
+            rig.reset.onSet = { nested = rig.effects.applyPolicy(otherPlan); hideDialer(rig) }
+            rig.reset.throwOn = "set"
+            val result = if (pinRepair) rig.reconciler.repair(request!!, grant()) else rig.reconciler.reconcile()
+            assertTrue("nested call ran", nested != null)
+            assertEquals(ReconcileFailure.RESET_APPLY, result.failure)
+            assertNull(rig.store.waitingStore.read())
+            assertDialerRepaired(rig, "nested direct apply; PIN repair=$pinRepair")
+        }
+    }
+
+    /** A direct effect call from another thread waits for the whole run, then runs. */
+    @Test fun aDirectEffectFromAnotherThreadWaitsForTheRun() {
+        val rig = Rig()
+        rig.lose()
+        val otherResult = java.util.concurrent.atomic.AtomicReference<Boolean?>()
+        var other: Thread? = null
+        var waited = false
+        rig.reset.onSet = {
+            val before = rig.dpm.ops.size
+            other = Thread { otherResult.set(rig.effects.applyPolicy(PolicyEngine.decide(input))) }.also { it.start() }
+            Thread.sleep(200)
+            waited = other!!.isAlive && rig.dpm.ops.size == before
+        }
+        assertEquals(ReconcileOutcome.RECOVERED, rig.reconciler.reconcile().outcome)
+        other!!.join(5000)
+        assertTrue("the direct call waited and wrote nothing during the run", waited)
+        assertEquals(true, otherResult.get())
     }
 }
