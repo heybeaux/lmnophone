@@ -360,7 +360,7 @@ always be found (trusted-person-controls, "Where Cancel is reachable"), whatever
 More → **Phone settings** offers one PIN-free switch, off by default:
 **Show missed calls and unread texts on Home**.
 
-Under it: **Counts texts and picture messages. Chat messages (RCS) may not be counted.**
+Under it: **Counts texts and picture messages. Chat messages (RCS) and other apps are not counted.**
 When on but unavailable, show the applicable line(s):
 - **LMNOPhone can't read missed calls right now**
 - **LMNOPhone can't read unread texts right now**
@@ -538,3 +538,6 @@ gives them.
 - **Body:** Tap Start within {m} minutes. This uses 1 of your {left} openings left today.
 - **Primary:** Start → opens {kind}
 - **Secondary:** Not now → home. If Start isn't tapped in time, it closes and doesn't count.
+
+Approved count permission disclosure (design revision 2, D7):
+"LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say."
