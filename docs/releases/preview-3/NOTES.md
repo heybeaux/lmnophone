@@ -5,6 +5,9 @@ Android 15) on 2026-10-11 at 04:50:50 UTC (Sat 10 Oct, 21:50 PDT), over preview-
 and the tester's starter list and settings were kept. APK sha256 `ec3e05bb…d329f720cb`, `testOnly=true`, same
 signing key. It was built from `release/preview-2` at `f33cd44`; later commits are evidence and notes only.
 
+**Owner observation (not install evidence):** Beaux reported seeing the change on his spare (board relay,
+Telegram3188, 2026-10-11). The install and readback evidence is `evidence/spare/upgrade-check.txt`.
+
 ## What changed since preview-2
 - **Calmer Home.** "More" is now plain centred text: no outline, no arrow, no "Ask for an app, settings, help" line.
   It is still a big touch target and still opens More, including Emergency 9-1-1 (PLA-285, cherry-picked as `6fc9698`, `bf1f29c`).
@@ -44,6 +47,12 @@ save flip, best effort), the locked-restart and power-cut checks. See `../previe
 - Evidence: spare screenshots `1-after-install-home.png` and `2-after-restart-home.png` are byte-identical, and both show
   the post-restart clock (9:51). So the after-install Home is evidenced by the text read-back only, not by its own
   screenshot. `4-` and `5-` are also identical (the same dial pad reached two ways).
+- Home at 100 % text, 200 % text and on a short screen is covered by the Paparazzi goldens only
+  (`HomeScreenshotTest[fontScale=1|2]`, `HomeShortScreenshotTest[height=480|540|560]`). Those variants were not
+  captured on the emulator or the spare. The `HomeScreenTest` instrumented test was not run for this build.
+- Emulator screenshots `0-before-home.png` and `1-after-install-home.png` are byte-identical: `0-` was taken in the
+  second pass, after the upgrade. The real before state (v1, with the "Ask for an app…" line) is the text in
+  `evidence/emulator/upgrade-install.txt`.
 - Same known risk as preview-2: the unhide save flip is best effort (see `../preview-2/NOTES.md`).
 
 ## Way out
