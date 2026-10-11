@@ -12,6 +12,7 @@ import org.plainphone.policy.CredentialState
 import org.plainphone.policy.FreshAuthority
 import org.plainphone.policy.FrictionSettings
 import org.plainphone.policy.PersonAuthorityConsumer
+import org.plainphone.device.boot.RestrictionFilter
 import org.plainphone.policy.PolicyEngine
 import org.plainphone.policy.PolicyInput
 import org.plainphone.policy.PolicyPlan
@@ -43,6 +44,9 @@ class DpmDeviceOwnerReader(private val context: Context) : DeviceOwnerReader {
  * - Every Android effect (owner read, policy, reset protection) runs as a [JointAuthorityStore.androidEffect]:
  *   a store call made from it is refused, and a call from outside a running reconciliation waits for the
  *   whole run (refused as a failure past the wait limit), so it never interleaves with one.
+ * - Every plan goes through [filter], the same build/SDK restriction filter as the boot re-apply, before
+ *   the write, the readback and the emergency repair (PLA-350 R1): a test build never applies the
+ *   recovery restrictions it withholds, and no build expects keys its API level lacks.
  * - [applyPolicy] runs the whole plan through [applier]; it is true only when no stage failed. When a
  *   stage fails it then runs the applier's independent emergency repair of the same plan, so an early
  *   failure (such as restrictions) never skips the dialer and never-hide repair, and still returns
@@ -64,15 +68,16 @@ class DeviceReconciliationEffects(
     private val applier: ReadbackPolicyApplier,
     private val reset: ResetProtectionEffects,
     internal val store: JointAuthorityStore,
+    private val filter: RestrictionFilter,
     private val onApplied: (ApplyResult) -> Unit = {},
 ) : ReconciliationEffects {
     override fun revokeTemporaryAccess(): Boolean = attempt { revoke() }
     override fun isDeviceOwner(): Boolean? = android(null) { try { owner.isDeviceOwner() } catch (_: Exception) { null } }
 
     override fun applyPolicy(plan: PolicyPlan): Boolean = android(false) {
-        attempt { applier.apply(plan).also(onApplied).complete }.also { if (!it) repairFloorHeld(plan) }
+        attempt { applier.apply(filter.apply(plan)).also(onApplied).complete }.also { if (!it) repairFloorHeld(plan) }
     }
-    override fun readBackPolicy(plan: PolicyPlan): Boolean = android(false) { attempt { applier.readBack(plan) } }
+    override fun readBackPolicy(plan: PolicyPlan): Boolean = android(false) { attempt { applier.readBack(filter.apply(plan)) } }
 
     override fun applyResetProtection(userIds: Set<String>): Boolean =
         android(false) { attempt { reset.setResetProtection(userIds) && reset.broadcastResetProtectionChanged() } }
@@ -85,7 +90,7 @@ class DeviceReconciliationEffects(
     internal fun repairFloor(plan: PolicyPlan) = android(Unit) { repairFloorHeld(plan) }
 
     private fun repairFloorHeld(plan: PolicyPlan) {
-        try { onApplied(applier.repairEmergency(plan)) } catch (_: Exception) { }
+        try { onApplied(applier.repairEmergency(filter.apply(plan))) } catch (_: Exception) { }
     }
 
     private fun activeFriction(): FrictionSettings? = try { store.credentials.read()?.recoveryProfile?.friction } catch (_: Exception) { null }

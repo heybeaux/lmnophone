@@ -5,6 +5,7 @@ package org.plainphone.device.authority
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -19,6 +20,10 @@ import org.plainphone.device.ReadbackPolicyApplier
 import org.plainphone.device.ResetProtectionEffects
 import org.plainphone.device.ResetProtectionPort
 import org.plainphone.device.ResetProtectionReading
+import org.plainphone.device.boot.BootReapply
+import org.plainphone.device.boot.RestrictionFilter
+import org.plainphone.device.storage.FileJournalStore
+import org.plainphone.policy.Restriction
 import org.plainphone.policy.CredentialState
 import org.plainphone.policy.ElevationRecord
 import org.plainphone.policy.FloorIdentity
@@ -104,6 +109,7 @@ class DeviceReconciliationTest {
         var revoked: () -> Boolean = { true },
         var owner: () -> Boolean = { true },
         fresh: Boolean = true,
+        filter: RestrictionFilter = RestrictionFilter.NONE,
     ) {
         val order = mutableListOf<String>()
         val effects = DeviceReconciliationEffects(
@@ -112,6 +118,7 @@ class DeviceReconciliationTest {
             applier = ReadbackPolicyApplier(dpm),
             reset = ResetProtectionEffects(reset),
             store = store,
+            filter = filter,
         )
         val reconciler = store.waitingReconciler({ input }, effects, PersonAuthorityConsumer { _, _, _ -> true })
         init { if (fresh) assertTrue(store.initialize(credentials(), WaitingState(storageGeneration = "live"), ElevationRecord())) }
@@ -241,7 +248,7 @@ class DeviceReconciliationTest {
         rig.lose()
         val other = Rig()
         val crossed = DeviceReconciliationEffects({ true }, DeviceOwnerReader { true }, ReadbackPolicyApplier(dpm()),
-            ResetProtectionEffects(ResetPort()), other.store)
+            ResetProtectionEffects(ResetPort()), other.store, RestrictionFilter.NONE)
         assertFalse("effects bound to another store are refused", runCatching {
             rig.store.waitingReconciler({ input }, crossed, PersonAuthorityConsumer { _, _, _ -> true })
         }.isSuccess)
@@ -285,7 +292,7 @@ class DeviceReconciliationTest {
         rig.dpm.flipsIgnored = 100
         var reported: org.plainphone.device.ApplyResult? = null
         val effects = DeviceReconciliationEffects({ true }, DeviceOwnerReader { true },
-            ReadbackPolicyApplier(rig.dpm), ResetProtectionEffects(rig.reset), rig.store,
+            ReadbackPolicyApplier(rig.dpm), ResetProtectionEffects(rig.reset), rig.store, RestrictionFilter.NONE,
             onApplied = { reported = it })
         val reconciler = rig.store.waitingReconciler({ input }, effects, PersonAuthorityConsumer { _, _, _ -> true })
         assertEquals(ReconcileOutcome.RECOVERED, reconciler.reconcile().outcome)
@@ -644,5 +651,164 @@ class DeviceReconciliationTest {
         other!!.join(5000)
         assertTrue("the direct call waited and wrote nothing during the run", waited)
         assertEquals(true, otherResult.get())
+    }
+
+    // Wiring slice 1: what every policy pass reads from the one authority store (AuthorityPass).
+    private fun turnOff(phase: org.plainphone.policy.WaitingPhase) = org.plainphone.policy.WaitingOperation(
+        org.plainphone.policy.WaitingIdentity("wait-1", "synthetic-cancel"), anna, 1, 0, Mode.TRUSTED,
+        org.plainphone.core.RunningTime("epoch", 0), phase, mapOf(anna to 1L, ben to 2L),
+        recipientContacts = mapOf(anna to null, ben to null))
+
+    private fun Rig.pass() = AuthorityPass(store, reconciler)
+
+    /** A phone that never set up trusted people has no store: normal policy, no reconciliation, nothing written. */
+    @Test fun aFreshPhoneHasNoWaitingOperationAndWritesNothing() {
+        val rig = Rig(fresh = false)
+        val pass = rig.pass()
+        assertNull(pass.waitingOperation())
+        assertFalse(pass.turnOffCommitting())
+        assertNull(pass.reconcileIfLost())
+        assertTrue("nothing written: ${files(rig.dir).keys}", files(rig.dir).isEmpty())
+        assertTrue(rig.dpm.ops.isEmpty())
+        assertTrue(rig.reset.ops.isEmpty())
+    }
+
+    /** Each read is fresh: a turn-off that moves to COMMITTING selects the floor-only plan on the next pass. */
+    @Test fun aCommittingTurnOffIsReadFreshOnEveryPass() {
+        val rig = Rig()
+        val pass = rig.pass()
+        val vacant = rig.store.waitingStore.read()!!
+        val pending = WaitingState(1, turnOff(org.plainphone.policy.WaitingPhase.PENDING), emptyList(), "live")
+        assertTrue(rig.store.waitingStore.compareAndSet(vacant, pending))
+        assertEquals(org.plainphone.policy.WaitingPhase.PENDING, pass.waitingOperation()?.phase)
+        assertFalse(pass.turnOffCommitting())
+        assertTrue(PolicyEngine.decide(input.copy(waitingOperation = pass.waitingOperation())).restrictions.isNotEmpty())
+        val committing = WaitingState(2, turnOff(org.plainphone.policy.WaitingPhase.COMMITTING), emptyList(), "live")
+        assertTrue(rig.store.waitingStore.compareAndSet(rig.store.waitingStore.read()!!, committing))
+        assertTrue(pass.turnOffCommitting())
+        val plan = PolicyEngine.decide(input.copy(waitingOperation = pass.waitingOperation()))
+        assertTrue("floor only: ${plan.restrictions}", plan.restrictions.isEmpty())
+        assertNull(pass.reconcileIfLost())
+    }
+
+    /** A damaged waiting record is not a committing turn-off: normal lockdown, and the loss is reconciled without a PIN. */
+    @Test fun aConfirmedLossReconcilesAutomatically() {
+        val rig = Rig()
+        rig.lose()
+        val pass = rig.pass()
+        assertNull(pass.waitingOperation())
+        assertFalse(pass.turnOffCommitting())
+        assertEquals(ReconcileOutcome.RECOVERED, pass.reconcileIfLost()?.outcome)
+        assertNotNull(rig.store.waitingStore.read())
+        assertNull("recovered: nothing lost on the next pass", pass.reconcileIfLost())
+    }
+
+    /** A failed automatic reconciliation keeps the slot held and is retried on the next pass. */
+    @Test fun aFailedAutomaticReconciliationIsRetriedOnTheNextPass() {
+        val rig = Rig()
+        rig.lose()
+        val pass = rig.pass()
+        rig.reset.throwOn = "set"
+        assertEquals(ReconcileFailure.RESET_APPLY, pass.reconcileIfLost()?.failure)
+        assertNull(rig.store.waitingStore.read())
+        rig.reset.throwOn = null
+        assertEquals(ReconcileOutcome.RECOVERED, pass.reconcileIfLost()?.outcome)
+    }
+
+    // PLA-350 R1: reconciliation applies, reads back and repairs through the build's restriction filter.
+    private fun reviewBoot(rig: Rig) = BootReapply(
+        FileJournalStore(tmp.newFolder(), null, "model", "build"),
+        rig.dpm, emptySet(),
+        { locked -> PolicyEngine.decide(input.copy(lockedBoot = locked, waitingOperation = rig.pass().waitingOperation())) },
+        RestrictionFilter.TEST_BUILD.forSdk(35),
+    )
+
+    /** The Verifier's probe; the only change is the Rig's filter, which PolicyRuntime now passes to both. */
+    @Test fun reviewLostRecordMustPreserveDebugRestrictionFilter() {
+        val rig = Rig(filter = RestrictionFilter.TEST_BUILD.forSdk(35))
+        rig.lose()
+        val boot = reviewBoot(rig)
+        assertTrue(boot.run(false).ready)
+        val withheld = RestrictionFilter.TEST_BUILD.withheld
+        assertTrue(rig.dpm.restrictionSet.intersect(withheld).isEmpty())
+        rig.revoked = { boot.sessions.onStart() }
+        assertEquals(ReconcileOutcome.RECOVERED, rig.pass().reconcileIfLost()?.outcome)
+        assertTrue("Reconciliation applied withheld restrictions: ${rig.dpm.restrictionSet.intersect(withheld)}",
+            rig.dpm.restrictionSet.intersect(withheld).isEmpty())
+    }
+
+    /** The effects themselves: the write leaves withheld keys out, and the readback does not expect them. */
+    @Test fun policyEffectsWriteAndReadBackThroughTheFilter() {
+        val filter = RestrictionFilter.TEST_BUILD.forSdk(33)
+        val rig = Rig(filter = filter)
+        val plan = PolicyEngine.decide(input)
+        assertTrue(Restriction.DISALLOW_CONFIG_DEFAULT_APPS in filter.withheld)
+        assertTrue(plan.restrictions.containsAll(filter.withheld))
+        assertTrue(rig.effects.applyPolicy(plan))
+        assertTrue("withheld: ${rig.dpm.restrictionSet.intersect(filter.withheld)}", rig.dpm.restrictionSet.intersect(filter.withheld).isEmpty())
+        assertEquals(plan.restrictions - filter.withheld, rig.dpm.restrictionSet)
+        assertTrue("readback of the filtered plan", rig.effects.readBackPolicy(plan))
+    }
+
+    /** A held reconciliation's floor repair also stays inside the filter. */
+    @Test fun aHeldReconciliationNeverAppliesWithheldRestrictions() {
+        val rig = Rig(filter = RestrictionFilter.TEST_BUILD.forSdk(35))
+        rig.lose()
+        rig.reset.throwOn = "set"
+        assertEquals(ReconcileFailure.RESET_APPLY, rig.pass().reconcileIfLost()?.failure)
+        assertTrue(rig.dpm.restrictionSet.intersect(RestrictionFilter.TEST_BUILD.withheld).isEmpty())
+    }
+
+    // PLA-350 R2: an initialized store that cannot be read carries attention on its own.
+    /** The Verifier's probe, asserting the separate attention signal: no reconciliation can start here. */
+    @Test fun reviewUnreadableInitializedAuthorityMustShowAttention() {
+        val rig = Rig()
+        File(rig.dir, "authority-a.rec").writeBytes(byteArrayOf(1))
+        File(rig.dir, "authority-b.rec").writeBytes(byteArrayOf(1))
+        val pass = rig.pass()
+        assertNull(pass.waitingOperation())
+        assertFalse(pass.turnOffCommitting())
+        assertNull(rig.store.credentials.read())
+        assertNull(rig.store.reconciliation.lostRecord())
+        assertNull("nothing to reconcile from", pass.reconcileIfLost())
+        assertTrue("Unreadable initialized authority produces no held/attention signal", pass.needsAttention())
+        assertTrue(rig.dpm.ops.isEmpty())
+    }
+
+    @Test fun aFreshOrReadablePhoneNeedsNoAttention() {
+        assertFalse(Rig(fresh = false).pass().needsAttention())
+        assertFalse(Rig().pass().needsAttention())
+    }
+
+    /** Copies gone, fences left: initialized, unreadable. */
+    @Test fun fencesWithoutCopiesNeedAttention() {
+        val rig = Rig()
+        assertTrue(File(rig.dir, "authority-a.rec").delete())
+        assertTrue(File(rig.dir, "authority-b.rec").delete())
+        assertTrue(rig.pass().needsAttention())
+    }
+
+    /** A loss needs attention until it is reconciled, and not after. */
+    @Test fun aLossNeedsAttentionUntilRecovered() {
+        val rig = Rig()
+        rig.lose()
+        val pass = rig.pass()
+        assertTrue(pass.needsAttention())
+        rig.reset.throwOn = "set"
+        assertEquals(ReconcileOutcome.NEEDS_ATTENTION, pass.reconcileIfLost()?.outcome)
+        assertTrue(pass.needsAttention())
+        rig.reset.throwOn = null
+        assertEquals(ReconcileOutcome.RECOVERED, pass.reconcileIfLost()?.outcome)
+        assertFalse(pass.needsAttention())
+    }
+
+    /** A lost waiting section whose recovery section is damaged too cannot start a reconciliation, but still needs attention. */
+    @Test fun aLossThatCannotStartReconciliationStillNeedsAttention() {
+        val rig = Rig()
+        rig.lose()
+        assertTrue(rig.store.replaceSectionForTest(Section.RECOVERY, byteArrayOf(9, 9)))
+        val pass = rig.pass()
+        assertNull(pass.reconcileIfLost())
+        assertTrue(pass.needsAttention())
     }
 }
