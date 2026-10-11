@@ -4,6 +4,7 @@ package org.plainphone.boot
 
 import android.app.ActivityManager
 import java.io.File
+import java.io.IOException
 
 /**
  * The live lock-task state, read at the Android boundary (PLA-322 finding 3). Only [LOCKED] is managed
@@ -35,7 +36,7 @@ enum class CallingScreen { IN_CALL, PHONE, EMERGENCY_KEYPAD }
 /**
  * Where [LockTaskRecovery] keeps the calling screen LMNOPhone opened, so it outlives the process that
  * opened it: Home's process can die while that screen is still opening (PLA-324). Best effort; a
- * record that can't be read or saved counts as nothing opened.
+ * failed read counts as nothing opened; a failed save keeps the in-process record.
  */
 interface OpenedScreenRecord {
     fun load(): CallingScreen?
@@ -108,6 +109,8 @@ class LockTaskRecovery(
 ) {
     private var opened: CallingScreen? = try {
         record.load()
+    } catch (e: IOException) {
+        null
     } catch (e: RuntimeException) {
         null
     }
@@ -130,6 +133,8 @@ class LockTaskRecovery(
     private fun save(screen: CallingScreen?) {
         try {
             record.save(screen)
+        } catch (e: IOException) {
+            // Storage failure must not abort the calling-screen action; keep the in-process record.
         } catch (e: RuntimeException) {
             // The in-process record still works; only a later process loses it.
         }
