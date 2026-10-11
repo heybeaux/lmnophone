@@ -789,8 +789,16 @@ class JointAuthorityStore internal constructor(
      */
     internal fun <T> serialized(refused: T, block: () -> T): T = coordinator.operation(refused, block)
 
-    /** An Android-only effect of the running [serialized] operation: any store call from inside [block] is refused. */
+    /**
+     * An Android-only effect: any store call from inside [block] is refused. Inside a [serialized]
+     * operation it runs on that operation's thread. Called from any other thread, it waits for the whole
+     * running operation first, so it never runs in the middle of one; past the wait limit it throws
+     * [EffectRefused] without running [block].
+     */
     internal fun <T> androidEffect(block: () -> T): T = coordinator.effect(block)
+
+    /** An [androidEffect] that did not run: another thread's operation held the store past the wait limit. */
+    internal class EffectRefused : IllegalStateException("store busy: effect not run")
 
     internal fun replaceSectionForTest(section: Section, bytes: ByteArray): Boolean = coordinator.run(false) {
         val current = load() ?: return@run false
@@ -1046,12 +1054,13 @@ class JointAuthorityStore internal constructor(
      * Serializes the store. Every call takes [operationLock] and then [lock]; an [operation] holds
      * [operationLock] from start to end, so its own store calls run inside it while every other
      * thread's calls wait for the whole operation. During an [effect] of that operation every store
-     * call from its thread is refused, so an Android effect cannot interleave a store write.
+     * call from its thread is refused, so an Android effect cannot interleave a store write. An effect
+     * from outside an operation also takes [operationLock], so it waits for any running operation.
      */
     private class Coordinator {
         private val lock = ReentrantLock()
         private val operationLock = ReentrantLock()
-        /** The operation thread while it runs an Android-only effect. Only that thread writes it. */
+        /** The thread running an Android-only effect. Only the [operationLock] holder writes it. */
         @Volatile private var effectThread: Thread? = null
         private var viewed: Snapshot? = null
         /** A nested call from the thread already inside a transaction or an effect is refused, as is a wait past the limit. */
@@ -1072,12 +1081,19 @@ class JointAuthorityStore internal constructor(
             if (!acquire(operationLock)) return refused
             try { return block() } finally { operationLock.unlock() }
         }
-        /** Inside an operation, runs [block] with every store call from this thread refused. Outside one it just runs [block]. */
+        /**
+         * Runs [block] holding [operationLock], with every store call from this thread refused. Inside an
+         * operation it joins it; from another thread it waits for that operation, and throws [EffectRefused] past the limit.
+         */
         fun <T> effect(block: () -> T): T {
-            if (!operationLock.isHeldByCurrentThread) return block()
+            val joined = operationLock.isHeldByCurrentThread
+            if (!joined && !acquire(operationLock)) throw EffectRefused()
             val before = effectThread
             effectThread = Thread.currentThread()
-            try { return block() } finally { effectThread = before }
+            try { return block() } finally {
+                effectThread = before
+                if (!joined) operationLock.unlock()
+            }
         }
         private fun acquire(target: ReentrantLock): Boolean = try {
             target.tryLock(coordinatorWaitMillis, java.util.concurrent.TimeUnit.MILLISECONDS)

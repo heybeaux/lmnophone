@@ -41,7 +41,8 @@ class DpmDeviceOwnerReader(private val context: Context) : DeviceOwnerReader {
  * - [revokeTemporaryAccess] runs [revoke], the common startup revocation (sessions and elevation).
  *   It is a store writer taking part in the reconciliation, so it may write [store].
  * - Every Android effect (owner read, policy, reset protection) runs as a [JointAuthorityStore.androidEffect]:
- *   inside a reconciliation, a store call made from it is refused.
+ *   a store call made from it is refused, and a call from outside a running reconciliation waits for the
+ *   whole run (refused as a failure past the wait limit), so it never interleaves with one.
  * - [applyPolicy] runs the whole plan through [applier]; it is true only when no stage failed. When a
  *   stage fails it then runs the applier's independent emergency repair of the same plan, so an early
  *   failure (such as restrictions) never skips the dialer and never-hide repair, and still returns
@@ -66,30 +67,22 @@ class DeviceReconciliationEffects(
     private val onApplied: (ApplyResult) -> Unit = {},
 ) : ReconciliationEffects {
     override fun revokeTemporaryAccess(): Boolean = attempt { revoke() }
-    override fun isDeviceOwner(): Boolean? = store.androidEffect { try { owner.isDeviceOwner() } catch (_: Exception) { null } }
+    override fun isDeviceOwner(): Boolean? = android(null) { try { owner.isDeviceOwner() } catch (_: Exception) { null } }
 
-    /**
-     * The plan the current run gave [applyPolicy], kept so a later failure in the same run repairs the
-     * floor from it without reading the input again. [DeviceWaitingReconciliation] clears it at the start
-     * and end of every run, so it never reaches another run.
-     */
-    internal var runPlan: PolicyPlan? = null
-
-    override fun applyPolicy(plan: PolicyPlan): Boolean = android {
-        runPlan = plan
+    override fun applyPolicy(plan: PolicyPlan): Boolean = android(false) {
         attempt { applier.apply(plan).also(onApplied).complete }.also { if (!it) repairFloorHeld(plan) }
     }
-    override fun readBackPolicy(plan: PolicyPlan): Boolean = android { attempt { applier.readBack(plan) } }
+    override fun readBackPolicy(plan: PolicyPlan): Boolean = android(false) { attempt { applier.readBack(plan) } }
 
     override fun applyResetProtection(userIds: Set<String>): Boolean =
-        android { attempt { reset.setResetProtection(userIds) && reset.broadcastResetProtectionChanged() } }
-    override fun readBackResetProtection(userIds: Set<String>): Boolean = android { attempt { reset.readBackResetProtection(userIds) } }
+        android(false) { attempt { reset.setResetProtection(userIds) && reset.broadcastResetProtectionChanged() } }
+    override fun readBackResetProtection(userIds: Set<String>): Boolean = android(false) { attempt { reset.readBackResetProtection(userIds) } }
 
     override fun applyFriction(settings: FrictionSettings): Boolean = activeFriction() == settings
     override fun readBackFriction(settings: FrictionSettings): Boolean = activeFriction() == settings
 
     /** The applier's emergency repair of [plan]: the dialer, never-hide packages and their lock-task floor. Best effort. */
-    internal fun repairFloor(plan: PolicyPlan) = android { repairFloorHeld(plan) }
+    internal fun repairFloor(plan: PolicyPlan) = android(Unit) { repairFloorHeld(plan) }
 
     private fun repairFloorHeld(plan: PolicyPlan) {
         try { onApplied(applier.repairEmergency(plan)) } catch (_: Exception) { }
@@ -97,7 +90,9 @@ class DeviceReconciliationEffects(
 
     private fun activeFriction(): FrictionSettings? = try { store.credentials.read()?.recoveryProfile?.friction } catch (_: Exception) { null }
 
-    private fun <T> android(block: () -> T): T = store.androidEffect(block)
+    /** [block] as a [JointAuthorityStore.androidEffect]; [refused] when another thread's operation held the store past the wait limit. */
+    private fun <T> android(refused: T, block: () -> T): T =
+        try { store.androidEffect(block) } catch (_: JointAuthorityStore.EffectRefused) { refused }
     private fun attempt(block: () -> Boolean): Boolean = try { block() } catch (_: Exception) { false }
 }
 
@@ -108,36 +103,48 @@ class DeviceReconciliationEffects(
  * from inside another (for example from an effect) is refused with [NOT_RUN].
  *
  * After any NEEDS_ATTENTION result, including a failed revocation before any policy write, the
- * emergency floor is repaired inside the same run: from the plan this run already applied when it got
- * that far (so a later input failure cannot lose it), otherwise from [emergencyPlan]. The result and
- * the held slot are unchanged. No plan crosses runs. With no plan at all (no readable credentials or
+ * emergency floor is repaired inside the same run: from the plan this run's own reconciler applied when
+ * it got that far (so a later input failure cannot lose it, and a direct or nested effect call cannot
+ * replace it), otherwise from [emergencyPlan]. The result and the held slot are unchanged. No plan crosses runs. With no plan at all (no readable credentials or
  * policy input) nothing is repaired here; startup's own floor repair still runs.
  */
 class DeviceWaitingReconciliation internal constructor(
     private val store: JointAuthorityStore,
-    policyInput: (CredentialState) -> PolicyInput?,
+    private val policyInput: (CredentialState) -> PolicyInput?,
     private val effects: DeviceReconciliationEffects,
-    authority: PersonAuthorityConsumer,
+    private val authority: PersonAuthorityConsumer,
     private val emergencyPlan: () -> PolicyPlan?,
 ) {
-    private val reconciler = WaitingReconciler(store.reconciliation, { store.credentials.read() }, policyInput, effects, authority)
+    private fun reconciler(effects: ReconciliationEffects) =
+        WaitingReconciler(store.reconciliation, { store.credentials.read() }, policyInput, effects, authority)
 
-    fun reconcile(): ReconcileResult = store.serialized(NOT_RUN) { runOnce { reconciler.reconcile() } }
-    fun prepareRepair(person: TrustedPersonId): RepairRequest? = store.serialized(null) { reconciler.prepareRepair(person) }
+    fun reconcile(): ReconcileResult = store.serialized(NOT_RUN) { runOnce { it.reconcile() } }
+    fun prepareRepair(person: TrustedPersonId): RepairRequest? = store.serialized(null) { reconciler(effects).prepareRepair(person) }
     fun repair(request: RepairRequest, grant: FreshAuthority): ReconcileResult =
-        store.serialized(NOT_RUN) { runOnce { reconciler.repair(request, grant) } }
+        store.serialized(NOT_RUN) { runOnce { it.repair(request, grant) } }
 
-    /** One run: no plan from an earlier run, and after NEEDS_ATTENTION the floor repaired from this run's plan if it got that far. */
-    private fun runOnce(block: () -> ReconcileResult): ReconcileResult {
-        effects.runPlan = null
-        try {
-            val result = block()
-            if (result.outcome == ReconcileOutcome.NEEDS_ATTENTION) {
-                (effects.runPlan ?: try { emergencyPlan() } catch (_: Exception) { null })?.let(effects::repairFloor)
-            }
-            return result
-        } finally {
-            effects.runPlan = null
+    /**
+     * One run, with its own [RunEffects] that only this run's reconciler holds: the plan it keeps comes
+     * from that reconciler's own [ReconciliationEffects.applyPolicy] and nowhere else, so no direct or
+     * nested call to [effects], and no other run, can replace it. After NEEDS_ATTENTION the floor is
+     * repaired from that plan if the run got that far.
+     */
+    private fun runOnce(block: (WaitingReconciler) -> ReconcileResult): ReconcileResult {
+        val run = RunEffects(effects)
+        val result = block(reconciler(run))
+        if (result.outcome == ReconcileOutcome.NEEDS_ATTENTION) {
+            (run.plan ?: try { emergencyPlan() } catch (_: Exception) { null })?.let(effects::repairFloor)
+        }
+        return result
+    }
+
+    /** [effects] for one run, keeping the last plan that run's reconciler applied. */
+    private class RunEffects(private val effects: DeviceReconciliationEffects) : ReconciliationEffects by effects {
+        var plan: PolicyPlan? = null
+            private set
+        override fun applyPolicy(plan: PolicyPlan): Boolean {
+            this.plan = plan
+            return effects.applyPolicy(plan)
         }
     }
 
