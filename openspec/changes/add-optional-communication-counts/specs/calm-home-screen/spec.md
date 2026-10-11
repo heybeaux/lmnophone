@@ -57,23 +57,41 @@ Each number SHALL:
 - be plain digits in the existing ink colour and typeface, inside the existing row and touch target, with no colour, shape, border, divider, subtitle or animation;
 - show "99+" above 99.
 
-When a count can't be read (switch off, permission missing, phone not unlocked since boot, or any read error), that number SHALL NOT be shown.
+When a count can't be read (switch off, permission missing, phone not unlocked since boot, any read error or timeout, or the Phone or Messages role holder isn't the supported app), that number SHALL NOT be shown.
+
+Each time Home becomes visible it SHALL start with no numbers, and SHALL show a number only from a read that started after it became visible and finished before anything changed it. When the call log or text store changes while Home is visible, an old number SHALL be hidden if a fresh one is not shown within 1 second.
 
 For this feature LMNOPhone SHALL read only row IDs and the type, new, read and message-box fields. It SHALL NOT read, log, store or send message text, phone numbers, contact names or dates.
 
-The Settings screen SHALL state under the switch which messages are counted and which are not (chat/RCS messages and other apps), and that LMNOPhone keeps permission to check calls and texts after the switch is turned off.
+The Settings screen SHALL state under the switch that texts and picture messages are counted, that chat (RCS) messages and other apps aren't supported and may be missing, and that LMNOPhone keeps permission to check calls and texts after the switch is turned off.
 
-If either the SMS or the MMS read fails, the Messages number SHALL NOT be shown; a partial sum is never shown.
+The Messages number SHALL come from SMS and MMS reads that agree with each other. If either read fails, or they don't come from the same moment, the Messages number SHALL NOT be shown; a partial or mixed sum is never shown.
 
 The accessibility name of the Phone and Messages rows SHALL include the count when one is shown (for example "Phone, 2 missed calls"). Touch targets and large-text behaviour SHALL stay as they are.
 
 #### Scenario: Default
-- **WHEN** LMNOPhone is installed or updated to a build with this feature
+- **WHEN** LMNOPhone is newly installed, or updated from a build that doesn't have this switch
 - **THEN** the switch is off and Home shows no numbers
+
+#### Scenario: Update keeps the choice
+- **WHEN** the switch is on (or off) and LMNOPhone is updated in place
+- **THEN** the switch is still on (or off) after the update, and no count was saved
+
+#### Scenario: Messages changes during a read
+- **WHEN** texts are marked read and picture messages arrive while LMNOPhone is reading the two stores
+- **THEN** Messages shows no number until a read where both stores agree, and never shows a total that didn't exist
+
+#### Scenario: Different Messages app
+- **WHEN** the default text app is changed to another app, or the standard Messages app is disabled
+- **THEN** the Messages number disappears and Settings says counts work only with the standard apps
 
 #### Scenario: Missed call
 - **WHEN** counts are on and a call is missed
 - **THEN** Phone shows "1" while Home is visible, without restarting LMNOPhone
+
+#### Scenario: Refresh too slow
+- **WHEN** Phone shows "2" and a change arrives, but the new read hasn't finished after 1 second
+- **THEN** the number is hidden until a fresh read finishes
 
 #### Scenario: Missed call acknowledged
 - **WHEN** the user views the missed call in the Phone app's call history, taps or swipes the missed-call notification, or calls back, and returns Home
