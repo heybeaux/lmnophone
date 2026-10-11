@@ -100,7 +100,7 @@ class AppApprovalControllerTest {
     }
     private val effects = object : AppApprovalEffects {
         override fun hideAndReadBack(identity: ApprovalBinding): Boolean {
-            check(!poweredOff)
+            if (poweredOff) throw SimulatedProcessDeath()
             if (!event("hide")) return false
             hidden = true
             return true
@@ -115,7 +115,7 @@ class AppApprovalControllerTest {
             return event("window-visible-readback")
         }
         override fun closePermissionWindow(identity: ApprovalBinding): Boolean {
-            check(!poweredOff)
+            if (poweredOff) throw SimulatedProcessDeath()
             if (!event("window-rehide")) return false
             hidden = true
             return event("window-hidden-readback")
@@ -129,7 +129,7 @@ class AppApprovalControllerTest {
             return event("write-${write.choice}-${write.permission.value}")
         }
         override fun readPermissions(identity: ApprovalBinding): Map<PermissionName, PermissionReadback> {
-            if (!hidden && state!!.pending?.phase != AppApprovalPhase.COMMITTED) assertWindowExcluded()
+            if (!hidden && state!!.pending?.phase in setOf(AppApprovalPhase.PREPARING, AppApprovalPhase.EDITING)) assertWindowExcluded()
             if (!event("permissions-readback")) return emptyMap()
             event(if (hidden) "permissions-hidden" else "permissions-visible")
             return if (modelPermissions) actualPermissions else permissionReadback
@@ -283,7 +283,7 @@ class AppApprovalControllerTest {
             val committed = state!!.apps.isNotEmpty()
             crash = null; events.clear(); controller = controller()
             val result = controller.onStart()
-            assertEquals(if (recoverHide) "hide" else if (recoverContain) "contain" else "revoke", events.first())
+            assertEquals(if (recoverHide || recoverContain) "contain" else "revoke", events.first())
             assertTrue(result == AppApprovalOutcome.READY || result == AppApprovalOutcome.APPROVED)
             assertNull(state!!.pending)
             assertEquals(committed, state!!.apps.isNotEmpty())
@@ -387,7 +387,7 @@ class AppApprovalControllerTest {
             val receipt = state!!.receipts.last()
             assertEquals(r.approvalId, receipt.approvalId); assertEquals(other, receipt.actor)
             assertEquals(setOf(person, other), receipt.recipientGenerations.keys)
-            assertEquals("revoke", events.first()); assertFalse("unhide" in events)
+            assertEquals("contain", events.first()); assertFalse("unhide" in events)
             assertFalse("permission" in events); assertFalse("permissions-readback" in events)
             assertEquals(AppApprovalOutcome.READY, controller.resume())
             assertEquals(2, state!!.receipts.size)
@@ -444,7 +444,7 @@ class AppApprovalControllerTest {
             val saved = state!!.pending?.phase == AppApprovalPhase.WITHDRAWING || state!!.pending == null
             crash = null; events.clear(); controller = controller()
             val result = controller.onStart()
-            assertEquals(if (saved) "revoke" else "contain", events.first())
+            assertEquals(if (point == "after-save-finished") "revoke" else "contain", events.first())
             assertFalse("unhide" in events)
             if (saved) {
                 assertTrue(result in setOf(AppApprovalOutcome.READY, AppApprovalOutcome.WITHDRAWN))
@@ -490,10 +490,13 @@ class AppApprovalControllerTest {
                 "changed during readback" -> atEvent = { if (it == "policy-readback") policy = policy.copy(lockedBoot = true) }
             }
             assertEquals(AppApprovalOutcome.NOT_READY, controller.withdrawPending(r, r.approvalId, withdrawalAuth(r)), bad)
-            assertEquals(AppApprovalPhase.WITHDRAWING, state!!.pending!!.phase)
+            assertEquals(if (bad == "floor") AppApprovalPhase.COMMITTED else AppApprovalPhase.WITHDRAWING, state!!.pending!!.phase)
             assertTrue(app in state!!.apps); assertFalse("unhide" in events)
             atEvent = null; policy = originalPolicy
-            assertEquals(AppApprovalOutcome.WITHDRAWN, controller.resume())
+            if (bad == "floor") {
+                val retry = assertNotNull(controller.prepareWithdrawal(person))
+                assertEquals(AppApprovalOutcome.WITHDRAWN, controller.withdrawPending(retry, retry.approvalId, withdrawalAuth(retry)))
+            } else assertEquals(AppApprovalOutcome.WITHDRAWN, controller.resume())
         }
     }
 
@@ -660,9 +663,10 @@ class AppApprovalControllerTest {
             crash = point
             assertFailsWith<SimulatedProcessDeath>(point) { controller.removeApproved(r, r.approvalId, a) }
             val saved = state!!.pending?.phase == AppApprovalPhase.REMOVING || app !in state!!.apps
+            val recovering = state!!.pending != null
             crash = null; events.clear(); controller = controller()
             val result = controller.onStart()
-            assertEquals("revoke", events.first()); assertFalse("unhide" in events)
+            assertEquals(if (recovering) "contain" else "revoke", events.first()); assertFalse("unhide" in events)
             assertTrue(result in setOf(AppApprovalOutcome.READY, AppApprovalOutcome.REMOVED))
             assertNull(state!!.pending); assertEquals(!saved, app in state!!.apps)
             assertEquals(saved, app in state!!.removedApps)
@@ -805,7 +809,7 @@ class AppApprovalControllerTest {
             crash = null; events.clear(); controller = controller()
             assertEquals(if (durable && state!!.pending != null) AppApprovalOutcome.PERMISSIONS_CHANGED else AppApprovalOutcome.READY,
                 controller.onStart(), point)
-            assertEquals(if (recoverHide) "hide" else if (recoverContain) "contain" else "revoke", events.first()); assertNull(state!!.pending)
+            assertEquals(if (recoverHide || recoverContain) "contain" else "revoke", events.first()); assertNull(state!!.pending)
             assertEquals(if (durable) PermissionChoice.DENY else PermissionChoice.ALLOW, state!!.apps.getValue(app).permissions.choices[camera])
             assertEquals(if (durable) 1 else 0, state!!.receipts.size)
             assertEquals(AppApprovalOutcome.REFUSED, controller.editPermissions(r, r.approvalId, a))
@@ -853,7 +857,7 @@ class AppApprovalControllerTest {
             val withdrawal = assertNotNull(controller.prepareWithdrawal(other))
             failure = null; events.clear()
             assertEquals(AppApprovalOutcome.WITHDRAWN, controller.withdrawPending(withdrawal, withdrawal.approvalId, withdrawalAuth(withdrawal, other)))
-            assertFalse(app in state!!.apps); assertNull(state!!.pending); assertFalse("permission" in events); assertFalse("unhide" in events)
+            assertTrue(app in state!!.apps); assertNull(state!!.pending); assertFalse("permission" in events); assertTrue("unhide" in events)
             assertEquals(listOf(AppApprovalReceiptKind.PERMISSIONS_CHANGED, AppApprovalReceiptKind.WITHDRAWN), state!!.receipts.map { it.kind })
         }
     }
@@ -874,14 +878,17 @@ class AppApprovalControllerTest {
     }
 
 
-    @Test fun `withdrawing a permission edit preserves reapproval provenance across restart`() {
+    @Test fun `withdrawing a permission edit preserves approved access across restart`() {
         activeApproval(true); val r = editRequest(); failure = "hide"
         assertEquals(AppApprovalOutcome.NOT_READY, controller.editPermissions(r, r.approvalId, editAuth(r)))
         val withdrawal = assertNotNull(controller.prepareWithdrawal(person)); failure = null
+        modelPermissions = true
         assertEquals(AppApprovalOutcome.WITHDRAWN, controller.withdrawPending(withdrawal, withdrawal.approvalId, withdrawalAuth(withdrawal)))
-        assertEquals(binding, state!!.removedApps[app])
+        assertEquals(binding, state!!.apps.getValue(app).identity)
+        assertFalse(app in state!!.removedApps)
         controller = controller(); assertEquals(AppApprovalOutcome.READY, controller.onStart())
-        assertNotNull(controller.prepareReapproval(app, other, PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.DENY))))
+        assertTrue(app in state!!.approvedPackages(policy.installed, policy.installedIdentities))
+        assertNotNull(controller.preparePermissionEdit(app, other, PermissionSelection(manifest!!, mapOf(camera to PermissionChoice.DENY))))
     }
 
     @Test fun `active removal after permission edit preserves both action receipts`() {
@@ -984,7 +991,7 @@ class AppApprovalControllerTest {
             assertFalse("after-save-committed" in f.events)
             f.failure = null; f.battery = BatteryState(1, false); f.events.clear(); f.controller = f.controller()
             assertEquals(if (edit) AppApprovalOutcome.LOW_BATTERY else AppApprovalOutcome.READY, f.controller.onStart())
-            assertEquals("hide", f.events.first()); assertTrue(f.hidden)
+            assertEquals("contain", f.events.first()); assertTrue(f.hidden)
         }
     }
 
@@ -1001,8 +1008,8 @@ class AppApprovalControllerTest {
         for (edit in listOf(false, true)) for (point in listOf("window-unhide", "write-DENY-${microphone.value}",
             "write-ALLOW-${camera.value}", "write-ALLOW-${contacts.value}")) for (gate in listOf("battery", "session", "plan")) {
             val f = AppApprovalControllerTest(); val action = f.windowAction(edit)
-            f.atEvent = { if (it == point) { f.poweredOff = true; error("power loss; no further effects can run") } }
-            assertFailsWith<IllegalStateException> { action() }
+            f.atEvent = { if (it == point) { f.poweredOff = true; throw SimulatedProcessDeath() } }
+            assertFailsWith<SimulatedProcessDeath> { action() }
             assertFalse(f.hidden, point)
             assertEquals(if (edit) AppApprovalPhase.EDITING else AppApprovalPhase.PREPARING, f.state!!.pending!!.phase)
             assertFalse("after-save-committed" in f.events)
@@ -1015,7 +1022,7 @@ class AppApprovalControllerTest {
             f.controller = f.controller()
             val result = f.controller.onStart()
             assertTrue(result in setOf(AppApprovalOutcome.READY, AppApprovalOutcome.LOW_BATTERY, AppApprovalOutcome.NOT_READY))
-            assertEquals("hide", f.events.first(), "$edit $point $gate")
+            assertEquals("contain", f.events.first(), "$edit $point $gate")
             assertTrue(f.hidden); assertFalse("after-save-committed" in f.events)
             assertFalse(f.app in f.state!!.approvedPackages(f.policy.installed, f.policy.installedIdentities))
             if (!edit) assertTrue(f.state!!.apps.isEmpty())
@@ -1024,11 +1031,11 @@ class AppApprovalControllerTest {
 
     @Test fun `recovered edit rewrites every permission before it commits`() {
         val f = AppApprovalControllerTest(); val action = f.windowAction(true)
-        f.atEvent = { if (it == "write-DENY-${f.microphone.value}") { f.poweredOff = true; error("power loss") } }
-        assertFailsWith<IllegalStateException> { action() }
+        f.atEvent = { if (it == "write-DENY-${f.microphone.value}") { f.poweredOff = true; throw SimulatedProcessDeath() } }
+        assertFailsWith<SimulatedProcessDeath> { action() }
         f.poweredOff = false; f.atEvent = null; f.events.clear(); f.controller = f.controller()
         assertEquals(AppApprovalOutcome.PERMISSIONS_CHANGED, f.controller.onStart())
-        assertEquals("hide", f.events.first())
+        assertEquals("contain", f.events.first())
         assertEquals(3, f.events.count { it.startsWith("write-") })
         assertTrue(f.events.indexOf("permissions-hidden") < f.events.indexOf("save-committed"))
         assertEquals(1, f.state!!.receipts.size)
@@ -1455,7 +1462,7 @@ class AppApprovalControllerTest {
                 "facts" -> f.inputAvailable = false
                 "session" -> f.failure = "revoke"
                 "battery" -> f.battery = BatteryState(4, false)
-                "permissions" -> f.actualPermissions = emptyMap()
+                "permissions" -> f.failure = "permissions-readback"
                 "readback" -> f.failure = "policy-readback"
                 "save" -> f.failure = "save-finished"
             }
@@ -1477,6 +1484,41 @@ class AppApprovalControllerTest {
             assertEquals(AppApprovalReceiptKind.WITHDRAWN, f.state!!.receipts.last().kind)
             assertFalse(f.app in f.state!!.removedApps)
         }
+    }
+
+
+    @Test fun `unverified containment retains every phase even before controller initialization`() {
+        for (phase in AppApprovalPhase.entries) for (entry in listOf("resume", "start"))
+            for (fault in listOf("false", "throw", "readback")) {
+                val f = AppApprovalControllerTest(); f.failedActivationAndContainment(phase == AppApprovalPhase.EDITING)
+                val op = f.state!!.pending!!
+                val finalKind = when (phase) {
+                    AppApprovalPhase.WITHDRAWING -> AppApprovalReceiptKind.WITHDRAWN
+                    AppApprovalPhase.REMOVING -> AppApprovalReceiptKind.REMOVED
+                    else -> null
+                }
+                val receipt = finalKind?.let { AppApprovalReceipt("final-receipt", f.person,
+                    mapOf(f.person to 0L), it, op.record.id) }
+                f.state = f.state!!.replacing(
+                    apps = if (phase == AppApprovalPhase.PREPARING) emptyMap() else f.state!!.apps,
+                    receipts = if (phase == AppApprovalPhase.PREPARING) emptyList() else f.state!!.receipts,
+                    pending = AppApprovalOperation(op.record, op.receipt, phase, receipt))
+                val extra = f.addUnrelatedApprovedApp()
+                val before = f.state
+                when (fault) {
+                    "false" -> f.containmentWorks = false
+                    "throw" -> f.atEvent = { if (it == "contain") error("containment unavailable") }
+                    "readback" -> f.failure = "contain-readback"
+                }
+                f.events.clear(); f.containmentRequests.clear()
+                val cold = f.controller()
+                assertEquals(AppApprovalOutcome.NOT_READY, if (entry == "resume") cold.resume() else cold.onStart())
+                assertEquals("contain", f.events.first(), "$phase/$entry/$fault")
+                assertEquals(listOf(setOf(f.app)), f.containmentRequests)
+                assertSame(before, f.state)
+                assertTrue(extra in f.appliedLockTask && extra in f.appliedHome)
+                assertFalse("revoke" in f.events || "unhide" in f.events)
+            }
     }
 
 }
