@@ -54,3 +54,9 @@ topResumedActivity=ActivityRecord{762404b u0 org.plainphone/.MainActivity t5}
 mLockTaskModeState=LOCKED
 Lock credential cleared
 PIN disabled: false
+## Reading (PLA-266 finding 1, PLA-267)
+- Before the first unlock (RUNNING_LOCKED) the Emergency dial pad opened in lock task, but no digit was typed: the first
+  attempt's taps failed.
+- The retry ran after the PIN had already been used (screen off, lock screen), so the user was RUNNING_UNLOCKED. It shows
+  9-1-1 typed on the lock-screen dial pad, not before the first unlock.
+- So typing 9-1-1 before the first unlock is unverified here.

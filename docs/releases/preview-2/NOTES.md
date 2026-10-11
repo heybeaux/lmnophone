@@ -31,7 +31,7 @@ preview-2a (tag `preview-2a`) was installed on 2026-10-10 at 00:51 UTC (Fri 9 Oc
 ## Safety checks (evidence in `evidence/`; preview-2b in `emulator-2b/` and `spare-2b/`)
 | Check | Emulator (API 35) | Spare |
 |---|---|---|
-| 1. 9-1-1 typed in, no call placed | 2a and 2b: More, Phone, lock-screen button (temporary PIN; 2b after a locked restart) | 2a and 2b: More, Phone; lock screen has no button without a PIN |
+| 1. 9-1-1 typed in, no call placed | 2a and 2b: More, Phone, lock-screen button (temporary PIN). 2b: after a locked restart the Emergency dial pad opened before unlock; typing 9-1-1 before the first unlock is **unverified** (the retry typed it after the PIN had been used, `check1.txt`) | 2a and 2b: More, Phone; lock screen has no button without a PIN |
 | 2. `remove-active-admin` removes Plainphone, hidden apps come back | 2a: 13 of 13; 2b: 15 of 15 | 2a: 70 of 70; 2b: 42 of 42 |
 | 3. Each unhide followed at once by its save flip (mitigation B, best effort) | 2a and 2b: unhide and flip in the file before the apply reported (the hide control was also prompt) | 2a and 2b: flip ran and read back straight after the unhide; storage not observable without root |
 
@@ -40,15 +40,16 @@ preview-2a (tag `preview-2a`) was installed on 2026-10-10 at 00:51 UTC (Fri 9 Oc
 |---|---|---|
 | Restart (`adb reboot`) | Home drawn 92 ms after the first full read-back, in lock task (`restart.txt`) | Locked run, then full read-back at 11:59:05; Home drawn at 11:59:23 in lock task (`restart.txt`) |
 | Locked restart (temporary PIN) | Before unlock: lock task on, locked runs read back, Home not drawn; after unlock Home drawn 106 ms after the full read-back (`check1.txt`) | not run (no PIN by rule) |
-| Power cut during an unhide (`emu kill`, cold boot) | Home drawn only after the full read-back; the lost unhide was redone (`power-cut-unhide.txt`) | not run (no power cut on the spare) |
+| Power cut during an unhide (`emu kill`, cold boot) | After a cold boot Chrome ended visible and Home was drawn only after the full read-back. That the cut lost the unhide and the re-apply redid it is an inference: the on-disk state before the re-apply was not read (`power-cut-unhide.txt`) | not run (no power cut on the spare) |
 
 ## Known risk
 Mitigation B is best effort, not a guarantee. On Android 15 the package-settings write that records an unhide is queued,
 not forced to storage (PLA-185 F1, PLA-25). If power is lost just after an unhide, the phone can come back with that app
 hidden again. In the worst case (PLA-22) it can get stuck restarting. The board accepted that risk for the spare only, and
-the spare may be erased from recovery if it gets stuck (1A consent). preview-2b narrows the ordinary case: after a
-restart, the boot re-apply unhides the app again before Home shows (emulator power-cut test). It does not remove the
-boot-loop worst case.
+the spare may be erased from recovery if it gets stuck (1A consent). preview-2b should narrow the ordinary case: after a
+restart, the full re-apply and read-back run before Home shows, so an app whose unhide was lost should be unhidden again
+then. The emulator power-cut test shows the end state (the app visible, Home only after the full read-back); it does not
+show the unhide was actually lost and redone, which is inferred. It does not remove the boot-loop worst case.
 
 ## Way out
 `adb -s <spare> shell dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver`. This brings back every app

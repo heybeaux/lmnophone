@@ -15,5 +15,6 @@ result=0
 ## Reading
 - After the unhide the setup re-apply read back ready=true with flipFailures=0, and FlushMarker's explicit state flipped.
   This shows the flip ran after the unhide. It does not show the unhide reached storage: on Android 15 that write is queued
-  (PLA-185 F1, PLA-25). Mitigation B stays best effort. The boot re-apply (restart.txt) is what repairs a lost unhide.
+  (PLA-185 F1, PLA-25). Mitigation B stays best effort. The boot re-apply (restart.txt) is
+  meant to repair a lost unhide; on the emulator that repair is inferred, not observed (PLA-266 finding 3).
 - The spare ends on the standard starter list (Phone, Messages, Camera, Maps).

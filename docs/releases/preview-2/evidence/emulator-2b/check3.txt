@@ -24,6 +24,9 @@ result=0
   preview-2a, now through the boot runtime (PolicyRuntime -> BootReapply -> ReadbackPolicyApplier).
 - Control: the hide was also on disk at once (mtime 11:38:19.608), so this emulator does not separate the flip from the
   platform's own write. Mitigation B stays best effort: on Android 15 the write behind the SYNCHRONOUS flip is queued
-  (PLA-25, PLA-185 F1). The power-cut test (power-cut-unhide.txt) shows the boot re-apply repairs a lost unhide before Home.
+  (PLA-25, PLA-185 F1). The power-cut test (power-cut-unhide.txt) shows that after a
+  cold boot Chrome ends visible and Home is drawn only after the full read-back. That the cut lost the unhide and the boot
+  re-apply redid it is an inference (PACKAGE_ADDED for Chrome arrives after boot); the on-disk state before the re-apply
+  was not read. (Wording corrected for PLA-266 finding 3, PLA-267.)
 - An earlier probe in this run read the FlushMarker state wrongly (a grep bug), so it was rerun. The emulator ends on the
   standard starter list.
