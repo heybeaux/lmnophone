@@ -1,0 +1,3 @@
+Warning InlinedApi: Field requires API level 34 (current min is 30): `android.os.UserManager#DISALLOW_CONFIG_DEFAULT_APPS`
+Warning InlinedApi: Field requires API level 34 (current min is 30): `android.content.pm.PackageInstaller#STATUS_FAILURE_TIMEOUT`
+Warning InlinedApi: Field requires API level 33 (current min is 30): `android.content.Context#RECEIVER_NOT_EXPORTED`

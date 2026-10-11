@@ -1,0 +1,258 @@
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:processResources NO-SOURCE
+> Task :policy:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :policy:processResources NO-SOURCE
+> Task :links:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :links:processResources
+> Task :device:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:preBuild UP-TO-DATE
+> Task :device:preDebugBuild UP-TO-DATE
+> Task :device:generateDebugResValues
+> Task :device:generateDebugResources
+> Task :device:packageDebugResources
+> Task :device:parseDebugLocalResources
+> Task :device:javaPreCompileDebug
+> Task :plainphone:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:generateDebugRFile
+> Task :device:compileDebugLibraryResources
+> Task :plainphone:preBuild UP-TO-DATE
+> Task :plainphone:preDebugBuild UP-TO-DATE
+> Task :ui:preBuild UP-TO-DATE
+> Task :ui:preDebugBuild UP-TO-DATE
+> Task :device:writeDebugAarMetadata
+> Task :ui:writeDebugAarMetadata
+> Task :plainphone:generateDebugResValues
+> Task :ui:generateDebugResValues
+> Task :ui:generateDebugResources
+> Task :plainphone:checkDebugAarMetadata
+> Task :ui:packageDebugResources
+> Task :plainphone:mapDebugSourceSetPaths
+> Task :plainphone:generateDebugResources
+> Task :core:compileKotlin
+> Task :core:compileJava NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar
+> Task :plainphone:packageDebugResources
+> Task :plainphone:createDebugCompatibleScreenManifests
+> Task :plainphone:parseDebugLocalResources
+> Task :device:extractDeepLinksDebug
+> Task :plainphone:extractDeepLinksDebug
+> Task :ui:extractDeepLinksDebug
+> Task :device:processDebugManifest
+> Task :plainphone:mergeDebugResources
+> Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ui:processDebugManifest
+> Task :ui:parseDebugLocalResources
+> Task :ui:compileDebugLibraryResources
+> Task :ui:javaPreCompileDebug
+> Task :plainphone:processDebugMainManifest
+> Task :plainphone:processDebugManifest
+> Task :plainphone:processDebugManifestForPackage
+> Task :plainphone:preDebugUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileDebug
+> Task :ui:generateDebugRFile
+> Task :plainphone:javaPreCompileDebugUnitTest
+> Task :ui:generateDebugUnitTestAssets UP-TO-DATE
+> Task :ui:mergeDebugShaders
+> Task :ui:compileDebugShaders NO-SOURCE
+> Task :ui:generateDebugAssets UP-TO-DATE
+> Task :ui:mergeDebugAssets
+> Task :ui:preDebugUnitTestBuild UP-TO-DATE
+> Task :ui:mergeDebugUnitTestAssets
+> Task :ui:generateDebugUnitTestResValues
+> Task :ui:checkDebugUnitTestAarMetadata
+> Task :ui:mapDebugUnitTestSourceSetPaths
+> Task :ui:generateDebugUnitTestResources
+> Task :plainphone:processDebugResources
+> Task :links:compileKotlin
+> Task :links:compileJava NO-SOURCE
+> Task :links:classes
+> Task :links:jar
+> Task :ui:processDebugUnitTestManifest
+> Task :ui:preparePaparazziDebugResources
+> Task :device:preDebugUnitTestBuild UP-TO-DATE
+> Task :ui:javaPreCompileDebugUnitTest
+> Task :device:generateDebugUnitTestStubRFile
+> Task :policy:processTestResources NO-SOURCE
+> Task :device:javaPreCompileDebugUnitTest
+> Task :ui:mergeDebugJniLibFolders
+> Task :ui:mergeDebugNativeLibs NO-SOURCE
+> Task :ui:stripDebugDebugSymbols NO-SOURCE
+> Task :ui:copyDebugJniLibsProjectAndLocalJars
+> Task :ui:extractDeepLinksForAarDebug
+> Task :ui:prepareDebugArtProfile
+> Task :ui:preDebugAndroidTestBuild UP-TO-DATE
+> Task :ui:prepareLintJarForPublish
+> Task :ui:generateDebugAndroidTestResValues
+> Task :ui:writeDebugLintModelMetadata
+> Task :ui:extractProguardFiles
+> Task :ui:mergeDebugUnitTestResources
+> Task :device:mergeDebugJniLibFolders
+> Task :device:mergeDebugNativeLibs NO-SOURCE
+> Task :device:stripDebugDebugSymbols NO-SOURCE
+> Task :device:copyDebugJniLibsProjectAndLocalJars
+> Task :device:extractDeepLinksForAarDebug
+> Task :device:mergeDebugShaders
+> Task :device:compileDebugShaders NO-SOURCE
+> Task :device:generateDebugAssets UP-TO-DATE
+> Task :device:mergeDebugAssets
+> Task :device:prepareDebugArtProfile
+> Task :device:preDebugAndroidTestBuild UP-TO-DATE
+> Task :device:prepareLintJarForPublish
+> Task :device:generateDebugAndroidTestResValues
+> Task :device:writeDebugLintModelMetadata
+> Task :device:extractProguardFiles
+> Task :plainphone:preDebugAndroidTestBuild SKIPPED
+> Task :plainphone:generateDebugAndroidTestResValues
+> Task :plainphone:extractProguardFiles
+> Task :plainphone:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :plainphone:mergeDebugShaders
+> Task :plainphone:compileDebugShaders NO-SOURCE
+> Task :plainphone:generateDebugAssets UP-TO-DATE
+> Task :plainphone:mergeDebugAssets
+> Task :plainphone:compressDebugAssets
+> Task :plainphone:desugarDebugFileDependencies
+> Task :device:copyDebugJniLibsProjectOnly
+> Task :plainphone:mergeDebugJniLibFolders
+> Task :ui:copyDebugJniLibsProjectOnly
+> Task :plainphone:validateSigningDebug
+> Task :plainphone:checkDebugDuplicateClasses
+> Task :plainphone:writeDebugAppMetadata
+> Task :plainphone:writeDebugSigningConfigVersions
+> Task :ui:processDebugUnitTestResources
+> Task :ui:packageDebugUnitTestForUnitTest
+> Task :ui:generateDebugUnitTestConfig
+> Task :policy:compileKotlin
+> Task :policy:compileJava NO-SOURCE
+> Task :policy:classes UP-TO-DATE
+> Task :policy:jar
+> Task :plainphone:mergeDebugNativeLibs
+
+> Task :plainphone:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so. Run with --info option to learn more.
+
+> Task :ui:compileDebugKotlin
+> Task :ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :ui:processDebugJavaRes
+> Task :ui:bundleLibCompileToJarDebug
+> Task :ui:bundleLibRuntimeToJarDebug
+> Task :ui:extractDebugAnnotations
+> Task :ui:mergeDebugGeneratedProguardFiles
+> Task :ui:mergeDebugConsumerProguardFiles
+> Task :ui:mergeDebugJavaResource
+> Task :ui:createFullJarDebug
+> Task :ui:syncDebugLibJars
+> Task :ui:bundleDebugLocalLintAar
+> Task :plainphone:mergeExtDexDebug
+> Task :ui:generateDebugLintReportModel
+> Task :ui:generateDebugAndroidTestLintModel
+> Task :ui:generateDebugUnitTestLintModel
+> Task :ui:generateDebugLintModel
+> Task :ui:compileDebugUnitTestKotlin
+> Task :ui:processDebugUnitTestJavaRes
+> Task :ui:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :ui:bundleLibRuntimeToDirDebug
+> Task :ui:transformDebugUnitTestClassesWithAsm
+
+> Task :device:compileDebugKotlin
+w: file://<worktree>/app/device/src/main/kotlin/org/plainphone/device/DpmPort.kt:148:69 'static field DISALLOW_ADD_MANAGED_PROFILE: String' is deprecated. Deprecated in Java.
+w: file://<worktree>/app/device/src/main/kotlin/org/plainphone/device/storage/RecordFile.kt:75:108 Java type mismatch: inferred type is 'File?', but 'File' was expected.
+
+> Task :policy:compileTestKotlin
+> Task :ui:lintAnalyzeDebugUnitTest
+> Task :ui:lintAnalyzeDebugAndroidTest
+> Task :ui:lintAnalyzeDebug
+
+> Task :ui:testDebugUnitTest
+See the Paparazzi report at: file://<worktree>/app/ui/build/reports/paparazzi/debug/index.html
+
+> Task :device:compileDebugJavaWithJavac NO-SOURCE
+> Task :device:processDebugJavaRes
+> Task :ui:verifyPaparazziDebug
+> Task :policy:compileTestJava NO-SOURCE
+> Task :policy:testClasses UP-TO-DATE
+> Task :device:bundleLibRuntimeToJarDebug
+> Task :device:bundleLibCompileToJarDebug
+> Task :policy:test
+
+> Task :ui:lintReportDebug
+Wrote HTML report to file://<worktree>/app/ui/build/reports/lint-results-debug.html
+
+> Task :device:extractDebugAnnotations
+> Task :ui:lintDebug
+> Task :ui:lint
+> Task :device:mergeDebugGeneratedProguardFiles
+> Task :device:mergeDebugConsumerProguardFiles
+> Task :device:mergeDebugJavaResource
+> Task :device:createFullJarDebug
+> Task :device:syncDebugLibJars
+> Task :device:bundleDebugLocalLintAar
+> Task :device:generateDebugLintReportModel
+> Task :device:generateDebugLintModel
+> Task :device:generateDebugAndroidTestLintModel
+> Task :device:generateDebugUnitTestLintModel
+> Task :device:bundleLibRuntimeToDirDebug
+> Task :plainphone:mergeLibDexDebug
+> Task :plainphone:compileDebugKotlin
+> Task :plainphone:compileDebugJavaWithJavac NO-SOURCE
+> Task :plainphone:processDebugJavaRes
+> Task :plainphone:bundleDebugClassesToRuntimeJar
+> Task :plainphone:bundleDebugClassesToCompileJar
+> Task :plainphone:generateDebugLintReportModel
+> Task :plainphone:generateDebugAndroidTestLintModel
+> Task :plainphone:generateDebugUnitTestLintModel
+> Task :plainphone:dexBuilderDebug
+> Task :plainphone:mergeDebugGlobalSynthetics
+> Task :plainphone:mergeProjectDexDebug
+> Task :plainphone:mergeDebugJavaResource
+> Task :plainphone:packageDebug
+> Task :plainphone:createDebugApkListingFileRedirect
+> Task :plainphone:assembleDebug
+
+> Task :plainphone:compileDebugUnitTestKotlin
+w: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/boot/CallingScreenRecordFailureTest.kt:48:21 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+
+> Task :plainphone:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:processDebugUnitTestJavaRes
+> Task :device:lintAnalyzeDebugAndroidTest
+> Task :plainphone:testDebugUnitTest
+> Task :plainphone:lintAnalyzeDebugAndroidTest
+
+> Task :device:compileDebugUnitTestKotlin
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/LegacyMigrationTest.kt:37:9 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/MigrationJournalTest.kt:39:9 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/PeopleTransactionsTest.kt:601:100 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/PeopleTransactionsTest.kt:624:135 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/UpdateDownloadTest.kt:67:41 Java type mismatch: inferred type is 'File?', but 'File' was expected.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/UpdateStagingTest.kt:30:41 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+
+> Task :device:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :device:processDebugUnitTestJavaRes
+> Task :device:lintAnalyzeDebug
+> Task :plainphone:lintAnalyzeDebugUnitTest
+> Task :device:lintAnalyzeDebugUnitTest
+> Task :device:testDebugUnitTest
+
+> Task :device:lintReportDebug
+Wrote HTML report to file://<worktree>/app/device/build/reports/lint-results-debug.html
+
+> Task :device:lintDebug
+> Task :device:lint
+> Task :plainphone:lintAnalyzeDebug
+
+> Task :plainphone:lintReportDebug
+Wrote HTML report to file://<worktree>/app/plainphone/build/reports/lint-results-debug.html
+
+> Task :plainphone:lintDebug
+> Task :plainphone:lint
+
+[Incubating] Problems report is available at: file://<worktree>/app/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 1m 32s
+165 actionable tasks: 165 executed

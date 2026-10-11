@@ -1,0 +1,22 @@
+{
+  "home": {
+    "compared_rectangle": [
+      0,
+      600,
+      1080,
+      2330
+    ],
+    "equal": true,
+    "excluded": "Home clock and system bars"
+  },
+  "more": {
+    "compared_rectangle": [
+      0,
+      150,
+      1080,
+      2330
+    ],
+    "equal": true,
+    "excluded": "system bars"
+  }
+}

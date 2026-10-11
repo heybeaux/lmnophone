@@ -1,0 +1,23 @@
+Warning InflateParams: Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout's root element)
+Warning GradleDependency: A newer version of androidx.compose:compose-bom than 2025.06.01 is available: 2026.09.00
+Warning GradleDependency: A newer version of androidx.compose:compose-bom than 2025.06.01 is available: 2026.09.00
+Warning GradleDependency: A newer version of androidx.test:runner than 1.6.2 is available: 1.7.0
+Warning NewerVersionAvailable: A newer version of app.cash.paparazzi than 2.0.0-alpha02 is available: 2.0.0-alpha05.1
+Warning PluralsCandidate: Formatting %d followed by words ("minutes"): This should probably be a plural rather than a string
+Warning PluralsCandidate: Formatting %d followed by words ("minutes"): This should probably be a plural rather than a string
+Warning PluralsCandidate: Formatting %d followed by words ("minutes"): This should probably be a plural rather than a string
+Warning PluralsCandidate: Formatting %d followed by words ("minutes"): This should probably be a plural rather than a string
+Warning PluralsCandidate: Formatting %d followed by words ("minutes"): This should probably be a plural rather than a string
+Warning PluralsCandidate: Formatting %d followed by words ("openings"): This should probably be a plural rather than a string
+Warning PluralsCandidate: Formatting %d followed by words ("openings"): This should probably be a plural rather than a string
+Warning TypographyDashes: Replace "-" with an "en dash" character (–, &#8211;) ?
+Warning UseTomlInstead: Use the existing version catalog reference (`libs.compose.bom`) instead
+Warning UseTomlInstead: Use version catalog instead
+Warning UseTomlInstead: Use version catalog instead
+Warning UseTomlInstead: Use version catalog instead
+Warning UseTomlInstead: Use version catalog instead
+Warning UseTomlInstead: Use the existing version catalog reference (`libs.junit4`) instead
+Warning UseTomlInstead: Use the existing version catalog reference (`libs.compose.bom`) instead
+Warning UseTomlInstead: Use version catalog instead
+Warning UseTomlInstead: Use version catalog instead
+Warning UseTomlInstead: Use version catalog instead

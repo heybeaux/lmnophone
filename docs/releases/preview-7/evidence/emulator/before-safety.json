@@ -1,0 +1,186 @@
+{
+  "time_utc": "2026-10-11T19:14:30.536446+00:00",
+  "serial": "<emulator>",
+  "before": {
+    "owner": "1 owner:\nUser  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated",
+    "restriction_names_in_dump": [
+      "no_add_clone_profile",
+      "no_add_managed_profile",
+      "no_add_private_profile",
+      "no_bluetooth_sharing",
+      "no_config_credentials",
+      "no_config_wifi",
+      "no_fun",
+      "no_install_unknown_sources",
+      "no_outgoing_calls",
+      "no_sms",
+      "no_wallpaper"
+    ],
+    "active_restriction_sections": [
+      {
+        "section": "Restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile"
+        ]
+      },
+      {
+        "section": "Device policy restrictions:",
+        "values": []
+      },
+      {
+        "section": "Effective restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile"
+        ]
+      },
+      {
+        "section": "Device policy global restrictions:",
+        "values": []
+      },
+      {
+        "section": "Guest restrictions:",
+        "values": [
+          "no_config_credentials",
+          "no_config_wifi",
+          "no_install_unknown_sources",
+          "no_outgoing_calls",
+          "no_sms"
+        ]
+      }
+    ],
+    "lock_packages": [
+      "com.android.camera2",
+      "com.android.phone",
+      "com.android.server.telecom",
+      "com.google.android.apps.maps",
+      "com.google.android.apps.messaging",
+      "com.google.android.apps.safetyhub",
+      "com.google.android.cellbroadcastreceiver",
+      "com.google.android.dialer",
+      "org.plainphone"
+    ],
+    "lock_features": 53,
+    "lock_state": "LOCKED",
+    "first_install_time": "2026-10-11 12:12:01",
+    "count_preference": "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n    <boolean name=\"show_communication_counts\" value=\"false\" />\n</map>",
+    "package_flags": {
+      "hidden": [
+        "com.android.chrome",
+        "com.android.stk",
+        "com.android.vending",
+        "com.google.android.apps.docs",
+        "com.google.android.apps.photos",
+        "com.google.android.apps.youtube.music",
+        "com.google.android.calendar",
+        "com.google.android.contacts",
+        "com.google.android.deskclock",
+        "com.google.android.documentsui",
+        "com.google.android.gm",
+        "com.google.android.googlequicksearchbox",
+        "com.google.android.youtube"
+      ],
+      "suspended": [],
+      "disabled": [
+        "com.android.nfc",
+        "com.google.android.devicelockcontroller",
+        "com.google.android.gms.supervision"
+      ],
+      "packages_read": 244
+    }
+  },
+  "after": {
+    "owner": "1 owner:\nUser  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated",
+    "restriction_names_in_dump": [
+      "no_add_clone_profile",
+      "no_add_managed_profile",
+      "no_add_private_profile",
+      "no_bluetooth_sharing",
+      "no_config_credentials",
+      "no_config_wifi",
+      "no_fun",
+      "no_install_unknown_sources",
+      "no_outgoing_calls",
+      "no_sms",
+      "no_wallpaper"
+    ],
+    "active_restriction_sections": [
+      {
+        "section": "Restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile"
+        ]
+      },
+      {
+        "section": "Device policy restrictions:",
+        "values": []
+      },
+      {
+        "section": "Effective restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile"
+        ]
+      },
+      {
+        "section": "Device policy global restrictions:",
+        "values": []
+      },
+      {
+        "section": "Guest restrictions:",
+        "values": [
+          "no_config_credentials",
+          "no_config_wifi",
+          "no_install_unknown_sources",
+          "no_outgoing_calls",
+          "no_sms"
+        ]
+      }
+    ],
+    "lock_packages": [
+      "com.android.camera2",
+      "com.android.phone",
+      "com.android.server.telecom",
+      "com.google.android.apps.maps",
+      "com.google.android.apps.messaging",
+      "com.google.android.apps.safetyhub",
+      "com.google.android.cellbroadcastreceiver",
+      "com.google.android.dialer",
+      "org.plainphone"
+    ],
+    "lock_features": 53,
+    "lock_state": "LOCKED",
+    "first_install_time": "2026-10-11 12:12:01",
+    "count_preference": "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n    <boolean name=\"show_communication_counts\" value=\"false\" />\n</map>",
+    "package_flags": {
+      "hidden": [
+        "com.android.chrome",
+        "com.android.stk",
+        "com.android.vending",
+        "com.google.android.apps.docs",
+        "com.google.android.apps.photos",
+        "com.google.android.apps.youtube.music",
+        "com.google.android.calendar",
+        "com.google.android.contacts",
+        "com.google.android.deskclock",
+        "com.google.android.documentsui",
+        "com.google.android.gm",
+        "com.google.android.googlequicksearchbox",
+        "com.google.android.youtube"
+      ],
+      "suspended": [],
+      "disabled": [
+        "com.android.nfc",
+        "com.google.android.devicelockcontroller",
+        "com.google.android.gms.supervision"
+      ],
+      "packages_read": 244
+    }
+  }
+}

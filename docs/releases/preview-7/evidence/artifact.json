@@ -1,0 +1,11 @@
+{
+  "versionCode": 7,
+  "versionName": "0.1.0-preview-7",
+  "applicationId": "org.plainphone",
+  "testOnly": true,
+  "mergeCommit": "b87eca7",
+  "candidateCodeHead": "f4fdaab",
+  "apkSha256": "cb6aaa42d843badb6e7dfead15675760b1270e37dc9a7aafd0831ebaa2fb4fd3",
+  "signerSha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "apkAttachmentId": "03f0bd9f-9a53-4187-b14f-f6be8b53852d"
+}

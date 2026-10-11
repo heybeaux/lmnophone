@@ -1,0 +1,8 @@
+Warning InlinedApi: Field requires API level 33 (current min is 30): `android.content.Context#RECEIVER_NOT_EXPORTED`
+Warning DataExtractionRules: The attribute `android:allowBackup` is deprecated from Android 12 and higher and may be removed in future versions. Consider adding the attribute `android:dataExtractionRules` specifying an `@xml` resource which configures cloud backups and device transfers on Android 12 and higher.
+Warning StaticFieldLeak: Do not place Android context classes in static fields (static reference to `PolicyRuntime` which has field `context` pointing to `Context`); this is a memory leak
+Warning MissingApplicationIcon: Should explicitly set `android:icon`, there is no default
+Warning UseKtx: Use the KTX extension function `String.toUri` instead?
+Warning UseKtx: Use the KTX extension function `SharedPreferences.edit` instead?
+Warning UseKtx: Use the KTX extension function `String.toUri` instead?
+Warning UseKtx: Use the KTX extension function `String.toUri` instead?
