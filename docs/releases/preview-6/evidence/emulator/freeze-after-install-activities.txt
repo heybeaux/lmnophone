@@ -1,0 +1,381 @@
+ACTIVITY MANAGER ACTIVITIES (dumpsys activity activities)
+Display #0 (activities from top to bottom):
+  * Task{1572a1 #1 type=home U=0 visible=true visibleRequested=true mode=fullscreen translucent=false sz=1}
+    * Task{80522e #5 type=home A=10207:org.plainphone U=0 rootTaskId=1 visible=true visibleRequested=true mode=fullscreen translucent=false sz=1}
+      mLastNonFullscreenBounds=Rect(237, 420 - 844, 1500)
+      isSleeping=false
+      topResumedActivity=ActivityRecord{1c64ca9 u0 org.plainphone/.MainActivity t5}
+      * Hist  #0: ActivityRecord{1c64ca9 u0 org.plainphone/.MainActivity t5}
+        packageName=org.plainphone processName=org.plainphone
+        launchedFromUid=0 launchedFromPackage=null launchedFromFeature=null userId=0
+        app=ProcessRecord{f25dbb 956:org.plainphone/u0a207}
+        Intent { act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=org.plainphone/.MainActivity (has extras) }
+        rootOfTask=true task=Task{80522e #5 type=home A=10207:org.plainphone}
+        taskAffinity=10207:org.plainphone
+        mActivityComponent=org.plainphone/.MainActivity
+        baseDir=/data/app/~~B0F8U9qEqCe9gMxAghHcjg==/org.plainphone-ypMoSccTBm9Hg96adKlbZA==/base.apk
+        dataDir=/data/user/0/org.plainphone
+        stateNotNeeded=false componentSpecified=true mActivityType=home
+        compat={480dpi} theme=0x1030241
+        mLastReportedConfigurations:
+          mGlobalConfig={1.0 310mcc260mnc [en_US] ldltr sw360dp w360dp h640dp 480dpi nrml long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.100 fontWeightAdjustment=0}
+          mOverrideConfig={1.0 310mcc260mnc [en_US] ldltr sw360dp w360dp h640dp 480dpi nrml long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=home mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.9 fontWeightAdjustment=0}
+        mLastReportedActivityWindowInfo=ActivityWindowInfo{isEmbedded=false, taskBounds=Rect(0, 0 - 1080, 1920), taskFragmentBounds=Rect(0, 0 - 1080, 1920)}
+        CurrentConfiguration={1.0 310mcc260mnc [en_US] ldltr sw360dp w360dp h640dp 480dpi nrml long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=home mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.10 fontWeightAdjustment=0}
+        RequestedOverrideConfiguration={0.0 ?mcc0mnc ?localeList ?layoutDir ?swdp ?wdp ?hdp ?density ?lsize ?long ?ldr ?wideColorGamut ?orien ?uimode ?night ?touch ?keyb/?/? ?nav/? winConfig={ mBounds=Rect(0, 0 - 0, 0) mAppBounds=null mMaxBounds=Rect(0, 0 - 0, 0) mDisplayRotation=undefined mWindowingMode=undefined mActivityType=home mAlwaysOnTop=undefined mRotation=undefined} as.3 ?fontWeightAdjustment}
+        taskDescription: label="null" icon=null iconResource=/0 iconFilename=null primaryColor=fff5f5f5
+          backgroundColor=fffafafa statusBarColor=ff757575 navigationBarColor=808080
+         backgroundColorFloating=ffffffff
+        launchFailed=false launchCount=1 lastLaunchTime=-7s480ms
+        mHaveState=false mIcicle=null
+        state=RESUMED delayedResume=false finishing=false
+        keysPaused=false inHistory=true idle=true
+        occludesParent=true noDisplay=false immersive=false launchMode=2
+        mActivityType=home
+        mImeInsetsFrozenUntilStartInput=false
+        windows=[Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}]
+        windowType=2
+        mOccludesParent=true
+        overrideOrientation=SCREEN_ORIENTATION_UNSPECIFIED
+        requestedOrientation=SCREEN_ORIENTATION_UNSPECIFIED
+        mVisibleRequested=true mVisible=true mClientVisible=true reportedDrawn=true reportedVisible=true
+        mNumInterestingWindows=1 mNumDrawnWindows=1 allDrawn=true lastAllDrawn=false)
+        startingData=null firstWindowDrawn=true mIsExiting=false
+        nowVisible=true lastVisibleTime=-2s296ms
+        resizeMode=RESIZE_MODE_UNRESIZEABLE
+        mLastReportedMultiWindowMode=false mLastReportedPictureInPictureMode=false
+        supportsSizeChanges=SIZE_CHANGES_UNSUPPORTED_METADATA
+        configChanges=0x3
+        neverSandboxDisplayApis=false
+        alwaysSandboxDisplayApis=false
+        areBoundsLetterboxed=false
+        mCameraCompatControlState=hidden
+        mCameraCompatControlEnabled=true
+
+  * Task{dbe876e #2 type=undefined U=0 visible=false visibleRequested=false mode=fullscreen translucent=true sz=0}
+    mCreatedByOrganizer=true
+    isSleeping=false
+
+  * Task{f630007 #3 type=undefined U=0 visible=false visibleRequested=false mode=multi-window translucent=true sz=0}
+    mCreatedByOrganizer=true
+    isSleeping=false
+
+  * Task{1ac282a #4 type=undefined U=0 visible=false visibleRequested=false mode=multi-window translucent=true sz=0}
+    mBounds=Rect(0, 1920 - 1080, 2880)
+    mCreatedByOrganizer=true
+    isSleeping=false
+
+  Resumed activities in task display areas (from top to bottom):
+    Resumed: ActivityRecord{1c64ca9 u0 org.plainphone/.MainActivity t5}
+
+  ResumedActivity: ActivityRecord{1c64ca9 u0 org.plainphone/.MainActivity t5}
+
+ActivityTaskSupervisor state:
+  topDisplayFocusedRootTask=Task{1572a1 #1 type=home}
+  Display: mDisplayId=0 (organized)
+    init=1080x2400 420dpi mMinSizeOfResizeableTaskDp=220 base=1080x1920 480dpi cur=1080x1920 app=1080x1920 rng=1080x1080-1920x1920
+    deferred=false mLayoutNeeded=false
+  mLastOrientationSource=WindowedMagnification:0:31@33781931
+  deepestLastOrientationSource=ActivityRecord{1c64ca9 u0 org.plainphone/.MainActivity t5}
+  overrideConfig={1.0 310mcc260mnc [en_US] ldltr sw360dp w360dp h640dp 480dpi nrml long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 1920) mAppBounds=Rect(0, 0 - 1080, 1920) mMaxBounds=Rect(0, 0 - 1080, 1920) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.73 fontWeightAdjustment=0}
+  mLayoutSeq=81
+  mCurrentFocus=Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}
+  mFocusedApp=ActivityRecord{1c64ca9 u0 org.plainphone/.MainActivity t5}
+
+  mHoldScreenWindow=null
+  mObscuringWindow=Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}
+  mLastWakeLockHoldingWindow=null
+  mLastWakeLockObscuringWindow=null
+
+  displayId=0
+  mWallpaperTarget=null
+  mLastWallpaperZoomOut=0.0
+  token WallpaperWindowToken{2713863 token=android.os.Binder@b70c692}:
+    canShowWhenLocked=true
+    mWallpaperX=NA
+    mWallpaperY=NA
+    mWallpaperXStep=NA
+    mWallpaperYStep=NA
+    mWallpaperDisplayOffsetX=NA
+    mWallpaperDisplayOffsetY=NA
+
+  mSystemGestureExclusion=SkRegion()
+
+  Display areas in top down Z order:
+    * Leaf:36:36
+    * HideDisplayCutout:32:35
+      * OneHanded:34:35
+        * FullscreenMagnification:34:35
+          * Leaf:34:35
+      * FullscreenMagnification:33:33
+        * Leaf:33:33
+      * OneHanded:32:32
+        * Leaf:32:32
+    * WindowedMagnification:0:31
+      * HideDisplayCutout:26:31
+        * OneHanded:26:31
+          * FullscreenMagnification:29:31
+            * Leaf:29:31
+          * Leaf:28:28
+          * FullscreenMagnification:26:27
+            * Leaf:26:27
+      * Leaf:24:25
+      * HideDisplayCutout:18:23
+        * OneHanded:18:23
+          * FullscreenMagnification:18:23
+            * Leaf:18:23
+      * OneHanded:17:17
+        * FullscreenMagnification:17:17
+          * Leaf:17:17
+      * HideDisplayCutout:16:16
+        * OneHanded:16:16
+          * FullscreenMagnification:16:16
+            * Leaf:16:16
+      * OneHanded:15:15
+        * FullscreenMagnification:15:15
+          * Leaf:15:15
+      * HideDisplayCutout:0:14
+        * OneHanded:0:14
+          * ImePlaceholder:13:14
+            * ImeContainer
+          * FullscreenMagnification:0:12
+            * Leaf:3:12
+            * DefaultTaskDisplayArea (organized)
+            * Leaf:0:1
+
+  Task display areas in top down Z order:
+    TaskDisplayArea DefaultTaskDisplayArea
+      overrideConfig={0.0 ?mcc0mnc ?localeList ?layoutDir ?swdp ?wdp ?hdp ?density ?lsize ?long ?ldr ?wideColorGamut ?orien ?uimode ?night ?touch ?keyb/?/? ?nav/? winConfig={ mBounds=Rect(0, 0 - 0, 0) mAppBounds=null mMaxBounds=Rect(0, 0 - 0, 0) mDisplayRotation=undefined mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=undefined} ?fontWeightAdjustment}
+      mPreferredTopFocusableRootTask=Task{1572a1 #1 type=home}
+      mLastFocusedRootTask=Task{1572a1 #1 type=home}
+      Application tokens in top down Z order:
+      * Task{1572a1 #1 type=home U=0 visible=true visibleRequested=true mode=fullscreen translucent=false sz=1}
+        bounds=[0,0][1080,1920]
+        * Task{80522e #5 type=home A=10207:org.plainphone U=0 rootTaskId=1 visible=true visibleRequested=true mode=fullscreen translucent=false sz=1}
+          bounds=[0,0][1080,1920]
+          * ActivityRecord{1c64ca9 u0 org.plainphone/.MainActivity t5}
+      * Task{dbe876e #2 type=undefined U=0 visible=false visibleRequested=false mode=fullscreen translucent=true sz=0}
+        bounds=[0,0][1080,1920]
+      * Task{f630007 #3 type=undefined U=0 visible=false visibleRequested=false mode=multi-window translucent=true sz=0}
+        bounds=[0,0][1080,1920]
+      * Task{1ac282a #4 type=undefined U=0 visible=false visibleRequested=false mode=multi-window translucent=true sz=0}
+        bounds=[0,1920][1080,2880]
+
+  no ScreenRotationAnimation 
+
+  rootHomeTask=Task=1
+
+  PinnedTaskController
+    mIsImeShowing=false
+    mImeHeight=0
+    mMinAspectRatio=0.41841003
+    mMaxAspectRatio=2.39
+
+  DisplayFrames w=1080 h=1920 r=0
+
+  DisplayPolicy
+    mCarDockEnablesAccelerometer=true mDeskDockEnablesAccelerometer=true
+    mDockMode=EXTRA_DOCK_STATE_UNDOCKED mLidState=LID_OPEN
+    mAwake=true mScreenOnEarly=true mScreenOnFully=true
+    mKeyguardDrawComplete=true mWindowManagerDrawComplete=true
+    mHdmiPlugged=false
+    mLastAppearance=LIGHT_STATUS_BARS LIGHT_NAVIGATION_BARS
+    mLastBehavior=DEFAULT
+    mShowingDream=false mDreamingLockscreen=false
+    mStatusBar=Window{b1a1e5a u0 StatusBar}
+    mExpandedPanel=Window{b1fb4d9 u0 NotificationShade}
+    isKeyguardShowing=false
+    mNavigationBar=Window{102b2b5 u0 Taskbar}
+    mNavBarOpacityMode=2
+    mNavigationBarCanMove=false
+    mNavigationBarPosition=4
+    mLeftGestureHost=Window{102b2b5 u0 Taskbar}
+    mTopGestureHost=Window{b1a1e5a u0 StatusBar}
+    mRightGestureHost=Window{102b2b5 u0 Taskbar}
+    mBottomGestureHost=Window{102b2b5 u0 Taskbar}
+    mFocusedWindow=Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}
+    mTopFullscreenOpaqueWindowState=Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}
+    mSystemBarColorApps={ActivityRecord{1c64ca9 u0 org.plainphone/.MainActivity t5}}
+    mNavBarColorWindowCandidate=Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}
+    mNavBarBackgroundWindowCandidate=Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}
+    mLastStatusBarAppearanceRegions=
+      AppearanceRegion{LIGHT_STATUS_BARS bounds=[0,0][1080,1920]}
+    mLastLetterboxDetails=
+    mStatusBarBackgroundWindows=
+      Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}
+    mTopIsFullscreen=false
+    mImeInsetsConsumed=false
+    mForceShowNavigationBarEnabled=false mAllowLockscreenWhenOn=false
+    mRemoteInsetsControllerControlsSystemBars=false
+    mDecorInsetsInfo:
+      ROTATION_0={nonDecorInsets=[0,0][0,0], overrideNonDecorInsets=[0,0][0,72], configInsets=[0,0][0,0], overrideConfigInsets=[0,72][0,72], nonDecorFrame=[0,0][1080,1920], overrideNonDecorFrame=[0,0][1080,1848], configFrame=[0,0][1080,1920], overrideConfigFrame=[0,72][1080,1848]}
+      ROTATION_90={nonDecorInsets=[0,0][0,0], overrideNonDecorInsets=[0,0][0,72], configInsets=[0,0][0,0], overrideConfigInsets=[0,72][0,72], nonDecorFrame=[0,0][1920,1080], overrideNonDecorFrame=[0,0][1920,1008], configFrame=[0,0][1920,1080], overrideConfigFrame=[0,72][1920,1008]}
+      ROTATION_180={nonDecorInsets=[0,0][0,0], overrideNonDecorInsets=[0,0][0,72], configInsets=[0,0][0,0], overrideConfigInsets=[0,72][0,72], nonDecorFrame=[0,0][1080,1920], overrideNonDecorFrame=[0,0][1080,1848], configFrame=[0,0][1080,1920], overrideConfigFrame=[0,72][1080,1848]}
+      ROTATION_270={nonDecorInsets=[0,0][0,0], overrideNonDecorInsets=[0,0][0,72], configInsets=[0,0][0,0], overrideConfigInsets=[0,72][0,72], nonDecorFrame=[0,0][1920,1080], overrideNonDecorFrame=[0,0][1920,1008], configFrame=[0,0][1920,1080], overrideConfigFrame=[0,72][1920,1008]}
+    SystemGestures:
+      mDisplayCutoutTouchableRegionSize=0
+      mSwipeStartThreshold=Rect(72, 72 - 72, 72)
+      mSwipeDistanceThreshold=72
+
+  DisplayRotation
+    mCurrentAppOrientation=SCREEN_ORIENTATION_UNSPECIFIED
+    mLastOrientation=-1
+    mRotation=0 mDeferredRotationPauseCount=0
+    mLandscapeRotation=ROTATION_90 mSeascapeRotation=ROTATION_270
+    mPortraitRotation=ROTATION_0 mUpsideDownRotation=ROTATION_180
+    mSupportAutoRotation=true
+    WindowOrientationListener
+      mEnabled=true
+      mCurrentRotation=ROTATION_0
+      mSensorType=null
+      mSensor={Sensor name="Goldfish 3-axis Accelerometer", vendor="The Android Open Source Project", version=1, type=1, maxRange=39.300102, resolution=2.480159E-4, power=3.0, minDelay=10000}
+      mRate=2
+      AccelSensorJudge
+        mProposedRotation=0
+        mPredictedRotation=0
+        mLastFilteredX=0.0
+        mLastFilteredY=9.776321
+        mLastFilteredZ=0.812345
+        mLastFilteredTimestampNanos=18160996296 (27.736212ms ago)
+        mTiltHistory={last: 5.0}
+        mFlat=false
+        mSwinging=false
+        mAccelerating=false
+        mOverhead=false
+        mTouched=false
+        mTiltToleranceConfig=[[-25, 70], [-25, 65], [-25, 60], [-25, 65]]
+
+    mCarDockRotation=-1 mDeskDockRotation=-1
+    mUserRotationMode=USER_ROTATION_FREE mUserRotation=ROTATION_0 mCameraRotationMode=0 mAllowAllRotations=unknown
+    mDemoHdmiRotation=ROTATION_90 mDemoHdmiRotationLock=false mUndockedHdmiRotation=-1
+    mLidOpenRotation=-1
+    mFixedToUserRotation=false
+  FoldController
+    mPauseAutorotationDuringUnfolding=false
+    mShouldDisableRotationSensor=false
+    mShouldIgnoreSensorRotation=false
+    mLastDisplaySwitchTime=0
+    mLastHingeAngleEventTime=0
+    mDeviceState=FOLDED
+
+  InputConsumers:
+    name=recents_animation_input_consumer pid=1112 user=UserHandle{0}
+
+  WindowInsetsStateController
+    InsetsState
+      mDisplayFrame=Rect(0, 0 - 1080, 1920)
+      mDisplayCutout=DisplayCutout{insets=Rect(0, 0 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=0 displayHeight=0 physicalDisplayWidth=0 physicalDisplayHeight=0 density={0.0} cutoutSpec={} rotation={0} scale={0.0} physicalPixelDisplaySizeRatio={0.0}}} sideOverrides=null}
+      mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=0, center=Point(0, 0)}, RoundedCorner{position=TopRight, radius=0, center=Point(0, 0)}, RoundedCorner{position=BottomRight, radius=0, center=Point(0, 0)}, RoundedCorner{position=BottomLeft, radius=0, center=Point(0, 0)}]}
+      mRoundedCornerFrame=Rect(0, 0 - 0, 0)
+      mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(792, 0 - 1038, 72) rotation=0}
+      mDisplayShape=DisplayShape{ spec=-1893857183 displayWidth=1080 displayHeight=2400 physicalPixelDisplaySizeRatio=1.0 rotation=0 offsetX=0 offsetY=0 scale=1.0}
+        InsetsSource id=82820001 type=navigationBars frame=[0,1848][1080,1920] visible=true flags=SUPPRESS_SCRIM|ANIMATE_RESIZING sideHint=BOTTOM boundingRects=null
+        InsetsSource id=82820004 type=systemGestures frame=[0,0][90,1920] visible=true flags= sideHint=LEFT boundingRects=null
+        InsetsSource id=82820005 type=mandatorySystemGestures frame=[0,1824][1080,1920] visible=true flags= sideHint=BOTTOM boundingRects=null
+        InsetsSource id=82820006 type=tappableElement frame=[0,0][0,0] visible=true flags= sideHint=NONE boundingRects=null
+        InsetsSource id=82820024 type=systemGestures frame=[990,0][1080,1920] visible=true flags= sideHint=RIGHT boundingRects=null
+        InsetsSource id=85bb0000 type=statusBars frame=[0,0][1080,72] visible=true flags= sideHint=TOP boundingRects=null
+        InsetsSource id=85bb0005 type=mandatorySystemGestures frame=[0,0][1080,72] visible=true flags= sideHint=TOP boundingRects=null
+        InsetsSource id=85bb0006 type=tappableElement frame=[0,0][1080,72] visible=true flags= sideHint=TOP boundingRects=null
+        InsetsSource id=3 type=ime frame=[0,0][0,0] visible=false flags= sideHint=NONE boundingRects=null
+    Control map:
+      Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}:
+        InsetsSourceControl: {3 mType=ime mSurfacePosition=Point(60, 1776) mInsetsHint=Insets{left=0, top=0, right=0, bottom=0}}
+        InsetsSourceControl: {82820001 mType=navigationBars initiallyVisible mSurfacePosition=Point(0, 1848) mInsetsHint=Insets{left=0, top=0, right=0, bottom=72}}
+        InsetsSourceControl: {85bb0000 mType=statusBars initiallyVisible mSurfacePosition=Point(0, 0) mInsetsHint=Insets{left=0, top=72, right=0, bottom=0}}
+    InsetsSourceProviders:
+      ImeInsetsSourceProvider
+        mSource=InsetsSource id=3 type=ime frame=[0,0][0,0] visible=false flags= sideHint=NONE boundingRects=null
+        mSourceFrame=Rect(60, 1776 - 1020, 1920)
+        mControl=InsetsSourceControl mId=3 mType=ime mLeash=Surface(name=Surface(name=383dc09 InputMethod)/@0x5328627 - animation-leash of insets_animation)/@0x6640e5 mInitiallyVisible=false mSurfacePosition=Point(60, 1776) mInsetsHint=Insets{left=0, top=0, right=0, bottom=0} mSkipAnimationOnce=false
+        mInsetsHint=Insets{left=0, top=0, right=0, bottom=0} stale
+        mIsLeashReadyForDispatching=true mHasPendingPosition=false
+        mWindowContainer=Window{383dc09 u0 InputMethod}
+        mAdapter=ControlAdapter mCapturedLeash=Surface(name=Surface(name=383dc09 InputMethod)/@0x5328627 - animation-leash of insets_animation)/@0x6640e5
+        mControlTarget=Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}
+        mImeShowing=false        showImePostLayout not scheduled, mImeRequester=null
+
+      InsetsSourceProvider
+        mSource=InsetsSource id=85bb0006 type=tappableElement frame=[0,0][1080,72] visible=true flags= sideHint=TOP boundingRects=null
+        mSourceFrame=Rect(0, 0 - 1080, 72)
+        mIsLeashReadyForDispatching=true mHasPendingPosition=false
+        mWindowContainer=Window{b1a1e5a u0 StatusBar}
+      InsetsSourceProvider
+        mSource=InsetsSource id=85bb0005 type=mandatorySystemGestures frame=[0,0][1080,72] visible=true flags= sideHint=TOP boundingRects=null
+        mSourceFrame=Rect(0, 0 - 1080, 72)
+        mIsLeashReadyForDispatching=true mHasPendingPosition=false
+        mWindowContainer=Window{b1a1e5a u0 StatusBar}
+      InsetsSourceProvider
+        mSource=InsetsSource id=85bb0000 type=statusBars frame=[0,0][1080,72] visible=true flags= sideHint=TOP boundingRects=null
+        mSourceFrame=Rect(0, 0 - 1080, 72)
+        mControl=InsetsSourceControl mId=85bb0000 mType=statusBars mLeash=Surface(name=Surface(name=b1a1e5a StatusBar)/@0xc8ad68 - animation-leash of insets_animation)/@0x4185733 mInitiallyVisible=true mSurfacePosition=Point(0, 0) mInsetsHint=Insets{left=0, top=72, right=0, bottom=0} mSkipAnimationOnce=false
+        mInsetsHint=Insets{left=0, top=72, right=0, bottom=0}
+        mIsLeashReadyForDispatching=true mHasPendingPosition=false
+        mWindowContainer=Window{b1a1e5a u0 StatusBar}
+        mAdapter=ControlAdapter mCapturedLeash=Surface(name=Surface(name=b1a1e5a StatusBar)/@0xc8ad68 - animation-leash of insets_animation)/@0x4185733
+        mControlTarget=Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}
+      InsetsSourceProvider
+        mSource=InsetsSource id=82820024 type=systemGestures frame=[990,0][1080,1920] visible=true flags= sideHint=RIGHT boundingRects=null
+        mSourceFrame=Rect(990, 0 - 1080, 1920)
+        mIsLeashReadyForDispatching=true mHasPendingPosition=false
+        mWindowContainer=Window{102b2b5 u0 Taskbar}
+      InsetsSourceProvider
+        mSource=InsetsSource id=82820006 type=tappableElement frame=[0,0][0,0] visible=true flags= sideHint=NONE boundingRects=null
+        mSourceFrame=Rect(0, 0 - 0, 0)
+        mOverrideFrames={2011=Rect(0, 1848 - 1080, 1920), 2031=Rect(0, 0 - 0, 0)}
+        mIsLeashReadyForDispatching=true mHasPendingPosition=false
+        mWindowContainer=Window{102b2b5 u0 Taskbar}
+      InsetsSourceProvider
+        mSource=InsetsSource id=82820005 type=mandatorySystemGestures frame=[0,1824][1080,1920] visible=true flags= sideHint=BOTTOM boundingRects=null
+        mSourceFrame=Rect(0, 1824 - 1080, 1920)
+        mOverrideFrames={2011=Rect(0, 1848 - 1080, 1920), 2031=Rect(0, 1824 - 1080, 1920)}
+        mIsLeashReadyForDispatching=true mHasPendingPosition=false
+        mWindowContainer=Window{102b2b5 u0 Taskbar}
+      InsetsSourceProvider
+        mSource=InsetsSource id=82820004 type=systemGestures frame=[0,0][90,1920] visible=true flags= sideHint=LEFT boundingRects=null
+        mSourceFrame=Rect(0, 0 - 90, 1920)
+        mIsLeashReadyForDispatching=true mHasPendingPosition=false
+        mWindowContainer=Window{102b2b5 u0 Taskbar}
+      InsetsSourceProvider
+        mSource=InsetsSource id=82820001 type=navigationBars frame=[0,1848][1080,1920] visible=true flags=SUPPRESS_SCRIM|ANIMATE_RESIZING sideHint=BOTTOM boundingRects=null
+        mSourceFrame=Rect(0, 1848 - 1080, 1920)
+        mOverrideFrames={2011=Rect(0, 1848 - 1080, 1920), 2031=Rect(0, 1848 - 1080, 1920)}
+        mControl=InsetsSourceControl mId=82820001 mType=navigationBars mLeash=Surface(name=Surface(name=102b2b5 Taskbar)/@0xb067197 - animation-leash of insets_animation)/@0xd60daf0 mInitiallyVisible=true mSurfacePosition=Point(0, 1848) mInsetsHint=Insets{left=0, top=0, right=0, bottom=72} mSkipAnimationOnce=false
+        mInsetsHint=Insets{left=0, top=0, right=0, bottom=72}
+        mIsLeashReadyForDispatching=true mHasPendingPosition=false
+        mWindowContainer=Window{102b2b5 u0 Taskbar}
+        mAdapter=ControlAdapter mCapturedLeash=Surface(name=Surface(name=102b2b5 Taskbar)/@0xb067197 - animation-leash of insets_animation)/@0xd60daf0
+        mControlTarget=Window{d89260d u0 org.plainphone/org.plainphone.MainActivity}
+  InsetsPolicy
+    status: WINDOW_STATE_SHOWING
+    nav: WINDOW_STATE_SHOWING
+
+  KeyguardController:
+    mKeyguardShowing=false
+    mAodShowing=false
+    mKeyguardGoingAway=false
+   KeyguardShowing=false AodShowing=false KeyguardGoingAway=false DismissalRequested=false  Occluded=false DismissingKeyguardActivity=null TurnScreenOnActivity=null at display=0
+    mDismissalRequested=false
+
+  LockTaskController:
+    mLockTaskModeState=LOCKED
+    mLockTaskModeTasks=
+      #0 Task{80522e #5 type=home A=10207:org.plainphone}
+    mLockTaskPackages (userId:packages)=
+      u0:[com.android.camera2, com.google.android.apps.maps, com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.android.phone, com.google.android.cellbroadcastreceiver]
+
+  mCurTaskIdForUser={0=5}
+  mUserRootTaskInFront={}
+  mVisibilityTransactionDepth=0
+  isHomeRecentsComponent=false
+  mNoHistoryActivities=[]
+
+  TaskOrganizerController:
+      android.window.ITaskOrganizer$Stub$Proxy@a928869 uid=10178 (active):
+        (fullscreen) Task{1572a1 #1 type=home}
+        (fullscreen) Task{dbe876e #2 type=undefined}
+        (multi-window) Task{f630007 #3 type=undefined}
+        (multi-window) Task{1ac282a #4 type=undefined}
+
+  VisibleActivityProcess:[ ProcessRecord{f25dbb 956:org.plainphone/u0a207}]
+  NumNonAppVisibleWindowUidMap:[ 10178:3 10177:1]

@@ -1,5 +1,8 @@
 # Preview 6 preparation
 
+Historical prep evidence. The A1 freeze candidate and fresh upgrade results are
+in [freeze verification](freeze/verification.md); the APK below is superseded.
+
 Prepared for [PLA-340](/PLA/issues/PLA-340). The Lead owns the single freeze
 review under [PLA-339](/PLA/issues/PLA-339); this is not self-approval or physical
 device acceptance.

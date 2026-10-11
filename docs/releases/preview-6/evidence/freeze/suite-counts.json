@@ -1,0 +1,20 @@
+{
+  "device": {
+    "tests": 606,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "policy": {
+    "tests": 636,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "plainphone": {
+    "tests": 119,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

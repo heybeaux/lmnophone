@@ -1,0 +1,15 @@
+{
+  "source_commit": "8c3674b15f0080f2c8f43627336c35f8713be0d5",
+  "apk_sha256": "4806bada7b7bd0f827312972b8ff4a98af361df5c5299d625fa25a4a41cd5ace",
+  "version_code": 6,
+  "version_name": "0.1.0-preview-6",
+  "signer_sha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "install_time_utc": "2026-10-11T17:37:44Z",
+  "install_time_avd_local": "2026-10-11 10:37:44",
+  "serial": "emulator-5862",
+  "avd": "pla306-policy-a35",
+  "physical_device": false,
+  "application_id": "org.plainphone",
+  "test_only": true,
+  "installed_apk_sha256": "4806bada7b7bd0f827312972b8ff4a98af361df5c5299d625fa25a4a41cd5ace"
+}

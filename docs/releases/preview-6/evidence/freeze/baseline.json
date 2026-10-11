@@ -1,0 +1,5 @@
+{
+  "installed_apk_sha256": "f43b93978c8994bc25b44ec66bc8d40532a79cead43becd69fed87b3e048204c",
+  "method": "in-place testOnly downgrade of owned AVD to exact build 5; no uninstall/reset/reprovision",
+  "serial": "emulator-5862"
+}
