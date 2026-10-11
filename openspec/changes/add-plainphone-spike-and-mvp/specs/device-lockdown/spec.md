@@ -97,16 +97,18 @@ After boot, the LMNOPhone home activity SHALL start lock task before it draws it
 - the home activity SHALL show only the attention screen: "LMNOPhone needs attention. You can still make calls.", with Phone and Emergency, and no app list;
 - the suspension SHALL be recorded in device-protected storage before it is applied, so that a later pass can lift exactly what it added. It SHALL be lifted only after lock task has started with `KEYGUARD` read back;
 - packages that Android refuses to suspend SHALL be logged and shown in the trusted person's attention details. If one of them can be opened from a notification, an explicit intent or a deep link, this requirement is not met until the board approves a disclosure for that route.
+- **Board-approved disclosure (card `da306a1a`, 2026-10-11):** on API 35 a Device Owner cannot suspend Settings or the permission controller (`OP_SYSTEM_EXEMPT_FROM_SUSPENSION`). In fallback containment these two MAY stay reachable. The attention screen's details and the user docs SHALL say so plainly: "Until this is fixed, Settings and the app-permissions screen can still be opened." Apps opened from them stay suspended, and the user restrictions still apply. Any other package Android refuses to suspend still needs its own disclosure.
+- LMNOPhone MAY also disable the status bar (`setStatusBarDisabled`) in this state, which removes the notification route to Settings, but only if a test shows it is reliable and leaves the Phone and Emergency actions reachable. Otherwise it SHALL NOT be used.
 
 **Lock task must actually be running.** After every unlocked policy pass whose writes read back, and whenever the home activity is created or resumed, LMNOPhone SHALL read the live lock-task state. Only `LOCK_TASK_MODE_LOCKED` counts as containment. `NONE`, `PINNED` and an unreadable state SHALL NOT be reported as contained or ready.
 - If the state is `NONE`, LMNOPhone SHALL bring the home activity to the front and start lock task, with the `KEYGUARD` check above, then read back `LOCKED`.
 - If the activity it displaced was a system Phone or emergency keypad screen that LMNOPhone itself opened, or the in-call UI, LMNOPhone SHALL bring that screen back inside lock task as soon as `LOCKED` reads back. A Phone or emergency keypad screen opened from outside LMNOPhone (another app, a notification or a shell) cannot be identified by a Device Owner. It is covered by the home activity, and Phone stays one tap away there. Recovery SHALL NOT end a call. Locked-boot passes SHALL keep the keyguard and emergency access.
 - If the state is `PINNED`, LMNOPhone SHALL report not ready and show "LMNOPhone needs attention". Emergency SHALL stay reachable.
-- This recovery covers the case where LMNOPhone's process died and another app reached the front before it restarted. Until recovery reads back `LOCKED`, that app can be used, and changes made in it stay. Test reports SHALL give the observed exposure times and SHALL NOT claim a fixed maximum.
+- This recovery covers the case where LMNOPhone's process died and another app reached the front before it restarted. Until recovery reads back `LOCKED`, that app can be used, and changes made in it stay. Test reports SHALL give the observed exposure times and SHALL NOT claim a fixed maximum. The board accepted this exposure with disclosure (card `da306a1a`, 2026-10-11). The user docs SHALL say: "After a rare LMNOPhone crash, another app can be used for a moment before the phone locks again, and changes made in that moment stay."
 
 Restrictions, hidden apps and lock-task package settings are kept by Android across reboots. LMNOPhone SHALL NOT clear them during recovery.
 
-From unlock until lock task starts, including during fallback containment, no unapproved app SHALL be openable from the routes below. The only exception is the exposure after LMNOPhone's process dies, described under *Lock task must actually be running*.
+From unlock until lock task starts, including during fallback containment, no unapproved app SHALL be openable from the routes below. There are two exceptions: the exposure after LMNOPhone's process dies, described under *Lock task must actually be running*, and Settings and the permission controller during fallback containment, under the board-approved disclosure above.
 - a notification
 - an explicit intent
 - a deep link
@@ -118,7 +120,7 @@ From unlock until lock task starts, including during fallback containment, no un
 #### Scenario: Features never read back, after the PIN
 - **WHEN** the lock-task features cannot be written or never read back with `KEYGUARD`, and the user enters the PIN
 - **THEN** the home activity is not in lock task and shows only the attention screen with Phone and Emergency
-- **AND** an unapproved app does not open from a notification tap, an explicit intent or a deep link
+- **AND** an unapproved app does not open from a notification tap, an explicit intent or a deep link, except Settings and the permission controller, which the attention details disclose
 - **AND** the next time the screen turns off, the secure keyguard still needs the PIN
 
 #### Scenario: LMNOPhone's process dies while another app is opening
