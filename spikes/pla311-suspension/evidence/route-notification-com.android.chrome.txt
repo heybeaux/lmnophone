@@ -1,0 +1,1 @@
+ topResumedActivity=ActivityRecord{e79abb0 u0 com.android.settings/.enterprise.ActionDisabledByAdminDialog t12}  mLockTaskModeState=NONE 

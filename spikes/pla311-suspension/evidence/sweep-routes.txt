@@ -1,0 +1,6 @@
+DIAL: Warning: Activity not started, its current task has been brought to the front  topResumedActivity=ActivityRecord{f5f8409 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t14}  mLockTaskModeState=NONE 
+EMERGENCY: Warning: Activity not started, its current task has been brought to the front  topResumedActivity=ActivityRecord{c0c6a88 u0 com.android.phone/.EmergencyDialer t15}  mLockTaskModeState=NONE 
+SETTINGS:   topResumedActivity=ActivityRecord{2f86f5d u0 com.android.settings/.Settings t17}  mLockTaskModeState=NONE 
+PERMCTL:   topResumedActivity=ActivityRecord{6fe68be u0 com.google.android.permissioncontroller/com.android.permissioncontroller.permission.ui.ManagePermissionsActivity t18}  mLockTaskModeState=NONE 
+WEBCAM:   topResumedActivity=ActivityRecord{b094fa1 u0 org.plainphone/.MainActivity t16}  mLockTaskModeState=NONE 
+CHROME:   topResumedActivity=ActivityRecord{3ead024 u0 com.android.settings/.enterprise.ActionDisabledByAdminDialog t19}  mLockTaskModeState=NONE 

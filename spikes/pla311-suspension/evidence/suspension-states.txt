@@ -1,0 +1,8 @@
+com.google.android.inputmethod.latin suspended=false
+com.google.android.dialer suspended=false
+com.google.android.apps.safetyhub suspended=false
+com.android.emergency suspended=false
+com.android.server.telecom suspended=false
+com.android.phone suspended=false
+com.android.systemui suspended=false
+com.google.android.apps.messaging suspended=false

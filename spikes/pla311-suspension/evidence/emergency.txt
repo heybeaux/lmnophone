@@ -1,0 +1,1 @@
+ topResumedActivity=ActivityRecord{c0c6a88 u0 com.android.phone/.EmergencyDialer t15}  mLockTaskModeState=NONE 
