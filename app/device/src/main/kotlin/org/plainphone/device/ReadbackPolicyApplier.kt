@@ -5,6 +5,7 @@ package org.plainphone.device
 import org.plainphone.core.PackageName
 import org.plainphone.policy.ApplyStage
 import org.plainphone.policy.ExpectedPolicyState
+import org.plainphone.policy.LockTaskFeature
 import org.plainphone.policy.PolicyPlan
 
 /**
@@ -19,6 +20,9 @@ import org.plainphone.policy.PolicyPlan
  *   UI and of Plainphone ([ExpectedPolicyState.home], the Home package), so Home can start lock task
  *   at the first frame even after the list was lost, and it restores the fixed lock-task features
  *   (including BLOCK_ACTIVITY_START_IN_TASK). This is the locked-boot path of device-lockdown.
+ * - Keyguard first: the floor and the lock-task stage write the features and read them back (with
+ *   KEYGUARD) before any lock-task list write. If they do not read back, the list is not written and
+ *   the stage fails; Home then stays out of lock task ([KeyguardFirst]).
  * - The never-hide guard fails a plan that would hide a never-hide package. Hides skip that list
  *   whatever the plan says. [PolicyPlan.allowedDestruction] is a guard result and is never run.
  * - A package the plan needs enabled gets one best-effort enable. If it stays disabled it is reported
@@ -117,12 +121,11 @@ class ReadbackPolicyApplier(
             }
             ApplyStage.EMERGENCY_FLOOR -> {
                 show(floorPackages)
-                // Features before membership: a Home that enters lock task between the two writes must
-                // already have KEYGUARD, or Android drops even a secure keyguard (PLA-242 spike).
+                // Keyguard first (PLA-264 finding 1): no membership write until the features read back.
                 expected.features?.let { want -> if (port.lockTaskFeatures() != want) port.setLockTaskFeatures(want) }
                 floorLockTask?.let { want ->
                     val now = port.lockTaskPackages()
-                    if (!now.containsAll(want)) port.setLockTaskPackages(now + want)
+                    if (!now.containsAll(want) && featuresReadBack()) port.setLockTaskPackages(now + want)
                 }
             }
             ApplyStage.NEVER_HIDE_GUARD -> if (guardHolds()) show(plan.neverHide)
@@ -134,7 +137,8 @@ class ReadbackPolicyApplier(
             }
             ApplyStage.LOCK_TASK -> {
                 expected.features?.let { port.setLockTaskFeatures(plan.features) }
-                expected.lockTaskPackages?.let { port.setLockTaskPackages(plan.lockTaskPackages) }
+                // Features that did not read back leave the list as it is; the readback fails the stage.
+                expected.lockTaskPackages?.let { if (featuresReadBack()) port.setLockTaskPackages(plan.lockTaskPackages) }
             }
             ApplyStage.HOME -> expected.home?.let(port::setHome)
             }
@@ -158,6 +162,16 @@ class ReadbackPolicyApplier(
                 expected.lockTaskPackages.let { it == null || port.lockTaskPackages() == it } &&
                     expected.features.let { it == null || port.lockTaskFeatures() == it }
             ApplyStage.HOME -> expected.home.let { it == null || port.home() == it }
+        }
+
+        /**
+         * The features read back as the plan expects, with KEYGUARD. Without it no lock-task list write
+         * runs, so no package (Home included) gains or keeps a fresh grant while Home could enter lock
+         * task without the keyguard. A plan that does not manage features still needs KEYGUARD.
+         */
+        private fun featuresReadBack(): Boolean {
+            val now = port.lockTaskFeatures()
+            return LockTaskFeature.KEYGUARD in now && expected.features.let { it == null || now == it }
         }
 
         private fun guardHolds() = plan.neverHide.none { it in plan.hidden || expected.hidden?.contains(it) == true }
