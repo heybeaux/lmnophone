@@ -4,7 +4,6 @@
 package org.plainphone.ui.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,12 +57,11 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
         val minimumApp = 56.dp.roundToPx()
 
         // Measure real scaled text, then use the token document's fallback order.
-        var briefMore = largeText
         var noticeLines = 3
         var inlineClock = false
-        fun bottom(brief: Boolean) = subcompose("measure-bottom-$brief") {
+        fun bottom() = subcompose("measure-bottom") {
             // Probes must never contribute duplicate controls to the semantics tree.
-            Box(Modifier.clearAndSetSemantics {}) { HomeBottom(brief, onEvent = {}) }
+            Box(Modifier.clearAndSetSemantics {}) { HomeBottom(onEvent = {}) }
         }.single().measure(natural)
         fun top(lines: Int, inline: Boolean) = subcompose("measure-top-$lines-$inline") {
             Box(Modifier.clearAndSetSemantics {}) {
@@ -71,12 +69,8 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
             }
         }.single().measure(natural)
 
-        var bottom = bottom(briefMore)
+        val bottom = bottom()
         var top = top(noticeLines, inlineClock)
-        if (height - top.height - bottom.height < minimumApp && !briefMore) {
-            briefMore = true
-            bottom = bottom(true)
-        }
         if (height - top.height - bottom.height < minimumApp) {
             inlineClock = true
             top = top(noticeLines, true)
@@ -97,7 +91,7 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
                             HomeAppRow(app.name) { onEvent(HomeEvent.OpenApp(app.id)) }
                         }
                     }
-                    HomeBottom(briefMore, onEvent)
+                    HomeBottom(onEvent)
                 }
             }.single().measure(constraints)
             layout(width, height) { page.placeRelative(0, 0) }
@@ -106,7 +100,7 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
                 HomeTop(state, noticeLines, inlineClock, largeText, onEvent)
             }.single().measure(natural)
             val visibleBottom = subcompose("visible-bottom") {
-                HomeBottom(briefMore, onEvent)
+                HomeBottom(onEvent)
             }.single().measure(natural)
             val apps = subcompose("apps") {
                 LazyColumn(Modifier.fillMaxSize().testTag("home-apps"), reverseLayout = true,
@@ -161,23 +155,17 @@ private fun HomeTop(state: HomeUiState, noticeLines: Int, inlineClock: Boolean,
 }
 
 @Composable
-private fun HomeBottom(briefMore: Boolean, onEvent: (HomeEvent) -> Unit) {
+private fun HomeBottom(onEvent: (HomeEvent) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = PlainphoneSpace.S3)) {
         HomeAppRow(stringResource(R.string.home_messages)) { onEvent(HomeEvent.OpenMessages) }
         HomeAppRow(stringResource(R.string.home_phone)) { onEvent(HomeEvent.OpenPhone) }
         val shape = RoundedCornerShape(percent = 50)
-        Column(Modifier.padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S2)
-            .fillMaxWidth().border(PlainphoneSpace.Border, PlainphoneColors.Ink3, shape)
+        Box(Modifier.padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S2)
+            .fillMaxWidth()
             .plainphoneAction(shape) { onEvent(HomeEvent.OpenMore) }
             .heightIn(min = 64.dp).padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S2),
-            verticalArrangement = Arrangement.Center) {
-            Row(verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
-                Text(stringResource(R.string.home_more), style = PlainphoneType.Row)
-                Text("^", style = PlainphoneType.Row.copy(color = PlainphoneColors.Ink3),
-                    modifier = Modifier.clearAndSetSemantics {})
-            }
-            if (!briefMore) Text(stringResource(R.string.home_more_description), style = PlainphoneType.Small)
+            contentAlignment = Alignment.Center) {
+            Text(stringResource(R.string.home_more), style = PlainphoneType.Row)
         }
     }
 }
