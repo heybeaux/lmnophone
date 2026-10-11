@@ -68,7 +68,15 @@ class DeviceReconciliationEffects(
     override fun revokeTemporaryAccess(): Boolean = attempt { revoke() }
     override fun isDeviceOwner(): Boolean? = store.androidEffect { try { owner.isDeviceOwner() } catch (_: Exception) { null } }
 
+    /**
+     * The plan the current run gave [applyPolicy], kept so a later failure in the same run repairs the
+     * floor from it without reading the input again. [DeviceWaitingReconciliation] clears it at the start
+     * and end of every run, so it never reaches another run.
+     */
+    internal var runPlan: PolicyPlan? = null
+
     override fun applyPolicy(plan: PolicyPlan): Boolean = android {
+        runPlan = plan
         attempt { applier.apply(plan).also(onApplied).complete }.also { if (!it) repairFloorHeld(plan) }
     }
     override fun readBackPolicy(plan: PolicyPlan): Boolean = android { attempt { applier.readBack(plan) } }
@@ -100,9 +108,10 @@ class DeviceReconciliationEffects(
  * from inside another (for example from an effect) is refused with [NOT_RUN].
  *
  * After any NEEDS_ATTENTION result, including a failed revocation before any policy write, the
- * emergency floor of [emergencyPlan] is repaired inside the same run. The result and the held slot
- * are unchanged. With no plan (no readable credentials or policy input) nothing is repaired here;
- * startup's own floor repair still runs.
+ * emergency floor is repaired inside the same run: from the plan this run already applied when it got
+ * that far (so a later input failure cannot lose it), otherwise from [emergencyPlan]. The result and
+ * the held slot are unchanged. No plan crosses runs. With no plan at all (no readable credentials or
+ * policy input) nothing is repaired here; startup's own floor repair still runs.
  */
 class DeviceWaitingReconciliation internal constructor(
     private val store: JointAuthorityStore,
@@ -113,15 +122,23 @@ class DeviceWaitingReconciliation internal constructor(
 ) {
     private val reconciler = WaitingReconciler(store.reconciliation, { store.credentials.read() }, policyInput, effects, authority)
 
-    fun reconcile(): ReconcileResult = store.serialized(NOT_RUN) { reconciler.reconcile().also(::afterResult) }
+    fun reconcile(): ReconcileResult = store.serialized(NOT_RUN) { runOnce { reconciler.reconcile() } }
     fun prepareRepair(person: TrustedPersonId): RepairRequest? = store.serialized(null) { reconciler.prepareRepair(person) }
     fun repair(request: RepairRequest, grant: FreshAuthority): ReconcileResult =
-        store.serialized(NOT_RUN) { reconciler.repair(request, grant).also(::afterResult) }
+        store.serialized(NOT_RUN) { runOnce { reconciler.repair(request, grant) } }
 
-    private fun afterResult(result: ReconcileResult) {
-        if (result.outcome != ReconcileOutcome.NEEDS_ATTENTION) return
-        val plan = try { emergencyPlan() } catch (_: Exception) { null } ?: return
-        effects.repairFloor(plan)
+    /** One run: no plan from an earlier run, and after NEEDS_ATTENTION the floor repaired from this run's plan if it got that far. */
+    private fun runOnce(block: () -> ReconcileResult): ReconcileResult {
+        effects.runPlan = null
+        try {
+            val result = block()
+            if (result.outcome == ReconcileOutcome.NEEDS_ATTENTION) {
+                (effects.runPlan ?: try { emergencyPlan() } catch (_: Exception) { null })?.let(effects::repairFloor)
+            }
+            return result
+        } finally {
+            effects.runPlan = null
+        }
     }
 
     companion object {

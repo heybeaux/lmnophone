@@ -1090,7 +1090,8 @@ class JointAuthorityStore internal constructor(
             viewed = snapshot
             try { return block() } finally { viewed = null }
         }
-        fun view(): Snapshot? = if (lock.isHeldByCurrentThread) viewed else null
+        /** The snapshot under comparison, for a final check on this thread only; never inside an [effect]. */
+        fun view(): Snapshot? = if (lock.isHeldByCurrentThread && effectThread !== Thread.currentThread()) viewed else null
     }
 
     companion object {
