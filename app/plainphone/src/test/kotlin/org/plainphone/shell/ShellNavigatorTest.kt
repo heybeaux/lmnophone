@@ -93,7 +93,7 @@ class ShellNavigatorTest {
         val blocked = BlockedLinkUiState.Blocked("example.invalid", shareWith = "Sam")
         val start = at(ShellRoute.BlockedLink(blocked, "example.invalid/bus"))
         val confirm = nav.onLink(start, BlockedLinkEvent.ReviewSharing).state
-        assertEquals(BlockedLinkUiState.Confirm("Sam", "Plainphone: Alex would like to look at this link with you: example.invalid/bus"),
+        assertEquals(BlockedLinkUiState.Confirm("Sam", "LMNOPhone: Alex would like to look at this link with you: example.invalid/bus"),
             (confirm.current as ShellRoute.BlockedLink).stage)
         assertEquals(start, nav.onLink(confirm, BlockedLinkEvent.DontSend).state)
         val sent = nav.onLink(confirm, BlockedLinkEvent.Send).state
