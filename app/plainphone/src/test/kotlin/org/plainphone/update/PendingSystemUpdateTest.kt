@@ -11,6 +11,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.plainphone.device.SerialDispatcher
 import org.plainphone.ui.home.HomeNotice
 import org.w3c.dom.Element
 
@@ -50,6 +51,39 @@ class PendingSystemUpdateTest {
         file.writeText("garbage")
         assertFalse(store().pending())
         assertFalse(file.exists())
+    }
+
+    /**
+     * PLA-450 R1: a failed record write (here the temp file cannot be opened; a full disk also throws
+     * IOException) is contained: not pending, no partial record, and nothing escapes to the caller.
+     */
+    @Test fun aFailedWriteIsContainedAndNotPending() {
+        File(folder.root, "system-update.tmp").mkdir()
+        assertFalse(store().onPending(42L))
+        assertFalse(store().pending())
+        assertFalse(file.exists())
+    }
+
+    /**
+     * PLA-450 R1: on the shared policy dispatcher a failed write must not reach the uncaught-exception
+     * handler (Android's kills the app), and later dispatcher work still runs.
+     */
+    @Test fun aFailedWriteLeavesTheDispatcherRunning() {
+        File(folder.root, "system-update.tmp").mkdir()
+        val uncaught = mutableListOf<Throwable>()
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { _, e -> synchronized(uncaught) { uncaught += e } }
+        try {
+            SerialDispatcher("pending-test").use { dispatcher ->
+                var pending: Boolean? = null
+                dispatcher.post { pending = store().onPending(42L) }
+                assertTrue(dispatcher.run { true })
+                assertEquals(false, pending)
+            }
+        } finally {
+            Thread.setDefaultUncaughtExceptionHandler(previous)
+        }
+        assertEquals(emptyList<Throwable>(), uncaught)
     }
 
     /** The record holds the time and an opaque build key only: no fingerprint text. */

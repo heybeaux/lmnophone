@@ -16,6 +16,8 @@ class SystemUpdatePostponeTest {
         var failRead: Boolean = false,
         var failWrite: Boolean = false,
         var failClear: Boolean = false,
+        /** What a clear leaves behind; null clears the policy. */
+        var afterClear: UpdatePolicyRead? = null,
     ) : SystemUpdatePolicyPort {
         var clears = 0
         val writes = mutableListOf<UpdatePolicyKind>()
@@ -34,7 +36,7 @@ class SystemUpdatePostponeTest {
         override fun clear() {
             if (failClear) throw IllegalStateException(DETAIL)
             clears++
-            held = UpdatePolicyRead(UpdatePolicyKind.NONE, 0)
+            held = afterClear ?: UpdatePolicyRead(UpdatePolicyKind.NONE, 0)
         }
     }
 
@@ -112,6 +114,31 @@ class SystemUpdatePostponeTest {
         val failing = postpone(FakePort(failClear = true))
         assertEquals(PostponeStatus.FAILED, failing.release())
         assertEquals(PostponeStatus.SET, failing.apply())
+    }
+
+    /**
+     * PLA-450 R2: release confirms only a read-back NONE. If the policy is still there, the driver gets a
+     * failure (not result 0) and re-applies stay enabled.
+     */
+    @Test fun releaseThatDoesNotReadBackNoneIsAMismatch() {
+        val port = FakePort(afterClear = SystemUpdatePostpone.TARGET)
+        val postpone = postpone(port)
+        postpone.apply()
+        assertEquals(PostponeStatus.MISMATCH, postpone.release())
+        assertEquals(1, port.clears)
+        port.held = UpdatePolicyRead(UpdatePolicyKind.NONE, 0)
+        assertEquals(PostponeStatus.SET, postpone.apply())
+    }
+
+    @Test fun releaseWithAFailedReadbackIsAFailureAndKeepsReapplies() {
+        val port = FakePort()
+        val postpone = postpone(port)
+        postpone.apply()
+        port.failRead = true
+        assertEquals(PostponeStatus.FAILED, postpone.release())
+        port.failRead = false
+        assertEquals(PostponeStatus.SET, postpone.apply())
+        logs.forEach { assertFalse(it, it.contains(DETAIL)) }
     }
 
     /** Logs carry only the status and policy shape: no build fingerprint, serial or exception message. */
