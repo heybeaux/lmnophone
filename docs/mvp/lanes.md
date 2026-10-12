@@ -94,6 +94,13 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 **`:ui` (lane B) exports:** one `@Composable` per screen, with this shape:
 - `XScreen(state: XUiState, onEvent: (XEvent) -> Unit)`.
 - `XUiState` and `XEvent` are plain Kotlin types owned by lane B.
+- `home.NeedsAttentionScreen(NeedsAttentionUiState, onEvent)` displays an optional
+  `PendingChange(kind, committing)`. `PendingChangeKind.TurnOff(time, day)` requires
+  the same host time/day snapshot as Home; `People` and `Setup` need no date.
+  `CancelChange` opens `WaitingChangeScreen` at `WaitingStage.ConfirmCancel` with
+  a null context, without a PIN. The host rechecks the live change before acting;
+  `Back` returns home. Committing state removes Cancel. Calls and Emergency stay
+  reachable through host navigation; this screen does not launch either.
 - Covers: home (with the single notice line), More, ask for an app, blocked link, Wi-Fi messages, the trusted-person screens ("Who are you?", PIN, approvals, permissions, people, waits and cancel), Plainphone settings, setup, turning off, About, and "What Plainphone can't stop".
 
 **`:device` / `:plainphone` (lane D):** implements `JournalStore`, `PolicyStore` and `KeyDerivation`. It also provides:
