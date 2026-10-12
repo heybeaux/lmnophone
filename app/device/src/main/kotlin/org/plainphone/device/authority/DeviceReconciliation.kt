@@ -6,7 +6,7 @@ import android.app.admin.DevicePolicyManager
 import android.content.Context
 import org.plainphone.device.ApplyResult
 import org.plainphone.device.ReadbackPolicyApplier
-import org.plainphone.device.ResetProtectionEffects
+import org.plainphone.policy.PeopleResetProtectionEffects
 import org.plainphone.core.TrustedPersonId
 import org.plainphone.policy.CredentialState
 import org.plainphone.policy.FreshAuthority
@@ -66,7 +66,7 @@ class DeviceReconciliationEffects(
     private val revoke: () -> Boolean,
     private val owner: DeviceOwnerReader,
     private val applier: ReadbackPolicyApplier,
-    private val reset: ResetProtectionEffects,
+    private val reset: PeopleResetProtectionEffects,
     internal val store: JointAuthorityStore,
     private val filter: RestrictionFilter,
     private val onApplied: (ApplyResult) -> Unit = {},
