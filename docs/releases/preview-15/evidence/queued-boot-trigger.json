@@ -1,0 +1,5 @@
+{
+  "trigger": "I/uc_send_user_broadcast(  590): [0,android.intent.action.USER_UNLOCKED]",
+  "action": "Explicit LOCKED_BOOT_COMPLETED to existing BootReceiver immediately after real USER_UNLOCKED broadcast; root host on owned emulator only",
+  "broadcast_result": "Broadcasting: Intent { act=android.intent.action.LOCKED_BOOT_COMPLETED flg=0x10400000 cmp=org.plainphone/.boot.BootReceiver }\nBroadcast completed: result=0"
+}

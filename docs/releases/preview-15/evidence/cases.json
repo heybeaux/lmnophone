@@ -1,0 +1,10 @@
+{
+  "release_notes": {
+    "id": "3e684cad-eb72-459b-a2c3-819ef2eee31c",
+    "identifier": "PLA-C63"
+  },
+  "qa_gate_run": {
+    "id": "afa309de-2e9d-4dd0-97fa-a2990c192880",
+    "identifier": "PLA-C64"
+  }
+}

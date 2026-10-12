@@ -1,0 +1,15 @@
+{
+  "version_code": 15,
+  "version_name": "0.1.0-preview-15",
+  "apk_sha256": "9d13b678db2b6c2976f3ee1db21434d2b726ab25a3864de7e3f500e4ffbf128a",
+  "signer_sha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "previous_version": 14,
+  "previous_installed_sha256": "40b7e93249fc372c1f804625e51c94eec7bf477efc48983207b840e64632261a",
+  "installed_at_utc": "2026-10-12T02:39:50+00:00",
+  "first_install_time": "2026-10-11 14:05:10",
+  "installed_hash_matches": true,
+  "attachment_id": "fca6a83a-057e-4bfe-ab33-95286b2d83f9",
+  "download_path": "/api/attachments/fca6a83a-057e-4bfe-ab33-95286b2d83f9/content",
+  "gzip_sha256": "3a490d4279554738da7a48622973ad9d9cdfb3e0369b3e4af526249deadd1660",
+  "download_verified": true
+}
