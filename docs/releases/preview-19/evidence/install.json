@@ -1,0 +1,11 @@
+{
+  "installedAtUtc": "2026-10-12T06:25:28.587662+00:00",
+  "upgrade": "18 -> 19",
+  "versionCode": 19,
+  "versionName": "0.1.0-preview-19",
+  "apkSha256": "6d89b84e7a4bc340fac7e15c5b0c15b242586108c8bcb52afe49e3c12a656d4f",
+  "signerSha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "sameSignerAs18": true,
+  "installer": "Success",
+  "testOnly": true
+}

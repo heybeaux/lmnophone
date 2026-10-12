@@ -1,0 +1,48 @@
+> Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ui:preBuild UP-TO-DATE
+> Task :ui:preDebugBuild UP-TO-DATE
+> Task :ui:generateDebugResValues UP-TO-DATE
+> Task :ui:generateDebugResources
+> Task :ui:packageDebugResources
+> Task :ui:javaPreCompileDebug UP-TO-DATE
+> Task :ui:generateDebugUnitTestAssets UP-TO-DATE
+> Task :ui:mergeDebugShaders UP-TO-DATE
+> Task :ui:compileDebugShaders NO-SOURCE
+> Task :ui:generateDebugAssets UP-TO-DATE
+> Task :ui:mergeDebugAssets UP-TO-DATE
+> Task :ui:preDebugUnitTestBuild UP-TO-DATE
+> Task :ui:parseDebugLocalResources
+> Task :ui:mergeDebugUnitTestAssets UP-TO-DATE
+> Task :ui:writeDebugAarMetadata UP-TO-DATE
+> Task :ui:checkDebugUnitTestAarMetadata UP-TO-DATE
+> Task :ui:generateDebugRFile
+> Task :ui:compileDebugLibraryResources
+> Task :ui:generateDebugUnitTestResValues UP-TO-DATE
+> Task :ui:mapDebugUnitTestSourceSetPaths
+> Task :ui:generateDebugUnitTestResources UP-TO-DATE
+> Task :ui:extractDeepLinksDebug UP-TO-DATE
+> Task :ui:processDebugManifest UP-TO-DATE
+> Task :ui:processDebugUnitTestManifest UP-TO-DATE
+> Task :ui:preparePaparazziDebugResources UP-TO-DATE
+> Task :ui:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :ui:mergeDebugUnitTestResources
+> Task :ui:compileDebugKotlin
+> Task :ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :ui:processDebugJavaRes UP-TO-DATE
+> Task :ui:bundleLibCompileToJarDebug
+> Task :ui:bundleLibRuntimeToJarDebug
+> Task :ui:processDebugUnitTestResources
+> Task :ui:packageDebugUnitTestForUnitTest
+> Task :ui:generateDebugUnitTestConfig
+> Task :ui:compileDebugUnitTestKotlin
+> Task :ui:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :ui:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :ui:transformDebugUnitTestClassesWithAsm
+
+> Task :ui:testDebugUnitTest
+See the Paparazzi report at: file:///Users/beauxwalton/projects/plainphone-policy-preview19/app/ui/build/reports/paparazzi/debug/index.html
+
+> Task :ui:recordPaparazziDebug
+
+BUILD SUCCESSFUL in 7s
+32 actionable tasks: 16 executed, 16 up-to-date
