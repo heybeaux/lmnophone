@@ -1,0 +1,17 @@
+{
+  "installed_at": "2026-10-12T10:30:37.160615+00:00",
+  "device": "owned pla363-policy-a35 / emulator-5880",
+  "upgrade": "23 -> 24, in place",
+  "versionCode": 24,
+  "versionName": "0.1.0-preview-24",
+  "apk_sha256": "a0f6622a023496097b6dc29cc3640d2e1882e1213b0be9c3812d35767ed1abaa",
+  "signer_sha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "delta_installed_at": "2026-10-12T10:35:59.211056+00:00",
+  "initial_apk_sha256": "243bb12db4bbe46738e1c398b8e2e03ee330fa6c5750d6a55bf1f390a8d3a851",
+  "delta": "24 -> 24: uncertain storage result now shows attention rather than claiming no change; pending UI-started wait retained",
+  "reinstall_same_artifact_at": "2026-10-12T10:37:48.998266+00:00",
+  "reinstall_note": "Navigation delta compilation failed; this reinstall used the previously passing artifact. Navigation delta is not in this artifact.",
+  "final_installed_at": "2026-10-12T10:38:38.477889+00:00",
+  "final_apk_sha256": "400d839e07a1509cb747c4eb28810131bad780ab1c6100b272b9af7079aa7e0d",
+  "final_delta": "Waiting receipt OK returns Home; See waiting change opens the existing PIN-free current-wait view"
+}

@@ -1,0 +1,37 @@
+{
+  "base": "release/preview-23 @ a20edc4c",
+  "implementation": "6fb96741",
+  "tests_first": "315568d9",
+  "apk_attachment": "4d094e57-0c3e-43c6-9bd2-80b249e8a64b",
+  "artifact_work_product": "10070cad-5751-45e8-8294-f52327b91373",
+  "built": true,
+  "installed": "owned emulator-5880; in-place 23 -> 24, final artifact readback",
+  "exercised": "UI enrollment/start/cancel and UI start/clock-only maturity; no seeded waiting operation",
+  "upgrade_gate_exit": 0,
+  "emergency_routes": "exactly 911 on More and Phone; zero current calls; no call or SOS",
+  "restore": "authority and clock byte-for-byte; verified by instrumentation",
+  "screens": "all 92 new/changed images inspected; five requested scales",
+  "notes": "Host APK upload helper response remained open after upload. Attachment SHA-256 and artifact work product were confirmed with independent GETs; no duplicate upload.",
+  "policy": {
+    "tests": 646,
+    "failures": 0,
+    "skipped": 0
+  },
+  "device": {
+    "tests": 26,
+    "failures": 0,
+    "skipped": 0
+  },
+  "plainphone": {
+    "tests": 192,
+    "failures": 0,
+    "skipped": 0
+  },
+  "ui": {
+    "tests": 168,
+    "failures": 0,
+    "skipped": 0
+  },
+  "installed_apk_hash_matches": true,
+  "host_driver_restored_uid": 2000
+}

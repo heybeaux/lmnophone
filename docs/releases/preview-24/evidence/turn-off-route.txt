@@ -1,0 +1,14 @@
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+PASS: UI start; separate fresh PIN; two confirmations; receipt OK returns Home
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+INSTRUMENTATION_RESULT: outcome=PASS: cancelled
+INSTRUMENTATION_CODE: -1
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+PASS: UI start; separate fresh PIN; two confirmations; receipt OK returns Home
+INSTRUMENTATION_RESULT: outcome=PASS: mature
+INSTRUMENTATION_CODE: -1
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+INSTRUMENTATION_RESULT: outcome=PASS: closed
+INSTRUMENTATION_CODE: -1
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+PASS: maturity; unchanged DO, hidden/suspended sets, restrictions and LOCKED; restart notice

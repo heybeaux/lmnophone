@@ -1,0 +1,11 @@
+{
+  "UI_start": true,
+  "fixture_start": false,
+  "fresh_PIN": true,
+  "both_confirmations": true,
+  "home_pending": true,
+  "settings_box": true,
+  "cancel_without_PIN": true,
+  "both_removed": true,
+  "terminal": "CANCELLED; zero restore steps"
+}
