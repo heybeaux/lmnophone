@@ -1,0 +1,9 @@
+# Build 24 on the spare (Lead, sole driver)
+
+- APK SHA-256 `400d839e07a1509cb747c4eb28810131bad780ab1c6100b272b9af7079aa7e0d`, signer cert SHA-256 `99edd5a3…11bd` (same as build 23). Installed APK pulled back from the device: same hash.
+- Installed in place 23→24 at 2026-10-12T11:05:53Z by the unchanged upgrade gate (`upgrade-gate.txt`, `exit=0`). firstInstallTime unchanged (2026-10-09). Readback: versionCode 24, `0.1.0-preview-24`, testOnly, Device Owner, lock task LOCKED. Suspended packages: 1 before, 1 after.
+- Gate: exactly 911 on More > Emergency and on Phone typed digits, zero current Telecom calls both times. No call placed, no SOS gesture.
+- Exercised (11:09–11:16Z): the trusted-person entry showed Choose a new PIN, so the Lead enrolled a private test PIN (held on the host, not in the repo). More → For Sam and Jo → PIN → Turn LMNOPhone off → intro (with "This test build doesn't send texts.") → Continue → Yes, turn it off → fresh PIN → Last check → Start the 24-hour wait at 11:13:18Z → "Waiting 24 hours" → OK. Home line `home-line.png`; Phone settings box `u7-box.png`; cancel view `waiting-view.png`. PIN-free Yes, cancel it at 11:15:48Z → Cancelled → OK. Afterwards Home has no line and Phone settings has no box (`home-after.png`). Lock task LOCKED throughout.
+- **Defect found (PLA-413):** the spare uses 3-button navigation, and its bar covers y 2280–2400. "Yes, cancel it" `[60,2240][1020,2380]` and the Cancelled OK are under it (`waiting-view.png`). A tap in the middle hits the Home key. Only the top 40 px strip works. MainActivity's cancel and attention views skip the shell's `systemBarsPadding()`.
+- Copy note: the first confirmation says "LMNOPhone will be turned off on Alex's phone." even though the intro says "your phone" (sample name, self-managed preview).
+- Maturity not exercised on the spare.
