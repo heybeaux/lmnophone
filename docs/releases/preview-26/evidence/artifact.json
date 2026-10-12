@@ -1,0 +1,15 @@
+{
+  "build": 26,
+  "version": "0.1.0-preview-26",
+  "sha256": "4c92adcc16e54245c946d3fe2f85a426271d33c46353105daa5999e4f335c371",
+  "signer_sha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "baseline_sha256": "5114c251fcd80640380764221751a4f8d9b9f46ea38eb16a885c1c3d0c72a5da",
+  "baseline": 25,
+  "emulator": "emulator-5880",
+  "preflight_utc": "2026-10-12T12:44:47.415601+00:00",
+  "baseline_readback": "25 minSdk=30 targetSdk=36",
+  "installed_utc": "2026-10-12T12:44:47Z",
+  "readback": "26 / 0.1.0-preview-26; TEST_ONLY; Device Owner; LOCKED",
+  "gzip_sha256": "02bdd3a5d3012ef5e309fc5ff495931f55dbc508f8c790ffc6ce3c5c771170d3",
+  "attachmentId": "fb3997fc-56f3-4694-a4c0-02761f19c442"
+}

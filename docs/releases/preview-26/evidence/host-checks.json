@@ -1,0 +1,45 @@
+{
+  "build": "PASS :plainphone:assembleDebug",
+  "goldens": "PASS :ui:verifyPaparazziDebug",
+  "tests": [
+    {
+      "name": "org.plainphone.ui.UserVisibleBrandingTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0"
+    },
+    {
+      "name": "org.plainphone.ui.TrustedNamesScreenshotTest",
+      "tests": "16",
+      "failures": "0",
+      "errors": "0"
+    },
+    {
+      "name": "org.plainphone.ui.PreviewTurnOffScreenshotTest",
+      "tests": "65",
+      "failures": "0",
+      "errors": "0"
+    },
+    {
+      "name": "org.plainphone.ui.TrustedScreensScreenshotTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0"
+    }
+  ],
+  "golden_inspection": {
+    "changed": 470,
+    "added": 25,
+    "inspected": 495,
+    "scales": [
+      1,
+      1.3,
+      1.5,
+      1.8,
+      2
+    ],
+    "notes": "Inspected all 20 contact sheets (all changed/new images). Long content retains vertical scrolling and existing whole-page fallback. Existing synthetic fixture strings outside resources are unchanged."
+  },
+  "gate_unit_tests": 9,
+  "tests_first_commit": "6bcee3c0"
+}

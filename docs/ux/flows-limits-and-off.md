@@ -171,6 +171,8 @@ its existing turn-off behavior. All other L4 copy is unchanged.
 
 - **Title:** Are you sure?
 - **Body:** LMNOPhone will be turned off on {user}'s phone.
+- **Self-managed and test-build body:** LMNOPhone will be turned off on your phone.
+  This uses the same self-managed/test-build selection as the introduction's wait line ([PLA-417](/PLA/issues/PLA-417)).
 - **Primary:** Yes, turn it off (black like every primary button; it stands out by its words and the extra confirmations, not by colour)
 - **Secondary:** No, keep it on
 - **Then:** PIN or recovery code (fresh; with two trusted people, "Who are you?" first).
@@ -184,6 +186,9 @@ its existing turn-off behavior. All other L4 copy is unchanged.
 - **Secondary:** Cancel
 - **Then:** [M3c](flows-people-modes-and-waits.md#m3c-started) ("Waiting 24 hours"). The home line becomes
   "LMNOPhone will turn off after {time}. Tap to cancel."
+
+The helper wording is the same for self-managed and trusted-person phones: it names
+the person who must use a computer to set LMNOPhone up again, not the phone owner.
 
 ### L4c2. When the wait ends
 
