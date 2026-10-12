@@ -1,0 +1,5 @@
+10-12 01:07:57.367  4201  4237 I PlainphoneBoot: reapply reason=feature-fault-off control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=NONE withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFl
+10-12 01:07:57.374  4201  4237 I PlainphoneBoot: lock task not running after feature-fault-off: Home brought forward at=991924
+10-12 01:07:57.504  4201  4237 I PlainphoneBoot: fallback lifted=211 at=992055
+10-12 01:07:57.737  4201  4237 I PlainphoneBoot: reapply reason=fallback-lifted control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFl
+10-12 01:07:57.812  4201  4201 I PlainphoneBoot: home shown lockTask=LOCKED at=992362

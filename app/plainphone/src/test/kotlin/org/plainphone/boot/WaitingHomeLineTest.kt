@@ -171,4 +171,19 @@ class WaitingHomeLineTest {
             assertEquals(org.plainphone.R.string.wait_change_setup, waitingChangeTextResource(kind))
     }
 
+    // PLA-383 note: Android Back on Home's own sub-screens.
+    @Test fun systemBackClosesTheTopSubScreen() {
+        val confirm = HomeScreens(cancelOpen = true, sending = false, attentionOpen = true)
+        assertEquals("from the confirmation back to the attention screen", HomeScreens(false, false, true), confirm.back())
+        assertEquals("from the attention screen back to Home", HomeScreens(false, false, false), HomeScreens(false, false, true).back())
+        assertEquals("from a confirmation opened on Home back to Home", HomeScreens(false, false, false), HomeScreens(true, false, false).back())
+    }
+
+    /** Back never closes a cancel that is being saved: its saved result still shows. */
+    @Test fun systemBackWaitsForASavingCancel() {
+        val saving = HomeScreens(cancelOpen = true, sending = true, attentionOpen = false)
+        assertEquals(saving, saving.back())
+        org.junit.Assert.assertTrue(saving.handlesBack)
+        org.junit.Assert.assertFalse("plain Home keeps the system's own Back", HomeScreens(false, false, false).handlesBack)
+    }
 }

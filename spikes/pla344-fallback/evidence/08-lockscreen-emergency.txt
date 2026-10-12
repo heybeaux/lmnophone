@@ -1,0 +1,9 @@
+    topResumedActivity=ActivityRecord{7790744 u0 com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity t13}
+    mLockTaskModeState=NONE
+    mCallState=0
+10-12 01:00:19.487   572  1307 I ActivityTaskManager: START u0 {act=android.intent.action.DIAL_EMERGENCY flg=0x14800000 pkg=com.google.android.apps.safetyhub cmp=com.google.android.apps.safetyhub/.emergencydialer.ui.EmergencyDialerActivity (has extras)} with LAUNCH_MULTIPLE from uid 10178 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+10-12 01:00:19.553   572  1037 I ActivityTaskManager: START u0 {cmp=com.google.android.apps.safetyhub/.emergencydialer.ui.DialPadActivity} with LAUNCH_MULTIPLE from uid 10134 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+text=""	resource-id="com.google.android.apps.safetyhub:id/digits_view_container"
+text=""	resource-id="com.google.android.apps.safetyhub:id/digits_view"
+text=""	resource-id="com.google.android.apps.safetyhub:id/digits_bottom_divider"
+text=""	resource-id="com.google.android.apps.safetyhub:id/dial_pad_digits"

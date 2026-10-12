@@ -12,6 +12,7 @@ import java.io.File
 import org.plainphone.core.PackageName
 import org.plainphone.device.ReapplyTimings
 import org.plainphone.device.facts.AndroidPackageSystemPort
+import org.plainphone.policy.FloorRole
 import org.plainphone.policy.PolicyPlan
 
 /**
@@ -28,6 +29,9 @@ class Preview2Device(private val context: Context) {
     internal var lastPlan: PolicyPlan? = null
         private set
     internal var systemPackages: Set<PackageName> = emptySet()
+        private set
+    /** The floor roles the last [plan] could not read; null until that plan read the floor (PLA-399 F1). */
+    @Volatile internal var floorUnreadable: Set<FloorRole>? = null
         private set
 
     val isOwner: Boolean get() = dpm.isDeviceOwnerApp(context.packageName)
@@ -52,7 +56,9 @@ class Preview2Device(private val context: Context) {
     fun plan(locked: Boolean, timings: ReapplyTimings = ReapplyTimings()): PolicyPlan {
         lastPlan = null
         systemPackages = emptySet()
+        floorUnreadable = null
         val (installed, floor) = PreviewPackageInput.read(AndroidPackageSystemPort(context), timings)
+        floorUnreadable = floor.unreadable
         if (locked) return Preview2Plan.decideLocked(plainphone, installed, floor.identities)
         val starter = starter()
         check(starter.isNotEmpty()) { "no starter list yet" }

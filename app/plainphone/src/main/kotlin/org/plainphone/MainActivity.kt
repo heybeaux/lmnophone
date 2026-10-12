@@ -30,6 +30,7 @@ import android.util.Log
 import android.text.format.DateFormat
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -57,7 +58,9 @@ import org.plainphone.boot.CallingScreen
 import org.plainphone.boot.LockTaskState
 import org.plainphone.boot.checkingShowsAttention
 import org.plainphone.boot.CheckingScreen
+import org.plainphone.boot.FallbackNotice
 import org.plainphone.boot.HomeGate
+import org.plainphone.boot.HomeScreens
 import org.plainphone.boot.cancelStage
 import org.plainphone.boot.confirmStage
 import org.plainphone.boot.settingsWaitingChange
@@ -214,7 +217,11 @@ class MainActivity : ComponentActivity() {
                 communication.controller.setSettingsVisible(settingsVisible)
             }
             if (gate != HomeGate.READY || !enterLockTask(followUp = false)) {
-                PlainphoneTheme { CheckingScreen(onPhone = ::openPhone, onEmergency = ::openEmergency, attention = checkingShowsAttention(gate, notice)) }
+                val fallback by runtime.fallback.collectAsState()
+                PlainphoneTheme {
+                    CheckingScreen(onPhone = ::openPhone, onEmergency = ::openEmergency, attention = checkingShowsAttention(gate, notice),
+                        details = fallback?.let(::fallbackDetails).orEmpty())
+                }
                 return@setContent
             }
             // Each ready read-back run refreshes the app list and the attention notice.
@@ -232,6 +239,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
             val cancel = cancelScreen
+            val screens = HomeScreens(cancel != null, cancel?.state?.sending == true, attentionOpen)
+            BackHandler(enabled = screens.handlesBack) { onSystemBack() }
             if (gate == HomeGate.READY && cancel != null) {
                 val wait by runtime.waitingNotice.collectAsState()
                 LaunchedEffect(wait) { followOperation() }
@@ -328,6 +337,13 @@ class MainActivity : ComponentActivity() {
         return state.contained
     }
 
+    /** The attention screen's lines while fallback containment holds (PLA-344). */
+    private fun fallbackDetails(notice: FallbackNotice): List<String> = listOfNotNull(
+        getString(R.string.fallback_disclosure),
+        notice.others.takeIf { it.isNotEmpty() }?.let { getString(R.string.fallback_others, it.joinToString(", ")) },
+        getString(R.string.fallback_incomplete).takeIf { notice.incomplete },
+    )
+
     /** Brings back a displaced calling screen, now inside lock task. Never ends or touches a call. */
     private fun reopen(screen: CallingScreen) {
         Log.i(PolicyRuntime.TAG, "reopening $screen inside lock task at=${SystemClock.elapsedRealtime()}")
@@ -386,6 +402,14 @@ class MainActivity : ComponentActivity() {
             WaitingStage.ConfirmCancel -> screen
             else -> screen.copy(state = screen.state.copy(stage = stage))
         }
+    }
+
+    /** Android Back on a sub-screen ([HomeScreens.back]); read fresh, since the handler outlives composition. */
+    private fun onSystemBack() {
+        val cancel = cancelScreen
+        val after = HomeScreens(cancel != null, cancel?.state?.sending == true, attentionOpen).back()
+        if (!after.cancelOpen) cancelScreen = null
+        attentionOpen = after.attentionOpen
     }
 
     private data class CancelScreen(val requestId: String, val state: WaitingChangeUiState)
