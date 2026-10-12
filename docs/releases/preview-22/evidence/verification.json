@@ -1,0 +1,91 @@
+{
+  "base": "426e98609e455f8dfb8851a0bb80d78ed941552b",
+  "testsFirstCommit": "7667dd73",
+  "accessibilityRegressionCommit": "657bb0f7",
+  "implementationCommits": [
+    "5a5780d7",
+    "f726d1a8"
+  ],
+  "red": [
+    "VolumeController tests failed compilation on missing onOpen and adjustable before implementation.",
+    "10 Sound semantics cases failed on duplicate spoken glyph content before the semantics correction.",
+    "Emulator rejected the interim enabled synthetic label node; final full-parent button semantics pass actual Android enabled/readback checks."
+  ],
+  "hostTests": {
+    "volume": 12,
+    "brightness": 9,
+    "plainphone": 187,
+    "selectedUiSnapshotsAndSemantics": 128,
+    "upgradeGateUnitTests": 9
+  },
+  "screenshots": {
+    "states": [
+      "normal",
+      "ring failure",
+      "media failure",
+      "silent/vibrate"
+    ],
+    "fontScales": [
+      1,
+      1.3,
+      1.5,
+      1.8,
+      2
+    ],
+    "viewportDp": "360x640",
+    "soundGoldensInspected": 20,
+    "uiRegressions": [
+      "BasicSettingsScreenshotTest",
+      "CommunicationCountsScreenshotTest",
+      "AboutScreenScreenshotTest",
+      "UserScreensScreenshotTest.more*"
+    ]
+  },
+  "lint": [
+    "ui:lintDebug PASS",
+    "device:lintDebug PASS",
+    "plainphone:lintDebug PASS"
+  ],
+  "refresh": {
+    "intervalMilliseconds": 1000,
+    "scope": "LaunchedEffect keyed to route and resumed/ready/unobscured visibility; cancels on leave/pause/gate loss. Brightness reads automatic mode too, to detect outside mode changes.",
+    "volumeMechanism": "AOSP marks stream volume broadcast internal/@hide. Public ringer-mode broadcast alone cannot track volume steps; use requested short visible-page timer.",
+    "sources": [
+      "https://android.googlesource.com/platform/frameworks/base/+/275ad1dfa81fb1f978f799fb97057cad782b9063/media/java/android/media/AudioManager.java#190",
+      "https://developer.android.com/reference/android/media/AudioManager#getStreamVolume(int)",
+      "https://developer.android.com/reference/android/media/AudioManager#getRingerMode()"
+    ]
+  },
+  "artifact": {
+    "apkSha256": "3f6fe3e7448d7e51a69d8ce1f653fd7801f9fe2aa9053c32925d174ffae88c62",
+    "gzipSha256": "e53b0f78ac51e9a0fb760e7d031d80befacb3d31211874ac29d58e4b9e886dc8",
+    "attachmentId": "2c06e013-0907-41ed-be1b-83bb559e206b"
+  },
+  "limitations": [
+    "Emulator evidence only; Lead owns opposite-model review and spare upgrade.",
+    "Accessibility labels and disabled actions checked in Compose semantics and Android UI hierarchy; no claim of an audible TalkBack listening test.",
+    "Live changes sampled after 1.1 seconds; XML dumps add latency. Stock side key opened volume overlay without changing the two stream values; cmd media_session changes proved both streams refresh.",
+    "Failure states use fake-port tests and screenshots; the real emulator exercise covers normal/vibrate operations."
+  ],
+  "upgradeGate": {
+    "exit": 0,
+    "unchangedFromPreview21ExceptVersionStrings": true,
+    "moreRoute": "exactly 911",
+    "phoneRoute": "exactly 911",
+    "currentCalls": 0,
+    "testOnly": true,
+    "deviceOwner": true,
+    "lockTask": "LOCKED",
+    "driver": "Unchanged gate_on_root_avd.py restores emulator host root after reboot for recorded sdcard EFAULT; app remains unprivileged."
+  },
+  "built": true,
+  "installed": "owned API 35 emulator, final artifact 2026-10-12T09:14:14.456076Z",
+  "exercised": [
+    "live ring/media from cmd media_session",
+    "live manual brightness",
+    "vibrate ring disabled and media usable",
+    "all nine Android spoken labels",
+    "restored original settings",
+    "unchanged emergency upgrade gate"
+  ]
+}

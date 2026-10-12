@@ -1,0 +1,39 @@
+{
+  "timeUtc": "2026-10-12T09:15:11.961038+00:00",
+  "records": [
+    {
+      "action": "outside stream change reflected on open page",
+      "ring": 3,
+      "media": 6
+    },
+    {
+      "action": "outside stream change reflected on open page",
+      "ring": 4,
+      "media": 8
+    },
+    {
+      "action": "side-key snapshot matched Android; stream changes proven separately by cmd media_session",
+      "ring": 4,
+      "media": 8
+    },
+    {
+      "action": "vibrate disables ring; attempted ring tap unchanged; media increment works; DND unchanged"
+    },
+    {
+      "action": "outside manual brightness changes reflected as 40% and 80%; all nine labels checked"
+    }
+  ],
+  "originalAndRestoredVolumes": {
+    "2": 5,
+    "3": 5
+  },
+  "originalAndRestoredRingerMode": "NORMAL",
+  "originalAndRestoredZenMode": "0",
+  "originalAndRestoredBrightness": {
+    "screen_brightness": "102",
+    "screen_brightness_mode": "0",
+    "font_scale": "1.0"
+  },
+  "sampleWaitSeconds": 1.1,
+  "note": "Screenshots taken after the 1.1 s wait; XML assertions add UI-dump latency."
+}

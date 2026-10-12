@@ -1,0 +1,35 @@
+{
+  "timeUtc": "2026-10-12T09:14:14.456076+00:00",
+  "upgrade": "21\u219222 in place",
+  "device": "owned pla363-policy-a35 / emulator-5880",
+  "sha256": "3f6fe3e7448d7e51a69d8ce1f653fd7801f9fe2aa9053c32925d174ffae88c62",
+  "versionCode": 22,
+  "versionName": "0.1.0-preview-22",
+  "signerSha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "installed": true,
+  "exercised": false,
+  "initialCandidate": {
+    "timeUtc": "2026-10-12T09:12:15.551431+00:00",
+    "upgrade": "21\u219222 in place",
+    "device": "owned pla363-policy-a35 / emulator-5880",
+    "sha256": "1cd1a6ec2866330051c8eeefd708bea4e9c7d58cea830bd631d45d3e1c5c0811",
+    "versionCode": 22,
+    "versionName": "0.1.0-preview-22",
+    "signerSha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+    "installed": true,
+    "exercised": false,
+    "initialCandidate": {
+      "timeUtc": "2026-10-12T09:08:41.158889+00:00",
+      "upgrade": "21\u219222 in place",
+      "device": "owned pla363-policy-a35 / emulator-5880",
+      "sha256": "6fae04a04f759af508ab4a951e5f8b9e4733d8d68113b06007822a2712c0893f",
+      "versionCode": 22,
+      "versionName": "0.1.0-preview-22",
+      "signerSha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+      "installed": true,
+      "exercised": false
+    },
+    "note": "Replayed accepted build 21 in place on owned emulator, then upgraded to corrected final build 22; no data wipe."
+  },
+  "note": "Replayed accepted build 21 in place on owned emulator, then upgraded to final build 22; no data wipe."
+}
