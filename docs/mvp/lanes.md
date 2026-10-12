@@ -215,3 +215,13 @@ A lost authority record remains held with needs-attention in this preview: the
 reconciler receives no full-engine policy input, so it cannot replace the preview
 plan or write reset-protection accounts. A committing turn-off cannot authorize
 forward restore. This is an explicit fail-closed merge choice, not full D1 recovery.
+
+`device.authority.PinEnrollment.create(person, pin)` is the first-use PIN
+adapter. It returns `CREATED`, `INVALID_PIN`, or `UNAVAILABLE`; clears the input
+array on every path; refuses any existing authority record; and atomically creates
+self-managed credentials, an empty wait and idle elevation through
+`JointAuthorityStore.initialize`. It grants no authority and creates no recovery
+profile. Authentication still uses `PinVault` and the shared credential CAS.
+The adapter is not exposed by the preview UI until the friction-profile
+prerequisite is resolved; `More`'s other unavailable routes remain covered by
+`TestBuildNavigatorTest`.

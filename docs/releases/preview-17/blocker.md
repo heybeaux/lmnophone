@@ -1,6 +1,6 @@
 # Preview 17: missing wait-start route
 
-This is an integration finding, not release notes for a built candidate.
+This is an integration checkpoint, not release notes for a deliverable candidate.
 Build 16 remains the latest installed build recorded by the assignment.
 
 ## Reproduced scope gap
@@ -8,8 +8,10 @@ Build 16 remains the latest installed build recorded by the assignment.
 The requested parents are preview 16 `3454f0f4` and device wiring 1–4
 `5e5810f9`. Merging those exact commits produces the expected conflicts in
 `MainActivity.kt`, `boot/PolicyRuntime.kt`, and `docs/mvp/lanes.md`.
-The diagnostic merge was aborted without changing either parent. The owned
-`release/preview-17` branch contains only this report on the preview 16 base.
+The initial diagnostic merge was aborted. After the Lead narrowed the route to
+a real PIN-checked friction change, the merge was resolved and committed as
+`ae71cca3`, preserving the restriction-free preview plan. The new enrollment
+adapter is tested but not yet exposed by the app.
 
 Neither parent supplies the requested trusted-person tap route to start a wait:
 
@@ -68,3 +70,42 @@ No additional approval chain is proposed.
 Built: **no build 17 APK**. Installed: **none**. Exercised: **baseline JVM
 navigation only**. No emulator or physical-device commands, emergency call,
 version bump, new signer, or build 17 acceptance claim occurred.
+
+## Resumed scope: PIN setup plus a friction change
+
+The Lead replaced turn-off with a looser self-managed friction change. Turn-off,
+people/mode starts, and Update remain unavailable. No synthetic waiting operation
+or account is permitted. The remaining prerequisite is now precise:
+
+1. `FrictionSettingsPatch.create` requires self-managed credentials whose
+   `recoveryProfile.friction` supplies the existing limits.
+2. `RecoveryProfile` requires a nonempty mapping of holder IDs to account IDs;
+   `CredentialState` requires exactly the active credential holders as keys.
+3. The account IDs are passed to reset-protection reconciliation. A fake value is
+   not harmless preview metadata. PIN-only enrollment has no genuine account ID.
+4. Therefore the real friction route needs either genuine profile enrollment or
+   a reviewed model/storage change separating friction settings from account
+   metadata. The Lead owns choosing that bounded scope on the existing issue.
+
+`PinEnrollment` is an independent completed foundation: it uses
+`PinVault.prepareCredential`, then the reviewed joint-store `initialize` for
+first enrollment. `CredentialStore.compareAndSet` cannot create a missing record;
+normal PIN authentication uses it afterwards through the vault. Enrollment
+creates no recovery profile, returns no grant, clears the supplied PIN array,
+and refuses existing/damaged authority. Failed durability never reports success.
+The recovery-code UI remains out of scope; no code is exposed or logged.
+
+Tests were written first: the narrow enrollment suite failed to compile on the
+missing adapter, then all six tests passed after implementation. They cover
+persistence/reopen, single-use PIN authority, re-enrollment refusal, corruption,
+invalid PINs, durability failure, and the inability of PIN-only setup to prepare
+a friction wait. The last case makes the remaining domain prerequisite explicit.
+
+The merged app debug unit suite also passed. Full requested build/test checks
+are recorded in the checkpoint verification file when they finish. The version
+has not been bumped and the locally assembled checkpoint must not be installed
+as build 17. No ready candidate is claimed.
+
+Read-only emulator preflight confirmed retained `pla363-policy-a35`,
+`emulator-5880`, API 35, still on version 16. No data, app install, or device
+configuration was changed. The physical spare was not accessed.

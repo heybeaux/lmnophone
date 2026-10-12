@@ -1,0 +1,333 @@
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:compileKotlin UP-TO-DATE
+> Task :core:compileJava NO-SOURCE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :policy:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :policy:compileKotlin UP-TO-DATE
+> Task :policy:compileJava NO-SOURCE
+> Task :policy:processResources NO-SOURCE
+> Task :policy:classes UP-TO-DATE
+> Task :policy:jar UP-TO-DATE
+> Task :links:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :links:compileKotlin UP-TO-DATE
+> Task :links:compileJava NO-SOURCE
+> Task :links:processResources UP-TO-DATE
+> Task :links:classes UP-TO-DATE
+> Task :links:jar UP-TO-DATE
+> Task :device:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:preBuild UP-TO-DATE
+> Task :device:preDebugBuild UP-TO-DATE
+> Task :device:generateDebugResValues UP-TO-DATE
+> Task :device:generateDebugResources UP-TO-DATE
+> Task :device:packageDebugResources UP-TO-DATE
+> Task :device:parseDebugLocalResources UP-TO-DATE
+> Task :device:generateDebugRFile UP-TO-DATE
+> Task :device:compileDebugKotlin UP-TO-DATE
+> Task :device:javaPreCompileDebug UP-TO-DATE
+> Task :device:compileDebugJavaWithJavac NO-SOURCE
+> Task :device:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :device:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :device:preDebugUnitTestBuild UP-TO-DATE
+> Task :device:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :device:compileDebugUnitTestKotlin UP-TO-DATE
+> Task :device:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :device:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :device:processDebugJavaRes UP-TO-DATE
+> Task :device:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :device:testDebugUnitTest
+> Task :device:preReleaseBuild UP-TO-DATE
+> Task :device:generateReleaseResValues
+> Task :device:generateReleaseResources
+> Task :device:packageReleaseResources
+> Task :device:preReleaseUnitTestBuild UP-TO-DATE
+> Task :device:parseReleaseLocalResources
+> Task :device:javaPreCompileRelease
+> Task :device:javaPreCompileReleaseUnitTest
+> Task :plainphone:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:compileDebugLibraryResources UP-TO-DATE
+> Task :device:writeDebugAarMetadata UP-TO-DATE
+> Task :plainphone:preBuild UP-TO-DATE
+> Task :plainphone:preCtlNoAlertLockTaskBuild UP-TO-DATE
+> Task :ui:preBuild UP-TO-DATE
+> Task :ui:preDebugBuild UP-TO-DATE
+> Task :ui:writeDebugAarMetadata UP-TO-DATE
+> Task :device:generateReleaseRFile
+> Task :plainphone:checkCtlNoAlertLockTaskAarMetadata
+> Task :plainphone:generateCtlNoAlertLockTaskResValues
+> Task :ui:generateDebugResValues UP-TO-DATE
+> Task :device:generateReleaseUnitTestStubRFile
+> Task :ui:generateDebugResources UP-TO-DATE
+> Task :ui:packageDebugResources UP-TO-DATE
+> Task :plainphone:mapCtlNoAlertLockTaskSourceSetPaths
+> Task :plainphone:generateCtlNoAlertLockTaskResources
+> Task :plainphone:packageCtlNoAlertLockTaskResources
+> Task :plainphone:parseCtlNoAlertLockTaskLocalResources
+> Task :plainphone:createCtlNoAlertLockTaskCompatibleScreenManifests
+> Task :device:extractDeepLinksDebug UP-TO-DATE
+> Task :device:processDebugManifest UP-TO-DATE
+> Task :plainphone:extractDeepLinksCtlNoAlertLockTask
+> Task :ui:extractDeepLinksDebug UP-TO-DATE
+> Task :ui:processDebugManifest UP-TO-DATE
+> Task :plainphone:processCtlNoAlertLockTaskMainManifest
+> Task :plainphone:processCtlNoAlertLockTaskManifest
+> Task :ui:compileDebugLibraryResources UP-TO-DATE
+> Task :ui:parseDebugLocalResources UP-TO-DATE
+> Task :ui:generateDebugRFile UP-TO-DATE
+> Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :plainphone:mergeCtlNoAlertLockTaskResources
+> Task :ui:compileDebugKotlin UP-TO-DATE
+> Task :ui:javaPreCompileDebug UP-TO-DATE
+> Task :ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :ui:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :plainphone:preCtlNoAlertLockTaskUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileCtlNoAlertLockTask
+> Task :ui:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :plainphone:javaPreCompileCtlNoAlertLockTaskUnitTest
+> Task :ui:processDebugJavaRes UP-TO-DATE
+> Task :plainphone:preCtlNoAlertBuild UP-TO-DATE
+> Task :plainphone:generateCtlNoAlertResValues
+> Task :plainphone:checkCtlNoAlertAarMetadata
+> Task :plainphone:mapCtlNoAlertSourceSetPaths
+> Task :plainphone:generateCtlNoAlertResources
+> Task :plainphone:packageCtlNoAlertResources
+> Task :plainphone:createCtlNoAlertCompatibleScreenManifests
+> Task :plainphone:parseCtlNoAlertLocalResources
+> Task :plainphone:extractDeepLinksCtlNoAlert
+> Task :plainphone:processCtlNoAlertMainManifest
+> Task :plainphone:processCtlNoAlertManifest
+> Task :plainphone:preCtlNoAlertUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileCtlNoAlert
+> Task :plainphone:preCtlNoDialerLockTaskBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileCtlNoAlertUnitTest
+> Task :plainphone:generateCtlNoDialerLockTaskResValues
+> Task :plainphone:checkCtlNoDialerLockTaskAarMetadata
+> Task :plainphone:mapCtlNoDialerLockTaskSourceSetPaths
+> Task :plainphone:generateCtlNoDialerLockTaskResources
+> Task :plainphone:mergeCtlNoAlertResources
+> Task :plainphone:packageCtlNoDialerLockTaskResources
+> Task :plainphone:parseCtlNoDialerLockTaskLocalResources
+> Task :plainphone:createCtlNoDialerLockTaskCompatibleScreenManifests
+> Task :plainphone:extractDeepLinksCtlNoDialerLockTask
+> Task :plainphone:processCtlNoDialerLockTaskMainManifest
+> Task :plainphone:processCtlNoDialerLockTaskManifest
+> Task :plainphone:processCtlNoAlertManifestForPackage
+> Task :plainphone:preCtlNoDialerLockTaskUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileCtlNoDialerLockTask
+> Task :plainphone:preCtlNoPhoneBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileCtlNoDialerLockTaskUnitTest
+> Task :plainphone:generateCtlNoPhoneResValues
+> Task :plainphone:checkCtlNoPhoneAarMetadata
+> Task :plainphone:mapCtlNoPhoneSourceSetPaths
+> Task :plainphone:generateCtlNoPhoneResources
+> Task :plainphone:mergeCtlNoDialerLockTaskResources
+> Task :plainphone:packageCtlNoPhoneResources
+> Task :plainphone:createCtlNoPhoneCompatibleScreenManifests
+> Task :plainphone:parseCtlNoPhoneLocalResources
+> Task :plainphone:extractDeepLinksCtlNoPhone
+> Task :plainphone:processCtlNoPhoneMainManifest
+> Task :plainphone:processCtlNoPhoneManifest
+> Task :plainphone:javaPreCompileCtlNoPhone
+> Task :plainphone:processCtlNoPhoneManifestForPackage
+> Task :plainphone:preCtlNoPhoneUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileCtlNoPhoneUnitTest
+> Task :plainphone:processCtlNoAlertLockTaskManifestForPackage
+> Task :plainphone:preDebugBuild UP-TO-DATE
+> Task :plainphone:checkDebugAarMetadata UP-TO-DATE
+> Task :plainphone:generateDebugResValues UP-TO-DATE
+> Task :plainphone:mapDebugSourceSetPaths UP-TO-DATE
+> Task :plainphone:processCtlNoDialerLockTaskManifestForPackage
+> Task :plainphone:processCtlNoAlertResources
+> Task :plainphone:generateDebugResources UP-TO-DATE
+> Task :plainphone:mergeCtlNoPhoneResources
+> Task :plainphone:mergeDebugResources UP-TO-DATE
+> Task :plainphone:packageDebugResources UP-TO-DATE
+> Task :plainphone:parseDebugLocalResources UP-TO-DATE
+> Task :plainphone:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :plainphone:extractDeepLinksDebug UP-TO-DATE
+> Task :plainphone:processDebugMainManifest UP-TO-DATE
+> Task :plainphone:processDebugManifest UP-TO-DATE
+> Task :plainphone:processDebugManifestForPackage UP-TO-DATE
+> Task :plainphone:processDebugResources UP-TO-DATE
+> Task :plainphone:javaPreCompileDebug UP-TO-DATE
+> Task :plainphone:preDebugUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :plainphone:buildKotlinToolingMetadata
+> Task :device:compileReleaseLibraryResources
+> Task :plainphone:preReleaseBuild UP-TO-DATE
+> Task :ui:preReleaseBuild UP-TO-DATE
+> Task :device:writeReleaseAarMetadata
+> Task :ui:writeReleaseAarMetadata
+> Task :plainphone:generateReleaseResValues
+> Task :ui:generateReleaseResValues
+> Task :plainphone:checkReleaseAarMetadata
+> Task :ui:generateReleaseResources
+> Task :ui:packageReleaseResources
+> Task :plainphone:mapReleaseSourceSetPaths
+> Task :plainphone:generateReleaseResources
+> Task :plainphone:processCtlNoPhoneResources
+> Task :plainphone:processCtlNoAlertLockTaskResources
+> Task :plainphone:packageReleaseResources
+> Task :plainphone:parseReleaseLocalResources
+> Task :plainphone:createReleaseCompatibleScreenManifests
+> Task :device:extractDeepLinksRelease
+> Task :plainphone:extractDeepLinksRelease
+> Task :device:processReleaseManifest
+> Task :ui:extractDeepLinksRelease
+> Task :ui:compileReleaseLibraryResources
+> Task :ui:processReleaseManifest
+> Task :ui:parseReleaseLocalResources
+> Task :plainphone:processCtlNoDialerLockTaskResources
+> Task :ui:javaPreCompileRelease
+> Task :plainphone:processReleaseMainManifest
+> Task :plainphone:processReleaseManifest
+> Task :plainphone:preReleaseUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileRelease
+> Task :plainphone:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :plainphone:javaPreCompileReleaseUnitTest
+> Task :ui:generateReleaseRFile
+> Task :device:mergeDebugShaders
+> Task :device:compileDebugShaders NO-SOURCE
+> Task :device:generateDebugAssets UP-TO-DATE
+> Task :device:mergeDebugAssets
+> Task :plainphone:mergeReleaseResources
+> Task :plainphone:mergeDebugShaders
+> Task :plainphone:compileDebugShaders NO-SOURCE
+> Task :plainphone:generateDebugAssets UP-TO-DATE
+> Task :ui:mergeDebugShaders
+> Task :ui:compileDebugShaders NO-SOURCE
+> Task :ui:generateDebugAssets UP-TO-DATE
+> Task :plainphone:compileDebugKotlin
+> Task :ui:mergeDebugAssets
+> Task :plainphone:compileDebugJavaWithJavac NO-SOURCE
+> Task :plainphone:processDebugJavaRes UP-TO-DATE
+> Task :plainphone:mergeDebugAssets
+> Task :plainphone:desugarDebugFileDependencies
+> Task :plainphone:compressDebugAssets
+> Task :plainphone:bundleDebugClassesToRuntimeJar
+> Task :plainphone:bundleDebugClassesToCompileJar
+> Task :plainphone:dexBuilderDebug
+> Task :plainphone:mergeDebugGlobalSynthetics
+> Task :device:mergeDebugJniLibFolders
+> Task :device:mergeDebugNativeLibs NO-SOURCE
+> Task :device:copyDebugJniLibsProjectOnly
+> Task :plainphone:mergeDebugJniLibFolders
+> Task :ui:mergeDebugJniLibFolders
+> Task :ui:mergeDebugNativeLibs NO-SOURCE
+> Task :plainphone:processReleaseManifestForPackage
+> Task :ui:copyDebugJniLibsProjectOnly
+> Task :plainphone:checkDebugDuplicateClasses
+> Task :plainphone:compileDebugUnitTestKotlin
+> Task :plainphone:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :device:bundleLibRuntimeToDirDebug
+
+> Task :device:compileReleaseKotlin
+w: file://<worktree>/app/device/src/main/kotlin/org/plainphone/device/DpmPort.kt:157:69 'static field DISALLOW_ADD_MANAGED_PROFILE: String' is deprecated. Deprecated in Java.
+w: file://<worktree>/app/device/src/main/kotlin/org/plainphone/device/storage/RecordFile.kt:75:108 Java type mismatch: inferred type is 'File?', but 'File' was expected.
+
+> Task :plainphone:processReleaseResources
+> Task :ui:bundleLibRuntimeToDirDebug
+> Task :plainphone:mergeDebugJavaResource
+> Task :plainphone:testDebugUnitTest
+> Task :device:compileReleaseJavaWithJavac NO-SOURCE
+> Task :device:processReleaseJavaRes
+> Task :device:bundleLibRuntimeToJarRelease
+> Task :device:bundleLibCompileToJarRelease
+> Task :plainphone:mergeProjectDexDebug
+> Task :plainphone:validateSigningDebug
+> Task :plainphone:mergeDebugNativeLibs
+> Task :plainphone:writeDebugAppMetadata
+> Task :plainphone:writeDebugSigningConfigVersions
+
+> Task :plainphone:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so. Run with --info option to learn more.
+
+> Task :plainphone:mergeLibDexDebug
+> Task :plainphone:compileCtlNoAlertKotlin
+> Task :plainphone:compileCtlNoAlertJavaWithJavac NO-SOURCE
+> Task :plainphone:bundleCtlNoAlertClassesToRuntimeJar
+> Task :plainphone:processCtlNoAlertJavaRes
+> Task :plainphone:bundleCtlNoAlertClassesToCompileJar
+> Task :plainphone:compileCtlNoAlertLockTaskKotlin
+> Task :plainphone:compileCtlNoAlertLockTaskJavaWithJavac NO-SOURCE
+> Task :plainphone:compileCtlNoPhoneKotlin
+> Task :plainphone:processCtlNoAlertLockTaskJavaRes
+> Task :plainphone:compileCtlNoPhoneJavaWithJavac NO-SOURCE
+> Task :plainphone:processCtlNoPhoneJavaRes
+> Task :plainphone:compileCtlNoDialerLockTaskKotlin
+> Task :plainphone:bundleCtlNoAlertLockTaskClassesToCompileJar
+> Task :plainphone:bundleCtlNoAlertLockTaskClassesToRuntimeJar
+> Task :plainphone:compileCtlNoDialerLockTaskJavaWithJavac NO-SOURCE
+> Task :plainphone:bundleCtlNoPhoneClassesToRuntimeJar
+> Task :plainphone:bundleCtlNoPhoneClassesToCompileJar
+> Task :plainphone:processCtlNoDialerLockTaskJavaRes
+> Task :plainphone:bundleCtlNoDialerLockTaskClassesToRuntimeJar
+> Task :plainphone:bundleCtlNoDialerLockTaskClassesToCompileJar
+
+> Task :plainphone:compileCtlNoAlertUnitTestKotlin
+w: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/boot/CallingScreenRecordFailureTest.kt:48:21 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+
+> Task :plainphone:compileCtlNoAlertUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:processCtlNoAlertUnitTestJavaRes
+> Task :ui:compileReleaseKotlin
+
+> Task :plainphone:compileCtlNoPhoneUnitTestKotlin
+w: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/boot/CallingScreenRecordFailureTest.kt:48:21 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+
+> Task :plainphone:compileCtlNoAlertLockTaskUnitTestKotlin
+w: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/boot/CallingScreenRecordFailureTest.kt:48:21 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+
+> Task :plainphone:compileCtlNoDialerLockTaskUnitTestKotlin
+w: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/boot/CallingScreenRecordFailureTest.kt:48:21 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+
+> Task :plainphone:mergeExtDexDebug
+> Task :plainphone:testCtlNoAlertUnitTest
+> Task :plainphone:compileCtlNoAlertLockTaskUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:processCtlNoAlertLockTaskUnitTestJavaRes
+> Task :plainphone:testCtlNoAlertLockTaskUnitTest
+> Task :plainphone:compileCtlNoDialerLockTaskUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:processCtlNoDialerLockTaskUnitTestJavaRes
+
+> Task :device:compileReleaseUnitTestKotlin
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/LegacyMigrationTest.kt:37:9 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/MigrationJournalTest.kt:39:9 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/PeopleTransactionsTest.kt:601:100 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/PeopleTransactionsTest.kt:624:135 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/ArchiveApkInspectorFlagsTest.kt:17:80 'static field GET_SIGNATURES: Int' is deprecated. Deprecated in Java.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/UpdateDownloadTest.kt:67:41 Java type mismatch: inferred type is 'File?', but 'File' was expected.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/UpdateStagingTest.kt:30:41 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/VerifierUpdateBoundaryTest.kt:3:36 This code uses error suppression for 'INVISIBLE_REFERENCE'. While it might compile and work, the compiler behavior is UNSPECIFIED and WILL NOT BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue
+
+> Task :plainphone:testCtlNoDialerLockTaskUnitTest
+> Task :device:compileReleaseUnitTestJavaWithJavac NO-SOURCE
+> Task :device:processReleaseUnitTestJavaRes
+> Task :device:testReleaseUnitTest
+> Task :device:test
+> Task :plainphone:compileCtlNoPhoneUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:processCtlNoPhoneUnitTestJavaRes
+> Task :plainphone:testCtlNoPhoneUnitTest
+> Task :ui:compileReleaseJavaWithJavac NO-SOURCE
+> Task :ui:processReleaseJavaRes
+> Task :plainphone:packageDebug
+> Task :plainphone:createDebugApkListingFileRedirect
+> Task :plainphone:assembleDebug
+> Task :ui:bundleLibRuntimeToJarRelease
+> Task :ui:bundleLibCompileToJarRelease
+> Task :plainphone:compileReleaseKotlin
+> Task :plainphone:compileReleaseJavaWithJavac NO-SOURCE
+> Task :plainphone:processReleaseJavaRes
+> Task :plainphone:bundleReleaseClassesToRuntimeJar
+> Task :plainphone:bundleReleaseClassesToCompileJar
+
+> Task :plainphone:compileReleaseUnitTestKotlin
+w: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/boot/CallingScreenRecordFailureTest.kt:48:21 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+
+> Task :plainphone:compileReleaseUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:processReleaseUnitTestJavaRes
+> Task :plainphone:testReleaseUnitTest
+> Task :plainphone:test
+
+BUILD SUCCESSFUL in 2m 15s
+235 actionable tasks: 179 executed, 56 up-to-date

@@ -1,0 +1,52 @@
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:compileKotlin UP-TO-DATE
+> Task :core:compileJava NO-SOURCE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :policy:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :policy:compileKotlin UP-TO-DATE
+> Task :policy:compileJava NO-SOURCE
+> Task :policy:processResources NO-SOURCE
+> Task :policy:classes UP-TO-DATE
+> Task :policy:jar UP-TO-DATE
+> Task :links:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :links:compileKotlin UP-TO-DATE
+> Task :links:compileJava NO-SOURCE
+> Task :links:processResources UP-TO-DATE
+> Task :links:classes UP-TO-DATE
+> Task :links:jar UP-TO-DATE
+> Task :device:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:preBuild UP-TO-DATE
+> Task :device:preDebugBuild UP-TO-DATE
+> Task :device:generateDebugResValues UP-TO-DATE
+> Task :device:generateDebugResources UP-TO-DATE
+> Task :device:packageDebugResources UP-TO-DATE
+> Task :device:parseDebugLocalResources UP-TO-DATE
+> Task :device:generateDebugRFile UP-TO-DATE
+> Task :device:javaPreCompileDebug UP-TO-DATE
+> Task :device:preDebugUnitTestBuild UP-TO-DATE
+> Task :device:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :device:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :device:compileDebugKotlin
+> Task :device:compileDebugJavaWithJavac NO-SOURCE
+> Task :device:processDebugJavaRes UP-TO-DATE
+> Task :device:bundleLibRuntimeToJarDebug
+> Task :device:bundleLibCompileToJarDebug
+
+> Task :device:compileDebugUnitTestKotlin
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/LegacyMigrationTest.kt:37:9 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/MigrationJournalTest.kt:39:9 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/PeopleTransactionsTest.kt:601:100 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/authority/PeopleTransactionsTest.kt:624:135 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/ArchiveApkInspectorFlagsTest.kt:17:80 'static field GET_SIGNATURES: Int' is deprecated. Deprecated in Java.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/UpdateDownloadTest.kt:67:41 Java type mismatch: inferred type is 'File?', but 'File' was expected.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/UpdateStagingTest.kt:30:41 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+w: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/update/VerifierUpdateBoundaryTest.kt:3:36 This code uses error suppression for 'INVISIBLE_REFERENCE'. While it might compile and work, the compiler behavior is UNSPECIFIED and WILL NOT BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue
+
+> Task :device:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :device:processDebugUnitTestJavaRes
+> Task :device:testDebugUnitTest
+
+BUILD SUCCESSFUL in 2s
+22 actionable tasks: 6 executed, 16 up-to-date
