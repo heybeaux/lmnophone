@@ -40,14 +40,23 @@ class AndroidWifi(context: Context) : WifiPort {
     override fun read(): WifiFacts {
         if (!wifi.isWifiEnabled) return WifiFacts(false, false, null, null)
         // Check every network, not only the default: mobile data or a VPN may be the default.
-        val connected = connectivity.allNetworks.any {
-            connectivity.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+        val networks = connectivity.allNetworks.mapNotNull { network ->
+            connectivity.getNetworkCapabilities(network)?.takeIf {
+                it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) &&
+                    !it.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+            }?.let { network to it }
         }
+        val current = networks.firstOrNull { it.first == connectivity.activeNetwork }
+            ?: networks.minByOrNull { it.first.networkHandle }
+        val connected = current != null
         val readable = hasPermission() && app.getSystemService(LocationManager::class.java).isLocationEnabled
         val ssid = if (connected && readable) try { wifi.connectionInfo?.ssid } catch (_: Exception) { null } else null
         val nearby = if (readable) try {
             wifi.scanResults.map { WifiNetwork(it.SSID, it.level) }
         } catch (_: Exception) { null } else null
-        return WifiFacts(true, connected, ssid, nearby)
+        return WifiFacts(true, connected, ssid, nearby,
+            validated = current?.second?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
+            captivePortal = current?.second?.hasCapability(NetworkCapabilities.NET_CAPABILITY_CAPTIVE_PORTAL) == true,
+            connectionId = current?.first?.networkHandle)
     }
 }

@@ -16,8 +16,11 @@ import org.plainphone.ui.R
 import org.plainphone.ui.components.ScreenLink
 import org.plainphone.ui.theme.*
 
+enum class WifiInternetUiStatus { SignInRequired, NoInternet }
+
 data class WifiSettingsUiState(val enabled: Boolean = true, val connected: Boolean = false,
-    val network: String? = null, val nearby: List<String>? = null)
+    val network: String? = null, val nearby: List<String>? = null,
+    val readFailed: Boolean = false, val internetStatus: WifiInternetUiStatus? = null)
 
 /** Read-only information page. The host supplies fresh, cleaned names while visible. */
 @Composable
@@ -27,7 +30,9 @@ fun WifiSettingsScreen(state: WifiSettingsUiState, onBack: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4)) {
         ScreenLink(stringResource(R.string.settings_back), onBack, centered = false)
         Text(stringResource(R.string.settings_wifi), style = PlainphoneType.Title, modifier = Modifier.semantics { heading() })
-        if (!state.enabled) {
+        if (state.readFailed) {
+            Text(stringResource(R.string.wifi_status_unavailable), style = PlainphoneType.Body)
+        } else if (!state.enabled) {
             Text(stringResource(R.string.wifi_off), style = PlainphoneType.Body)
         } else {
             Text(when {
@@ -35,6 +40,12 @@ fun WifiSettingsScreen(state: WifiSettingsUiState, onBack: () -> Unit) {
                 state.network == null -> stringResource(R.string.wifi_connected_unnamed)
                 else -> stringResource(R.string.wifi_connected_named, state.network)
             }, style = PlainphoneType.Body)
+            if (state.connected) state.internetStatus?.let {
+                Text(stringResource(when (it) {
+                    WifiInternetUiStatus.SignInRequired -> R.string.wifi_signin
+                    WifiInternetUiStatus.NoInternet -> R.string.wifi_no_internet
+                }), style = PlainphoneType.Body)
+            }
             Text(stringResource(R.string.wifi_nearby), style = PlainphoneType.Row, modifier = Modifier.semantics { heading() })
             if (state.nearby == null) Text(stringResource(R.string.wifi_nearby_unavailable), style = PlainphoneType.Body)
             else state.nearby.forEach { Text(it, style = PlainphoneType.Body) }

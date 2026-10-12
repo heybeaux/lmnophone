@@ -1,0 +1,41 @@
+Before implementation: :device:compileDebugUnitTestKotlin failed (new status/clock/readFailed seams absent).
+Tests-first commit ac69cfd9.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:15:51 No parameter with name 'captivePortal' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:15:73 No parameter with name 'validated' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:16:35 Too many arguments for 'constructor(port: WifiPort): WifiController'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:17:22 Unresolved reference 'WifiInternetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:17:65 Unresolved reference 'internetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:21:51 No parameter with name 'validated' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:21:70 No parameter with name 'connectionId' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:22:35 Too many arguments for 'constructor(port: WifiPort): WifiController'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:23:28 Unresolved reference 'internetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:24:55 Unresolved reference 'internetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:25:42 Unresolved reference 'WifiInternetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:25:81 Unresolved reference 'internetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:29:51 No parameter with name 'validated' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:30:35 Too many arguments for 'constructor(port: WifiPort): WifiController'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:31:49 Unresolved reference 'WifiInternetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:31:88 Unresolved reference 'internetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:32:32 No parameter with name 'validated' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:32:83 Unresolved reference 'internetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:33:32 No parameter with name 'validated' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:33:84 Unresolved reference 'internetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:38:28 Unresolved reference 'readFailed'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:39:85 Unresolved reference 'internetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:40:58 Unresolved reference 'readFailed'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:44:51 No parameter with name 'validated' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:44:70 No parameter with name 'connectionId' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:45:35 Too many arguments for 'constructor(port: WifiPort): WifiController'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:47:32 No parameter with name 'connectionId' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:47:84 Unresolved reference 'internetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:48:49 Unresolved reference 'WifiInternetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:48:88 Unresolved reference 'internetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:53:55 No parameter with name 'validated' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:55:39 Too many arguments for 'constructor(port: WifiPort): WifiController'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:61:52 No parameter with name 'captivePortal' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:62:53 No parameter with name 'validated' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:66:46 Unresolved reference 'internetStatus'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:71:51 No parameter with name 'validated' found.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:72:35 Too many arguments for 'constructor(port: WifiPort): WifiController'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:73:25 Unresolved reference 'onOpen'.
+test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:73:67 Unresolved reference 'internetStatus'.

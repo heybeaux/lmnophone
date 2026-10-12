@@ -10,6 +10,8 @@ import org.plainphone.device.settings.AndroidVolume
 import org.plainphone.device.settings.VolumeController
 import org.plainphone.device.settings.AndroidWifi
 import org.plainphone.device.settings.WifiController
+import org.plainphone.device.settings.WifiInternetStatus
+import org.plainphone.ui.user.WifiInternetUiStatus
 import org.plainphone.ui.user.WifiSettingsUiState
 import org.plainphone.device.settings.AndroidTextSize
 import org.plainphone.device.settings.TextSizeController
@@ -120,12 +122,17 @@ class MainActivity : ComponentActivity() {
     private val shell: ShellViewModel by viewModels()
     private lateinit var communication: AndroidCommunicationCounts
     private val wifiSource by lazy { AndroidWifi(this) }
-    private val wifiController by lazy { WifiController(wifiSource) }
+    private val wifiController by lazy { WifiController(wifiSource) { SystemClock.elapsedRealtime() } }
     private var wifi by mutableStateOf(WifiSettingsUiState())
     private fun syncWifi() {
         wifiController.refresh()
         val value = wifiController.state
-        wifi = WifiSettingsUiState(value.enabled, value.connected, value.network, value.nearby)
+        wifi = WifiSettingsUiState(value.enabled, value.connected, value.network, value.nearby,
+            value.readFailed, when (value.internetStatus) {
+                WifiInternetStatus.SignInRequired -> WifiInternetUiStatus.SignInRequired
+                WifiInternetStatus.NoInternet -> WifiInternetUiStatus.NoInternet
+                null -> null
+            })
     }
     private val textSizeController by lazy { TextSizeController(AndroidTextSize(this)) }
     private var textSize by mutableStateOf(TextSizeUiState())
@@ -229,6 +236,7 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(basicSettingsVisible, shell.state.current) {
                 if (basicSettingsVisible && shell.state.current == ShellRoute.WifiSettings) {
                     wifiSource.onOpen()
+                    wifiController.onOpen()
                     while (true) {
                         syncWifi()
                         delay(1_000)

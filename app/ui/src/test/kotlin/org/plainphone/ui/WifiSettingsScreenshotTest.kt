@@ -25,6 +25,11 @@ class WifiSettingsScreenshotTest(private val scale: Float) {
         screenWidth = 360, screenHeight = 640, xdpi = 160, ydpi = 160,
         density = Density.MEDIUM, fontScale = scale, locale = "en"),
         showSystemUi = false, maxPercentDifference = 0.0)
+    @Test fun captivePortal() = shot(WifiSettingsUiState(true, true,
+        internetStatus = WifiInternetUiStatus.SignInRequired))
+    @Test fun noInternet() = shot(WifiSettingsUiState(true, true,
+        internetStatus = WifiInternetUiStatus.NoInternet))
+    @Test fun readFailure() = shot(WifiSettingsUiState(readFailed = true))
     @Test fun connected() = shot(WifiSettingsUiState(true, true, "AndroidWifi", listOf("AndroidWifi", "Sam", "Jo")))
     @Test fun unnamed() = shot(WifiSettingsUiState(true, true))
     @Test fun disconnected() = shot(WifiSettingsUiState(true, false, nearby = listOf("Sam")))
@@ -40,11 +45,17 @@ class WifiSettingsScreenshotTest(private val scale: Float) {
                 val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
                 val text = nodes.flatMap { it.config.getOrElse(SemanticsProperties.Text) { emptyList() } }.map { it.text }
                 assertTrue("Wi-Fi" in text)
-                assertEquals(!state.enabled, "Wi-Fi is off." in text)
-                assertEquals(state.enabled, "Nearby networks" in text)
-                assertEquals(state.enabled && state.nearby == null, "Nearby networks can't be shown right now." in text)
+                assertEquals(!state.readFailed && !state.enabled, "Wi-Fi is off." in text)
+                assertEquals(!state.readFailed && state.enabled, "Nearby networks" in text)
+                assertEquals(!state.readFailed && state.enabled && state.nearby == null, "Nearby networks can't be shown right now." in text)
                 val expected = if (!state.connected) "Not connected" else state.network?.let { "Connected to $it" } ?: "Connected to Wi-Fi"
-                if (state.enabled) assertTrue(expected in text)
+                if (state.enabled && !state.readFailed) assertTrue(expected in text)
+                assertEquals(state.readFailed, "Wi-Fi status can't be read right now." in text)
+                if (state.readFailed) assertFalse("Not connected" in text)
+                val portal = "This Wi-Fi needs a sign-in page, which LMNOPhone doesn't allow. Use mobile data or another Wi-Fi."
+                val offline = "This Wi-Fi isn't reaching the internet."
+                assertEquals(state.internetStatus == WifiInternetUiStatus.SignInRequired, portal in text)
+                assertEquals(state.internetStatus == WifiInternetUiStatus.NoInternet, offline in text)
                 // The Back link is the only action; network labels cannot be tapped.
                 assertEquals(1, nodes.count { it.config.contains(SemanticsActions.OnClick) })
             }) { HomeTestFrame { WifiSettingsScreen(state, {}) } }

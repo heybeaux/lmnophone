@@ -458,6 +458,17 @@ changes Location mode, saved networks, or Wi-Fi state. Names remain on screen
 only, with Android's outer quotes and unknown-name marker removed. Text size's
 sample sentence is **This is how big your text will be.** (updated above).
 
+### Build 29 read-only Wi-Fi status
+
+Approved in [PLA-424](/PLA/issues/PLA-424). Under the connection line, show the
+exact Wi-Fi message below when Android reports a sign-in page, or after at least
+10 seconds of observed unvalidated connectivity without a sign-in page. Fresh
+connections and validated connections show no internet status line. This subset
+has no Forget or OK action and no separate message screen.
+
+If the overall status read fails, show **Wi-Fi status can't be read right now.**
+with no connection claim or nearby list. Location mode remains unchanged.
+
 ### Build 22 Sound corrections
 
 Approved in [PLA-404](/PLA/issues/PLA-404). Failure lines appear below the stream

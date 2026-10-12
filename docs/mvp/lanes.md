@@ -297,3 +297,11 @@ Its page-open hook may grant only its own fine-location permission via DPM.
 `:plainphone` refreshes while resumed on `ShellRoute.WifiSettings` and maps
 `WifiState` to `WifiSettingsUiState`; `:ui` exposes Back only. These are preview
 presentation seams, with no changes to policy-engine or lock-task contracts.
+
+Preview 29 extends `WifiFacts` with nullable validation, captive-portal status and
+an ephemeral network handle. `WifiController` takes a monotonic clock, resets its
+observation on page open, connection change or unreadable/interrupted state, and
+emits `WifiInternetStatus` after the 10-second grace period (portal is immediate).
+`WifiState` / `WifiSettingsUiState` explicitly distinguish an overall read failure;
+UI receives `WifiInternetUiStatus` and remains read-only. Names and handles are
+never persisted. Policy and lock-task interfaces are unchanged.

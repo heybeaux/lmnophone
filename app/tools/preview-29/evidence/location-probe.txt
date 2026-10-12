@@ -1,0 +1,20 @@
+Foreground probe: API 35, Device Owner, fine location granted; no names recorded.
+INSTRUMENTATION_RESULT: connectionInfo=returned=true infoPresent=true named=true unknownMarker=false
+INSTRUMENTATION_RESULT: locationMode=3
+INSTRUMENTATION_RESULT: outcome=PASS
+INSTRUMENTATION_RESULT: scanResults=returned=true count=1 namedCount=1
+INSTRUMENTATION_RESULT: transportInfo=callback=true wifiInfo=true named=true unknownMarker=false validated=true captive=false
+INSTRUMENTATION_CODE: -1
+INSTRUMENTATION_RESULT: connectionInfo=returned=true infoPresent=true named=false unknownMarker=true
+INSTRUMENTATION_RESULT: locationMode=0
+INSTRUMENTATION_RESULT: outcome=PASS
+INSTRUMENTATION_RESULT: scanResults=returned=true count=0 namedCount=0
+INSTRUMENTATION_RESULT: transportInfo=callback=true wifiInfo=true named=false unknownMarker=true validated=true captive=false
+INSTRUMENTATION_CODE: -1
+INSTRUMENTATION_RESULT: connectionInfo=returned=true infoPresent=true named=true unknownMarker=false
+INSTRUMENTATION_RESULT: locationMode=3
+INSTRUMENTATION_RESULT: outcome=PASS
+INSTRUMENTATION_RESULT: scanResults=returned=true count=1 namedCount=1
+INSTRUMENTATION_RESULT: transportInfo=callback=true wifiInfo=true named=true unknownMarker=false validated=true captive=false
+INSTRUMENTATION_CODE: -1
+Location before=3 probe=0 after=3; saved networks unchanged=true (names withheld)
