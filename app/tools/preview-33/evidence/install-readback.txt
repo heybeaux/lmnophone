@@ -1,0 +1,5 @@
+Installed UTC: 2026-10-12T18:30:53.647870+00:00
+APK SHA256: c88a63f8dbe99aeee3de0cb363244d74a5e20d6c37f95673b2738e47a8db4fe5
+Signer SHA256: 99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd
+Accepted 32 → final 33 in-place install; versionCode=33; versionName=0.1.0-preview-33; TEST_ONLY retained.
+No probe/fixture code in final APK.

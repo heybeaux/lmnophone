@@ -1,0 +1,12 @@
+Tests first: a95b549a defines the new controller API and fails compilation before implementation.
+An additional failed-enable-readback test was shown failing before its cleanup correction.
+:device:testDebugUnitTest --tests '*Wifi*': 29 tests, 0 failures.
+:plainphone:testDebugUnitTest: 203 tests, 0 failures.
+:ui:verifyPaparazziDebug --tests '*Wifi*ScreenshotTest': 95 tests, 0 failures.
+Goldens recorded only for intended Wi-Fi changes. Every changed/new image inspected at
+1.0, 1.3, 1.5, 1.8, 2.0. Show-nearby primary action pinned; selectable rows at least 56dp.
+openspec validate --all: 3 passed, 0 failed.
+Lint remains blocked by two unchanged baseline errors (no checks suppressed):
+- AndroidWifi.kt:55 existing scan permission flow (MissingPermission).
+- PinAccessActivity.kt:99 existing StateFlow.value read in composition.
+No lint errors in the new join adapter, controller, or UI.

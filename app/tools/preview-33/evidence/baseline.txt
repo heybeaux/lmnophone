@@ -1,0 +1,2 @@
+Accepted build 32 restored in place; exact accepted SHA256 verified.
+Location=3; saved networks and font/ringtone/Bluetooth captured for equality checks (no names recorded).
