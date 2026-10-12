@@ -94,6 +94,18 @@ class TestBuildNavigatorTest {
         }
     }
 
+    @Test fun liveWifiMessageReturnsToWifiForOkBackAndForget() {
+        val start = at(ShellRoute.More, ShellRoute.PhoneSettings, ShellRoute.WifiSettings)
+        for (problem in WifiProblem.entries) {
+            val step = nav.openWifiMessage(start, problem)
+            assertEquals(start.stack + ShellRoute.Wifi(problem), step.state.stack)
+            assertEquals(start, nav.back(step.state).state)
+            assertEquals(start, nav.onWifi(step.state, WifiMessageEvent.Ok).state)
+            assertEquals(start, nav.onWifi(step.state, WifiMessageEvent.ForgetNetwork).state)
+        }
+        assertEquals(ShellState(), nav.openWifiMessage(ShellState(), WifiProblem.NoInternet).state)
+    }
+
     @Test fun okOnAWifiMessageStillJustCloses() {
         val wifi = at(ShellRoute.Wifi(WifiProblem.NoInternet))
         assertEquals(ShellState(), nav.onWifi(wifi, WifiMessageEvent.Ok).state)
