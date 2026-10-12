@@ -1,0 +1,41 @@
+PASS: arguments: serial APK output-directory [label]
+PASS: owned emulator serial
+preview-25 gate 2026-10-12T12:14:42.183788+00:00
+APK sha256=5114c251fcd80640380764221751a4f8d9b9f46ea38eb16a885c1c3d0c72a5da
+PASS: install in place
+PASS: installer reports Success
+PASS: read package version
+PASS: version is preview-25
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: restart
+PASS: wait for device
+PASS: read boot status
+PASS: read boot status
+PASS: read boot status
+PASS: read boot status
+PASS: wake screen
+PASS: dismiss no-PIN keyguard
+PASS: swipe unlock
+PASS: read boot gate log
+PASS: read boot gate log
+PASS: Home after full read-back
+full read-back=10-12 05:15:09.113; home shown=10-12 05:15:09.438
+PASS: read package version
+PASS: version is preview-25
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: press Home
+PASS: press Home
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+FAIL: read UI XML
+exit=1
