@@ -24,6 +24,8 @@ class FakePackageSystemPort : PackageSystemPort {
     val failing = mutableSetOf<String>()
     val calls = mutableListOf<String>()
     var packageReads = 0
+    /** Answers [installedForUser]; by default, listed in any read. */
+    var userInstalled: (String) -> Boolean = { name -> reads.any { read -> read.any { it.name == name } } }
 
     fun packages(vararg p: RawPackage) { reads = mutableListOf(p.toList()) }
 
@@ -48,6 +50,7 @@ class FakePackageSystemPort : PackageSystemPort {
     override fun systemOnlyActivities(action: String, data: String?) =
         call("systemOnlyActivities") { activities[if (data == null) action else "$action $data"].orEmpty() }
     override fun systemOnlyReceivers(action: String) = call("systemOnlyReceivers") { receivers[action].orEmpty() }
+    override fun installedForUser(name: String) = call("installedForUser") { userInstalled(name) }
 }
 
 fun raw(name: String, system: Boolean = false, version: Long = 1, vararg signers: String): RawPackage =
