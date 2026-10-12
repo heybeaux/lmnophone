@@ -1,0 +1,32 @@
+{
+  "plainphone": {
+    "tests": 189,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "ui": {
+    "tests": 232,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "device": {
+    "tests": 18,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "allAcceptanceMet": false,
+  "unmet": "No supported UI start route exists on specified preview baseline; live cancel exercise used an emulator-only store fixture.",
+  "upgradeGate": {
+    "exit": 0,
+    "routes": [
+      "More \u2192 Emergency: exactly 911",
+      "Phone: exactly 911"
+    ],
+    "currentCalls": 0,
+    "ownerRetained": true,
+    "lockTask": "LOCKED"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "fixtureOnly": true,
+  "noSupportedUiStartRoute": true,
+  "checks": [
+    "TURN_OFF fixture: U7 present, spoken label exact, existing confirmation opens, cancel without PIN, box absent, durable CANCELLED and zero restore steps, owner retained",
+    "Original authority and clock restored byte for byte; returned Home"
+  ]
+}

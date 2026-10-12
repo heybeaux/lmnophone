@@ -1,0 +1,12 @@
+{
+  "installedAt": "2026-10-12T09:51:12.664424+00:00",
+  "device": "owned pla363-policy-a35 / emulator-5880",
+  "from": 22,
+  "to": 23,
+  "versionName": "0.1.0-preview-23",
+  "apkSha256": "cbc829b9b9b74d43c64f23072bd92461f328cb2ef65aadc46b0e08dd04483afb",
+  "signerSha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "sameSignerAs22": true,
+  "inPlace": true,
+  "testOnly": true
+}
