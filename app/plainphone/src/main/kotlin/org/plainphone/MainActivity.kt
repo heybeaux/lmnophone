@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +24,7 @@ import org.plainphone.boot.BuildControl
 import org.plainphone.boot.CallingScreen
 import org.plainphone.boot.CheckingScreen
 import org.plainphone.boot.HomeGate
+import org.plainphone.boot.HomeScreens
 import org.plainphone.boot.LockTaskState
 import org.plainphone.boot.PolicyRuntime
 import org.plainphone.boot.cancelStage
@@ -72,6 +74,8 @@ class MainActivity : ComponentActivity() {
                     }
                     val notice by runtime.notice.collectAsState()
                     val cancel = cancelScreen
+                    val screens = HomeScreens(cancel != null, cancel?.state?.sending == true, attentionOpen)
+                    BackHandler(enabled = screens.handlesBack) { onSystemBack() }
                     if (cancel != null) {
                         // The open confirmation follows each published read of the operation (PLA-371 R1).
                         val wait by runtime.waitingNotice.collectAsState()
@@ -212,6 +216,14 @@ class MainActivity : ComponentActivity() {
             WaitingStage.ConfirmCancel -> screen
             else -> screen.copy(state = screen.state.copy(stage = stage))
         }
+    }
+
+    /** Android Back on a sub-screen ([HomeScreens.back]); read fresh, since the handler outlives composition. */
+    private fun onSystemBack() {
+        val cancel = cancelScreen
+        val after = HomeScreens(cancel != null, cancel?.state?.sending == true, attentionOpen).back()
+        if (!after.cancelOpen) cancelScreen = null
+        attentionOpen = after.attentionOpen
     }
 
     private data class CancelScreen(val requestId: String, val state: WaitingChangeUiState)
