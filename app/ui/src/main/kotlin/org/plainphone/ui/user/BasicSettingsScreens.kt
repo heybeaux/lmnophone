@@ -62,10 +62,10 @@ fun BrightnessScreen(state: BrightnessUiState, onEvent: (BrightnessEvent) -> Uni
             valueRange = 10f..100f, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
                 .semantics { contentDescription = sliderLabel })
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            BrightnessButton(stringResource(R.string.brightness_minus), enabled && (state.percent ?: 0) > 10) {
+            BrightnessButton(stringResource(R.string.brightness_minus), stringResource(R.string.brightness_lower), enabled && (state.percent ?: 0) > 10) {
                 onEvent(BrightnessEvent.Adjust(-10))
             }
-            BrightnessButton(stringResource(R.string.brightness_plus), enabled && (state.percent ?: 100) < 100) {
+            BrightnessButton(stringResource(R.string.brightness_plus), stringResource(R.string.brightness_raise), enabled && (state.percent ?: 100) < 100) {
                 onEvent(BrightnessEvent.Adjust(10))
             }
         }
@@ -81,9 +81,9 @@ fun BrightnessScreen(state: BrightnessUiState, onEvent: (BrightnessEvent) -> Uni
 }
 
 @Composable
-private fun BrightnessButton(label: String, enabled: Boolean, onClick: () -> Unit) {
+private fun BrightnessButton(label: String, spokenLabel: String, enabled: Boolean, onClick: () -> Unit) {
     Box(Modifier.sizeIn(minWidth = 64.dp, minHeight = 56.dp)
-        .plainphoneAction(enabled = enabled, onClick = onClick), contentAlignment = Alignment.Center) {
-        Text(label, style = PlainphoneType.Row.copy(color = if (enabled) PlainphoneColors.Ink else PlainphoneColors.Ink3))
+        .plainphoneAction(enabled = enabled, onClick = onClick).semantics { contentDescription = spokenLabel }, contentAlignment = Alignment.Center) {
+        Text(label, modifier = Modifier.clearAndSetSemantics {}, style = PlainphoneType.Row.copy(color = if (enabled) PlainphoneColors.Ink else PlainphoneColors.Ink3))
     }
 }

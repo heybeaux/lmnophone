@@ -419,6 +419,21 @@ picker must not open from lock task.
 Brightness hides the percentage while **Adjust automatically** is on and shows
 it again when off. Battery shows **Charged** when Android reports full.
 
+### Build 22 Sound corrections
+
+Approved in [PLA-404](/PLA/issues/PLA-404). Failure lines appear below the stream
+that failed and clear when Sound opens. The page reads both volumes once a second
+while visible; Brightness also refreshes so outside changes do not leave stale values.
+
+When silent or vibrate is on, ring controls are disabled and say:
+**Ring volume can't be changed while the phone is on silent or vibrate.**
+Media stays usable. The page never changes ringer mode or Do Not Disturb.
+
+Visible buttons stay **−** and **+**. Spoken labels are **Lower ring volume**,
+**Raise ring volume**, **Lower media volume**, **Raise media volume**,
+**Lower brightness**, **Raise brightness**. Slider labels are **Ring volume**,
+**Media volume**, **Brightness**.
+
 ### Wi-Fi messages (exact text, from web-containment)
 
 | When | Message | Action |

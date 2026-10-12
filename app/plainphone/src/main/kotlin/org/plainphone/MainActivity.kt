@@ -110,7 +110,8 @@ class MainActivity : ComponentActivity() {
         sound = SoundUiState(
             ringVolume.state.reading?.let { VolumeUiState(it.level, maxOf(1, it.min), it.max) },
             mediaVolume.state.reading?.let { VolumeUiState(it.level, it.min, it.max) },
-            ringVolume.state.failed || mediaVolume.state.failed)
+            ringFailed = ringVolume.state.failed, mediaFailed = mediaVolume.state.failed,
+            ringAdjustable = ringVolume.state.reading?.adjustable ?: true)
     }
     private fun onSound(event: SoundEvent) {
         fun controller(stream: SoundStream) = if (stream == SoundStream.Ring) ringVolume else mediaVolume
@@ -185,13 +186,25 @@ class MainActivity : ComponentActivity() {
             }
             LaunchedEffect(basicSettingsVisible, shell.state.current) {
                 if (basicSettingsVisible && shell.state.current == ShellRoute.Sound) {
-                    ringVolume.refresh()
-                    mediaVolume.refresh()
+                    ringVolume.onOpen()
+                    mediaVolume.onOpen()
                     syncSound()
+                    // No public per-stream volume callback. Poll only the visible, resumed page.
+                    while (true) {
+                        delay(1_000)
+                        ringVolume.refresh()
+                        mediaVolume.refresh()
+                        syncSound()
+                    }
                 }
                 if (basicSettingsVisible && shell.state.current == ShellRoute.Brightness) {
                     brightnessController.refresh()
                     syncBrightness()
+                    while (true) {
+                        delay(1_000)
+                        brightnessController.refresh()
+                        syncBrightness()
+                    }
                 }
             }
             SideEffect {

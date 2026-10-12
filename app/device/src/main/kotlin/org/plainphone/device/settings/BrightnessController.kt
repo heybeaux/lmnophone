@@ -21,7 +21,9 @@ class BrightnessController(private val port: BrightnessPort) {
         state = read()?.let { BrightnessState(percent(it.raw), it.automatic, state.failed) }
             ?: BrightnessState(null, failed = true)
     }
-    fun adjust(delta: Int) { setPercent((state.percent ?: return).plus(delta)) }
+    fun adjust(delta: Int) = change { before ->
+        if (before.automatic) before else before.copy(raw = raw(percent(before.raw) + delta))
+    }
     fun setPercent(percent: Int) = change { before ->
         if (before.automatic) before else before.copy(raw = raw(percent))
     }

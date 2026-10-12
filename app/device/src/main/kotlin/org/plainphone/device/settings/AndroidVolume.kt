@@ -12,7 +12,8 @@ class AndroidVolume(context: Context, private val stream: Int) : VolumePort {
     private val audio = context.applicationContext.getSystemService(AudioManager::class.java)
     init { require(stream == AudioManager.STREAM_RING || stream == AudioManager.STREAM_MUSIC) }
     override fun read() = VolumeReading(audio.getStreamVolume(stream),
-        audio.getStreamMinVolume(stream), audio.getStreamMaxVolume(stream))
+        audio.getStreamMinVolume(stream), audio.getStreamMaxVolume(stream),
+        adjustable = stream != AudioManager.STREAM_RING || audio.ringerMode == AudioManager.RINGER_MODE_NORMAL)
     override fun write(level: Int) {
         // Do not turn a pre-existing silent/vibrate mode off as a side effect of this page.
         if (stream == AudioManager.STREAM_RING) {

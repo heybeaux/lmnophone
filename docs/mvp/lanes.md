@@ -261,3 +261,9 @@ reads stream level/min/max and writes a requested level. Ring floor is 1,
 media floor 0; failure attempts restoration and reports the final readback.
 `BatteryUiState.status` distinguishes Charging, Charged and NotCharging.
 No policy-engine, emergency, count or About seam changes.
+
+Build 22 settings seams ([PLA-404](/PLA/issues/PLA-404)): `VolumeReading.adjustable`
+is false for ring in silent/vibrate; `VolumeController.onOpen()` clears old failures
+and reads fresh state. `SoundUiState` carries `ringFailed`, `mediaFailed` and
+`ringAdjustable` separately. The host refreshes only while the page is resumed
+and visible; UI only presents supplied state.

@@ -18,4 +18,11 @@
     <string name="volume_value">%1$d</string>
     <string name="volume_failed">Volume couldn\'t be changed.</string>
     <string name="battery_charged">Charged</string>
+    <string name="sound_lower_ring">Lower ring volume</string>
+    <string name="sound_raise_ring">Raise ring volume</string>
+    <string name="sound_lower_media">Lower media volume</string>
+    <string name="sound_raise_media">Raise media volume</string>
+    <string name="brightness_lower">Lower brightness</string>
+    <string name="brightness_raise">Raise brightness</string>
+    <string name="sound_silent">Ring volume can\'t be changed while the phone is on silent or vibrate.</string>
 </resources>
