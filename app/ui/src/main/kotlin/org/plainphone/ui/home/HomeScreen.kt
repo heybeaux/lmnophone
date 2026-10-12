@@ -160,10 +160,12 @@ private fun HomeTop(state: HomeUiState, noticeLines: Int, inlineClock: Boolean,
 @Composable
 private fun HomeBottom(state: HomeUiState, exposeTags: Boolean = true, onEvent: (HomeEvent) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = PlainphoneSpace.S3)) {
-        CommunicationRow(stringResource(R.string.home_messages), state.unreadTexts,
-            R.plurals.home_unread_texts, if (exposeTags) "home-messages" else null) { onEvent(HomeEvent.OpenMessages) }
-        CommunicationRow(stringResource(R.string.home_phone), state.missedCalls,
-            R.plurals.home_missed_calls, if (exposeTags) "home-phone" else null) { onEvent(HomeEvent.OpenPhone) }
+        Column(verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S3)) {
+            CommunicationRow(stringResource(R.string.home_messages), state.unreadTexts,
+                R.plurals.home_unread_texts, if (exposeTags) "home-messages" else null) { onEvent(HomeEvent.OpenMessages) }
+            CommunicationRow(stringResource(R.string.home_phone), state.missedCalls,
+                R.plurals.home_missed_calls, if (exposeTags) "home-phone" else null) { onEvent(HomeEvent.OpenPhone) }
+        }
         val shape = RoundedCornerShape(percent = 50)
         Box(Modifier.padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S2)
             .fillMaxWidth()
@@ -181,10 +183,7 @@ private fun HomeBottom(state: HomeUiState, exposeTags: Boolean = true, onEvent: 
 private fun CommunicationRow(name: String, count: Int?, spokenPlural: Int, tag: String?, onClick: () -> Unit) {
     val positive = count?.takeIf { it > 0 }
     val spoken = positive?.let { pluralStringResource(spokenPlural, it, it) }
-    Box(Modifier.fillMaxWidth().then(if (tag == null) Modifier else Modifier.testTag(tag))
-        .plainphoneAction(onClick = onClick).heightIn(min = 56.dp)
-        .padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S1),
-        contentAlignment = Alignment.CenterStart) {
+    HomeRow(if (tag == null) Modifier else Modifier.testTag(tag), onClick) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4),
             modifier = if (spoken == null) Modifier else Modifier.clearAndSetSemantics {
                 contentDescription = spoken
@@ -201,11 +200,15 @@ private fun CommunicationRow(name: String, count: Int?, spokenPlural: Int, tag: 
 
 @Composable
 private fun HomeAppRow(name: String, onClick: () -> Unit) {
-    Box(Modifier.fillMaxWidth().plainphoneAction(onClick = onClick)
+    HomeRow(onClick = onClick) { Text(name, style = PlainphoneType.App) }
+}
+
+/** All app actions, including Messages and Phone, use the same target and padding. */
+@Composable
+private fun HomeRow(modifier: Modifier = Modifier, onClick: () -> Unit, content: @Composable () -> Unit) {
+    Box(modifier.fillMaxWidth().plainphoneAction(onClick = onClick)
         .heightIn(min = 56.dp).padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S1),
-        contentAlignment = Alignment.CenterStart) {
-        Text(name, style = PlainphoneType.App)
-    }
+        contentAlignment = Alignment.CenterStart) { content() }
 }
 
 @Composable

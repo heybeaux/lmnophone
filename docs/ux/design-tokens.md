@@ -160,8 +160,8 @@ where a thumb reaches. There is no Emergency button and nothing filled: the scre
 └──────────────────────────────┘
 ```
 
-- **App names:** `app` style, left-aligned, 24 dp from the edge, rows 56 dp minimum with `s3` between. The whole
-  row is the touch target, edge to edge. No icon, no divider, no badge.
+- **App names:** `app` style, left-aligned, 24 dp from the edge, rows 56 dp minimum with `s3` between,
+  including Messages and Phone. The whole row is the touch target, edge to edge. No icon, no divider, no badge.
 - **Order:** the other apps in the order the trusted person set (or the user, in self-managed mode). Then
   **Messages**, then **Phone**, always last and always visible. This follows the reference image, which ends the list
   with Messages and Phone, and it puts the two everyday apps nearest the thumb.
@@ -215,10 +215,10 @@ render using the 200% sizes above, so illustrative):
 |---|---|
 | Top 24 + time 75 + date 36 + gap 24 | 159 |
 | Notice, 3 lines | 143 |
-| Messages 56 + Phone 56 + gap 8 + More 64 (one line, step 1) + bottom 8 | 192 |
-| **Total without the other apps** | **494** |
+| Messages 56 + gap 12 + Phone 56 + gap 8 + More 64 (one line, step 1) + bottom 8 | 204 |
+| **Total without the other apps** | **506** |
 
-With a 32 dp status bar and a 24 dp gesture bar the content is 584 dp. That leaves 90 dp for the other apps, or 66 dp
+With a 32 dp status bar and a 24 dp gesture bar the content is 584 dp. That leaves 78 dp for the other apps, or 54 dp
 with a 48 dp three-button bar.
 
 **The build measured more than this.** In the `:ui` goldens (PLA-47, commit `f87ff6e`), real Lexend line heights run
@@ -245,8 +245,8 @@ list them:
 
 **The "Emergency 9-1-1" row in More**
 - The **first row** of More, in the normal menu-row look: "Emergency 9-1-1" in `row`, second line "Opens the dialer
-  with 9-1-1 typed in" in `small`, `›` in `ink-3`. A 16 dp gap below it sets it apart from the other rows. No fill,
-  no colour: it's found by its words and by being first.
+  with 9-1-1 typed in" in `small`, `›` in `ink-3`. It uses the same spacing as every other menu row. Keep the `s8`
+  section gap before About this phone. No fill, no colour: it's found by its words and by being first.
 - "9-1-1" never breaks across lines (non-breaking hyphens, U+2011, or one unbreakable span).
 - One tap opens Android's dialer with 9-1-1 typed in (`ACTION_DIAL` for `tel:911`, sent to the system dialer
   package). It never calls by itself: the person still presses the dialer's call button. So reaching a call takes
