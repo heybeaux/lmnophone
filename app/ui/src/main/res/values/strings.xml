@@ -19,6 +19,8 @@
     <string name="notice_monthly_self">Time for your monthly phone check</string>
     <string name="notice_in_progress">Already in progress</string>
     <string name="notice_cancelling">Cancelling…</string>
+    <!-- docs/ux/flows-limits-and-off.md L2d (device-lockdown, system updates). -->
+    <string name="notice_system_update">Phone software update waiting – the LMNOPhone team will review it</string>
     <string name="names_or">%1$s or %2$s</string>
     <string name="names_and">%1$s and %2$s</string>
     <string name="notice_time_tomorrow">%1$s tomorrow</string>

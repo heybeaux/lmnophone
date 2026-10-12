@@ -113,6 +113,7 @@
             <intent-filter>
                 <action android:name="org.plainphone.preview.SET_STARTER" />
                 <action android:name="org.plainphone.preview.APPLY" />
+                <action android:name="org.plainphone.preview.RELEASE_UPDATE_POLICY" />
             </intent-filter>
         </receiver>
 

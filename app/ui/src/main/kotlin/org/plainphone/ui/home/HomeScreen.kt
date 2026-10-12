@@ -224,6 +224,7 @@ private fun noticeText(notice: HomeNotice): String? = when (notice) {
     HomeNotice.SelfManagedMonthlyCheck -> stringResource(R.string.notice_monthly_self)
     HomeNotice.AlreadyInProgress -> stringResource(R.string.notice_in_progress)
     HomeNotice.Cancelling -> stringResource(R.string.notice_cancelling)
+    HomeNotice.SoftwareUpdateWaiting -> stringResource(R.string.notice_system_update)
 }
 
 @Preview(name = "Home 100%", widthDp = 360, heightDp = 640, fontScale = 1f)

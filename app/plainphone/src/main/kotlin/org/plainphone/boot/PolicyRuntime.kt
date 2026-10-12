@@ -2,6 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.boot
 
+import org.plainphone.update.PendingSystemUpdate
+import org.plainphone.update.PostponeStatus
+import org.plainphone.update.SystemUpdatePostpone
+import org.plainphone.update.buildKey
+import org.plainphone.update.withUpdateLine
 import android.Manifest
 import android.app.ActivityManager
 import android.app.admin.DevicePolicyManager
@@ -224,6 +229,10 @@ class PolicyRuntime private constructor(private val context: Context) {
     @Volatile private var lastGate = HomeGate.CHECKING
     @Volatile private var checkingHeld = false
     private val noticeState = MutableStateFlow<HomeNotice?>(null)
+    /** The last pass's line before the pending-update line, which is not attention (PLA-447). */
+    @Volatile private var baseNotice: HomeNotice? = null
+    private val updatePostpone = SystemUpdatePostpone.forDevice(context)
+    private val pendingUpdate = PendingSystemUpdate(File(protectedDir, "system-update-pending"), buildKey(Build.FINGERPRINT))
     private val packageEvents = PackageEventBurst(dispatcher::post, { reasons, maySkip ->
         run(reasons.singleOrNull() ?: "package-burst", maySkip, reasons)
     }) { packageReadback.hasSnapshot }
@@ -319,6 +328,22 @@ class PolicyRuntime private constructor(private val context: Context) {
     fun onPackageEvent(reason: String) = packageEvents.add(reason)
 
     /**
+     * `onSystemUpdatePending` (device-lockdown): records the time Android reports (-1 clears it) and
+     * updates Home's line now, without a re-apply pass. Logs no build details.
+     */
+    /** The setup command's undo of the postpone policy ([SystemUpdatePostpone.release]), on the pass thread. */
+    fun releaseUpdatePolicy(done: (PostponeStatus) -> Unit) = dispatcher.post { done(updatePostpone.release()) }
+
+    fun onSystemUpdatePending(receivedTime: Long) = dispatcher.post {
+        val pending = try { pendingUpdate.onPending(receivedTime) } catch (e: RuntimeException) {
+            Log.e(TAG, "system update pending record failed: ${e.javaClass.simpleName}")
+            false
+        }
+        Log.i(SystemUpdatePostpone.TAG, "system update pending=$pending")
+        noticeState.value = withUpdateLine(baseNotice, pending)
+    }
+
+    /**
      * Test builds only (debug `TestHook` HOLD; release never calls it): keeps the checking screen up so
      * the emergency gate can test its Phone, then restores the last re-apply's gate.
      */
@@ -379,6 +404,7 @@ class PolicyRuntime private constructor(private val context: Context) {
             if (!checkingHeld) gateState.value = lastGate
             return
         }
+        updatePostpone.apply()
         val locked = !users.isUserUnlocked
         timings.reset()
         val started = SystemClock.elapsedRealtime()
@@ -507,11 +533,13 @@ class PolicyRuntime private constructor(private val context: Context) {
             waitingReadState.value = WaitingRead(wait, readAt)
             waitingNoticeState.value = wait
             noticeTapState.value = line?.tap
-            noticeState.value = homeLine(line, readAt, DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
+            val base = homeLine(line, readAt, DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
                 ?: if (waiting.previewTurnOffClosed()) HomeNotice.PreviewTurnOffClosed else null
+            baseNotice = base
+            noticeState.value = withUpdateLine(base, try { pendingUpdate.pending() } catch (_: RuntimeException) { false })
             lastGate = if (outcome?.ready == true && !pinned && !contained) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
-            refreshState.value = HomeRefresh(noticeState.value,
+            refreshState.value = HomeRefresh(base,
                 if (lastGate == HomeGate.READY && refreshHome) refreshState.value.revision + 1 else refreshState.value.revision)
             when (action) {
                 RecoveryAction.HOME_FORWARD ->
