@@ -144,6 +144,14 @@ The packet now says when it appears.
 
 ## U3. "LMNOPhone needs attention" (from the notice line)
 
+**Bounded presentation for PLA-377 / PLA-92 wiring:** the approved task uses
+the title **LMNOPhone needs attention**, L3's sentence **Calls, texts and
+Emergency still work.**, and **OK**. Pending changes use the exact Home notice
+strings above in a grey box, with **Cancel this change** pinned above OK so it
+stays reachable at 200% on 360×640 dp. Cancel opens U9b without a PIN. Committing
+uses **Already in progress** and U9e's body (the turn-off variant when applicable),
+with no Cancel. The cause/helper detail presentation below remains later wiring.
+
 **Spec:** calm-home-screen notice; device-lockdown (baseline, unknown build); approved-apps (hide failed).
 
 - **Title:** Something needs checking

@@ -16,6 +16,9 @@ import android.os.UserManager
 import android.telecom.TelecomManager
 import android.util.Log
 import java.io.File
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.plainphone.MainActivity
@@ -26,15 +29,35 @@ import org.plainphone.device.facts.PackageChangeFacts
 import org.plainphone.policy.SessionJournal
 import org.plainphone.device.DpmPort
 import org.plainphone.device.KeyguardFirst
+import org.plainphone.device.DpmResetProtectionPort
+import org.plainphone.device.ReadbackPolicyApplier
+import org.plainphone.device.ResetProtectionEffects
 import org.plainphone.device.SerialDispatcher
 import org.plainphone.device.ReapplyTimings
+import org.plainphone.device.authority.AuthorityPass
+import org.plainphone.device.authority.DeviceReconciliationEffects
+import org.plainphone.device.authority.DpmDeviceOwnerReader
+import org.plainphone.device.authority.JointAuthorityStore
+import org.plainphone.device.authority.WaitingCheckpoints
+import org.plainphone.device.authority.waitingReconciler
 import org.plainphone.device.boot.BootOutcome
 import org.plainphone.device.boot.BootReapply
 import org.plainphone.device.facts.AndroidPackageSystemPort
 import org.plainphone.device.facts.osFloor
+import org.plainphone.device.runtime.AndroidRuntimeFacts
+import org.plainphone.device.runtime.FileClockStateStore
 import org.plainphone.device.storage.FileFlipFailureStore
 import org.plainphone.device.storage.FileJournalStore
 import org.plainphone.preview.Preview2Device
+import org.plainphone.policy.PersonAuthorityConsumer
+import org.plainphone.core.Mode
+import org.plainphone.policy.NoticeInput
+import org.plainphone.policy.NoticeLine
+import org.plainphone.policy.NoticeTap
+import org.plainphone.policy.ProvenRunningClock
+import org.plainphone.policy.ReconcileOutcome
+import org.plainphone.policy.WaitingNotice
+import org.plainphone.policy.WaitingOutcome
 import org.plainphone.ui.home.HomeNotice
 
 /** What Home may show. Only [READY] lets Home draw; the others show the neutral checking screen. */
@@ -49,6 +72,15 @@ enum class HomeGate { CHECKING, READY, NOT_READY }
  * user unlock, the 15-minute alarm and, from the wiring slice, [afterTrustedPersonAction]. Each run re-reads the
  * live phone. Unchanged system-package events may use targeted readback after a verified
  * full unlocked pass; all errors fall back to the full pass.
+ *
+ * Every run first checkpoints a pending wait ([waiting]): the proven clock, a recorded cancel or changed
+ * dependency, and maturity to COMMITTING. The preview never executes a turn-off. While a wait is pending the
+ * checkpoint alarm runs every 5 minutes. [cancelWait] is the phone's PIN-free cancel.
+ *
+ * Every run also reads the current waiting operation fresh from the one authority store ([authority])
+ * and, once unlocked, attempts reconciliation. Without a full enrolled profile/policy, a lost record
+ * remains held with attention; it never replaces the preview plan. Nothing writes that
+ * store until trusted people are set up, so on a phone without them both read nothing and change nothing.
  */
 class PolicyRuntime private constructor(private val context: Context) {
     private val dispatcher = SerialDispatcher()
@@ -70,17 +102,55 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val packageReadback = PackageChangeReadback(port, packageFacts::protected, packageFacts::launchable) {
         !journal.revocationPending() && journal.read() == SessionJournal.Empty
     }
+    /** One build/SDK restriction filter for every policy write: the boot re-apply and reconciliation (PLA-350 R1). */
+    private val restrictionFilter = BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT)
+    /** Credentials, the waiting operation and its reconciliation, in device-protected storage. */
+    private val authorityStore = JointAuthorityStore(File(protectedDir, "authority"))
+    private val authority: AuthorityPass by lazy {
+        AuthorityPass(authorityStore, authorityStore.waitingReconciler(
+            // The preview has no full-engine policy/profile enrollment. A lost record
+            // stays held with attention; never replace the starter-list plan or touch FRP.
+            { null },
+            DeviceReconciliationEffects(
+                // The common startup revocation: the session journal's revoke and protected-state check.
+                revoke = { boot.sessions.onStart() },
+                owner = DpmDeviceOwnerReader(context),
+                applier = ReadbackPolicyApplier(port),
+                reset = ResetProtectionEffects(DpmResetProtectionPort(context, admin)),
+                store = authorityStore,
+                filter = restrictionFilter,
+            ),
+            // PIN Repair is not wired yet, so no grant is ever accepted. Automatic reconciliation needs none.
+            PersonAuthorityConsumer { _, _, _ -> false },
+        ))
+    }
+    /**
+     * The pending wait's checkpoints and PIN-free cancel: one per process, on the same store, with the
+     * proven clock in device-protected storage. No grant is accepted; nothing here starts or skips a wait.
+     */
+    private val waiting: WaitingCheckpoints by lazy {
+        val facts = AndroidRuntimeFacts(context)
+        WaitingCheckpoints(
+            authorityStore,
+            ProvenRunningClock(FileClockStateStore(File(protectedDir, "clock")), facts::bootTime, authorityStore::reserveEpoch),
+            facts::battery,
+            PersonAuthorityConsumer { _, _, _ -> false },
+        )
+    }
     private val boot = BootReapply(
         journal,
         port, SESSION_PACKAGES,
-        { locked -> preview.plan(locked, timings) },
-        BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT),
+        { locked ->
+            // Read authority afresh at the decision boundary. Unsupported forward restore
+            // cannot authorize replacing the preview plan or removing its owner.
+            check(!authority.turnOffCommitting()) { "turn-off execution unavailable in preview" }
+            preview.plan(locked, timings)
+        },
+        restrictionFilter,
         { stage, error -> Log.w(TAG, "stage $stage failed: ${error ?: "readback mismatch"}", error) },
         floor = { osFloor(packagesPort) },
         home = PackageName(context.packageName),
-        // No waiting-change store is wired yet, so no turn-off can be committing. The wiring slice
-        // that adds turn-off passes its committing read here.
-        turnOffCommitting = { false },
+        turnOffCommitting = { authority.turnOffCommitting() },
         flipFailures = FileFlipFailureStore(File(protectedDir, "flip-failures")),
         timings = timings,
     )
@@ -91,6 +161,9 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val packageEvents = PackageEventBurst(dispatcher::post, { reasons, maySkip ->
         run(reasons.singleOrNull() ?: "package-burst", maySkip, reasons)
     }) { packageReadback.hasSnapshot }
+    private val noticeTapState = MutableStateFlow<NoticeTap?>(null)
+    private val waitingNoticeState = MutableStateFlow<WaitingNotice?>(null)
+    private val waitingReadState = MutableStateFlow<WaitingRead?>(null)
     private val runsState = MutableStateFlow(0)
     private val refreshState = MutableStateFlow(HomeRefresh(null, 0))
     val refresh: StateFlow<HomeRefresh> = refreshState
@@ -115,6 +188,12 @@ class PolicyRuntime private constructor(private val context: Context) {
     val gate: StateFlow<HomeGate> = gateState
     /** The Home notice from the last unlocked re-apply ([homeNotice]). */
     val notice: StateFlow<HomeNotice?> = noticeState
+    /** What tapping [notice] does (policy `NoticeLine`); controllers re-check before any effect. */
+    val noticeTap: StateFlow<NoticeTap?> = noticeTapState
+    /** The current waiting operation as the last unlocked re-apply read it; null with none. */
+    val waitingNotice: StateFlow<WaitingNotice?> = waitingNoticeState
+    /** The same read with the time it was made: screens time the change from it, as Home's line does. */
+    val waitingRead: StateFlow<WaitingRead?> = waitingReadState
     /** Counts handled re-apply triggers, covered boot triggers included: Home retries lock-task entry after each. */
     val runs: StateFlow<Int> = runsState
 
@@ -179,6 +258,22 @@ class PolicyRuntime private constructor(private val context: Context) {
     /** Hook for the wiring slice: run after every trusted-person action commits. */
     fun afterTrustedPersonAction() = reapply("trusted-person")
 
+    /** The phone's own cancel of the pending wait it shows; no PIN. The pass that follows reads the result. */
+    fun cancelWait(requestId: String, done: (WaitingOutcome?) -> Unit = {}) = dispatcher.post {
+        val result = try {
+            waiting.cancel(requestId)
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "waiting cancel threw", e)
+            null
+        }
+        Log.i(TAG, "waiting cancel: $result")
+        try {
+            run("waiting-cancel")
+        } finally {
+            done(result)
+        }
+    }
+
     private fun run(reason: String, packageMaySkip: Boolean = true, packageReasons: List<String> = listOf(reason)) {
         val loggedReason = reason + if (reason == "package-burst") " groupedReasons=$packageReasons" else ""
         if (!dpm.isDeviceOwnerApp(context.packageName)) {
@@ -192,12 +287,28 @@ class PolicyRuntime private constructor(private val context: Context) {
         val locked = !users.isUserUnlocked
         timings.reset()
         val started = SystemClock.elapsedRealtime()
+        // Checkpoint before deciding whether any earlier package/boot pass can be reused.
+        var waitingUncertain = false
+        val waited = try { waiting.checkpoint() } catch (e: RuntimeException) {
+            waitingUncertain = true
+            Log.e(TAG, "waiting checkpoint threw", e)
+            null
+        }
+        val activeWait = try {
+            authority.needsAttention() || authority.waitingOperation()?.phase in setOf(
+                org.plainphone.policy.WaitingPhase.PENDING,
+                org.plainphone.policy.WaitingPhase.COMMITTING,
+                org.plainphone.policy.WaitingPhase.ROLLING_BACK)
+        } catch (_: RuntimeException) { true }
+        if (waited != null) try {
+            ReapplyAlarm.schedule(context, waiting.periodMillis(ReapplyAlarm.PERIOD_MILLIS))
+        } catch (e: RuntimeException) { Log.e(TAG, "checkpoint alarm threw", e) }
         var passId = 0L
         var bootMillis = 0L
         var wasSkipped = false
         bootCoverage.run(reason, locked,
             // Negative-control builds deliberately break readback state after a pass: never reuse it.
-            retryPending = { boot.retryPending || BuildControl.control !== NegativeControl.None },
+            retryPending = { boot.retryPending || waited != null || activeWait || waitingUncertain || BuildControl.control !== NegativeControl.None },
             apply = { id ->
                 passId = id
                 packageReadback.invalidate()
@@ -249,13 +360,47 @@ class PolicyRuntime private constructor(private val context: Context) {
     }
 
     private fun publishPass(reason: String, locked: Boolean, outcome: BootOutcome?, refreshHome: Boolean = true) {
+        // Attempt only after unlock. Preview recovery has no full-policy input: loss stays held.
+        val reconciled = if (locked) null else try {
+            authority.reconcileIfLost()?.also { Log.i(TAG, "lost waiting record: outcome=${it.outcome} failure=${it.failure}") }
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "lost-record reconciliation threw", e)
+            null
+        }
+        // Set up but unreadable needs attention even when no reconciliation can start (PLA-350 R2).
+        val authorityAttention = !locked && try {
+            authority.needsAttention()
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "authority attention check threw", e)
+            true
+        }
         runsState.value++
         // A locked run never opens Home: the full plan has not run yet.
         if (!locked) {
             val action = recovery.afterPass(locked, outcome?.ready == true)
             // PINNED is not containment (PLA-322 finding 3): not ready, and needs attention.
             val pinned = action == RecoveryAction.PINNED_ATTENTION
-            noticeState.value = if (pinned) HomeNotice.NeedsAttention else homeNotice(outcome)
+            // Only the notice: Home and calling stay available either way.
+            val held = reconciled?.outcome == ReconcileOutcome.NEEDS_ATTENTION || authorityAttention
+            val attention = pinned || held || homeNotice(outcome) != null
+            // One line, in the spec's order (policy NoticeLine): attention, then the pending change (wiring 3).
+            val wait = try {
+                waiting.notice()
+            } catch (e: RuntimeException) {
+                Log.e(TAG, "waiting notice threw", e)
+                null
+            }
+            val mode = if (wait == null) Mode.TRUSTED else try {
+                authorityStore.credentials.read()?.mode
+            } catch (_: RuntimeException) {
+                null
+            } ?: Mode.TRUSTED
+            val line = NoticeLine.decide(NoticeInput(mode, attention, wait)).line
+            val readAt = ZonedDateTime.now()
+            waitingReadState.value = WaitingRead(wait, readAt)
+            waitingNoticeState.value = wait
+            noticeTapState.value = line?.tap
+            noticeState.value = homeLine(line, readAt, DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
             lastGate = if (outcome?.ready == true && !pinned) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
             refreshState.value = HomeRefresh(noticeState.value,

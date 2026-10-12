@@ -115,7 +115,8 @@ class UpdateUseStoreTest {
         assertArrayEquals(AuthorityCodec.encodeElevation(usedUp), reopened.sectionBytesForTest(Section.ELEVATION))
         val outbox = reopened.updateReceipts()!!.single()
         assertEquals("grant-1", outbox.receipt.id)
-        assertEquals(mapOf(alice to "synthetic-number-a", bob to "synthetic-number-b"), outbox.recipientContacts.mapValues { it.value?.number })
+        assertEquals(mapOf(alice to ("synthetic-alice" to "synthetic-number-a"), bob to ("synthetic-bob" to "synthetic-number-b")),
+            outbox.recipientContacts.mapValues { it.value?.let { c -> c.name to c.number } })
         assertEquals(emptySet<TrustedPersonId>(), outbox.acknowledged)
     }
 
@@ -298,10 +299,10 @@ class UpdateUseStoreTest {
         // Bob's contact changes after the submission; delivery still uses the frozen one.
         val now = store.credentials.read()!!
         assertTrue(store.credentials.compareAndSet(now, credentials(1, PersonContact("synthetic-bob-2", "synthetic-number-c"))))
-        val sent = mutableListOf<Pair<String, String>>()
+        val sent = mutableListOf<Triple<String, String, String>>()
         var failBob = true
         val sender = UpdateNoticeSender { dedup, _, contact, _ ->
-            sent += dedup to contact.number
+            sent += Triple(dedup, contact.name, contact.number)
             !(contact.number == "synthetic-number-b" && failBob)
         }
         assertFalse(UpdateReceiptDelivery(open(), sender).deliverPending())
@@ -309,8 +310,10 @@ class UpdateUseStoreTest {
         failBob = false
         assertTrue(UpdateReceiptDelivery(open(), sender).deliverPending())
         assertEquals(emptyList<StoredUpdateReceipt>(), open().updateReceipts())
-        assertEquals(listOf("grant-1:alice" to "synthetic-number-a", "grant-1:bob" to "synthetic-number-b",
-            "grant-1:bob" to "synthetic-number-b"), sent)
+        // Frozen (name, number) pairs: Bob's later "synthetic-bob-2" contact is never used.
+        assertEquals(listOf(Triple("grant-1:alice", "synthetic-alice", "synthetic-number-a"),
+            Triple("grant-1:bob", "synthetic-bob", "synthetic-number-b"),
+            Triple("grant-1:bob", "synthetic-bob", "synthetic-number-b")), sent)
         // Nothing left to send; the submission record keeps its receipt.
         assertTrue(UpdateReceiptDelivery(open(), sender).deliverPending())
         assertEquals(3, sent.size)
@@ -424,6 +427,27 @@ class UpdateUseStoreTest {
             sections.forEachIndexed { i, bytes -> assertArrayEquals("$point $i", bytes, store.sectionBytesForTest(Section.entries[i])) }
         }
     }
+
+    @Test fun noStorageReadOrRepairAfterTheFinalCheck() {
+        // R2 (PLA-207): every load, decode and repair happens before finalCheck. Copies made
+        // unreadable during the check are therefore never read; only the durable write follows.
+        val store = initialized()
+        val copies = dir.listFiles()!!.filter { it.name.startsWith("authority-a") || it.name.startsWith("authority-b") }
+        assertTrue(copies.isNotEmpty())
+        assertTrue(commitSelf(store) {
+            copies.forEach { it.writeBytes(byteArrayOf(9, 9, 9)) }
+            true
+        })
+        assertEquals(UpdatePhase.SUBMITTED, open().update.readUpdate()!!.submission!!.phase)
+        assertArrayEquals(AuthorityCodec.encodeElevation(usedUp), open().sectionBytesForTest(Section.ELEVATION))
+    }
+
+    @Test fun aFailedFinalCheckWritesNothing() {
+        val store = initialized()
+        val before = allSections(store)
+        assertFalse(commitSelf(store) { false })
+        assertEquals(before, allSections(open()))
+    }
 }
 
 /** Raw UPDATE-section bytes, for receipts the policy's own constructor would refuse. */
@@ -440,4 +464,5 @@ internal object UpdateCodecFixtures {
         }
         return out.toByteArray()
     }
+
 }

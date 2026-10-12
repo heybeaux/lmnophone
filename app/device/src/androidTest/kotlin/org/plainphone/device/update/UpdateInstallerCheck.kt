@@ -56,7 +56,7 @@ class UpdateInstallerCheck(private val ctx: Context, private val args: Bundle?, 
         }
     }
     private fun staging(name: String) = UpdateStaging(File(ctx.noBackupFilesDir, name))
-    private fun installer(staging: UpdateStaging) = StagedUpdateInstaller(port, ArchiveApkInspector(ctx), staging, pinned) { true }
+    private fun installer(staging: UpdateStaging) = StagedUpdateInstaller(port, ArchiveApkInspector(ctx), staging, CommitMemory(File(ctx.noBackupFilesDir, "update-commits")), pinned) { true }
 
     fun update() {
         ctx.registerReceiver(receiver, IntentFilter(action), Context.RECEIVER_NOT_EXPORTED)

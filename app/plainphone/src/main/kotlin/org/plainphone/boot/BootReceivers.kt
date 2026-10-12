@@ -62,6 +62,10 @@ object UserUnlockEvents {
  * and SCHEDULE_EXACT_ALARM (API 30–32) cover it; if exact alarms are refused anyway it falls back to
  * `setAndAllowWhileIdle`, which Android may delay. In Doze, allow-while-idle alarms are rate-limited
  * (about one per 9 minutes per app), which a 15-minute period stays under.
+ *
+ * While a wait is pending, [PolicyRuntime] re-arms it at 5 minutes, the clock's checkpoint period. In Doze
+ * that may stretch to about 9 minutes. Same-boot time is still credited in full; only time between the
+ * last checkpoint and a reboot is lost, so a wait can run longer, never shorter.
  */
 class ReapplyAlarm : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -73,13 +77,14 @@ class ReapplyAlarm : BroadcastReceiver() {
     companion object {
         const val PERIOD_MILLIS = 15 * 60 * 1000L
 
-        fun schedule(context: Context) {
+        /** Re-arms the one alarm [periodMillis] from now, replacing any earlier one. */
+        fun schedule(context: Context, periodMillis: Long = PERIOD_MILLIS) {
             val alarms = context.getSystemService(AlarmManager::class.java)
             val operation = PendingIntent.getBroadcast(
                 context, 0, Intent(context, ReapplyAlarm::class.java),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
-            val at = SystemClock.elapsedRealtime() + PERIOD_MILLIS
+            val at = SystemClock.elapsedRealtime() + periodMillis
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarms.canScheduleExactAlarms()) {
                 alarms.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, at, operation)
             } else {

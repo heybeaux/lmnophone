@@ -47,6 +47,23 @@ PLA-289).
 
 ## Verification
 
+`home.NeedsAttentionScreen` is the stateless presentation for a Home attention
+notice hiding a pending change (PLA-377, for PLA-92 wiring). Supply
+`NeedsAttentionUiState(PendingChange(kind, committing))`, or null pending.
+`PendingChangeKind` is `TurnOff(time, HomeNoticeDay)`, `People`, or `Setup`.
+Time and day are required together for turn-off; UI never reads the clock.
+`CancelChange` requests the existing PIN-free `WaitingStage.ConfirmCancel` route
+(`WaitingChangeUiState.context = null`); it does not cancel anything itself.
+The host must recheck current change state and identity when handling the event.
+`Back` returns home. The screen exposes no phone, emergency, PIN or Stop action.
+Wrap it in `PlainphoneTheme` and supply the same system-bar-safe bounds as Home.
+
+`NeedsAttentionScreenshotTest` covers seven fixtures at 1.0, 1.3, 1.5, 1.8 and
+2.0 on 360×640 dp with 80 dp reserved for system bars. The emulator test checks
+fully visible Cancel/OK actions without scrolling, their events, and removal of
+Cancel after a host transition to committing. Long progress text scrolls while
+OK remains pinned. This is UI evidence, not integrated cancellation evidence.
+
 From `app/`:
 
 ```sh

@@ -14,6 +14,8 @@ import org.plainphone.ui.user.PhoneSettingsScreen
 import org.plainphone.ui.user.PhoneSettingsUiState
 import org.plainphone.ui.user.PhoneSettingsEvent
 import org.plainphone.counts.CommunicationCounts
+import org.plainphone.ui.home.HomeNotice
+import org.plainphone.ui.home.HomeEvent
 import org.plainphone.ui.home.HomeScreen
 import org.plainphone.ui.theme.PlainphoneColors
 import org.plainphone.ui.theme.PlainphoneTheme
@@ -32,6 +34,8 @@ fun PlainphoneShell(
     mapper: ShellUiMapper,
     navigator: ShellNavigator,
     counts: CommunicationCounts,
+    notice: HomeNotice?,
+    onNotice: () -> Unit,
     settings: PhoneSettingsUiState,
     onSettings: (PhoneSettingsEvent) -> Unit,
     onStep: (Step) -> Unit,
@@ -41,7 +45,9 @@ fun PlainphoneShell(
         // The :ui screens expect the safe content area; the request screen handles the keyboard itself.
         Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).systemBarsPadding().displayCutoutPadding()) {
             when (val route = state.current) {
-                ShellRoute.Home -> HomeScreen(mapper.home(snapshot).copy(missedCalls = counts.missedCalls, unreadTexts = counts.unreadTexts)) { onStep(navigator.onHome(state, it)) }
+                ShellRoute.Home -> HomeScreen(mapper.home(snapshot).copy(notice = notice, missedCalls = counts.missedCalls, unreadTexts = counts.unreadTexts)) {
+                    if (it == HomeEvent.OpenNotice) onNotice() else onStep(navigator.onHome(state, it))
+                }
                 ShellRoute.PhoneSettings -> PhoneSettingsScreen(settings, onSettings)
                 ShellRoute.More -> MoreScreen(mapper.more(snapshot)) { onStep(navigator.onMore(state, it)) }
                 ShellRoute.AskForApp ->

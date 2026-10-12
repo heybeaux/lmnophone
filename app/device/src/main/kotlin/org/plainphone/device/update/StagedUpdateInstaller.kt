@@ -19,19 +19,29 @@ import org.plainphone.policy.UpdateInstaller
  *   through `openRead`. The staged file must still be private and read-only and hash the same before
  *   and after its facts are read; package, exact signer set and version come from that file. Any
  *   failure is null, and a null clears the earlier pass, so [commit] needs a passing final read.
- * - [commit] runs once per session, never again even if it threw. The session ID is remembered first.
- * - [abandonOwnSessions] abandons only sessions that read uncommitted and that this process never
- *   passed to [commit]: abandoning a committed session cancels its install (X6, API 35), and
- *   `isCommitted()` still reads false for about 16 ms after `commit()` returns.
+ * - [commit] runs once per session, never again even if it threw or [commits] refused the marker.
+ *   The session ID is written durably to [commits] first; without that marker there is no commit.
+ * - [abandonOwnSessions] abandons only UNCOMMITTED own sessions: those that read uncommitted and
+ *   that no instance or process ever passed to [commit] (per [commits]). Abandoning a committed
+ *   session cancels its install (X6, API 35), and `isCommitted()` still reads false for about 16 ms
+ *   after `commit()` returns, so the durable marker, not `isCommitted()`, is what keeps it. When the
+ *   markers cannot be read nothing is abandoned. Markers of sessions that are gone are dropped.
+ * - [committedSessionPending] reads `getSessionInfo(id)`: present and committed (or present and
+ *   remembered, during the lag) is pending, absent is gone, anything else or any failure is unknown.
+ *   A present session never reads gone. Residual: a committed session parked in
+ *   `STATUS_PENDING_USER_ACTION` would read pending with no attention signal. As Device Owner the
+ *   self-update finished with `STATUS_SUCCESS` and no user action on API 33 and API 35
+ *   (`spikes/installer-boundary/evidence/update-check-api33.txt`, `-api35.txt`).
  */
 class StagedUpdateInstaller(private val port: InstallerPort, private val inspector: ApkInspector,
-    private val staging: UpdateStaging, private val pinnedSelf: ApprovalBinding,
+    private val staging: UpdateStaging, private val commits: CommitMemory, private val pinnedSelf: ApprovalBinding,
     private val selfCheck: () -> Boolean) : UpdateInstaller {
     private val self = pinnedSelf.packageName
     private var session: Int? = null
     private var finalRead = false
     private var verified: Int? = null
-    private val committed = mutableSetOf<Int>()
+    /** Sessions this object tried to commit, remembered or not: never committed again. */
+    private val attempted = mutableSetOf<Int>()
 
     /** Writes the staged update into a new session; its ID, or null (then no session is left behind). */
     @Synchronized
@@ -61,7 +71,7 @@ class StagedUpdateInstaller(private val port: InstallerPort, private val inspect
     }
 
     private fun read(id: Int): UpdateFinalFacts? {
-        if (id in committed) return null
+        if (id in attempted) return null
         val own = port.ownSessions()?.singleOrNull { it.id == id } ?: return null
         if (own.committed || own.appPackageName != self.value || port.entries(id) != listOf(ENTRY)) return null
         val hash = port.readSha256(id, ENTRY) ?: return null
@@ -78,12 +88,21 @@ class StagedUpdateInstaller(private val port: InstallerPort, private val inspect
 
     @Synchronized
     override fun commit(sessionId: Int) {
-        check(sessionId == session && finalRead && verified == sessionId && sessionId !in committed) {
+        check(sessionId == session && finalRead && verified == sessionId && sessionId !in attempted) {
             "session $sessionId is not this installer's verified, uncommitted session"
         }
-        committed += sessionId
+        attempted += sessionId
         verified = null
+        check(commits.remember(sessionId)) { "session $sessionId could not be remembered before commit" }
         port.commit(sessionId)
+    }
+
+    @Synchronized
+    override fun committedSessionPending(sessionId: Int): Boolean? {
+        val s = try { port.sessionInfo(sessionId) } catch (_: Exception) { return null } ?: return false
+        if (s.id != sessionId || s.appPackageName != self.value) return null
+        if (s.committed) return true
+        return if (commits.ids()?.contains(sessionId) == true) true else null
     }
 
     @Synchronized
@@ -92,14 +111,17 @@ class StagedUpdateInstaller(private val port: InstallerPort, private val inspect
         session = null
         finalRead = false
         verified = null
+        // Markers first: a session another instance creates after this read has no marker yet, and its
+        // marker is written before it is committed, so it can be neither abandoned committed nor pruned.
+        val remembered = commits.ids() ?: return false
         val before = safely { port.ownSessions() } ?: return false
+        fun abandonable(s: OwnSession) = !s.committed && s.id !in remembered
         var ok = true
         for (s in before) if (abandonable(s) && safely { port.abandon(s.id) } != true) ok = false
         val after = safely { port.ownSessions() } ?: return false
-        return ok && after.none(::abandonable) && staging.clear()
+        val pruned = commits.forget(remembered - before.map { it.id }.toSet())
+        return ok && after.none(::abandonable) && pruned && staging.clear()
     }
-
-    private fun abandonable(s: OwnSession) = !s.committed && s.id !in committed
 
     override fun installedVersionCode(): Long? = safely { port.installedVersionCode(self) }
 

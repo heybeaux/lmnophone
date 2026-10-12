@@ -209,9 +209,9 @@ class JointAuthorityStore internal constructor(
 
         override fun commitUpdateUse(expectedElevation: ElevationRecord, replacementElevation: ElevationRecord,
             expectedCredentials: CredentialState, expectedUpdate: UpdateRecord, submission: UpdateSubmission,
-            finalCheck: () -> Boolean): Boolean = commit { s ->
-            if (!usable(expectedElevation, replacementElevation, expectedCredentials, expectedUpdate, submission)) return@commit null
-            val elevationBytes = AuthorityCodec.encodeElevation(replacementElevation) ?: return@commit null
+            finalCheck: () -> Boolean): Boolean = commitChecked(finalCheck) { s ->
+            if (!usable(expectedElevation, replacementElevation, expectedCredentials, expectedUpdate, submission)) return@commitChecked null
+            val elevationBytes = AuthorityCodec.encodeElevation(replacementElevation) ?: return@commitChecked null
             fun current(of: Snapshot): UpdateSection? {
                 val stored = AuthorityCodec.decodeUpdate(of.sections[Section.UPDATE.ordinal]) ?: return null
                 return stored.takeIf {
@@ -220,19 +220,15 @@ class JointAuthorityStore internal constructor(
                         of.matches(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(expectedCredentials))
                 }
             }
-            val stored = current(s) ?: return@commit null
-            if (stored.outbox.any { it.receipt.id == submission.receipt.id }) return@commit null
+            val stored = current(s) ?: return@commitChecked null
+            if (stored.outbox.any { it.receipt.id == submission.receipt.id }) return@commitChecked null
             val contacts = submission.receipt.recipientGenerations.keys.associateWith { expectedCredentials.people.getValue(it).contact }
             val next = try {
                 UpdateSection(UpdateRecord(expectedUpdate.revision + 1, submission), stored.outbox + StoredUpdateReceipt(submission.receipt, contacts))
             } catch (_: IllegalArgumentException) {
-                return@commit null
+                return@commitChecked null
             }
-            val updateBytes = AuthorityCodec.encodeUpdate(next) ?: return@commit null
-            // Once, after all blocking work. The check may read this record; any write it tries is refused.
-            if (!coordinator.viewing(s, finalCheck)) return@commit null
-            val again = load() ?: return@commit null
-            if (again.sequence != s.sequence || current(again) == null) return@commit null
+            val updateBytes = AuthorityCodec.encodeUpdate(next) ?: return@commitChecked null
             s.with(Section.ELEVATION, elevationBytes).with(Section.UPDATE, updateBytes)
         }
     }
@@ -805,6 +801,12 @@ class JointAuthorityStore internal constructor(
         save(current, Snapshot(current.sequence + 1, current.with(section, bytes).sections))
     }
 
+    /**
+     * True when any record copy or fence exists, in any schema: the store was set up, so a record that
+     * does not read is damaged, not absent. A refused coordinator counts as present (fail toward attention).
+     */
+    fun recordPresent(): Boolean = coordinator.run(true) { copyA.exists() || copyB.exists() || fenceA.exists() || fenceB.exists() }
+
     /** Recovery receipt addresses, kept as a permanent audit. Null when the record is unreadable. */
     fun recoveryAddresses(): List<StoredRecoveryAddresses>? = section(Section.RECOVERY)?.let(AuthorityCodec::decodeRecovery)?.audit
 
@@ -996,14 +998,31 @@ class JointAuthorityStore internal constructor(
     private fun commit(change: (Snapshot) -> Snapshot?): Boolean = coordinator.run(false) { commitHeld(change) }
 
     /** [commit] for a caller that already holds the coordinator. */
-    private fun commitHeld(change: (Snapshot) -> Snapshot?): Boolean {
-        val current = load() ?: return false
-        if (current.sequence == Long.MAX_VALUE) return false
-        val next = change(current) ?: return false
+    private fun commitHeld(change: (Snapshot) -> Snapshot?): Boolean =
+        prepare(change)?.let(::write) ?: false
+
+    /**
+     * [commit] with [finalCheck] run once, after every load, decode, comparison and repair (R2,
+     * PLA-207): [change] compares against the loaded record and the files are repaired to it before
+     * the check. After the check only the durable write and its read-back remain. The check may read
+     * the record under comparison; any write it tries is refused, and the coordinator keeps every
+     * other store call out until this one ends, so the comparison still holds when the write starts.
+     */
+    private fun commitChecked(finalCheck: () -> Boolean, change: (Snapshot) -> Snapshot?): Boolean = coordinator.run(false) {
+        val prepared = prepare(change) ?: return@run false
+        val compared = prepared.previous ?: return@run false
+        coordinator.viewing(compared, finalCheck) && write(prepared)
+    }
+
+    /** Load, [change], decode what changed and repair the files to the loaded record; null refuses before any write. */
+    private fun prepare(change: (Snapshot) -> Snapshot?): PreparedWrite? {
+        val current = load() ?: return null
+        if (current.sequence == Long.MAX_VALUE) return null
+        val next = change(current) ?: return null
         // Only sections this transaction replaced must decode; untouched ones are kept byte for byte.
         val changed = Section.entries.filter { !next.sections[it.ordinal].contentEquals(current.sections[it.ordinal]) }
-        if (changed.any { !readable(next, it) }) return false
-        return save(current, Snapshot(current.sequence + 1, next.sections))
+        if (changed.any { !readable(next, it) }) return null
+        return prepareSave(current, Snapshot(current.sequence + 1, next.sections))
     }
 
     /**
@@ -1028,13 +1047,27 @@ class JointAuthorityStore internal constructor(
      * be read [next] may still have committed, so false never promises [previous]. A migration names
      * the copy that holds no old record, so the old one survives until both new copies are written.
      */
-    private fun save(previous: Snapshot?, next: Snapshot, spare: AtomicRecord? = null): Boolean {
-        if (previous != null && !heal(previous)) return false
-        val bytes = next.encode()
-        val fence = fenceBytes(next.sequence)
+    private fun save(previous: Snapshot?, next: Snapshot, spare: AtomicRecord? = null): Boolean =
+        prepareSave(previous, next, spare)?.let(::write) ?: false
+
+    /** A repaired record and the copy files' exact prior bytes: everything [save] reads before it writes. */
+    private class PreparedWrite(val previous: Snapshot?, val next: Snapshot, val first: AtomicRecord,
+        val other: AtomicRecord, val before: Pair<ByteArray?, ByteArray?>)
+
+    /** The reads and repairs of [save]; null when the repair or the snapshot of the copies failed. */
+    private fun prepareSave(previous: Snapshot?, next: Snapshot, spare: AtomicRecord? = null): PreparedWrite? {
+        if (previous != null && !heal(previous)) return null
         val (first, other) = if (spare === copyB) copyB to copyA else copyA to copyB
         // Exactly what each copy file held, legacy formats included, so a failure can put it back.
-        val before = try { first.snapshot() to other.snapshot() } catch (_: IOException) { return false }
+        val before = try { first.snapshot() to other.snapshot() } catch (_: IOException) { return null }
+        return PreparedWrite(previous, next, first, other, before)
+    }
+
+    /** The writes of [save]: copies, fences, then the read-back that decides the result. */
+    private fun write(p: PreparedWrite): Boolean {
+        val next = p.next; val first = p.first; val other = p.other; val before = p.before
+        val bytes = next.encode()
+        val fence = fenceBytes(next.sequence)
         faults.at(WritePoint.BEFORE_COPY_A, dir)
         val copied = first.write(bytes) { faults.at(WritePoint.AFTER_COPY_A, dir) } &&
             other.write(bytes) { faults.at(WritePoint.AFTER_COPY_B, dir) }

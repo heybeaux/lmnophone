@@ -161,4 +161,22 @@ class UpdateDownloadTest {
         assertNull(download().fetch(source))
         assertNull("a failed download never leaves the previous file staged", staging.staged())
     }
+
+    @Test fun overLongRequestIsRefusedBeforeConnecting() {
+        // R3 (PLA-207): the internal constructor skips the parser's path bound; the download still refuses.
+        reply(byteArrayOf(1))
+        val long = UpdateSource(InetAddress.getLoopbackAddress(), server.localPort, "/" + "a".repeat(UpdateSource.MAX_PATH_CHARS))
+        assertNull(download().fetch(long))
+        Thread.sleep(200)
+        assertEquals(0, connections.get())
+        assertNull(staging.staged())
+    }
+
+    @Test fun headerThatNeverEndsStopsAtTheOverallLimit() {
+        // The watchdog closes the socket at the deadline whatever call is blocked.
+        serve { s -> s.getOutputStream().apply { write("HTTP/1.1 200 OK\r\n".toByteArray()); flush() }; Thread.sleep(10_000) }
+        val start = System.nanoTime()
+        assertNull(download(limitMillis = 300).fetch(source))
+        assertTrue((System.nanoTime() - start) / 1_000_000 < 1_500)
+    }
 }

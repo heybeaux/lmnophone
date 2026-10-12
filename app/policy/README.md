@@ -635,8 +635,14 @@ permission support. Those require lane D integration and independent verificatio
 process-local PIN-bound grant, closes package access with policy readback, reads `UpdateInstaller`
 facts, proposes use through `UpdateCommitPolicy`, then calls `UpdateUseStore.commitUpdateUse`.
 Inside that transaction the final callback reads the session facts again and checks ownership,
-credentials, policy, boot and the strict deadline after blocking work. Only a successful joint write
-is followed immediately by one installer commit. No public consume-then-act operation exists.
+credentials, policy, boot and the strict deadline after blocking work. After a successful joint write,
+the protocol reads its injected `bootTime: () -> BootTime?` once for a submission with a deadline.
+This must be a pure monotonic clock read, not `RunningClock.checkpoint()` or other adapter work.
+If `now > elevationDeadline`, it records FAILED through result-only CAS and returns FAILED without
+calling the installer. The turn stays spent and the receipt/outbox stays due. Unknown or changed-boot
+readings also refuse installation; a failed result CAS returns NOT_READY and leaves the submission
+unavailable until startup recovery. At/before the deadline, one installer commit follows the read.
+Supervised use has no deadline and needs no extra clock read. No public consume-then-act operation exists.
 
 `UpdateUseStore` is the device adapter's combined store port. On the same coordinator as credentials,
 elevation, sessions and mode changes it must reject reentrant controller mutations, while allowing
@@ -676,15 +682,20 @@ hash equals that session hash. The controller checks exact self identity, valid 
 newer installed version and exact grant/request digest plus version. The session ID and all facts
 must agree across the two reads. A same-version reinstall is refused by policy.
 
-Startup uses the internal `UpdateProtocol.onStart` wrapper: abandon every own installer session,
-then call `ElevationController.onStart` to revoke all temporary authority, then reconcile the saved
-submission. For SUBMITTED **or FAILED**, installed version equal to the staged version means
-INSTALLED; a readable higher or lower version means FAILED. FAILED remains recoverable because an
-already-committed platform install may finish after our restart. Unreadable version (`null`) means
-NOT_READY with no update-record write; retry on the next startup. INSTALLED is written before the
-idempotent post-update self-check; its separate PENDING/PASSED/FAILED result survives/retries a crash.
-A result callback must match the saved session; success for SUBMITTED or FAILED requires equal
-version readback and runs the journaled self-check. Completed INSTALLED results cannot run it again.
+Startup uses the internal `UpdateProtocol.onStart` wrapper: abandon only **uncommitted** own
+installer sessions, keeping committed sessions (X6), then call `ElevationController.onStart` to revoke
+temporary authority and reconcile the saved submission. Commit-attempt memory belongs to one adapter
+**instance**, not the whole process; adapter lifetime/ownership must preserve it through platform lag.
+For SUBMITTED **or FAILED**, installed version equal to the staged version means INSTALLED, regardless
+of session readback. Otherwise `UpdateInstaller.committedSessionPending(sessionId: Int): Boolean?`
+returns true while the platform retains the committed session, false when it is confirmed gone, or
+null when unknown. Read session presence before installed version so completion between reads cannot
+combine an old version with a newly absent session. True keeps/restores SUBMITTED and blocks replacement; false records FAILED and
+allows a new submission; null returns NOT_READY without changing the journal. Unreadable installed
+version also returns NOT_READY. Both success and failure callbacks use this same readback; a callback
+must match the saved session. FAILED remains recoverable if the installed version later matches.
+INSTALLED is written before the idempotent self-check; its separate PENDING/PASSED/FAILED result
+survives/retries a crash. Completed INSTALLED results cannot run it again.
 Route **only terminal** installer statuses to `onResult`; never translate `STATUS_PENDING_USER_ACTION`
 into failure. Never commit on startup, replay a saved submission, refund a turn or extend a deadline.
 
@@ -709,10 +720,13 @@ wire the internal seam to exercise the full controller. Lane D can implement the
 Lead must arrange Claude review of this GPT-authored slice and the cross-model adapter review before
 any later change exposes production wiring or an Update UI action. This work does not self-approve.
 
-**Known gaps from the proved installer protocol (PLA-86 / PLA-126):** the deadline binds authority
-use-up, not platform install start. G2: a paused process may call commit after the deadline, only for
-the exact hash-bound, pinned-signer, newer self package. G1: a crash between use-up and commit spends
-the turn and installs nothing; startup abandons the open session. G3: no session write after the final
+**Known gaps from the proved installer protocol (PLA-86 / PLA-126; tightened by PLA-209):** G2:
+`finalCheck` checks the deadline before durable use-up, and a pure clock read checks it again after
+use-up. A late use-up spends the turn without installing. The remaining pause gap is only between
+that clock read and the platform call, still bound to the exact hash, signer and newer self version.
+G1: a crash between use-up and commit spends the turn and installs nothing; startup abandons only
+uncommitted sessions. Committed sessions are kept and tracked by pending-session readback (R1).
+G3: no session write after the final
 hash read is a code rule, not a platform guarantee. The store transaction is not atomic with Android.
 Evidence: `mvp/device:spikes/installer-boundary/README.md` and its API 35 emulator transcripts
 `evidence/pm-session-rules-api35.txt`, `evidence/app-self-update-api35.txt` (2026-10-09).

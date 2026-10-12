@@ -11,7 +11,7 @@ import java.security.MessageDigest
 /** One of this app's own PackageInstaller sessions (`getMySessions()`). */
 data class OwnSession(val id: Int, val committed: Boolean, val appPackageName: String?)
 
-/** The PackageInstaller calls behind [StagedUpdateInstaller]. Only [commit] may throw. */
+/** The PackageInstaller calls behind [StagedUpdateInstaller]. Only [commit] and [sessionInfo] may throw. */
 interface InstallerPort {
     /** This app's own sessions; null when the read failed. */
     fun ownSessions(): List<OwnSession>?
@@ -25,6 +25,12 @@ interface InstallerPort {
     fun readSha256(sessionId: Int, name: String): String?
     /** `Session.commit`. May throw; the caller never retries. */
     fun commit(sessionId: Int)
+    /**
+     * `getSessionInfo(sessionId)`: the session, or null when Android has no such session. Throws when
+     * the read failed, so a failure is never taken for "gone". A session another installer created
+     * reads with a null [OwnSession.appPackageName].
+     */
+    fun sessionInfo(sessionId: Int): OwnSession?
     /** `abandonSession`; false when Android refused it. */
     fun abandon(sessionId: Int): Boolean
     /** Installed `longVersionCode` of [name]; null when unreadable. */

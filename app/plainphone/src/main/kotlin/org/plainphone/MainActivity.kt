@@ -42,6 +42,16 @@ import org.plainphone.boot.LockTaskState
 import org.plainphone.boot.checkingShowsAttention
 import org.plainphone.boot.CheckingScreen
 import org.plainphone.boot.HomeGate
+import org.plainphone.boot.cancelStage
+import org.plainphone.boot.confirmStage
+import org.plainphone.boot.pendingChange
+import org.plainphone.policy.NoticeTap
+import org.plainphone.policy.WaitingChangeKind
+import org.plainphone.ui.home.NeedsAttentionEvent
+import org.plainphone.ui.home.NeedsAttentionScreen
+import org.plainphone.ui.home.NeedsAttentionUiState
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import org.plainphone.boot.PolicyRuntime
 import org.plainphone.policy.NoticeInput
 import org.plainphone.preview.Preview2Device
@@ -55,6 +65,10 @@ import org.plainphone.shell.ShellUiMapper
 import org.plainphone.shell.Step
 import org.plainphone.ui.theme.PlainphoneColors
 import org.plainphone.ui.theme.PlainphoneTheme
+import org.plainphone.ui.trusted.WaitingChangeEvent
+import org.plainphone.ui.trusted.WaitingChangeScreen
+import org.plainphone.ui.trusted.WaitingChangeUiState
+import org.plainphone.ui.trusted.WaitingStage
 
 /**
  * Plainphone Home. Keyguard first (PLA-264 finding 1): the manifest never starts lock task; Home calls
@@ -109,7 +123,7 @@ class MainActivity : ComponentActivity() {
             val runs by runtime.runs.collectAsState()
             val notice by runtime.notice.collectAsState()
             LaunchedEffect(runs) { enterLockTask() }
-            val homeVisible = resumed && gate == HomeGate.READY && shell.phone != null && shell.state.current == ShellRoute.Home
+            val homeVisible = resumed && gate == HomeGate.READY && shell.phone != null && shell.state.current == ShellRoute.Home && cancelScreen == null && !attentionOpen
             val settingsVisible = resumed && gate == HomeGate.READY && shell.phone != null && shell.state.current == ShellRoute.PhoneSettings
             SideEffect {
                 communication.controller.setVisible(homeVisible)
@@ -133,7 +147,28 @@ class MainActivity : ComponentActivity() {
                     delay(1_000)
                 }
             }
+            val cancel = cancelScreen
+            if (cancel != null) {
+                val wait by runtime.waitingNotice.collectAsState()
+                LaunchedEffect(wait) { followOperation() }
+                PlainphoneTheme { WaitingChangeScreen(cancel.state) { onCancelEvent(cancel, it) } }
+                return@setContent
+            }
+            if (attentionOpen) {
+                val read by runtime.waitingRead.collectAsState()
+                PlainphoneTheme {
+                    NeedsAttentionScreen(NeedsAttentionUiState(pendingChange(read,
+                        DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)))) { event ->
+                        when (event) {
+                            NeedsAttentionEvent.Back -> attentionOpen = false
+                            NeedsAttentionEvent.CancelChange -> read?.notice?.let { openCancel(it.requestId) }
+                        }
+                    }
+                }
+                return@setContent
+            }
             PlainphoneShell(shell.state, snapshot, mapper, shell.navigator ?: return@setContent,
+                notice = notice, onNotice = ::openNotice,
                 counts = counts,
                 settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps),
                 onSettings = { event ->
@@ -203,6 +238,69 @@ class MainActivity : ComponentActivity() {
         Log.i(PolicyRuntime.TAG, "reopening $screen inside lock task at=${SystemClock.elapsedRealtime()}")
         callingActions.reopen(screen)
     }
+
+    /**
+     * The notice line's tap: "needs attention" opens its screen (wiring 4); a pending-change line opens the
+     * PIN-free cancel (wiring 3).
+     */
+    private fun openNotice() {
+        when (val tap = runtime.noticeTap.value) {
+            NoticeTap.OPEN_ATTENTION -> attentionOpen = true
+            is NoticeTap.ConfirmCancel -> openCancel(tap.requestId)
+            else -> {}
+        }
+    }
+
+    /** Anyone holding the phone may cancel the pending change [requestId], without a PIN, if it is still pending. */
+    private fun openCancel(requestId: String) {
+        val wait = runtime.waitingNotice.value?.takeIf { confirmStage(requestId, it) == WaitingStage.ConfirmCancel } ?: return
+        val change = when (wait.kind) {
+            WaitingChangeKind.TURN_OFF -> getString(R.string.wait_change_turn_off, getString(R.string.app_name))
+            WaitingChangeKind.ADD_PERSON, WaitingChangeKind.HAND_OVER, WaitingChangeKind.REMOVE_PERSON ->
+                getString(R.string.wait_change_people)
+            else -> getString(R.string.wait_change_setup)
+        }
+        cancelScreen = CancelScreen(requestId, WaitingChangeUiState(stage = WaitingStage.ConfirmCancel, change = change,
+            turningOff = wait.kind == WaitingChangeKind.TURN_OFF))
+    }
+
+    /**
+     * Yes: cancel, then show what was written ([cancelStage]): "Cancelled" only after the cancelled state
+     * is saved. Any other choice, or OK afterwards, goes back to Home.
+     */
+    private fun onCancelEvent(screen: CancelScreen, event: WaitingChangeEvent) {
+        if (event != WaitingChangeEvent.ConfirmCancel || screen.state.stage != WaitingStage.ConfirmCancel) {
+            cancelScreen = null
+            return
+        }
+        if (screen.state.sending) return
+        cancelScreen = screen.copy(state = screen.state.copy(sending = true))
+        runtime.cancelWait(screen.requestId) { result ->
+            runOnUiThread {
+                cancelScreen = cancelStage(result)?.let { screen.copy(state = screen.state.copy(stage = it, sending = false)) }
+            }
+        }
+    }
+
+    /**
+     * While "Cancel this change?" waits for a choice, it tracks the current operation: committing shows
+     * "Already in progress" with no Cancel, and a finished or replaced request closes it. Once Yes is
+     * pressed, the cancel's own result decides.
+     */
+    private fun followOperation() {
+        val screen = cancelScreen ?: return
+        if (screen.state.stage != WaitingStage.ConfirmCancel || screen.state.sending) return
+        val stage = confirmStage(screen.requestId, runtime.waitingNotice.value)
+        cancelScreen = when (stage) {
+            null -> null
+            WaitingStage.ConfirmCancel -> screen
+            else -> screen.copy(state = screen.state.copy(stage = stage))
+        }
+    }
+
+    private data class CancelScreen(val requestId: String, val state: WaitingChangeUiState)
+    private var cancelScreen by mutableStateOf<CancelScreen?>(null)
+    private var attentionOpen by mutableStateOf(false)
 
     private fun openPhone() {
         runtime.opened(CallingScreen.PHONE)

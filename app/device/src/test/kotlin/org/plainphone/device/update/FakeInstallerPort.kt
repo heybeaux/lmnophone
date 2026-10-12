@@ -23,6 +23,7 @@ class FakeInstallerPort : InstallerPort {
     var listWorks = true
     var readWorks = true
     var commitThrows = false
+    var infoThrows = false
     var abandonLeaves = false
     /** The platform's `isCommitted()` lags `commit()` by about 16 ms (X6). */
     var commitShowsAtOnce = true
@@ -67,6 +68,11 @@ class FakeInstallerPort : InstallerPort {
         val s = sessions[sessionId] ?: throw SecurityException("Caller has no access to session $sessionId")
         check(!s.committed)
         if (commitShowsAtOnce) s.committed = true
+    }
+    override fun sessionInfo(sessionId: Int): OwnSession? {
+        calls += "info $sessionId"
+        if (infoThrows) throw SecurityException("simulated")
+        return sessions[sessionId]?.let { OwnSession(it.id, it.committed, it.appPackageName) }
     }
     override fun abandon(sessionId: Int): Boolean {
         calls += "abandon $sessionId"
