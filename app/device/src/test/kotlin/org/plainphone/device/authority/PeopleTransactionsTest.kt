@@ -730,9 +730,11 @@ class PeopleTransactionsTest {
     @Test fun driverCompletesACommittingAddThroughResetProtection() {
         val rig = Rig()
         val id = rig.startAdd(); rig.mature(id)
-        assertEquals(PeopleChangeOutcome.COMPLETED, rig.driver().drive()!!.outcome)
+        // Two passes: the patch lands with reset protection applied and read back, then the change completes.
+        assertEquals(PeopleChangeOutcome.APPLIED, rig.driver().drive()!!.outcome)
         assertEquals(listOf("set", "broadcast", "readback"), rig.effects.calls)
         assertEquals(setOf(anna, cleo), rig.credentials().people.keys)
+        assertEquals(PeopleChangeOutcome.COMPLETED, rig.driver().drive()!!.outcome)
         assertEquals(WaitingPhase.COMPLETED, rig.journal().operation!!.phase)
         assertNull("finished", rig.driver().drive())
     }
@@ -748,6 +750,7 @@ class PeopleTransactionsTest {
         assertEquals(WaitingPhase.COMMITTING, rig.journal().operation!!.phase)
         rig.effects.failAt = null
         rig.wire()
+        assertEquals(PeopleChangeOutcome.APPLIED, rig.driver().drive()!!.outcome)
         assertEquals(PeopleChangeOutcome.COMPLETED, rig.driver().drive()!!.outcome)
         assertEquals(setOf(anna, cleo), rig.credentials().people.keys)
     }
@@ -758,7 +761,8 @@ class PeopleTransactionsTest {
         val id = rig.startAdd(); rig.mature(id)
         val stop = checkNotNull(rig.people.prepareStop(id, anna))
         rig.effects.failAt = "set"
-        assertEquals(PeopleChangeOutcome.NEEDS_ATTENTION, rig.people.stop(stop, rig.auth(anna, stop.action)).outcome)
+        // The stop saves ROLLING_BACK first; its reset restore fails, so the rollback is left to finish.
+        assertEquals(PeopleChangeOutcome.ROLLING_BACK, rig.people.stop(stop, rig.auth(anna, stop.action)).outcome)
         assertEquals(WaitingPhase.ROLLING_BACK, rig.journal().operation!!.phase)
         rig.effects.failAt = null
         rig.wire()
