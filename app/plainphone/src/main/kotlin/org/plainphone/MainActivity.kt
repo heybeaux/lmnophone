@@ -23,6 +23,7 @@ import java.time.format.FormatStyle
 import org.plainphone.boot.BuildControl
 import org.plainphone.boot.CallingScreen
 import org.plainphone.boot.CheckingScreen
+import org.plainphone.boot.FallbackNotice
 import org.plainphone.boot.HomeGate
 import org.plainphone.boot.HomeScreens
 import org.plainphone.boot.LockTaskState
@@ -95,7 +96,9 @@ class MainActivity : ComponentActivity() {
                     } else Home(notice)
                 } else {
                     val notice by runtime.notice.collectAsState()
-                    CheckingScreen(onPhone = ::openPhone, onEmergency = ::openEmergency, attention = checkingShowsAttention(gate, notice))
+                    val fallback by runtime.fallback.collectAsState()
+                    CheckingScreen(onPhone = ::openPhone, onEmergency = ::openEmergency, attention = checkingShowsAttention(gate, notice),
+                        details = fallback?.let(::fallbackDetails).orEmpty())
                 }
             }
         }
@@ -131,6 +134,13 @@ class MainActivity : ComponentActivity() {
         if (followUp) runtime.onHomeLockTaskState(state)?.let(::reopen)
         return state.contained
     }
+
+    /** The attention screen's lines while fallback containment holds (PLA-344). */
+    private fun fallbackDetails(notice: FallbackNotice): List<String> = listOfNotNull(
+        getString(R.string.fallback_disclosure),
+        notice.others.takeIf { it.isNotEmpty() }?.let { getString(R.string.fallback_others, it.joinToString(", ")) },
+        getString(R.string.fallback_incomplete).takeIf { notice.incomplete },
+    )
 
     /** Brings back a displaced calling screen, now inside lock task. Never ends or touches a call. */
     private fun reopen(screen: CallingScreen) {

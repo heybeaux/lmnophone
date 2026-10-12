@@ -25,7 +25,9 @@ import kotlinx.coroutines.flow.StateFlow
 import org.plainphone.MainActivity
 import org.plainphone.PlainphoneAdminReceiver
 import org.plainphone.core.PackageName
+import org.plainphone.device.DevicePolicyPort
 import org.plainphone.device.DpmPort
+import org.plainphone.device.DpmSuspensionPort
 import org.plainphone.device.KeyguardFirst
 import org.plainphone.device.DpmResetProtectionPort
 import org.plainphone.device.ReadbackPolicyApplier
@@ -39,6 +41,7 @@ import org.plainphone.device.authority.WaitingCheckpoints
 import org.plainphone.device.authority.waitingReconciler
 import org.plainphone.device.boot.BootOutcome
 import org.plainphone.device.boot.BootReapply
+import org.plainphone.device.boot.FallbackContainment
 import org.plainphone.device.facts.AndroidPackageSystemPort
 import org.plainphone.device.facts.LivePolicyInputAssembler
 import org.plainphone.device.facts.osFloor
@@ -46,6 +49,7 @@ import org.plainphone.device.runtime.AndroidRuntimeFacts
 import org.plainphone.device.runtime.FileClockStateStore
 import org.plainphone.device.storage.FileFlipFailureStore
 import org.plainphone.device.storage.FileJournalStore
+import org.plainphone.device.storage.FileSuspensionRecord
 import org.plainphone.device.storage.FilePolicyStore
 import org.plainphone.policy.PersonAuthorityConsumer
 import org.plainphone.core.Mode
@@ -87,7 +91,9 @@ class PolicyRuntime private constructor(private val context: Context) {
         run("user-unlocked")
     }
     private val admin = ComponentName(context, PlainphoneAdminReceiver::class.java)
-    private val port = DpmPort(context, admin, ComponentName(context, FlushMarker::class.java))
+    /** Test builds can drop feature writes ([FeatureFault]); release always writes them. */
+    private val port: DevicePolicyPort =
+        FeatureFaultPort(DpmPort(context, admin, ComponentName(context, FlushMarker::class.java))) { FeatureFault.on(context) }
     private val protectedDir = context.createDeviceProtectedStorageContext().filesDir
     private val packagesPort = AndroidPackageSystemPort(context)
     private val assembler = LivePolicyInputAssembler(
@@ -138,6 +144,17 @@ class PolicyRuntime private constructor(private val context: Context) {
         turnOffCommitting = { authority.turnOffCommitting() },
         flipFailures = FileFlipFailureStore(File(protectedDir, "flip-failures")),
     )
+    /**
+     * Fallback containment (PLA-344): suspends what it can while lock task cannot start with KEYGUARD,
+     * and lifts exactly that once lock task is LOCKED with KEYGUARD.
+     */
+    private val containment = FallbackContainment(
+        DpmSuspensionPort(context, admin, packagesPort),
+        FileSuspensionRecord(File(protectedDir, "fallback")),
+        { lockTaskState() == LockTaskState.LOCKED },
+        { mayEnterLockTask() },
+    )
+    private val fallbackState = MutableStateFlow<FallbackNotice?>(null)
     private val gateState = MutableStateFlow(HomeGate.CHECKING)
     @Volatile private var lastGate = HomeGate.CHECKING
     @Volatile private var checkingHeld = false
@@ -174,6 +191,8 @@ class PolicyRuntime private constructor(private val context: Context) {
     val waitingNotice: StateFlow<WaitingNotice?> = waitingNoticeState
     /** The same read with the time it was made: screens time the change from it, as Home's line does. */
     val waitingRead: StateFlow<WaitingRead?> = waitingReadState
+    /** While fallback containment holds: what the attention screen discloses. Null otherwise. */
+    val fallback: StateFlow<FallbackNotice?> = fallbackState
     /** Counts finished re-apply runs, locked ones included: Home retries lock-task entry after each. */
     val runs: StateFlow<Int> = runsState
 
@@ -193,6 +212,10 @@ class PolicyRuntime private constructor(private val context: Context) {
     fun onHomeLockTaskState(state: LockTaskState): CallingScreen? {
         val followUp = recovery.onHomeLockTaskState(state)
         if (followUp.reapply) reapply("pin-ended")
+        // Lock task just started with KEYGUARD: lift the fallback suspension, then refresh the gate.
+        if (state == LockTaskState.LOCKED && containment.mayHoldSuspensions) dispatcher.post {
+            if (fallbackStep(!users.isUserUnlocked, lockTaskState(), mayEnterLockTask()) == FallbackStep.LIFT && lift()) run("fallback-lifted")
+        }
         return followUp.restore
     }
 
@@ -280,6 +303,7 @@ class PolicyRuntime private constructor(private val context: Context) {
         }
         userUnlocked.recordPass(locked)
         log(reason, outcome, SystemClock.elapsedRealtime() - started)
+        fallbackPass(locked, outcome)
         // Full policy input exists only after unlock, so a lost record is reconciled only then.
         val reconciled = if (locked) null else try {
             authority.reconcileIfLost()?.also { Log.i(TAG, "lost waiting record: outcome=${it.outcome} failure=${it.failure}") }
@@ -310,7 +334,8 @@ class PolicyRuntime private constructor(private val context: Context) {
             val pinned = action == RecoveryAction.PINNED_ATTENTION
             // Only the notice: Home and calling stay available either way.
             val held = reconciled?.outcome == ReconcileOutcome.NEEDS_ATTENTION || authorityAttention
-            val attention = pinned || held || homeNotice(outcome) != null
+            val contained = fallbackState.value != null
+            val attention = pinned || held || contained || homeNotice(outcome) != null
             // One line, in the spec's order (policy NoticeLine): attention, then the pending change (wiring 3).
             val wait = try {
                 waiting.notice()
@@ -329,7 +354,7 @@ class PolicyRuntime private constructor(private val context: Context) {
             waitingNoticeState.value = wait
             noticeTapState.value = line?.tap
             noticeState.value = homeLine(line, readAt, DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
-            lastGate = if (outcome?.ready == true && !pinned) HomeGate.READY else HomeGate.NOT_READY
+            lastGate = if (outcome?.ready == true && !pinned && !contained) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
             when (action) {
                 RecoveryAction.HOME_FORWARD ->
@@ -339,6 +364,56 @@ class PolicyRuntime private constructor(private val context: Context) {
                 RecoveryAction.NOTHING -> {}
             }
         }
+    }
+
+    /**
+     * After every pass: contain when lock task cannot start with KEYGUARD, lift when it runs with it
+     * ([fallbackStep]). The keep set comes from this pass; without one that holds Home nothing is suspended.
+     */
+    private fun fallbackPass(userLocked: Boolean, outcome: BootOutcome?) {
+        when (fallbackStep(userLocked, lockTaskState(), mayEnterLockTask())) {
+            FallbackStep.CONTAIN -> {
+                val keep = outcome?.keep.orEmpty()
+                if (home !in keep) {
+                    Log.w(TAG, "fallback containment skipped: no keep set this pass")
+                    fallbackState.value = FallbackNotice(emptyList(), incomplete = true)
+                    return
+                }
+                val result = try {
+                    containment.contain(keep + PLATFORM_KEEP)
+                } catch (e: RuntimeException) {
+                    Log.e(TAG, "fallback containment threw", e)
+                    null
+                }
+                Log.i(TAG, "fallback containment: suspended=${result?.suspended?.size} " +
+                    "refused=${result?.refused?.map { it.value }?.sorted()} recorded=${result?.recorded} at=${SystemClock.elapsedRealtime()}")
+                fallbackState.value = result?.let { fallbackNotice(it, DISCLOSED, ::label) } ?: FallbackNotice(emptyList(), incomplete = true)
+            }
+            FallbackStep.LIFT -> lift()
+            FallbackStep.NONE -> {}
+        }
+    }
+
+    /** Lifts the recorded suspension (LOCKED with KEYGUARD is re-read inside); true when the notice cleared. */
+    private fun lift(): Boolean {
+        val held = fallbackState.value != null
+        val lifted = if (containment.mayHoldSuspensions) try {
+            containment.liftIfLocked()
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "fallback lift threw", e)
+            null
+        } else emptySet()
+        if (lifted == null) return false
+        if (lifted.isNotEmpty()) Log.i(TAG, "fallback lifted=${lifted.size} at=${SystemClock.elapsedRealtime()}")
+        fallbackState.value = null
+        return held
+    }
+
+    private fun label(name: PackageName): String = try {
+        val pm = context.packageManager
+        pm.getApplicationInfo(name.value, PackageManager.MATCH_UNINSTALLED_PACKAGES).loadLabel(pm).toString()
+    } catch (e: Exception) {
+        name.value
     }
 
     /** An ongoing call, from Telecom; the audio mode stands in if READ_PHONE_STATE can't be granted. */
@@ -370,6 +445,8 @@ class PolicyRuntime private constructor(private val context: Context) {
     companion object {
         const val TAG = "PlainphoneBoot"
         private val MESSAGES = PackageName("com.google.android.apps.messaging")
+        /** What the board-approved disclosure names: Settings and the app-permissions screen (card da306a1a). */
+        private val DISCLOSED = setOf(PackageName("com.android.settings")) + PERMISSION_CONTROLLERS
         /** Every package a session window can relax: Play, plus a matching inventory's Settings packages (none compiled in yet). */
         private val SESSION_PACKAGES = setOf(PackageName("com.android.vending"))
 
