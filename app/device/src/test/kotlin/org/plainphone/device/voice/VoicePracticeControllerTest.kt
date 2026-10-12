@@ -57,7 +57,7 @@ class VoicePracticeControllerTest {
     private val mic = Mic()
     private val speaker = Speaker()
     private val sam = VoicePeople.practice[0]
-    private fun store(dir: File = tmp.newFolder("voice")) = VoiceDraftStore(dir) { now }
+    private fun store(dir: File = tmp.newFolder()) = VoiceDraftStore(dir) { now }
     private fun controller(store: VoiceDraftStore = store()) =
         VoicePracticeController(recorder, player, store, mic, speaker, clock = { now }).also { it.open() }
 

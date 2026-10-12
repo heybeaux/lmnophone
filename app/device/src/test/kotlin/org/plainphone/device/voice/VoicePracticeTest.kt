@@ -8,6 +8,7 @@ import kotlin.random.Random
 import org.plainphone.device.voice.VoiceEffect.*
 import org.plainphone.device.voice.VoiceEvent.*
 import org.plainphone.device.voice.VoiceState.*
+import org.plainphone.device.voice.VoiceEvent.MicUnavailable
 
 class VoicePracticeTest {
     private val sam = VoicePeople.practice[0]
@@ -156,8 +157,9 @@ class VoicePracticeTest {
                 s = t.state
             }
         }
-        assertTrue(VoiceState::class.sealedSubclasses.none { it.simpleName.orEmpty().contains("Sent") })
-        assertTrue(VoiceEffect::class.sealedSubclasses.none { it.simpleName.orEmpty().contains("Send") })
+        assertEquals(6, VoiceState::class.java.declaredClasses.count { VoiceState::class.java.isAssignableFrom(it) })
+        assertTrue(VoiceState::class.java.declaredClasses.none { it.simpleName.contains("Sent") })
+        assertTrue(VoiceEffect::class.java.declaredClasses.none { it.simpleName.contains("Send") })
     }
 
     private fun events(random: Random) = generateSequence {
