@@ -14,8 +14,11 @@ import org.plainphone.policy.AppApprovalStore
  *
  * Retry triggers. Every policy pass calls [beforePass] before it decides, so boot, user unlock, Home
  * start, package events, the alarm and the pass after a trusted-person action each give a stuck
- * operation one retry. The first unlocked passes run [AppApprovalController.onStart] until it once
- * returns other than NOT_READY; later passes run [AppApprovalController.resume].
+ * operation one retry. The first unlocked pass runs [AppApprovalController.onStart]; until one returns
+ * other than NOT_READY, later passes run it again only while the record reads. Startup revokes every
+ * session window, and with no record (no trusted people yet) there is nothing to recover, so repeating
+ * it would only close a window on each package event. Once startup succeeds, passes run
+ * [AppApprovalController.resume].
  *
  * Ordinary passes ([forPass]). Every reconcile decides with the stored approval state, but only while no
  * operation is pending. A failed activation contains the attempted plan's discretionary apps, including
@@ -34,16 +37,25 @@ class ApprovalRecovery(
 ) {
     /** Startup recovery has once returned other than NOT_READY in this process. Dispatcher only. */
     private var started = false
+    /** Startup recovery has run at least once in this process. Dispatcher only. */
+    private var attempted = false
 
     /**
-     * One controller retry before a pass decides. Null for a locked pass: the controller's plans need the
-     * full policy input, which exists only after unlock, and the locked plan never unhides an approved app.
+     * One controller retry before a pass decides; null when none ran. None for a locked pass: the
+     * controller's plans need the full policy input, which exists only after unlock, and the locked plan
+     * never unhides an approved app.
      */
     fun beforePass(locked: Boolean): AppApprovalOutcome? = dispatcher.run {
         if (locked) null
         else try {
-            if (started) controller.resume()
-            else controller.onStart().also { started = it != AppApprovalOutcome.NOT_READY }
+            when {
+                started -> controller.resume()
+                attempted && read() == null -> null
+                else -> {
+                    attempted = true
+                    controller.onStart().also { started = it != AppApprovalOutcome.NOT_READY }
+                }
+            }
         } catch (_: RuntimeException) {
             AppApprovalOutcome.NOT_READY
         }
