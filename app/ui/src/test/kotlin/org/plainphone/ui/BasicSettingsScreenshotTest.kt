@@ -62,6 +62,12 @@ class BasicSettingsScreenshotTest(private val scale: Float) {
                     if (label in disabled) assertTrue("Must be disabled: $label", matching.single().config.contains(SemanticsProperties.Disabled))
                     if (label in enabled) assertTrue("Must be enabled: $label", !matching.single().config.contains(SemanticsProperties.Disabled))
                 }
+                val merged = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
+                for (label in labels.filter { it.startsWith("Lower ") || it.startsWith("Raise ") }) {
+                    val button = merged.single { label in it.config.getOrElse(SemanticsProperties.ContentDescription) { emptyList() } }
+                    assertTrue("Glyph must not create a second spoken node: $label",
+                        button.config.getOrElse(SemanticsProperties.Text) { emptyList() }.isEmpty())
+                }
                 val texts = nodes
                     .flatMap { it.config.getOrElse(SemanticsProperties.Text) { emptyList() } }.map { it.text }
                 expected.forEach { assertTrue("Missing $it in $texts", it in texts) }
