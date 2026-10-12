@@ -1,0 +1,19 @@
+PASS: spare requires sole-driver opt-in
+PASS: negative control is emulator-only
+PASS: read package version
+PASS: version is preview-31
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: read ring volume and ringer mode
+PASS: read ring stream
+PASS: read ring levels and both ringer modes
+PASS: read Bluetooth state without names
+PASS: read one Bluetooth state
+PASS: read ringtone
+PASS: read Location
+PASS: read saved networks without retaining names
+PASS: initial ringtone is built-in
+{"ringtone": "content://media/internal/audio/media/32?title=Moto&canonical=1", "ringVolume": "2 (speaker): 5, 40000000 (default): 5", "ringerModes": [["internal", "NORMAL"], ["external", "NORMAL"]], "bluetooth": "ON", "location": "0", "savedNetworksSha256": "dd04c25daffe13f1a7f24d5a85394afd54d644c1e89ee702b2fe7dcbed863051"}

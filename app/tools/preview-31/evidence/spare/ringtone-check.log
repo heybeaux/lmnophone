@@ -1,0 +1,161 @@
+PASS: spare requires sole-driver opt-in
+PASS: negative control is emulator-only
+PASS: read ring volume and ringer mode
+PASS: read ring stream
+PASS: read ring levels and both ringer modes
+PASS: read Bluetooth state without names
+PASS: read one Bluetooth state
+PASS: read ringtone
+PASS: read Location
+PASS: read saved networks without retaining names
+PASS: upgrade preserved all captured settings
+PASS: press Home
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^More$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Phone settings$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Sound$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Ringtone$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: read existing settings app-op
+PASS: current ringtone recognized in full built-in list
+PASS: another built-in choice visible
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Attentive$
+PASS: read before Done
+PASS: preview does not save
+PASS: capture ringtone-selected.png
+PASS: valid PNG ringtone-selected.png
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Done$
+PASS: read saved ringtone
+PASS: Done writes chosen built-in ringtone with readback
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: Done returned to Sound
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: Sound shows only the confirmed ringtone title
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Ringtone$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Moto$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Done$
+PASS: read restored ringtone
+PASS: chooser restored exact original ringtone
+PASS: capture sound-restored.png
+PASS: valid PNG sound-restored.png
+PASS: read cleanup ringtone
+PASS: restore original settings-write app-op
+PASS: press Home
+PASS: read package version
+PASS: version is preview-31
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: read Telecom current calls
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: read ring volume and ringer mode
+PASS: read ring stream
+PASS: read ring levels and both ringer modes
+PASS: read Bluetooth state without names
+PASS: read one Bluetooth state
+PASS: read ringtone
+PASS: read Location
+PASS: read saved networks without retaining names
+PASS: ringtone, ring volume, ringer mode, Bluetooth, Location and networks unchanged at end
+{"before": {"ringtone": "content://media/internal/audio/media/32?title=Moto&canonical=1", "ringVolume": "2 (speaker): 5, 40000000 (default): 5", "ringerModes": [["internal", "NORMAL"], ["external", "NORMAL"]], "bluetooth": "ON", "location": "0", "savedNetworksSha256": "dd04c25daffe13f1a7f24d5a85394afd54d644c1e89ee702b2fe7dcbed863051"}, "after": {"ringtone": "content://media/internal/audio/media/32?title=Moto&canonical=1", "ringVolume": "2 (speaker): 5, 40000000 (default): 5", "ringerModes": [["internal", "NORMAL"], ["external", "NORMAL"]], "bluetooth": "ON", "location": "0", "savedNetworksSha256": "dd04c25daffe13f1a7f24d5a85394afd54d644c1e89ee702b2fe7dcbed863051"}}
+exit=0

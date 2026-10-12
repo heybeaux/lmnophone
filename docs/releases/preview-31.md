@@ -102,3 +102,25 @@ accepted no-call/recovery gate. `ringtone_check.py before` captures build 30's
 settings in `PAPERCLIP_RUN_SCRATCH_DIR`; `ringtone_check.py after` exercises and
 restores the chooser on **emulator-5880 only**. Logs and inspected screenshots:
 [evidence](../../app/tools/preview-31/evidence/).
+
+## Spare install (Lead, sole driver)
+
+- **Reviewed:** single opposite-model review by the Lead on PLA-431 (approved; no blocking findings).
+- **Installed:** exact APK `b7e66e81…573622` in place over spare build 30 at
+  **2026-10-12 17:00:59Z** (`lastUpdateTime`); installer Success. Gate exit 0
+  (`evidence/spare/gate.log`): version 31, Device Owner, TEST_ONLY and LOCKED kept;
+  restart; More › Emergency and Phone both typed exactly **911**, **zero calls**.
+- **Exercised:** More › Phone settings › Sound › Ringtone listed 7 built-in ringtones
+  (Attentive … Simple) with the current one recognized. Chose **Attentive**: preview
+  did not save; Done wrote it and `settings get system ringtone` read back the
+  Attentive URI; Sound showed the read-back title. Then chose **Moto** again and Done
+  restored the exact original
+  `content://media/internal/audio/media/32?title=Moto&canonical=1`.
+- **Readback:** ringtone, ring volume (5), ringer mode (NORMAL internal/external),
+  Bluetooth ON, Location mode 0 and saved networks identical before and after.
+  WRITE_SETTINGS was already `allow` on the spare and remains `allow`.
+  No cleanup restore was needed. The spare script is the emulator
+  `ringtone_check.py` with the serial and version check changed
+  (`evidence/spare/spare_ringtone_check.py.txt`).
+- **Not exercised on the spare:** no-grant state, custom/unlisted current ringtone,
+  write or read-back failure (covered by controller tests and the emulator gate).
