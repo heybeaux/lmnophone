@@ -114,7 +114,6 @@ class WifiJoinSession private constructor(context: Context) {
     val locationPort = AndroidWifiLocation(context)
     val location = WifiLocationController(locationPort, SystemClock::elapsedRealtime)
     val joinPort = AndroidWifiJoin(context)
-    val forget = WifiForgetController(AndroidWifiForget(context), SystemClock::elapsedRealtime)
     private var connectedName: String? = null
     private var connectedHandle: Long? = null
     val join = WifiJoinController(joinPort, SystemClock::elapsedRealtime) {
@@ -127,8 +126,8 @@ class WifiJoinSession private constructor(context: Context) {
     private val handler = Handler(Looper.getMainLooper())
     private val cleanup = object : Runnable {
         override fun run() {
-            join.tick(); location.tick(); if (forget.pending) forget.refresh()
-            if (try { locationPort.owned() } catch (_: Exception) { true } || join.state.joining || forget.pending) handler.postDelayed(this, 1_000)
+            join.tick(); location.tick()
+            if (try { locationPort.owned() } catch (_: Exception) { true } || join.state.joining) handler.postDelayed(this, 1_000)
         }
     }
     init { location.recover(); schedule() }

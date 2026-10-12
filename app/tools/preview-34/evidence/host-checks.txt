@@ -1,0 +1,10 @@
+device: tests=33 failures=0 errors=0
+plainphone: tests=24 failures=0 errors=0
+ui: tests=95 failures=0 errors=0
+Final candidate: F1/F2 only. Wi-Fi Forget and message routing deferred.
+F1 red before fix: three new tests failed (78dffa85).
+F2 red before fix: literal-byte test failed (a6e3c07d).
+Final screen source and goldens exactly match accepted build 33; five-scale Wi-Fi golden verification passed.
+Deferred c3a64c60 candidate: 39 device tests, 25 navigator tests, 128 affected screen checks passed; all 30 new/changed goldens inspected.
+Deferred candidate live Forget passed at Location 3 but Location-0 button eligibility gate failed. This is not an accepted final feature.
+No temporary spike receiver ships in final APK.

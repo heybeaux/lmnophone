@@ -1,0 +1,16 @@
+build=34
+subset=F1-F2-only
+version=0.1.0-preview-34
+apk_sha256=6138736a8fd4d34a11d17ba063fe334b3edda7091549eecdf28f121baacf7557
+installed_utc=2026-10-12T19:25:48.146779+00:00
+upgrade=accepted-33-to-34-in-place
+same_signer=true
+TEST_ONLY=true
+DO=true
+LOCKED=true
+saved_list_sha256=6260342d8d2bf086c2f5a1a58f63fdf432e9ba293b241fc4a9133d6e9c4eb848
+saved_list_unchanged=true
+location_unchanged=true
+font_unchanged=true
+ringtone_unchanged=true
+bluetooth_unchanged=true

@@ -19,7 +19,7 @@ public class ForgetProbe extends BroadcastReceiver {
    if(!Build.HARDWARE.equals("ranchu")||Build.VERSION.SDK_INT!=35||!d.isDeviceOwnerApp(c.getPackageName()))throw new IllegalStateException();
    out("locked",c.getSystemService(ActivityManager.class).getLockTaskModeState()==1);
    if(c.getSystemService(ActivityManager.class).getLockTaskModeState()!=1)throw new IllegalStateException();
-   out("currentIdReadableLocationOff",w.getConnectionInfo().getNetworkId()>=0);
+   out("currentIdReadableBeforeProbe",w.getConnectionInfo().getNetworkId()>=0);
    d.setLocationEnabled(a,true);Thread.sleep(1000);
    int original=w.getConnectionInfo().getNetworkId();if(original<0)throw new IllegalStateException();
    List<WifiConfiguration> before=w.getConfiguredNetworks();out("savedCountBefore",before.size());

@@ -1,0 +1,117 @@
+PASS: assigned emulator
+PASS: emulator identity
+PASS: read saved ids without names
+PASS: original saved list intact before joining
+PASS: press Home
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^More$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Phone settings$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Wi-Fi$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: Forget shown for identifiable original connection; not tapped
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: refresh emulator scan fixture
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: one synthetic AP row available
+PASS: synthetic AP row bounds
+PASS: select synthetic AP
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Connect$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: read saved ids without names
+PASS: one synthetic saved id added
+PASS: read Location
+PASS: join restored Location
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: Forget shown after synthetic join
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Forget this network$
+PASS: read saved ids without names
+PASS: original saved configuration hash unchanged after Forget
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: no longer connected to forgotten configuration
+PASS: product readback accepted removal
+PASS: read location
+PASS: location unchanged
+PASS: read font
+PASS: font unchanged
+PASS: read ringtone
+PASS: ringtone unchanged
+PASS: read bluetooth
+PASS: bluetooth unchanged
+PASS: press Home
+PASS: read package version
+PASS: version is preview-34
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: read Telecom current calls
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: connected synthetic network forgotten; saved count -1; original hash retained; zero calls

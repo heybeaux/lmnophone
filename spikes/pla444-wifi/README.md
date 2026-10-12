@@ -15,3 +15,8 @@ The recorded API-35 result is in `docs/previews/preview-34/probe.txt`. Own and
 shell-created removals returned true. Original connection and saved-list hash
 survived. Raw configured-network counts were 4 → 6 → 4 → 2: Android returned two
 rows per network ID. Distinct IDs were 2 → 3 → 2 → 1. Product readback counts IDs.
+
+The first raw probe field was labelled currentIdReadableLocationOff in error;
+the saved baseline Location mode was 3. That field establishes identity at the
+baseline only. The live product gate separately checks a temporary Location-0
+fixture and restores the original mode afterward.

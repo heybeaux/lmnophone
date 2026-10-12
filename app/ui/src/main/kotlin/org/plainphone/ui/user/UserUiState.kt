@@ -77,7 +77,7 @@ sealed interface BlockedLinkEvent {
     data object Ok : BlockedLinkEvent
 }
 enum class WifiProblem { SignInRequired, NoInternet }
-data class WifiMessageUiState(val problem: WifiProblem, val canForget: Boolean = true)
+data class WifiMessageUiState(val problem: WifiProblem)
 sealed interface WifiMessageEvent {
     data object ForgetNetwork : WifiMessageEvent
     data object Ok : WifiMessageEvent

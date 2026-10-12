@@ -1,0 +1,10 @@
+build=34
+version=0.1.0-preview-34
+apk_sha256=afa638c8ce325a5bdb17826b0391748d1c3b55515fee977927dea2794c8ff07f
+installed_utc=2026-10-12T19:20:28.119720+00:00
+upgrade=accepted-33-to-34-in-place
+same_signer=true
+TEST_ONLY=true
+DO=true
+LOCKED=true
+saved_list_unchanged=true

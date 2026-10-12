@@ -1,0 +1,7 @@
+--------- beginning of main
+10-12 12:23:23.985  3966  3966 I WifiIdentityProbe: location=0
+10-12 12:23:23.986  3966  3966 I WifiIdentityProbe: infoId=-1 completed=true
+10-12 12:23:23.986  3966  3966 I WifiIdentityProbe: distinctCurrentCount=0 currentIds=[]
+10-12 12:23:24.055  3966  3966 I WifiIdentityProbe: location=3
+10-12 12:23:24.058  3966  3966 I WifiIdentityProbe: infoId=0 completed=true
+10-12 12:23:24.061  3966  3966 I WifiIdentityProbe: distinctCurrentCount=1 currentIds=[0]

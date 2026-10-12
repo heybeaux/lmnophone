@@ -735,7 +735,12 @@ rewritten; the existing configuration is used when that network was already save
 
 ### Build 34 Wi-Fi Forget subset
 
-Authorized in [PLA-444](/PLA/issues/PLA-444). Beneath the connected line, show
+Authorized in [PLA-444](/PLA/issues/PLA-444), but **deferred from the delivered
+build-34 subset** after the Location-0 identity gate failed on the emulator.
+Implementation checkpoint: `c3a64c60`. The approved copy for the later subset is
+retained below; build 34 ships only the build-33 review corrections.
+
+Beneath the connected line, show
 **Forget this network** only when the current saved configuration is identifiable.
 The tap removes only that configuration, with a fresh identity check. No confirm
 screen. Read back disconnection and exactly one fewer distinct saved network ID;
@@ -746,6 +751,7 @@ screen above: **Calls and texts still work**, then **when the phone has signal
 (the bars at the top of the screen).**, the matching message unchanged, and
 **Forget this network stops the phone trying to join this Wi-Fi.** Primary:
 **Forget this network**. Secondary: **OK**. OK, Back, and Forget return to Wi-Fi.
+The matching message is **This Wi-Fi needs a sign-in page, which LMNOPhone doesn't allow. Use mobile data or another Wi-Fi.** or **This Wi-Fi isn't reaching the internet.**
 Forget is unavailable if the connection can no longer be identified. No system
 Settings or sign-in page opens, and Forget never changes Location.
 

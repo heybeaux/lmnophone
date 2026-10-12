@@ -1,0 +1,6 @@
+after_reboot_saved_count=1
+saved_list_sha256=6260342d8d2bf086c2f5a1a58f63fdf432e9ba293b241fc4a9133d6e9c4eb848
+location_unchanged=true
+font_unchanged=true
+ringtone_unchanged=true
+bluetooth_unchanged=true

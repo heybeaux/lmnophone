@@ -14,7 +14,7 @@ import org.plainphone.ui.theme.PlainphoneType
 @Composable
 fun WifiMessageScreen(state: WifiMessageUiState, onEvent: (WifiMessageEvent) -> Unit) {
     TaskScreen(stringResource(R.string.wifi_title), stringResource(R.string.wifi_forget),
-        { onEvent(WifiMessageEvent.ForgetNetwork) }, primaryEnabled = state.canForget, secondary = stringResource(R.string.user_ok),
+        { onEvent(WifiMessageEvent.ForgetNetwork) }, secondary = stringResource(R.string.user_ok),
         onSecondary = { onEvent(WifiMessageEvent.Ok) }) {
         Text(stringResource(R.string.wifi_signal), style = PlainphoneType.Body)
         Text(stringResource(when (state.problem) {

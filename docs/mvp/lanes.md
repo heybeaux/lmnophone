@@ -354,16 +354,11 @@ marked Location at application startup and continues deferred cleanup after paus
 The Activity owns ephemeral password text and FLAG_SECURE while joining. Policy,
 lock-task, emergency and authority interfaces are unchanged.
 
-### Preview 34 connected Wi-Fi Forget seam
+### Preview 34 review corrections
 
-`:device/settings` exports `WifiForgetPort` (fresh connected ID and distinct saved
-IDs, connected-only remove) and `WifiForgetController`. A removal needs the
-expected visible connection to match at tap time and again at the Android write.
-It performs one write, then polls for exact saved-set subtraction and confirmed
-disconnection for at most ten seconds. Failure uses the existing unreadable line.
-`WifiJoinSession` owns readback across Activity changes; no identity is persisted.
-`:ui` adds `canForget`, `onForget` and `onMessage` to the Wi-Fi page, and a disabled
-Forget state to the existing message screen. `ShellNavigator.openWifiMessage`
-opens that screen from Wi-Fi; OK/Back/Forget return there. The host retains the
-message's selected configuration ID and rejects stale taps. No policy, emergency,
-lock-task or authority interface changes.
+No interface changes. `WifiLocationController` warns after 60 seconds of unknown
+call state while owned Location needs cleanup, and continues retrying without
+turning Location off during a known active call. `quoteWifiValue` adds only outer
+quotes so Android receives literal name/passphrase bytes. The connected Forget
+and message-route implementation at `c3a64c60` is deferred: API 35 redacts both
+current connection identity and CURRENT configurations at Location 0.
