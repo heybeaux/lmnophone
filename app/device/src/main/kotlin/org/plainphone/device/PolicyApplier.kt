@@ -34,6 +34,6 @@ data class ApplyResult(
     val flipped: Set<PackageName> = emptySet(),
 ) {
     val complete: Boolean get() = failedStage == null
-    /** Show "Plainphone needs attention". */
+    /** Show "LMNOPhone needs attention". */
     val needsAttention: Boolean get() = !complete || flipFailures.isNotEmpty() || unrepairable.isNotEmpty()
 }

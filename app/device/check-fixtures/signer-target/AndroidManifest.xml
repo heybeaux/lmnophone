@@ -8,7 +8,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.plainphone.testtarget">
     <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="35" />
-    <application android:hasCode="false" android:label="Plainphone check target">
+    <application android:hasCode="false" android:label="LMNOPhone check target">
         <activity android:name=".Emergency" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.DIAL_EMERGENCY" />

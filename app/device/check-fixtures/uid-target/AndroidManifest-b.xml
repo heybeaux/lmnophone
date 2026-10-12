@@ -4,7 +4,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.plainphone.uidtarget.b" android:sharedUserId="org.plainphone.uidshared">
     <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="35" />
-    <application android:hasCode="false" android:label="Plainphone UID target b">
+    <application android:hasCode="false" android:label="LMNOPhone UID target b">
         <activity android:name="android.app.Activity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

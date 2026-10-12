@@ -8,7 +8,7 @@
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
 
-    <application android:label="Plainphone emergency gate" android:testOnly="true">
+    <application android:label="LMNOPhone emergency gate" android:testOnly="true">
         <!-- Never invoked. Makes the package Direct Boot aware so the gate can run before the first unlock. -->
         <receiver
             android:name=".DirectBootMarker"
@@ -18,6 +18,6 @@
 
     <instrumentation
         android:name=".EmergencyGate"
-        android:label="Plainphone emergency gate"
+        android:label="LMNOPhone emergency gate"
         android:targetPackage="org.plainphone.emergencygate" />
 </manifest>

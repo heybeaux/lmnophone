@@ -80,10 +80,10 @@ fun trustedFixtures(two: Boolean = true, long: Boolean = false): List<TrustedFix
                 canSkip = true, canStop = true), {}) })
         }
         add(TrustedFixture("user_wait") { WaitingChangeScreen(WaitingChangeUiState(stage = WaitingStage.Details,
-            change = "turn Plainphone off", everyone = everyone, starterName = name, day = "Thursday",
+            change = "turn LMNOPhone off", everyone = everyone, starterName = name, day = "Thursday",
             startedAt = "10:40", happensAt = "10:40 tomorrow", turningOff = true), {}) })
         add(TrustedFixture("self_wait", false) { WaitingChangeScreen(WaitingChangeUiState(AdminContext(user), WaitingStage.Details,
-            "turn Plainphone off", happensAt = "10:40 tomorrow"), {}) })
+            "turn LMNOPhone off", happensAt = "10:40 tomorrow"), {}) })
         add(TrustedFixture("cancel_saving") { WaitingChangeScreen(WaitingChangeUiState(stage = WaitingStage.ConfirmCancel,
             change = change, everyone = everyone, sending = true), {}) })
         TurnOffStage.entries.forEach { stage ->
@@ -107,7 +107,7 @@ fun trustedFixtures(two: Boolean = true, long: Boolean = false): List<TrustedFix
         SessionStage.entries.forEach { stage ->
             add(TrustedFixture("session_$stage") { SessionScreen(SessionUiState(context, stage, other,
                 dueDate = "8 November", apps = listOf(CheckApp("sms", "Messages"), CheckApp("play", "Google Play services", true)),
-                restoredLines = listOf("The texting app was changed, so Plainphone put Messages back.")), {}) })
+                restoredLines = listOf("The texting app was changed, so LMNOPhone put Messages back.")), {}) })
         }
     }
 }

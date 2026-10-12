@@ -34,7 +34,7 @@ private val previewApp = InstalledApp("example", "Bus times", "Example Apps")
     PeopleChangeScreen(PeopleChangeUiState(previewContext, PeopleAction.Add, listOf("Sam"), newName = "Jo"), {})
 }
 @MinimumScreen @Composable private fun WaitingPreview() = PlainphoneTheme {
-    WaitingChangeScreen(WaitingChangeUiState(previewContext, WaitingStage.Details, "turn Plainphone off", listOf("Sam"),
+    WaitingChangeScreen(WaitingChangeUiState(previewContext, WaitingStage.Details, "turn LMNOPhone off", listOf("Sam"),
         "Sam", "Thursday", "10:40", "10:40 tomorrow", canSkip = true), {})
 }
 @MinimumScreen @Composable private fun SessionPreview() = PlainphoneTheme { SessionScreen(SessionUiState(previewContext, SessionStage.Play), {}) }

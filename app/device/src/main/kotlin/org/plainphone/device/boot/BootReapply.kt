@@ -47,7 +47,7 @@ data class BootOutcome(
      */
     val keepComplete: Boolean = false,
 ) {
-    /** Show "Plainphone needs attention" (Home still draws when [ready]). */
+    /** Show "LMNOPhone needs attention" (Home still draws when [ready]). */
     val needsAttention: Boolean get() =
         planNeedsAttention || apply?.needsAttention != false || disabledFloor.isNotEmpty() || flipRecordUnknown
     /** Setup must not finish while a floor package is disabled. */

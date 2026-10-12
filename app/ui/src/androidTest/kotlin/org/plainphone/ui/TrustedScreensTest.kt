@@ -62,7 +62,7 @@ class TrustedScreensTest {
     }
     @Test fun waitingPhasesNeverImplySavedCancellation() {
         val state = mutableStateOf(WaitingChangeUiState(context, WaitingStage.ConfirmCancel,
-            "turn Plainphone off", listOf("Sam\u202E", "Jo"), sending = true))
+            "turn LMNOPhone off", listOf("Sam\u202E", "Jo"), sending = true))
         show { WaitingChangeScreen(state.value, {}) }
         compose.onNodeWithText("Cancelling…").assertIsNotEnabled()
         compose.onNodeWithText("Cancelled").assertDoesNotExist()
@@ -75,7 +75,7 @@ class TrustedScreensTest {
     }
     @Test fun selfManagedWaitHasNoSkipOrRecipientPromise() {
         show { WaitingChangeScreen(WaitingChangeUiState(AdminContext("Pat"), WaitingStage.Details,
-            "turn Plainphone off", happensAt = "10:40 tomorrow"), {}) }
+            "turn LMNOPhone off", happensAt = "10:40 tomorrow"), {}) }
         compose.onNodeWithText("Your settings").assertIsDisplayed()
         compose.onNodeWithText("Skip the wait").assertDoesNotExist()
         compose.onNodeWithText("will get a text", substring = true).assertDoesNotExist()
@@ -95,7 +95,7 @@ class TrustedScreensTest {
             when (page.value) {
                 0 -> AppReviewScreen(AppReviewUiState(context, InstalledApp("one", "Bus times", "Example"), stage = AppReviewStage.Confirm, sending = true), events::add)
                 1 -> PeopleChangeScreen(PeopleChangeUiState(context, PeopleAction.Remove, listOf("Sam", "Jo"), otherName = "Jo", sending = true), events::add)
-                2 -> WaitingChangeScreen(WaitingChangeUiState(context, WaitingStage.SkipConfirm, "turn Plainphone off", listOf("Sam"), sending = true), events::add)
+                2 -> WaitingChangeScreen(WaitingChangeUiState(context, WaitingStage.SkipConfirm, "turn LMNOPhone off", listOf("Sam"), sending = true), events::add)
                 3 -> SessionScreen(SessionUiState(context, SessionStage.CheckConfirm, sending = true), events::add)
                 4 -> UpdateScreen(UpdateUiState(context, UpdateStage.Confirm, "Jo", version = "1.2", sending = true), events::add)
                 5 -> OpeningScreen(OpeningUiState(AdminContext("Pat"), OpeningStage.Ready, OpeningKind.Play, sending = true), events::add)
@@ -129,12 +129,12 @@ class TrustedScreensTest {
     @Test fun failedCancelAndOffNeverOfferAResetOrPretendToFinish() {
         val page = mutableStateOf(false)
         show {
-            if (!page.value) WaitingChangeScreen(WaitingChangeUiState(stage = WaitingStage.StillCancelling, change = "turn Plainphone off"), {})
+            if (!page.value) WaitingChangeScreen(WaitingChangeUiState(stage = WaitingStage.StillCancelling, change = "turn LMNOPhone off"), {})
             else TurnOffScreen(TurnOffUiState(context, TurnOffStage.Failed, helper = "Jo", stepDescription = "unlocking the home screen"), {})
         }
         compose.onNodeWithText("Cancelled").assertDoesNotExist()
         compose.runOnIdle { page.value = true }
-        compose.onNodeWithText("Plainphone is off").assertDoesNotExist()
+        compose.onNodeWithText("LMNOPhone is off").assertDoesNotExist()
         compose.onNodeWithText("Erase phone").assertDoesNotExist()
         compose.onNodeWithText("Try again").assertIsDisplayed()
     }

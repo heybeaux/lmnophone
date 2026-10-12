@@ -6,7 +6,7 @@ import org.plainphone.device.boot.BootOutcome
 import org.plainphone.ui.home.HomeNotice
 
 /**
- * The Home notice for a re-apply outcome: "Plainphone needs attention" for corrupt policy (baseline),
+ * The Home notice for a re-apply outcome: "LMNOPhone needs attention" for corrupt policy (baseline),
  * failed flips, unrepairable or disabled floor packages, or any other attention flag. It never decides
  * whether Home shows; calls stay reachable.
  */

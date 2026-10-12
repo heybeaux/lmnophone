@@ -93,7 +93,7 @@ class SliceThreeCompletionTest {
         show { WaitingChangeScreen(state.value, {}) }
         compose.onNodeWithText("Until this works, nothing changes: you still look after this phone", substring = true).assertExists()
         compose.runOnIdle { state.value = state.value.copy(stage = WaitingStage.StopConfirm) }
-        compose.onNodeWithText("Plainphone puts reset protection back for your Google account. Jo's PIN and details are thrown away, and you keep looking after this phone.").assertExists()
+        compose.onNodeWithText("LMNOPhone puts reset protection back for your Google account. Jo's PIN and details are thrown away, and you keep looking after this phone.").assertExists()
         compose.runOnIdle { state.value = state.value.copy(stage = WaitingStage.Stopped) }
         compose.onNodeWithText("Stopped. Nothing changed. You still look after this phone.").assertExists()
     }

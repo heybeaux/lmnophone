@@ -9,7 +9,7 @@
     package="org.plainphone.launchtarget">
     <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="35" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <application android:hasCode="false" android:label="Plainphone launch target">
+    <application android:hasCode="false" android:label="LMNOPhone launch target">
         <activity android:name="android.app.Activity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
