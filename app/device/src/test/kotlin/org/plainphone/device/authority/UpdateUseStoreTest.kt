@@ -427,22 +427,6 @@ class UpdateUseStoreTest {
             sections.forEachIndexed { i, bytes -> assertArrayEquals("$point $i", bytes, store.sectionBytesForTest(Section.entries[i])) }
         }
     }
-}
-
-/** Raw UPDATE-section bytes, for receipts the policy's own constructor would refuse. */
-internal object UpdateCodecFixtures {
-    fun section(actor: String, actorGeneration: Long, recipients: List<Pair<String, Long>>): ByteArray {
-        val out = java.io.ByteArrayOutputStream()
-        java.io.DataOutputStream(out).use { d ->
-            d.writeLong(1); d.writeBoolean(true)
-            d.writeInt(41); d.writeUTF("ab".repeat(32)); d.writeLong(7)
-            d.writeUTF("grant-1"); d.writeUTF(actor); d.writeLong(actorGeneration)
-            d.writeInt(recipients.size); recipients.forEach { (id, g) -> d.writeUTF(id); d.writeLong(g) }
-            d.writeBoolean(false); d.writeUTF("SUBMITTED"); d.writeUTF("PENDING")
-            d.writeInt(0)
-        }
-        return out.toByteArray()
-    }
 
     @Test fun noStorageReadOrRepairAfterTheFinalCheck() {
         // R2 (PLA-207): every load, decode and repair happens before finalCheck. Copies made
@@ -464,4 +448,21 @@ internal object UpdateCodecFixtures {
         assertFalse(commitSelf(store) { false })
         assertEquals(before, allSections(open()))
     }
+}
+
+/** Raw UPDATE-section bytes, for receipts the policy's own constructor would refuse. */
+internal object UpdateCodecFixtures {
+    fun section(actor: String, actorGeneration: Long, recipients: List<Pair<String, Long>>): ByteArray {
+        val out = java.io.ByteArrayOutputStream()
+        java.io.DataOutputStream(out).use { d ->
+            d.writeLong(1); d.writeBoolean(true)
+            d.writeInt(41); d.writeUTF("ab".repeat(32)); d.writeLong(7)
+            d.writeUTF("grant-1"); d.writeUTF(actor); d.writeLong(actorGeneration)
+            d.writeInt(recipients.size); recipients.forEach { (id, g) -> d.writeUTF(id); d.writeLong(g) }
+            d.writeBoolean(false); d.writeUTF("SUBMITTED"); d.writeUTF("PENDING")
+            d.writeInt(0)
+        }
+        return out.toByteArray()
+    }
+
 }
