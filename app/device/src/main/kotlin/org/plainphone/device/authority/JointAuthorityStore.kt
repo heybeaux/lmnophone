@@ -680,6 +680,9 @@ class JointAuthorityStore internal constructor(
         save(null, genesis)
     }
 
+    /** No fence and no readable record: the only state [initialize] writes over ([InitialProvisioning], PLA-97). */
+    internal fun vacant(): Boolean = coordinator.run(false) { !fenceA.exists() && !fenceB.exists() && load() == null }
+
     /**
      * Explicit startup step, run before any controller reads this store. A record written by a
      * schema 1-3 store reads as missing until it is migrated. Migration reads it with the old
