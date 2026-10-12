@@ -42,6 +42,7 @@ import org.plainphone.policy.SelfManagedEnrollmentConfirmations
 import org.plainphone.policy.SessionAccess
 import org.plainphone.policy.SessionEffects
 import org.plainphone.policy.WaitingChangeController
+import org.plainphone.policy.WaitingSkipSupport
 import org.plainphone.policy.WaitingOutcome
 import org.plainphone.policy.WaitingStart
 
@@ -78,6 +79,8 @@ internal class ModeSwitchRig(mode: Mode, val dir: File, val friction: FrictionSe
     var faults = StorageFaults { _, _ -> }
     var sequence = 0
     val effects = ModeSwitchFakeEffects()
+    /** Each setup holder's recovery code. */
+    val codes = mutableMapOf<TrustedPersonId, String>()
     lateinit var store: JointAuthorityStore
     lateinit var vault: PinVault
     lateinit var waiting: WaitingChangeController
@@ -86,7 +89,7 @@ internal class ModeSwitchRig(mode: Mode, val dir: File, val friction: FrictionSe
     init {
         wire()
         val holders = (if (mode == Mode.TRUSTED) listOf(ALEX, JO) else listOf(SAM)).associateWith { id ->
-            vault.prepareCredential(pin).credential.let {
+            vault.prepareCredential(pin).also { codes[id] = it.recoveryCode }.credential.let {
                 if (mode == Mode.TRUSTED) it.copy(contact = PersonContact("synthetic-${id.value}", "synthetic-number-${id.value}")) else it
             }
         }
@@ -101,7 +104,8 @@ internal class ModeSwitchRig(mode: Mode, val dir: File, val friction: FrictionSe
         vault = PinVault(store.credentials, KeyDerivation { chars, salt, _ ->
             MessageDigest.getInstance("SHA-256").digest(chars.concatToString().toByteArray() + salt)
         }, SecretEntropy { n -> ByteArray(n) { (++sequence).toByte() } }, clock)
-        waiting = WaitingChangeController(store.waitingStore, { store.credentials.read() }, clock, vault, store.identities, store.cancelIntents)
+        waiting = WaitingChangeController(store.waitingStore, { store.credentials.read() }, clock, vault, store.identities, store.cancelIntents,
+            WaitingSkipSupport(vault, store.skipCommitter))
         people = PeopleChangeController(store.waitingStore, store.credentials, store.modeCommitter, effects, clock, vault)
     }
     fun disk() = JointAuthorityStore(dir, INVENTORY)
