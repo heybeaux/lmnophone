@@ -22,6 +22,16 @@ class FallbackNoticeTest {
     @Test fun anUnrecordedContainmentIsIncomplete() {
         assertTrue(fallbackNotice(Containment(emptySet(), emptySet(), recorded = false), emptySet()) { it.value }.incomplete)
     }
+
+    /** AVD pla242-a35 (PLA-344): the first pass suspended these; alerts, SMS storage and call audio need them. */
+    @Test fun keepsTheAlertAndCallingServicesUnsuspended() {
+        listOf(
+            "com.google.android.cellbroadcastservice", "com.android.cellbroadcastservice",
+            "com.google.android.cellbroadcastreceiver", "com.android.cellbroadcastreceiver",
+            "com.android.providers.telephony", "com.android.bluetooth", "com.google.android.bluetooth",
+            "com.google.android.telephony.satellite",
+        ).forEach { assertTrue(it, PackageName(it) in PLATFORM_KEEP) }
+    }
 }
 
 class FallbackStepTest {
