@@ -707,6 +707,67 @@ class PeopleTransactionsTest {
         assertEquals(0L, rig.credentials().people.getValue(anna).generation)
     }
 
+    // ---- Wiring 5: the pass drives a committing or rolling-back people change in its recorded direction ----
+    private fun Rig.driver() = PeopleCommitDriver(store, effects, clock, vault)
+
+    @Test fun driverIsIdleWithoutACommittingPeopleChange() {
+        val rig = Rig()
+        assertNull("vacant", rig.driver().drive())
+        rig.startAdd()
+        assertNull("pending is the checkpoint's, not the driver's", rig.driver().drive())
+        assertTrue(rig.effects.calls.isEmpty())
+    }
+
+    @Test fun driverIgnoresACommittingTurnOff() {
+        val rig = Rig()
+        val r = checkNotNull(rig.waiting.prepareTurnOff(anna))
+        assertEquals(WaitingOutcome.PENDING, rig.waiting.startTurnOff(r, rig.auth(anna, r.action), true, true))
+        rig.mature(r.requestId)
+        assertNull(rig.driver().drive())
+        assertEquals(WaitingPhase.COMMITTING, rig.journal().operation!!.phase)
+    }
+
+    @Test fun driverCompletesACommittingAddThroughResetProtection() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        assertEquals(PeopleChangeOutcome.COMPLETED, rig.driver().drive()!!.outcome)
+        assertEquals(listOf("set", "broadcast", "readback"), rig.effects.calls)
+        assertEquals(setOf(anna, cleo), rig.credentials().people.keys)
+        assertEquals(WaitingPhase.COMPLETED, rig.journal().operation!!.phase)
+        assertNull("finished", rig.driver().drive())
+    }
+
+    /** A failed reset set keeps COMMITTING and the old holders; the next pass retries forward. */
+    @Test fun driverKeepsOldHoldersWhenResetProtectionFails() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        rig.effects.failAt = "set"
+        val failed = rig.driver().drive()!!
+        assertEquals(PeopleChangeOutcome.NEEDS_ATTENTION, failed.outcome)
+        assertEquals(setOf(anna), rig.credentials().people.keys)
+        assertEquals(WaitingPhase.COMMITTING, rig.journal().operation!!.phase)
+        rig.effects.failAt = null
+        rig.wire()
+        assertEquals(PeopleChangeOutcome.COMPLETED, rig.driver().drive()!!.outcome)
+        assertEquals(setOf(anna, cleo), rig.credentials().people.keys)
+    }
+
+    /** After a stop, the driver follows the recorded rollback and never resumes forward. */
+    @Test fun driverFollowsTheRecordedRollback() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        val stop = checkNotNull(rig.people.prepareStop(id, anna))
+        rig.effects.failAt = "set"
+        assertEquals(PeopleChangeOutcome.NEEDS_ATTENTION, rig.people.stop(stop, rig.auth(anna, stop.action)).outcome)
+        assertEquals(WaitingPhase.ROLLING_BACK, rig.journal().operation!!.phase)
+        rig.effects.failAt = null
+        rig.wire()
+        assertEquals(PeopleChangeOutcome.CANCELLED, rig.driver().drive()!!.outcome)
+        assertEquals(setOf(anna), rig.credentials().people.keys)
+        assertEquals(setOf("account-anna", "account-backup"), rig.effects.applied)
+        assertNull(rig.driver().drive())
+    }
+
     private fun Rig.startRemove(): String = start(waiting.prepareRemove(anna, ben))
 
     private fun holderBytes(state: CredentialState, person: TrustedPersonId): ByteArray =
