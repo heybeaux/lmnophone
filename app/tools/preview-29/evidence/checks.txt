@@ -1,0 +1,15 @@
+Tests-first checkpoint ac69cfd9; implementation checkpoint a546e6b6.
+:device:testDebugUnitTest --tests '*WifiControllerTest': 16 tests, 0 failures/errors/skips.
+:plainphone:testDebugUnitTest: 202 tests, 0 failures/errors/skips.
+:ui:verifyPaparazziDebug --tests '*WifiSettingsScreenshotTest': 45 tests, 0 failures/errors/skips.
+15 new golden images visually inspected: portal, no internet and read failure at 1.0/1.3/1.5/1.8/2.0.
+All pre-existing Wi-Fi goldens unchanged. Long content scrolls vertically.
+:plainphone:assembleDebug: PASS.
+Installed in place 28 -> 29 on emulator-5880 at 2026-10-12T14:22:52Z.
+Package lastUpdateTime=2026-10-12 07:22:52, timezone America/Vancouver.
+Version readback=29 / 0.1.0-preview-29; DO=true TEST_ONLY=true LOCKED=true.
+APK sha256=039506e95ab1153cc6b0c54ce984569e99862c8671a4ebd2bfdccea91944414d
+Same signer as installed 28; accepted signer continuity 23-28 carried forward.
+Built: yes. Installed: owned API35 emulator only. Exercised: upgrade/restart/dialer routes, Wi-Fi validated state and Location-off/on names/fallbacks.
+Portal, timed no-internet and overall read failure: host controller and screenshot tests only; no claim of live portal/network-failure exercise.
+Spare install: pending Lead review and sole-driver handoff. No spare commands.
