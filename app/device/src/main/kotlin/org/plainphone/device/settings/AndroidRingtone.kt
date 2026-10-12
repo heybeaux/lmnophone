@@ -56,8 +56,12 @@ class AndroidRingtone(context: Context) : RingtonePort {
     override fun canWrite() = Settings.System.canWrite(app)
     override fun write(uri: String) {
         check(canWrite())
-        require(internal(Uri.parse(uri)))
-        RingtoneManager.setActualDefaultRingtoneUri(app, RingtoneManager.TYPE_RINGTONE, Uri.parse(uri))
+        val chosen = Uri.parse(uri)
+        require(internal(chosen))
+        // Preserve the platform's canonical form (including its stable title) across saves.
+        // read() normalizes both forms for comparison with the catalog's row identity.
+        val canonical = resolver.canonicalize(chosen) ?: chosen
+        RingtoneManager.setActualDefaultRingtoneUri(app, RingtoneManager.TYPE_RINGTONE, canonical)
     }
 
     override fun preview(uri: String) {
