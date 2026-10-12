@@ -20,11 +20,18 @@ class TestBuildNavigatorTest {
 
     @Test fun everyUnwiredMoreRowSaysNotInThisTestBuild() {
         for (e in listOf(MoreEvent.AskForApp, MoreEvent.AddApp,
-            MoreEvent.OpenSelfManagedSettings, MoreEvent.OpenAbout)) {
+            MoreEvent.OpenSelfManagedSettings)) {
             val step = nav.onMore(at(ShellRoute.More), e)
             assertEquals(e.toString(), at(ShellRoute.More, ShellRoute.NotInBuild), step.state)
             assertNull(step.effect)
         }
+    }
+
+    @Test fun aboutOpensU8AndBackReturnsToMore() {
+        val step = nav.onMore(at(ShellRoute.More), MoreEvent.OpenAbout)
+        assertEquals("About", step.state.current.javaClass.simpleName)
+        assertNull(step.effect)
+        assertEquals(at(ShellRoute.More), nav.back(step.state).state)
     }
 
     @Test fun trustedPersonOpensTheRealPinHostWithoutChangingTheShellStack() {
