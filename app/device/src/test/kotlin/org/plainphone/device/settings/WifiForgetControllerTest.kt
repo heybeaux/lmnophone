@@ -9,6 +9,7 @@ class WifiForgetControllerTest {
         var on = false; var marker = false; var offWorks = true; var enableWorks = true
         var idle: Boolean? = true
         var facts = WifiForgetFacts(true, 7, setOf(2, 7, 9), validated = true)
+        var redactedReads = 0
         var immediate = true; var accepted = true; var unreadable = false
         val events = mutableListOf<String>(); val removed = mutableListOf<Int>()
         override fun enabled() = on
@@ -19,7 +20,7 @@ class WifiForgetControllerTest {
         override fun read(): WifiForgetFacts {
             events += "read:$on"
             if (unreadable) error("unavailable")
-            return if (on) facts else facts.copy(connectedId=null)
+            return if (on && redactedReads-- <= 0) facts else facts.copy(connectedId=null)
         }
         override fun removeConnected(networkId: Int): Boolean {
             assertTrue(on); removed += networkId; events += "remove"
@@ -39,11 +40,17 @@ class WifiForgetControllerTest {
     @Test fun noIdentityDisconnectedUnvalidatedUnsavedOrUnreadableRemovesNothingAndCleans() {
         for (facts in listOf(WifiForgetFacts(true,null,setOf(7),true), WifiForgetFacts(false,7,setOf(7),true),
             WifiForgetFacts(true,7,setOf(9),true), WifiForgetFacts(true,7,setOf(7),false))) {
-            val f=Fixture(); f.facts=facts; f.controller.forget()
+            val f=Fixture(); f.facts=facts; f.controller.forget(); f.time=2_000; f.controller.refresh()
             assertTrue(f.controller.failed); assertTrue(f.removed.isEmpty()); assertFalse(f.on)
         }
         val f=Fixture(); f.unreadable=true; f.controller.forget()
         assertTrue(f.controller.failed); assertTrue(f.removed.isEmpty()); assertFalse(f.on)
+    }
+    @Test fun locationReadbackCanPrecedeWifiIdentityPropagation() {
+        val f=Fixture(); f.redactedReads=1; f.controller.forget()
+        assertTrue(f.controller.pending); assertTrue(f.on); assertTrue(f.removed.isEmpty())
+        f.time=1_000; f.controller.refresh()
+        assertEquals(listOf(7),f.removed); assertFalse(f.controller.failed); assertFalse(f.on)
     }
     @Test fun failedEnableDoesNotRemove() {
         val f=Fixture(); f.enableWorks=false; f.controller.forget()
