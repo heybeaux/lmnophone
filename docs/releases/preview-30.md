@@ -82,3 +82,26 @@ and compares state and bonded count with `dumpsys bluetooth_manager` without
 recording names. Bluetooth state, bonded count, Location mode and saved networks
 must remain unchanged; BLUETOOTH_CONNECT is the only expected new runtime grant.
 Preserve both emergency routes and never place a call.
+
+## Spare install (Lead, sole driver)
+
+Lead review [PLA-428](/PLA/issues/PLA-428): approved (changed product code plus
+affected tests). The APK hash above matched the author's local build before install.
+
+- **Installed:** in place over 29 at **2026-10-12 15:54:22Z** with the build-30 gate,
+  installer Success, exit 0. The installed APK on the spare reads back byte-identical
+  (`3a9f12da…e5eca5`). A second gate run with `SKIP_INSTALL=1` saved the full log:
+  restart, More › Emergency and Phone both typed exactly **911**, **zero calls**,
+  Device Owner, TEST_ONLY and LOCKED kept, exit 0 (`spare-upgrade-check.txt`).
+- **Exercised:** Phone settings rows are Wi-Fi, Bluetooth, Brightness, Sound, Text size,
+  Battery. The Bluetooth page reads **Paired with: / No paired devices.** with the
+  pairing-later note. The spare has Bluetooth ON, zero bonded devices and Location
+  mode 0, so no names existed to show or record (`spare-bluetooth-check.txt`,
+  `spare-bluetooth-page.png`).
+- **Readback:** Bluetooth state ON and bonded count 0 unchanged, Location mode 0,
+  saved networks exactly unchanged, zero calls. BLUETOOTH_CONNECT is granted
+  `POLICY_FIXED`. It read back granted after the post-install gate restart, before the
+  Bluetooth page was first opened. The trigger for that early grant was not identified.
+  It is the one expected new grant.
+- **Not exercised on the spare:** named, unnamed or many paired devices; Bluetooth off
+  and transition states; read failure. These are covered by controller tests and goldens only.
