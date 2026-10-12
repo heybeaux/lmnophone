@@ -26,6 +26,7 @@ import org.plainphone.boot.HomeGate
 import org.plainphone.boot.LockTaskState
 import org.plainphone.boot.PolicyRuntime
 import org.plainphone.boot.cancelStage
+import org.plainphone.boot.confirmStage
 import org.plainphone.boot.checkingShowsAttention
 import org.plainphone.policy.NoticeTap
 import org.plainphone.policy.WaitingChangeKind
@@ -67,7 +68,12 @@ class MainActivity : ComponentActivity() {
                     }
                     val notice by runtime.notice.collectAsState()
                     val cancel = cancelScreen
-                    if (cancel != null) WaitingChangeScreen(cancel.state) { onCancelEvent(cancel, it) } else Home(notice)
+                    if (cancel != null) {
+                        // The open confirmation follows each published read of the operation (PLA-371 R1).
+                        val wait by runtime.waitingNotice.collectAsState()
+                        LaunchedEffect(wait) { followOperation() }
+                        WaitingChangeScreen(cancel.state) { onCancelEvent(cancel, it) }
+                    } else Home(notice)
                 } else {
                     val notice by runtime.notice.collectAsState()
                     CheckingScreen(onPhone = ::openPhone, onEmergency = ::openEmergency, attention = checkingShowsAttention(gate, notice))
@@ -163,6 +169,22 @@ class MainActivity : ComponentActivity() {
             runOnUiThread {
                 cancelScreen = cancelStage(result)?.let { screen.copy(state = screen.state.copy(stage = it, sending = false)) }
             }
+        }
+    }
+
+    /**
+     * While "Cancel this change?" waits for a choice, it tracks the current operation: committing shows
+     * "Already in progress" with no Cancel, and a finished or replaced request closes it. Once Yes is
+     * pressed, the cancel's own result decides.
+     */
+    private fun followOperation() {
+        val screen = cancelScreen ?: return
+        if (screen.state.stage != WaitingStage.ConfirmCancel || screen.state.sending) return
+        val stage = confirmStage(screen.requestId, runtime.waitingNotice.value)
+        cancelScreen = when (stage) {
+            null -> null
+            WaitingStage.ConfirmCancel -> screen
+            else -> screen.copy(state = screen.state.copy(stage = stage))
         }
     }
 
