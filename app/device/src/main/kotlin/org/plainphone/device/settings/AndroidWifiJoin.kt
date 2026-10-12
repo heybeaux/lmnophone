@@ -75,13 +75,13 @@ class AndroidWifiJoin(context: Context) : WifiJoinPort {
         }
         val id = if (existing != null) existing.networkId else {
             val config = WifiConfiguration().apply {
-                SSID = quote(choice.ssid)
+                SSID = quoteWifiValue(choice.ssid)
                 when (choice.security) {
                     WifiSecurity.Open -> allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE)
                     WifiSecurity.Personal -> {
                         if (choice.sae) { setSecurityParams(WifiConfiguration.SECURITY_TYPE_SAE) }
                         else allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK)
-                        preSharedKey = if (!choice.sae && password.length == 64 && password.all { it in "0123456789abcdefABCDEF" }) password else quote(password)
+                        preSharedKey = if (!choice.sae && password.length == 64 && password.all { it in "0123456789abcdefABCDEF" }) password else quoteWifiValue(password)
                     }
                     WifiSecurity.Unsupported -> return null
                 }
@@ -106,7 +106,6 @@ class AndroidWifiJoin(context: Context) : WifiJoinPort {
         previous = null
     }
     override fun complete(networkId: Int) { created = null; previous = null }
-    private fun quote(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 }
 
 /** Process-wide cleanup survives Activity pause, Home, and calls. Restart reads the durable marker. */
