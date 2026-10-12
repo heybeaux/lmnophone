@@ -1,0 +1,14 @@
+{
+  "apkSha256": "326be911572f9395c1ab18560b4545ad736b9149ab513c6ecfdb56dc1f4180a2",
+  "from": 19,
+  "to": 20,
+  "installStartedUtc": "2026-10-12T07:32:16.349053+00:00",
+  "result": "Performing Streamed Install\nSuccess\n",
+  "readback": [
+    "versionCode=20 minSdk=30 targetSdk=36",
+    "versionName=0.1.0-preview-20",
+    "lastUpdateTime=2026-10-12 00:32:16",
+    "firstInstallTime=2026-10-11 14:05:10"
+  ],
+  "readbackUtc": "2026-10-12T07:32:17.304811+00:00"
+}

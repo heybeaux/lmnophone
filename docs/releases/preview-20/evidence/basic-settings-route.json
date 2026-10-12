@@ -1,0 +1,83 @@
+{
+  "timeUtc": "2026-10-12T07:41:00.644746+00:00",
+  "records": [
+    {
+      "action": "plus",
+      "raw": 128,
+      "mode": 0
+    },
+    {
+      "action": "minus",
+      "raw": 102,
+      "mode": 0
+    },
+    {
+      "action": "minus toward floor",
+      "raw": 77,
+      "mode": 0
+    },
+    {
+      "action": "minus toward floor",
+      "raw": 51,
+      "mode": 0
+    },
+    {
+      "action": "minus toward floor",
+      "raw": 26,
+      "mode": 0
+    },
+    {
+      "action": "floor",
+      "raw": 26,
+      "mode": 0
+    },
+    {
+      "action": "minus at floor",
+      "raw": 26,
+      "mode": 0
+    },
+    {
+      "action": "slider drag up",
+      "raw": 245,
+      "mode": 0
+    },
+    {
+      "action": "slider maximum",
+      "raw": 255,
+      "mode": 0
+    },
+    {
+      "action": "slider floor",
+      "raw": 26,
+      "mode": 0
+    },
+    {
+      "action": "automatic on",
+      "raw": 26,
+      "mode": 1
+    },
+    {
+      "action": "manual plus disabled in automatic",
+      "raw": 26,
+      "mode": 1
+    },
+    {
+      "action": "automatic off",
+      "raw": 26,
+      "mode": 0
+    },
+    {
+      "action": "battery matches dumpsys",
+      "level": 100
+    },
+    {
+      "action": "battery live update",
+      "level": 64,
+      "charging": false
+    }
+  ],
+  "originalAndRestored": {
+    "raw": 102,
+    "mode": 0
+  }
+}

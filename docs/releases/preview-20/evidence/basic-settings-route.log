@@ -1,0 +1,14 @@
+PASS plus {'raw': 128, 'mode': 0}
+PASS minus {'raw': 102, 'mode': 0}
+PASS minus toward floor {'raw': 77, 'mode': 0}
+PASS minus toward floor {'raw': 51, 'mode': 0}
+PASS minus toward floor {'raw': 26, 'mode': 0}
+PASS floor {'raw': 26, 'mode': 0}
+PASS minus at floor {'raw': 26, 'mode': 0}
+PASS slider drag up {'raw': 245, 'mode': 0}
+PASS slider maximum {'raw': 255, 'mode': 0}
+PASS slider floor {'raw': 26, 'mode': 0}
+PASS automatic on {'raw': 26, 'mode': 1}
+PASS manual plus disabled in automatic {'raw': 26, 'mode': 1}
+PASS automatic off {'raw': 26, 'mode': 0}
+PASS U7 routes and restoration
