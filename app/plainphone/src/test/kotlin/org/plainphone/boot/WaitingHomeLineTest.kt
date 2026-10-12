@@ -154,4 +154,21 @@ class WaitingHomeLineTest {
         assertEquals("19:21", home.time)
         assertNull(pendingChange(WaitingRead(null, readAt), time))
     }
+    @Test fun settingsReadsCurrentPendingChangeWithoutKeepingACopy() {
+        val pending = WaitingRead(wait(WaitingChangeKind.REMOVE_PERSON), now)
+        assertEquals(pending.notice, settingsWaitingChange(pending))
+        assertNull(settingsWaitingChange(WaitingRead(null, now))) // cancelled or completed
+        assertNull(settingsWaitingChange(null))
+        for (phase in listOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK))
+            assertNull(settingsWaitingChange(WaitingRead(wait(WaitingChangeKind.REMOVE_PERSON, phase), now)))
+    }
+
+    @Test fun settingsAndCancelUseTheExistingChangeDescriptions() {
+        assertEquals(org.plainphone.R.string.wait_change_turn_off, waitingChangeTextResource(WaitingChangeKind.TURN_OFF))
+        for (kind in listOf(WaitingChangeKind.ADD_PERSON, WaitingChangeKind.HAND_OVER, WaitingChangeKind.REMOVE_PERSON))
+            assertEquals(org.plainphone.R.string.wait_change_people, waitingChangeTextResource(kind))
+        for (kind in listOf(WaitingChangeKind.SWITCH_MODE, WaitingChangeKind.SHORTEN_COUNTDOWN, WaitingChangeKind.RAISE_DAILY_LIMIT))
+            assertEquals(org.plainphone.R.string.wait_change_setup, waitingChangeTextResource(kind))
+    }
+
 }
