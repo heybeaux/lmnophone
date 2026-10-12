@@ -1,0 +1,80 @@
+test_current_calls_only (test_upgrade_check.GateTest.test_current_calls_only) ... PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: read exactly one Telecom current-call section
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+ok
+test_digits_exactly_one_node (test_upgrade_check.GateTest.test_digits_exactly_one_node) ... PASS: read exactly one dial field
+PASS: read exactly one dial field
+ok
+test_empty_dial_field_has_known_google_phone_hint (test_upgrade_check.GateTest.test_empty_dial_field_has_known_google_phone_hint) ... PASS: dial field empty (raw text='')
+PASS: dial field empty (raw text='Phone Number')
+ok
+test_every_route_dump_rewakes_and_dismisses_keyguard (test_upgrade_check.GateTest.test_every_route_dump_rewakes_and_dismisses_keyguard) ... PASS: UI dump completed
+FAIL
+test_exact_digits_do_not_normalize_duplicate_prefill (test_upgrade_check.GateTest.test_exact_digits_do_not_normalize_duplicate_prefill) ... ok
+test_failed_adb_survives_tee (test_upgrade_check.GateTest.test_failed_adb_survives_tee) ... ok
+test_keyguard_failure_stops_before_ui_dump (test_upgrade_check.GateTest.test_keyguard_failure_stops_before_ui_dump) ... PASS: UI dump completed
+FAIL
+test_safe_tap_selector (test_upgrade_check.GateTest.test_safe_tap_selector) ... ok
+test_serial_and_negative_control_guards (test_upgrade_check.GateTest.test_serial_and_negative_control_guards) ... PASS: owned emulator serial
+PASS: spare requires sole-driver opt-in
+PASS: negative control is emulator-only
+PASS: spare requires sole-driver opt-in
+PASS: owned emulator serial
+PASS: owned emulator serial
+PASS: EXPECT_DIAL requires emulator self-test opt-in
+PASS: negative control expects only 912; typed digits stay 911
+ok
+
+======================================================================
+FAIL: test_every_route_dump_rewakes_and_dismisses_keyguard (test_upgrade_check.GateTest.test_every_route_dump_rewakes_and_dismisses_keyguard)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<worktree>/app/tools/preview-12/test_upgrade_check.py", line 30, in test_every_route_dump_rewakes_and_dismisses_keyguard
+    self.assertEqual(commands[:3], [
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+        ('input', 'keyevent', 'KEYCODE_WAKEUP'),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ('wm', 'dismiss-keyguard'),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ('uiautomator', 'dump', '/sdcard/preview9-ui.xml'),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ])
+    ^^
+AssertionError: Lists differ: [('uiautomator', 'dump', '/sdcard/preview9-u[39 chars]ml')] != [('input', 'keyevent', 'KEYCODE_WAKEUP'), ('[72 chars]ml')]
+
+First differing element 0:
+('uiautomator', 'dump', '/sdcard/preview9-ui.xml')
+('input', 'keyevent', 'KEYCODE_WAKEUP')
+
+Second list contains 1 additional elements.
+First extra element 2:
+('uiautomator', 'dump', '/sdcard/preview9-ui.xml')
+
++ [('input', 'keyevent', 'KEYCODE_WAKEUP'),
++  ('wm', 'dismiss-keyguard'),
+- [('uiautomator', 'dump', '/sdcard/preview9-ui.xml'),
+? ^                                                  ^
+
++  ('uiautomator', 'dump', '/sdcard/preview9-ui.xml')]
+? ^                                                  ^
+
+-  ('cat', '/sdcard/preview9-ui.xml')]
+
+======================================================================
+FAIL: test_keyguard_failure_stops_before_ui_dump (test_upgrade_check.GateTest.test_keyguard_failure_stops_before_ui_dump)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<worktree>/app/tools/preview-12/test_upgrade_check.py", line 46, in test_keyguard_failure_stops_before_ui_dump
+    with self.assertRaises(gate.GateFailure): subject.dump()
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+AssertionError: GateFailure not raised
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.234s
+
+FAILED (failures=2)

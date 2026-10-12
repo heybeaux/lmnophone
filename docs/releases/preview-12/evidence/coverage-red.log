@@ -1,0 +1,128 @@
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:processResources NO-SOURCE
+> Task :policy:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :policy:processResources NO-SOURCE
+> Task :links:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :links:processResources
+> Task :device:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:preBuild UP-TO-DATE
+> Task :device:preDebugBuild UP-TO-DATE
+> Task :device:generateDebugResValues
+> Task :device:generateDebugResources
+> Task :device:packageDebugResources
+> Task :device:preDebugUnitTestBuild UP-TO-DATE
+> Task :device:javaPreCompileDebug
+> Task :plainphone:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:javaPreCompileDebugUnitTest
+> Task :device:parseDebugLocalResources
+> Task :device:compileDebugLibraryResources
+> Task :plainphone:preBuild UP-TO-DATE
+> Task :plainphone:preDebugBuild UP-TO-DATE
+> Task :ui:preBuild UP-TO-DATE
+> Task :ui:preDebugBuild UP-TO-DATE
+> Task :device:writeDebugAarMetadata
+> Task :device:generateDebugRFile
+> Task :ui:writeDebugAarMetadata
+> Task :device:generateDebugUnitTestStubRFile
+> Task :plainphone:generateDebugResValues
+> Task :ui:generateDebugResValues
+> Task :ui:generateDebugResources
+> Task :plainphone:checkDebugAarMetadata
+> Task :ui:packageDebugResources
+> Task :plainphone:mapDebugSourceSetPaths
+> Task :plainphone:generateDebugResources
+> Task :plainphone:packageDebugResources
+> Task :plainphone:createDebugCompatibleScreenManifests
+> Task :device:extractDeepLinksDebug
+> Task :plainphone:parseDebugLocalResources
+> Task :core:compileKotlin
+> Task :plainphone:extractDeepLinksDebug
+> Task :core:compileJava NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :device:processDebugManifest
+> Task :plainphone:mergeDebugResources
+> Task :core:jar
+> Task :ui:extractDeepLinksDebug
+> Task :ui:processDebugManifest
+> Task :ui:compileDebugLibraryResources
+> Task :ui:parseDebugLocalResources
+> Task :plainphone:processDebugMainManifest
+> Task :plainphone:processDebugManifest
+> Task :plainphone:processDebugManifestForPackage
+> Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ui:javaPreCompileDebug
+> Task :plainphone:preDebugUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileDebug
+> Task :plainphone:javaPreCompileDebugUnitTest
+> Task :ui:generateDebugRFile
+> Task :plainphone:processDebugResources
+> Task :links:compileKotlin
+> Task :links:compileJava NO-SOURCE
+> Task :links:classes
+> Task :links:jar
+> Task :policy:compileKotlin
+> Task :policy:compileJava NO-SOURCE
+> Task :policy:classes UP-TO-DATE
+> Task :policy:jar
+> Task :ui:compileDebugKotlin
+> Task :ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :ui:processDebugJavaRes
+> Task :ui:bundleLibRuntimeToJarDebug
+> Task :ui:bundleLibCompileToJarDebug
+
+> Task :device:compileDebugKotlin
+w: file://<worktree>/app/device/src/main/kotlin/org/plainphone/device/DpmPort.kt:157:69 'static field DISALLOW_ADD_MANAGED_PROFILE: String' is deprecated. Deprecated in Java.
+w: file://<worktree>/app/device/src/main/kotlin/org/plainphone/device/storage/RecordFile.kt:75:108 Java type mismatch: inferred type is 'File?', but 'File' was expected.
+
+> Task :device:compileDebugJavaWithJavac NO-SOURCE
+> Task :device:processDebugJavaRes
+> Task :device:bundleLibRuntimeToJarDebug
+> Task :device:bundleLibCompileToJarDebug
+> Task :plainphone:compileDebugKotlin
+> Task :plainphone:compileDebugJavaWithJavac NO-SOURCE
+> Task :plainphone:bundleDebugClassesToRuntimeJar
+> Task :plainphone:processDebugJavaRes
+> Task :plainphone:bundleDebugClassesToCompileJar
+
+> Task :device:compileDebugUnitTestKotlin FAILED
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/boot/FlipFailureDurabilityTest.kt:75:25 Unresolved reference 'retryPending'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/boot/FlipFailureDurabilityTest.kt:78:26 Unresolved reference 'retryPending'.
+
+> Task :plainphone:compileDebugUnitTestKotlin FAILED
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/boot/BootPassCoverageTest.kt:17:24 Unresolved reference 'BootPassCoverage'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/boot/BootPassCoverageTest.kt:24:22 Cannot infer type for this parameter. Specify it explicitly.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/boot/BootPassCoverageTest.kt:25:86 Unresolved reference 'it'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/boot/BootPassCoverageTest.kt:108:28 Cannot infer type for this parameter. Specify it explicitly.
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':device:compileDebugUnitTestKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':plainphone:compileDebugUnitTestKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 8s
+58 actionable tasks: 58 executed

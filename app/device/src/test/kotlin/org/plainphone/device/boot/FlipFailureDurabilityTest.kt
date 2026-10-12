@@ -62,6 +62,22 @@ class FlipFailureDurabilityTest {
         }
     }
 
+    @Test fun failedClearSaveRemainsPendingEvenWithNoVisibleFailure() {
+        val store = FlakyStore(failing = false)
+        val boot = process(store)
+        boot.run(locked = true)
+        store.failing = true
+        boot.acknowledgeFlipFailures()
+        port.flushComponent = false
+        val outcome = boot.run(locked = false)
+        assertTrue(outcome.ready)
+        assertTrue(outcome.apply!!.flipFailures.isEmpty())
+        assertTrue(boot.retryPending)
+        store.failing = false
+        boot.run(locked = false)
+        assertFalse(boot.retryPending)
+    }
+
     @Test fun aFalseSaveIsRetriedOnEveryPassUntilAcknowledged() {
         val store = FlakyStore(failing = true)
         val boot = process(store)

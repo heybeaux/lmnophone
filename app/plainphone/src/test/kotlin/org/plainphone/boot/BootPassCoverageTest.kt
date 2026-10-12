@@ -1,0 +1,125 @@
+// Copyright 2026 LMNOPhone contributors
+// SPDX-License-Identifier: Apache-2.0
+package org.plainphone.boot
+
+import org.junit.Assert.*
+import org.junit.Test
+import org.plainphone.core.PackageName
+import org.plainphone.device.ApplyResult
+import org.plainphone.device.boot.BootOutcome
+import org.plainphone.policy.ApplyStage
+
+class BootPassCoverageTest {
+    private val good = BootOutcome(true, false,
+        ApplyResult(ApplyStage.entries.toList(), null, emptySet(), emptySet()), emptySet())
+
+    private inner class Fixture {
+        val coverage = BootPassCoverage()
+        var applies = 0
+        var publications = 0
+        var pending = false
+        var publishedReady = true
+        val skips = mutableListOf<Long>()
+        fun run(reason: String, locked: Boolean = false, outcome: BootOutcome? = good) =
+            coverage.run(reason, locked, { pending }, apply = { applies++; outcome },
+                afterPass = { publications++; publishedReady }, skipped = { skips += it })
+    }
+
+    @Test fun fullPassCoversBothLateBootTriggersButKeepsSideEffects() {
+        val f = Fixture()
+        f.run("user-unlocked")
+        f.run("locked-boot")
+        f.run("boot")
+        assertEquals(1, f.applies)
+        assertEquals(3, f.publications)
+        assertEquals(listOf(1L, 1L), f.skips)
+    }
+
+    @Test fun noPriorPassAndNewProcessMustApply() {
+        for (reason in listOf("boot", "locked-boot")) {
+            val f = Fixture()
+            f.run(reason)
+            assertEquals(1, f.applies)
+            assertTrue(f.skips.isEmpty())
+        }
+    }
+
+    @Test fun onlyBootTriggersCanReuseCoverage() {
+        for (reason in listOf("package:PACKAGE_CHANGED:example", "updated", "user-unlocked", "start", "alarm", "trusted-person", "pin-ended")) {
+            val f = Fixture()
+            f.run("start")
+            f.run(reason)
+            assertEquals(reason, 2, f.applies)
+            assertTrue(f.skips.isEmpty())
+        }
+    }
+
+    @Test fun lockedPassNeverSkipsOrCoversTheFirstUnlockedBoot() {
+        val f = Fixture()
+        f.run("start")
+        f.run("locked-boot", locked = true, outcome = good.copy(locked = true))
+        f.run("boot")
+        assertEquals(3, f.applies)
+        assertTrue(f.skips.isEmpty())
+    }
+
+    @Test fun failedUnverifiedMissingOrAttentionOutcomeInvalidatesEarlierSuccess() {
+        val bad = listOf(null, good.copy(ready = false), good.copy(apply = null),
+            good.copy(apply = good.apply!!.copy(failedStage = ApplyStage.HOME)),
+            good.copy(apply = good.apply!!.copy(applied = listOf(ApplyStage.RESTRICTIONS))),
+            good.copy(planNeedsAttention = true), good.copy(flipRecordUnknown = true),
+            good.copy(disabledFloor = setOf(PackageName("com.example.dialer"))),
+            good.copy(apply = good.apply!!.copy(flipFailures = setOf(PackageName("com.example.dialer")))))
+        for (outcome in bad) {
+            val f = Fixture()
+            f.run("start")
+            f.run("alarm", outcome = outcome)
+            f.run("boot")
+            assertEquals(outcome.toString(), 3, f.applies)
+            assertTrue(f.skips.isEmpty())
+        }
+    }
+
+    @Test fun pendingDurabilityRetryPreventsSkippingEvenAfterPriorSuccess() {
+        val f = Fixture()
+        f.run("start")
+        f.pending = true
+        f.run("boot")
+        f.pending = false
+        f.run("locked-boot")
+        assertEquals(3, f.applies)
+    }
+
+    @Test fun failedPublicationInvalidatesCoverage() {
+        val f = Fixture()
+        f.run("start")
+        f.publishedReady = false
+        f.run("boot")
+        f.publishedReady = true
+        f.run("locked-boot")
+        assertEquals(2, f.applies)
+    }
+
+    @Test fun throwInPassOrSideEffectsInvalidatesCoverage() {
+        for (throwInApply in listOf(true, false)) {
+            val f = Fixture()
+            f.run("start")
+            try {
+                f.coverage.run("alarm", false, { false },
+                    apply = { if (throwInApply) error("apply") else good },
+                    afterPass = { error("publish") }, skipped = {})
+                fail("must throw")
+            } catch (_: IllegalStateException) { }
+            f.run("boot")
+            assertEquals(2, f.applies)
+        }
+    }
+
+    @Test fun explicitInvalidationForLostOwnershipRequiresANewPass() {
+        val f = Fixture()
+        f.run("start")
+        f.coverage.invalidate()
+        f.run("boot")
+        assertEquals(2, f.applies)
+    }
+}
