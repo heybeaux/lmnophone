@@ -1,0 +1,18 @@
+Starting: Intent { cmp=com.android.settings/.Settings }
+Status: ok
+LaunchState: WARM
+Activity: com.android.settings/.homepage.SettingsHomepageActivity
+TotalTime: 291
+WaitTime: 294
+Complete
+    topResumedActivity=ActivityRecord{ce8f228 u0 com.android.settings/.Settings t11}
+    mLockTaskModeState=NONE
+Starting: Intent { act=android.intent.action.MANAGE_PERMISSIONS }
+Status: ok
+LaunchState: WARM
+Activity: com.google.android.permissioncontroller/com.android.permissioncontroller.permission.ui.ManagePermissionsActivity
+TotalTime: 340
+WaitTime: 341
+Complete
+    topResumedActivity=ActivityRecord{9483c05 u0 com.google.android.permissioncontroller/com.android.permissioncontroller.permission.ui.ManagePermissionsActivity t12}
+    mLockTaskModeState=NONE

@@ -1,0 +1,22 @@
+Starting: Intent { cmp=com.android.chrome/com.google.android.apps.chrome.Main }
+Status: ok
+LaunchState: WARM
+Activity: com.android.settings/.enterprise.ActionDisabledByAdminDialog
+TotalTime: 131
+WaitTime: 137
+Complete
+    topResumedActivity=ActivityRecord{b16b5f u0 com.android.settings/.enterprise.ActionDisabledByAdminDialog t6}
+    mLockTaskModeState=NONE
+resource-id="com.android.settings:id/action_bar_root"
+resource-id="android:id/content"
+resource-id="com.android.settings:id/parentPanel"
+resource-id="com.android.settings:id/customPanel"
+resource-id="com.android.settings:id/custom"
+resource-id="com.android.settings:id/admin_support_icon"
+text="Blocked by work policy"
+resource-id="com.android.settings:id/admin_support_dialog_title"
+text="For more info, contact your IT admin"
+resource-id="com.android.settings:id/admin_support_msg"
+resource-id="com.android.settings:id/buttonPanel"
+text="Close"
+resource-id="android:id/button1"
