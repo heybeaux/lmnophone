@@ -1,0 +1,110 @@
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:processResources NO-SOURCE
+> Task :policy:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :policy:processResources NO-SOURCE
+> Task :links:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :links:processResources
+> Task :device:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:preBuild UP-TO-DATE
+> Task :device:preDebugBuild UP-TO-DATE
+> Task :device:generateDebugResValues
+> Task :device:generateDebugResources
+> Task :device:packageDebugResources
+> Task :plainphone:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :device:javaPreCompileDebug
+> Task :device:parseDebugLocalResources
+> Task :device:compileDebugLibraryResources
+> Task :plainphone:preBuild UP-TO-DATE
+> Task :plainphone:preDebugBuild UP-TO-DATE
+> Task :device:generateDebugRFile
+> Task :ui:preBuild UP-TO-DATE
+> Task :device:writeDebugAarMetadata
+> Task :ui:preDebugBuild UP-TO-DATE
+> Task :ui:writeDebugAarMetadata
+> Task :plainphone:generateDebugResValues
+> Task :ui:generateDebugResValues
+> Task :ui:generateDebugResources
+> Task :plainphone:checkDebugAarMetadata
+> Task :ui:packageDebugResources
+> Task :plainphone:mapDebugSourceSetPaths
+> Task :plainphone:generateDebugResources
+> Task :core:compileKotlin
+> Task :core:compileJava NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar
+> Task :plainphone:packageDebugResources
+> Task :plainphone:createDebugCompatibleScreenManifests
+> Task :plainphone:parseDebugLocalResources
+> Task :device:extractDeepLinksDebug
+> Task :plainphone:mergeDebugResources
+> Task :plainphone:extractDeepLinksDebug
+> Task :device:processDebugManifest
+> Task :ui:extractDeepLinksDebug
+> Task :ui:processDebugManifest
+> Task :ui:compileDebugLibraryResources
+> Task :ui:parseDebugLocalResources
+> Task :plainphone:processDebugMainManifest
+> Task :plainphone:processDebugManifest
+> Task :plainphone:processDebugManifestForPackage
+> Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ui:javaPreCompileDebug
+> Task :plainphone:preDebugUnitTestBuild UP-TO-DATE
+> Task :plainphone:javaPreCompileDebug
+> Task :plainphone:javaPreCompileDebugUnitTest
+> Task :ui:generateDebugRFile
+> Task :plainphone:processDebugResources
+> Task :links:compileKotlin
+> Task :links:compileJava NO-SOURCE
+> Task :links:classes
+> Task :links:jar
+> Task :policy:compileKotlin
+> Task :policy:compileJava NO-SOURCE
+> Task :policy:classes UP-TO-DATE
+> Task :policy:jar
+> Task :ui:compileDebugKotlin
+> Task :ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :ui:processDebugJavaRes
+> Task :ui:bundleLibCompileToJarDebug
+> Task :ui:bundleLibRuntimeToJarDebug
+
+> Task :device:compileDebugKotlin
+w: file://<worktree>/app/device/src/main/kotlin/org/plainphone/device/DpmPort.kt:157:69 'static field DISALLOW_ADD_MANAGED_PROFILE: String' is deprecated. Deprecated in Java.
+w: file://<worktree>/app/device/src/main/kotlin/org/plainphone/device/storage/RecordFile.kt:75:108 Java type mismatch: inferred type is 'File?', but 'File' was expected.
+
+> Task :device:compileDebugJavaWithJavac NO-SOURCE
+> Task :device:processDebugJavaRes
+> Task :device:bundleLibRuntimeToJarDebug
+> Task :device:bundleLibCompileToJarDebug
+> Task :plainphone:compileDebugKotlin
+> Task :plainphone:compileDebugJavaWithJavac NO-SOURCE
+> Task :plainphone:processDebugJavaRes
+> Task :plainphone:bundleDebugClassesToRuntimeJar
+> Task :plainphone:bundleDebugClassesToCompileJar
+
+> Task :plainphone:compileDebugUnitTestKotlin
+w: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/boot/CallingScreenRecordFailureTest.kt:48:21 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'File?'.
+
+> Task :plainphone:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :plainphone:processDebugUnitTestJavaRes
+
+> Task :plainphone:testDebugUnitTest FAILED
+
+BootPassCoverageTest > everyGroupFailureFallsBackToFullPass FAILED
+    java.lang.AssertionError at BootPassCoverageTest.kt:164
+
+BootPassCoverageTest > unchangedGroupSkipsWithoutHomeRefreshAndKeepsPassAndCapture FAILED
+    java.lang.AssertionError at BootPassCoverageTest.kt:126
+
+23 tests completed, 2 failed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':plainphone:testDebugUnitTest'.
+> There were failing tests. See the report at: file://<worktree>/app/plainphone/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 7s
+57 actionable tasks: 57 executed

@@ -1,0 +1,10 @@
+{
+  "release_notes": {
+    "id": "a3ba64f7-6711-47a2-b8f3-ec0338e63916",
+    "identifier": "PLA-C65"
+  },
+  "qa_gate_run": {
+    "id": "f7f011af-9dc6-4592-9c23-7d0910d616ac",
+    "identifier": "PLA-C66"
+  }
+}
