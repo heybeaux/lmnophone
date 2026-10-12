@@ -147,6 +147,16 @@ class VoicePracticeControllerTest {
         }
     }
 
+    @Test fun microphoneFailingJustAfterStartIsBusyAndKeepsTheDraft() {
+        val store = store(); val c = controller(store)
+        c.dispatch(Choose(sam)); c.recordFor(3_000)
+        val kept = store.file("sam").readBytes()
+        c.dispatch(RecordAgain); recorder.listener!!.onStartFailed()
+        assertEquals(VoiceNotice.MicBusy, (c.state as VoiceState.Review).notice)
+        assertFalse(recorder.running); assertArrayEquals(kept, store.file("sam").readBytes())
+        assertFalse(store.takeFile("sam").exists())
+    }
+
     @Test fun storageThatCannotBeWrittenIsRecorderErrorWithoutStartingTheMic() {
         val notADir = tmp.newFile("voice-file")
         val c = controller(VoiceDraftStore(notADir) { now })
