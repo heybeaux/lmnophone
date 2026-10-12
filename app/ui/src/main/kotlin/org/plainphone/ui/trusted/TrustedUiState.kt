@@ -107,6 +107,7 @@ data class WaitingChangeUiState(val context: AdminContext? = null, val stage: Wa
     val change: String, val everyone: List<String> = emptyList(), val starterName: String = "",
     val day: String = "", val startedAt: String = "", val happensAt: String = "",
     val newName: String = "", val helper: String = "", val userName: String = "",
+    val happensAtDay: org.plainphone.ui.home.HomeNoticeDay? = null,
     val canSkip: Boolean = false, val canStop: Boolean = false, val turningOff: Boolean = false,
     val sending: Boolean = false, val otherCommitting: Boolean = false, val changeToSelfManaged: Boolean = false)
 sealed interface WaitingChangeEvent {
@@ -174,5 +175,5 @@ sealed interface HistoryEvent { data object Done : HistoryEvent }
 enum class TurnOffStage { Intro, FirstConfirmation, LastConfirmation, TurningOff, Off, Failed }
 data class TurnOffUiState(val context: AdminContext, val stage: TurnOffStage, val everyone: List<String> = emptyList(),
     val helper: String = "", val step: Int = 0, val total: Int = 0, val stepDescription: String = "",
-    val resumed: Boolean = false, val sending: Boolean = false)
+    val resumed: Boolean = false, val sending: Boolean = false, val testBuild: Boolean = false)
 sealed interface TurnOffEvent { data object Continue : TurnOffEvent; data object KeepOn : TurnOffEvent; data object Details : TurnOffEvent }

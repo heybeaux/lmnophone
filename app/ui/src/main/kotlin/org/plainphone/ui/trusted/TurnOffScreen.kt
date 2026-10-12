@@ -40,7 +40,8 @@ fun TurnOffScreen(state: TurnOffUiState, onEvent: (TurnOffEvent) -> Unit) {
             TurnOffStage.Intro -> {
                 Words(if (self) s(R.string.off_intro_self) else s(R.string.off_intro, user))
                 Words(s(R.string.off_kept))
-                Words(if (self) s(R.string.off_wait_self) else s(R.string.off_wait, trustedPeopleText(state.everyone, everyone = true).orEmpty()))
+                Words(if (state.testBuild || self) s(R.string.off_wait_self) else s(R.string.off_wait, trustedPeopleText(state.everyone, everyone = true).orEmpty()))
+                if (state.testBuild) Words(s(R.string.preview_no_texts))
                 Words(s(R.string.off_setup, helper)); Words(s(R.string.off_battery))
             }
             TurnOffStage.FirstConfirmation -> Words(s(R.string.off_sure_body, user))

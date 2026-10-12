@@ -24,6 +24,7 @@ data class HomeApp(val id: String, val name: String)
 data class HomeNoticeDay(val date: LocalDate, val daysFromToday: Int)
 
 sealed interface HomeNotice {
+    data object PreviewTurnOffClosed : HomeNotice
     data object NeedsAttention : HomeNotice
     data class TurnOffWaiting(val time: String, val day: HomeNoticeDay) : HomeNotice
     data object PeopleChangeWaiting : HomeNotice

@@ -33,6 +33,7 @@ class WaitingCheckpoints(
     private val clock: RunningClock,
     private val battery: () -> BatteryState?,
     authority: PersonAuthorityConsumer,
+    private val testBuild: Boolean = false,
 ) {
     private val controller = WaitingChangeController(
         store.waitingStore, { store.credentials.read() }, clock, authority, store.identities, store.cancelIntents,
@@ -48,7 +49,7 @@ class WaitingCheckpoints(
     /** One checkpoint of the pending operation; null when nothing is pending. */
     fun checkpoint(): WaitingOutcome? {
         val requestId = pendingRequest() ?: return null
-        return controller.tick(requestId, battery() ?: UNKNOWN_BATTERY)
+        return controller.tick(requestId, battery() ?: UNKNOWN_BATTERY, turnOffAvailable = !testBuild)
     }
 
     /**
@@ -62,6 +63,18 @@ class WaitingCheckpoints(
         val remaining = if (op.phase != WaitingPhase.PENDING) 0L else
             clock.checkpoint()?.proven?.let { (WAIT_MILLIS - it.since(op.startedAt)).coerceIn(0L, WAIT_MILLIS) } ?: WAIT_MILLIS
         return WaitingNotice(op.identity.requestId, op.kind, op.phase, remaining)
+    }
+
+    /** Durable terminal preview result; it remains readable across process death. No effect ports. */
+    fun previewTurnOffClosed(): Boolean {
+        if (!testBuild) return false
+        val state = store.waitingStore.read() ?: return false
+        val op = state.operation ?: return false
+        return op.kind == org.plainphone.policy.WaitingChangeKind.TURN_OFF &&
+            op.phase == WaitingPhase.CANCELLED && op.restoredSteps == 0 && state.texts.any {
+                it.operation.identity.requestId == op.identity.requestId &&
+                    it.event == org.plainphone.policy.WaitingEvent.CANCELLED_AFTER_ROLLBACK
+            }
     }
 
     /** The phone's own cancel of [requestId]. No PIN. */

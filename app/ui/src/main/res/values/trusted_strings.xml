@@ -51,7 +51,7 @@
     <string name="admin_update">Install a Plainphone update</string>
     <string name="admin_change_pin">Change PIN</string>
     <string name="admin_switch">Let someone look after this phone</string>
-    <string name="admin_turn_off">Turn Plainphone off</string>
+    <string name="admin_turn_off">Turn LMNOPhone off</string>
     <string name="admin_hidden_app">Add a hidden app</string>
     <string name="admin_add_title">Add %1$s?</string>
     <string name="admin_made_by">Made by %1$s</string>

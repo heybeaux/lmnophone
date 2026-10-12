@@ -72,6 +72,11 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
   - Hashing goes through a `KeyDerivation` interface (PBKDF2 is implemented by D).
   - Supports one or two trusted people.
 - `WaitingChangeController`: the 24-hour waits (turning off, trusted-people changes, mode switches) and cancel.
+  `tick` keeps its default forward behavior. Preview hosts pass `turnOffAvailable = false`
+  only from Android's test-build flag: a mature pending turn-off closes as CANCELLED
+  through the existing terminal cancellation path, with zero restore steps. The
+  existing CANCELLED_AFTER_ROLLBACK receipt identifies this no-effect preview result;
+  it is not a rollback of a committing turn-off. No new PIN authority is introduced.
 - `ElevationController` (self-managed mode), `PlaySessionMachine`, `MonthlyCheck`, `EmergencyFloor` and baseline rules, `NoticeLine` priority.
 - `TimeWindowQuota`: the generic "open for a few minutes" quota. The **web window** (5×/day × 5 min, extendable) and **Wi-Fi sign-in** (3 per 24 h) are built behind a flag that stays off. Their OpenSpec change isn't approved yet; Wi-Fi sign-in comes after the MVP core.
 

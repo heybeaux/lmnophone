@@ -95,7 +95,7 @@ fun WaitingChangeScreen(state: WaitingChangeUiState, onEvent: (WaitingChangeEven
             WaitingStage.Cancelled -> { Words(s(R.string.wait_cancel_body, change)); everyone?.let { Words(s(R.string.wait_cancelled_text, it)) } }
             WaitingStage.Committing -> Words(s(if (state.turningOff) R.string.wait_off_progress else R.string.wait_progress_body))
             WaitingStage.Started -> {
-                Words(s(R.string.wait_started_body, change, state.happensAt))
+                Words(s(R.string.wait_started_body, change, state.happensAtDay?.let { waitingTimeText(state.happensAt, it) } ?: state.happensAt))
                 everyone?.let { Words(s(R.string.wait_started_text, it)) }
                 Words(s(R.string.wait_started_cancel))
             }

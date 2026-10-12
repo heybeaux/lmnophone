@@ -38,6 +38,7 @@ import org.plainphone.device.authority.PinEntry
 import org.plainphone.device.authority.PinEnrollmentResult
 import org.plainphone.device.authority.PinAccessResult
 import org.plainphone.device.authority.PreviewPinAccess
+import org.plainphone.device.authority.PreviewTurnOff
 import org.plainphone.device.runtime.Pbkdf2KeyDerivation
 import org.plainphone.device.runtime.SecureEntropy
 import org.plainphone.policy.PinVault
@@ -133,21 +134,23 @@ class PolicyRuntime private constructor(private val context: Context) {
     }
     /**
      * The pending wait's checkpoints and PIN-free cancel: one per process, on the same store, with the
-     * proven clock in device-protected storage. No grant is accepted; nothing here starts or skips a wait.
+     * proven clock in device-protected storage. Starting uses PreviewTurnOff and a separate fresh PIN; skipping is unavailable.
      */
     private val facts by lazy { AndroidRuntimeFacts(context) }
     private val runningClock by lazy {
         ProvenRunningClock(FileClockStateStore(File(protectedDir, "clock")), facts::bootTime, authorityStore::reserveEpoch)
     }
-    private val pins by lazy {
-        PreviewPinAccess(authorityStore, PinVault(authorityStore.credentials, Pbkdf2KeyDerivation, SecureEntropy, runningClock))
-    }
+    private val testBuild get() = context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_TEST_ONLY != 0
+    private val vault by lazy { PinVault(authorityStore.credentials, Pbkdf2KeyDerivation, SecureEntropy, runningClock) }
+    private val pins by lazy { PreviewPinAccess(authorityStore, vault) }
+    private val turnOff by lazy { PreviewTurnOff(authorityStore, vault, runningClock) }
     private val waiting: WaitingCheckpoints by lazy {
         WaitingCheckpoints(
             authorityStore,
             runningClock,
             facts::battery,
             PersonAuthorityConsumer { _, _, _ -> false },
+            testBuild = testBuild,
         )
     }
     private val boot = BootReapply(
@@ -281,6 +284,17 @@ class PolicyRuntime private constructor(private val context: Context) {
 
     fun checkPin(pin: CharArray, done: (PinAccessResult) -> Unit) = dispatcher.post {
         done(pins.authenticate(pin))
+    }
+
+    fun checkTurnOffPin(flow: String, pin: CharArray, done: (PinAccessResult) -> Unit) = dispatcher.post {
+        val result = try { turnOff.authenticate(flow, pin) } catch (_: RuntimeException) { PinAccessResult.Unavailable }
+        finally { pin.fill('\u0000') }
+        done(result)
+    }
+    fun closeTurnOff(flow: String) = dispatcher.post { turnOff.close(flow) }
+    fun startTurnOff(flow: String, first: Boolean, second: Boolean, done: (WaitingOutcome) -> Unit) = dispatcher.post {
+        val result = try { turnOff.start(flow, first, second) } catch (_: RuntimeException) { WaitingOutcome.NOT_READY }
+        try { run("turn-off-start") } finally { done(result) }
     }
 
     /** The phone's own cancel of the pending wait it shows; no PIN. The pass that follows reads the result. */
@@ -426,6 +440,7 @@ class PolicyRuntime private constructor(private val context: Context) {
             waitingNoticeState.value = wait
             noticeTapState.value = line?.tap
             noticeState.value = homeLine(line, readAt, DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
+                ?: if (waiting.previewTurnOffClosed()) HomeNotice.PreviewTurnOffClosed else null
             lastGate = if (outcome?.ready == true && !pinned) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
             refreshState.value = HomeRefresh(noticeState.value,

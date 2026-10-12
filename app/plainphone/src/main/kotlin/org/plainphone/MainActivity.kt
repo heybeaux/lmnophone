@@ -283,6 +283,8 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.hasCategory(Intent.CATEGORY_HOME)) shell.state = ShellState()
+        // This opens only the existing PIN-free view; its controller rechecks the current request.
+        if (intent.getBooleanExtra("open_waiting_change", false)) openNotice()
         enterLockTask()
     }
 

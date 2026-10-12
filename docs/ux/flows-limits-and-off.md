@@ -159,6 +159,14 @@ wipe); design C6. The wait itself, its texts and the skip are in
 - **Notes:** the flat-battery line is from the Lead, based on PLA-5 A6 (the lockdown comes back after a
   restart). The 24-hour wait is Beaux's choice (card `c60170d6`, approved in PLA-30).
 
+**Build 24 preview exception (authorized in [PLA-408](/PLA/issues/PLA-408)):**
+The preview has no delivery addresses. Show "This test build doesn't send texts."
+instead of a promise that anyone receives a text. The currently enrolled preview
+record is self-managed; keep the matching L4a self-managed wait wording. No SMS is sent.
+On maturity, the test build closes the wait without turning off and Home says:
+"Turning off isn't in this test build. Nothing changed." A real release keeps
+its existing turn-off behavior. All other L4 copy is unchanged.
+
 ### L4b. First confirmation
 
 - **Title:** Are you sure?

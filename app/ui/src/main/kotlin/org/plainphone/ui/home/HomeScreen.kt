@@ -211,6 +211,7 @@ private fun HomeAppRow(name: String, onClick: () -> Unit) {
 @Composable
 private fun noticeText(notice: HomeNotice): String? = when (notice) {
     HomeNotice.NeedsAttention -> stringResource(R.string.notice_attention)
+    HomeNotice.PreviewTurnOffClosed -> stringResource(R.string.preview_turn_off_closed)
     is HomeNotice.TurnOffWaiting -> stringResource(R.string.notice_turn_off,
         waitingTimeText(notice.time, notice.day))
     HomeNotice.PeopleChangeWaiting -> stringResource(R.string.notice_people)

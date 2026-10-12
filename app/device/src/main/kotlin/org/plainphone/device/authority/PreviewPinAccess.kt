@@ -18,7 +18,7 @@ sealed interface PinAccessResult {
 }
 
 /**
- * Access to the preview's informational controls screen only. Every action in it remains unhosted.
+ * Access to the preview's controls screen only. Turn-off requires a separate fresh action-bound PIN.
  * A successful PIN creates and immediately consumes a purpose-bound, single-use vault grant. This
  * result cannot authorize a future privileged action. No access or raw secret is persisted.
  * All methods are called on PolicyRuntime's common serial dispatcher.

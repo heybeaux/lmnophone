@@ -313,7 +313,7 @@ class WaitingChangeController(
     }
 
     @Synchronized
-    fun tick(requestId: String, battery: BatteryState): WaitingOutcome {
+    fun tick(requestId: String, battery: BatteryState, turnOffAvailable: Boolean = true): WaitingOutcome {
         val before = store.read() ?: return WaitingOutcome.NOT_READY
         reconcileCancellations(before)
         val operation = before.operation ?: return WaitingOutcome.IGNORED
@@ -332,6 +332,10 @@ class WaitingChangeController(
         if (intent == CancelIntent.UNKNOWN) return WaitingOutcome.NOT_READY
         val now = clock.checkpoint() ?: return WaitingOutcome.NOT_READY
         if (now.proven.since(operation.startedAt) < 86_400_000L) return WaitingOutcome.PENDING
+        // Test-only hosts can close the pending wait before any forward restore is authorized.
+        // Reuse the terminal cancellation receipt; zero restore steps have run.
+        if (operation.kind == WaitingChangeKind.TURN_OFF && !turnOffAvailable)
+            return cancelPending(before, operation, WaitingEvent.CANCELLED_AFTER_ROLLBACK)
         if (operation.kind == WaitingChangeKind.TURN_OFF && !battery.allowsDiscretionaryUnhide) return WaitingOutcome.LOW_BATTERY
         return if (write(before, operation.withPhase(WaitingPhase.COMMITTING), WaitingEvent.COMMITTING,
                 current.people.mapValues { it.value.generation }, current.contacts()))

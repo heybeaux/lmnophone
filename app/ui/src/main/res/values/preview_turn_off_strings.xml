@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <string name="preview_no_texts">This test build doesn\'t send texts.</string>
+    <string name="preview_turn_off_closed">Turning off isn\'t in this test build. Nothing changed.</string>
+</resources>
