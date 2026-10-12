@@ -340,3 +340,16 @@ path requires API 31+. `:ui` renders `BluetoothDiscoveryUiState`, emits
 Back/LookAgain/Select events, and shows a name-only device page with the honest
 pairing-not-ready line. `:plainphone` owns route selection and cancels on pause
 or leave. No policy-engine or lock-task interface changes.
+
+### Preview 33 Wi-Fi joining seam
+
+`:device/settings` exports `WifiLocationController(WifiLocationPort, clock)` and
+`WifiJoinController(WifiJoinPort, clock, onConnected)`. The first owns a durable
+Location marker and call-aware cleanup; the second bounds each confirmed-network
+join to 30 seconds. `WifiJoinSession` serializes them on the main thread, restores
+marked Location at application startup and continues deferred cleanup after pause.
+`AndroidWifiJoin` adds new configurations or selects existing ones unchanged.
+`:ui` renders `WifiJoinUiState` and emits password/show/connect/cancel events;
+`WifiSettingsUiState` adds Location status and selectable transient choices.
+The Activity owns ephemeral password text and FLAG_SECURE while joining. Policy,
+lock-task, emergency and authority interfaces are unchanged.

@@ -98,3 +98,11 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [x] Changed screenshot checks at 1.0/1.3/1.5/1.8/2.0, with every changed image inspected.
 - [x] In-place emulator upgrade, discovery exercise, no-call emergency and unchanged-setting readbacks.
 - [ ] Single Lead review and in-place spare installation.
+
+## Approved build 33 Wi-Fi subset (PLA-437)
+
+- [x] Deterministic Location ownership, cleanup and join outcome controllers, tests first.
+- [x] DO join adapter and native open/personal/unsupported join presentation.
+- [x] Probe temporary Location, connection retention and Location-off reconnection on API 35.
+- [x] Complete affected goldens and in-place emulator upgrade gate.
+- [ ] Lead opposite-model review and in-place spare install/readback.

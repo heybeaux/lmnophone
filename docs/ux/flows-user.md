@@ -711,3 +711,24 @@ Selecting a row shows **‹ Pair a new device**, the device name, and **Pairing
 from LMNOPhone isn't ready yet.** There is no Pair button: the emulator probe
 found Android's confirmation is rejected under lock task. No pairing call
 ships. Names are ephemeral display data only, never logs or saved evidence.
+
+### Build 33 Wi-Fi joining subset
+
+Approved by the board on [PLA-425](/PLA/issues/PLA-425), implemented in
+[PLA-437](/PLA/issues/PLA-437). Under **Nearby networks**, when Location is off:
+**To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.**
+Action: **Show nearby networks**. Failure: **Nearby networks can't be shown right now.**
+
+Tap an unconnected network to open its name as the title. Personal networks show
+**Wi-Fi password**, a **Show password** switch, **Connect**, and **Cancel**.
+Open networks show **This network has no password.**, **Connect**, and **Cancel**.
+Other networks show **LMNOPhone can't join this kind of network.** and **OK** only.
+During the attempt: **Joining…**. Failure or 30 seconds: **Couldn't join. Check the password and try again.**
+Success returns to **Connected to {network}** on the Wi-Fi page.
+
+Only Location enabled by this flow is turned off: on success, Back, Cancel, Home,
+page hidden, or five minutes without joining. A call defers that change until idle.
+A restart recovers the durable ownership marker. Failed restoration shows
+**Location is still on. LMNOPhone couldn't turn it off.** on the Wi-Fi page.
+There is no Forget action or system Settings route. Saved configurations are never
+rewritten; the existing configuration is used when that network was already saved.

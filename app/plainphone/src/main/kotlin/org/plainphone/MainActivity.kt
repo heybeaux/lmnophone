@@ -16,7 +16,12 @@ import org.plainphone.ui.user.BluetoothDiscoveryEvent
 import org.plainphone.device.settings.AndroidBluetooth
 import org.plainphone.device.settings.BluetoothController
 import org.plainphone.ui.user.BluetoothSettingsUiState
-import org.plainphone.device.settings.AndroidWifi
+import org.plainphone.device.settings.WifiJoinSession
+import org.plainphone.device.settings.WifiSecurity
+import org.plainphone.ui.user.WifiJoinUiState
+import org.plainphone.ui.user.WifiJoinKind
+import org.plainphone.ui.user.WifiJoinEvent
+import org.plainphone.ui.user.WifiNearbyUi
 import org.plainphone.device.settings.WifiController
 import org.plainphone.device.settings.WifiInternetStatus
 import org.plainphone.ui.user.WifiInternetUiStatus
@@ -166,18 +171,72 @@ class MainActivity : ComponentActivity() {
         val value = bluetoothController.state
         bluetooth = BluetoothSettingsUiState(value.enabled, value.paired, value.readFailed)
     }
-    private val wifiSource by lazy { AndroidWifi(this) }
-    private val wifiController by lazy { WifiController(wifiSource) { SystemClock.elapsedRealtime() } }
+    private val wifiSession by lazy { WifiJoinSession.get(this) }
+    private val wifiSource get() = wifiSession.source
+    private val wifiController by lazy { WifiController({ wifiSession.facts() }) { SystemClock.elapsedRealtime() } }
+    private var wifiJoin by mutableStateOf<WifiJoinUiState?>(null)
+    private var wifiEnableFailed = false
+    private fun wifiVisible() = resumed && shell.state.current == ShellRoute.WifiSettings
+    private fun showNearbyWifi() {
+        if (!wifiVisible()) return
+        wifiSource.onOpen()
+        wifiEnableFailed = !wifiSession.location.show()
+        wifiSession.schedule()
+        syncWifi()
+    }
+    private fun selectWifi(id: String) {
+        if (!wifiVisible()) return
+        val choice = wifiSession.joinPort.choices().firstOrNull { it.ssid == id } ?: return
+        val current = try { wifiSession.facts() } catch (_: Exception) { return }
+        if (current.connected && current.ssid?.removeSurrounding("\"") == id) return
+        wifiSession.join.select(choice)
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+        wifiJoin = WifiJoinUiState(choice.name, when (choice.security) {
+            WifiSecurity.Open -> WifiJoinKind.Open
+            WifiSecurity.Personal -> WifiJoinKind.Personal
+            WifiSecurity.Unsupported -> WifiJoinKind.Unsupported
+        })
+    }
+    private fun leaveWifi() {
+        wifiSession.leave()
+        wifiJoin = null
+        window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+    }
+    private fun onWifiJoin(event: WifiJoinEvent) {
+        if (!wifiVisible()) return
+        val current = wifiJoin ?: return
+        when (event) {
+            is WifiJoinEvent.Password -> if (!current.joining) wifiJoin = current.copy(password = event.value)
+            is WifiJoinEvent.ShowPassword -> if (!current.joining) wifiJoin = current.copy(showPassword = event.value)
+            WifiJoinEvent.Cancel -> leaveWifi()
+            WifiJoinEvent.Connect -> {
+                wifiSession.join.connect(current.password)
+                wifiJoin = current.copy(password = "", showPassword = false)
+                wifiSession.schedule()
+            }
+        }
+        syncWifi()
+    }
     private var wifi by mutableStateOf(WifiSettingsUiState())
     private fun syncWifi() {
+        wifiSession.join.tick()
+        wifiSession.location.tick()
+        val joining = wifiSession.join.state
+        wifiJoin = if (joining.choice == null) null else wifiJoin?.copy(joining = joining.joining, failed = joining.failed)
+        if (wifiJoin == null) window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
         wifiController.refresh()
         val value = wifiController.state
+        val locationOff = try { !wifiSession.locationPort.enabled() } catch (_: Exception) { false }
+        val choices = if (!locationOff && !value.readFailed && value.enabled) wifiSession.joinPort.choices() else emptyList()
+        val rawCurrent = try { wifiSession.facts().ssid?.removeSurrounding("\"") } catch (_: Exception) { null }
         wifi = WifiSettingsUiState(value.enabled, value.connected, value.network, value.nearby,
             value.readFailed, when (value.internetStatus) {
                 WifiInternetStatus.SignInRequired -> WifiInternetUiStatus.SignInRequired
                 WifiInternetStatus.NoInternet -> WifiInternetUiStatus.NoInternet
                 null -> null
-            })
+            }, locationOff = locationOff, locationEnableFailed = wifiEnableFailed,
+            locationOffFailed = wifiSession.location.offFailed,
+            choices = choices.map { WifiNearbyUi(it.ssid, it.name, value.connected && it.ssid == rawCurrent) })
     }
     private val textSizeController by lazy { TextSizeController(AndroidTextSize(this)) }
     private var textSize by mutableStateOf(TextSizeUiState())
@@ -336,12 +395,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 if (basicSettingsVisible && shell.state.current == ShellRoute.WifiSettings) {
+                    wifiEnableFailed = false
                     wifiSource.onOpen()
                     wifiController.onOpen()
-                    while (true) {
-                        syncWifi()
-                        delay(1_000)
-                    }
+                    try {
+                        while (true) { syncWifi(); delay(1_000) }
+                    } finally { leaveWifi() }
                 }
                 if (basicSettingsVisible && shell.state.current == ShellRoute.TextSize) {
                     textSizeController.onOpen()
@@ -436,7 +495,8 @@ class MainActivity : ComponentActivity() {
                 isDeviceSecure = getSystemService(KeyguardManager::class.java).isDeviceSecure,
                 versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() },
                 textSize = textSize, onTextSize = ::onTextSize,
-                wifi = wifi, bluetooth = bluetooth,
+                wifi = wifi, wifiJoin = wifiJoin, onWifiJoin = ::onWifiJoin,
+                onWifiShow = ::showNearbyWifi, onWifiSelect = ::selectWifi, bluetooth = bluetooth,
                 sound = sound, onSound = ::onSound,
                 ringtone = ringtone, onRingtone = ::onRingtone,
                 discovery = discovery, onDiscovery = ::onDiscovery, onPairNew = ::openDiscovery,
@@ -463,7 +523,7 @@ class MainActivity : ComponentActivity() {
     /** The Home key always lands on the home screen, whatever Plainphone screen was open. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent.hasCategory(Intent.CATEGORY_HOME)) shell.state = ShellState()
+        if (intent.hasCategory(Intent.CATEGORY_HOME)) { leaveWifi(); shell.state = ShellState() }
         // This opens only the existing PIN-free view; its controller rechecks the current request.
         if (intent.getBooleanExtra("open_waiting_change", false)) openNotice()
         enterLockTask()
@@ -478,6 +538,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        leaveWifi()
         discoveryController.close()
         ringtoneController.stopPreview()
         resumed = false

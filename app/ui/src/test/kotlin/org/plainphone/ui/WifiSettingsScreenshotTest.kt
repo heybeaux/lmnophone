@@ -30,7 +30,7 @@ class WifiSettingsScreenshotTest(private val scale: Float) {
     @Test fun noInternet() = shot(WifiSettingsUiState(true, true,
         internetStatus = WifiInternetUiStatus.NoInternet))
     @Test fun readFailure() = shot(WifiSettingsUiState(readFailed = true))
-    @Test fun connected() = shot(WifiSettingsUiState(true, true, "AndroidWifi", listOf("AndroidWifi", "Sam", "Jo")))
+    @Test fun connected() = shot(WifiSettingsUiState(true, true, "Alex", listOf("Alex", "Sam", "Jo")))
     @Test fun unnamed() = shot(WifiSettingsUiState(true, true))
     @Test fun disconnected() = shot(WifiSettingsUiState(true, false, nearby = listOf("Sam")))
     @Test fun off() = shot(WifiSettingsUiState(enabled = false))

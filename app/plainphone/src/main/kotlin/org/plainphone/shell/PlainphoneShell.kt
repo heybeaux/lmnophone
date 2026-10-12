@@ -48,6 +48,10 @@ fun PlainphoneShell(
     textSize: TextSizeUiState,
     onTextSize: (TextSizeEvent) -> Unit,
     wifi: WifiSettingsUiState,
+    wifiJoin: WifiJoinUiState?,
+    onWifiJoin: (WifiJoinEvent) -> Unit,
+    onWifiShow: () -> Unit,
+    onWifiSelect: (String) -> Unit,
     bluetooth: BluetoothSettingsUiState,
     discovery: BluetoothDiscoveryUiState,
     onDiscovery: (BluetoothDiscoveryEvent) -> Unit,
@@ -61,7 +65,10 @@ fun PlainphoneShell(
     onBrightness: (BrightnessEvent) -> Unit,
     onStep: (Step) -> Unit,
 ) {
-    BackHandler { onStep(navigator.back(state)) }
+    BackHandler {
+        if (state.current == ShellRoute.WifiSettings && wifiJoin != null) onWifiJoin(WifiJoinEvent.Cancel)
+        else onStep(navigator.back(state))
+    }
     PlainphoneTheme {
         // The :ui screens expect the safe content area; the request screen handles the keyboard itself.
         Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).systemBarsPadding().displayCutoutPadding()) {
@@ -76,7 +83,8 @@ fun PlainphoneShell(
                     { onStep(navigator.back(state)) }, onPairNew)
                 ShellRoute.BluetoothDiscovery -> BluetoothDiscoveryScreen(discovery, onDiscovery)
                 is ShellRoute.BluetoothDevice -> BluetoothDeviceScreen(route.name) { onStep(navigator.back(state)) }
-                ShellRoute.WifiSettings -> WifiSettingsScreen(wifi) { onStep(navigator.back(state)) }
+                ShellRoute.WifiSettings -> if (wifiJoin != null) WifiJoinScreen(wifiJoin, onWifiJoin)
+                    else WifiSettingsScreen(wifi, { onStep(navigator.back(state)) }, onWifiShow, onWifiSelect)
                 ShellRoute.Sound -> SoundScreen(sound, onSound)
                 ShellRoute.Ringtone -> RingtoneScreen(ringtone, onRingtone)
                 ShellRoute.Brightness -> BrightnessScreen(brightness, onBrightness)

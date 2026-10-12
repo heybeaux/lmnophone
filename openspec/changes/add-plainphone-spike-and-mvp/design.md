@@ -323,3 +323,11 @@ Location dependency or system UI is introduced. Names are never persisted.
 8. **Wi-Fi sign-in and Wi-Fi calling (Telegram 4481, PLA-17).** Sign-in Wi-Fi stays unsupported in the MVP. The approved direction for later is in D4. The two initial users rely on Wi-Fi calling **sometimes**, so the handover checklist (task 6.3) checks that Wi-Fi calling works on ordinary Wi-Fi with LMNOPhone's policy on. Wi-Fi calling on a sign-in network only works once the sign-in is done, which Beaux accepted.
 
 **For the spike:** Q1–Q14 in `docs/feasibility-questions.md`.
+
+Build 33 (board decision on PLA-425, delivery PLA-437) extends the Wi-Fi subset
+with DO addNetwork/enableNetwork. Existing configurations are selected unchanged.
+A process-wide device adapter runs a deterministic join controller and a temporary
+Location controller. Device-protected ownership is committed before enabling;
+cleanup is read back, deferred during calls, retried, and recovered at startup.
+Passwords stay ephemeral in the visible UI and are passed only to Android's
+network configuration. No lock-task list or emergency policy changes.

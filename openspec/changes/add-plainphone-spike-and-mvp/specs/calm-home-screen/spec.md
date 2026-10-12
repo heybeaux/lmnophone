@@ -101,3 +101,22 @@ or attempt pairing while the pairing confirmation is known to be inaccessible.
 - **WHEN** the user selects a nearby device
 - **THEN** its name and the U7 pairing-not-ready message appear with Back only
 - **AND** no bond request, system Settings launch or lock-task change occurs
+
+### Requirement: Build 33 temporary Location Wi-Fi joining
+The approved build-33 preview SHALL offer native Wi-Fi joining for open and
+WPA2/WPA3 personal networks, without system Settings, hidden networks or Forget.
+The explicit Show nearby networks action MAY enable Location after durably
+recording ownership. Only owned Location SHALL be disabled after join success,
+leaving the flow, five minutes, or process restart. An active or unknown call
+state SHALL defer disabling until idle. Every Location write SHALL be read back;
+failed restoration SHALL retain the marker and show the approved failure copy.
+
+#### Scenario: Join with temporary Location
+- **WHEN** Location is off and the person taps Show nearby networks and joins
+- **THEN** the confirmed network appears as connected and owned Location turns off
+- **AND** an already-on Location setting and existing saved configurations are preserved
+
+#### Scenario: Join failure and cancellation
+- **WHEN** joining fails or takes 30 seconds
+- **THEN** the password screen shows the approved retry line
+- **AND** leaving clears ephemeral credentials and restores owned Location once idle

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <string name="wifi_location_explanation">To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.</string>
+    <string name="wifi_show_nearby">Show nearby networks</string>
+    <string name="wifi_password">Wi-Fi password</string>
+    <string name="wifi_show_password">Show password</string>
+    <string name="wifi_connect">Connect</string>
+    <string name="wifi_cancel">Cancel</string>
+    <string name="wifi_join_ok">OK</string>
+    <string name="wifi_open">This network has no password.</string>
+    <string name="wifi_unsupported">LMNOPhone can\'t join this kind of network.</string>
+    <string name="wifi_joining">Joining…</string>
+    <string name="wifi_join_failed">Couldn\'t join. Check the password and try again.</string>
+    <string name="wifi_location_off_failed">Location is still on. LMNOPhone couldn\'t turn it off.</string>
+</resources>
