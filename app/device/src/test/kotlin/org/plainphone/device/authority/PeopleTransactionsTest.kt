@@ -772,6 +772,61 @@ class PeopleTransactionsTest {
         assertNull(rig.driver().drive())
     }
 
+    // ---- PLA-390 R1: the people step runs only after the common startup revocation succeeded ----
+    private val play = org.plainphone.core.PackageName("com.android.vending")
+    private val home = org.plainphone.core.PackageName("org.plainphone")
+    private val dialer = org.plainphone.core.PackageName("com.android.dialer")
+    private val sms = org.plainphone.core.PackageName("com.example.messages")
+
+    /** The Verifier's composition: Play visible and in lock task, the real BootReapply and its revocation. */
+    private fun startup(port: org.plainphone.device.FakeDevicePolicyPort) = org.plainphone.device.boot.BootReapply(
+        org.plainphone.device.storage.FileJournalStore(tmp.newFolder(), null, "model", "build"), port, setOf(play), { locked ->
+            org.plainphone.policy.PolicyEngine.decide(org.plainphone.policy.PolicyInput(
+                model = "model", fingerprint = "build", plainphone = home, messages = sms,
+                installed = listOf(home, dialer, sms, play).map { org.plainphone.policy.InstalledPackage(it, it != home, 1) },
+                identities = listOf(
+                    org.plainphone.policy.FloorIdentity(dialer, org.plainphone.policy.FloorRole.SYSTEM_DIALER, org.plainphone.policy.FloorRole.SYSTEM_DIALER.source),
+                    org.plainphone.policy.FloorIdentity(sms, org.plainphone.policy.FloorRole.SMS, org.plainphone.policy.FloorRole.SMS.source)),
+                lockedBoot = locked))
+        }, org.plainphone.device.boot.RestrictionFilter.TEST_BUILD)
+
+    private fun leftoverPlay() = org.plainphone.device.FakeDevicePolicyPort(
+        listOf(play, home, dialer, sms).associate { it.value to org.plainphone.device.visible() }).apply { lockTask = setOf(home, dialer, play) }
+
+    /** The Verifier's probe in the runtime's corrected order: startup first, then the people step. */
+    @Test fun reviewStartupRevokesPlayBeforePeopleResetEffect() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        rig.wire()
+        val port = leftoverPlay()
+        rig.effects.onCall = { step ->
+            assertTrue("$step reached before startup revoked Play lock-task access", play !in port.lockTask)
+            assertTrue("$step reached before startup hid Play", port.hidden(play.value))
+        }
+        val outcome = startup(port).run(false)
+        assertTrue(outcome.ready)
+        assertEquals(PeopleChangeOutcome.APPLIED, rig.driver().driveAfter(outcome)!!.outcome)
+    }
+
+    /** A failed revocation means no people step: no reset effect, the record and old holders stay, the next pass retries. */
+    @Test fun failedStartupRevocationSkipsThePeopleStep() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        rig.wire()
+        val port = leftoverPlay().apply { hidesStick = false }
+        val outcome = startup(port).run(false)
+        assertFalse("Play stays visible, so revocation failed", outcome.ready)
+        assertNull(rig.driver().driveAfter(outcome))
+        assertNull("no startup outcome at all", rig.driver().driveAfter(null))
+        assertTrue(rig.effects.calls.isEmpty())
+        assertEquals(WaitingPhase.COMMITTING, rig.journal().operation!!.phase)
+        assertEquals(setOf(anna), rig.credentials().people.keys)
+        port.hidesStick = true
+        val next = startup(port).run(false)
+        assertTrue(next.ready)
+        assertEquals(PeopleChangeOutcome.APPLIED, rig.driver().driveAfter(next)!!.outcome)
+    }
+
     private fun Rig.startRemove(): String = start(waiting.prepareRemove(anna, ben))
 
     private fun holderBytes(state: CredentialState, person: TrustedPersonId): ByteArray =
