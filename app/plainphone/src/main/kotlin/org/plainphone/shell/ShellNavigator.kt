@@ -18,6 +18,7 @@ sealed interface ShellRoute {
     data object Home : ShellRoute
     data object More : ShellRoute
     data object About : ShellRoute
+    data object WifiSettings : ShellRoute
     data object Sound : ShellRoute
     data object TextSize : ShellRoute
     data object Brightness : ShellRoute
@@ -112,6 +113,7 @@ class ShellNavigator(
     fun onSettings(s: ShellState, e: org.plainphone.ui.user.PhoneSettingsEvent): Step = when (e) {
         org.plainphone.ui.user.PhoneSettingsEvent.OpenBrightness -> push(s, ShellRoute.Brightness)
         org.plainphone.ui.user.PhoneSettingsEvent.OpenTextSize -> push(s, ShellRoute.TextSize)
+        org.plainphone.ui.user.PhoneSettingsEvent.OpenWifi -> push(s, ShellRoute.WifiSettings)
         org.plainphone.ui.user.PhoneSettingsEvent.OpenSound -> push(s, ShellRoute.Sound)
         org.plainphone.ui.user.PhoneSettingsEvent.OpenBattery -> push(s, ShellRoute.Battery)
         org.plainphone.ui.user.PhoneSettingsEvent.Back -> back(s)

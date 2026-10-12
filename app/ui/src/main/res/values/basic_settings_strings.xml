@@ -26,10 +26,18 @@
     <string name="brightness_raise">Raise brightness</string>
     <string name="sound_silent">Ring volume can\'t be changed while the phone is on silent or vibrate.</string>
     <string name="settings_text_size">Text size</string>
-    <string name="text_size_sample">LMNOPhone\'s own screens will still fit.</string>
+    <string name="text_size_sample">This is how big your text will be.</string>
     <string name="text_size_percent">%1$s%%</string>
     <string name="text_size_smaller">Smaller text</string>
     <string name="text_size_bigger">Bigger text</string>
     <string name="text_size_failed">Text size couldn\'t be changed.</string>
     <string name="text_size_note">Bigger text may push some apps\' words off the edge. LMNOPhone\'s own screens will still fit.</string>
+    <string name="settings_wifi">Wi-Fi</string>
+    <string name="wifi_connected_named">Connected to %1$s</string>
+    <string name="wifi_connected_unnamed">Connected to Wi-Fi</string>
+    <string name="wifi_not_connected">Not connected</string>
+    <string name="wifi_off">Wi-Fi is off.</string>
+    <string name="wifi_nearby">Nearby networks</string>
+    <string name="wifi_nearby_unavailable">Nearby networks can\'t be shown right now.</string>
+    <string name="wifi_preview_note">Joining a network comes in a later test build.</string>
 </resources>

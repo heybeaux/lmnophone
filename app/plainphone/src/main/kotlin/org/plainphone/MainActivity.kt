@@ -8,6 +8,9 @@ import androidx.compose.runtime.DisposableEffect
 import android.media.AudioManager
 import org.plainphone.device.settings.AndroidVolume
 import org.plainphone.device.settings.VolumeController
+import org.plainphone.device.settings.AndroidWifi
+import org.plainphone.device.settings.WifiController
+import org.plainphone.ui.user.WifiSettingsUiState
 import org.plainphone.device.settings.AndroidTextSize
 import org.plainphone.device.settings.TextSizeController
 import org.plainphone.ui.user.TextSizeUiState
@@ -116,6 +119,14 @@ import org.plainphone.ui.trusted.WaitingStage
 class MainActivity : ComponentActivity() {
     private val shell: ShellViewModel by viewModels()
     private lateinit var communication: AndroidCommunicationCounts
+    private val wifiSource by lazy { AndroidWifi(this) }
+    private val wifiController by lazy { WifiController(wifiSource) }
+    private var wifi by mutableStateOf(WifiSettingsUiState())
+    private fun syncWifi() {
+        wifiController.refresh()
+        val value = wifiController.state
+        wifi = WifiSettingsUiState(value.enabled, value.connected, value.network, value.nearby)
+    }
     private val textSizeController by lazy { TextSizeController(AndroidTextSize(this)) }
     private var textSize by mutableStateOf(TextSizeUiState())
     private fun syncTextSize() {
@@ -216,6 +227,13 @@ class MainActivity : ComponentActivity() {
                 onDispose { source?.close() }
             }
             LaunchedEffect(basicSettingsVisible, shell.state.current) {
+                if (basicSettingsVisible && shell.state.current == ShellRoute.WifiSettings) {
+                    wifiSource.onOpen()
+                    while (true) {
+                        syncWifi()
+                        delay(1_000)
+                    }
+                }
                 if (basicSettingsVisible && shell.state.current == ShellRoute.TextSize) {
                     textSizeController.onOpen()
                     syncTextSize()
@@ -309,6 +327,7 @@ class MainActivity : ComponentActivity() {
                 isDeviceSecure = getSystemService(KeyguardManager::class.java).isDeviceSecure,
                 versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() },
                 textSize = textSize, onTextSize = ::onTextSize,
+                wifi = wifi,
                 sound = sound, onSound = ::onSound,
                 brightness = brightness, battery = battery, onBrightness = ::onBrightness,
                 settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps,
@@ -316,7 +335,7 @@ class MainActivity : ComponentActivity() {
                 onSettings = { event ->
                     when (event) {
                         PhoneSettingsEvent.OpenWaitingChange -> settingsWait?.let { openCancel(it.requestId) }
-                        PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenTextSize, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenSound, PhoneSettingsEvent.OpenBattery ->
+                        PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenWifi, PhoneSettingsEvent.OpenTextSize, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenSound, PhoneSettingsEvent.OpenBattery ->
                             shell.state = shell.navigator!!.onSettings(shell.state, event).state
                         is PhoneSettingsEvent.ShowCommunicationCountsChanged -> {
                             communication.controller.setEnabled(event.enabled)

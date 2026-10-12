@@ -1,0 +1,5 @@
+INSTRUMENTATION_RESULT: after=fineGranted=true connected=true name=AndroidWifi scanContainsAndroidWifi=true locationModeUnchanged=true
+INSTRUMENTATION_RESULT: before=fineGranted=false connected=true named=false scanReadable=false
+INSTRUMENTATION_RESULT: outcome=PASS
+INSTRUMENTATION_RESULT: platformBefore=named=false scanReadable=true
+INSTRUMENTATION_CODE: -1

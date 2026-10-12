@@ -286,3 +286,14 @@ attempt. `TextSizeState` contains the confirmed scale, enabled directions and
 failure flag. `:ui` renders `TextSizeUiState` and emits `TextSizeEvent`
 (Smaller/Bigger/Done); `:plainphone` formats the percentage, polls only while
 the page is visible, and owns navigation. No policy or lock-task list changes.
+
+## Preview 28 read-only Wi-Fi seam
+
+The approved build-28 slice adds `WifiPort.read(): WifiFacts` and the pure
+`WifiController.refresh()` presentation reducer in `:device/settings`, alongside
+the existing basic-settings controllers. `AndroidWifi` reads enabled/connection
+state and the latest platform scan, never starts scans or alters networks/settings.
+Its page-open hook may grant only its own fine-location permission via DPM.
+`:plainphone` refreshes while resumed on `ShellRoute.WifiSettings` and maps
+`WifiState` to `WifiSettingsUiState`; `:ui` exposes Back only. These are preview
+presentation seams, with no changes to policy-engine or lock-task contracts.

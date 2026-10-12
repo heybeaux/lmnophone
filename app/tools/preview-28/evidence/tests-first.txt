@@ -35,34 +35,34 @@
 > Task :device:processDebugJavaRes UP-TO-DATE
 
 > Task :device:compileDebugUnitTestKotlin FAILED
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:9:26 Unresolved reference 'WifiPort'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:10:21 Unresolved reference 'WifiFacts'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:10:62 Cannot infer type for this parameter. Specify it explicitly.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:12:9 'read' overrides nothing.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:12:30 Unresolved reference 'WifiFacts'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:15:17 Unresolved reference 'WifiController'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:21:21 Unresolved reference 'WifiController'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:26:33 Unresolved reference 'WifiController'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:31:33 Unresolved reference 'WifiController'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:32:58 Cannot infer type for this parameter. Specify it explicitly.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:32:65 Unresolved reference 'WifiNetwork'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:37:60 Cannot infer type for this parameter. Specify it explicitly.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:37:67 Unresolved reference 'WifiNetwork'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:38:17 Unresolved reference 'WifiController'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:44:21 Cannot infer type for this parameter. Specify it explicitly.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:44:27 Unresolved reference 'WifiNetwork'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:44:61 Cannot infer type for this parameter. Specify it explicitly.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:45:13 Cannot infer type for this parameter. Specify it explicitly.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:45:20 Unresolved reference 'WifiNetwork'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:45:50 Unresolved reference 'WifiNetwork'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:45:71 Unresolved reference 'WifiNetwork'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:46:17 Unresolved reference 'WifiController'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:51:22 Cannot infer type for this parameter. Specify it explicitly.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:51:29 Unresolved reference 'WifiNetwork'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:51:57 Unresolved reference 'WifiNetwork'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:52:17 Unresolved reference 'WifiController'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:56:33 Unresolved reference 'WifiController'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview28/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:61:17 Unresolved reference 'WifiController'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:9:26 Unresolved reference 'WifiPort'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:10:21 Unresolved reference 'WifiFacts'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:10:62 Cannot infer type for this parameter. Specify it explicitly.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:12:9 'read' overrides nothing.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:12:30 Unresolved reference 'WifiFacts'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:15:17 Unresolved reference 'WifiController'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:21:21 Unresolved reference 'WifiController'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:26:33 Unresolved reference 'WifiController'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:31:33 Unresolved reference 'WifiController'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:32:58 Cannot infer type for this parameter. Specify it explicitly.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:32:65 Unresolved reference 'WifiNetwork'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:37:60 Cannot infer type for this parameter. Specify it explicitly.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:37:67 Unresolved reference 'WifiNetwork'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:38:17 Unresolved reference 'WifiController'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:44:21 Cannot infer type for this parameter. Specify it explicitly.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:44:27 Unresolved reference 'WifiNetwork'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:44:61 Cannot infer type for this parameter. Specify it explicitly.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:45:13 Cannot infer type for this parameter. Specify it explicitly.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:45:20 Unresolved reference 'WifiNetwork'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:45:50 Unresolved reference 'WifiNetwork'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:45:71 Unresolved reference 'WifiNetwork'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:46:17 Unresolved reference 'WifiController'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:51:22 Cannot infer type for this parameter. Specify it explicitly.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:51:29 Unresolved reference 'WifiNetwork'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:51:57 Unresolved reference 'WifiNetwork'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:52:17 Unresolved reference 'WifiController'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:56:33 Unresolved reference 'WifiController'.
+e: file://<worktree>/app/device/src/test/kotlin/org/plainphone/device/settings/WifiControllerTest.kt:61:17 Unresolved reference 'WifiController'.
 
 FAILURE: Build failed with an exception.
 

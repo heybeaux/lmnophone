@@ -35,6 +35,7 @@ data class PhoneSettingsUiState(
 sealed interface PhoneSettingsEvent {
     data object OpenWaitingChange : PhoneSettingsEvent
     data object OpenBrightness : PhoneSettingsEvent
+    data object OpenWifi : PhoneSettingsEvent
     data object OpenSound : PhoneSettingsEvent
     data object OpenTextSize : PhoneSettingsEvent
     data object OpenBattery : PhoneSettingsEvent
@@ -67,6 +68,7 @@ fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEven
                 Text("›", style = PlainphoneType.Row.copy(color = PlainphoneColors.Ink2))
             }
         }
+        SettingsRow(stringResource(R.string.settings_wifi)) { onEvent(PhoneSettingsEvent.OpenWifi) }
         SettingsRow(stringResource(R.string.settings_brightness)) { onEvent(PhoneSettingsEvent.OpenBrightness) }
         SettingsRow(stringResource(R.string.settings_sound)) { onEvent(PhoneSettingsEvent.OpenSound) }
         SettingsRow(stringResource(R.string.settings_text_size)) { onEvent(PhoneSettingsEvent.OpenTextSize) }

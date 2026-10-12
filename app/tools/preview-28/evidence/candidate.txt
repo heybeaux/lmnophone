@@ -1,0 +1,53 @@
+Preview 28 — PLA-421 — 2026-10-12
+Base: preview-27 cb923172d325465f25674ec92987b9d88abcaa91
+Version: 28 / 0.1.0-preview-28
+APK SHA-256: 6067973639b4bfc83d86cb0ac1782e28a8685f9386a4e173bca5b8e1b9ac471d
+Signer SHA-256: 99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd
+Same signer as the local accepted preview-27 artifact.
+
+BUILT: debug APK; 39 settings controller tests (9 new Wi-Fi), 10 navigation tests,
+83 affected screenshot test invocations PASS. 98 new/changed golden images inspected,
+including all 30 Wi-Fi fixtures at 1.0, 1.3, 1.5, 1.8, 2.0. Goldens verify PASS.
+OpenSpec: 3 changes validated, 0 failures. git diff --check PASS.
+Tests-first checkpoint: fa6d8c1f (controller absent, compilation fails as recorded).
+
+INSTALLED: emulator-5880 only, in-place 27 -> 28 at 2026-10-12T13:54:11Z.
+Package lastUpdateTime: 2026-10-12 06:54:11 (emulator America/Los_Angeles).
+Device Owner, TEST_ONLY, LOCKED retained before/after reboot. Home follows full readback.
+No spare commands. Lead owns the single opposite-model review and spare installation.
+
+EXERCISED: More -> Emergency actual prefill exactly 911, Phone typed field exactly 911,
+Telecom zero current calls throughout. Never pressed Call or sent a call intent.
+Wi-Fi page shows Connected to AndroidWifi and one deduplicated AndroidWifi nearby row.
+Network row nonclickable; preview note present; refreshed across multiple visible ticks.
+Back -> Text size shows This is how big your text will be.
+Location mode 3 and saved AndroidWifi open/owe entries exactly unchanged before/after.
+Font scale remains 1.0; WRITE_SETTINGS remains default. All four emulator screenshots inspected.
+
+Permission evidence (app UID, API 35): before grant, fine location false, platform connected
+SSID unnamed. The raw scan call returned without SecurityException; that probe did not
+record its rows, so it does not prove scan-name availability without location permission.
+Our adapter withheld names/scans without fine permission. The DO onOpen grant of only
+ACCESS_FINE_LOCATION to its own package succeeded. Then connected SSID and scan contained
+AndroidWifi. Android also granted its grouped coarse permission; both read POLICY_FIXED.
+No location request, no Location toggle, no active Wi-Fi scan or saved-network write.
+Sources: https://developer.android.com/develop/connectivity/wifi/wifi-scan
+https://developer.android.com/reference/android/net/wifi/WifiManager
+
+Limits: read-only; no connect/password/Forget, sign-in or internet diagnosis. Polls latest
+platform scan cache; does not initiate scans or promise fresh radio discovery each second.
+Wi-Fi off, unavailable scans, dedupe/order/limit, SSID quoting and long-name cases have
+host coverage; no setting changes were made to stimulate these states on the emulator.
+Spare installed/exercised: NOT CLAIMED; pending Lead review and sole-driver gate.
+
+Reproduce from app/:
+JAVA_HOME=<JDK17> ANDROID_HOME=<SDK> ./gradlew :device:testDebugUnitTest --tests '*settings.*' :plainphone:testDebugUnitTest --tests '*TestBuildNavigatorTest' :plainphone:assembleDebug
+./gradlew :ui:verifyPaparazziDebug --tests '*WifiSettingsScreenshotTest*' --tests '*TextSizeScreenshotTest*' --tests '*PhoneSettingsWaitingScreenshotTest*' --tests '*CommunicationCountsScreenshotTest.settings*' --tests '*UserScreensScreenshotTest.more*' --tests '*BasicSettingsScreenshotTest.moreSettingsCopy*'
+./gradlew :plainphone:assembleDebugAndroidTest -PpreviewTestRunner=org.plainphone.settings.WifiReadCheck
+From repository root, owned emulator only:
+app/tools/preview-28/upgrade-check.sh emulator-5880 app/plainphone/build/outputs/apk/debug/plainphone-debug.apk <output-directory>
+adb -s emulator-5880 install -r -t app/plainphone/build/outputs/apk/androidTest/debug/plainphone-debug-androidTest.apk
+adb -s emulator-5880 shell am instrument -w -r org.plainphone.test/org.plainphone.settings.WifiReadCheck
+python3 app/tools/preview-28/wifi_ui_check.py <pre-install-baseline-json>
+The before-grant probe is one-shot on a baseline without the new permission; repeat runs
+report the grant already present and do not revoke it.

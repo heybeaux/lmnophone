@@ -45,6 +45,7 @@ class TestBuildNavigatorTest {
         val start = at(ShellRoute.More, ShellRoute.PhoneSettings)
         for ((event, route) in listOf(
             org.plainphone.ui.user.PhoneSettingsEvent.OpenBrightness to ShellRoute.Brightness,
+            org.plainphone.ui.user.PhoneSettingsEvent.OpenWifi to ShellRoute.WifiSettings,
             org.plainphone.ui.user.PhoneSettingsEvent.OpenSound to ShellRoute.Sound,
             org.plainphone.ui.user.PhoneSettingsEvent.OpenTextSize to ShellRoute.TextSize,
             org.plainphone.ui.user.PhoneSettingsEvent.OpenBattery to ShellRoute.Battery)) {

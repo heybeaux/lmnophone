@@ -42,6 +42,7 @@ class TextSizeScreenshotTest(private val scale: Float) {
                 }
                 val text = nodes.flatMap { it.config.getOrElse(SemanticsProperties.Text) { emptyList() } }.map { it.text }
                 assertTrue("Done" in text)
+                assertTrue("This is how big your text will be." in text)
                 assertEquals(state.failed, "Text size couldn't be changed." in text)
                 state.percent?.let { assertTrue("$it%" in text) }
             }) { HomeTestFrame { TextSizeScreen(state, {}) } }
