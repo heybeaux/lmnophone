@@ -9,10 +9,11 @@
 - AOSP citations are from tag `android-15.0.0_r1`.
 - Requirement-by-requirement coverage and limitations: `REQUIREMENTS.md`. These results are a feasibility spike, not product acceptance or evidence of real recipient delivery.
 - Correction verification: `evidence/DELTA-CHECKS.md` and `evidence/delta-5984.log`, labelled separately from the original run.
+- **Partial answer to the Lead's later AAC request:** the encoder and emulator runs use `audio/amr`, not an AAC `.m4a` part labelled `audio/mp4`. No AAC clip was encoded, sent, persisted or played, and no AOSP `mmslib` subset was vendored. The AAC duration table is a bitrate estimate only. The original timebox permits partial results; the AMR evidence is not acceptance of the requested AAC variant.
 
 ## Answers
 
-### 1. Send path A: our app sends the MMS itself (`SmsManager.sendMultimediaMessage`). **Works, no role needed.**
+### 1. Send path A: our app sends the MMS itself (`SmsManager.sendMultimediaMessage`). **Works for the AMR fixture, no role needed.**
 
 - **What is enforced:** `frameworks/base/services/core/java/com/android/server/MmsServiceBroker.java` `sendMessage()` (around l.336–360) checks:
   - `enforceCallingPermission(SEND_SMS)`;

@@ -12,6 +12,7 @@
 | Google Messages default; no account/new family app | Original `env` log; Messages used without account | No real family recipient was exercised; RCS was not configured |
 | A: SEND_SMS + sendMultimediaMessage without role | `Probe.sendA`; broker source; original callback logs | Permission denied throws; app-op/profile rejection may return with no callback |
 | A: one audio/amr m-send-req PDU | `VoiceMms.sendReq`; 8099-byte PDU with 8006-byte AMR part at fake MMSC | Minimal multipart/mixed, no SMIL; carrier/interoperability still untested |
+| Later Lead priority: AAC `.m4a` / `audio/mp4` and a minimal AOSP `mmslib` subset | Partial, not implemented or exercised; original hand-written AMR encoder retained | No AAC encoding, transport, persistence or playback evidence; bitrate estimates do not satisfy this variant |
 | A: licence recorded | Original encoder, Apache-2.0 project source headers | No third-party encoder library |
 | A: actual callback and reason on emulator | Disabled MMS: 12; unreachable MMSC: 4; loopback: RESULT_OK | Result 12 depends on platform feature flag; no real carrier result |
 | A: sent message persisted, visible in Messages | `a3`, `a4`, `logcat-pla458.log`; `SendRequest.persistIfRequired` | Failed row is transiently SENT then hidden; use callback, not box alone |
