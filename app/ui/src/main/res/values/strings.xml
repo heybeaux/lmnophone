@@ -27,4 +27,9 @@
     <string name="lexend_notice">Lexend – SIL Open Font License 1.1</string>
     <string name="settings_counts_permission">LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say.</string>
     <string name="settings_waiting_spoken">A change is waiting, %1$s. Opens the change.</string>
+    <string name="ringtone_title">Ringtone</string>
+    <string name="ringtone_back">‹ Sound</string>
+    <string name="ringtone_not_set">Not set</string>
+    <string name="ringtone_current_stays">Your current ringtone stays until you choose another.</string>
+    <string name="ringtone_failed">Ringtone couldn\'t be changed.</string>
 </resources>

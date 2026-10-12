@@ -66,6 +66,14 @@ Every label SHALL be in plain language. Any Android setting outside this list SH
 - **AND** the app may grant only its own BLUETOOTH_CONNECT permission and never scans, pairs, unpairs, connects, changes Bluetooth, uses Location, or opens system UI
 - **AND** device names remain ephemeral display data; recorded evidence contains counts only
 
+#### Scenario: Build 31 built-in ringtone preview
+- **WHEN** the user opens Sound → Ringtone in build 31
+- **THEN** only built-in internal TYPE_RINGTONE entries are shown, sorted by title ignoring case, with the current entry selected when present
+- **AND** tapping previews at the existing volume/mode for at most about five seconds, stopping any earlier preview and stopping on leave
+- **AND** Done saves only a changed selection, reads the actual RINGTONE setting back, and returns to Sound only on a matching read-back; failure stays with the U7 failure line
+- **AND** an absent settings-write grant disables Done but permits preview; no selection leaves the current ringtone unchanged
+- **AND** no new permission, external picker, Android Settings, custom ringtone, Silent choice, notification sound or alarm sound is added
+
 ### Requirement: Readable by default
 All LMNOPhone screens SHALL:
 - follow the system font scale

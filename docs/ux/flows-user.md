@@ -488,6 +488,28 @@ Owner. No discovery, pairing, unpairing, connection, Bluetooth-state writes,
 Location use or system UI. Device names stay on screen only; evidence records
 counts. Pairing remains a later slice.
 
+### Build 31 in-app Ringtone chooser
+
+Approved in [PLA-431](/PLA/issues/PLA-431). Below Media volume, Sound shows
+**Ringtone**, the read-back title (or **Not set**), and `›`.
+
+The chooser shows **‹ Sound**, **Ringtone**, then built-in ringtones sorted
+case-insensitively by title. The selected row has `✓` and spoken state
+**selected**. If the current ringtone is absent, no row is selected and the line
+is **Your current ringtone stays until you choose another.**
+
+Tapping a row selects it and previews it for up to about five seconds at the
+existing ring volume and mode. Another tap or leaving the page stops playback.
+**Done** saves and reads back the setting before returning to Sound. With no
+changed selection it just returns. Back leaves without saving. Write/read-back
+failure stays on the chooser with **Ringtone couldn't be changed.** Without the
+settings-write grant, rows can still preview but Done is disabled with that line.
+
+No custom sounds, Silent choice, notification/alarm sounds, media permission,
+external picker or Android Settings. An empty readable list keeps the current
+ringtone and offers Back or Done; a list/read failure shows the same failure line
+and disables Done. Sound uses **Not set** when the current title cannot be read.
+
 ### Build 22 Sound corrections
 
 Approved in [PLA-404](/PLA/issues/PLA-404). Failure lines appear below the stream

@@ -16,6 +16,11 @@ import org.plainphone.device.settings.WifiController
 import org.plainphone.device.settings.WifiInternetStatus
 import org.plainphone.ui.user.WifiInternetUiStatus
 import org.plainphone.ui.user.WifiSettingsUiState
+import org.plainphone.device.settings.AndroidRingtone
+import org.plainphone.device.settings.RingtoneController
+import org.plainphone.ui.user.RingtoneUiState
+import org.plainphone.ui.user.RingtoneOption
+import org.plainphone.ui.user.RingtoneEvent
 import org.plainphone.device.settings.AndroidTextSize
 import org.plainphone.device.settings.TextSizeController
 import org.plainphone.ui.user.TextSizeUiState
@@ -163,6 +168,29 @@ class MainActivity : ComponentActivity() {
     private val brightnessController by lazy {
         BrightnessController(AndroidBrightness(this, ComponentName(this, PlainphoneAdminReceiver::class.java)))
     }
+    private val ringtoneController by lazy { RingtoneController(AndroidRingtone(this)) }
+    private var ringtone by mutableStateOf(RingtoneUiState())
+    private fun syncRingtone() {
+        val value = ringtoneController.state
+        ringtone = RingtoneUiState(value.choices.map { RingtoneOption(it.id, it.title) },
+            value.selectedId, value.currentUnlisted, value.canSave, value.failed)
+    }
+    private fun onRingtone(event: RingtoneEvent) {
+        if (!resumed || shell.state.current != ShellRoute.Ringtone) return
+        when (event) {
+            RingtoneEvent.Back -> {
+                ringtoneController.onLeave()
+                shell.state = shell.navigator!!.back(shell.state).state
+            }
+            RingtoneEvent.Done -> if (ringtoneController.done()) {
+                ringtoneController.onLeave()
+                shell.state = shell.navigator!!.back(shell.state).state
+                syncSound()
+            }
+            is RingtoneEvent.Select -> ringtoneController.select(event.id)
+        }
+        syncRingtone()
+    }
     private val ringVolume by lazy { VolumeController(AndroidVolume(this, AudioManager.STREAM_RING), 1) }
     private val mediaVolume by lazy { VolumeController(AndroidVolume(this, AudioManager.STREAM_MUSIC), 0) }
     private var sound by mutableStateOf(SoundUiState())
@@ -171,12 +199,13 @@ class MainActivity : ComponentActivity() {
             ringVolume.state.reading?.let { VolumeUiState(it.level, maxOf(1, it.min), it.max) },
             mediaVolume.state.reading?.let { VolumeUiState(it.level, it.min, it.max) },
             ringFailed = ringVolume.state.failed, mediaFailed = mediaVolume.state.failed,
-            ringAdjustable = ringVolume.state.reading?.adjustable ?: true)
+            ringAdjustable = ringVolume.state.reading?.adjustable ?: true,
+            ringtoneTitle = ringtoneController.currentTitle())
     }
     private fun onSound(event: SoundEvent) {
         fun controller(stream: SoundStream) = if (stream == SoundStream.Ring) ringVolume else mediaVolume
         when (event) {
-            SoundEvent.Done -> shell.state = shell.navigator!!.back(shell.state).state
+            SoundEvent.Done, SoundEvent.OpenRingtone -> shell.state = shell.navigator!!.onSound(shell.state, event).state
             is SoundEvent.SetLevel -> controller(event.stream).setLevel(event.level)
             is SoundEvent.Adjust -> controller(event.stream).adjust(event.delta)
         }
@@ -244,7 +273,19 @@ class MainActivity : ComponentActivity() {
                     BatterySource(this@MainActivity) { battery = it } else null
                 onDispose { source?.close() }
             }
+            DisposableEffect(basicSettingsVisible, shell.state.current) {
+                val chooserVisible = basicSettingsVisible && shell.state.current == ShellRoute.Ringtone
+                if (chooserVisible) { ringtoneController.onOpen(); syncRingtone() }
+                onDispose { if (chooserVisible) ringtoneController.onLeave() }
+            }
             LaunchedEffect(basicSettingsVisible, shell.state.current) {
+                if (basicSettingsVisible && shell.state.current == ShellRoute.Ringtone) {
+                    while (true) {
+                        ringtoneController.refreshPermission()
+                        syncRingtone()
+                        delay(1_000)
+                    }
+                }
                 if (basicSettingsVisible && shell.state.current == ShellRoute.BluetoothSettings) {
                     try {
                         bluetoothSource.onOpen()
@@ -360,6 +401,7 @@ class MainActivity : ComponentActivity() {
                 textSize = textSize, onTextSize = ::onTextSize,
                 wifi = wifi, bluetooth = bluetooth,
                 sound = sound, onSound = ::onSound,
+                ringtone = ringtone, onRingtone = ::onRingtone,
                 brightness = brightness, battery = battery, onBrightness = ::onBrightness,
                 settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps,
                     pendingChange = settingsWait?.let { getString(waitingChangeTextResource(it.kind), getString(R.string.app_name)) }),
@@ -398,6 +440,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        ringtoneController.stopPreview()
         resumed = false
         communication.controller.setVisible(false)
         communication.controller.setSettingsVisible(false)
@@ -406,6 +449,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        ringtoneController.onLeave()
         communication.close()
         super.onDestroy()
     }

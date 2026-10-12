@@ -30,7 +30,11 @@ class BasicSettingsScreenshotTest(private val scale: Float) {
     @Test fun automatic() = shot(forbidden = listOf("50%")) { BrightnessScreen(BrightnessUiState(50, true), {}) }
     @Test fun manualPercentageReturns() = brightnessShot(BrightnessUiState(50, false), "50%")
     @Test fun charged() = batteryShot(BatteryUiState(100, status = BatteryStatus.Charged), "Charged")
-    @Test fun sound() = shot("Ring volume", "Media volume", "Done", labels = soundLabels) { SoundScreen(SoundUiState(VolumeUiState(4, 1, 7), VolumeUiState(7, 0, 15)), {}) }
+    @Test fun sound() = shot("Ring volume", "Media volume", "Ringtone", "Not set", "Done", labels = soundLabels) { SoundScreen(SoundUiState(VolumeUiState(4, 1, 7), VolumeUiState(7, 0, 15)), {}) }
+    @Test fun soundRingtoneLongTitle() = shot("Ringtone", "A very long built-in ringtone title that wraps onto several lines") {
+        SoundScreen(SoundUiState(VolumeUiState(4, 1, 7), VolumeUiState(7, 0, 15),
+            ringtoneTitle = "A very long built-in ringtone title that wraps onto several lines"), {})
+    }
     @Test fun soundFailed() = shot("Volume couldn't be changed.") { SoundScreen(SoundUiState(VolumeUiState(4, 1, 7), VolumeUiState(7, 0, 15), true), {}) }
     @Test fun soundMediaFailed() = shot("Volume couldn't be changed.") {
         SoundScreen(SoundUiState(VolumeUiState(4, 1, 7), VolumeUiState(7, 0, 15), mediaFailed = true), {})

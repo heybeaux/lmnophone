@@ -315,3 +315,15 @@ ten-entry paired-name list; exceptions discard all facts. `clear()` drops names
 when hidden. `:plainphone` polls only while resumed on `ShellRoute.BluetoothSettings`;
 `:ui` receives `BluetoothSettingsUiState` and exposes Back only. No policy or
 lock-task interface changes. API 30 uses the normal legacy BLUETOOTH permission.
+
+### Preview 31 Ringtone seam
+
+`:device/settings` exports `RingtoneController(RingtonePort)` and `AndroidRingtone`.
+The port lists built-in TYPE_RINGTONE choices, normalizes URIs, reads the actual
+RINGTONE setting/title, checks the existing settings-write grant, and bounds
+preview playback to five seconds. The controller selects without writing and
+returns success from Done only after matching read-back (or no change).
+`:ui` renders `RingtoneUiState` and emits Select/Done/Back; `SoundUiState` adds
+`ringtoneTitle`, with `SoundEvent.OpenRingtone` opening `ShellRoute.Ringtone`.
+The host stops previews on leave/pause, polls the grant only while visible, and
+re-reads the title for Sound. No policy, lock-task or permission contract changes.

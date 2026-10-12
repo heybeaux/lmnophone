@@ -25,12 +25,13 @@ import kotlin.math.roundToInt
 
 data class VolumeUiState(val level: Int, val min: Int, val max: Int)
 data class SoundUiState(val ring: VolumeUiState? = null, val media: VolumeUiState? = null, val ringFailed: Boolean = false,
-    val mediaFailed: Boolean = false, val ringAdjustable: Boolean = true)
+    val mediaFailed: Boolean = false, val ringAdjustable: Boolean = true, val ringtoneTitle: String? = null)
 enum class SoundStream { Ring, Media }
 sealed interface SoundEvent {
     data class SetLevel(val stream: SoundStream, val level: Int) : SoundEvent
     data class Adjust(val stream: SoundStream, val delta: Int) : SoundEvent
     data object Done : SoundEvent
+    data object OpenRingtone : SoundEvent
 }
 
 @Composable
@@ -40,6 +41,16 @@ fun SoundScreen(state: SoundUiState, onEvent: (SoundEvent) -> Unit) {
             state.ringFailed, state.ringAdjustable, onEvent)
         VolumeControl(stringResource(R.string.sound_media), state.media, SoundStream.Media,
             state.mediaFailed, true, onEvent)
+        Row(Modifier.fillMaxWidth().heightIn(min = 56.dp)
+            .plainphoneAction { onEvent(SoundEvent.OpenRingtone) }.padding(vertical = PlainphoneSpace.S2),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.ringtone_title), style = PlainphoneType.Row)
+                Text(state.ringtoneTitle ?: stringResource(R.string.ringtone_not_set), style = PlainphoneType.Body)
+            }
+            Text("›", style = PlainphoneType.Row.copy(color = PlainphoneColors.Ink3))
+        }
     }
 }
 

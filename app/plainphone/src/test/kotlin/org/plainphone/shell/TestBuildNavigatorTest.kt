@@ -64,6 +64,14 @@ class TestBuildNavigatorTest {
         assertEquals(at(ShellRoute.More), nav.back(step.state).state)
     }
 
+    @Test fun ringtoneStaysInsideSoundAndBackReturnsToSound() {
+        val start = at(ShellRoute.More, ShellRoute.PhoneSettings, ShellRoute.Sound)
+        val step = nav.onSound(start, org.plainphone.ui.user.SoundEvent.OpenRingtone)
+        assertEquals(start.stack + ShellRoute.Ringtone, step.state.stack)
+        assertNull(step.effect)
+        assertEquals(start, nav.back(step.state).state)
+    }
+
     @Test fun emergencyStillOpensTheDialerWithTheNumberTypedIn() {
         assertEquals(ShellEffect.OpenEmergencyDialer, nav.onMore(at(ShellRoute.More), MoreEvent.OpenEmergencyDialer).effect)
     }

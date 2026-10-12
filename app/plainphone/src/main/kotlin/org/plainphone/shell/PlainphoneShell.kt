@@ -51,6 +51,8 @@ fun PlainphoneShell(
     bluetooth: BluetoothSettingsUiState,
     sound: SoundUiState,
     onSound: (SoundEvent) -> Unit,
+    ringtone: RingtoneUiState,
+    onRingtone: (RingtoneEvent) -> Unit,
     brightness: BrightnessUiState,
     battery: BatteryUiState,
     onBrightness: (BrightnessEvent) -> Unit,
@@ -70,6 +72,7 @@ fun PlainphoneShell(
                 ShellRoute.BluetoothSettings -> BluetoothSettingsScreen(bluetooth) { onStep(navigator.back(state)) }
                 ShellRoute.WifiSettings -> WifiSettingsScreen(wifi) { onStep(navigator.back(state)) }
                 ShellRoute.Sound -> SoundScreen(sound, onSound)
+                ShellRoute.Ringtone -> RingtoneScreen(ringtone, onRingtone)
                 ShellRoute.Brightness -> BrightnessScreen(brightness, onBrightness)
                 ShellRoute.Battery -> BatteryScreen(battery) { onStep(navigator.back(state)) }
                 ShellRoute.PhoneSettings -> PhoneSettingsScreen(settings, onSettings)

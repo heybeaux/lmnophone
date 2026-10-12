@@ -21,6 +21,7 @@ sealed interface ShellRoute {
     data object WifiSettings : ShellRoute
     data object BluetoothSettings : ShellRoute
     data object Sound : ShellRoute
+    data object Ringtone : ShellRoute
     data object TextSize : ShellRoute
     data object Brightness : ShellRoute
     data object Battery : ShellRoute
@@ -121,6 +122,13 @@ class ShellNavigator(
         org.plainphone.ui.user.PhoneSettingsEvent.Back -> back(s)
         org.plainphone.ui.user.PhoneSettingsEvent.OpenWaitingChange,
         is org.plainphone.ui.user.PhoneSettingsEvent.ShowCommunicationCountsChanged -> Step(s)
+    }
+
+    fun onSound(s: ShellState, e: org.plainphone.ui.user.SoundEvent): Step = when (e) {
+        org.plainphone.ui.user.SoundEvent.OpenRingtone ->
+            if (s.current == ShellRoute.Sound) push(s, ShellRoute.Ringtone) else Step(s)
+        org.plainphone.ui.user.SoundEvent.Done -> back(s)
+        else -> Step(s)
     }
 
     fun onAbout(s: ShellState, e: AboutEvent): Step = when (e) {
