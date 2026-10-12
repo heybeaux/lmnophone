@@ -105,4 +105,53 @@ class WaitingHomeLineTest {
         assertNull("finished", confirmStage("wait-1", null))
         assertNull("another request", confirmStage("wait-1", current(WaitingPhase.PENDING, "wait-2")))
     }
+
+    // Wiring 4: the pending change on the needs-attention screen.
+    private fun wait(kind: WaitingChangeKind, phase: WaitingPhase = WaitingPhase.PENDING, remaining: Long = 0) =
+        WaitingNotice("wait-1", kind, phase, remaining)
+
+    @Test fun noPendingChangeWithoutAWait() {
+        assertNull(pendingChange(null, now, time))
+    }
+
+    /** The same rounded-up time and day as Home's line. */
+    @Test fun aPendingTurnOffShowsTheSameTimeAsHome() {
+        val at = ZonedDateTime.parse("2026-10-11T21:30:45Z")
+        assertEquals(org.plainphone.ui.home.PendingChange(org.plainphone.ui.home.PendingChangeKind.TurnOff("21:31",
+            HomeNoticeDay(LocalDate.of(2026, 10, 12), 1))),
+            pendingChange(wait(WaitingChangeKind.TURN_OFF, remaining = 86_400_000L), at, time))
+    }
+
+    @Test fun peopleAndSetupPendingChanges() {
+        for (k in listOf(WaitingChangeKind.ADD_PERSON, WaitingChangeKind.HAND_OVER, WaitingChangeKind.REMOVE_PERSON))
+            assertEquals(org.plainphone.ui.home.PendingChange(org.plainphone.ui.home.PendingChangeKind.People),
+                pendingChange(wait(k), now, time))
+        for (k in listOf(WaitingChangeKind.SWITCH_MODE, WaitingChangeKind.SHORTEN_COUNTDOWN, WaitingChangeKind.RAISE_DAILY_LIMIT))
+            assertEquals(org.plainphone.ui.home.PendingChange(org.plainphone.ui.home.PendingChangeKind.Setup),
+                pendingChange(wait(k), now, time))
+    }
+
+    /** Committing or rolling back: shown as in progress, so the screen offers no Cancel. */
+    @Test fun committingIsInProgress() {
+        for (phase in listOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)) {
+            assertEquals(true, pendingChange(wait(WaitingChangeKind.TURN_OFF, phase), now, time)?.committing)
+            assertEquals(true, pendingChange(wait(WaitingChangeKind.ADD_PERSON, phase), now, time)?.committing)
+        }
+        assertEquals(false, pendingChange(wait(WaitingChangeKind.TURN_OFF), now, time)?.committing)
+    }
+
+    /**
+     * Found on the emulator: the screen added the remaining time read at the last pass to a later "now",
+     * so it named a later time than Home's line. Both now come from the same read and its time.
+     */
+    @Test fun attentionTimeMatchesHomeFromTheSameRead() {
+        val readAt = ZonedDateTime.parse("2026-10-11T19:20:42Z")
+        val notice = wait(WaitingChangeKind.TURN_OFF, remaining = 86_399_000L)
+        val read = WaitingRead(notice, readAt)
+        val home = homeLine(NoticeLine.decide(NoticeInput(Mode.TRUSTED, false, notice)).line, readAt, time)
+            as HomeNotice.TurnOffWaiting
+        assertEquals(org.plainphone.ui.home.PendingChangeKind.TurnOff(home.time, home.day), pendingChange(read, time)?.kind)
+        assertEquals("19:21", home.time)
+        assertNull(pendingChange(WaitingRead(null, readAt), time))
+    }
 }

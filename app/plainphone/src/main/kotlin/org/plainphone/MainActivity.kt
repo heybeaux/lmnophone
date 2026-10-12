@@ -27,6 +27,7 @@ import org.plainphone.boot.LockTaskState
 import org.plainphone.boot.PolicyRuntime
 import org.plainphone.boot.cancelStage
 import org.plainphone.boot.confirmStage
+import org.plainphone.boot.pendingChange
 import org.plainphone.boot.checkingShowsAttention
 import org.plainphone.policy.NoticeTap
 import org.plainphone.policy.WaitingChangeKind
@@ -34,6 +35,9 @@ import org.plainphone.ui.home.HomeEvent
 import org.plainphone.ui.home.HomeNotice
 import org.plainphone.ui.home.HomeScreen
 import org.plainphone.ui.home.HomeUiState
+import org.plainphone.ui.home.NeedsAttentionEvent
+import org.plainphone.ui.home.NeedsAttentionScreen
+import org.plainphone.ui.home.NeedsAttentionUiState
 import org.plainphone.ui.theme.PlainphoneTheme
 import org.plainphone.ui.trusted.WaitingChangeEvent
 import org.plainphone.ui.trusted.WaitingChangeScreen
@@ -73,6 +77,17 @@ class MainActivity : ComponentActivity() {
                         val wait by runtime.waitingNotice.collectAsState()
                         LaunchedEffect(wait) { followOperation() }
                         WaitingChangeScreen(cancel.state) { onCancelEvent(cancel, it) }
+                    } else if (attentionOpen) {
+                        // Under "needs attention" the pending change and its PIN-free Cancel are here (wiring 4).
+                        // Timed from the pass's read, so it names the same time as Home's line.
+                        val read by runtime.waitingRead.collectAsState()
+                        NeedsAttentionScreen(NeedsAttentionUiState(pendingChange(read,
+                            DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)))) { event ->
+                            when (event) {
+                                NeedsAttentionEvent.Back -> attentionOpen = false
+                                NeedsAttentionEvent.CancelChange -> read?.notice?.let { openCancel(it.requestId) }
+                            }
+                        }
                     } else Home(notice)
                 } else {
                     val notice by runtime.notice.collectAsState()
@@ -140,17 +155,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** A pending-change line: anyone holding the phone may cancel it, without a PIN (wiring 3). */
+    /**
+     * The notice line's tap: "needs attention" opens its screen (wiring 4); a pending-change line opens the
+     * PIN-free cancel (wiring 3).
+     */
     private fun openNotice() {
-        val tap = runtime.noticeTap.value as? NoticeTap.ConfirmCancel ?: return
-        val wait = runtime.waitingNotice.value?.takeIf { it.requestId == tap.requestId } ?: return
+        when (val tap = runtime.noticeTap.value) {
+            NoticeTap.OPEN_ATTENTION -> attentionOpen = true
+            is NoticeTap.ConfirmCancel -> openCancel(tap.requestId)
+            else -> {}
+        }
+    }
+
+    /** Anyone holding the phone may cancel the pending change [requestId], without a PIN, if it is still pending. */
+    private fun openCancel(requestId: String) {
+        val wait = runtime.waitingNotice.value?.takeIf { confirmStage(requestId, it) == WaitingStage.ConfirmCancel } ?: return
         val change = when (wait.kind) {
             WaitingChangeKind.TURN_OFF -> getString(R.string.wait_change_turn_off, getString(R.string.app_name))
             WaitingChangeKind.ADD_PERSON, WaitingChangeKind.HAND_OVER, WaitingChangeKind.REMOVE_PERSON ->
                 getString(R.string.wait_change_people)
             else -> getString(R.string.wait_change_setup)
         }
-        cancelScreen = CancelScreen(tap.requestId, WaitingChangeUiState(stage = WaitingStage.ConfirmCancel, change = change,
+        cancelScreen = CancelScreen(requestId, WaitingChangeUiState(stage = WaitingStage.ConfirmCancel, change = change,
             turningOff = wait.kind == WaitingChangeKind.TURN_OFF))
     }
 
@@ -190,6 +216,7 @@ class MainActivity : ComponentActivity() {
 
     private data class CancelScreen(val requestId: String, val state: WaitingChangeUiState)
     private var cancelScreen by mutableStateOf<CancelScreen?>(null)
+    private var attentionOpen by mutableStateOf(false)
 
     private fun openPhone() {
         runtime.opened(CallingScreen.PHONE)
