@@ -66,6 +66,16 @@ class AndroidPackageSystemPort(private val context: Context) : PackageSystemPort
     override fun systemOnlyReceivers(action: String): Set<String> =
         receivers(Intent(action), SYSTEM_ONLY).map { it.activityInfo.packageName }.toSet()
 
+    override fun installedForUser(name: String): Boolean {
+        val info = try {
+            if (Build.VERSION.SDK_INT >= 33) pm.getApplicationInfo(name, PackageManager.ApplicationInfoFlags.of(HIDDEN_AND_DISABLED))
+            else @Suppress("DEPRECATION") pm.getApplicationInfo(name, HIDDEN_AND_DISABLED.toInt())
+        } catch (e: PackageManager.NameNotFoundException) {
+            return false
+        }
+        return info.flags and ApplicationInfo.FLAG_INSTALLED != 0
+    }
+
     private fun activities(intent: Intent, flags: Long): Set<String> =
         (if (Build.VERSION.SDK_INT >= 33) pm.queryIntentActivities(intent, PackageManager.ResolveInfoFlags.of(flags))
         else @Suppress("DEPRECATION") pm.queryIntentActivities(intent, flags.toInt()))

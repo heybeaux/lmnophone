@@ -115,7 +115,8 @@ class AbsentMinimumUiWindowTest {
         val reduced = pass()
         fun at(b: Boundary) {
             if (b == boundary) install(minimum)
-            assertFalse("$boundary: no lock-task access at $b", minimum in port.lockTask)
+            // Until the apply replaces it, the earlier applied list still names it: earlier access, not new.
+            if (b != Boundary.PLAN_BUILT) assertFalse("$boundary: no lock-task access at $b", minimum in port.lockTask)
         }
         at(Boundary.PLAN_BUILT)
         assertTrue("$boundary", apply(reduced))

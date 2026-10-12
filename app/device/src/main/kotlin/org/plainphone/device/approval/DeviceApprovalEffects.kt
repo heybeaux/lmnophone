@@ -84,6 +84,9 @@ class PublishedHomeApps : HomeAppList {
  * applied list, open refuses, before any unhide, unless the candidate and every package left in that
  * list resolve to a UID and none equals the candidate's. A UID that reads as absent (null) or throws
  * proves nothing, so it refuses too (PLA-229). It never removes the sibling or the floor.
+ * A minimum-UI package removed for the user leaves the list only through a policy pass with confirmed
+ * absence (PLA-293), applied and read back exactly; this gate is not relaxed for it, and an install never
+ * amends the applied list: the name stays out until the window closes and a fresh pass applies.
  *
  * One window at a time. Open claims the window for its identity before its first write, and keeps it
  * even when it fails part-way; a second open is refused and touches nothing. Only the owner's close or

@@ -25,6 +25,12 @@ data class LivePolicyFacts(val input: PolicyInput, val packages: List<PackageFac
  * A package disabled in both reads is left out of `installed`, so no sweep tries to hide it: it cannot
  * open, and a system-disabled app never reads back as hidden (PLA-144 spare finding). A disabled package
  * that a floor identity names stays in, so the floor still enables and unhides it.
+ *
+ * Confirmed absence (PLA-293). After both list reads, each minimum-UI name of the matching inventory and
+ * each [assemble] `previousLockTask` name is asked about on its own ([PackageSystemPort.installedForUser]).
+ * Only a positive "not installed for this user" makes it absent. A name listed in either read (hidden,
+ * disabled and suspended packages are listed), a floor name, Plainphone, or a query that throws is never
+ * absent. Nothing is kept between passes: each pass asks again.
  */
 class LivePolicyInputAssembler(
     private val port: PackageSystemPort,
@@ -33,12 +39,20 @@ class LivePolicyInputAssembler(
     private val plainphone: PackageName,
     private val messages: PackageName,
 ) {
-    fun assemble(): LivePolicyFacts {
+    /**
+     * @param previousLockTask the protected UI state the caller would otherwise add with `copy`. It is set
+     *   on the input, and its names are checked for absence like the minimum UI.
+     */
+    fun assemble(previousLockTask: Set<PackageName> = emptySet()): LivePolicyFacts {
         lateinit var floor: FloorRead
         val packages = LivePackageReader(port).read { floor = FloorIdentityReader(port).read() }
         val floorNames = floor.identities.map { it.name }.toSet()
         val model = port.model()
         val fingerprint = port.fingerprint()
+        val inventory = inventoryFor(model, fingerprint)
+        val listed = packages.installed.map { it.name }.toSet()
+        val absent = ((inventory?.minimumUi.orEmpty() + previousLockTask) - listed - floorNames - plainphone)
+            .filterTo(mutableSetOf()) { name -> runCatching { !port.installedForUser(name.value) }.getOrDefault(false) }
         val input = PolicyInput(
             model = model,
             fingerprint = fingerprint,
@@ -46,9 +60,11 @@ class LivePolicyInputAssembler(
             messages = messages,
             installed = packages.installed.filter { it.name !in packages.disabled || it.name in floorNames },
             identities = floor.identities,
-            inventory = inventoryFor(model, fingerprint),
+            inventory = inventory,
             health = store.read().health,
+            previousLockTask = previousLockTask,
             installedIdentities = packages.identities,
+            confirmedAbsentPackages = absent,
         )
         return LivePolicyFacts(input, packages.facts, floor.unreadable)
     }

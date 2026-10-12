@@ -47,4 +47,12 @@ interface PackageSystemPort {
     fun systemOnlyActivities(action: String, data: String? = null): Set<String>
     /** Packages with a receiver for [action], `MATCH_SYSTEM_ONLY`, hidden included. */
     fun systemOnlyReceivers(action: String): Set<String>
+
+    /**
+     * Whether [name] is installed for this user, asked on its own. True for hidden, disabled and
+     * suspended packages. False only when Android positively answers that it is not: the name is
+     * unknown, or it exists on the device with `FLAG_INSTALLED` unset for this user (for example after
+     * `pm uninstall --user 0`). Throws when the answer cannot be read; a throw is never absence.
+     */
+    fun installedForUser(name: String): Boolean
 }
