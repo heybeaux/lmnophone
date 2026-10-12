@@ -26,7 +26,7 @@ class VoicePracticeControllerTest {
             starts++
             failStart?.let { throw it }
             lastFormat = format; lastMaxMs = maxMs
-            file.writeBytes(format.header + ByteArray(320))
+            file.writeBytes(format.sample())
             running = true; this.listener = listener
         }
         override fun stop(): Boolean { stops++; check(running); running = false; return stopResult }
@@ -48,7 +48,9 @@ class VoicePracticeControllerTest {
     }
     private class Speaker : VoiceSpeaker {
         val spoken = mutableListOf<String>()
-        override fun speakName(name: String) { spoken += name }
+        var stops = 0
+        override fun speak(prompt: VoicePrompt, person: VoicePerson?) { spoken += "$prompt ${person?.name}" }
+        override fun stop() { stops++ }
     }
 
     private var now = 1_000_000L
@@ -65,25 +67,45 @@ class VoicePracticeControllerTest {
         dispatch(Record); now += ms; dispatch(end)
     }
 
-    @Test fun recordsAmrNbMonoForAtMostSixtySecondsByDefault() {
+    @Test fun recordsAacM4aMonoForAtMostTwoMinutesByDefault() {
         val c = controller(); c.dispatch(Choose(sam)); c.dispatch(Record)
-        assertEquals(VoiceFormat.AmrNb, recorder.lastFormat)
-        assertEquals(60_000L, recorder.lastMaxMs)
+        assertEquals(VoiceFormat.AacM4a, recorder.lastFormat)
+        assertEquals(120_000L, recorder.lastMaxMs)
+        assertEquals("audio/mp4", VoiceFormat.AacM4a.mimeType)
+        assertEquals(1, VoiceFormat.AacM4a.channels)
         assertEquals("audio/amr", VoiceFormat.AmrNb.mimeType)
         assertEquals(1, VoiceFormat.AmrNb.channels)
         assertTrue(c.state is VoiceState.Recording)
     }
 
+    @Test fun openingSaysItIsPracticeAndRecordSilencesSpeechFirst() {
+        val c = controller()
+        assertEquals(listOf("Intro null"), speaker.spoken)
+        c.dispatch(Choose(sam)); val stops = speaker.stops
+        c.dispatch(Record)
+        assertEquals(stops + 1, speaker.stops)
+        assertEquals(listOf("Intro null", "Person Sam"), speaker.spoken)
+    }
+
+    @Test fun amrFallbackIsConfigurable() {
+        val store = VoiceDraftStore(tmp.newFolder(), VoiceFormat.AmrNb) { now }
+        val c = VoicePracticeController(recorder, player, store, mic, speaker, clock = { now }, format = VoiceFormat.AmrNb)
+            .also { it.open() }
+        c.dispatch(Choose(sam)); c.recordFor(2_000)
+        assertEquals(VoiceFormat.AmrNb, recorder.lastFormat)
+        assertEquals(listOf("sam.amr"), store.dir.list()!!.toList())
+    }
+
     @Test fun stopKeepsOneDraftPerPersonAndSpeaksTheName() {
         val store = store(); val c = controller(store)
-        c.dispatch(Choose(sam)); assertEquals(listOf("Sam"), speaker.spoken)
+        c.dispatch(Choose(sam)); assertEquals("Person Sam", speaker.spoken.last())
         c.recordFor(3_000)
         assertEquals(1, recorder.stops)
         val review = c.state as VoiceState.Review
         assertEquals("sam", review.draft.personId)
         assertTrue(store.file("sam").length() > 0)
         c.dispatch(RecordAgain); now += 2_000; c.dispatch(Stop)
-        assertEquals(listOf("sam.amr"), store.dir.list()!!.sorted())
+        assertEquals(listOf("sam.m4a"), store.dir.list()!!.sorted())
     }
 
     @Test fun reopeningAPersonShowsTheirKeptDraft() {
@@ -98,7 +120,7 @@ class VoicePracticeControllerTest {
 
     @Test fun tooShortATakeIsNotKept() {
         val store = store(); val c = controller(store)
-        c.dispatch(Choose(sam)); c.recordFor(200)
+        c.dispatch(Choose(sam)); c.recordFor(999)
         assertEquals(VoiceState.Person(sam, VoiceNotice.NothingRecorded), c.state)
         assertFalse(store.file("sam").exists()); assertTrue(store.dir.list()!!.isEmpty())
     }
@@ -111,14 +133,15 @@ class VoicePracticeControllerTest {
         assertTrue(store.dir.list()!!.isEmpty())
     }
 
-    @Test fun startThrowingIsRecorderErrorAndTheHookFired() {
+    @Test fun startThrowingIsBusyAndTheHookFired() {
         for (failure in listOf(RuntimeException("start failed"), IllegalStateException("mic busy"), IOException("prepare"))) {
             recorder.failStart = failure
             val starts = recorder.starts
             val store = store(); val c = controller(store)
             c.dispatch(Choose(sam)); c.dispatch(Record)
             assertEquals(starts + 1, recorder.starts)
-            assertEquals(VoiceState.MicUnavailable(sam, MicProblem.RecorderError, null), c.state)
+            assertEquals(VoiceState.Person(sam, VoiceNotice.MicBusy), c.state)
+            assertEquals("Busy Sam", speaker.spoken.last())
             assertTrue(store.dir.list()!!.isEmpty())
             assertFalse(recorder.running)
         }
@@ -173,7 +196,7 @@ class VoicePracticeControllerTest {
     }
 
     @Test fun maxLengthFromTheRecorderEndsInReview() {
-        val c = controller(); c.dispatch(Choose(sam)); c.dispatch(Record); now += 60_000
+        val c = controller(); c.dispatch(Choose(sam)); c.dispatch(Record); now += 120_000
         recorder.listener!!.onMaxLength()
         assertEquals(VoiceNotice.MaxLength, (c.state as VoiceState.Review).notice)
         assertEquals(1, recorder.stops)

@@ -10,7 +10,7 @@ import org.junit.rules.TemporaryFolder
 class VoiceDraftStoreTest {
     @get:Rule val tmp = TemporaryFolder()
     private var now = 10 * VoiceDraftStore.RETENTION_MS
-    private fun store() = VoiceDraftStore(tmp.newFolder("voice")) { now }
+    private fun store() = VoiceDraftStore(tmp.newFolder("voice"), VoiceFormat.AmrNb) { now }
     private fun VoiceDraftStore.write(id: String, bytes: ByteArray = VoiceFormat.AmrNb.header + ByteArray(64)) {
         takeFile(id).writeBytes(bytes); assertNotNull(keepTake(id))
     }
@@ -50,6 +50,17 @@ class VoiceDraftStoreTest {
         for (bad in listOf("../x", "a/b", "", "Sam", "x.amr")) {
             assertThrows(IllegalArgumentException::class.java) { s.file(bad) }
         }
+    }
+
+    @Test fun defaultDraftsAreAacInM4aAndNeedTheFtypBoxAndAudio() {
+        val s = VoiceDraftStore(tmp.newFolder("m4a")) { now }
+        assertEquals("sam.m4a", s.file("sam").name)
+        s.takeFile("sam").writeBytes(VoiceFormat.AmrNb.sample())
+        assertNull("an AMR file is not an m4a draft", s.keepTake("sam"))
+        s.takeFile("sam").writeBytes(byteArrayOf(0, 0, 0, 0x18) + "ftyp".toByteArray())
+        assertNull("box header alone is nothing recorded", s.keepTake("sam"))
+        s.takeFile("sam").writeBytes(VoiceFormat.AacM4a.sample())
+        assertNotNull(s.keepTake("sam")); assertNotNull(s.draft("sam"))
     }
 
     @Test fun amrHeaderIsTheSingleChannelNarrowbandMagic() {

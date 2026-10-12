@@ -23,8 +23,9 @@ class VoicePracticeTest {
     }
 
     @Test fun choosingAPersonSpeaksTheNameAndShowsAnExistingDraft() {
-        assertEquals(Transition(Person(sam), listOf(SpeakName(sam))), reduce(ChoosePerson, Choose(sam, null)))
-        assertEquals(Transition(Review(sam, older), listOf(SpeakName(sam))), reduce(ChoosePerson, Choose(sam, older)))
+        assertEquals(Transition(Person(sam), listOf(Speak(VoicePrompt.Person, sam))), reduce(ChoosePerson, Choose(sam, null)))
+        assertEquals(Transition(Review(sam, older, notice = VoiceNotice.Unsent), listOf(Speak(VoicePrompt.Unsent, sam))),
+            reduce(ChoosePerson, Choose(sam, older)))
     }
 
     @Test fun recordShowsRecordingBeforeTheRecorderStarts() {
@@ -37,7 +38,8 @@ class VoicePracticeTest {
         val saving = reduce(Recording(sam, null), Stop)
         assertEquals(Saving(sam, null), saving.state)
         assertEquals(listOf(FinishRecording("sam", keep = true)), saving.effects)
-        assertEquals(Review(sam, take), reduce(saving.state, RecordingFinished(take)).state)
+        assertEquals(Transition(Review(sam, take), listOf(Speak(VoicePrompt.Review, sam))),
+            reduce(saving.state, RecordingFinished(take)))
     }
 
     @Test fun maxLengthAndEveryInterruptionEndInReviewWithTheDraftKept() {
@@ -46,16 +48,27 @@ class VoicePracticeTest {
         for ((event, notice) in causes) {
             val saving = reduce(Recording(sam, null), event)
             assertEquals(event.toString(), listOf(FinishRecording("sam", keep = true)), saving.effects)
-            assertEquals(event.toString(), Review(sam, take, notice = notice),
-                reduce(saving.state, RecordingFinished(take)).state)
+            val done = reduce(saving.state, RecordingFinished(take))
+            assertEquals(event.toString(), Review(sam, take, notice = notice), done.state)
+            // An interruption means the person may not be looking: say nothing (UX V11).
+            assertEquals(event.toString(), if (event == MaxLengthReached) listOf(Speak(VoicePrompt.MaxLength, sam))
+                else emptyList<VoiceEffect>(), done.effects)
         }
     }
 
     @Test fun nothingUsableGoesBackToPersonOrThePreviousDraft() {
-        assertEquals(Person(sam, VoiceNotice.NothingRecorded),
-            reduce(Saving(sam, null), RecordingFinished(null)).state)
+        assertEquals(Transition(Person(sam, VoiceNotice.NothingRecorded), listOf(Speak(VoicePrompt.TooShort, sam))),
+            reduce(Saving(sam, null), RecordingFinished(null)))
         assertEquals(Review(sam, older, notice = VoiceNotice.NothingRecorded),
             reduce(Saving(sam, older), RecordingFinished(null)).state)
+    }
+
+    @Test fun recorderThatCannotStartIsBusyAndKeepsThePersonOrDraft() {
+        val t = reduce(Recording(sam, null), CouldNotStart)
+        assertEquals(Transition(Person(sam, VoiceNotice.MicBusy),
+            listOf(FinishRecording("sam", keep = false), Speak(VoicePrompt.Busy, sam))), t)
+        assertEquals(Review(sam, older, notice = VoiceNotice.MicBusy), reduce(Recording(sam, older), CouldNotStart).state)
+        for (s in listOf(Person(sam), Review(sam, take), ChoosePerson)) assertEquals(Transition(s), reduce(s, CouldNotStart))
     }
 
     @Test fun backWhileRecordingStopsAndKeepsTheTake() {
@@ -68,13 +81,19 @@ class VoicePracticeTest {
         for (problem in MicProblem.entries) {
             val t = reduce(Recording(sam, older), MicUnavailable(problem))
             assertEquals(listOf(FinishRecording("sam", keep = false)), t.effects)
-            assertEquals(VoiceState.MicUnavailable(sam, problem, older), reduce(t.state, RecordingFinished(null)).state)
+            val prompt = when (problem) {
+                MicProblem.PermissionRefused -> VoicePrompt.MicNotAllowed
+                MicProblem.PrivacyToggle -> VoicePrompt.MicOff
+                MicProblem.RecorderError -> VoicePrompt.Busy
+            }
+            assertEquals(Transition(VoiceState.MicUnavailable(sam, problem, older), listOf(Speak(prompt, sam))),
+                reduce(t.state, RecordingFinished(null)))
         }
     }
 
     @Test fun micProblemBeforeRecordingIsAnExplicitState() {
-        assertEquals(VoiceState.MicUnavailable(sam, MicProblem.PermissionRefused, null),
-            reduce(Person(sam), MicUnavailable(MicProblem.PermissionRefused)).state)
+        assertEquals(Transition(VoiceState.MicUnavailable(sam, MicProblem.PermissionRefused, null),
+            listOf(Speak(VoicePrompt.MicNotAllowed, sam))), reduce(Person(sam), MicUnavailable(MicProblem.PermissionRefused)))
         assertEquals(VoiceState.MicUnavailable(sam, MicProblem.PrivacyToggle, older),
             reduce(Review(sam, older), MicUnavailable(MicProblem.PrivacyToggle)).state)
     }
@@ -106,10 +125,13 @@ class VoicePracticeTest {
         assertEquals(Transition(Recording(sam, older), listOf(StopPlayback, StartRecording("sam"))), t)
         val saving = reduce(t.state, Stop).state
         assertEquals(Review(sam, take), reduce(saving, RecordingFinished(take)).state)
+        assertEquals("a failed take keeps the old draft", Review(sam, older, notice = VoiceNotice.NothingRecorded),
+            reduce(saving, RecordingFinished(null)).state)
     }
 
     @Test fun deleteRemovesTheFileAndReturnsToPerson() {
-        assertEquals(Transition(Person(sam, VoiceNotice.Deleted), listOf(StopPlayback, DeleteDraft("sam"))),
+        assertEquals(Transition(Person(sam, VoiceNotice.Deleted),
+            listOf(StopPlayback, DeleteDraft("sam"), Speak(VoicePrompt.Deleted, sam))),
             reduce(Review(sam, take, playing = true), Delete))
     }
 
@@ -147,7 +169,7 @@ class VoicePracticeTest {
                     }
                     is FinishRecording -> { assertTrue("finish only a running recorder: $s $e", recorderRunning); recorderRunning = false }
                     is StartPlayback -> assertTrue(t.state is Review && (t.state as Review).playing)
-                    is SpeakName, StopPlayback, is DeleteDraft, Leave -> Unit
+                    is Speak, StopPlayback, is DeleteDraft, Leave -> Unit
                 }
                 if (recorderRunning) assertTrue("recorder running only while Recording is shown: $s $e -> ${t.state}", t.state is Recording)
                 val next = t.state.person
@@ -163,7 +185,7 @@ class VoicePracticeTest {
     }
 
     private fun events(random: Random) = generateSequence {
-        when (random.nextInt(16)) {
+        when (random.nextInt(17)) {
             0 -> Choose(VoicePeople.practice.random(random), if (random.nextBoolean()) take else null)
             1 -> Record; 2 -> Stop; 3 -> Play; 4 -> PlaybackEnded; 5 -> PlaybackFailed
             6 -> RecordAgain; 7 -> Delete; 8 -> Back; 9 -> MaxLengthReached
@@ -172,6 +194,7 @@ class VoicePracticeTest {
             12 -> RecordingFinished(if (random.nextBoolean()) take else null)
             13 -> Choose(sam, null)
             14 -> Stop
+            15 -> CouldNotStart
             else -> Record
         }
     }
