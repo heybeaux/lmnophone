@@ -24,6 +24,7 @@ class UserScreensScreenshotTest(private val scale: Float) {
     )
     @Test fun moreOnePerson() = tallShot { MoreScreen(MoreUiState(MoreMode.Trusted(listOf("Sam"), "Sam")), {}) }
     @Test fun moreTwoPeople() = tallShot { MoreScreen(MoreUiState(MoreMode.Trusted(listOf("Sam", "Jo"), "Sam")), {}) }
+    @Test fun moreVoicePractice() = tallShot { MoreScreen(MoreUiState(MoreMode.Trusted(listOf("Sam"), "Sam"), voicePractice = true), {}) }
     @Test fun moreSelfManaged() = shot { MoreScreen(MoreUiState(MoreMode.SelfManaged(10)), {}) }
     @Test fun moreOneMinute() = shot { MoreScreen(MoreUiState(MoreMode.SelfManaged(1)), {}) }
     @Test fun requestEmpty() = shot { AskForAppScreen(AskForAppUiState("Sam"), {}) }
