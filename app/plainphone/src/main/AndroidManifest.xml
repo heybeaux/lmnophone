@@ -70,6 +70,12 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".PinAccessActivity"
+            android:exported="false"
+            android:lockTaskMode="normal"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- Direct Boot aware: the locked-boot re-apply runs before the first unlock. -->
         <receiver
             android:name=".boot.BootReceiver"

@@ -34,6 +34,13 @@ import org.plainphone.device.ReadbackPolicyApplier
 import org.plainphone.device.ResetProtectionEffects
 import org.plainphone.device.SerialDispatcher
 import org.plainphone.device.ReapplyTimings
+import org.plainphone.device.authority.PinEntry
+import org.plainphone.device.authority.PinEnrollmentResult
+import org.plainphone.device.authority.PinAccessResult
+import org.plainphone.device.authority.PreviewPinAccess
+import org.plainphone.device.runtime.Pbkdf2KeyDerivation
+import org.plainphone.device.runtime.SecureEntropy
+import org.plainphone.policy.PinVault
 import org.plainphone.device.authority.AuthorityPass
 import org.plainphone.device.authority.DeviceReconciliationEffects
 import org.plainphone.device.authority.DpmDeviceOwnerReader
@@ -128,11 +135,17 @@ class PolicyRuntime private constructor(private val context: Context) {
      * The pending wait's checkpoints and PIN-free cancel: one per process, on the same store, with the
      * proven clock in device-protected storage. No grant is accepted; nothing here starts or skips a wait.
      */
+    private val facts by lazy { AndroidRuntimeFacts(context) }
+    private val runningClock by lazy {
+        ProvenRunningClock(FileClockStateStore(File(protectedDir, "clock")), facts::bootTime, authorityStore::reserveEpoch)
+    }
+    private val pins by lazy {
+        PreviewPinAccess(authorityStore, PinVault(authorityStore.credentials, Pbkdf2KeyDerivation, SecureEntropy, runningClock))
+    }
     private val waiting: WaitingCheckpoints by lazy {
-        val facts = AndroidRuntimeFacts(context)
         WaitingCheckpoints(
             authorityStore,
-            ProvenRunningClock(FileClockStateStore(File(protectedDir, "clock")), facts::bootTime, authorityStore::reserveEpoch),
+            runningClock,
             facts::battery,
             PersonAuthorityConsumer { _, _, _ -> false },
         )
@@ -257,6 +270,18 @@ class PolicyRuntime private constructor(private val context: Context) {
 
     /** Hook for the wiring slice: run after every trusted-person action commits. */
     fun afterTrustedPersonAction() = reapply("trusted-person")
+
+    /** PIN work shares the policy dispatcher; no secret or capability crosses a saved UI state. */
+    fun pinEntry(done: (PinEntry) -> Unit) = dispatcher.post { done(pins.entry()) }
+
+    fun enrollPin(pin: CharArray, done: (PinEnrollmentResult) -> Unit) = dispatcher.post {
+        val result = pins.enroll(pin)
+        try { run("pin-enrollment") } finally { done(result) }
+    }
+
+    fun checkPin(pin: CharArray, done: (PinAccessResult) -> Unit) = dispatcher.post {
+        done(pins.authenticate(pin))
+    }
 
     /** The phone's own cancel of the pending wait it shows; no PIN. The pass that follows reads the result. */
     fun cancelWait(requestId: String, done: (WaitingOutcome?) -> Unit = {}) = dispatcher.post {

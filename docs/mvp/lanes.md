@@ -222,6 +222,14 @@ array on every path; refuses any existing authority record; and atomically creat
 self-managed credentials, an empty wait and idle elevation through
 `JointAuthorityStore.initialize`. It grants no authority and creates no recovery
 profile. Authentication still uses `PinVault` and the shared credential CAS.
-The adapter is not exposed by the preview UI until the friction-profile
-prerequisite is resolved; `More`'s other unavailable routes remain covered by
-`TestBuildNavigatorTest`.
+The preview UI exposes PIN setup and entry only; `More`'s other unavailable
+routes remain covered by `TestBuildNavigatorTest`. Waiting-change starts still
+need the separately deferred recovery-profile integration.
+
+Preview 17 hosts `device.authority.PreviewPinAccess` through the common serial
+`PolicyRuntime` dispatcher. It offers genesis-only PIN enrollment, then checks a
+fresh PIN and immediately consumes its purpose-bound grant to open an informational
+controls screen. The screen stores no grant and every privileged action remains
+unhosted. `PinScreenFlow` ignores callbacks after close and rejects duplicate
+submits; `PinAccessActivity` clears input and access on pause. Enrollment has no
+reset-protection profile, starts no wait, and leaves the preview starter plan intact.

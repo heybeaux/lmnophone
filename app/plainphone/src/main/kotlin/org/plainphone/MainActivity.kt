@@ -320,6 +320,7 @@ class MainActivity : ComponentActivity() {
             ShellEffect.OpenDialer, ShellEffect.OpenEmergencyDialer -> null // Handled above.
             ShellEffect.OpenMessages ->
                 CommunicationEntryIntents.messages()
+            ShellEffect.OpenTrustedPerson -> Intent(this, PinAccessActivity::class.java)
             is ShellEffect.OpenApp -> packageManager.getLaunchIntentForPackage(effect.id)
             ShellEffect.Finish -> null.also { finish() }
         } ?: return

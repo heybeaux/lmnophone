@@ -60,6 +60,7 @@ data class ShellState(val stack: List<ShellRoute> = listOf(ShellRoute.Home), val
 sealed interface ShellEffect {
     data object OpenDialer : ShellEffect
     data object OpenMessages : ShellEffect
+    data object OpenTrustedPerson : ShellEffect
     /** The system dialer with the emergency number filled in. Never places the call. */
     data object OpenEmergencyDialer : ShellEffect
     data class OpenApp(val id: String) : ShellEffect
@@ -96,7 +97,8 @@ class ShellNavigator(
         MoreEvent.OpenEmergencyDialer -> Step(s, ShellEffect.OpenEmergencyDialer)
         MoreEvent.AskForApp -> if (testBuild) notInBuild(s) else push(s.copy(draft = ""), ShellRoute.AskForApp)
         MoreEvent.OpenPhoneSettings -> push(s, ShellRoute.PhoneSettings)
-        MoreEvent.AddApp, MoreEvent.OpenTrustedPerson,
+        MoreEvent.OpenTrustedPerson -> Step(s, ShellEffect.OpenTrustedPerson)
+        MoreEvent.AddApp,
         MoreEvent.OpenSelfManagedSettings, MoreEvent.OpenAbout -> if (testBuild) notInBuild(s) else Step(s)
     }
 

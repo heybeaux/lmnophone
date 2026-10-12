@@ -34,12 +34,17 @@ class ShellNavigatorTest {
     }
 
     @Test fun unwiredDestinationsStayPut() {
-        // Notice details, trusted-person and About screens are later slices.
+        // Remaining unhosted destinations stay put outside the test-build shell.
         assertEquals(Step(ShellState()), nav.onHome(ShellState(), HomeEvent.OpenNotice))
-        for (e in listOf(MoreEvent.AddApp, MoreEvent.OpenTrustedPerson,
+        for (e in listOf(MoreEvent.AddApp,
             MoreEvent.OpenSelfManagedSettings, MoreEvent.OpenAbout)) {
             assertEquals(Step(at(ShellRoute.More)), nav.onMore(at(ShellRoute.More), e))
         }
+    }
+
+    @Test fun trustedPersonOpensThePrivatePinHost() {
+        assertEquals(Step(at(ShellRoute.More), ShellEffect.OpenTrustedPerson),
+            nav.onMore(at(ShellRoute.More), MoreEvent.OpenTrustedPerson))
     }
 
     @Test fun moreBackEmergencyAndAsk() {
