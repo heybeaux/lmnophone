@@ -139,4 +139,19 @@ class WaitingHomeLineTest {
         }
         assertEquals(false, pendingChange(wait(WaitingChangeKind.TURN_OFF), now, time)?.committing)
     }
+
+    /**
+     * Found on the emulator: the screen added the remaining time read at the last pass to a later "now",
+     * so it named a later time than Home's line. Both now come from the same read and its time.
+     */
+    @Test fun attentionTimeMatchesHomeFromTheSameRead() {
+        val readAt = ZonedDateTime.parse("2026-10-11T19:20:42Z")
+        val notice = wait(WaitingChangeKind.TURN_OFF, remaining = 86_399_000L)
+        val read = WaitingRead(notice, readAt)
+        val home = homeLine(NoticeLine.decide(NoticeInput(Mode.TRUSTED, false, notice)).line, readAt, time)
+            as HomeNotice.TurnOffWaiting
+        assertEquals(org.plainphone.ui.home.PendingChangeKind.TurnOff(home.time, home.day), pendingChange(read, time)?.kind)
+        assertEquals("19:21", home.time)
+        assertNull(pendingChange(WaitingRead(null, readAt), time))
+    }
 }
