@@ -82,7 +82,7 @@ class ApprovalHarness : AutoCloseable {
         listOf(RuntimePermission(camera, "Camera", emptyList(), PermissionGrantCapability.SUPPORTED)))
     private val inventory = BuildInventory("model", "build", 1, NeverHideList(setOf(messages)), setOf(messages), emptySet())
     var approvals = AppApprovalState(removedApps = mapOf(target to identity, sibling to siblingIdentity))
-    private val input = { PolicyInput("model", "build", plainphone, messages,
+    val input = { PolicyInput("model", "build", plainphone, messages,
         listOf(InstalledPackage(plainphone, false, 1), InstalledPackage(messages, true, 1), InstalledPackage(dialer, true, 1),
             InstalledPackage(target, false, 1), InstalledPackage(sibling, false, 1)),
         listOf(FloorIdentity(dialer, FloorRole.SYSTEM_DIALER, IdentitySource.OS_MANAGED)), inventory,
@@ -116,11 +116,15 @@ class ApprovalHarness : AutoCloseable {
         override fun protectedStateCheck() = true
         override fun readBackPolicy() = true
     }, clock, inventory, vault) { credentials?.mode }
-    private val store = object : AppApprovalStore {
-        override fun read() = approvals
+    /** The record does not read while true. */
+    var unreadable = false
+    /** A write it matches lands but is not acknowledged: the ambiguous compare-and-set. */
+    var lostAck: (AppApprovalState) -> Boolean = { false }
+    val store = object : AppApprovalStore {
+        override fun read() = approvals.takeUnless { unreadable }
         override fun compareAndSet(expected: AppApprovalState, replacement: AppApprovalState, expectedCredentials: CredentialState?): Boolean {
-            if (approvals !== expected) return false
-            approvals = replacement; return true
+            if (unreadable || approvals !== expected) return false
+            approvals = replacement; return !lostAck(replacement)
         }
     }
     private val watched = object : AppApprovalEffects by effects {
