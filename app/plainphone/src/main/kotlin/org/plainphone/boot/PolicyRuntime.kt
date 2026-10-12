@@ -29,7 +29,7 @@ import org.plainphone.device.DpmPort
 import org.plainphone.device.KeyguardFirst
 import org.plainphone.device.DpmResetProtectionPort
 import org.plainphone.device.ReadbackPolicyApplier
-import org.plainphone.device.ResetProtectionEffects
+import org.plainphone.device.resetProtectionFor
 import org.plainphone.device.SerialDispatcher
 import org.plainphone.device.authority.AuthorityPass
 import org.plainphone.device.authority.DeviceReconciliationEffects
@@ -98,6 +98,16 @@ class PolicyRuntime private constructor(private val context: Context) {
     )
     /** One build/SDK restriction filter for every policy write: the boot re-apply and reconciliation (PLA-350 R1). */
     private val restrictionFilter = BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT)
+    /**
+     * The one reset-protection effect for reconciliation and people changes. Test builds withhold the
+     * write under the same filter as DISALLOW_FACTORY_RESET (Lead decision on PLA-92) and log only the
+     * account count.
+     */
+    private val resetEffects by lazy {
+        resetProtectionFor(restrictionFilter, DpmResetProtectionPort(context, admin)) { accounts ->
+            Log.i(TAG, "reset protection WITHHELD (test build): would set $accounts accounts")
+        }
+    }
     /** Credentials, the waiting operation and its reconciliation, in device-protected storage. */
     private val authorityStore = JointAuthorityStore(File(protectedDir, "authority"))
     private val authority: AuthorityPass by lazy {
@@ -108,7 +118,7 @@ class PolicyRuntime private constructor(private val context: Context) {
                 revoke = { boot.sessions.onStart() },
                 owner = DpmDeviceOwnerReader(context),
                 applier = ReadbackPolicyApplier(port),
-                reset = ResetProtectionEffects(DpmResetProtectionPort(context, admin)),
+                reset = resetEffects,
                 store = authorityStore,
                 filter = restrictionFilter,
             ),
@@ -134,7 +144,7 @@ class PolicyRuntime private constructor(private val context: Context) {
      * The fresh-PIN stop is not wired, so no grant is accepted.
      */
     private val peopleDriver: PeopleCommitDriver by lazy {
-        PeopleCommitDriver(authorityStore, ResetProtectionEffects(DpmResetProtectionPort(context, admin)), provenClock,
+        PeopleCommitDriver(authorityStore, resetEffects, provenClock,
             PersonAuthorityConsumer { _, _, _ -> false })
     }
     private val boot = BootReapply(

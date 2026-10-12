@@ -24,6 +24,13 @@ class RestrictionFilter(val withheld: Set<Restriction>) {
         )
     }
 
+    /**
+     * True when this build withholds DISALLOW_FACTORY_RESET: it then withholds the reset-protection
+     * write as well (Lead decision on PLA-92): a test build never writes a new reset-protection policy.
+     * It does not read or clear one that is already set. See `resetProtectionFor`.
+     */
+    val withholdsResetProtection: Boolean get() = Restriction.DISALLOW_FACTORY_RESET in withheld
+
     /** This filter plus every restriction that API level [sdk] does not have. */
     fun forSdk(sdk: Int) = RestrictionFilter(withheld + unsupportedOn(sdk))
 
