@@ -35,6 +35,7 @@ import org.plainphone.device.authority.AuthorityPass
 import org.plainphone.device.authority.DeviceReconciliationEffects
 import org.plainphone.device.authority.DpmDeviceOwnerReader
 import org.plainphone.device.authority.JointAuthorityStore
+import org.plainphone.device.authority.PeopleCommitDriver
 import org.plainphone.device.authority.WaitingCheckpoints
 import org.plainphone.device.authority.waitingReconciler
 import org.plainphone.device.boot.BootOutcome
@@ -52,6 +53,7 @@ import org.plainphone.core.Mode
 import org.plainphone.policy.NoticeInput
 import org.plainphone.policy.NoticeLine
 import org.plainphone.policy.NoticeTap
+import org.plainphone.policy.PeopleChangeOutcome
 import org.plainphone.policy.PolicyEngine
 import org.plainphone.policy.ProvenRunningClock
 import org.plainphone.policy.ReconcileOutcome
@@ -118,14 +120,22 @@ class PolicyRuntime private constructor(private val context: Context) {
      * The pending wait's checkpoints and PIN-free cancel: one per process, on the same store, with the
      * proven clock in device-protected storage. No grant is accepted; nothing here starts or skips a wait.
      */
+    private val facts by lazy { AndroidRuntimeFacts(context) }
+    /** The one proven running clock, in device-protected storage, for every wait and people step. */
+    private val provenClock by lazy {
+        ProvenRunningClock(FileClockStateStore(File(protectedDir, "clock")), facts::bootTime, authorityStore::reserveEpoch)
+    }
     private val waiting: WaitingCheckpoints by lazy {
-        val facts = AndroidRuntimeFacts(context)
-        WaitingCheckpoints(
-            authorityStore,
-            ProvenRunningClock(FileClockStateStore(File(protectedDir, "clock")), facts::bootTime, authorityStore::reserveEpoch),
-            facts::battery,
-            PersonAuthorityConsumer { _, _, _ -> false },
-        )
+        WaitingCheckpoints(authorityStore, provenClock, facts::battery, PersonAuthorityConsumer { _, _, _ -> false })
+    }
+    /**
+     * The directed callback for a committing or rolling-back people change (wiring 5): one step per pass,
+     * in the direction its record holds, through the exact reset-protection set, broadcast and readback.
+     * The fresh-PIN stop is not wired, so no grant is accepted.
+     */
+    private val peopleDriver: PeopleCommitDriver by lazy {
+        PeopleCommitDriver(authorityStore, ResetProtectionEffects(DpmResetProtectionPort(context, admin)), provenClock,
+            PersonAuthorityConsumer { _, _, _ -> false })
     }
     private val boot = BootReapply(
         FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT),
@@ -280,6 +290,14 @@ class PolicyRuntime private constructor(private val context: Context) {
         }
         userUnlocked.recordPass(locked)
         log(reason, outcome, SystemClock.elapsedRealtime() - started)
+        // A committing or rolling-back people change takes its next step only after this pass's startup
+        // revoked every session and read back (PLA-390 R1); otherwise it waits for the next pass.
+        val drove = try {
+            peopleDriver.driveAfter(outcome)?.also { Log.i(TAG, "people change after $reason: ${it.outcome} failure=${it.failure}") }
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "people change step threw", e)
+            null
+        }
         // Full policy input exists only after unlock, so a lost record is reconciled only then.
         val reconciled = if (locked) null else try {
             authority.reconcileIfLost()?.also { Log.i(TAG, "lost waiting record: outcome=${it.outcome} failure=${it.failure}") }
@@ -309,7 +327,8 @@ class PolicyRuntime private constructor(private val context: Context) {
             // PINNED is not containment (PLA-322 finding 3): not ready, and needs attention.
             val pinned = action == RecoveryAction.PINNED_ATTENTION
             // Only the notice: Home and calling stay available either way.
-            val held = reconciled?.outcome == ReconcileOutcome.NEEDS_ATTENTION || authorityAttention
+            val held = reconciled?.outcome == ReconcileOutcome.NEEDS_ATTENTION || authorityAttention ||
+                drove?.outcome == PeopleChangeOutcome.NEEDS_ATTENTION
             val attention = pinned || held || homeNotice(outcome) != null
             // One line, in the spec's order (policy NoticeLine): attention, then the pending change (wiring 3).
             val wait = try {
