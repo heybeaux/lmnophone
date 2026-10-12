@@ -1,0 +1,4 @@
+PASS: Home → More → Phone settings → Wi-Fi → Forget this network.
+Before tap: location_mode=0.
+After tap: Not connected; location_mode=0.
+No emergency route or call was opened.

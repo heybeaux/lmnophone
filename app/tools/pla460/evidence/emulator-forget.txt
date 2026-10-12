@@ -1,0 +1,8 @@
+INSTRUMENTATION_RESULT: after=one_connected_id_removed=true other_saved_ids_preserved=true disconnected=true location_mode=0 owned=false
+INSTRUMENTATION_RESULT: before=location_mode=0 owned=false
+INSTRUMENTATION_RESULT: controller=pending=false failed=false removal_attempted=true
+INSTRUMENTATION_RESULT: last_read=connected=false validated=false identity_readable=false saved_count=1 location_on=true
+INSTRUMENTATION_RESULT: no_id=failed=true removed_nothing=true location_mode=0 owned=false
+INSTRUMENTATION_RESULT: outcome=PASS
+INSTRUMENTATION_RESULT: saved_check=before_count=2 after_count=1 exact_remaining=true sentinel_preserved=true
+INSTRUMENTATION_CODE: -1
