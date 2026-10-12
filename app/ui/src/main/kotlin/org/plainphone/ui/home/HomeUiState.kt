@@ -35,6 +35,8 @@ sealed interface HomeNotice {
     data object SelfManagedMonthlyCheck : HomeNotice
     data object AlreadyInProgress : HomeNotice
     data object Cancelling : HomeNotice
+    /** device-lockdown: Android reported a system update waiting; LMNOPhone asked it to wait. */
+    data object SoftwareUpdateWaiting : HomeNotice
 }
 
 sealed interface HomeEvent {
