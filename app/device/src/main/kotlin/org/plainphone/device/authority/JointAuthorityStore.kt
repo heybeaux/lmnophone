@@ -34,6 +34,7 @@ import org.plainphone.policy.ElevationTarget
 import org.plainphone.policy.FrictionSettingsReceipt
 import org.plainphone.policy.SessionJournal
 import org.plainphone.policy.FrictionWaitingStore
+import org.plainphone.policy.ModeSwitchCommitter
 import org.plainphone.policy.PeopleChangeCommitter
 import org.plainphone.policy.PersonContact
 import org.plainphone.policy.RecoveryProfile
@@ -553,6 +554,86 @@ class JointAuthorityStore internal constructor(
             joint(s, expectedCredentials, null, expectedWaiting, replacementWaiting, listOf(event to expectedCredentials))
         }
     }
+
+    /**
+     * People and mode-switch commits on this store's coordinator (PLA-97). People operations go to
+     * [peopleCommitter] unchanged. A mode switch's [elevationStore] is this store's own, built over
+     * this store's [waitingStore], so the controller's exact-store binding check holds only for a
+     * controller wired to that same [waitingStore] instance.
+     *
+     * [applyModePatch] compares the credential, waiting and elevation sections in one transaction,
+     * requires the elevation record to hold no temporary authority, and writes only the credential
+     * section: holders, mode, recovery profile, raised structure generation and applied marker
+     * together. The elevation record and its whole ledger are kept byte for byte. [move] for a mode
+     * switch only persists the rollback direction; the terminal write is [finishMode], which also
+     * compares the elevation record. Nothing here runs an effect.
+     */
+    val modeCommitter: ModeSwitchCommitter = object : ModeSwitchCommitter {
+        override val elevationStore: ElevationStore get() = this@JointAuthorityStore.elevationStore
+
+        override fun applyPatch(expectedCredentials: CredentialState, replacementCredentials: CredentialState,
+            expectedWaiting: WaitingState): Boolean =
+            expectedWaiting.operation?.modePatch == null && peopleCommitter.applyPatch(expectedCredentials, replacementCredentials, expectedWaiting)
+
+        override fun move(expectedCredentials: CredentialState, expectedWaiting: WaitingState, replacementWaiting: WaitingState): Boolean {
+            val before = expectedWaiting.operation ?: return false
+            if (before.modePatch == null) return peopleCommitter.move(expectedCredentials, expectedWaiting, replacementWaiting)
+            return commit { s ->
+                val after = replacementWaiting.operation ?: return@commit null
+                // Only the rollback direction; a terminal mode write must also compare the elevation record.
+                if (before.phase != WaitingPhase.COMMITTING || after.phase != WaitingPhase.ROLLING_BACK ||
+                    applied(expectedWaiting, expectedCredentials)) return@commit null
+                val stopper = after.stopper ?: return@commit null
+                if (expectedCredentials.people[stopper]?.generation != after.stopperGeneration ||
+                    !sameOperation(after, before.copied(WaitingPhase.ROLLING_BACK, stopper = stopper, stopperGeneration = after.stopperGeneration))) return@commit null
+                joint(s, expectedCredentials, null, expectedWaiting, replacementWaiting, listOf(WaitingEvent.ROLLING_BACK to expectedCredentials))
+            }
+        }
+
+        override fun applyModePatch(expectedCredentials: CredentialState, replacementCredentials: CredentialState,
+            expectedWaiting: WaitingState, expectedElevation: ElevationRecord): Boolean = commit { s ->
+            val op = expectedWaiting.operation ?: return@commit null
+            val patch = op.modePatch ?: return@commit null
+            if (op.phase != WaitingPhase.COMMITTING || applied(expectedWaiting, expectedCredentials) ||
+                !patch.dependenciesMatch(expectedCredentials) || !clearOfAuthority(expectedElevation)) return@commit null
+            val profile = expectedCredentials.recoveryProfile ?: return@commit null
+            if (expectedCredentials.revision == Long.MAX_VALUE || expectedCredentials.structureGeneration == Long.MAX_VALUE) return@commit null
+            // The one acceptable result, built from the stored patch the same way as the policy's candidate.
+            val person = patch.incomingPerson
+            val credential = patch.incomingSelfManaged?.credential ?: patch.incomingTrustedPerson?.credential ?: return@commit null
+            val account = patch.incomingSelfManaged?.resetProtectionUserId ?: patch.incomingTrustedPerson?.resetProtectionUserId ?: return@commit null
+            val structure = expectedCredentials.structureGeneration + 1
+            val wanted = CredentialState(patch.targetMode, mapOf(person to credential), expectedCredentials.revision + 1, structure,
+                expectedCredentials.pendingNotices, RecoveryProfile(mapOf(person to account), profile.backupUserId, profile.friction),
+                AppliedPeopleChange(op.identity.requestId, expectedWaiting.storageGeneration, structure))
+            val bytes = AuthorityCodec.encodeCredentials(replacementCredentials)
+            if (!bytes.contentEquals(AuthorityCodec.encodeCredentials(wanted)) ||
+                !s.matches(Section.CREDENTIALS, AuthorityCodec.encodeCredentials(expectedCredentials)) ||
+                !s.matches(Section.WAITING, AuthorityCodec.encodeWaiting(expectedWaiting)) ||
+                !s.matches(Section.ELEVATION, AuthorityCodec.encodeElevation(expectedElevation))) return@commit null
+            s.with(Section.CREDENTIALS, bytes)
+        }
+
+        override fun finishMode(expectedCredentials: CredentialState, expectedWaiting: WaitingState,
+            replacementWaiting: WaitingState, expectedElevation: ElevationRecord): Boolean = commit { s ->
+            val before = expectedWaiting.operation ?: return@commit null
+            val after = replacementWaiting.operation ?: return@commit null
+            if (before.modePatch == null || !clearOfAuthority(expectedElevation)) return@commit null
+            val done = applied(expectedWaiting, expectedCredentials)
+            val event = when {
+                before.phase == WaitingPhase.COMMITTING && after.phase == WaitingPhase.COMPLETED && done -> WaitingEvent.COMPLETED
+                before.phase == WaitingPhase.ROLLING_BACK && after.phase == WaitingPhase.CANCELLED && !done -> WaitingEvent.CANCELLED_AFTER_ROLLBACK
+                else -> return@commit null
+            }
+            if (!sameOperation(after, before.copied(after.phase)) ||
+                !s.matches(Section.ELEVATION, AuthorityCodec.encodeElevation(expectedElevation))) return@commit null
+            joint(s, expectedCredentials, null, expectedWaiting, replacementWaiting, listOf(event to expectedCredentials))
+        }
+    }
+
+    /** No shared session journal, countdown, grant or person binding: the ledger alone. */
+    private fun clearOfAuthority(r: ElevationRecord) = r.journal == SessionJournal.Empty &&
+        r.state.countdown == null && r.state.grant == null && r.person == null
 
     /**
      * The shared tail of every joint people write: both stored sections still match, the journal
