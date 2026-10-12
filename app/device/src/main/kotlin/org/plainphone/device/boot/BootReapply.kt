@@ -36,6 +36,7 @@ data class BootOutcome(
     val planNeedsAttention: Boolean = false,
     /** The saved flip-failure record could not be read ([FlipFailures.unknown]). */
     val flipRecordUnknown: Boolean = false,
+    val keep: Set<PackageName> = emptySet(),
 ) {
     /** Show "Plainphone needs attention" (Home still draws when [ready]). */
     val needsAttention: Boolean get() =
