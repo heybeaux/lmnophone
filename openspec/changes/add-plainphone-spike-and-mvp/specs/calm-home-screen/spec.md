@@ -51,6 +51,13 @@ Every label SHALL be in plain language. Any Android setting outside this list SH
 - **WHEN** the user opens Settings → Wi-Fi in LMNOPhone, picks a network and types the password
 - **THEN** the phone connects, and Android Settings never appears
 
+#### Scenario: Build 28 read-only Wi-Fi preview
+- **WHEN** the user opens Phone settings → Wi-Fi in build 28
+- **THEN** the page shows connection state and at most ten distinct visible nearby names, strongest first, refreshed while visible
+- **AND** unreadable names use the U7 fallback copy and Wi-Fi off has no list
+- **AND** no network can be joined or forgotten, Location and saved networks remain unchanged, and Android Settings never appears
+- **AND** the only new permission grant is ACCESS_FINE_LOCATION to LMNOPhone itself through Device Owner, if needed
+
 ### Requirement: Readable by default
 All LMNOPhone screens SHALL:
 - follow the system font scale

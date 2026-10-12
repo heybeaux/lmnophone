@@ -427,7 +427,7 @@ Approved in [PLA-420](/PLA/issues/PLA-420). Phone settings rows are **Brightness
 subtitle is **Brightness, sound, text size, battery**.
 
 Text size shows **‹ Phone settings**, **Text size**, the sample sentence
-**LMNOPhone's own screens will still fit.**, the confirmed percentage, **−** and
+**This is how big your text will be.**, the confirmed percentage, **−** and
 **+**, then **Bigger text may push some apps' words off the edge. LMNOPhone's own
 screens will still fit.**, and **Done**. Spoken labels are **Smaller text** and
 **Bigger text**. Failure copy: **Text size couldn't be changed.**
@@ -438,6 +438,25 @@ Only Android's read-back value is shown. Without the settings-write grant, both
 controls are disabled and the failure line appears. This preview requires a
 one-time tester grant by adb; setup integration remains open. Android Settings
 never opens from this page.
+
+### Build 28 read-only Wi-Fi subset
+
+Approved in [PLA-421](/PLA/issues/PLA-421). Rows are **Wi-Fi**, **Brightness**,
+**Sound**, **Text size**, **Battery**, then the counts switch. More's subtitle is
+**Wi-Fi, brightness, sound, text size, battery**.
+
+Wi-Fi shows **‹ Phone settings**, **Wi-Fi**, then **Connected to {network}**,
+**Connected to Wi-Fi** when connected but unnamed, or **Not connected**.
+Below **Nearby networks**, show at most ten distinct non-hidden names, strongest
+first. Rows are read-only. If the list cannot be read, show **Nearby networks
+can't be shown right now.** Then show **Joining a network comes in a later test
+build.** When off, show **Wi-Fi is off.** with no list. Refresh while visible.
+There is no connect, password, Forget, or Settings launch in this build.
+
+The app may grant itself ACCESS_FINE_LOCATION through its Device Owner. It never
+changes Location mode, saved networks, or Wi-Fi state. Names remain on screen
+only, with Android's outer quotes and unknown-name marker removed. Text size's
+sample sentence is **This is how big your text will be.** (updated above).
 
 ### Build 22 Sound corrections
 
