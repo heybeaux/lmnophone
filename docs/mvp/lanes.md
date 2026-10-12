@@ -94,6 +94,7 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 **`:ui` (lane B) exports:** one `@Composable` per screen, with this shape:
 - `XScreen(state: XUiState, onEvent: (XEvent) -> Unit)`.
 - `XUiState` and `XEvent` are plain Kotlin types owned by lane B.
+- `AboutUiState.isDeviceSecure` is a host-supplied `KeyguardManager.isDeviceSecure` fact (default false); only true shows the lock-screen emergency instruction. The UI does not query Android.
 - Optional communication-count UI: `HomeUiState.missedCalls` / `unreadTexts` are
   nullable host-supplied integers. Host passes null immediately when off or
   unavailable; UI shows only positive values, capped visually at 99+.

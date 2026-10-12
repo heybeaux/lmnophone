@@ -31,6 +31,7 @@ class AboutScreenScreenshotTest(private val scale: Float) {
     )
 
     @Test fun oneTrustedPerson() = shot(listOf("Sam"))
+    @Test fun threeTrustedPeople() = shot(listOf("Sam", "Jo", "Alex"))
     @Test fun twoTrustedPeople() = shot(listOf("Sam", "Jo"))
     @Test fun longTrustedNames() = shot(listOf("Sam ".repeat(8).trim(), "Jo ".repeat(8).trim()))
 
@@ -54,11 +55,14 @@ class AboutScreenScreenshotTest(private val scale: Float) {
                 val pinWrong = if (people.size == 1) "$everyone's PIN is typed" else "one of their PINs is typed"
                 val knows = if (people.size == 1) "$everyone knows" else "they know"
                 assertTrue(texts.any { it == "LMNOPhone sends $everyone a text only when you choose to ask for an app or share a link, when the monthly check is due, when LMNOPhone needs a check or a phone update is coming, when $pinUsed to change something on this phone, when a big change (like turning LMNOPhone off) starts, is cancelled or finishes, or if $pinWrong wrongly many times (so $knows if someone is guessing it)." })
+                assertEquals(people.size > 1, "$everyone are equals: either can add apps with you." in texts)
+                assertTrue(texts.any { it == "$everyone can't read your messages, see where you are, or see what you do in your apps. LMNOPhone has no server of its own, no analytics and no account. It connects to Sam's computer over home Wi-Fi only to update itself." })
                 assertEquals(secure, "From the lock screen, tap Emergency call." in texts)
                 assertTrue("Tap Phone, type 9-1-1, and press call." in texts)
                 assertTrue("Or tap More, then Emergency 9-1-1." in texts)
             }) {
-            HomeTestFrame { AboutScreen(AboutUiState("0.1.0-preview-18", people, "Sam", "LMNOPhone"), {}) }
+                // Keep the original version fixture so one-person goldens must stay byte-identical.
+                HomeTestFrame { AboutScreen(AboutUiState("0.1.0-preview-18", people, "Sam", "LMNOPhone", isDeviceSecure = secure), {}) }
             }
         }
     }

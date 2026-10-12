@@ -432,12 +432,13 @@ mandates it. It restates facts already in the design (no monitoring, no servers,
 - **Then, a section with its own heading: "To call 9-1-1"**
   - Tap **Phone**, type 9-1-1, and press call.
   - Or tap **More**, then **Emergency 9-1-1**.
-  - From the lock screen, tap **Emergency call**.
+  - From the lock screen, tap **Emergency call**. Show this line only when the host reports a secure lock (`KeyguardManager.isDeviceSecure`).
   - {sos_line}
   `{sos_line}` is "Or press the power button 5 times quickly." **only if** feasibility question Q14 confirms the
   Emergency SOS gesture works on this phone while LMNOPhone is running. Otherwise the line is left out.
-- **Two trusted people:** `{tp}` is "Sam and Jo" throughout, and one line is added after the first sentence:
-  "Sam and Jo are equals: either can add apps with you."
+- **Two or more trusted people:** `{everyone}` joins the names with "and". Keep the privacy paragraph unchanged with these names and add the existing equals line after the first sentence: "{everyone} are equals: either can add apps with you." Use these paragraphs instead of the one-person choices and texts paragraphs (approved in [PLA-392](/PLA/issues/PLA-392)):
+  - Choices: {everyone} help choose which apps are on it, together with you, with the phone in their hands. "For {everyone}" needs a PIN from one of them so that nobody else can change your phone.
+  - Texts: {product} sends {everyone} a text only when you choose to ask for an app or share a link, when the monthly check is due, when {product} needs a check or a phone update is coming, when one of their PINs is used to change something on this phone, when a big change (like turning {product} off) starts, is cancelled or finishes, or if one of their PINs is typed wrongly many times (so they know if someone is guessing it).
 - **Self-managed version of the body:** LMNOPhone is the program that keeps this phone simple. You hold its PIN.
   It adds waits before you can open things up, so that distraction takes effort. It's friction, not a lock.
   LMNOPhone has no server of its own, no analytics and no account. It connects to {helper}'s computer over home

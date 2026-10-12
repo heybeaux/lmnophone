@@ -39,6 +39,7 @@ fun PlainphoneShell(
     navigator: ShellNavigator,
     counts: CommunicationCounts,
     versionName: String,
+    isDeviceSecure: Boolean,
     notice: HomeNotice?,
     onNotice: () -> Unit,
     settings: PhoneSettingsUiState,
@@ -54,7 +55,7 @@ fun PlainphoneShell(
                     if (it == HomeEvent.OpenNotice) onNotice() else onStep(navigator.onHome(state, it))
                 }
                 ShellRoute.About -> AboutScreen(AboutUiState(versionName, snapshot.trustedPeople,
-                    snapshot.requestRecipient, stringResource(R.string.product_name))) { onStep(navigator.onAbout(state, it)) }
+                    snapshot.requestRecipient, stringResource(R.string.product_name), isDeviceSecure)) { onStep(navigator.onAbout(state, it)) }
                 ShellRoute.PhoneSettings -> PhoneSettingsScreen(settings, onSettings)
                 ShellRoute.More -> MoreScreen(mapper.more(snapshot)) { onStep(navigator.onMore(state, it)) }
                 ShellRoute.AskForApp ->

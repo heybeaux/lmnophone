@@ -15,7 +15,8 @@ import org.plainphone.ui.components.withoutBidiControls
 import org.plainphone.ui.theme.PlainphoneType
 
 /** Display data only. The host supplies the installed version and preview identities. */
-data class AboutUiState(val versionName: String, val trustedPeople: List<String>, val helper: String, val productName: String)
+data class AboutUiState(val versionName: String, val trustedPeople: List<String>, val helper: String, val productName: String,
+    val isDeviceSecure: Boolean = false)
 
 sealed interface AboutEvent {
     data object Ok : AboutEvent
@@ -34,16 +35,18 @@ fun AboutScreen(state: AboutUiState, onEvent: (AboutEvent) -> Unit) {
             if (state.trustedPeople.size > 1) {
                 Text(stringResource(R.string.about_equals, everyone), style = PlainphoneType.Body)
             }
-            Text(stringResource(R.string.about_choices, everyone), style = PlainphoneType.Body)
+            Text(stringResource(if (state.trustedPeople.size > 1) R.string.about_choices_multiple else R.string.about_choices, everyone), style = PlainphoneType.Body)
             Text(stringResource(R.string.about_privacy, product, everyone, state.helper.withoutBidiControls()),
                 style = PlainphoneType.Body)
-            Text(stringResource(R.string.about_texts, product, everyone), style = PlainphoneType.Body)
+            Text(stringResource(if (state.trustedPeople.size > 1) R.string.about_texts_multiple else R.string.about_texts, product, everyone), style = PlainphoneType.Body)
             Text(stringResource(R.string.about_history), style = PlainphoneType.Body)
         }
         Text(stringResource(R.string.about_emergency_title), style = PlainphoneType.Row,
             modifier = Modifier.semantics { heading() })
         Text(stringResource(R.string.about_emergency_phone), style = PlainphoneType.Body)
         Text(stringResource(R.string.about_emergency_more), style = PlainphoneType.Body)
-        Text(stringResource(R.string.about_emergency_lock), style = PlainphoneType.Body)
+        if (state.isDeviceSecure) {
+            Text(stringResource(R.string.about_emergency_lock), style = PlainphoneType.Body)
+        }
     }
 }

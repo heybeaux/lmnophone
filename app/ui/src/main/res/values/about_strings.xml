@@ -13,4 +13,6 @@
     <string name="about_emergency_phone">Tap Phone, type 9-1-1, and press call.</string>
     <string name="about_emergency_more">Or tap More, then Emergency 9-1-1.</string>
     <string name="about_emergency_lock">From the lock screen, tap Emergency call.</string>
+    <string name="about_choices_multiple">%1$s help choose which apps are on it, together with you, with the phone in their hands. \"For %1$s\" needs a PIN from one of them so that nobody else can change your phone.</string>
+    <string name="about_texts_multiple">%1$s sends %2$s a text only when you choose to ask for an app or share a link, when the monthly check is due, when %1$s needs a check or a phone update is coming, when one of their PINs is used to change something on this phone, when a big change (like turning %1$s off) starts, is cancelled or finishes, or if one of their PINs is typed wrongly many times (so they know if someone is guessing it).</string>
 </resources>

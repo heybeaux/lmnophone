@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone
 
+import android.app.KeyguardManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -170,6 +171,7 @@ class MainActivity : ComponentActivity() {
             PlainphoneShell(shell.state, snapshot, mapper, shell.navigator ?: return@setContent,
                 notice = notice, onNotice = ::openNotice,
                 counts = counts,
+                isDeviceSecure = getSystemService(KeyguardManager::class.java).isDeviceSecure,
                 versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() },
                 settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps),
                 onSettings = { event ->
