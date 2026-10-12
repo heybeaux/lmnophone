@@ -1,0 +1,13 @@
+location before= 0
+PASS: tap More
+PASS: tap Phone settings
+PASS: tap Wi-Fi
+explanation shown= True ; button shown= True ; connected line= True ; offFailed line= False
+PASS: tap Show nearby networks
+t+0s location=3
+after 1s: button still shown=False unavailable=False clickable name rows=9 connected line=True
+location while open= 3
+PASS: Back key
+after Back t+1s location=0
+left Wi-Fi page= True ; settings shown= True
+marker= <?xml version='1.0' encoding='utf-8' standalone='yes' ?> <map>     <boolean name="owned" value="false" /> </map>

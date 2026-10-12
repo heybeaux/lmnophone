@@ -1,0 +1,48 @@
+import subprocess, sys, time, re, xml.etree.ElementTree as ET
+SER='ZY22KW6P9J'
+def sh(*a): return subprocess.run(['adb','-s',SER,'shell',*a],capture_output=True,text=True,timeout=60).stdout
+def loc(): return sh('settings','get','secure','location_mode').strip()
+def dump():
+    for _ in range(3):
+        out=sh('uiautomator dump /sdcard/ui.xml >/dev/null && cat /sdcard/ui.xml && rm /sdcard/ui.xml')
+        if '<hierarchy' in out: return ET.fromstring(out[out.index('<?xml') if '<?xml' in out else out.index('<hierarchy'):])
+        time.sleep(1)
+    raise SystemExit('FAIL: no dump')
+def nodes(r): return list(r.iter('node'))
+def texts(r): return [n.get('text') or n.get('content-desc') or '' for n in nodes(r)]
+def center(n):
+    x1,y1,x2,y2=map(int,re.findall(r'\d+',n.get('bounds'))); return (x1+x2)//2,(y1+y2)//2
+def tap(label, tries=10):
+    for _ in range(tries):
+        r=dump()
+        for n in nodes(r):
+            if (n.get('text') or n.get('content-desc'))==label:
+                x,y=center(n); sh('input','tap',str(x),str(y)); print('PASS: tap',label); time.sleep(1.5); return
+        sh('input','swipe','540','1800','540','900','300'); time.sleep(1)
+    raise SystemExit('FAIL: not found '+label)
+FIXED={'‹ Back','Show nearby networks','Wi-Fi','Nearby networks','‹ Phone settings','Back'}
+print('location before=',loc())
+sh('input','keyevent','KEYCODE_WAKEUP')
+tap('More'); tap('Phone settings'); tap('Wi-Fi')
+t=texts(dump())
+print('explanation shown=', any(x.startswith('To see nearby networks, LMNOPhone turns on Location for a short time.') for x in t),
+      '; button shown=', 'Show nearby networks' in t, '; connected line=', any(x.startswith('Connected to') for x in t),
+      '; offFailed line=', any(x.startswith('Location is still on') for x in t))
+tap('Show nearby networks')
+for i in range(6):
+    m=loc(); print('t+%ds location=%s'%(i,m))
+    if m!='0': break
+    time.sleep(1)
+for i in range(20):
+    time.sleep(1); r=dump(); t=texts(r)
+    names=[n for n in nodes(r) if n.get('clickable')=='true' and not any((c.get('text') or c.get('content-desc') or '') in FIXED for c in [n,*n.iter('node')])]
+    if names: break
+print('after %ds: button still shown=%s unavailable=%s clickable name rows=%d connected line=%s'%(i+1,'Show nearby networks' in t,any("can't be shown" in x for x in t),len(names),any(x.startswith('Connected to') for x in t)))
+print('location while open=',loc())
+sh('input','keyevent','KEYCODE_BACK'); print('PASS: Back key')
+for i in range(10):
+    time.sleep(1); m=loc(); print('after Back t+%ds location=%s'%(i+1,m))
+    if m=='0': break
+t=texts(dump()); print('left Wi-Fi page=', 'Show nearby networks' not in t and not any(x.startswith('Connected to') for x in t), '; settings shown=', 'Wi-Fi' in t)
+print('marker=', sh('run-as','org.plainphone','cat','/data/user_de/0/org.plainphone/shared_prefs/wifi_location.xml').strip().replace('\n',' ') or 'absent')
+sh('input','keyevent','KEYCODE_HOME')

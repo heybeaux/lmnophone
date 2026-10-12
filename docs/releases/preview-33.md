@@ -63,3 +63,25 @@ Android API basis: [WifiManager](https://developer.android.com/reference/android
 (DO legacy network-management exemption) and
 [TelecomManager.isInCall](https://developer.android.com/reference/android/telecom/TelecomManager#isInCall())
 (ongoing managed or self-managed calls), backed by the emulator probe above.
+
+## Spare install (Lead)
+
+- **Installed** in place over 32 at **2026-10-12 18:47:51Z**, APK SHA256
+  `c88a63f8dbe99aeee3de0cb363244d74a5e20d6c37f95673b2738e47a8db4fe5`. The gate
+  exited 0: installed in place, version 33, TEST_ONLY, DO and LOCKED kept, both
+  routes show exactly 911, zero current calls (`app/tools/preview-33/evidence/spare/gate.log`).
+- **Exercised:** Phone settings → Wi-Fi showed the explanation and **Show nearby
+  networks**. The tap set Location 0 → 3 at once, and 9 network rows showed
+  (count only). Back → Location 0 within 1 s, and the ownership marker reads
+  `false` (`wifi-show.txt`). No join and no Forget.
+- **Unchanged after:** Location 0, Bluetooth on, bonded 0, font scale 1.0,
+  ringtone and ring volume, saved networks (count 2, same hash) (`before.txt`/`after.txt`).
+
+## Known limits from review (deferred)
+
+- If Android doesn't report the call state, LMNOPhone keeps Location on and shows
+  no warning (not seen on the spare: Location returned to 0).
+- A password or network name that contains `"` or `\` can't be joined yet
+  ("Couldn't join…").
+- For a network that is already saved, a newly typed password is not used
+  (saved networks are never changed).
