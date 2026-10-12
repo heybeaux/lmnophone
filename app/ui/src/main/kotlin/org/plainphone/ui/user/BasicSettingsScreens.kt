@@ -83,7 +83,12 @@ fun BrightnessScreen(state: BrightnessUiState, onEvent: (BrightnessEvent) -> Uni
 @Composable
 private fun BrightnessButton(label: String, spokenLabel: String, enabled: Boolean, onClick: () -> Unit) {
     Box(Modifier.sizeIn(minWidth = 64.dp, minHeight = 56.dp)
-        .plainphoneAction(enabled = enabled, onClick = onClick).semantics { contentDescription = spokenLabel }, contentAlignment = Alignment.Center) {
+        .plainphoneAction(enabled = enabled, onClick = onClick).clearAndSetSemantics {
+            contentDescription = spokenLabel
+            role = Role.Button
+            if (!enabled) disabled()
+            onClick { if (enabled) onClick(); enabled }
+        }, contentAlignment = Alignment.Center) {
         Text(label, modifier = Modifier.clearAndSetSemantics {}, style = PlainphoneType.Row.copy(color = if (enabled) PlainphoneColors.Ink else PlainphoneColors.Ink3))
     }
 }

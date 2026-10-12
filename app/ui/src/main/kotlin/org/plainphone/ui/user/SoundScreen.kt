@@ -12,6 +12,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.unit.dp
 import org.plainphone.ui.R
 import org.plainphone.ui.components.TaskScreen
@@ -66,7 +70,12 @@ private fun VolumeControl(label: String, state: VolumeUiState?, stream: SoundStr
 
 @Composable
 private fun VolumeButton(label: String, spokenLabel: String, enabled: Boolean, onClick: () -> Unit) {
-    Box(Modifier.sizeIn(minWidth = 64.dp, minHeight = 56.dp).plainphoneAction(enabled = enabled, onClick = onClick).semantics { contentDescription = spokenLabel },
+    Box(Modifier.sizeIn(minWidth = 64.dp, minHeight = 56.dp).plainphoneAction(enabled = enabled, onClick = onClick).clearAndSetSemantics {
+            contentDescription = spokenLabel
+            role = Role.Button
+            if (!enabled) disabled()
+            onClick { if (enabled) onClick(); enabled }
+        },
         contentAlignment = Alignment.Center) {
         Text(label, modifier = Modifier.clearAndSetSemantics {}, style = PlainphoneType.Row.copy(color = if (enabled) PlainphoneColors.Ink else PlainphoneColors.Ink3))
     }
