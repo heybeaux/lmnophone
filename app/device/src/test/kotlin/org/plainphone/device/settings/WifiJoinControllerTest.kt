@@ -49,6 +49,32 @@ class WifiJoinControllerTest {
         assertFalse(c.show());assertTrue(p.marker)
         p.failedReadAfterEnable=false;c.tick();assertFalse(p.on);assertFalse(p.marker)
     }
+    @Test fun unknownCallStateWarnsAtSixtySecondsAndKeepsRetrying() {
+        var now = 0L
+        val p = Location(); val c = WifiLocationController(p) { now }
+        c.show(); p.idle = null; c.leave()
+        now = 59_999; c.tick(); assertFalse(c.offFailed)
+        now = 60_000; c.tick(); assertTrue(c.offFailed)
+        assertTrue(p.on); assertTrue(p.marker); assertEquals(listOf(true), p.writes)
+        now = 120_000; c.tick(); assertTrue(c.offFailed)
+        p.idle = false; c.tick(); assertTrue(p.on); assertEquals(listOf(true), p.writes)
+        p.idle = true; c.tick(); assertFalse(p.on); assertFalse(p.marker); assertFalse(c.offFailed)
+    }
+    @Test fun knownActiveCallResetsUnknownDeadlineAndNeverTurnsLocationOff() {
+        var now = 0L
+        val p = Location(); val c = WifiLocationController(p) { now }
+        c.show(); p.idle = null; c.leave(); now = 59_000; c.tick()
+        p.idle = false; now = 120_000; c.tick(); assertFalse(c.offFailed)
+        p.idle = null; c.tick(); now = 179_999; c.tick(); assertFalse(c.offFailed)
+        now++; c.tick(); assertTrue(c.offFailed); assertEquals(listOf(true), p.writes)
+    }
+    @Test fun repeatedLeaveCannotPostponeUnknownWarningAndRestartAlsoWarns() {
+        var now = 0L
+        val p = Location().apply { on = true; marker = true; idle = null }
+        val c = WifiLocationController(p) { now }; c.recover()
+        now = 30_000; c.leave(); now = 60_000; c.tick()
+        assertTrue(c.offFailed); assertTrue(p.writes.isEmpty())
+    }
     private class Join:WifiJoinPort {
         var result:Int?=7;var status=WifiJoinOutcome.Waiting;var calls=0;var cancels=0
         override fun start(choice:WifiChoice,password:String):Int? {calls++;return result}
