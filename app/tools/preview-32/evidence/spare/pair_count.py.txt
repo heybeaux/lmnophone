@@ -1,0 +1,54 @@
+import subprocess, sys, time, re, xml.etree.ElementTree as ET
+SER='ZY22KW6P9J'
+def sh(*a): return subprocess.run(['adb','-s',SER,'shell',*a],capture_output=True,text=True,timeout=60).stdout
+def dump():
+    for _ in range(3):
+        out=sh('uiautomator dump /sdcard/ui.xml >/dev/null && cat /sdcard/ui.xml && rm /sdcard/ui.xml')
+        if '<hierarchy' in out: return ET.fromstring(out[out.index('<?xml') if '<?xml' in out else out.index('<hierarchy'):])
+        time.sleep(1)
+    raise SystemExit('FAIL: no dump')
+def nodes(root): return list(root.iter('node'))
+def texts(root): return [n.get('text') or n.get('content-desc') or '' for n in nodes(root)]
+def center(n):
+    x1,y1,x2,y2=map(int,re.findall(r'\d+',n.get('bounds'))); return (x1+x2)//2,(y1+y2)//2
+def tap(label, tries=10):
+    for _ in range(tries):
+        r=dump()
+        for n in nodes(r):
+            if (n.get('text') or n.get('content-desc'))==label:
+                x,y=center(n); sh('input','tap',str(x),str(y)); print('PASS: tap',label); time.sleep(1.5); return
+        sh('input','swipe','540','1800','540','900','300'); time.sleep(1)
+    raise SystemExit('FAIL: not found '+label)
+mode=sys.argv[1]
+if mode=='open':
+    sh('input','keyevent','KEYCODE_WAKEUP')
+    tap('More'); tap('Phone settings'); tap('Bluetooth')
+    r=dump(); t=texts(r)
+    print('bluetooth page: row shown=', 'Pair a new device' in t, '; preview note shown=', any('later test build' in x for x in t), '; paired header=', 'Paired with:' in t)
+    tap('Pair a new device')
+    r=dump(); t=texts(r); print('pair page looking shown=', 'Looking for nearby devices…' in t)
+    for i in range(40):
+        time.sleep(1); r=dump(); t=texts(r)
+        if 'Look again' in t or any("can't be shown" in x for x in t): break
+    ui_fixed={'‹ Bluetooth','Look again','Pair a new device','Looking for nearby devices…','›',''}
+    rows=[n for n in nodes(r) if n.get('clickable')=='true' and not any((c.get('text') or '') in ('‹ Bluetooth','Look again') for c in [n,*n.iter('node')])]
+    print('after %ds: look again shown=%s none text=%s error text=%s nearby rows=%d'%(i+1,'Look again' in t,any(x.startswith('No devices found') for x in t),any("can't be shown" in x for x in t),len(rows)))
+    if rows and len(sys.argv)>2:
+        x,y=center(rows[0]); sh('input','tap',str(x),str(y)); time.sleep(1.5); t=texts(dump())
+        print('device screen: not-ready text=', "Pairing from LMNOPhone isn't ready yet." in t, '; Pair button=', 'Pair' in t, '; back=', '‹ Pair a new device' in t)
+        tap('‹ Pair a new device')
+    tap('‹ Bluetooth')
+    t=texts(dump()); print('back on bluetooth page=', 'Pair a new device' in t)
+if mode=='rows':
+    tap('Pair a new device')
+    for i in range(40):
+        time.sleep(1); r=dump(); t=texts(r)
+        if 'Look again' in t: break
+    for n in nodes(r):
+        if n.get('clickable')=='true':
+            lab=(n.get('text') or n.get('content-desc') or ''); kids=[c.get('text') for c in n.iter('node') if c.get('text')]
+            fixed=[k for k in kids if k in ('‹ Bluetooth','Look again')]
+            print('clickable bounds=%s class=%s fixed=%s textchildren=%d'%(n.get('bounds'),n.get('class').split('.')[-1],fixed,len(kids)))
+    print('discovering while open=', 'mDiscovering: true' in sh('dumpsys bluetooth_manager') or 'isDiscovering: true' in sh('dumpsys bluetooth_manager'))
+    tap('‹ Bluetooth'); time.sleep(2)
+    d=sh('dumpsys bluetooth_manager'); print('discovery lines after leave:', [l.strip() for l in d.splitlines() if 'iscover' in l][:6])

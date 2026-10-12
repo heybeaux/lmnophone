@@ -1,0 +1,21 @@
+# Spare Pair a new device exercise (counts only; no names or radio identities recorded)
+PASS: tap More
+PASS: tap Phone settings
+PASS: tap Bluetooth
+bluetooth page: row shown= True ; preview note shown= False ; paired header= True
+PASS: tap Pair a new device
+pair page looking shown= True
+after 11s: look again shown=True none text=False error text=False nearby rows=3
+device screen: not-ready text= True ; Pair button= False ; back= True
+PASS: tap ‹ Pair a new device
+PASS: tap ‹ Bluetooth
+back on bluetooth page= True
+PASS: tap Pair a new device
+clickable bounds=[60,137][1020,257] class=View fixed=['‹ Bluetooth'] textchildren=1
+clickable bounds=[60,425][1020,585] class=View fixed=[] textchildren=1
+clickable bounds=[60,625][1020,785] class=View fixed=[] textchildren=1
+clickable bounds=[60,825][1020,985] class=View fixed=[] textchildren=1
+clickable bounds=[60,1025][1020,1185] class=View fixed=[] textchildren=1
+clickable bounds=[60,2120][1020,2260] class=View fixed=['Look again'] textchildren=1
+discovering while open= False
+PASS: tap ‹ Bluetooth

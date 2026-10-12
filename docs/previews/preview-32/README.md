@@ -74,3 +74,21 @@ Lead next: single opposite-model review, then in-place install over spare build
 31. Open the new page and record nearby **counts only**; pair nothing (no approved
 physical peer). Read back Bluetooth on, unchanged bonded count, Location 0 and
 ringtone. Update release-notes case `preview-32` with spare install/readback.
+
+## Spare install (Lead, sole driver)
+
+- **Reviewed:** single opposite-model review by the Lead on PLA-434: approved, no blocking findings. Two deferred nits: receiver `RECEIVER_NOT_EXPORTED`; restart the search on resume instead of showing "No devices found".
+- **Installed:** exact APK `a03b1e02…20f6eb` in place over spare build 31 at
+  **2026-10-12 17:44:32Z** (`lastUpdateTime`). Gate exit 0, 244 PASS (`evidence/spare/gate.log`):
+  version 32, Device Owner, TEST_ONLY and LOCKED kept; restart; More › Emergency and
+  Phone both typed exactly **911**, **zero calls** (screenshots inspected).
+- **Exercised:** More › Phone settings › Bluetooth showed **Pair a new device** (the
+  later-test-build note was gone; Paired with: header present). The Pair page showed
+  "Looking for nearby devices…" and then Look again after about 11 s. It listed **3** nearby
+  rows on the first search and **4** on a second; each row is 160 px (about 64 dp) tall. A device
+  screen showed "Pairing from LMNOPhone isn't ready yet." with **no Pair button**, and
+  Back returned to the list, then to Bluetooth. Nothing was paired. Counts only;
+  no names or radio identities were recorded (`evidence/spare/pair.txt`).
+- **Readback** (`before.txt` / `after.txt`): Location **0**, Bluetooth ON, bonded
+  count **0 → 0**, ringtone (original Moto URI), ring volume 5 and the saved-network
+  count and hash are identical. BLUETOOTH_SCAN and BLUETOOTH_CONNECT are granted (POLICY_FIXED).
