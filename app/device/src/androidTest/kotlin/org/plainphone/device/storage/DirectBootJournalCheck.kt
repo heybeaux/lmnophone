@@ -79,6 +79,7 @@ class DirectBootJournalCheck : Instrumentation() {
                 "rotated" -> org.plainphone.device.facts.PackageFactsCheck(targetContext, args, ::note).rotated()
                 "permissions" -> org.plainphone.device.apply.HiddenPermissionCheck(targetContext, args, ::note).check()
                 "window" -> org.plainphone.device.apply.PermissionWindowCheck(targetContext, args, ::note).check()
+                "absent" -> org.plainphone.device.apply.AbsentMinimumUiCheck(targetContext, ::note, ::shell).check()
                 "uid" -> org.plainphone.device.apply.WindowContainmentCheck(this, args, ::note).uid()
                 "pause-preparing" -> org.plainphone.device.apply.WindowContainmentCheck(this, args, ::note).pause(editing = false)
                 "pause-editing" -> org.plainphone.device.apply.WindowContainmentCheck(this, args, ::note).pause(editing = true)

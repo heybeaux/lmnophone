@@ -1,0 +1,109 @@
+# PLA-293 AbsentMinimumUiCheck, run 1, 2026-10-12. AVD pla186-a35 (API 35 google_apis userdebug, -read-only, emulator-5920), branch pla293/confirmed-absent at 75c39261 + the check commit.
+# adb shell am instrument -w -e phase absent org.plainphone.device.test/org.plainphone.device.storage.DirectBootJournalCheck
+PLA293 api=35 type=userdebug known=[com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test, org.plainphone.permtarget, org.plainphone.uidtarget.a, org.plainphone.uidtarget.b]
+PLA293 ok: this test APK is the Device Owner
+PLA293 ok: uid-a and uid-b start installed: package:org.plainphone.uidtarget.b uid:10209
+PLA293 ok: uid-a and uid-b share UID 10209
+PLA293 ok: uid-a hidden by DPM
+PLA293 ok: hidden uid-a: installedForUser=true, confirmedAbsent=[]
+PLA293 disable: Package org.plainphone.uidtarget.a new state: disabled-user
+PLA293 ok: disabled uid-a: installedForUser=true, confirmedAbsent=[]
+PLA293 enable: Package org.plainphone.uidtarget.a new state: enabled
+PLA293 ok: uid-a suspended by DPM
+PLA293 ok: suspended uid-a: installedForUser=true, confirmedAbsent=[]
+PLA293 ok: a never-installed name reads not installed (NameNotFound path)
+PLA293 ok: baseline apply with uid-a present
+PLA293 ok: baseline: uid-a and uid-b in the applied lock-task list [org.plainphone.device.test, com.google.android.dialer, org.plainphone.uidtarget.b, org.plainphone.uidtarget.a, com.google.android.apps.messaging]
+PLA293 remove org.plainphone.uidtarget.a: Success
+PLA293 ok: after pm uninstall -k --user 0: installedForUser(uid-a)=false (FLAG_INSTALLED unset)
+PLA293 ok: uid-a has no UID and no package state for user 0
+PLA293 ok: the stale applied list still names uid-a
+PLA293 ok: window REFUSED with the stale list (uid-a has a null UID)
+PLA293 ok: close after the refused open re-hides permtarget
+PLA293 ok: reduced plan drops uid-a, keeps uid-b: [com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test, org.plainphone.uidtarget.b]
+PLA293 ok: uid-a stays never-hide
+PLA293 ok: absent never-hide uid-a: apply complete=true, attention=false, reported absent=[org.plainphone.uidtarget.a]
+PLA293 ok: uid-a was reported, not repaired: still not installed
+PLA293 ok: applyPolicy(reduced)
+PLA293 ok: readBackPolicy(reduced)
+PLA293 ok: applied list reads back exactly: [com.google.android.apps.messaging, com.google.android.dialer, org.plainphone.device.test, org.plainphone.uidtarget.b]
+PLA293 ok: window OPENS after the reduced-list readback
+PLA293 ok: in the window: permtarget visible, outside lock task
+PLA293 ok: uid-b (the absent package's shared UID 10209) remains and resolves
+PLA293 ok: close
+PLA293 ok: after close: permtarget hidden
+PLA293 ok: stray never-installed name in the applied list, null UID
+PLA293 ok: window REFUSED: a remaining null-UID name
+PLA293 ok: close
+PLA293 ok: re-apply drops the stray
+PLA293 install org.plainphone.uidtarget.a: Success
+PLA293 ok: org.plainphone.uidtarget.a installed again
+PLA293 ok: uid-a present and applied
+PLA293 remove org.plainphone.uidtarget.a: Success
+PLA293 ok: lock-task write throws (injected): applyPolicy false
+PLA293 ok: stale uid-a still applied
+PLA293 ok: window REFUSED after a failed lock-task write
+PLA293 ok: close
+PLA293 ok: lock-task write ignored (injected): apply and readback false
+PLA293 ok: window REFUSED when the list did not read back
+PLA293 ok: close
+PLA293 install org.plainphone.uidtarget.a: Success
+PLA293 ok: org.plainphone.uidtarget.a installed again
+PLA293 ok: uid-a present and applied
+PLA293 remove org.plainphone.uidtarget.a: Success
+PLA293 ok: [PLAN_BUILT] plan built without uid-a
+PLA293 install org.plainphone.uidtarget.a: Success
+PLA293 ok: org.plainphone.uidtarget.a installed again
+PLA293 ok: [PLAN_BUILT] apply
+PLA293 ok: [PLAN_BUILT] at APPLIED: uid-a (installed=true) not in lock task
+PLA293 ok: [PLAN_BUILT] readback
+PLA293 ok: [PLAN_BUILT] at READ_BACK: uid-a (installed=true) not in lock task
+PLA293 ok: [PLAN_BUILT] window opens
+PLA293 ok: [PLAN_BUILT] at IN_WINDOW: uid-a (installed=true) not in lock task
+PLA293 ok: [PLAN_BUILT] close
+PLA293 ok: [PLAN_BUILT] after close: uid-a installed, still no lock task
+PLA293 ok: [PLAN_BUILT] fresh pass after close restores uid-a
+PLA293 ok: uid-a present and applied
+PLA293 remove org.plainphone.uidtarget.a: Success
+PLA293 ok: [APPLIED] plan built without uid-a
+PLA293 ok: [APPLIED] apply
+PLA293 install org.plainphone.uidtarget.a: Success
+PLA293 ok: org.plainphone.uidtarget.a installed again
+PLA293 ok: [APPLIED] at APPLIED: uid-a (installed=true) not in lock task
+PLA293 ok: [APPLIED] readback
+PLA293 ok: [APPLIED] at READ_BACK: uid-a (installed=true) not in lock task
+PLA293 ok: [APPLIED] window opens
+PLA293 ok: [APPLIED] at IN_WINDOW: uid-a (installed=true) not in lock task
+PLA293 ok: [APPLIED] close
+PLA293 ok: [APPLIED] after close: uid-a installed, still no lock task
+PLA293 ok: [APPLIED] fresh pass after close restores uid-a
+PLA293 ok: uid-a present and applied
+PLA293 remove org.plainphone.uidtarget.a: Success
+PLA293 ok: [READ_BACK] plan built without uid-a
+PLA293 ok: [READ_BACK] apply
+PLA293 ok: [READ_BACK] at APPLIED: uid-a (installed=false) not in lock task
+PLA293 ok: [READ_BACK] readback
+PLA293 install org.plainphone.uidtarget.a: Success
+PLA293 ok: org.plainphone.uidtarget.a installed again
+PLA293 ok: [READ_BACK] at READ_BACK: uid-a (installed=true) not in lock task
+PLA293 ok: [READ_BACK] window opens
+PLA293 ok: [READ_BACK] at IN_WINDOW: uid-a (installed=true) not in lock task
+PLA293 ok: [READ_BACK] close
+PLA293 ok: [READ_BACK] after close: uid-a installed, still no lock task
+PLA293 ok: [READ_BACK] fresh pass after close restores uid-a
+PLA293 ok: uid-a present and applied
+PLA293 remove org.plainphone.uidtarget.a: Success
+PLA293 ok: [IN_WINDOW] plan built without uid-a
+PLA293 ok: [IN_WINDOW] apply
+PLA293 ok: [IN_WINDOW] at APPLIED: uid-a (installed=false) not in lock task
+PLA293 ok: [IN_WINDOW] readback
+PLA293 ok: [IN_WINDOW] at READ_BACK: uid-a (installed=false) not in lock task
+PLA293 ok: [IN_WINDOW] window opens
+PLA293 install org.plainphone.uidtarget.a: Success
+PLA293 ok: org.plainphone.uidtarget.a installed again
+PLA293 ok: [IN_WINDOW] at IN_WINDOW: uid-a (installed=true) not in lock task
+PLA293 ok: [IN_WINDOW] close
+PLA293 ok: [IN_WINDOW] after close: uid-a installed, still no lock task
+PLA293 ok: [IN_WINDOW] fresh pass after close restores uid-a
+PLA293 ok: cleanup reinstalled uid-a, unhid permtarget, cleared lock task, Home and input-method policy
+RESULT PASS phase=absent
