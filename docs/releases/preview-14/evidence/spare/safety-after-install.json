@@ -1,0 +1,166 @@
+{
+  "time_utc": "2026-10-12T02:26:51.262961+00:00",
+  "serial": "<spare>",
+  "before": {
+    "owner": "1 owner:\nUser  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated",
+    "restriction_names_in_dump": [
+      "no_add_clone_profile",
+      "no_add_managed_profile",
+      "no_add_private_profile",
+      "no_bluetooth_sharing",
+      "no_config_credentials",
+      "no_config_wifi",
+      "no_install_unknown_sources",
+      "no_outgoing_calls",
+      "no_sms",
+      "no_wallpaper"
+    ],
+    "active_restriction_sections": [
+      {
+        "section": "Restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile"
+        ]
+      },
+      {
+        "section": "Device policy restrictions:",
+        "values": []
+      },
+      {
+        "section": "Effective restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile"
+        ]
+      },
+      {
+        "section": "Device policy global restrictions:",
+        "values": []
+      },
+      {
+        "section": "Guest restrictions:",
+        "values": [
+          "no_config_credentials",
+          "no_config_wifi",
+          "no_install_unknown_sources",
+          "no_outgoing_calls",
+          "no_sms"
+        ]
+      }
+    ],
+    "lock_packages": [
+      "com.android.phone",
+      "com.android.server.telecom",
+      "com.google.android.apps.maps",
+      "com.google.android.apps.messaging",
+      "com.google.android.apps.safetyhub",
+      "com.google.android.cellbroadcastreceiver",
+      "com.google.android.dialer",
+      "com.motorola.camera3",
+      "org.plainphone"
+    ],
+    "lock_features": 53,
+    "lock_state": "LOCKED",
+    "first_install_time": "2026-10-09 10:26:07",
+    "count_preference": "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n    <boolean name=\"show_communication_counts\" value=\"true\" />\n</map>",
+    "package_flags": {
+      "hidden": {
+        "count": 42,
+        "sha256_sorted": "de0197d26596987e37c5e04597337959f5fdc8b717bef5bb803bb5b3c475a4da"
+      },
+      "suspended": {
+        "count": 0,
+        "sha256_sorted": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "disabled": {
+        "count": 116,
+        "sha256_sorted": "6807dc13ed9e4de8a674145ee75b8987b3c25ccd07a1379d08f7cc4bb76b421b"
+      },
+      "packages_read": 545
+    }
+  },
+  "after": {
+    "owner": "1 owner:\nUser  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated",
+    "restriction_names_in_dump": [
+      "no_add_clone_profile",
+      "no_add_managed_profile",
+      "no_add_private_profile",
+      "no_bluetooth_sharing",
+      "no_config_credentials",
+      "no_config_wifi",
+      "no_install_unknown_sources",
+      "no_outgoing_calls",
+      "no_sms",
+      "no_wallpaper"
+    ],
+    "active_restriction_sections": [
+      {
+        "section": "Restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile"
+        ]
+      },
+      {
+        "section": "Device policy restrictions:",
+        "values": []
+      },
+      {
+        "section": "Effective restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile"
+        ]
+      },
+      {
+        "section": "Device policy global restrictions:",
+        "values": []
+      },
+      {
+        "section": "Guest restrictions:",
+        "values": [
+          "no_config_credentials",
+          "no_config_wifi",
+          "no_install_unknown_sources",
+          "no_outgoing_calls",
+          "no_sms"
+        ]
+      }
+    ],
+    "lock_packages": [
+      "com.android.phone",
+      "com.android.server.telecom",
+      "com.google.android.apps.maps",
+      "com.google.android.apps.messaging",
+      "com.google.android.apps.safetyhub",
+      "com.google.android.cellbroadcastreceiver",
+      "com.google.android.dialer",
+      "com.motorola.camera3",
+      "org.plainphone"
+    ],
+    "lock_features": 53,
+    "lock_state": "LOCKED",
+    "first_install_time": "2026-10-09 10:26:07",
+    "count_preference": "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n    <boolean name=\"show_communication_counts\" value=\"true\" />\n</map>",
+    "package_flags": {
+      "hidden": {
+        "count": 42,
+        "sha256_sorted": "de0197d26596987e37c5e04597337959f5fdc8b717bef5bb803bb5b3c475a4da"
+      },
+      "suspended": {
+        "count": 0,
+        "sha256_sorted": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "disabled": {
+        "count": 116,
+        "sha256_sorted": "6807dc13ed9e4de8a674145ee75b8987b3c25ccd07a1379d08f7cc4bb76b421b"
+      },
+      "packages_read": 545
+    }
+  }
+}
