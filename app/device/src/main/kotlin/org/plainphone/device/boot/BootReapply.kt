@@ -36,6 +36,10 @@ data class BootOutcome(
     val planNeedsAttention: Boolean = false,
     /** The saved flip-failure record could not be read ([FlipFailures.unknown]). */
     val flipRecordUnknown: Boolean = false,
+    /**
+     * What fallback containment never suspends: the lock-task UI list, the never-hide dependencies and
+     * the emergency floor of this pass's plan (the OS-only floor without one), plus Home.
+     */
     val keep: Set<PackageName> = emptySet(),
 ) {
     /** Show "Plainphone needs attention" (Home still draws when [ready]). */
@@ -120,6 +124,7 @@ class BootReapply(
         return BootOutcome(
             ready, locked, applied?.copy(flipFailures = failures.names), filter.withheld, disabledFloor,
             plan?.needsAttention ?: true, failures.unknown,
+            repairPlan.lockTaskPackages + repairPlan.neverHide + repairPlan.emergencyUi + listOfNotNull(home),
         )
     }
 

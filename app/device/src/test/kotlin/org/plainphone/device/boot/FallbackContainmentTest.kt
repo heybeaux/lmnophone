@@ -38,6 +38,8 @@ class FallbackContainmentTest {
         var throwOnWrite = false
         /** The process dies inside the call (an Error, which no caller catches). */
         var dieOnWrite = false
+        /** Unsuspending these does nothing (the lift never reads back). */
+        var stuck = emptySet<PackageName>()
         override fun installed(): Set<PackageName> = installed.toSet()
         override fun suspended(name: PackageName): Boolean? = if (name in installed) state[name] else null
         override fun setSuspended(names: Set<PackageName>, suspended: Boolean): Set<PackageName> {
@@ -45,7 +47,7 @@ class FallbackContainmentTest {
             if (dieOnWrite) throw ProcessDeath()
             if (throwOnWrite) throw IllegalStateException("write refused")
             val refused = if (suspended) names intersect refuses else emptySet()
-            for (name in names - refused) if (name in installed) state[name] = suspended
+            for (name in names - refused) if (name in installed && (suspended || name !in stuck)) state[name] = suspended
             return refused
         }
         fun suspendedNow(): Set<PackageName> = state.filterValues { it }.keys
@@ -124,6 +126,18 @@ class FallbackContainmentTest {
         assertEquals(false, port.state[testApp])
         assertEquals(setOf(chrome), record.saved)
         assertEquals(setOf(chrome), result.suspended)
+    }
+
+    @Test fun aKeptPackageWhoseLiftFailsIsNeverSuspendedAgain() {
+        val port = Port(keep + chrome + testApp)
+        val record = Record()
+        val c = containment(port, record)
+        c.contain(keep)
+        port.stuck = setOf(testApp)
+        events.clear()
+        c.contain(keep + testApp)
+        assertTrue("events=$events", events.filter { it.startsWith("suspend") }.none { testApp.value in it })
+        assertEquals(setOf(chrome, testApp), record.saved) // Still ours to lift later.
     }
 
     @Test fun liftsExactlyTheRecordedSetAndNotWhatWasSuspendedBefore() {
