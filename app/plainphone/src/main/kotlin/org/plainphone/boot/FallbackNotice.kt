@@ -25,12 +25,17 @@ val PERMISSION_CONTROLLERS = setOf(PackageName("com.android.permissioncontroller
 
 /**
  * Packages fallback containment never suspends, whatever the plan says: the calling, emergency and
- * keyguard stack read live (PLA-311 spike kept SystemUI, the keyboard and com.android.emergency too).
+ * keyguard stack read live (PLA-311 spike kept SystemUI, the keyboard and com.android.emergency too),
+ * plus emergency alerts, SMS storage, Bluetooth call audio and satellite SOS. None of these opens a
+ * browser or an app store; the first AVD pass (PLA-344) suspended them.
  */
 val PLATFORM_KEEP = setOf(
-    PackageName("android"), PackageName("com.android.systemui"), PackageName("com.android.phone"),
-    PackageName("com.android.server.telecom"), PackageName("com.android.emergency"),
-)
+    "android", "com.android.systemui", "com.android.phone", "com.android.server.telecom", "com.android.emergency",
+    "com.google.android.cellbroadcastservice", "com.android.cellbroadcastservice",
+    "com.google.android.cellbroadcastreceiver", "com.android.cellbroadcastreceiver",
+    "com.android.providers.telephony", "com.android.bluetooth", "com.google.android.bluetooth",
+    "com.google.android.telephony.satellite",
+).map(::PackageName).toSet()
 
 /**
  * Debug builds only: drops lock-task feature writes so they never read back, the PLA-307 finding 1
