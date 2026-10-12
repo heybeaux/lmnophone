@@ -24,7 +24,7 @@ import org.plainphone.policy.WaitingPhase
  * only when it is ready, which means its session revocation succeeded. A failed or missing startup
  * runs nothing; its own emergency repair still ran, and the next pass retries.
  *
- * Mode switches (PLA-97) are driven only when [effects] is a [org.plainphone.policy.ModeSwitchEffects]
+ * Mode switches (PLA-97) are driven only after a ready unlocked startup, and only when [effects] is a [org.plainphone.policy.ModeSwitchEffects]
  * such as [DeviceModeSwitchEffects]: the controller then commits through [JointAuthorityStore.modeCommitter],
  * which passes people changes to the same people committer. With plain reset-protection effects a mode
  * switch is left alone. Nothing here starts or skips a switch.
@@ -43,12 +43,15 @@ class PeopleCommitDriver(
     )
 
     /** One step after a ready [startup]; null when the startup was not ready or there is no such change. */
-    fun driveAfter(startup: BootOutcome?): PeopleChangeResult? = if (startup?.ready == true) drive() else null
+    fun driveAfter(startup: BootOutcome?): PeopleChangeResult? =
+        if (startup?.ready == true) drive(unlocked = !startup.locked) else null
 
     /** One step of a committing or rolling-back people change or mode switch; null when there is none. Callers go through [driveAfter]. */
-    internal fun drive(): PeopleChangeResult? {
+    internal fun drive(unlocked: Boolean = true): PeopleChangeResult? {
         val op = store.waitingStore.read()?.operation ?: return null
-        if (op.peoplePatch == null && (op.modePatch == null || !modes)) return null
+        // A locked pass applies only part of the protected policy, so it never authorizes a mode step
+        // in either direction (PLA-439 R1); the next ready unlocked pass does.
+        if (op.peoplePatch == null && (op.modePatch == null || !modes || !unlocked)) return null
         if (op.phase != WaitingPhase.COMMITTING && op.phase != WaitingPhase.ROLLING_BACK) return null
         return controller.tick(op.identity.requestId, op.phase)
     }
