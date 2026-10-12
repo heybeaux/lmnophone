@@ -38,16 +38,54 @@ class BootPassCoverageTest {
     }
 
     @Test fun interveningPassOrInvalidationDiscardsPendingCapture() {
-        for (intervening in listOf("invalidate", "alarm", "boot", "failed")) {
+        for (intervening in listOf("invalidate", "alarm", "locked-boot-full", "failed", "attention")) {
             val f = Fixture(); val tasks = mutableListOf<() -> Unit>()
             f.run("user-unlocked")
             f.coverage.captureAfterPublished({ tasks += it }) { fail(intervening) }
             when (intervening) {
                 "invalidate" -> f.coverage.invalidate()
                 "failed" -> f.run("alarm", outcome = good.copy(ready = false))
+                "attention" -> f.run("alarm", outcome = good.copy(planNeedsAttention = true))
+                "locked-boot-full" -> f.run("boot", locked = true, outcome = good.copy(locked = true))
                 else -> f.run(intervening)
             }
             tasks.single()()
+        }
+    }
+
+    @Test fun coveredBootSkipPreservesPublishedPassCapture() {
+        for (reason in listOf("boot", "locked-boot")) {
+            val f = Fixture(); val tasks = mutableListOf<() -> Unit>()
+            var captures = 0
+            f.coverage.run("user-unlocked", false, { false },
+                apply = { f.applies++; good }, afterPass = { f.publications++; true }, skipped = {},
+                afterPublished = { f.coverage.captureAfterPublished({ tasks += it }) { captures++ } })
+            f.run(reason)
+            assertEquals(listOf(1L), f.skips)
+            assertEquals(1, f.applies)
+            assertEquals(2, f.publications)
+            assertEquals(0, captures)
+            tasks.single()()
+            assertEquals(reason, 1, captures)
+        }
+    }
+
+    @Test fun coveredSkipWithFailedRecheckDiscardsPendingCapture() {
+        for (reason in listOf("boot", "locked-boot")) {
+            for (failure in listOf("retry", "publication")) {
+                val f = Fixture(); val tasks = mutableListOf<() -> Unit>()
+                f.run("user-unlocked")
+                f.coverage.captureAfterPublished({ tasks += it }) { fail("$reason $failure") }
+                f.coverage.run(reason, false, { f.pending },
+                    apply = { fail("must take covered skip"); good },
+                    afterPass = { f.pending = failure == "retry"; failure != "publication" },
+                    skipped = { f.skips += it })
+                assertEquals(listOf(1L), f.skips)
+                tasks.single()()
+                f.pending = false
+                f.run("boot")
+                assertEquals(2, f.applies)
+            }
         }
     }
 
