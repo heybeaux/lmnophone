@@ -195,4 +195,25 @@ class ApprovalRecoveryTest {
         assertTrue("a pass that used no approvals may hand back", h.dispatcher.run { recovery.handback(null) })
         assertEquals(true, recovery.pending())
     }
+
+    @Test fun withNoRecordStartupRevokesOnceAndLaterPassesLeaveSessionWindowsAlone() {
+        h.unreadable = true // as on a phone with no approval record yet: the record reads null
+        assertEquals(AppApprovalOutcome.NOT_READY, recovery.beforePass(locked = false))
+        val revoked = h.revocations
+        assertTrue("startup revoked session windows", revoked > 0)
+        repeat(3) { recovery.beforePass(locked = false) } // package events, the alarm, Home start
+        assertEquals("no pass repeats the startup revocation", revoked, h.revocations)
+    }
+
+    @Test fun startupRunsAgainOnceTheRecordReadsAndThenRetriesAFailedActivation() {
+        h.unreadable = true
+        assertEquals(AppApprovalOutcome.NOT_READY, recovery.beforePass(locked = false))
+        h.unreadable = false
+        assertEquals(AppApprovalOutcome.READY, recovery.beforePass(locked = false))
+        failedActivation()
+        assertTrue(pass())
+        assertNull("the operation finished", h.approvals.pending)
+        assertTrue(h.state(target), h.visibleAndPermitted(target))
+        assertTrue(h.state(sibling), h.visibleAndPermitted(sibling))
+    }
 }

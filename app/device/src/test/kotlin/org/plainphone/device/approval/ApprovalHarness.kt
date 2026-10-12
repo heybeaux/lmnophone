@@ -104,6 +104,8 @@ class ApprovalHarness : AutoCloseable {
         java.security.MessageDigest.getInstance("SHA-256").digest(chars.concatToString().toByteArray() + salt)
     }, SecretEntropy { n -> ByteArray(n) { (++entropy).toByte() } }, clock)
     private var combined = ElevationRecord()
+    /** How many times the session controller revoked every relaxation (each startup revocation). */
+    var revocations = 0
     private val sessions = SessionController(object : ElevationStore() {
         override fun read() = combined
         override fun compareAndSet(expected: ElevationRecord?, replacement: ElevationRecord, expectedCredentials: CredentialState?): Boolean {
@@ -111,7 +113,7 @@ class ApprovalHarness : AutoCloseable {
             combined = replacement; return true
         }
     }, object : SessionEffects {
-        override fun revokeAllRelaxations() = true
+        override fun revokeAllRelaxations() = true.also { revocations++ }
         override fun open(access: SessionAccess) = false
         override fun protectedStateCheck() = true
         override fun readBackPolicy() = true
