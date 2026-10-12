@@ -1,0 +1,53 @@
+# adb reboot 2026-10-12T00:57:11Z. Epoch seconds, device clock.
+## events
+         1791766652.854  1111  1111 I boot_progress_start: 9177
+         1791766653.657  1111  1111 I boot_progress_preload_start: 9980
+         1791766655.357  1111  1111 I boot_progress_preload_end: 11679
+         1791766655.688  1864  1864 I boot_progress_system_run: 12010
+         1791766656.184  1864  1864 I boot_progress_pms_start: 12506
+         1791766656.476  1864  1864 I boot_progress_pms_system_scan_start: 12798
+         1791766658.568  1864  1864 I boot_progress_pms_data_scan_start: 14891
+         1791766658.992  1864  1864 I boot_progress_pms_scan_end: 15314
+         1791766659.207  1864  1864 I boot_progress_pms_ready: 15530
+         1791766661.476  1864  1864 I boot_progress_ams_ready: 17799
+         1791766662.219  1864  1864 I ssm_user_starting: 0
+         1791766662.375  1864  1864 I uc_send_user_broadcast: [0,android.intent.action.USER_STARTED]
+         1791766662.375  1864  1864 I uc_send_user_broadcast: [0,android.intent.action.USER_STARTING]
+         1791766662.379  1864  1864 I uc_send_user_broadcast: [0,android.intent.action.USER_FOREGROUND]
+         1791766662.379  1864  1864 I uc_send_user_broadcast: [0,android.intent.action.USER_SWITCHED]
+         1791766663.767  1864  1904 I boot_progress_enable_screen: 20090
+         1791766666.489  1864  1904 I uc_finish_user_boot: 0
+         1791766666.491  1864  1904 I am_user_state_changed: [0,1]
+         1791766666.493  1864  1904 I uc_send_user_broadcast: [0,android.intent.action.LOCKED_BOOT_COMPLETED]
+         1791766666.550  1864  1904 I uc_finish_user_unlocking: 0
+         1791766667.011  1864  1901 I am_user_state_changed: [0,2]
+         1791766667.063  1864  1914 I ssm_user_unlocking: 0
+         1791766667.316  1864  1914 I uc_finish_user_unlocked: 0
+         1791766667.317  1864  1914 I am_user_state_changed: [0,3]
+         1791766667.580  1864  1914 I uc_send_user_broadcast: [0,android.intent.action.USER_UNLOCKED]
+         1791766667.718  1864  1914 I uc_finish_user_unlocked_completed: 0
+         1791766667.777  1864  1914 I ssm_user_unlocked: 0
+         1791766667.886  1864  1901 I uc_send_user_broadcast: [0,android.intent.action.BOOT_COMPLETED]
+         1791766672.805  1864  1914 I ssm_user_completed_event: [0,2]
+## PlainphoneBoot and broadcast timing (merged)
+         1791766662.375  1864  1864 D SystemServerTiming: broadcastIntent--1-android.intent.action.USER_STARTING
+         1791766662.375  1864  1864 D SystemServerTiming: broadcastIntent-0-android.intent.action.USER_STARTED
+         1791766662.379  1864  1864 D SystemServerTiming: broadcastIntent--1-android.intent.action.USER_SWITCHED
+         1791766662.379  1864  1864 D SystemServerTiming: broadcastIntent-0-android.intent.action.USER_FOREGROUND
+         1791766664.245  2601  2689 I PlainphoneBoot: reapply reason=start control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=true disabledFloor=[] ms=1225 totalMs=1226 pass=1 timingsMs=livePackages.snapshot1=250,floorIdentities=123,livePackages.snapshot2=359,livePackages.merge=200,livePackages=933,input=940,revoke=62,write.EMERGENCY_FLOOR=57,read.EMERGENCY_FLOOR=32,write.NEVER_HIDE_GUARD=30,read.NEVER_HIDE_GUARD.shownPackages=15,read.NEVER_HIDE_GUARD=16,verify.EMERGENCY_FLOOR=21,verify.NEVER_HIDE_GUARD.shownPackages=17,verify.NEVER_HIDE_GUARD=18,sessionStart=267,flipRecord=1,disabledRead=16,afterReapply=1
+         1791766666.149  2601  2689 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.android.systemui control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=809 totalMs=809 pass=2 timingsMs=livePackages.snapshot1=137,floorIdentities=41,livePackages.snapshot2=175,livePackages.merge=171,livePackages=524,input=537,revoke=12,write.EMERGENCY_FLOOR=26,read.EMERGENCY_FLOOR=29,write.NEVER_HIDE_GUARD=22,read.NEVER_HIDE_GUARD.shownPackages=40,read.NEVER_HIDE_GUARD=42,verify.EMERGENCY_FLOOR=33,verify.NEVER_HIDE_GUARD.shownPackages=35,verify.NEVER_HIDE_GUARD=36,sessionStart=236,flipRecord=0,disabledRead=36,afterReapply=0
+         1791766666.494  1864  1904 D SystemServerTiming: broadcastIntent-0-android.intent.action.LOCKED_BOOT_COMPLETED
+         1791766667.717  1864  1914 D SystemServerTiming: broadcastIntent-0-android.intent.action.USER_UNLOCKED
+         1791766667.824  2601  2689 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:android control=none locked=true ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=1671 totalMs=1671 pass=3 timingsMs=livePackages.snapshot1=206,floorIdentities=54,livePackages.snapshot2=214,livePackages.merge=373,livePackages=847,input=872,revoke=29,write.EMERGENCY_FLOOR=96,read.EMERGENCY_FLOOR=141,write.NEVER_HIDE_GUARD=110,read.NEVER_HIDE_GUARD.shownPackages=62,read.NEVER_HIDE_GUARD=63,verify.EMERGENCY_FLOOR=89,verify.NEVER_HIDE_GUARD.shownPackages=34,verify.NEVER_HIDE_GUARD=35,sessionStart=596,flipRecord=0,disabledRead=201,afterReapply=0
+         1791766668.040  1864  1901 D SystemServerTiming: broadcastIntent-0-android.intent.action.BOOT_COMPLETED
+         1791766672.593  2601  2689 I PlainphoneBoot: reapply reason=user-unlocked control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=4142 totalMs=4142 pass=4 timingsMs=livePackages.snapshot1=459,floorIdentities=134,livePackages.snapshot2=276,livePackages.merge=180,livePackages=1049,input=1135,revoke=7,write.EMERGENCY_FLOOR=121,read.EMERGENCY_FLOOR=150,write.NEVER_HIDE_GUARD=75,read.NEVER_HIDE_GUARD.shownPackages=432,read.NEVER_HIDE_GUARD=433,write.HIDES=610,read.HIDES.hiddenPackages=424,read.HIDES.shownPackages=235,read.HIDES=663,write.LOCK_TASK=71,read.LOCK_TASK=3,write.HOME=99,read.HOME=1,verify.EMERGENCY_FLOOR=55,verify.NEVER_HIDE_GUARD.shownPackages=114,verify.NEVER_HIDE_GUARD=118,verify.HIDES.hiddenPackages=326,verify.HIDES.shownPackages=130,verify.HIDES=462,verify.LOCK_TASK=4,verify.HOME=5,sessionStart=2916,flipRecord=0,disabledRead=91,afterReapply=0
+         1791766672.596  2601  2689 I PlainphoneBoot: reapply reason=locked-boot skipped=covered-by=4
+         1791766673.216  2601  2601 I PlainphoneBoot: home shown lockTask=LOCKED at=29538
+         1791766675.763  2601  2689 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.motorola.carriersettingsext control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=1044 totalMs=1044 pass=5 timingsMs=livePackages.snapshot1=100,floorIdentities=30,livePackages.snapshot2=59,livePackages.merge=20,livePackages=209,input=228,revoke=6,write.EMERGENCY_FLOOR=27,read.EMERGENCY_FLOOR=30,write.NEVER_HIDE_GUARD=111,read.NEVER_HIDE_GUARD.shownPackages=134,read.NEVER_HIDE_GUARD=135,write.HIDES=91,read.HIDES.hiddenPackages=78,read.HIDES.shownPackages=49,read.HIDES=131,write.LOCK_TASK=25,read.LOCK_TASK=1,write.HOME=43,read.HOME=3,verify.EMERGENCY_FLOOR=59,verify.NEVER_HIDE_GUARD.shownPackages=55,verify.NEVER_HIDE_GUARD=56,verify.HIDES.hiddenPackages=39,verify.HIDES.shownPackages=21,verify.HIDES=62,verify.LOCK_TASK=1,verify.HOME=2,sessionStart=807,flipRecord=0,disabledRead=8,afterReapply=0
+         1791766675.835  2601  2601 I PlainphoneBoot: home shown lockTask=LOCKED at=32158
+         1791766677.134  2601  2689 I PlainphoneBoot: reapply reason=boot skipped=covered-by=5
+         1791766677.238  2601  2601 I PlainphoneBoot: home shown lockTask=LOCKED at=33561
+         1791766684.447  2601  2689 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.motorola.enterprise.adapter.service control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=855 totalMs=855 pass=6 timingsMs=livePackages.snapshot1=116,floorIdentities=55,livePackages.snapshot2=71,livePackages.merge=22,livePackages=264,input=328,revoke=8,write.EMERGENCY_FLOOR=72,read.EMERGENCY_FLOOR=33,write.NEVER_HIDE_GUARD=33,read.NEVER_HIDE_GUARD.shownPackages=56,read.NEVER_HIDE_GUARD=57,write.HIDES=43,read.HIDES.hiddenPackages=44,read.HIDES.shownPackages=26,read.HIDES=77,write.LOCK_TASK=10,read.LOCK_TASK=1,write.HOME=22,read.HOME=1,verify.EMERGENCY_FLOOR=23,verify.NEVER_HIDE_GUARD.shownPackages=45,verify.NEVER_HIDE_GUARD=47,verify.HIDES.hiddenPackages=47,verify.HIDES.shownPackages=23,verify.HIDES=73,verify.LOCK_TASK=1,verify.HOME=2,sessionStart=515,flipRecord=0,disabledRead=12,afterReapply=0
+         1791766684.510  2601  2601 I PlainphoneBoot: home shown lockTask=LOCKED at=40832
+         1791766685.056  2601  2689 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.google.android.apps.wellbeing control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED withheld=[DISALLOW_FACTORY_RESET, DISALLOW_DEBUGGING_FEATURES] attention=false disabledFloor=[] ms=606 totalMs=606 pass=7 timingsMs=livePackages.snapshot1=70,floorIdentities=23,livePackages.snapshot2=48,livePackages.merge=19,livePackages=160,input=182,revoke=13,write.EMERGENCY_FLOOR=26,read.EMERGENCY_FLOOR=15,write.NEVER_HIDE_GUARD=14,read.NEVER_HIDE_GUARD.shownPackages=30,read.NEVER_HIDE_GUARD=31,write.HIDES=54,read.HIDES.hiddenPackages=43,read.HIDES.shownPackages=19,read.HIDES=64,write.LOCK_TASK=12,read.LOCK_TASK=3,write.HOME=27,read.HOME=2,verify.EMERGENCY_FLOOR=36,verify.NEVER_HIDE_GUARD.shownPackages=42,verify.NEVER_HIDE_GUARD=42,verify.HIDES.hiddenPackages=35,verify.HIDES.shownPackages=15,verify.HIDES=51,verify.LOCK_TASK=3,verify.HOME=1,sessionStart=409,flipRecord=0,disabledRead=14,afterReapply=0
+         1791766685.111  2601  2601 I PlainphoneBoot: home shown lockTask=LOCKED at=41434
