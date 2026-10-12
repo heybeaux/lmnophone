@@ -34,6 +34,12 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.ui.Modifier
 import androidx.compose.runtime.SideEffect
 import org.plainphone.counts.CommunicationEntryIntents
 import org.plainphone.counts.AndroidCommunicationCounts
@@ -244,17 +250,23 @@ class MainActivity : ComponentActivity() {
             if (gate == HomeGate.READY && cancel != null) {
                 val wait by runtime.waitingNotice.collectAsState()
                 LaunchedEffect(wait) { followOperation() }
-                PlainphoneTheme { WaitingChangeScreen(cancel.state) { onCancelEvent(cancel, it) } }
+                PlainphoneTheme {
+                    Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).systemBarsPadding().displayCutoutPadding()) {
+                        WaitingChangeScreen(cancel.state) { onCancelEvent(cancel, it) }
+                    }
+                }
                 return@setContent
             }
             if (gate == HomeGate.READY && attentionOpen) {
                 val read by runtime.waitingRead.collectAsState()
                 PlainphoneTheme {
-                    NeedsAttentionScreen(NeedsAttentionUiState(pendingChange(read,
-                        DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)))) { event ->
-                        when (event) {
-                            NeedsAttentionEvent.Back -> attentionOpen = false
-                            NeedsAttentionEvent.CancelChange -> read?.notice?.let { openCancel(it.requestId) }
+                    Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).systemBarsPadding().displayCutoutPadding()) {
+                        NeedsAttentionScreen(NeedsAttentionUiState(pendingChange(read,
+                            DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)))) { event ->
+                            when (event) {
+                                NeedsAttentionEvent.Back -> attentionOpen = false
+                                NeedsAttentionEvent.CancelChange -> read?.notice?.let { openCancel(it.requestId) }
+                            }
                         }
                     }
                 }
