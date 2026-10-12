@@ -7,6 +7,7 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import org.plainphone.ui.user.BlockedLinkEvent
 import org.plainphone.ui.user.BlockedLinkUiState
+import org.plainphone.ui.user.AboutEvent
 import org.plainphone.ui.user.MoreEvent
 import org.plainphone.ui.user.WifiMessageEvent
 import org.plainphone.ui.user.WifiProblem
@@ -27,11 +28,12 @@ class TestBuildNavigatorTest {
         }
     }
 
-    @Test fun aboutOpensU8AndBackReturnsToMore() {
+    @Test fun aboutOpensU8AndOkOrBackReturnsToMore() {
         val step = nav.onMore(at(ShellRoute.More), MoreEvent.OpenAbout)
-        assertEquals("About", step.state.current.javaClass.simpleName)
+        assertEquals(at(ShellRoute.More, ShellRoute.About), step.state)
         assertNull(step.effect)
         assertEquals(at(ShellRoute.More), nav.back(step.state).state)
+        assertEquals(Step(at(ShellRoute.More)), nav.onAbout(step.state, AboutEvent.Ok))
     }
 
     @Test fun trustedPersonOpensTheRealPinHostWithoutChangingTheShellStack() {

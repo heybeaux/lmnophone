@@ -37,7 +37,7 @@ class ShellNavigatorTest {
         // Remaining unhosted destinations stay put outside the test-build shell.
         assertEquals(Step(ShellState()), nav.onHome(ShellState(), HomeEvent.OpenNotice))
         for (e in listOf(MoreEvent.AddApp,
-            MoreEvent.OpenSelfManagedSettings, MoreEvent.OpenAbout)) {
+            MoreEvent.OpenSelfManagedSettings)) {
             assertEquals(Step(at(ShellRoute.More)), nav.onMore(at(ShellRoute.More), e))
         }
     }

@@ -8,6 +8,7 @@ import org.plainphone.ui.user.AppRequestResultEvent
 import org.plainphone.ui.user.AskForAppEvent
 import org.plainphone.ui.user.BlockedLinkEvent
 import org.plainphone.ui.user.BlockedLinkUiState
+import org.plainphone.ui.user.AboutEvent
 import org.plainphone.ui.user.MoreEvent
 import org.plainphone.ui.user.WifiMessageEvent
 import org.plainphone.ui.user.WifiProblem
@@ -16,6 +17,7 @@ import org.plainphone.ui.user.WifiProblem
 sealed interface ShellRoute {
     data object Home : ShellRoute
     data object More : ShellRoute
+    data object About : ShellRoute
     data object PhoneSettings : ShellRoute
     data object AskForApp : ShellRoute
     data class RequestResult(val result: AppRequestResult) : ShellRoute
@@ -98,8 +100,13 @@ class ShellNavigator(
         MoreEvent.AskForApp -> if (testBuild) notInBuild(s) else push(s.copy(draft = ""), ShellRoute.AskForApp)
         MoreEvent.OpenPhoneSettings -> push(s, ShellRoute.PhoneSettings)
         MoreEvent.OpenTrustedPerson -> Step(s, ShellEffect.OpenTrustedPerson)
+        MoreEvent.OpenAbout -> push(s, ShellRoute.About)
         MoreEvent.AddApp,
-        MoreEvent.OpenSelfManagedSettings, MoreEvent.OpenAbout -> if (testBuild) notInBuild(s) else Step(s)
+        MoreEvent.OpenSelfManagedSettings -> if (testBuild) notInBuild(s) else Step(s)
+    }
+
+    fun onAbout(s: ShellState, e: AboutEvent): Step = when (e) {
+        AboutEvent.Ok -> back(s)
     }
 
     fun onAsk(s: ShellState, e: AskForAppEvent): Step = when (e) {

@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import org.plainphone.R
+import org.plainphone.ui.user.AboutScreen
+import org.plainphone.ui.user.AboutUiState
 import org.plainphone.ui.user.PhoneSettingsScreen
 import org.plainphone.ui.user.PhoneSettingsUiState
 import org.plainphone.ui.user.PhoneSettingsEvent
@@ -34,6 +38,7 @@ fun PlainphoneShell(
     mapper: ShellUiMapper,
     navigator: ShellNavigator,
     counts: CommunicationCounts,
+    versionName: String,
     notice: HomeNotice?,
     onNotice: () -> Unit,
     settings: PhoneSettingsUiState,
@@ -48,6 +53,8 @@ fun PlainphoneShell(
                 ShellRoute.Home -> HomeScreen(mapper.home(snapshot).copy(notice = notice, missedCalls = counts.missedCalls, unreadTexts = counts.unreadTexts)) {
                     if (it == HomeEvent.OpenNotice) onNotice() else onStep(navigator.onHome(state, it))
                 }
+                ShellRoute.About -> AboutScreen(AboutUiState(versionName, snapshot.trustedPeople,
+                    snapshot.requestRecipient, stringResource(R.string.product_name))) { onStep(navigator.onAbout(state, it)) }
                 ShellRoute.PhoneSettings -> PhoneSettingsScreen(settings, onSettings)
                 ShellRoute.More -> MoreScreen(mapper.more(snapshot)) { onStep(navigator.onMore(state, it)) }
                 ShellRoute.AskForApp ->

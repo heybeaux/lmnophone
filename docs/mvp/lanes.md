@@ -110,6 +110,9 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
   a null context, without a PIN. The host rechecks the live change before acting;
   `Back` returns home. Committing state removes Cancel. Calls and Emergency stay
   reachable through host navigation; this screen does not launch either.
+- `user.AboutScreen(AboutUiState, onEvent)` displays U8 with host-supplied installed
+  `versionName`, `trustedPeople`, `helper` and resource-backed `productName`. `AboutEvent.Ok` returns to More.
+  The preview supplies sample identities; it offers no helper-number or SOS action.
 - Covers: home (with the single notice line), More, ask for an app, blocked link, Wi-Fi messages, the trusted-person screens ("Who are you?", PIN, approvals, permissions, people, waits and cancel), Plainphone settings, setup, turning off, About, and "What Plainphone can't stop".
 
 **`:device` / `:plainphone` (lane D):** implements `JournalStore`, `PolicyStore` and `KeyDerivation`. It also provides:

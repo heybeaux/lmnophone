@@ -148,13 +148,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
             val cancel = cancelScreen
-            if (cancel != null) {
+            if (gate == HomeGate.READY && cancel != null) {
                 val wait by runtime.waitingNotice.collectAsState()
                 LaunchedEffect(wait) { followOperation() }
                 PlainphoneTheme { WaitingChangeScreen(cancel.state) { onCancelEvent(cancel, it) } }
                 return@setContent
             }
-            if (attentionOpen) {
+            if (gate == HomeGate.READY && attentionOpen) {
                 val read by runtime.waitingRead.collectAsState()
                 PlainphoneTheme {
                     NeedsAttentionScreen(NeedsAttentionUiState(pendingChange(read,
@@ -170,6 +170,7 @@ class MainActivity : ComponentActivity() {
             PlainphoneShell(shell.state, snapshot, mapper, shell.navigator ?: return@setContent,
                 notice = notice, onNotice = ::openNotice,
                 counts = counts,
+                versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() },
                 settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps),
                 onSettings = { event ->
                     when (event) {

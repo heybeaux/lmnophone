@@ -27,7 +27,7 @@ class AboutScreenScreenshotTest(private val scale: Float) {
 
     private fun shot(people: List<String>) = paparazzi.snapshot {
         PlainphoneTheme {
-            HomeTestFrame { AboutScreen(AboutUiState("0.1.0-preview-18", people, "Sam"), {}) }
+            HomeTestFrame { AboutScreen(AboutUiState("0.1.0-preview-18", people, "Sam", "LMNOPhone"), {}) }
         }
     }
 

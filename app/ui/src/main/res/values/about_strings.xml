@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 LMNOPhone contributors
+     SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <string name="about_test_build">Test build %1$s. Some things described here are not in this build yet.</string>
+    <string name="about_intro">%1$s is the program that keeps this phone simple.</string>
+    <string name="about_equals">%1$s are equals: either can add apps with you.</string>
+    <string name="about_choices">%1$s helps choose which apps are on it, together with you, with the phone in %1$s\'s hands. \"For %1$s\" needs %1$s\'s PIN so that nobody else can change your phone.</string>
+    <string name="about_privacy">%2$s can\'t read your messages, see where you are, or see what you do in your apps. %1$s has no server of its own, no analytics and no account. It connects to %3$s\'s computer over home Wi-Fi only to update itself.</string>
+    <string name="about_texts">%1$s sends %2$s a text only when you choose to ask for an app or share a link, when the monthly check is due, when %1$s needs a check or a phone update is coming, when %2$s\'s PIN is used to change something on this phone, when a big change (like turning %1$s off) starts, is cancelled or finishes, or if %2$s\'s PIN is typed wrongly many times (so %2$s knows if someone is guessing it).</string>
+    <string name="about_history">The phone keeps a list of changes from the last 90 days. It doesn\'t include your messages, websites or what you do in apps.</string>
+    <string name="about_emergency_title">To call 9-1-1</string>
+    <string name="about_emergency_phone">Tap Phone, type 9-1-1, and press call.</string>
+    <string name="about_emergency_more">Or tap More, then Emergency 9-1-1.</string>
+    <string name="about_emergency_lock">From the lock screen, tap Emergency call.</string>
+</resources>
