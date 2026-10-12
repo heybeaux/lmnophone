@@ -3,9 +3,11 @@
 package org.plainphone.device.authority
 
 import java.io.File
+import java.io.IOException
 import java.security.MessageDigest
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -24,7 +26,11 @@ import org.plainphone.policy.AppApprovalIdSource
 import org.plainphone.policy.BatteryState
 import org.plainphone.policy.CredentialState
 import org.plainphone.policy.ElevationController
+import org.plainphone.policy.ElevationDebit
+import org.plainphone.policy.ElevationLedger
 import org.plainphone.policy.ElevationOutcome
+import org.plainphone.policy.ElevationRecord
+import org.plainphone.policy.ElevationState
 import org.plainphone.policy.ElevationTarget
 import org.plainphone.policy.FloorIdentity
 import org.plainphone.policy.FloorRole
@@ -39,6 +45,7 @@ import org.plainphone.policy.RecoveryProfile
 import org.plainphone.policy.SecretEntropy
 import org.plainphone.policy.SessionAccess
 import org.plainphone.policy.SessionEffects
+import org.plainphone.policy.WaitingState
 
 /**
  * PLA-97: initial setup durably creates the combined elevation record with an EMPTY debit ledger in
@@ -191,5 +198,83 @@ class InitialProvisioningTest {
         val later = CredentialState(first.mode, first.people, revision = 3, recoveryProfile = first.recoveryProfile)
         assertEquals(ProvisionOutcome.REFUSED, InitialProvisioning(store).provision(later))
         assertTrue(files(dir).isEmpty())
+    }
+
+    /** A genesis with one debit written straight to the ledger: a used record. */
+    private fun used(dir: File): CredentialState {
+        val store = open(dir); val credentials = selfManaged(store)
+        assertEquals(ProvisionOutcome.CREATED, InitialProvisioning(store).provision(credentials))
+        val debit = ElevationRecord(1, ElevationState(ElevationLedger(listOf(ElevationDebit("used", RunningTime("epoch", 1_000))))))
+        assertTrue(store.elevationStore.compareAndSet(store.elevationStore.read(), debit, credentials))
+        return credentials
+    }
+
+    // PLA-409 R1: no fence and no readable record is not vacant while a used copy is still on disk.
+    @Test fun aDamagedUsedRecordWithoutFencesIsNeverReinitialized() {
+        val dir = tmp.newFolder(); val credentials = used(dir)
+        assertTrue(File(dir, "fence-a.rec").delete()); assertTrue(File(dir, "fence-b.rec").delete())
+        File(dir, "authority-b.rec").writeBytes(ByteArray(7))
+        assertNull(open(dir).elevationStore.read())
+        val before = files(dir)
+        assertEquals(ProvisionOutcome.EXISTING, InitialProvisioning(open(dir)).provision(credentials))
+        assertUntouched(before, dir)
+        // The low-level genesis write refuses it too.
+        assertFalse(open(dir).initialize(credentials, WaitingState(storageGeneration = "g"), ElevationRecord()))
+        assertUntouched(before, dir)
+    }
+
+    @Test fun aSoleUsedCopyOrAnUndecodableCopyWithoutFencesIsNeverReinitialized() {
+        val dir = tmp.newFolder(); val credentials = used(dir)
+        listOf("fence-a", "fence-b", "authority-b").forEach { assertTrue(File(dir, "$it.rec").delete()) }
+        var before = files(dir)
+        assertEquals(ProvisionOutcome.EXISTING, InitialProvisioning(open(dir)).provision(credentials))
+        assertUntouched(before, dir)
+        // Garbage in the only copy (a damaged record, or another schema's) is not a vacant store either.
+        File(dir, "authority-a.rec").writeBytes(ByteArray(7))
+        before = files(dir)
+        assertEquals(ProvisionOutcome.EXISTING, InitialProvisioning(open(dir)).provision(credentials))
+        assertUntouched(before, dir)
+    }
+
+    // PLA-409 R2: CREATED needs a successful directory sync after the genesis is visible, not visibility alone.
+    @Test fun aGenesisWhoseDirectorySyncFailsIsUnavailableUntilABarrierSucceeds() {
+        val dir = tmp.newFolder()
+        var syncs = 0; var failing = true
+        val store = open(dir).withDirectorySync { d ->
+            syncs++
+            if (syncs >= 2 && failing) {
+                d.setWritable(false, false) // rollback cannot remove the renamed copies either
+                throw IOException("directory sync failed")
+            }
+            PlatformDirectorySync.sync(d)
+        }
+        val credentials = selfManaged(store)
+        val outcome = try { InitialProvisioning(store).provision(credentials) } finally { dir.setWritable(true, false) }
+        assertEquals(ProvisionOutcome.UNAVAILABLE, outcome)
+        assertTrue(open(dir).credentials.read() != null) // both copies read, but no barrier held
+        val before = files(dir)
+        // The early (already visible) path also needs the barrier.
+        assertEquals(ProvisionOutcome.UNAVAILABLE, InitialProvisioning(store).provision(credentials))
+        dir.setWritable(true, false)
+        failing = false
+        val synced = syncs
+        assertEquals(ProvisionOutcome.CREATED, InitialProvisioning(store).provision(credentials))
+        assertTrue(syncs > synced)
+        assertUntouched(before, dir)
+    }
+
+    @Test fun theReviewSequenceIsCreatedOnlyByALaterSuccessfulBarrier() {
+        val dir = tmp.newFolder()
+        var syncs = 0; var succeeded = 0
+        val store = open(dir).withDirectorySync { d ->
+            if (++syncs == 2) { d.setWritable(false, false); throw IOException("second copy sync failed") }
+            PlatformDirectorySync.sync(d); succeeded++
+        }
+        val credentials = selfManaged(store)
+        val outcome = try { InitialProvisioning(store).provision(credentials) } finally { dir.setWritable(true, false) }
+        // A successful directory sync after both renames makes them durable, so CREATED is acknowledged.
+        assertEquals(ProvisionOutcome.CREATED, outcome)
+        assertTrue(succeeded >= 2 && syncs >= 3)
+        assertGenesis(dir, Mode.SELF_MANAGED)
     }
 }
