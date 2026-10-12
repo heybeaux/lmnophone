@@ -1,0 +1,97 @@
+Spare text size check 2026-10-12T13:36:34.851520+00:00
+PASS: read font scale
+before font_scale=1.0
+PASS: spare starts at 1.0
+PASS: grant settings app-op
+PASS: press Home
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^More$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Phone settings$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+Phone settings texts: ['‹ More', 'Brightness', '›', 'Sound', '›', 'Text size', '›', 'Battery', '›', 'Show missed calls and unread texts on Home', "Counts texts and picture messages. Chat (RCS) messages and other apps aren't supported, so they may be missing from the number.", 'LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say.']
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Text size$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+Text size texts: ['‹ Phone settings', 'Text size', "LMNOPhone's own screens will still fit.", '100%', "Bigger text may push some apps' words off the edge. LMNOPhone's own screens will still fit.", 'Done']
+PASS: shows 100%
+PASS: no failure line
+PASS: one Bigger text
+PASS: Bigger enabled
+PASS: one Smaller text
+PASS: Smaller disabled at 100
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap Bigger text
+PASS: read font scale
+PASS: app write/readback font_scale 1.15
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+After Bigger: ['‹ Phone settings', 'Text size', "LMNOPhone's own screens will still fit.", '115%', "Bigger text may push some apps' words off the edge. LMNOPhone's own screens will still fit.", 'Done']
+PASS: page shows 115%
+PASS: capture spare-text-size-115.png
+PASS: valid PNG spare-text-size-115.png
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap Smaller text
+PASS: read font scale
+PASS: app write/readback font_scale back to 1.0
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: page shows 100%
+PASS: read font scale
+PASS: read font scale
+PASS: restored font_scale 1.0
+PASS: read app-op
+WRITE_SETTINGS app-op: WRITE_SETTINGS: allow; time=+4s876ms ago
+PASS: press Home
+PASS: read package version
+PASS: version is preview-27
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+exit=0

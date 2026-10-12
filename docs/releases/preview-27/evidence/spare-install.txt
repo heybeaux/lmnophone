@@ -1,0 +1,9 @@
+Build 27 spare install (Lead, PLA-420), 2026-10-12 UTC.
+APK sha256=a943703e45b88ea00cb35b2d727b7d0e1e2bd9e73a2f1ad5429ebcc3ca97a131 (release/preview-27 at ad037b3e).
+Installed in place over 26 at 13:30:17Z (lastUpdateTime 06:30:17 local). Gate exit=0: 911 exactly on both routes, zero calls.
+Before: 26, suspended=0 hidden=42 DeviceOwner LOCKED font_scale=1.0 WRITE_SETTINGS=default.
+After:  27, suspended=0 hidden=42 DeviceOwner LOCKED TEST_ONLY font_scale=1.0.
+Text size: granted WRITE_SETTINGS by adb, opened More > Phone settings > Text size (100%, no failure line,
+Smaller disabled), tapped Bigger: font_scale read back 1.15 and page showed 115%; tapped Smaller: back to 1.0.
+Final font_scale=1.0 (spare's previous value). WRITE_SETTINGS left at allow so the tester can use the page.
+Copy fix ("an LMNOPhone update") not opened on the spare (behind the PIN); covered by UpdateArticleTest.
