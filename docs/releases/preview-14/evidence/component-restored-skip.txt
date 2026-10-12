@@ -1,0 +1,2 @@
+--------- beginning of main
+10-11 19:14:44.549   969  1032 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.google.android.contacts skipped=unchanged-since=7

@@ -1,0 +1,66 @@
+[
+  {
+    "module": "device",
+    "variant": "testDebugUnitTest",
+    "tests": 655,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "device",
+    "variant": "testReleaseUnitTest",
+    "tests": 655,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "variant": "testCtlNoAlertLockTaskUnitTest",
+    "tests": 156,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "variant": "testCtlNoAlertUnitTest",
+    "tests": 156,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "variant": "testCtlNoDialerLockTaskUnitTest",
+    "tests": 156,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "variant": "testCtlNoPhoneUnitTest",
+    "tests": 156,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "variant": "testDebugUnitTest",
+    "tests": 156,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "plainphone",
+    "variant": "testReleaseUnitTest",
+    "tests": 156,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+]

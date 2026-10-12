@@ -1,0 +1,11 @@
+{
+  "version_code": 14,
+  "version_name": "0.1.0-preview-14",
+  "apk_sha256": "40b7e93249fc372c1f804625e51c94eec7bf477efc48983207b840e64632261a",
+  "signer_sha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "previous_installed_sha256": "03d099128f7acdbf11992362c169eea88796c37d65c7e348ef7d0f670bd5ac12",
+  "installed_at_utc": "2026-10-12T02:12:56.426855+00:00",
+  "installed_hash_matches": true,
+  "first_install_time": "2026-10-11 14:05:10",
+  "previous_version": 13
+}
