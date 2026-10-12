@@ -77,6 +77,27 @@ fun confirmStage(requestId: String, current: WaitingNotice?): WaitingStage? =
     }
 
 /**
+ * Home's own sub-screens: the PIN-free cancel confirmation ([cancelOpen], [sending] while its cancel is
+ * being saved) and the needs-attention screen ([attentionOpen]).
+ */
+data class HomeScreens(val cancelOpen: Boolean, val sending: Boolean, val attentionOpen: Boolean) {
+    /** Android Back is ours only while a sub-screen is open; plain Home keeps the system's own Back. */
+    val handlesBack: Boolean get() = cancelOpen || attentionOpen
+
+    /**
+     * Android Back closes the top sub-screen, as its own No/OK would (PLA-383 note): the confirmation
+     * returns to the attention screen or Home, the attention screen to Home. A cancel being saved stays
+     * open, so its saved result still shows.
+     */
+    fun back(): HomeScreens = when {
+        cancelOpen && sending -> this
+        cancelOpen -> copy(cancelOpen = false, sending = false)
+        attentionOpen -> copy(attentionOpen = false)
+        else -> this
+    }
+}
+
+/**
  * The PIN-free cancel screen after the cancel ran. "Cancelled" only when the cancelled state was written;
  * a change already committing says "Already in progress"; anything unfinished says "Still cancelling"
  * (the recorded intent and the next checkpoint keep trying, and nothing commits meanwhile). Null closes
