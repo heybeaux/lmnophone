@@ -19,10 +19,6 @@ class BatterySource(private val context: Context, private val changed: (BatteryU
     private fun values(intent: Intent?): BatteryUiState {
         val status = intent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
         return BatteryUiState(batteryPercent(intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1,
-            intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1), when (status) {
-                BatteryManager.BATTERY_STATUS_CHARGING, BatteryManager.BATTERY_STATUS_FULL -> true
-                BatteryManager.BATTERY_STATUS_DISCHARGING, BatteryManager.BATTERY_STATUS_NOT_CHARGING -> false
-                else -> null
-            })
+            intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1), status = batteryStatus(status))
     }
 }

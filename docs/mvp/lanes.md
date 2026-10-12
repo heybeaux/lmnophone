@@ -250,3 +250,14 @@ write/readback failure. A failed rollback is never called success; actual values
 or unavailable state are shown. Automatic brightness remains Android-controlled;
 manual controls are disabled until it is turned off. No permissions or policy
 lists change. These seams implement the approved U7 subset in [PLA-395](/PLA/issues/PLA-395).
+
+## Preview 21 U7 presentation and device seams
+
+`SoundScreen(SoundUiState, (SoundEvent) -> Unit)` emits stream-specific SetLevel,
+Adjust and Done. The host supplies only confirmed ring/media `VolumeUiState`
+values and a failure flag. `PhoneSettingsEvent.OpenSound` opens this route.
+`:device` owns `VolumePort` / `VolumeController` and `AndroidVolume`; the port
+reads stream level/min/max and writes a requested level. Ring floor is 1,
+media floor 0; failure attempts restoration and reports the final readback.
+`BatteryUiState.status` distinguishes Charging, Charged and NotCharging.
+No policy-engine, emergency, count or About seam changes.

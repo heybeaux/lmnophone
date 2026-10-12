@@ -5,6 +5,13 @@ package org.plainphone
 import android.app.KeyguardManager
 import android.content.ComponentName
 import androidx.compose.runtime.DisposableEffect
+import android.media.AudioManager
+import org.plainphone.device.settings.AndroidVolume
+import org.plainphone.device.settings.VolumeController
+import org.plainphone.ui.user.SoundUiState
+import org.plainphone.ui.user.SoundStream
+import org.plainphone.ui.user.SoundEvent
+import org.plainphone.ui.user.VolumeUiState
 import org.plainphone.device.settings.AndroidBrightness
 import org.plainphone.device.settings.BrightnessController
 import org.plainphone.settings.BatterySource
@@ -96,6 +103,24 @@ class MainActivity : ComponentActivity() {
     private val brightnessController by lazy {
         BrightnessController(AndroidBrightness(this, ComponentName(this, PlainphoneAdminReceiver::class.java)))
     }
+    private val ringVolume by lazy { VolumeController(AndroidVolume(this, AudioManager.STREAM_RING), 1) }
+    private val mediaVolume by lazy { VolumeController(AndroidVolume(this, AudioManager.STREAM_MUSIC), 0) }
+    private var sound by mutableStateOf(SoundUiState())
+    private fun syncSound() {
+        sound = SoundUiState(
+            ringVolume.state.reading?.let { VolumeUiState(it.level, maxOf(1, it.min), it.max) },
+            mediaVolume.state.reading?.let { VolumeUiState(it.level, it.min, it.max) },
+            ringVolume.state.failed || mediaVolume.state.failed)
+    }
+    private fun onSound(event: SoundEvent) {
+        fun controller(stream: SoundStream) = if (stream == SoundStream.Ring) ringVolume else mediaVolume
+        when (event) {
+            SoundEvent.Done -> shell.state = shell.navigator!!.back(shell.state).state
+            is SoundEvent.SetLevel -> controller(event.stream).setLevel(event.level)
+            is SoundEvent.Adjust -> controller(event.stream).adjust(event.delta)
+        }
+        syncSound()
+    }
     private var brightness by mutableStateOf(BrightnessUiState(null, false))
     private var battery by mutableStateOf(BatteryUiState())
     private fun syncBrightness() {
@@ -159,6 +184,11 @@ class MainActivity : ComponentActivity() {
                 onDispose { source?.close() }
             }
             LaunchedEffect(basicSettingsVisible, shell.state.current) {
+                if (basicSettingsVisible && shell.state.current == ShellRoute.Sound) {
+                    ringVolume.refresh()
+                    mediaVolume.refresh()
+                    syncSound()
+                }
                 if (basicSettingsVisible && shell.state.current == ShellRoute.Brightness) {
                     brightnessController.refresh()
                     syncBrightness()
@@ -211,11 +241,12 @@ class MainActivity : ComponentActivity() {
                 counts = counts,
                 isDeviceSecure = getSystemService(KeyguardManager::class.java).isDeviceSecure,
                 versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() },
+                sound = sound, onSound = ::onSound,
                 brightness = brightness, battery = battery, onBrightness = ::onBrightness,
                 settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps),
                 onSettings = { event ->
                     when (event) {
-                        PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenBattery ->
+                        PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenSound, PhoneSettingsEvent.OpenBattery ->
                             shell.state = shell.navigator!!.onSettings(shell.state, event).state
                         is PhoneSettingsEvent.ShowCommunicationCountsChanged -> {
                             communication.controller.setEnabled(event.enabled)

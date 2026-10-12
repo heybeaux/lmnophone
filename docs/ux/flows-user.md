@@ -400,11 +400,24 @@ percentage, a slider from 10% to 100%, − and +, **Adjust automatically**, and
 **Done**. Manual controls are disabled while automatic adjustment is on.
 Battery has **‹ Phone settings** for Back, the level and the charging line.
 
-TODO(copy), for the focused build review: U7 did not define unavailable/error
-wording. This preview uses **Brightness couldn't be changed.** on a failed write
+Accepted by the Lead on PLA-395: this preview uses **Brightness couldn't be changed.** on a failed write
 or read, and **Battery level isn't available.** for an unknown level. Unknown
 charging status has no charging line. No requested value is presented as saved
 until Android reads it back.
+
+### Build 21 U7 subset
+
+Phone settings rows are **Brightness**, **Sound**, **Battery**, then the unchanged
+counts switch. More's Phone settings subtitle is **Brightness, sound, battery**.
+Sound shows **Ring volume** and **Media volume**, each with a large slider and
+**−** / **+**, then **Done**. Values are Android's confirmed stream steps. Ring
+has a minimum of 1; media may reach 0. A failed write or read shows
+**Volume couldn't be changed.** The page does not change a pre-existing silent
+or vibrate mode. The **Ringtone** chooser is outside this build: another app's
+picker must not open from lock task.
+
+Brightness hides the percentage while **Adjust automatically** is on and shows
+it again when off. Battery shows **Charged** when Android reports full.
 
 ### Wi-Fi messages (exact text, from web-containment)
 

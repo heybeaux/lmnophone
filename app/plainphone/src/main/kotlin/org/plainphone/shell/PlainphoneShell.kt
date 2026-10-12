@@ -45,6 +45,8 @@ fun PlainphoneShell(
     onNotice: () -> Unit,
     settings: PhoneSettingsUiState,
     onSettings: (PhoneSettingsEvent) -> Unit,
+    sound: SoundUiState,
+    onSound: (SoundEvent) -> Unit,
     brightness: BrightnessUiState,
     battery: BatteryUiState,
     onBrightness: (BrightnessEvent) -> Unit,
@@ -60,6 +62,7 @@ fun PlainphoneShell(
                 }
                 ShellRoute.About -> AboutScreen(AboutUiState(versionName, snapshot.trustedPeople,
                     snapshot.requestRecipient, stringResource(R.string.product_name), isDeviceSecure)) { onStep(navigator.onAbout(state, it)) }
+                ShellRoute.Sound -> SoundScreen(sound, onSound)
                 ShellRoute.Brightness -> BrightnessScreen(brightness, onBrightness)
                 ShellRoute.Battery -> BatteryScreen(battery) { onStep(navigator.back(state)) }
                 ShellRoute.PhoneSettings -> PhoneSettingsScreen(settings, onSettings)

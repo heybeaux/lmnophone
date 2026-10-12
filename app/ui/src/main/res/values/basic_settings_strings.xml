@@ -7,10 +7,15 @@
     <string name="brightness_minus">−</string>
     <string name="brightness_plus">+</string>
     <string name="brightness_percent">%1$d%%</string>
-    <!-- TODO(copy): U7 lacks failure and unknown-level copy. Lead review on PLA-395. -->
     <string name="brightness_failed">Brightness couldn\'t be changed.</string>
     <string name="battery_unknown">Battery level isn\'t available.</string>
     <string name="battery_level">Battery: %1$d%%</string>
     <string name="battery_charging">Charging</string>
     <string name="battery_not_charging">Not charging</string>
+    <string name="settings_sound">Sound</string>
+    <string name="sound_ring">Ring volume</string>
+    <string name="sound_media">Media volume</string>
+    <string name="volume_value">%1$d</string>
+    <string name="volume_failed">Volume couldn\'t be changed.</string>
+    <string name="battery_charged">Charged</string>
 </resources>

@@ -30,6 +30,7 @@ data class PhoneSettingsUiState(
 
 sealed interface PhoneSettingsEvent {
     data object OpenBrightness : PhoneSettingsEvent
+    data object OpenSound : PhoneSettingsEvent
     data object OpenBattery : PhoneSettingsEvent
     data object Back : PhoneSettingsEvent
     data class ShowCommunicationCountsChanged(val enabled: Boolean) : PhoneSettingsEvent
@@ -44,6 +45,7 @@ fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEven
         verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4)) {
         ScreenLink(stringResource(R.string.back_more), { onEvent(PhoneSettingsEvent.Back) }, centered = false)
         SettingsRow(stringResource(R.string.settings_brightness)) { onEvent(PhoneSettingsEvent.OpenBrightness) }
+        SettingsRow(stringResource(R.string.settings_sound)) { onEvent(PhoneSettingsEvent.OpenSound) }
         SettingsRow(stringResource(R.string.settings_battery)) { onEvent(PhoneSettingsEvent.OpenBattery) }
         Row(Modifier.fillMaxWidth().heightIn(min = 56.dp)
             .toggleable(value = state.showCommunicationCounts, role = Role.Switch,

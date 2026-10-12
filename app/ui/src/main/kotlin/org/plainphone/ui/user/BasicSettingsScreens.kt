@@ -26,7 +26,9 @@ sealed interface BrightnessEvent {
     data class SetAutomatic(val enabled: Boolean) : BrightnessEvent
     data object Done : BrightnessEvent
 }
-data class BatteryUiState(val percent: Int? = null, val charging: Boolean? = null)
+enum class BatteryStatus { Charging, Charged, NotCharging }
+data class BatteryUiState(val percent: Int? = null, val charging: Boolean? = null,
+    val status: BatteryStatus? = charging?.let { if (it) BatteryStatus.Charging else BatteryStatus.NotCharging })
 
 @Composable
 fun BatteryScreen(state: BatteryUiState, onBack: () -> Unit) {
@@ -34,7 +36,11 @@ fun BatteryScreen(state: BatteryUiState, onBack: () -> Unit) {
         back = stringResource(R.string.settings_back), onBack = onBack) {
         Text(if (state.percent == null) stringResource(R.string.battery_unknown)
             else stringResource(R.string.battery_level, state.percent), style = PlainphoneType.Body)
-        state.charging?.let { Text(stringResource(if (it) R.string.battery_charging else R.string.battery_not_charging),
+        state.status?.let { Text(stringResource(when (it) {
+            BatteryStatus.Charging -> R.string.battery_charging
+            BatteryStatus.Charged -> R.string.battery_charged
+            BatteryStatus.NotCharging -> R.string.battery_not_charging
+        }),
             style = PlainphoneType.Body) }
     }
 }
@@ -46,7 +52,7 @@ fun BrightnessScreen(state: BrightnessUiState, onEvent: (BrightnessEvent) -> Uni
         val enabled = state.percent != null && !state.automatic
         // The thumb may track a drag, but only the read-back percentage is presented as saved.
         var draft by remember(state) { mutableStateOf((state.percent ?: 10).coerceAtLeast(10).toFloat()) }
-        if (state.percent != null) Text(stringResource(R.string.brightness_percent, state.percent), style = PlainphoneType.Body)
+        if (state.percent != null && !state.automatic) Text(stringResource(R.string.brightness_percent, state.percent), style = PlainphoneType.Body)
         val sliderLabel = stringResource(R.string.settings_brightness)
         Slider(value = draft, onValueChange = { draft = it }, enabled = enabled,
             onValueChangeFinished = {
