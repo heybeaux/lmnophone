@@ -176,3 +176,12 @@ Revision 4 host freshness uses separate timer and query ports, a single combined
 Messages statement, and read-only role/package/Home-target gates.
 `PhoneSettingsUiState.unsupportedApps` carries the supported-app disclosure.
 No policy-engine, emergency-floor or permission-grant interface changed.
+
+Preview 13 readback seam: `PackageChangeReadback` captures live package flags for
+system packages from a full preview plan, excluding its floor, guard, Home, lock
+task and session packages. Its read-only `unchanged` check requires a clear
+journal, live floor/Home exclusions, exact lock-task list, installed/hidden/
+suspended/enabled state equality, and no newly launchable visible package.
+`BootPassCoverage` independently requires the last full unlocked verified, ready,
+non-attention pass, no pending save and no negative control. It admits only a
+single `PACKAGE_CHANGED`; mixed bursts and all other package actions run fully.

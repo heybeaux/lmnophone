@@ -105,8 +105,6 @@ object PackageEvents {
         context.registerReceiver(object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 val name = intent.data?.schemeSpecificPart
-                // Our own flush-component flips arrive as PACKAGE_CHANGED; they never need a re-apply.
-                if (name == context.packageName) return
                 if (BuildControl.control.ignoresPackageEvent(name)) return
                 PolicyRuntime.get(context).onPackageEvent("package:${intent.action?.substringAfterLast('.')}:$name")
             }

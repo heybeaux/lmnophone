@@ -24,6 +24,12 @@ class Preview2Device(private val context: Context) {
     private val plainphone = PackageName(context.packageName)
     private val starterFile = File(context.filesDir, "starter-list.txt")
 
+    // Refreshed only by a full plan; used solely for optional post-verification readback evidence.
+    internal var lastPlan: PolicyPlan? = null
+        private set
+    internal var systemPackages: Set<PackageName> = emptySet()
+        private set
+
     val isOwner: Boolean get() = dpm.isDeviceOwnerApp(context.packageName)
 
     /** The setup script's list, one package per line. Empty until the script has run. */
@@ -44,6 +50,8 @@ class Preview2Device(private val context: Context) {
      * the checking screen.
      */
     fun plan(locked: Boolean, timings: ReapplyTimings = ReapplyTimings()): PolicyPlan {
+        lastPlan = null
+        systemPackages = emptySet()
         val (installed, floor) = PreviewPackageInput.read(AndroidPackageSystemPort(context), timings)
         if (locked) return Preview2Plan.decideLocked(plainphone, installed, floor.identities)
         val starter = starter()
@@ -52,6 +60,10 @@ class Preview2Device(private val context: Context) {
             keepVisible(), setOf(PackageName(SAFETY_HUB)))
         Log.i(TAG, "PREVIEW2 PLAN hidden=${plan.hidden.size} lockTask=${plan.lockTaskPackages.map { it.value }.sorted()} " +
             "floorUnreadable=${floor.unreadable}")
+        if (floor.unreadable.isEmpty()) {
+            systemPackages = installed.filter { it.isSystem }.mapTo(mutableSetOf()) { it.name }
+            lastPlan = plan
+        }
         return plan
     }
 

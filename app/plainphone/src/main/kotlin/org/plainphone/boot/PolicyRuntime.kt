@@ -16,12 +16,14 @@ import android.os.UserManager
 import android.telecom.TelecomManager
 import android.util.Log
 import java.io.File
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.plainphone.MainActivity
 import org.plainphone.PlainphoneAdminReceiver
 import org.plainphone.core.PackageName
+import org.plainphone.device.PackageChangeReadback
+import org.plainphone.device.facts.PackageChangeFacts
+import org.plainphone.policy.SessionJournal
 import org.plainphone.device.DpmPort
 import org.plainphone.device.KeyguardFirst
 import org.plainphone.device.SerialDispatcher
@@ -45,7 +47,8 @@ enum class HomeGate { CHECKING, READY, NOT_READY }
  *
  * Re-apply triggers ([reapply]): boot (locked and unlocked), every Plainphone start, package events,
  * user unlock, the 15-minute alarm and, from the wiring slice, [afterTrustedPersonAction]. Each run re-reads the
- * live phone; repeated runs are harmless.
+ * live phone. A single unchanged system-package event may use targeted readback after a verified
+ * full unlocked pass; all errors fall back to the full pass.
  */
 class PolicyRuntime private constructor(private val context: Context) {
     private val dispatcher = SerialDispatcher()
@@ -62,8 +65,13 @@ class PolicyRuntime private constructor(private val context: Context) {
     // Preserve the preview starter list and restriction-free plan during this in-place upgrade.
     private val preview = Preview2Device(context)
     private val timings = ReapplyTimings(SystemClock::elapsedRealtime)
+    private val journal = FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT)
+    private val packageFacts = PackageChangeFacts(context)
+    private val packageReadback = PackageChangeReadback(port, packageFacts::protected, packageFacts::launchable) {
+        !journal.revocationPending() && journal.read() == SessionJournal.Empty
+    }
     private val boot = BootReapply(
-        FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT),
+        journal,
         port, SESSION_PACKAGES,
         { locked -> preview.plan(locked, timings) },
         BuildRestrictions.filter.forSdk(Build.VERSION.SDK_INT),
@@ -80,7 +88,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     @Volatile private var lastGate = HomeGate.CHECKING
     @Volatile private var checkingHeld = false
     private val noticeState = MutableStateFlow<HomeNotice?>(null)
-    private val packageEventQueued = AtomicBoolean(false)
+    private val packageEvents = PackageEventBurst(dispatcher::post, ::run)
     private val runsState = MutableStateFlow(0)
     private val refreshState = MutableStateFlow(HomeRefresh(null, 0))
     val refresh: StateFlow<HomeRefresh> = refreshState
@@ -155,12 +163,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     fun onUserUnlocked(done: () -> Unit = {}) = userUnlocked.request(done)
 
     /** Package events come in bursts: at most one queued run for them. */
-    fun onPackageEvent(reason: String) {
-        if (packageEventQueued.compareAndSet(false, true)) dispatcher.post {
-            packageEventQueued.set(false)
-            run(reason)
-        }
-    }
+    fun onPackageEvent(reason: String) = packageEvents.add(reason)
 
     /**
      * Test builds only (debug `TestHook` HOLD; release never calls it): keeps the checking screen up so
@@ -177,6 +180,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     private fun run(reason: String) {
         if (!dpm.isDeviceOwnerApp(context.packageName)) {
             bootCoverage.invalidate()
+            packageReadback.invalidate()
             Log.w(TAG, "reapply $reason skipped: not Device Owner")
             lastGate = HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
@@ -193,6 +197,7 @@ class PolicyRuntime private constructor(private val context: Context) {
             retryPending = { boot.retryPending || BuildControl.control !== NegativeControl.None },
             apply = { id ->
                 passId = id
+                packageReadback.invalidate()
                 val outcome = try {
                     boot.run(locked)
                 } catch (e: RuntimeException) {
@@ -200,12 +205,29 @@ class PolicyRuntime private constructor(private val context: Context) {
                     null
                 }
                 userUnlocked.recordPass(locked)
+                if (!locked && outcome?.ready == true && !outcome.needsAttention && !boot.retryPending &&
+                    BuildControl.control === NegativeControl.None) {
+                    preview.lastPlan?.let { plan ->
+                        timings.measure("packageSnapshot") {
+                            packageReadback.capture(preview.systemPackages, plan, SESSION_PACKAGES)
+                        }
+                    }
+                }
                 bootMillis = SystemClock.elapsedRealtime() - started
                 outcome
             },
             skipped = { id ->
                 wasSkipped = true
-                Log.i(TAG, "reapply reason=$reason skipped=covered-by=$id")
+                val kind = if (reason.startsWith("package:PACKAGE_CHANGED:")) "unchanged-since" else "covered-by"
+                Log.i(TAG, "reapply reason=$reason skipped=$kind=$id")
+            },
+            packageUnchanged = {
+                val name = reason.removePrefix("package:PACKAGE_CHANGED:")
+                packageReadback.unchanged(PackageName(name))
+            },
+            afterPackageSkip = { outcome ->
+                publishPass(reason, locked, outcome, refreshHome = false)
+                lastGate == HomeGate.READY
             },
             afterPass = { outcome ->
                 try {
@@ -219,7 +241,7 @@ class PolicyRuntime private constructor(private val context: Context) {
         )
     }
 
-    private fun publishPass(reason: String, locked: Boolean, outcome: BootOutcome?) {
+    private fun publishPass(reason: String, locked: Boolean, outcome: BootOutcome?, refreshHome: Boolean = true) {
         runsState.value++
         // A locked run never opens Home: the full plan has not run yet.
         if (!locked) {
@@ -230,7 +252,7 @@ class PolicyRuntime private constructor(private val context: Context) {
             lastGate = if (outcome?.ready == true && !pinned) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
             refreshState.value = HomeRefresh(noticeState.value,
-                if (lastGate == HomeGate.READY) refreshState.value.revision + 1 else refreshState.value.revision)
+                if (lastGate == HomeGate.READY && refreshHome) refreshState.value.revision + 1 else refreshState.value.revision)
             when (action) {
                 RecoveryAction.HOME_FORWARD ->
                     Log.i(TAG, "lock task not running after $reason: Home brought forward at=${SystemClock.elapsedRealtime()}")

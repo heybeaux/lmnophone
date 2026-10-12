@@ -17,7 +17,8 @@ internal class BootPassCoverage {
      * [locked] is read live before starting work. Only a full pass started after that read says
      * unlocked can cover a late boot trigger. Never reuse a locked, incomplete or attention pass.
      * BootOutcome.ready includes independent final verification and journal clearing, not just apply.
-     * [afterPass] still runs on a skip (recovery, Home/count refresh, negative-control hooks).
+     * [afterPass] runs on a boot skip; [afterPackageSkip] keeps recovery but suppresses Home refresh.
+     * Package evidence is read only after the same eligibility checks; an error forces a full pass.
      * Clear coverage first so any exception, failed publication or pending save forces a new pass.
      */
     fun run(
@@ -27,10 +28,13 @@ internal class BootPassCoverage {
         apply: (Long) -> BootOutcome?,
         afterPass: (BootOutcome?) -> Boolean,
         skipped: (Long) -> Unit,
+        packageUnchanged: () -> Boolean = { false },
+        afterPackageSkip: (BootOutcome?) -> Boolean = afterPass,
     ) {
-        val covered = last.takeIf {
-            !locked && (reason == "boot" || reason == "locked-boot") && !retryPending()
-        }
+        val eligible = last.takeIf { !locked && !retryPending() }
+        val packageCovered = eligible != null && reason.startsWith("package:PACKAGE_CHANGED:") &&
+            try { packageUnchanged() } catch (_: Exception) { false }
+        val covered = eligible.takeIf { reason == "boot" || reason == "locked-boot" || packageCovered }
         invalidate()
         val pass = if (covered != null) {
             skipped(covered.id)
@@ -39,7 +43,7 @@ internal class BootPassCoverage {
             val id = ++nextId
             Pass(id, apply(id))
         }
-        val published = afterPass(pass.outcome)
+        val published = if (packageCovered) afterPackageSkip(pass.outcome) else afterPass(pass.outcome)
         val outcome = pass.outcome
         val applied = outcome?.apply
         if (!locked && published && outcome != null && !outcome.locked && outcome.ready &&
