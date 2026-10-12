@@ -4,7 +4,8 @@
 package org.plainphone.ui.user
 
 /** Display facts only. The host selects mode, recipients, eligibility and navigation. */
-data class MoreUiState(val mode: MoreMode)
+/** [voicePractice] shows the practice voice messages row (preview builds only, PLA-457). */
+data class MoreUiState(val mode: MoreMode, val voicePractice: Boolean = false)
 sealed interface MoreMode {
     data class Trusted(val people: List<String>, val requestRecipient: String) : MoreMode
     data class SelfManaged(val waitMinutes: Int) : MoreMode
@@ -19,6 +20,7 @@ sealed interface MoreEvent {
     data object OpenTrustedPerson : MoreEvent
     data object OpenSelfManagedSettings : MoreEvent
     data object OpenAbout : MoreEvent
+    data object OpenVoicePractice : MoreEvent
 }
 
 /** Host enforces 280 characters, letter requirement, quota and fixed recipient before sending.

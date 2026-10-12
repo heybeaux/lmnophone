@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 LMNOPhone contributors
+     SPDX-License-Identifier: Apache-2.0 -->
+<!-- Voice messages slice 1 (PLA-457), practice only.
+     TODO(copy): every string here is a placeholder until docs/ux/flows-voice-messages.md lands
+     (branch pla-voice/ux). Replace word for word from that doc. -->
+<resources>
+    <string name="more_voice">Voice messages (practice)</string>
+    <string name="more_voice_note">Record and listen. Nothing is sent.</string>
+    <string name="voice_practice_label">Practice — not sent</string>
+    <string name="voice_choose">Who is it for?</string>
+    <string name="voice_back_people">‹ People</string>
+    <string name="voice_hear_name">Hear name</string>
+    <string name="voice_record">Record</string>
+    <string name="voice_stop">Stop</string>
+    <string name="voice_recording">Recording</string>
+    <string name="voice_listen">Listen</string>
+    <string name="voice_record_again">Record again</string>
+    <string name="voice_delete">Delete</string>
+    <string name="voice_try_again">Try again</string>
+    <string name="voice_notice_max">That is the longest a message can be.</string>
+    <string name="voice_notice_interrupted">Recording stopped.</string>
+    <string name="voice_notice_nothing">Nothing was recorded.</string>
+    <string name="voice_notice_deleted">Message deleted.</string>
+    <string name="voice_notice_play">This message could not play.</string>
+    <string name="voice_mic_not_allowed">The microphone is not allowed.</string>
+    <string name="voice_mic_off">The microphone is turned off.</string>
+    <string name="voice_mic_error">The microphone did not work.</string>
+    <!-- Spoken by TalkBack for the person's picture symbol. -->
+    <string name="voice_picture">Picture of %1$s</string>
+</resources>

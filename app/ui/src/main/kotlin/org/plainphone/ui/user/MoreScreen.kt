@@ -61,6 +61,11 @@ fun MoreScreen(state: MoreUiState, onEvent: (MoreEvent) -> Unit) {
                 }
             }
         }
+        if (state.voicePractice) {
+            MenuRow(stringResource(R.string.more_voice), stringResource(R.string.more_voice_note)) {
+                onEvent(MoreEvent.OpenVoicePractice)
+            }
+        }
         Spacer(Modifier.height(PlainphoneSpace.S8))
         ScreenLink(stringResource(R.string.more_about), { onEvent(MoreEvent.OpenAbout) })
     }
