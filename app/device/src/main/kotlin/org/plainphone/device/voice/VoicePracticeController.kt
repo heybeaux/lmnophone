@@ -11,6 +11,8 @@ interface VoiceRecorder {
         fun onError()
         /** Android silenced this recording, for example with the microphone privacy toggle. */
         fun onSilenced()
+        /** The recorder accepted [start] but could not open the microphone (for example it is busy). */
+        fun onStartFailed()
     }
     /** Starts recording into [file]. Throws if the microphone or file can't be opened. */
     fun start(file: File, format: VoiceFormat, maxMs: Long, listener: Listener)
@@ -27,7 +29,12 @@ interface VoicePlayer {
 /** Null when the microphone may be used now; the host tries the Device Owner grant first. */
 fun interface MicAccess { fun problem(): MicProblem? }
 
-fun interface VoiceSpeaker { fun speakName(name: String) }
+/** Text-to-speech. [person] is null only for prompts about the whole practice. */
+interface VoiceSpeaker {
+    fun speak(prompt: VoicePrompt, person: VoicePerson?)
+    /** Silences speech at once, before the microphone opens or when the person taps. */
+    fun stop()
+}
 
 /**
  * Runs [VoicePractice] and its effects. Not thread-safe: call from the main thread only.
@@ -40,7 +47,7 @@ class VoicePracticeController(
     private val mic: MicAccess,
     private val speaker: VoiceSpeaker,
     private val clock: () -> Long,
-    private val format: VoiceFormat = VoiceFormat.AmrNb,
+    private val format: VoiceFormat = VoiceFormat.AacM4a,
     private val maxMs: Long = DEFAULT_MAX_MS,
 ) {
     var state: VoiceState = VoiceState.ChoosePerson
@@ -56,13 +63,15 @@ class VoicePracticeController(
         override fun onMaxLength() { if (live()) dispatch(VoiceEvent.MaxLengthReached) }
         override fun onError() { if (live()) dispatch(VoiceEvent.MicUnavailable(MicProblem.RecorderError)) }
         override fun onSilenced() { if (live()) dispatch(VoiceEvent.MicUnavailable(MicProblem.PrivacyToggle)) }
+        override fun onStartFailed() { if (live()) dispatch(VoiceEvent.CouldNotStart) }
     }
 
     fun open() {
         close()
-        store.prune()
+        safely { store.prune() }
         state = VoiceState.ChoosePerson
         onChange(state)
+        say(VoicePrompt.Intro, null)
     }
 
     fun dispatch(event: VoiceEvent) {
@@ -74,15 +83,21 @@ class VoicePracticeController(
         for (effect in t.effects) run(effect)
     }
 
-    /** Leaving the screen for any reason: stop recording (keeping the take) and playback. */
-    fun close() {
-        if (state is VoiceState.Recording) dispatch(VoiceEvent.Interrupted(Interruption.AppStopped))
+    /** Leaving the screen for any reason: stop recording (keeping the take), playback and speech. */
+    fun close(cause: Interruption = Interruption.AppStopped) {
+        if (state is VoiceState.Recording) dispatch(VoiceEvent.Interrupted(cause))
         stopPlayer()
+        safely { speaker.stop() }
     }
+
+    /** "Hear name" on a person's screen. */
+    fun sayName() { state.person?.let { say(VoicePrompt.Name, it) } }
+
+    private fun say(prompt: VoicePrompt, person: VoicePerson?) = safely { speaker.speak(prompt, person) }
 
     private fun run(effect: VoiceEffect) {
         when (effect) {
-            is VoiceEffect.SpeakName -> try { speaker.speakName(effect.person.name) } catch (_: Exception) { }
+            is VoiceEffect.Speak -> say(effect.prompt, effect.person)
             is VoiceEffect.StartRecording -> start(effect.personId)
             is VoiceEffect.FinishRecording -> dispatch(VoiceEvent.RecordingFinished(finish(effect)))
             is VoiceEffect.StartPlayback -> try {
@@ -97,14 +112,17 @@ class VoicePracticeController(
     }
 
     private fun start(personId: String) {
+        safely { speaker.stop() }
         val take = Take(clock()).also { recording = it }
         mic.problem()?.let { dispatch(VoiceEvent.MicUnavailable(it)); return }
+        val file = try { store.prepareTake(personId) } catch (_: Exception) {
+            dispatch(VoiceEvent.MicUnavailable(MicProblem.RecorderError)); return
+        }
         try {
-            val file = store.prepareTake(personId)
             recorder.start(file, format, maxMs, take)
             take.started = true
         } catch (_: Exception) {
-            dispatch(VoiceEvent.MicUnavailable(MicProblem.RecorderError))
+            dispatch(VoiceEvent.CouldNotStart)
         }
     }
 
@@ -124,8 +142,9 @@ class VoicePracticeController(
     private inline fun safely(block: () -> Unit) { try { block() } catch (_: Exception) { } }
 
     companion object {
-        const val DEFAULT_MAX_MS = 60_000L
-        /** Shorter takes are treated as a slip of the finger: nothing recorded. */
-        const val MIN_USABLE_MS = 500L
+        /** Longest practice message (Lead, PLA-457): 2 minutes. */
+        const val DEFAULT_MAX_MS = 120_000L
+        /** Shorter takes are dropped as a slip of the finger (UX V3 "Too short"). */
+        const val MIN_USABLE_MS = 1_000L
     }
 }

@@ -17,7 +17,10 @@ data class VoiceDraft(val personId: String, val savedAtMs: Long)
 
 enum class Interruption { Call, AudioFocusLost, AppStopped, ScreenOff }
 enum class MicProblem { PermissionRefused, PrivacyToggle, RecorderError }
-enum class VoiceNotice { MaxLength, Interrupted, NothingRecorded, Deleted, CouldNotPlay }
+enum class VoiceNotice { MaxLength, Interrupted, NothingRecorded, Deleted, CouldNotPlay, MicBusy, Unsent }
+
+/** What the phone says aloud (UX doc V1-V13, practice wording). The host maps each to a string. */
+enum class VoicePrompt { Intro, Name, Person, Review, Unsent, TooShort, MaxLength, Busy, Deleted, MicOff, MicNotAllowed }
 
 sealed interface VoiceState {
     val person: VoicePerson? get() = null
@@ -49,12 +52,14 @@ sealed interface VoiceEvent {
     data object MaxLengthReached : VoiceEvent
     data class Interrupted(val cause: Interruption) : VoiceEvent
     data class MicUnavailable(val problem: MicProblem) : VoiceEvent
+    /** The recorder refused to start (for example another app holds the microphone). */
+    data object CouldNotStart : VoiceEvent
     /** Result of [VoiceEffect.FinishRecording]: the kept draft, or null when nothing usable was saved. */
     data class RecordingFinished(val draft: VoiceDraft?) : VoiceEvent
 }
 
 sealed interface VoiceEffect {
-    data class SpeakName(val person: VoicePerson) : VoiceEffect
+    data class Speak(val prompt: VoicePrompt, val person: VoicePerson) : VoiceEffect
     data class StartRecording(val personId: String) : VoiceEffect
     /** Stop the recorder. [keep] false discards the take; an earlier draft is always kept. */
     data class FinishRecording(val personId: String, val keep: Boolean) : VoiceEffect
@@ -70,16 +75,16 @@ data class Transition(val state: VoiceState, val effects: List<VoiceEffect> = em
 object VoicePractice {
     fun reduce(s: VoiceState, e: VoiceEvent): Transition = when (s) {
         VoiceState.ChoosePerson -> when (e) {
-            is VoiceEvent.Choose -> Transition(
-                e.existing?.let { VoiceState.Review(e.person, it) } ?: VoiceState.Person(e.person),
-                listOf(VoiceEffect.SpeakName(e.person)))
+            is VoiceEvent.Choose -> e.existing?.let {
+                Transition(VoiceState.Review(e.person, it, notice = VoiceNotice.Unsent), speak(VoicePrompt.Unsent, e.person))
+            } ?: Transition(VoiceState.Person(e.person), speak(VoicePrompt.Person, e.person))
             VoiceEvent.Back -> Transition(s, listOf(VoiceEffect.Leave))
             else -> Transition(s)
         }
         is VoiceState.Person -> when (e) {
             VoiceEvent.Record -> record(s.person, null)
             VoiceEvent.Back -> Transition(VoiceState.ChoosePerson)
-            is VoiceEvent.MicUnavailable -> Transition(VoiceState.MicUnavailable(s.person, e.problem, null))
+            is VoiceEvent.MicUnavailable -> micUnavailable(s.person, e.problem, null)
             else -> Transition(s)
         }
         is VoiceState.Recording -> {
@@ -91,18 +96,28 @@ object VoicePractice {
                 is VoiceEvent.Interrupted -> finish(VoiceNotice.Interrupted)
                 is VoiceEvent.MicUnavailable -> Transition(VoiceState.Saving(s.person, s.previous, problem = e.problem),
                     listOf(VoiceEffect.FinishRecording(s.person.id, keep = false)))
+                VoiceEvent.CouldNotStart -> Transition(
+                    s.previous?.let { VoiceState.Review(s.person, it, notice = VoiceNotice.MicBusy) }
+                        ?: VoiceState.Person(s.person, VoiceNotice.MicBusy),
+                    listOf(VoiceEffect.FinishRecording(s.person.id, keep = false), VoiceEffect.Speak(VoicePrompt.Busy, s.person)))
                 else -> Transition(s)
             }
         }
         is VoiceState.Saving -> when (e) {
             is VoiceEvent.RecordingFinished -> {
                 val draft = e.draft ?: s.previous
-                Transition(when {
-                    s.problem != null -> VoiceState.MicUnavailable(s.person, s.problem, s.previous)
-                    draft == null -> VoiceState.Person(s.person, VoiceNotice.NothingRecorded)
-                    e.draft == null -> VoiceState.Review(s.person, draft, notice = VoiceNotice.NothingRecorded)
-                    else -> VoiceState.Review(s.person, draft, notice = s.notice)
-                })
+                val p = s.person
+                when {
+                    s.problem != null -> micUnavailable(p, s.problem, s.previous)
+                    draft == null -> Transition(VoiceState.Person(p, VoiceNotice.NothingRecorded), speak(VoicePrompt.TooShort, p))
+                    e.draft == null -> Transition(VoiceState.Review(p, draft, notice = VoiceNotice.NothingRecorded),
+                        speak(VoicePrompt.TooShort, p))
+                    // After an interruption the person may not be looking or listening: stay quiet (UX V11).
+                    s.notice == VoiceNotice.Interrupted -> Transition(VoiceState.Review(p, draft, notice = s.notice))
+                    s.notice == VoiceNotice.MaxLength -> Transition(VoiceState.Review(p, draft, notice = s.notice),
+                        speak(VoicePrompt.MaxLength, p))
+                    else -> Transition(VoiceState.Review(p, draft, notice = s.notice), speak(VoicePrompt.Review, p))
+                }
             }
             else -> Transition(s)
         }
@@ -117,9 +132,10 @@ object VoicePractice {
                 VoiceEvent.PlaybackFailed -> Transition(s.copy(playing = false, notice = VoiceNotice.CouldNotPlay))
                 VoiceEvent.RecordAgain, VoiceEvent.Record -> record(s.person, s.draft, stop)
                 VoiceEvent.Delete -> Transition(VoiceState.Person(s.person, VoiceNotice.Deleted),
-                    listOf(VoiceEffect.StopPlayback, VoiceEffect.DeleteDraft(s.person.id)))
+                    listOf(VoiceEffect.StopPlayback, VoiceEffect.DeleteDraft(s.person.id),
+                        VoiceEffect.Speak(VoicePrompt.Deleted, s.person)))
                 VoiceEvent.Back -> Transition(VoiceState.ChoosePerson, listOf(VoiceEffect.StopPlayback))
-                is VoiceEvent.MicUnavailable -> Transition(VoiceState.MicUnavailable(s.person, e.problem, s.draft), stop)
+                is VoiceEvent.MicUnavailable -> micUnavailable(s.person, e.problem, s.draft, stop)
                 else -> Transition(s)
             }
         }
@@ -129,6 +145,16 @@ object VoicePractice {
             else -> Transition(s)
         }
     }
+
+    private fun speak(prompt: VoicePrompt, person: VoicePerson) = listOf(VoiceEffect.Speak(prompt, person))
+
+    private fun micUnavailable(person: VoicePerson, problem: MicProblem, previous: VoiceDraft?,
+        before: List<VoiceEffect> = emptyList()) = Transition(VoiceState.MicUnavailable(person, problem, previous),
+        before + VoiceEffect.Speak(when (problem) {
+            MicProblem.PermissionRefused -> VoicePrompt.MicNotAllowed
+            MicProblem.PrivacyToggle -> VoicePrompt.MicOff
+            MicProblem.RecorderError -> VoicePrompt.Busy
+        }, person))
 
     private fun record(person: VoicePerson, previous: VoiceDraft?, before: List<VoiceEffect> = emptyList()) =
         Transition(VoiceState.Recording(person, previous), before + VoiceEffect.StartRecording(person.id))

@@ -6,32 +6,36 @@ import java.io.File
 import java.io.IOException
 
 /**
- * Codec and container. Slice 1 records AMR-NB in a raw `.amr` file (audio/amr), the classic MMS
- * voice format; the transport spike may change it. The host maps this to MediaRecorder settings.
+ * Codec and container; the host maps this to MediaRecorder settings. Default (Lead, PLA-457):
+ * AAC-LC mono in an MPEG-4 `.m4a` file, which plays on most phones. AMR-NB in a raw `.amr` file
+ * (the classic MMS voice format) stays as the fallback. [header] is the magic at [magicOffset].
  */
-enum class VoiceFormat(val extension: String, val mimeType: String, val channels: Int, val header: ByteArray) {
-    AmrNb("amr", "audio/amr", 1, "#!AMR\n".toByteArray(Charsets.US_ASCII));
+enum class VoiceFormat(val extension: String, val mimeType: String, val channels: Int,
+    val header: ByteArray, val magicOffset: Int) {
+    AacM4a("m4a", "audio/mp4", 1, "ftyp".toByteArray(Charsets.US_ASCII), 4),
+    AmrNb("amr", "audio/amr", 1, "#!AMR\n".toByteArray(Charsets.US_ASCII), 0);
 
-    /** True when [file] starts with this format's magic and holds at least one byte of audio after it. */
+    /** True when [file] has this format's magic and holds at least one byte of audio after it. */
     fun looksRecorded(file: File): Boolean = try {
-        file.length() > header.size && file.inputStream().use { input ->
-            val start = ByteArray(header.size)
-            input.read(start) == header.size && start.contentEquals(header)
+        val end = magicOffset + header.size
+        file.length() > end + (if (this == AacM4a) 4 else 0) && file.inputStream().use { input ->
+            val start = ByteArray(end)
+            input.read(start) == end && start.copyOfRange(magicOffset, end).contentEquals(header)
         }
     } catch (_: IOException) { false }
 }
 
 /**
- * One practice draft per person, as `<personId>.amr` in [dir]. The host passes an app-private,
+ * One practice draft per person, as `<personId>.<extension>` in [dir]. The host passes an app-private,
  * credential-encrypted, no-backup directory (Context.noBackupFilesDir), so drafts are unreadable
  * before the first unlock and never leave the phone in a backup.
  *
  * Retention: a draft is kept until it is deleted (or, in a later slice, sent), and is pruned
- * [RETENTION_MS] (7 days) after it was saved. A new take is written to `<personId>.take.amr` and
- * replaces the draft only once it is complete, so an interrupted take never destroys the old draft.
+ * [RETENTION_MS] (7 days) after it was saved. A new take is written to `<personId>.take.<extension>` and
+ * replaces the draft only once it is complete (stopped, at least 1 s, valid header), so an interrupted take never destroys the old draft.
  */
 open class VoiceDraftStore(val dir: File, private val format: VoiceFormat, private val clock: () -> Long) {
-    constructor(dir: File, clock: () -> Long) : this(dir, VoiceFormat.AmrNb, clock)
+    constructor(dir: File, clock: () -> Long) : this(dir, VoiceFormat.AacM4a, clock)
 
     fun file(personId: String): File = File(dir, "${checked(personId)}.${format.extension}")
     fun takeFile(personId: String): File = File(dir, "${checked(personId)}.take.${format.extension}")
