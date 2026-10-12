@@ -41,6 +41,18 @@ class TestBuildNavigatorTest {
         assertEquals(Step(state, ShellEffect.OpenTrustedPerson), nav.onMore(state, MoreEvent.OpenTrustedPerson))
     }
 
+    @Test fun basicSettingsHaveTheirOwnRoutesAndReturnToSettings() {
+        val start = at(ShellRoute.More, ShellRoute.PhoneSettings)
+        for ((event, route) in listOf(
+            org.plainphone.ui.user.PhoneSettingsEvent.OpenBrightness to ShellRoute.Brightness,
+            org.plainphone.ui.user.PhoneSettingsEvent.OpenBattery to ShellRoute.Battery)) {
+            val step = nav.onSettings(start, event)
+            assertEquals(start.stack + route, step.state.stack)
+            assertNull(step.effect)
+            assertEquals(start, nav.back(step.state).state)
+        }
+    }
+
     @Test fun phoneSettingsOpensWithoutPinAndBackReturnsToMore() {
         val step = nav.onMore(at(ShellRoute.More), MoreEvent.OpenPhoneSettings)
         assertEquals(at(ShellRoute.More, ShellRoute.PhoneSettings), step.state)
