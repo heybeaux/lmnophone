@@ -30,16 +30,20 @@ import org.plainphone.ui.theme.PlainphoneType
  * [attention] it says LMNOPhone needs attention instead of "This takes a moment" ([checkingShowsAttention]).
  */
 @Composable
-fun CheckingScreen(onPhone: () -> Unit, onEmergency: () -> Unit, attention: Boolean = false) {
+fun CheckingScreen(onPhone: () -> Unit, onEmergency: () -> Unit, attention: Boolean = false, details: List<String> = emptyList()) {
     Column(
         Modifier.fillMaxSize().background(PlainphoneColors.Paper).safeDrawingPadding().padding(PlainphoneSpace.S6),
         verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4),
     ) {
         BasicText(stringResource(R.string.checking_title, stringResource(R.string.app_name)), style = PlainphoneType.Title)
-        BasicText(
-            stringResource(if (attention) R.string.checking_attention else R.string.checking_body, stringResource(R.string.app_name)),
-            style = PlainphoneType.Body, modifier = Modifier.weight(1f),
-        )
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4)) {
+            BasicText(
+                stringResource(if (attention) R.string.checking_attention else R.string.checking_body, stringResource(R.string.app_name)),
+                style = PlainphoneType.Body,
+            )
+            // Fallback containment's disclosure (PLA-344), only with the attention text.
+            if (attention) for (line in details) BasicText(line, style = PlainphoneType.Body)
+        }
         Action(stringResource(R.string.checking_phone), onPhone)
         Action(stringResource(R.string.checking_emergency), onEmergency)
     }

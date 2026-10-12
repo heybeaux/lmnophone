@@ -1,0 +1,3 @@
+      topResumedActivity=ActivityRecord{4ac3f96 u0 org.plainphone/.MainActivity t42}
+    mLockTaskModeState=LOCKED
+            LockTaskPolicy {mPackages= com.google.android.dialer, com.android.server.telecom, com.google.android.apps.safetyhub, org.plainphone, com.google.android.apps.messaging, com.android.phone, com.google.android.cellbroadcastreceiver; mFlags= 119 }

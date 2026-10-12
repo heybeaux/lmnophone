@@ -1,0 +1,7 @@
+resource-id="android:id/content"
+text="LMNOPhone is checking the phone"
+text="LMNOPhone needs attention. You can still make calls."
+text="Until this is fixed, Settings and the app-permissions screen can still be opened."
+text="These can also still be opened: Dynamic System Updates, Emulator Multi Display Provider, Fused Location, Input Devices, Key Chain, Package installer, Settings Storage, Webcam Service, com.android.localtransport."
+text="Phone"
+text="Emergency call"

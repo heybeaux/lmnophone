@@ -36,6 +36,16 @@ data class BootOutcome(
     val planNeedsAttention: Boolean = false,
     /** The saved flip-failure record could not be read ([FlipFailures.unknown]). */
     val flipRecordUnknown: Boolean = false,
+    /**
+     * What fallback containment never suspends: the lock-task UI list, the never-hide dependencies and
+     * the emergency floor of this pass's plan (the OS-only floor without one), plus Home.
+     */
+    val keep: Set<PackageName> = emptySet(),
+    /**
+     * The floor behind [keep] was read from every OS source this pass (PLA-399 finding 1). When false,
+     * [keep] may miss an emergency package, so fallback containment must not suspend from it.
+     */
+    val keepComplete: Boolean = false,
 ) {
     /** Show "Plainphone needs attention" (Home still draws when [ready]). */
     val needsAttention: Boolean get() =
@@ -87,9 +97,16 @@ class BootReapply(
     /** Whether a turn-off is committing. A throw counts as yes: the fallback then repairs only the floor. */
     private val turnOffCommitting: () -> Boolean = { false },
     private val flipFailures: FlipFailureStore = InMemoryFlipFailureStore(),
+    /**
+     * Whether the floor source this pass used (the plan's facts, else [floor]) read every role; read after
+     * both. A throw or the default counts as no.
+     */
+    private val floorComplete: () -> Boolean = { false },
 ) {
     private val applier = ReadbackPolicyApplier(port, onFailure)
     private var plan: PolicyPlan? = null
+    /** [floor] returned a floor in this pass's [fallbackPlan]. */
+    private var fallbackFloorRead = false
     private var applied: ApplyResult? = null
     private val runFlipFailures = mutableSetOf<PackageName>()
     private val runFlipped = mutableSetOf<PackageName>()
@@ -104,6 +121,7 @@ class BootReapply(
         applied = null
         runFlipFailures.clear()
         runFlipped.clear()
+        fallbackFloorRead = false
         plan = attempt { filter.apply(decide(locked)) }
         val ready = attempt { sessions.onStart() } == true
         // Emergency repair does not depend on the revoke, on an earlier stage or on a plan. The journal
@@ -119,6 +137,8 @@ class BootReapply(
         return BootOutcome(
             ready, locked, applied?.copy(flipFailures = failures.names), filter.withheld, disabledFloor,
             plan?.needsAttention ?: true, failures.unknown,
+            repairPlan.lockTaskPackages + repairPlan.neverHide + repairPlan.emergencyUi + listOfNotNull(home),
+            (plan != null || fallbackFloorRead) && attempt { floorComplete() } == true,
         )
     }
 
@@ -161,6 +181,7 @@ class BootReapply(
     /** Restrictions, floor and guard without the policy engine: fixed sets and OS-sourced floor only. */
     private fun fallbackPlan(): PolicyPlan {
         val emergency = attempt { floor() }
+        fallbackFloorRead = emergency != null
         val emergencyUi = emergency?.emergencyUi.orEmpty()
         val neverHide = emergency?.neverHide.orEmpty() + emergencyUi
         val lockdown = attempt { !turnOffCommitting() } == true

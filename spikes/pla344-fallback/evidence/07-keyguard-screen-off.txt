@@ -1,0 +1,3 @@
+  mWakefulness=Asleep
+  mCurrentFocus=Window{5244311 u0 NotificationShade}
+    isKeyguardShowing=true
