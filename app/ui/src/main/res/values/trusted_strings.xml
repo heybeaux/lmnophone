@@ -140,7 +140,7 @@
     <string name="wait_cancelled_text">%1$s will get a text about it.</string>
     <string name="wait_progress">Already in progress</string>
     <string name="wait_progress_body">This change is being made now. It can\'t be cancelled at this point.</string>
-    <string name="wait_off_progress">Plainphone is turning off now. It can\'t be cancelled at this point. Calls, texts and Emergency keep working.</string>
+    <string name="wait_off_progress">LMNOPhone is turning off now. It can\'t be cancelled at this point. Calls, texts and Emergency keep working.</string>
     <string name="wait_started">Waiting 24 hours</string>
     <string name="wait_started_body">%1$s: this happens after about %2$s, if the phone stays on.</string>
     <string name="wait_started_text">%1$s will get a text now.</string>

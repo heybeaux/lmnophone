@@ -144,6 +144,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val noticeState = MutableStateFlow<HomeNotice?>(null)
     private val noticeTapState = MutableStateFlow<NoticeTap?>(null)
     private val waitingNoticeState = MutableStateFlow<WaitingNotice?>(null)
+    private val waitingReadState = MutableStateFlow<WaitingRead?>(null)
     private val packageEventQueued = AtomicBoolean(false)
     private val runsState = MutableStateFlow(0)
     private val home = PackageName(context.packageName)
@@ -171,6 +172,8 @@ class PolicyRuntime private constructor(private val context: Context) {
     val noticeTap: StateFlow<NoticeTap?> = noticeTapState
     /** The current waiting operation as the last unlocked re-apply read it; null with none. */
     val waitingNotice: StateFlow<WaitingNotice?> = waitingNoticeState
+    /** The same read with the time it was made: screens time the change from it, as Home's line does. */
+    val waitingRead: StateFlow<WaitingRead?> = waitingReadState
     /** Counts finished re-apply runs, locked ones included: Home retries lock-task entry after each. */
     val runs: StateFlow<Int> = runsState
 
@@ -321,9 +324,11 @@ class PolicyRuntime private constructor(private val context: Context) {
                 null
             } ?: Mode.TRUSTED
             val line = NoticeLine.decide(NoticeInput(mode, attention, wait)).line
+            val readAt = ZonedDateTime.now()
+            waitingReadState.value = WaitingRead(wait, readAt)
             waitingNoticeState.value = wait
             noticeTapState.value = line?.tap
-            noticeState.value = homeLine(line, ZonedDateTime.now(), DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
+            noticeState.value = homeLine(line, readAt, DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
             lastGate = if (outcome?.ready == true && !pinned) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
             when (action) {
