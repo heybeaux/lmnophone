@@ -79,8 +79,10 @@ class ModeSwitchReconciliationTest {
         assertNull(waiting.operation)
         assertEquals(mode, waiting.recoveryReceipts.single().mode)
         // A stale executor callback finds nothing to finish, and nothing is reapplied.
+        val calls = rig.effects.calls.toList()
         assertEquals(PeopleChangeOutcome.IGNORED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
         assertEquals(PeopleChangeOutcome.IGNORED, rig.people.tick(id, WaitingPhase.ROLLING_BACK).outcome)
+        assertEquals(calls, rig.effects.calls) // no effect ran (PLA-436 note)
         assertArrayEquals(expected, bytes(rig.credentials()))
         if (mode == Mode.SELF_MANAGED) {
             val released = rig.elevations(); assertEquals(ElevationOutcome.IDLE, released.onStart())
