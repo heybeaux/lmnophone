@@ -50,3 +50,24 @@ class FallbackStepTest {
         assertEquals(FallbackStep.NONE, fallbackStep(userLocked = false, LockTaskState.NONE, mayEnterLockTask = true))
     }
 }
+
+/** PLA-399 finding 1: no suspension from an unknown keep set. */
+class ContainmentKeepTest {
+    private val home = PackageName("org.plainphone")
+    private val dialer = PackageName("com.android.dialer")
+    private fun outcome(keep: Set<PackageName>, complete: Boolean) =
+        org.plainphone.device.boot.BootOutcome(false, false, null, emptySet(), keep = keep, keepComplete = complete)
+
+    @Test fun aCompleteKeepSetWithHomeAddsThePlatformKeep() {
+        assertEquals(setOf(home, dialer) + PLATFORM_KEEP, containmentKeep(outcome(setOf(home, dialer), true), home))
+    }
+
+    @Test fun anUnknownFloorGivesNoKeepSet() {
+        assertNull(containmentKeep(outcome(setOf(home, dialer), false), home))
+    }
+
+    @Test fun noOutcomeOrNoHomeGivesNoKeepSet() {
+        assertNull(containmentKeep(null, home))
+        assertNull(containmentKeep(outcome(setOf(dialer), true), home))
+    }
+}
