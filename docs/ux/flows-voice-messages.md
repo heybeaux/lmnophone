@@ -398,7 +398,8 @@ The first build can't send yet. It must not look like it sends.
 "Phone software changed – review pending"). On V3 the band reads **● Recording – practice**.
 
 **V4 in practice:** no Send button. The black button is **▶ Listen**; the outline buttons are **● Record again** and
-**✕ Delete**. V5–V8 are never shown.
+**✕ Delete**. V5–V8 are never shown. Spoken on V4 in practice: **"Listen, or record again."** (V9 in practice:
+**"Your message to Sam isn't sent yet. Listen, or delete."**)
 
 **Spoken, once, when V1 opens:** **"This is practice. Messages are not sent."** (before "Who do you want to talk to?").
 
@@ -508,6 +509,7 @@ Placeholders: `{person}` (family person's shown name), `{person_spoken}` (spoken
 | V10b | Voice messages need {tp} · Ask {tp} to set up voice messages again. Calls and texts still work. | Voice messages need {tp}. Ask {tp} for help. |
 | V12a | ▶ Listen to {person} · ■ Stop listening · ▶ Play again | {person}'s message. / {person}'s next message. / Tap Play again to hear it again, or Record to talk to {person}. |
 | V13 band | Practice – not sent · ● Recording – practice | This is practice. Messages are not sent. |
+| V13 review | (V4 without Send; black button ▶ Listen) | Listen, or record again. / Your message to {person} isn't sent yet. Listen, or delete. |
 | U8 | Voice messages · Voice messages go only to the family people {tp} added. A message you don't send is kept on this phone for 7 days, then erased. No one else can hear it. | – |
 
 The symbols (●, ■, ▶, ➤, ✕) in this table stand for the drawn symbols; they are **not** characters in the string.
