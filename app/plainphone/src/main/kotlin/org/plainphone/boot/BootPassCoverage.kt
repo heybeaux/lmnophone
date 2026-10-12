@@ -11,16 +11,16 @@ internal class BootPassCoverage {
     private var last: Pass? = null
     private var nextId = 0L
 
-    private var generation = 0L
+    fun invalidate() { last = null }
 
-    fun invalidate() { last = null; generation++ }
-
-    /** Queue only after publication. Any intervening run/invalidation cancels this capture. */
+    /**
+     * Queue only after publication. A covered skip can retain the same pass after fresh checks;
+     * a full pass, failed re-check or explicit invalidation discards this capture.
+     */
     fun captureAfterPublished(post: (() -> Unit) -> Unit, capture: () -> Unit) {
         val pass = last ?: return
-        val expectedGeneration = generation
         post {
-            if (generation == expectedGeneration && last === pass) capture()
+            if (last === pass) capture()
         }
     }
 
