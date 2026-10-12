@@ -1,0 +1,12 @@
+{
+  "byteIdenticalAcrossUpgrade": true,
+  "byteIdenticalAfterRebootAndPinEntryRoute": true,
+  "filesCompared": [
+    "authority-a.rec",
+    "authority-b.rec",
+    "fence-a.rec",
+    "fence-b.rec"
+  ],
+  "method": "SHA-256 of entire records, raw contents never exported",
+  "correctOldPinReentered": false
+}

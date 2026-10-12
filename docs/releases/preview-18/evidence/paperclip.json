@@ -1,0 +1,183 @@
+{
+  "releaseCase": {
+    "id": "625ff562-4f3b-4aaf-8beb-dcbabc2fefaa",
+    "identifier": "PLA-C70"
+  },
+  "qaCase": {
+    "id": "5bbf2ce4-e6c6-439e-a064-604b74744bad",
+    "identifier": "PLA-C71"
+  },
+  "reportAttachmentId": "2039ed31-67aa-4648-a18f-d6759cf0fd2c",
+  "apkAttachmentId": "6fac006c-1215-4ab2-a12c-c9ab1c6751e9",
+  "caseAttachments": [
+    {
+      "file": "about-1.0-emergency.png",
+      "id": "757b564d-db8f-49d2-a595-baa037fdeb0f"
+    },
+    {
+      "file": "about-1.0-scroll-2.png",
+      "id": "3bd2206a-26e9-4f59-ac7d-60e7ce9c31c2"
+    },
+    {
+      "file": "about-1.0-top.png",
+      "id": "c0b73e3b-4e5c-41bc-a170-2f1aad341ff8"
+    },
+    {
+      "file": "about-1.3-emergency.png",
+      "id": "bc8a181b-24c8-41b3-bd03-ceb7e54e2b35"
+    },
+    {
+      "file": "about-1.3-scroll-2.png",
+      "id": "8ec95677-e48b-4f30-b2db-8872cf31ef68"
+    },
+    {
+      "file": "about-1.3-top.png",
+      "id": "dbc82d57-2f96-453f-b82b-42dc8e04617a"
+    },
+    {
+      "file": "about-1.5-emergency.png",
+      "id": "b8773306-bd50-4b4b-985f-3a76c1619078"
+    },
+    {
+      "file": "about-1.5-scroll-2.png",
+      "id": "020fb7ca-b735-4229-9cc1-bb17c185e0e9"
+    },
+    {
+      "file": "about-1.5-top.png",
+      "id": "55fe038b-f946-4f28-93a3-389e4f5e4507"
+    },
+    {
+      "file": "about-1.8-emergency.png",
+      "id": "83d5c2c2-ab69-467d-a913-05996460a1b3"
+    },
+    {
+      "file": "about-1.8-scroll-2.png",
+      "id": "06055b47-c19f-4313-bda7-35c59e418221"
+    },
+    {
+      "file": "about-1.8-top.png",
+      "id": "9a4bf14b-89a1-46c6-b1ad-c5e2adf13f66"
+    },
+    {
+      "file": "about-2.0-emergency.png",
+      "id": "5bcee6c3-ead3-422c-9e44-d40ab769271b"
+    },
+    {
+      "file": "about-2.0-scroll-2.png",
+      "id": "545e52d4-c054-486d-b85f-3033dc2698d0"
+    },
+    {
+      "file": "about-2.0-scroll-5.png",
+      "id": "a865e152-05c1-4957-94cd-87af4afcb398"
+    },
+    {
+      "file": "about-2.0-top.png",
+      "id": "df18b03d-aba4-404d-a19e-c8cda49e6fb8"
+    },
+    {
+      "file": "home-final.png",
+      "id": "9dd3a54f-f017-4a9f-97c6-4ef46152b72f"
+    },
+    {
+      "file": "more-emergency-911.png",
+      "id": "e3fdab7a-b1a9-44b5-b93c-1cd8ac10ce65"
+    },
+    {
+      "file": "phone-911.png",
+      "id": "52e05ac0-2c80-4354-b87e-bc2e984b0b69"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_longTrustedNames[fontScale=1.3].png",
+      "id": "416abac4-98fb-4f00-b098-51dc1092751a"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_longTrustedNames[fontScale=1.5].png",
+      "id": "6dcaa9da-1837-45d5-9e4e-a81252a2808d"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_longTrustedNames[fontScale=1.8].png",
+      "id": "927677fa-a3f3-4e38-b914-beee024ffe5d"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_longTrustedNames[fontScale=1].png",
+      "id": "08bd9666-fd7b-405a-aaac-1499f46bddbe"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_longTrustedNames[fontScale=2].png",
+      "id": "d8580477-90c5-403b-8dd1-418992bfb607"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_oneTrustedPerson[fontScale=1.3].png",
+      "id": "c7a2f3e2-b560-4cf4-a508-48569133e16a"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_oneTrustedPerson[fontScale=1.5].png",
+      "id": "a05afb00-af80-46d1-ad61-a6eccea93b6e"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_oneTrustedPerson[fontScale=1.8].png",
+      "id": "fe7fd919-1c93-446e-b322-39b93f16e5a0"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_oneTrustedPerson[fontScale=1].png",
+      "id": "1dcafef3-ad09-465e-82c1-3685c5dd2dc3"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_oneTrustedPerson[fontScale=2].png",
+      "id": "465e3c76-0706-4b93-9514-8919a2a01db8"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_twoTrustedPeople[fontScale=1.3].png",
+      "id": "c446818f-affb-4f4b-ab84-61610ecb6077"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_twoTrustedPeople[fontScale=1.5].png",
+      "id": "910fbdbd-b121-4557-aa23-6a7eee8a74ea"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_twoTrustedPeople[fontScale=1.8].png",
+      "id": "73b19775-3d16-478d-8570-d386216b22eb"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_twoTrustedPeople[fontScale=1].png",
+      "id": "486f89da-2fac-4ebe-8f2b-aff7dc7de668"
+    },
+    {
+      "file": "org.plainphone.ui_AboutScreenScreenshotTest_twoTrustedPeople[fontScale=2].png",
+      "id": "3f26ea48-843b-40d0-acbe-cf2c2eecb0a2"
+    },
+    {
+      "file": "gate.log",
+      "id": "c96ccf6d-2034-4224-8beb-14553a616773"
+    },
+    {
+      "file": "about-route.json",
+      "id": "ac9118d1-a465-431a-a9d6-d46a890d76dd"
+    },
+    {
+      "file": "pin-entry.json",
+      "id": "57e743e4-6a40-4c4a-9113-020c357ec1ab"
+    },
+    {
+      "file": "install.json",
+      "id": "60c05527-c57d-4f88-bc09-897513024d3c"
+    },
+    {
+      "file": "authority-preservation.json",
+      "id": "7de30aec-98e6-4e2b-bb4d-f6de563d12c8"
+    },
+    {
+      "file": "final-safety.json",
+      "id": "5cc2c8ef-0504-46f1-8790-b01a93bd6715"
+    },
+    {
+      "file": "build-checks.txt",
+      "id": "444e9d77-2646-4c8c-b971-cfd0304ad0d9"
+    },
+    {
+      "file": "ui-verify.txt",
+      "id": "3aafa2bc-6856-45cf-a36a-375244bcc30c"
+    }
+  ],
+  "remoteApkHashVerified": true
+}

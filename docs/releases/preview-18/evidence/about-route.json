@@ -1,0 +1,60 @@
+{
+  "timeUtc": "2026-10-12T05:16:51.691724+00:00",
+  "runs": [
+    {
+      "fontScale": 1.0,
+      "sizeDp": [
+        360,
+        640
+      ],
+      "copySectionsReachable": true,
+      "emergencySectionReachable": true,
+      "okReturnsToMore": true,
+      "backReturnsToMore": true
+    },
+    {
+      "fontScale": 1.3,
+      "sizeDp": [
+        360,
+        640
+      ],
+      "copySectionsReachable": true,
+      "emergencySectionReachable": true,
+      "okReturnsToMore": true,
+      "backReturnsToMore": true
+    },
+    {
+      "fontScale": 1.5,
+      "sizeDp": [
+        360,
+        640
+      ],
+      "copySectionsReachable": true,
+      "emergencySectionReachable": true,
+      "okReturnsToMore": true,
+      "backReturnsToMore": true
+    },
+    {
+      "fontScale": 1.8,
+      "sizeDp": [
+        360,
+        640
+      ],
+      "copySectionsReachable": true,
+      "emergencySectionReachable": true,
+      "okReturnsToMore": true,
+      "backReturnsToMore": true
+    },
+    {
+      "fontScale": 2.0,
+      "sizeDp": [
+        360,
+        640
+      ],
+      "copySectionsReachable": true,
+      "emergencySectionReachable": true,
+      "okReturnsToMore": true,
+      "backReturnsToMore": true
+    }
+  ]
+}

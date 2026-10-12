@@ -1,0 +1,58 @@
+> Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ui:preBuild UP-TO-DATE
+> Task :ui:preDebugBuild UP-TO-DATE
+> Task :ui:generateDebugResValues UP-TO-DATE
+> Task :ui:generateDebugResources UP-TO-DATE
+> Task :ui:packageDebugResources UP-TO-DATE
+> Task :ui:parseDebugLocalResources UP-TO-DATE
+> Task :ui:generateDebugRFile UP-TO-DATE
+> Task :ui:compileDebugKotlin UP-TO-DATE
+> Task :ui:javaPreCompileDebug UP-TO-DATE
+> Task :ui:compileDebugJavaWithJavac NO-SOURCE
+> Task :ui:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :ui:generateDebugUnitTestAssets UP-TO-DATE
+> Task :ui:mergeDebugShaders
+> Task :ui:compileDebugShaders NO-SOURCE
+> Task :ui:generateDebugAssets UP-TO-DATE
+> Task :ui:mergeDebugAssets
+> Task :ui:preDebugUnitTestBuild UP-TO-DATE
+> Task :ui:mergeDebugUnitTestAssets
+> Task :ui:writeDebugAarMetadata UP-TO-DATE
+> Task :ui:compileDebugLibraryResources UP-TO-DATE
+> Task :ui:generateDebugUnitTestResValues
+> Task :ui:mapDebugUnitTestSourceSetPaths
+> Task :ui:checkDebugUnitTestAarMetadata
+> Task :ui:generateDebugUnitTestResources
+> Task :ui:extractDeepLinksDebug UP-TO-DATE
+> Task :ui:processDebugManifest UP-TO-DATE
+> Task :ui:processDebugUnitTestManifest
+> Task :ui:mergeDebugUnitTestResources
+> Task :ui:preparePaparazziDebugResources
+> Task :ui:processDebugJavaRes UP-TO-DATE
+> Task :ui:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :ui:javaPreCompileDebugUnitTest
+> Task :ui:processDebugUnitTestResources
+> Task :ui:packageDebugUnitTestForUnitTest
+> Task :ui:generateDebugUnitTestConfig
+
+> Task :ui:compileDebugUnitTestKotlin FAILED
+e: file://<worktree>/app/ui/src/test/kotlin/org/plainphone/ui/AboutScreenScreenshotTest.kt:13:31 Unresolved reference 'AboutScreen'.
+e: file://<worktree>/app/ui/src/test/kotlin/org/plainphone/ui/AboutScreenScreenshotTest.kt:14:31 Unresolved reference 'AboutUiState'.
+e: file://<worktree>/app/ui/src/test/kotlin/org/plainphone/ui/AboutScreenScreenshotTest.kt:30:29 Unresolved reference 'AboutScreen'.
+e: file://<worktree>/app/ui/src/test/kotlin/org/plainphone/ui/AboutScreenScreenshotTest.kt:30:41 Unresolved reference 'AboutUiState'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':ui:compileDebugUnitTestKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2s
+29 actionable tasks: 15 executed, 14 up-to-date

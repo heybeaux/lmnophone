@@ -1,0 +1,8 @@
+{
+  "installedUtc": "2026-10-12T05:12:14.602021+00:00",
+  "apkSha256": "2dcf99555ac91dce374699333cb578269cc9581c31aa7212f93d672b18d6deaf",
+  "readback": "versionCode=18 minSdk=30 targetSdk=36\nversionName=0.1.0-preview-18\nlastUpdateTime=2026-10-11 22:12:13\nfirstInstallTime=2026-10-11 14:05:10",
+  "inPlace": true,
+  "target": "pla363-policy-a35",
+  "physicalDevice": false
+}

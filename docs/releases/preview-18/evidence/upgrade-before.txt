@@ -1,0 +1,4 @@
+versionCode=17 minSdk=30 targetSdk=36
+versionName=0.1.0-preview-17
+lastUpdateTime=2026-10-11 21:33:53
+firstInstallTime=2026-10-11 14:05:10
