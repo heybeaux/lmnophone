@@ -20,6 +20,16 @@ class BrightnessControllerTest {
             if (!ignore) value = next
         }
     }
+    @Test fun refreshPicksUpOutsideManualChangeWithoutWrite() {
+        val p = Port(); val c = BrightnessController(p)
+        p.value = BrightnessReading(204, false); c.refresh()
+        assertEquals(80, c.state.percent); assertTrue(p.writes.isEmpty())
+    }
+    @Test fun adjustmentStartsFromCurrentOutsideValue() {
+        val p = Port(); val c = BrightnessController(p)
+        p.value = BrightnessReading(204, false); c.adjust(-10)
+        assertEquals(70, c.state.percent)
+    }
     @Test fun mappingRoundsAndClampsToVisibleRange() {
         assertEquals(26, BrightnessController.raw(0))
         assertEquals(26, BrightnessController.raw(10))

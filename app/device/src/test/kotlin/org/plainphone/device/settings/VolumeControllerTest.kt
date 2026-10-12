@@ -6,6 +6,7 @@ import org.junit.Test
 class VolumeControllerTest {
     private class Port : VolumePort {
         var value = VolumeReading(4, 0, 7)
+        val writes = mutableListOf<Int>()
         var throws = false
         var ignores = false
         var unreadable = false
@@ -17,11 +18,49 @@ class VolumeControllerTest {
             check(!unreadable); return value
         }
         override fun write(level: Int) {
+            writes += level
             if (throws) throw SecurityException()
             if (partial) { value = value.copy(level = level); partial = false; throw SecurityException() }
             if (!ignores) value = value.copy(level = level)
             if (failReadAfterWrite) { nextReadFails = true; failReadAfterWrite = false }
         }
+    }
+    @Test fun failuresAreIndependentAndResetOnOpen() {
+        val ring = Port(); val media = Port()
+        val r = VolumeController(ring, 1); val m = VolumeController(media, 0)
+        ring.ignores = true; r.setLevel(6)
+        m.setLevel(5)
+        assertTrue(r.state.failed); assertFalse(m.state.failed)
+        media.ignores = true; m.setLevel(6)
+        ring.ignores = false; r.setLevel(5)
+        assertFalse(r.state.failed); assertTrue(m.state.failed)
+        ring.ignores = true; r.setLevel(6)
+        r.onOpen(); m.onOpen()
+        assertFalse(r.state.failed); assertFalse(m.state.failed)
+    }
+    @Test fun refreshReadsOutsideChangesWithoutWritingOrLosingFailure() {
+        val p = Port(); val c = VolumeController(p, 1)
+        p.ignores = true; c.setLevel(6)
+        p.writes.clear(); p.value = p.value.copy(level = 2)
+        c.refresh()
+        assertEquals(2, c.state.reading?.level); assertTrue(c.state.failed)
+        assertTrue(p.writes.isEmpty())
+    }
+    @Test fun silentOrVibratePreventsEvenStaleControlWritesButMediaStillWorks() {
+        val p = Port(); val c = VolumeController(p, 1)
+        p.value = p.value.copy(adjustable = false)
+        c.adjust(1); c.setLevel(6)
+        assertFalse(c.state.reading!!.adjustable)
+        assertFalse(c.state.failed); assertTrue(p.writes.isEmpty())
+        val media = Port(); VolumeController(media, 0).adjust(1)
+        assertEquals(listOf(5), media.writes)
+        p.value = p.value.copy(adjustable = true); c.refresh()
+        assertTrue(c.state.reading!!.adjustable)
+    }
+    @Test fun openDoesNotHideAReadFailure() {
+        val p = Port(); val c = VolumeController(p, 1)
+        p.unreadable = true; c.onOpen()
+        assertNull(c.state.reading); assertTrue(c.state.failed)
     }
     @Test fun ringFloorAndMaximum() {
         val p = Port(); val c = VolumeController(p, 1)
