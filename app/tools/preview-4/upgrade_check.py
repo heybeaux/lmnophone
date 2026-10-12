@@ -89,7 +89,9 @@ def tap_bounds(xml, pattern):
 
 
 def check_target(serial, env):
-    if serial == 'ZY22KW6P9J':
+    # The approved spare's serial is not kept in the repo; only the sole driver sets it.
+    spare = env.get('PLAINPHONE_SPARE_SERIAL', '')
+    if spare and serial == spare and not serial.startswith('emulator-'):
         require(env.get('PLAINPHONE_SPARE_DRIVER') == '1', 'spare requires sole-driver opt-in')
         require('EXPECT_DIAL' not in env, 'negative control is emulator-only')
     else:

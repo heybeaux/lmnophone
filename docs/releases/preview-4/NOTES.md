@@ -77,7 +77,7 @@ data kept), and both 9-1-1 routes asserted exactly `911` with zero calls. Call w
 See [install read-back](evidence/spare/install-readback.txt) and
 [gate log](evidence/spare/upgrade-check.txt).
 
-All D8(a) checks pass ([results](evidence/spare/d8a-results.md)):
+D8(a) checks passed; the locked-storage (before-unlock) part was not exercised on this device; covered on the emulator (PLA-294/PLA-300 evidence) ([results](evidence/spare/d8a-results.md)):
 
 - **Apps:** Phone (DIALER role) is Google Phone 241.0.991235506. Messages (SMS role) is Google
   Messages messages.android_20261002_00_RC00.phone_dynamic.

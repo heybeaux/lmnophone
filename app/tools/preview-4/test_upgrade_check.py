@@ -43,10 +43,17 @@ class GateTest(unittest.TestCase):
 
     def test_serial_and_negative_control_guards(self):
         gate.check_target('emulator-5860', {})
-        for serial in ['emulator-5590', 'emulator-5604', 'emulator-5742', 'unknown', 'ZY22KW6P9J']:
+        fake = 'ZZ00FAKE0000'
+        spare = {'PLAINPHONE_SPARE_SERIAL':fake, 'PLAINPHONE_SPARE_DRIVER':'1'}
+        for serial in ['emulator-5590', 'emulator-5604', 'emulator-5742', 'unknown', fake]:
             with self.assertRaises(gate.GateFailure): gate.check_target(serial, {})
-        gate.check_target('ZY22KW6P9J', {'PLAINPHONE_SPARE_DRIVER':'1'})
-        with self.assertRaises(gate.GateFailure): gate.check_target('ZY22KW6P9J', {'PLAINPHONE_SPARE_DRIVER':'1', 'EXPECT_DIAL':'912'})
+        gate.check_target(fake, spare)
+        # Driver opt-in alone, or a serial set but not matching, still refuses a physical serial.
+        with self.assertRaises(gate.GateFailure): gate.check_target(fake, {'PLAINPHONE_SPARE_DRIVER':'1'})
+        with self.assertRaises(gate.GateFailure): gate.check_target(fake, {'PLAINPHONE_SPARE_SERIAL':fake})
+        with self.assertRaises(gate.GateFailure): gate.check_target('ZZ00FAKE0001', spare)
+        with self.assertRaises(gate.GateFailure): gate.check_target('emulator-5590', dict(spare, PLAINPHONE_SPARE_SERIAL='emulator-5590'))
+        with self.assertRaises(gate.GateFailure): gate.check_target(fake, dict(spare, EXPECT_DIAL='912'))
         with self.assertRaises(gate.GateFailure): gate.check_target('emulator-5860', {'EXPECT_DIAL':'912'})
         gate.check_target('emulator-5860', {'EXPECT_DIAL':'912', 'PLAINPHONE_CHECK_SELF_TEST':'1'})
 

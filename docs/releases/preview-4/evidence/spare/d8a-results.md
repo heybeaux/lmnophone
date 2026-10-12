@@ -1,11 +1,11 @@
 # preview-4 D8(a) driver checks on the spare (PLA-303)
 
-Driver: Android Platform Engineer (sole spare driver). Device: ZY22KW6P9J (moto g power 5G 2024,
+Driver: Android Platform Engineer (sole spare driver). Device: <spare> (moto g power 5G 2024,
 Android 15). Date: 2026-10-11, 08:39–08:59 UTC (device clock PDT, UTC−7). No calls or texts were
 made, and Call was never pressed. Logs below are counts/flags only: the counts code logs
 `<source> <outcome>` and never a number, a name or content.
 
-## Result: all D8(a) checks pass
+## Result: D8(a) checks passed; the locked-storage (before-unlock) part was not exercised on this device; covered on the emulator (PLA-294/PLA-300 evidence)
 
 | Check | Result |
 |---|---|
@@ -18,7 +18,7 @@ made, and Call was never pressed. Logs below are counts/flags only: the counts c
 | Restriction flags after install | both `granted=false`, `RESTRICTION_INSTALLER_EXEMPT` |
 | Restriction flags after switch on | both `granted=true`, `POLICY_FIXED`, `RESTRICTION_INSTALLER_EXEMPT` |
 | Switch off: no numbers, same PID | PASS: PID 2564 before on, after on, after off; no number on Home; no count read logged after off |
-| Restart: no number before unlock, fresh read after | PASS (see below) |
+| Restart: no number before unlock, fresh read after | PASS, passed; the locked-storage (before-unlock) part was not exercised on this device; covered on the emulator (PLA-294/PLA-300 evidence) (see below) |
 | Screenshots 100 % and 200 % | [d8a/](d8a/): reviewed, no names, numbers or account data, so no redaction needed |
 | Finish with switch off | PASS: off at 08:59 UTC, PID 2563 unchanged, no reads after off |
 

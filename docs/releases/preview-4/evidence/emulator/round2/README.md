@@ -69,8 +69,8 @@ failing fake adb propagated through the real shell wrapper and tee.
 
 ## Driver use
 
-The sole assigned spare driver may use `PLAINPHONE_SPARE_DRIVER=1` with the
-approved spare serial. All other physical serials and reserved emulators
+The sole assigned spare driver may use `PLAINPHONE_SPARE_DRIVER=1` with
+`PLAINPHONE_SPARE_SERIAL=<spare-serial>` set to the approved spare serial. All other physical serials and reserved emulators
 5590/5604/5742 are refused. This author used emulator-5860 only. See the draft
 notes' TODO(spare) and Recovery sections. Lead review must complete before the
 driver handoff; the target delivery time imposes no additional hold.
