@@ -47,7 +47,7 @@ enum class HomeGate { CHECKING, READY, NOT_READY }
  *
  * Re-apply triggers ([reapply]): boot (locked and unlocked), every Plainphone start, package events,
  * user unlock, the 15-minute alarm and, from the wiring slice, [afterTrustedPersonAction]. Each run re-reads the
- * live phone. A single unchanged system-package event may use targeted readback after a verified
+ * live phone. Unchanged system-package events may use targeted readback after a verified
  * full unlocked pass; all errors fall back to the full pass.
  */
 class PolicyRuntime private constructor(private val context: Context) {
@@ -88,7 +88,9 @@ class PolicyRuntime private constructor(private val context: Context) {
     @Volatile private var lastGate = HomeGate.CHECKING
     @Volatile private var checkingHeld = false
     private val noticeState = MutableStateFlow<HomeNotice?>(null)
-    private val packageEvents = PackageEventBurst(dispatcher::post, ::run) { packageReadback.hasSnapshot }
+    private val packageEvents = PackageEventBurst(dispatcher::post, { reasons, maySkip ->
+        run(reasons.singleOrNull() ?: "package-burst", maySkip, reasons)
+    }) { packageReadback.hasSnapshot }
     private val runsState = MutableStateFlow(0)
     private val refreshState = MutableStateFlow(HomeRefresh(null, 0))
     val refresh: StateFlow<HomeRefresh> = refreshState
@@ -177,11 +179,12 @@ class PolicyRuntime private constructor(private val context: Context) {
     /** Hook for the wiring slice: run after every trusted-person action commits. */
     fun afterTrustedPersonAction() = reapply("trusted-person")
 
-    private fun run(reason: String, packageMaySkip: Boolean = true) {
+    private fun run(reason: String, packageMaySkip: Boolean = true, packageReasons: List<String> = listOf(reason)) {
+        val loggedReason = reason + if (reason == "package-burst") " groupedReasons=$packageReasons" else ""
         if (!dpm.isDeviceOwnerApp(context.packageName)) {
             bootCoverage.invalidate()
             packageReadback.invalidate()
-            Log.w(TAG, "reapply $reason skipped: not Device Owner")
+            Log.w(TAG, "reapply $loggedReason skipped: not Device Owner")
             lastGate = HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
             return
@@ -201,7 +204,7 @@ class PolicyRuntime private constructor(private val context: Context) {
                 val outcome = try {
                     boot.run(locked)
                 } catch (e: RuntimeException) {
-                    Log.e(TAG, "reapply $reason threw", e)
+                    Log.e(TAG, "reapply $loggedReason threw", e)
                     null
                 }
                 userUnlocked.recordPass(locked)
@@ -210,13 +213,12 @@ class PolicyRuntime private constructor(private val context: Context) {
             },
             skipped = { id ->
                 wasSkipped = true
-                val kind = if (reason.startsWith("package:PACKAGE_CHANGED:")) "unchanged-since" else "covered-by"
-                Log.i(TAG, "reapply reason=$reason skipped=$kind=$id")
+                val kind = if (reason.startsWith("package:") || reason == "package-burst") "unchanged-since" else "covered-by"
+                Log.i(TAG, "reapply reason=$loggedReason skipped=$kind=$id")
             },
-            packageUnchanged = {
-                val name = reason.removePrefix("package:PACKAGE_CHANGED:")
-                packageMaySkip && packageReadback.unchanged(PackageName(name))
-            },
+            packageReasons = packageReasons,
+            packageMaySkip = packageMaySkip,
+            packageUnchanged = { name -> packageReadback.unchanged(PackageName(name)) },
             afterPackageSkip = { outcome ->
                 publishPass(reason, locked, outcome, refreshHome = false)
                 lastGate == HomeGate.READY
@@ -238,7 +240,7 @@ class PolicyRuntime private constructor(private val context: Context) {
                 try {
                     timings.measure("afterReapply") { BuildControl.control.afterReapply(context, dpm, admin) }
                 } finally {
-                    if (!wasSkipped) log(reason, outcome, bootMillis, SystemClock.elapsedRealtime() - started, passId)
+                    if (!wasSkipped) log(loggedReason, outcome, bootMillis, SystemClock.elapsedRealtime() - started, passId)
                 }
                 publishPass(reason, locked, outcome)
                 lastGate == HomeGate.READY

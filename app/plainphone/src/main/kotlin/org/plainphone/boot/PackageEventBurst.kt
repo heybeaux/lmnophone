@@ -5,7 +5,7 @@ package org.plainphone.boot
 /** Retains actions/names and receipt-time coverage; events during a pass queue the next one. */
 internal class PackageEventBurst(
     private val post: (() -> Unit) -> Unit,
-    private val run: (String, Boolean) -> Unit,
+    private val run: (List<String>, Boolean) -> Unit,
     private val hasSnapshot: () -> Boolean = { true },
 ) {
     private val pending = mutableSetOf<String>()
@@ -21,7 +21,7 @@ internal class PackageEventBurst(
         }
         if (enqueue) post {
             val (reasonToRun, eligible) = synchronized(pending) {
-                val next = pending.singleOrNull() ?: "package-burst"
+                val next = pending.toList()
                 val eligible = maySkip
                 pending.clear()
                 maySkip = true

@@ -39,13 +39,18 @@ internal class BootPassCoverage {
         apply: (Long) -> BootOutcome?,
         afterPass: (BootOutcome?) -> Boolean,
         skipped: (Long) -> Unit,
-        packageUnchanged: () -> Boolean = { false },
+        packageUnchanged: (String) -> Boolean = { false },
         afterPackageSkip: (BootOutcome?) -> Boolean = afterPass,
         afterPublished: (Long) -> Unit = {},
+        packageReasons: List<String> = listOf(reason),
+        packageMaySkip: Boolean = true,
     ) {
         val eligible = last.takeIf { !locked && !retryPending() }
-        val packageCovered = eligible != null && reason.startsWith("package:PACKAGE_CHANGED:") &&
-            try { packageUnchanged() } catch (_: Exception) { false }
+        val packageCovered = eligible != null && packageMaySkip &&
+            (reason.startsWith(PACKAGE_CHANGED) || reason == "package-burst") &&
+            packageReasons.isNotEmpty() && packageReasons.all { it.startsWith(PACKAGE_CHANGED) } &&
+            try { packageReasons.all { packageUnchanged(it.removePrefix(PACKAGE_CHANGED)) } }
+            catch (_: Exception) { false }
         val covered = eligible.takeIf { reason == "boot" || reason == "locked-boot" || packageCovered }
         invalidate()
         val pass = if (covered != null) {
@@ -67,6 +72,7 @@ internal class BootPassCoverage {
     }
 
     private companion object {
+        const val PACKAGE_CHANGED = "package:PACKAGE_CHANGED:"
         val FULL_STAGES = setOf(ApplyStage.EMERGENCY_FLOOR, ApplyStage.NEVER_HIDE_GUARD,
             ApplyStage.HIDES, ApplyStage.LOCK_TASK, ApplyStage.HOME)
     }
