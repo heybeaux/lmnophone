@@ -145,8 +145,8 @@ internal class UpdateSection(val record: UpdateRecord, outbox: List<StoredUpdate
  * Strict binary encoding for each section of the joint authority record. Every decoder rejects
  * truncated, padded or invalid data by returning null; it never builds an empty or default state.
  *
- * Encoders return null for data this adapter cannot yet read back: mode-switch patches. People
- * patches store the original immutable enrollment and decode through the policy's restore checks.
+ * People and mode-switch patches store the original immutable enrollment and decode through the
+ * policy's restore checks (a mode patch is operation tag 2, PLA-97).
  * Live countdowns, grants and session journals decode through the policy's restore functions, which
  * restore data only. The controllers still revoke on startup; nothing here restores authority.
  * Sets and maps whose order carries no meaning are written sorted, so equal states encode equally.

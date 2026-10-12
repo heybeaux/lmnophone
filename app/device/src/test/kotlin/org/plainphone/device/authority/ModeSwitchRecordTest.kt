@@ -1,4 +1,4 @@
-// Copyright 2026 Plainphone contributors
+// Copyright 2026 LMNOPhone contributors
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.device.authority
 
@@ -44,8 +44,8 @@ import org.plainphone.policy.WaitingState
  */
 class ModeSwitchRecordTest {
     @get:Rule val tmp = TemporaryFolder()
-    private val anna = TrustedPersonId("anna")
-    private val ben = TrustedPersonId("ben")
+    private val alex = TrustedPersonId("alex")
+    private val jo = TrustedPersonId("jo")
     private val sam = TrustedPersonId("sam")
     private val friction = FrictionSettings(1_200_000, 2)
     private val pin = CharArray(6) { '1' }
@@ -61,7 +61,7 @@ class ModeSwitchRecordTest {
             store.identities, store.cancelIntents)
 
         init {
-            val holders = (if (mode == Mode.TRUSTED) listOf(anna, ben) else listOf(sam)).associateWith {
+            val holders = (if (mode == Mode.TRUSTED) listOf(alex, jo) else listOf(sam)).associateWith {
                 vault.prepareCredential(pin).credential.let { c ->
                     if (mode == Mode.TRUSTED) c.copy(contact = PersonContact("synthetic-${it.value}", "synthetic-number-${it.value}")) else c
                 }
@@ -81,23 +81,23 @@ class ModeSwitchRecordTest {
 
     private fun selfManagedIncoming(rig: Rig) = checkNotNull(IncomingSelfManagedEnrollment.confirm(sam, "account-sam",
         rig.vault.prepareCredential(CharArray(6) { '5' }), SelfManagedEnrollmentConfirmations(true, true, true, true, true, true),
-        EnrollmentWitness.CurrentPerson(anna)))
+        EnrollmentWitness.CurrentPerson(alex)))
 
-    private fun supervisedIncoming(rig: Rig) = checkNotNull(IncomingPersonEnrollment.confirm(anna,
-        PersonContact("synthetic-anna", "synthetic-number-anna"), "account-anna", rig.vault.prepareCredential(CharArray(6) { '5' }),
+    private fun supervisedIncoming(rig: Rig) = checkNotNull(IncomingPersonEnrollment.confirm(alex,
+        PersonContact("synthetic-alex", "synthetic-number-alex"), "account-alex", rig.vault.prepareCredential(CharArray(6) { '5' }),
         EnrollmentConfirmations(true, true, true, true, true, true, true, true, true), EnrollmentWitness.Helper))
 
     @Test fun aSupervisedToSelfManagedWaitIsStoredExactlyAndSurvivesARestart() {
         val rig = Rig(Mode.TRUSTED)
         val incoming = selfManagedIncoming(rig)
-        val id = rig.start(rig.waiting.prepareSelfManaged(anna, incoming), anna)
+        val id = rig.start(rig.waiting.prepareSelfManaged(alex, incoming), alex)
         val op = checkNotNull(JointAuthorityStore(rig.dir).waitingStore.read()?.operation)
         assertEquals(id, op.identity.requestId)
         assertEquals(WaitingChangeKind.SWITCH_MODE, op.kind)
         assertEquals(WaitingPhase.PENDING, op.phase)
         val patch = checkNotNull(op.modePatch)
         assertEquals(Mode.TRUSTED, patch.sourceMode); assertEquals(Mode.SELF_MANAGED, patch.targetMode)
-        assertEquals(anna, patch.starter); assertEquals(setOf(anna, ben), patch.removedSlots)
+        assertEquals(alex, patch.starter); assertEquals(setOf(alex, jo), patch.removedSlots)
         val stored = checkNotNull(patch.incomingSelfManaged)
         assertNull(patch.incomingTrustedPerson)
         assertEquals(sam, stored.person); assertEquals("account-sam", stored.resetProtectionUserId)
@@ -118,7 +118,7 @@ class ModeSwitchRecordTest {
         assertEquals(setOf(sam), patch.removedSlots)
         val stored = checkNotNull(patch.incomingTrustedPerson)
         assertNull(patch.incomingSelfManaged)
-        assertEquals(anna, stored.person); assertEquals("account-anna", stored.resetProtectionUserId)
+        assertEquals(alex, stored.person); assertEquals("account-alex", stored.resetProtectionUserId)
         assertEquals(incoming.confirmations, stored.confirmations)
         assertEquals(incoming.credential.contact?.name, stored.credential.contact?.name)
         assertEquals(incoming.credential.contact?.number, stored.credential.contact?.number)
@@ -126,8 +126,8 @@ class ModeSwitchRecordTest {
 
     @Test fun aWaitWithoutAModePatchKeepsItsBytes() {
         val rig = Rig(Mode.TRUSTED)
-        val r = checkNotNull(rig.waiting.prepareTurnOff(anna))
-        val fresh = (rig.vault.authenticate(anna, pin, r.action) as PinResult.Authorized).authority
+        val r = checkNotNull(rig.waiting.prepareTurnOff(alex))
+        val fresh = (rig.vault.authenticate(alex, pin, r.action) as PinResult.Authorized).authority
         assertEquals(WaitingOutcome.PENDING, rig.waiting.startTurnOff(r, fresh, true, true))
         val op = checkNotNull(JointAuthorityStore(rig.dir).waitingStore.read()?.operation)
         val bytes = checkNotNull(AuthorityCodec.encodeOperation(op))
