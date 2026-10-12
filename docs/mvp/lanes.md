@@ -111,6 +111,8 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
   all existing merge/order/disabled rules. Full `read()` retains signers and probes
   for links/approval. An optional `ReapplyTimings` constructor parameter records
   fixed snapshot1/probes/snapshot2/merge labels; probes is absent in the light read.
+  `BootReapply.retryPending` reports an unacknowledged flip-notice save. The
+  preview runtime must not cover a late boot trigger while that retry is pending.
   `ReadbackPolicyApplier` and `BootReapply` accept an optional `ReapplyTimings`
   collector for elapsed-time diagnostics. The preview runtime shares one collector
   through input assembly, writes, readbacks and the post-reapply hook, resetting

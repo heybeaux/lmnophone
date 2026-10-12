@@ -120,6 +120,10 @@ class Gate:
         return self.adb(check, 'shell', *args)
 
     def dump(self):
+        # The no-PIN keyguard can return during readback or between either route's taps.
+        # Re-wake immediately before every UI lookup; a refusal fails the gate.
+        self.sh('wake screen before UI', 'input', 'keyevent', 'KEYCODE_WAKEUP')
+        self.sh('dismiss no-PIN keyguard before UI', 'wm', 'dismiss-keyguard')
         result = self.sh('dump UI', 'uiautomator', 'dump', '/sdcard/preview9-ui.xml')
         require('UI hierchary dumped to:' in result or 'UI hierarchy dumped to:' in result, 'UI dump completed')
         return self.sh('read UI XML', 'cat', '/sdcard/preview9-ui.xml')
@@ -155,7 +159,7 @@ class Gate:
 
     def readback(self):
         package = self.sh('read package version', 'dumpsys', 'package', 'org.plainphone')
-        require('versionCode=11 ' in package and 'versionName=0.1.0-preview-11' in package, 'version is preview-11')
+        require('versionCode=12 ' in package and 'versionName=0.1.0-preview-12' in package, 'version is preview-12')
         require('TEST_ONLY' in package, 'testOnly retained')
         owner = self.sh('read Device Owner', 'dpm', 'list-owners')
         require(any('org.plainphone/.PlainphoneAdminReceiver' in l and 'DeviceOwner' in l for l in owner.splitlines()), 'Device Owner retained')
@@ -221,7 +225,7 @@ def main():
         require(len(sys.argv) in (4, 5), 'arguments: serial APK output-directory [label]')
         serial, apk, out = sys.argv[1:4]
         check_target(serial, os.environ)
-        print('preview-11 gate '+datetime.datetime.now(datetime.timezone.utc).isoformat(), flush=True)
+        print('preview-12 gate '+datetime.datetime.now(datetime.timezone.utc).isoformat(), flush=True)
         gate = Gate(serial, out)
         if os.environ.get('SKIP_INSTALL') != '1':
             print('APK sha256='+hashlib.sha256(Path(apk).read_bytes()).hexdigest(), flush=True)

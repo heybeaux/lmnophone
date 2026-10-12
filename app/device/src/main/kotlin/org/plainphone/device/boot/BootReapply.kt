@@ -100,6 +100,9 @@ class BootReapply(
     /** [unresolved] has not been acknowledged durable by [flipFailures] yet. */
     private var unsaved = false
 
+    /** A failed notice save still needs a pass, even after the visible failure was cleared. */
+    val retryPending: Boolean get() = unsaved
+
     val sessions = SessionController(journal, Effects(), { null }, null, { _, _ -> false })
 
     fun run(locked: Boolean): BootOutcome {

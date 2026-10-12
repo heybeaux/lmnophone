@@ -49,6 +49,7 @@ enum class HomeGate { CHECKING, READY, NOT_READY }
  */
 class PolicyRuntime private constructor(private val context: Context) {
     private val dispatcher = SerialDispatcher()
+    private val bootCoverage = BootPassCoverage()
     private val dpm = context.getSystemService(DevicePolicyManager::class.java)
     private val users = context.getSystemService(UserManager::class.java)
     private val userUnlocked = UserUnlockedReapply(dispatcher, { users.isUserUnlocked }) {
@@ -104,7 +105,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     val gate: StateFlow<HomeGate> = gateState
     /** The Home notice from the last unlocked re-apply ([homeNotice]). */
     val notice: StateFlow<HomeNotice?> = noticeState
-    /** Counts finished re-apply runs, locked ones included: Home retries lock-task entry after each. */
+    /** Counts handled re-apply triggers, covered boot triggers included: Home retries lock-task entry after each. */
     val runs: StateFlow<Int> = runsState
 
     /** The live lock-task state; only [LockTaskState.LOCKED] is containment. */
@@ -175,6 +176,7 @@ class PolicyRuntime private constructor(private val context: Context) {
 
     private fun run(reason: String) {
         if (!dpm.isDeviceOwnerApp(context.packageName)) {
+            bootCoverage.invalidate()
             Log.w(TAG, "reapply $reason skipped: not Device Owner")
             lastGate = HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
@@ -183,19 +185,41 @@ class PolicyRuntime private constructor(private val context: Context) {
         val locked = !users.isUserUnlocked
         timings.reset()
         val started = SystemClock.elapsedRealtime()
-        val outcome = try {
-            boot.run(locked)
-        } catch (e: RuntimeException) {
-            Log.e(TAG, "reapply $reason threw", e)
-            null
-        }
-        userUnlocked.recordPass(locked)
-        val bootMillis = SystemClock.elapsedRealtime() - started
-        try {
-            timings.measure("afterReapply") { BuildControl.control.afterReapply(context, dpm, admin) }
-        } finally {
-            log(reason, outcome, bootMillis, SystemClock.elapsedRealtime() - started)
-        }
+        var passId = 0L
+        var bootMillis = 0L
+        var wasSkipped = false
+        bootCoverage.run(reason, locked,
+            // Negative-control builds deliberately break readback state after a pass: never reuse it.
+            retryPending = { boot.retryPending || BuildControl.control !== NegativeControl.None },
+            apply = { id ->
+                passId = id
+                val outcome = try {
+                    boot.run(locked)
+                } catch (e: RuntimeException) {
+                    Log.e(TAG, "reapply $reason threw", e)
+                    null
+                }
+                userUnlocked.recordPass(locked)
+                bootMillis = SystemClock.elapsedRealtime() - started
+                outcome
+            },
+            skipped = { id ->
+                wasSkipped = true
+                Log.i(TAG, "reapply reason=$reason skipped=covered-by=$id")
+            },
+            afterPass = { outcome ->
+                try {
+                    timings.measure("afterReapply") { BuildControl.control.afterReapply(context, dpm, admin) }
+                } finally {
+                    if (!wasSkipped) log(reason, outcome, bootMillis, SystemClock.elapsedRealtime() - started, passId)
+                }
+                publishPass(reason, locked, outcome)
+                lastGate == HomeGate.READY
+            },
+        )
+    }
+
+    private fun publishPass(reason: String, locked: Boolean, outcome: BootOutcome?) {
         runsState.value++
         // A locked run never opens Home: the full plan has not run yet.
         if (!locked) {
@@ -238,11 +262,11 @@ class PolicyRuntime private constructor(private val context: Context) {
         }
     }
 
-    private fun log(reason: String, outcome: BootOutcome?, millis: Long, totalMillis: Long) {
+    private fun log(reason: String, outcome: BootOutcome?, millis: Long, totalMillis: Long, passId: Long) {
         val apply = outcome?.apply
         Log.i(TAG, "reapply reason=$reason control=${BuildControl.control.name} locked=${outcome?.locked} ready=${outcome?.ready} " +
             "applied=${apply?.applied} failed=${apply?.failedStage} flipFailures=${apply?.flipFailures?.size} " +
-            "lockTask=${lockTaskState()} withheld=${outcome?.withheld?.sorted()} attention=${outcome?.needsAttention} disabledFloor=${outcome?.disabledFloor} ms=$millis totalMs=$totalMillis timingsMs=${timings.summary()}")
+            "lockTask=${lockTaskState()} withheld=${outcome?.withheld?.sorted()} attention=${outcome?.needsAttention} disabledFloor=${outcome?.disabledFloor} ms=$millis totalMs=$totalMillis pass=$passId timingsMs=${timings.summary()}")
     }
 
     companion object {
