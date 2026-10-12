@@ -70,6 +70,27 @@ class WaitingCheckpointsTest {
         fun phase() = store.waitingStore.read()?.operation?.phase
     }
 
+    @Test fun testBuildMaturityClosesWithoutCommittingAndSurvivesRestart() {
+        val rig = Rig()
+        rig.startTurnOff()
+        val preview = WaitingCheckpoints(rig.store, rig.clock, { rig.battery },
+            PersonAuthorityConsumer { _, _, _ -> false }, testBuild = true)
+        rig.advance(day - 1)
+        assertEquals(WaitingOutcome.PENDING, preview.checkpoint())
+        rig.advance(1)
+        assertEquals(WaitingOutcome.CANCELLED, preview.checkpoint())
+        assertEquals(WaitingPhase.CANCELLED, rig.phase())
+        assertEquals(0, rig.store.waitingStore.read()!!.operation!!.restoredSteps)
+        assertFalse(rig.store.waitingStore.read()!!.texts.any { it.event == org.plainphone.policy.WaitingEvent.COMMITTING })
+        assertNull(preview.notice())
+        assertTrue(preview.previewTurnOffClosed())
+        val restarted = WaitingCheckpoints(rig.store, rig.clock, { rig.battery },
+            PersonAuthorityConsumer { _, _, _ -> false }, testBuild = true)
+        assertNull(restarted.checkpoint())
+        assertTrue(restarted.previewTurnOffClosed())
+        assertFalse(rig.checkpoints.previewTurnOffClosed())
+    }
+
     private fun files(dir: File) = dir.walk().filter { it.isFile }.map { it.relativeTo(dir).path }.toList()
 
     /** A phone without trusted people: nothing pending, the normal alarm period, nothing written. */
