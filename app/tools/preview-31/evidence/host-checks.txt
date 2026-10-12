@@ -1,0 +1,17 @@
+Build 31 host checks
+Tests-first commit: f2437d2e (missing RingtoneController/Port, compilation failed before implementation).
+UI/navigation tests also failed compilation on missing screen/route types before wiring.
+65 settings controller checks: passed.
+203 host tests: passed.
+12 ringtone controller checks after canonical-URI correction: passed.
+60 Paparazzi checks at 1.0/1.3/1.5/1.8/2.0: passed.
+41 new/changed goldens inspected, including scrolled long and short Sound titles.
+UI lint: passed.
+Device lint: five unchanged MissingPermission errors in AndroidWifi.kt.
+App lint: one unchanged StateFlowValueCalledInComposition error in PinAccessActivity.kt.
+Both failing files byte-identical to base 165c7a10. No check disabled or suppressed.
+OpenSpec: 3 passed, 0 failed.
+Final APK SHA-256: b7e66e8153300729041d5a2acbeb590842023a958a2dcdb5537ee4e181573622
+Signer SHA-256: 99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd
+Initial in-place 30 -> 31 install: 2026-10-12 16:43:12Z.
+Canonical-URI correction install: 2026-10-12 16:48:45Z (finished 16:48:46Z).

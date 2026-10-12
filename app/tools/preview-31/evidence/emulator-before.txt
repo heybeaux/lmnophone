@@ -1,0 +1,19 @@
+PASS: check owned emulator
+PASS: correct emulator
+PASS: read package version
+PASS: version is preview-30
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: read ring volume and ringer mode
+PASS: read ring stream
+PASS: read ring levels and both ringer modes
+PASS: read Bluetooth state without names
+PASS: read one Bluetooth state
+PASS: read ringtone
+PASS: read Location
+PASS: read saved networks without retaining names
+PASS: initial ringtone is built-in
+{"ringtone": "content://media/internal/audio/media/143?title=Flutey%20Phone&canonical=1", "ringVolume": "2 (speaker): 5, 40000000 (default): 5", "ringerModes": [["internal", "NORMAL"], ["external", "NORMAL"]], "bluetooth": "ON", "location": "3", "savedNetworksSha256": "6260342d8d2bf086c2f5a1a58f63fdf432e9ba293b241fc4a9133d6e9c4eb848"}

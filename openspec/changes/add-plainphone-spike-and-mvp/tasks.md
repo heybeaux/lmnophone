@@ -66,6 +66,7 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [ ] 4.9 AE: LMNOPhone's own settings screens (Wi-Fi, Bluetooth, volume, brightness, text size, battery).
   - [x] Build 30: read-only Bluetooth state and paired devices (approved PLA-428); pairing remains deferred.
 - [x] 4.9a Preview 28: read-only Wi-Fi state/nearby names, U7 fallback copy, and corrected Text size sample (PLA-421). Joining/forgetting and other unfinished settings remain in 4.9.
+- [x] 4.9b Preview 31: in-app built-in Ringtone chooser, bounded previews, settings-write/read-back checks and U7 copy (PLA-431). Other unfinished settings remain in 4.9.
 - [ ] 4.10 AE: Setup flow, preinstall sweep before Wi-Fi, reset-protection IDs with a backup person, key attestation check, handover self-check (guided-setup).
 - [ ] 4.11 AE: Build inventory for each supported build, the emergency-safe baseline, the locked-boot path, and the first-frame lock task invariant (device-lockdown).
 - [ ] 4.12 AE: Monthly check state machine (stored due date, retries, home-screen line) and the SMS permission setup (approved-apps).

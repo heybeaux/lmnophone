@@ -1,0 +1,133 @@
+# Copyright 2026 LMNOPhone contributors
+# SPDX-License-Identifier: Apache-2.0
+"""Owned emulator only. Save/restore a built-in ringtone; no call controls or external picker."""
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import sys
+import time
+from urllib.parse import urlparse, parse_qs
+
+root = Path(__file__).resolve().parents[3]
+spec = importlib.util.spec_from_file_location('gate', Path(__file__).with_name('upgrade_check.py'))
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+class RingtoneGate(m.Gate):
+    def dump(self):
+        # UIAutomator sometimes reports no idle window during a page/grant transition.
+        # Retry only that read, never a tap/write, and still require a fresh completed dump.
+        for attempt in range(3):
+            try:
+                return super().dump()
+            except m.GateFailure as error:
+                if str(error) != 'UI dump completed' or attempt == 2:
+                    raise
+                print('RETRY: UIAutomator dump did not complete; no assertion waived', flush=True)
+                time.sleep(1)
+
+g = RingtoneGate('emulator-5880', root / 'app/tools/preview-31/evidence')
+require = m.previous.require
+baseline = Path(os.environ['PAPERCLIP_RUN_SCRATCH_DIR']) / 'preview31-baseline.json'
+
+def snapshot():
+    audio = g.sh('read ring volume and ringer mode', 'dumpsys', 'audio')
+    ring = re.search(r'^- STREAM_RING:\n(.*?)(?=\n- STREAM_)', audio, re.M | re.S)
+    require(ring is not None, 'read ring stream')
+    volume = re.search(r'^\s*Current: (.+)$', ring[1], re.M)
+    modes = re.findall(r'^- mode \((internal|external)\) = (\S+)$', audio, re.M)
+    require(volume is not None and len(modes) == 2, 'read ring levels and both ringer modes')
+    bluetooth = re.findall(r'^\s*state: (\S+)\s*$', g.sh('read Bluetooth state without names', 'dumpsys', 'bluetooth_manager'), re.M)
+    require(len(bluetooth) == 1, 'read one Bluetooth state')
+    return {'ringtone': g.sh('read ringtone', 'settings', 'get', 'system', 'ringtone'),
+        'ringVolume': volume[1], 'ringerModes': modes, 'bluetooth': bluetooth[0],
+        'location': g.sh('read Location', 'settings', 'get', 'secure', 'location_mode'),
+        'savedNetworksSha256': hashlib.sha256(g.sh('read saved networks without retaining names', 'cmd', 'wifi', 'list-networks').encode()).hexdigest()}
+
+def page():
+    xml = g.dump()
+    g.sh('remove transient UI dump', 'rm', '-f', '/data/local/tmp/preview26-ui.xml')
+    return m.previous.nodes(xml)
+
+def choose(title):
+    # Ringtone list is scrollable. Only match an exact known built-in title.
+    for _ in range(25):
+        nodes = page()
+        found = [n for n in nodes if n.get('text') == title]
+        if found:
+            g.tap('^'+re.escape(title)+'$')
+            return
+        g.sh('scroll ringtone list', 'input', 'swipe', '500', '1600', '500', '700', '250')
+    raise m.GateFailure('built-in title reachable by scrolling')
+
+def sound():
+    g.home(); g.tap('^More$'); g.tap('^Phone settings$'); g.tap('^Sound$')
+
+def chooser(expected_title=None):
+    for _ in range(5):
+        rows = page()
+        if any(n.get('text') == 'Ringtone' for n in rows):
+            if expected_title is not None:
+                require(any(n.get('text') == expected_title for n in rows), 'Sound shows only the confirmed ringtone title')
+            g.tap('^Ringtone$'); return
+        g.sh('scroll Sound to Ringtone', 'input', 'swipe', '500', '1500', '500', '700', '250')
+    raise m.GateFailure('Ringtone row reachable')
+
+require('pla363-policy-a35' in g.adb('check owned emulator', 'emu', 'avd', 'name'), 'correct emulator')
+if sys.argv[1] == 'before':
+    g.VERSION = 30
+    g.readback()
+    before = snapshot()
+    require(before['ringtone'].startswith('content://media/internal/audio/media/'), 'initial ringtone is built-in')
+    baseline.write_text(json.dumps(before))
+    print(json.dumps(before), flush=True)
+else:
+    before = json.loads(baseline.read_text())
+    require(json.loads(json.dumps(snapshot())) == before, 'upgrade preserved all captured settings')
+    original_title = parse_qs(urlparse(before['ringtone']).query)['title'][0]
+    sound(); chooser()
+    nodes = page()
+    op = g.sh('read existing settings app-op', 'appops', 'get', 'org.plainphone', 'WRITE_SETTINGS')
+    original_op = re.search(r'WRITE_SETTINGS: (\w+)', op)
+    original_op = original_op[1] if original_op else 'default'
+    missing_grant = any(n.get('text') == "Ringtone couldn't be changed." for n in nodes)
+    if missing_grant:
+        require(original_op != 'allow', 'failure line agrees with absent settings-write grant')
+        require(any(n.get('enabled') == 'false' and any(child.get('text') == 'Done' for child in n) for n in nodes), 'Done disabled without grant')
+    require(not any(n.get('text') == 'Your current ringtone stays until you choose another.' for n in nodes), 'current ringtone recognized in full built-in list')
+    # Select a currently visible built-in row, excluding navigation and current ringtone.
+    choices = [n for n in nodes if n.get('text') and n.get('text') not in ('‹ Sound', 'Ringtone', 'Done', original_title, '✓', "Ringtone couldn't be changed.")]
+    require(len(choices) > 0, 'another built-in choice visible')
+    selected_title = choices[0].get('text')
+    try:
+        choose(selected_title)
+        if missing_grant:
+            require(g.sh('read after preview without grant', 'settings', 'get', 'system', 'ringtone') == before['ringtone'], 'no-grant preview leaves setting unchanged')
+            g.sh('grant existing WRITE_SETTINGS for owned-emulator exercise', 'appops', 'set', 'org.plainphone', 'WRITE_SETTINGS', 'allow')
+            time.sleep(2)
+            require(not any(n.get('text') == "Ringtone couldn't be changed." for n in page()), 'visible page reads restored grant')
+        require(g.sh('read before Done', 'settings', 'get', 'system', 'ringtone') == before['ringtone'], 'preview does not save')
+        time.sleep(6)
+        g.shot('ringtone-selected.png')
+        g.tap('^Done$')
+        time.sleep(1)
+        actual = g.sh('read saved ringtone', 'settings', 'get', 'system', 'ringtone')
+        require(actual != before['ringtone'] and parse_qs(urlparse(actual).query).get('title') == [selected_title], 'Done writes chosen built-in ringtone with readback')
+        require(any(n.get('text') == 'Ring volume' for n in page()), 'Done returned to Sound')
+        chooser(selected_title); choose(original_title); g.tap('^Done$'); time.sleep(1)
+        require(g.sh('read restored ringtone', 'settings', 'get', 'system', 'ringtone') == before['ringtone'], 'chooser restored exact original ringtone')
+        g.shot('sound-restored.png')
+    finally:
+        # A failed gate must not leave the tester's original ringtone changed.
+        current = g.sh('read cleanup ringtone', 'settings', 'get', 'system', 'ringtone')
+        if current != before['ringtone']:
+            g.sh('restore original after failed gate', 'settings', 'put', 'system', 'ringtone', shlex.quote(before['ringtone']))
+        g.sh('restore original settings-write app-op', 'appops', 'set', 'org.plainphone', 'WRITE_SETTINGS', original_op)
+    g.home(); g.readback(); g.calls_empty()
+    after = json.loads(json.dumps(snapshot()))
+    require(after == before, 'ringtone, ring volume, ringer mode, Bluetooth, Location and networks unchanged at end')
+    print(json.dumps({'before': before, 'after': after}), flush=True)
+    print('exit=0', flush=True)
