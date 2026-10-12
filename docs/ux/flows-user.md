@@ -469,6 +469,25 @@ has no Forget or OK action and no separate message screen.
 If the overall status read fails, show **Wi-Fi status can't be read right now.**
 with no connection claim or nearby list. Location mode remains unchanged.
 
+### Build 30 read-only Bluetooth subset
+
+Approved in [PLA-428](/PLA/issues/PLA-428). Rows are **Wi-Fi**, **Bluetooth**,
+**Brightness**, **Sound**, **Text size**, **Battery**, then the unchanged counts
+switch. More's subtitle is **Wi-Fi, Bluetooth, brightness, sound, text size, battery**.
+
+The page shows **‹ Phone settings**, **Bluetooth**, then **Paired with:** and up
+to ten paired device names, sorted case-insensitively, only when Bluetooth is
+fully on. Missing names show **Unnamed device**; no devices shows **No paired
+devices.** Every other adapter state or no adapter shows **Bluetooth is off.**
+A failed read (including missing permission) shows **Bluetooth status can't be
+read right now.** with no on/off claim or list. Always show **Pairing a new
+device comes in a later test build.** Refresh only while visible.
+
+The only new runtime grant is the app's own BLUETOOTH_CONNECT through Device
+Owner. No discovery, pairing, unpairing, connection, Bluetooth-state writes,
+Location use or system UI. Device names stay on screen only; evidence records
+counts. Pairing remains a later slice.
+
 ### Build 22 Sound corrections
 
 Approved in [PLA-404](/PLA/issues/PLA-404). Failure lines appear below the stream

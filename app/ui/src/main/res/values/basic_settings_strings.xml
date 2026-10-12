@@ -41,4 +41,11 @@
     <string name="wifi_nearby_unavailable">Nearby networks can\'t be shown right now.</string>
     <string name="wifi_preview_note">Joining a network comes in a later test build.</string>
     <string name="wifi_status_unavailable">Wi-Fi status can\'t be read right now.</string>
+    <string name="settings_bluetooth">Bluetooth</string>
+    <string name="bluetooth_paired">Paired with:</string>
+    <string name="bluetooth_none">No paired devices.</string>
+    <string name="bluetooth_unnamed">Unnamed device</string>
+    <string name="bluetooth_off">Bluetooth is off.</string>
+    <string name="bluetooth_unavailable">Bluetooth status can\'t be read right now.</string>
+    <string name="bluetooth_preview_note">Pairing a new device comes in a later test build.</string>
 </resources>

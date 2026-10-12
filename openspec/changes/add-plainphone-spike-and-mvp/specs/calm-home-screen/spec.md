@@ -58,6 +58,14 @@ Every label SHALL be in plain language. Any Android setting outside this list SH
 - **AND** no network can be joined or forgotten, Location and saved networks remain unchanged, and Android Settings never appears
 - **AND** the only new permission grant is ACCESS_FINE_LOCATION to LMNOPhone itself through Device Owner, if needed
 
+#### Scenario: Build 30 read-only Bluetooth preview
+- **WHEN** the user opens Phone settings → Bluetooth in build 30
+- **THEN** STATE_ON shows at most ten paired device names sorted case-insensitively, with the U7 unnamed and empty fallbacks
+- **AND** every other state or no adapter shows off, and read failure shows unavailable without any state claim or list
+- **AND** the page refreshes while visible and always states that pairing comes in a later test build
+- **AND** the app may grant only its own BLUETOOTH_CONNECT permission and never scans, pairs, unpairs, connects, changes Bluetooth, uses Location, or opens system UI
+- **AND** device names remain ephemeral display data; recorded evidence contains counts only
+
 ### Requirement: Readable by default
 All LMNOPhone screens SHALL:
 - follow the system font scale

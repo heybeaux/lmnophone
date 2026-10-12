@@ -305,3 +305,13 @@ emits `WifiInternetStatus` after the 10-second grace period (portal is immediate
 `WifiState` / `WifiSettingsUiState` explicitly distinguish an overall read failure;
 UI receives `WifiInternetUiStatus` and remains read-only. Names and handles are
 never persisted. Policy and lock-task interfaces are unchanged.
+
+### Preview 30 read-only Bluetooth seam
+
+`:device/settings` exports `BluetoothPort.read(): BluetoothFacts`,
+`BluetoothController.refresh()` and `AndroidBluetooth.onOpen()` (own
+BLUETOOTH_CONNECT grant only). Only fully-on snapshots expose the sorted,
+ten-entry paired-name list; exceptions discard all facts. `clear()` drops names
+when hidden. `:plainphone` polls only while resumed on `ShellRoute.BluetoothSettings`;
+`:ui` receives `BluetoothSettingsUiState` and exposes Back only. No policy or
+lock-task interface changes. API 30 uses the normal legacy BLUETOOTH permission.

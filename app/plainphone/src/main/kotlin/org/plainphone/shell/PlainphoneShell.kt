@@ -48,6 +48,7 @@ fun PlainphoneShell(
     textSize: TextSizeUiState,
     onTextSize: (TextSizeEvent) -> Unit,
     wifi: WifiSettingsUiState,
+    bluetooth: BluetoothSettingsUiState,
     sound: SoundUiState,
     onSound: (SoundEvent) -> Unit,
     brightness: BrightnessUiState,
@@ -66,6 +67,7 @@ fun PlainphoneShell(
                 ShellRoute.About -> AboutScreen(AboutUiState(versionName, snapshot.trustedPeople,
                     snapshot.requestRecipient, stringResource(R.string.product_name), isDeviceSecure)) { onStep(navigator.onAbout(state, it)) }
                 ShellRoute.TextSize -> TextSizeScreen(textSize, onTextSize)
+                ShellRoute.BluetoothSettings -> BluetoothSettingsScreen(bluetooth) { onStep(navigator.back(state)) }
                 ShellRoute.WifiSettings -> WifiSettingsScreen(wifi) { onStep(navigator.back(state)) }
                 ShellRoute.Sound -> SoundScreen(sound, onSound)
                 ShellRoute.Brightness -> BrightnessScreen(brightness, onBrightness)

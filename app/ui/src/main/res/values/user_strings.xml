@@ -10,7 +10,7 @@
     <string name="more_emergency_note">Opens the dialer with 9‑1‑1 typed in</string>
     <string name="more_emergency_spoken">Emergency 9-1-1. Opens the dialer with 9-1-1 typed in.</string>
     <string name="more_phone_settings">Phone settings</string>
-    <string name="more_phone_settings_note">Wi-Fi, brightness, sound, text size, battery</string>
+    <string name="more_phone_settings_note">Wi-Fi, Bluetooth, brightness, sound, text size, battery</string>
     <string name="more_ask">Ask for an app</string>
     <string name="more_ask_note">%1$s adds apps with you</string>
     <string name="more_for">For %1$s</string>

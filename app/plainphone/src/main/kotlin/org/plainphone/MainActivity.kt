@@ -8,6 +8,9 @@ import androidx.compose.runtime.DisposableEffect
 import android.media.AudioManager
 import org.plainphone.device.settings.AndroidVolume
 import org.plainphone.device.settings.VolumeController
+import org.plainphone.device.settings.AndroidBluetooth
+import org.plainphone.device.settings.BluetoothController
+import org.plainphone.ui.user.BluetoothSettingsUiState
 import org.plainphone.device.settings.AndroidWifi
 import org.plainphone.device.settings.WifiController
 import org.plainphone.device.settings.WifiInternetStatus
@@ -121,6 +124,14 @@ import org.plainphone.ui.trusted.WaitingStage
 class MainActivity : ComponentActivity() {
     private val shell: ShellViewModel by viewModels()
     private lateinit var communication: AndroidCommunicationCounts
+    private val bluetoothSource by lazy { AndroidBluetooth(this) }
+    private val bluetoothController by lazy { BluetoothController(bluetoothSource) }
+    private var bluetooth by mutableStateOf(BluetoothSettingsUiState())
+    private fun syncBluetooth() {
+        bluetoothController.refresh()
+        val value = bluetoothController.state
+        bluetooth = BluetoothSettingsUiState(value.enabled, value.paired, value.readFailed)
+    }
     private val wifiSource by lazy { AndroidWifi(this) }
     private val wifiController by lazy { WifiController(wifiSource) { SystemClock.elapsedRealtime() } }
     private var wifi by mutableStateOf(WifiSettingsUiState())
@@ -234,6 +245,18 @@ class MainActivity : ComponentActivity() {
                 onDispose { source?.close() }
             }
             LaunchedEffect(basicSettingsVisible, shell.state.current) {
+                if (basicSettingsVisible && shell.state.current == ShellRoute.BluetoothSettings) {
+                    try {
+                        bluetoothSource.onOpen()
+                        while (true) {
+                            syncBluetooth()
+                            delay(1_000)
+                        }
+                    } finally {
+                        bluetoothController.clear()
+                        bluetooth = BluetoothSettingsUiState()
+                    }
+                }
                 if (basicSettingsVisible && shell.state.current == ShellRoute.WifiSettings) {
                     wifiSource.onOpen()
                     wifiController.onOpen()
@@ -335,7 +358,7 @@ class MainActivity : ComponentActivity() {
                 isDeviceSecure = getSystemService(KeyguardManager::class.java).isDeviceSecure,
                 versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() },
                 textSize = textSize, onTextSize = ::onTextSize,
-                wifi = wifi,
+                wifi = wifi, bluetooth = bluetooth,
                 sound = sound, onSound = ::onSound,
                 brightness = brightness, battery = battery, onBrightness = ::onBrightness,
                 settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps,
@@ -343,7 +366,7 @@ class MainActivity : ComponentActivity() {
                 onSettings = { event ->
                     when (event) {
                         PhoneSettingsEvent.OpenWaitingChange -> settingsWait?.let { openCancel(it.requestId) }
-                        PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenWifi, PhoneSettingsEvent.OpenTextSize, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenSound, PhoneSettingsEvent.OpenBattery ->
+                        PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenBluetooth, PhoneSettingsEvent.OpenWifi, PhoneSettingsEvent.OpenTextSize, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenSound, PhoneSettingsEvent.OpenBattery ->
                             shell.state = shell.navigator!!.onSettings(shell.state, event).state
                         is PhoneSettingsEvent.ShowCommunicationCountsChanged -> {
                             communication.controller.setEnabled(event.enabled)

@@ -36,6 +36,7 @@ sealed interface PhoneSettingsEvent {
     data object OpenWaitingChange : PhoneSettingsEvent
     data object OpenBrightness : PhoneSettingsEvent
     data object OpenWifi : PhoneSettingsEvent
+    data object OpenBluetooth : PhoneSettingsEvent
     data object OpenSound : PhoneSettingsEvent
     data object OpenTextSize : PhoneSettingsEvent
     data object OpenBattery : PhoneSettingsEvent
@@ -69,6 +70,7 @@ fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEven
             }
         }
         SettingsRow(stringResource(R.string.settings_wifi)) { onEvent(PhoneSettingsEvent.OpenWifi) }
+        SettingsRow(stringResource(R.string.settings_bluetooth)) { onEvent(PhoneSettingsEvent.OpenBluetooth) }
         SettingsRow(stringResource(R.string.settings_brightness)) { onEvent(PhoneSettingsEvent.OpenBrightness) }
         SettingsRow(stringResource(R.string.settings_sound)) { onEvent(PhoneSettingsEvent.OpenSound) }
         SettingsRow(stringResource(R.string.settings_text_size)) { onEvent(PhoneSettingsEvent.OpenTextSize) }

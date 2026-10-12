@@ -211,6 +211,12 @@ LMNOPhone's own settings screen uses Device Owner APIs:
 
 Anything else needs a supervised Settings session. There is no generic "helper task" fallback.
 
+Build 30 (approved PLA-428) is the read-only Bluetooth subset: the adapter and
+bonded-device names are read with BLUETOOTH_CONNECT (legacy BLUETOOTH on API 30),
+with a one-second visible-page poll and fresh permission readback. Device Owner
+may grant only that permission to this app. No Bluetooth mutation, discovery,
+Location dependency or system UI is introduced. Names are never persisted.
+
 ### D8. Setup: helper custody, sweep before Wi-Fi, reset-protection IDs without secrets
 
 **Order of steps:**
