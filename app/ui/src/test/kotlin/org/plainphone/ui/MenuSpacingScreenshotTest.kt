@@ -64,6 +64,19 @@ class MenuSpacingScreenshotTest(private val scale: Float) {
             .copy(missedCalls = 100, unreadTexts = 100), {})
     }
 
+    @Test fun moreTrustedViewport() = shot {
+        MoreScreen(MoreUiState(MoreMode.Trusted(listOf("Sam", "Jo"), "Sam")), {})
+    }
+
+    @Test fun moreSelfManagedViewport() = shot {
+        MoreScreen(MoreUiState(MoreMode.SelfManaged(10)), {})
+    }
+
+    @Test fun moreLongTrustedNamesFullContent() {
+        paparazzi.unsafeUpdateConfig(deviceConfig = device.copy(screenHeight = 1800))
+        moreLongTrustedNames()
+    }
+
     @Test fun moreLongTrustedNames() = shot {
         MoreScreen(MoreUiState(MoreMode.Trusted(listOf("Sam".repeat(8), "Jo".repeat(8)), "Sam".repeat(8))), {})
     }
