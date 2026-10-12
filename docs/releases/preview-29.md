@@ -73,3 +73,25 @@ More → Phone settings → Wi-Fi, and compares the connection and internet line
 with platform status/validation. Record Location and saved networks before/after;
 neither should change. With Location off the name fallbacks remain expected.
 No calls, no settings changes, no separate approval chain.
+
+## Spare install (Lead, sole driver)
+
+Lead review [PLA-424](/PLA/issues/PLA-424): approved (changed product code plus
+affected tests; `WifiControllerTest` re-run 16/16 PASS). APK hash above matched
+the author's local build.
+
+- **Installed:** in place over 28 at **2026-10-12 14:52:56Z**, installer Success.
+  The first gate run used the build-28 script, which correctly failed its
+  "version is preview-28" check after a good install
+  (`spare-install-wrong-gate-version.txt`). The build-29 gate then ran with
+  `SKIP_INSTALL=1`: restart, More › Emergency and Phone both typed exactly
+  **911**, **zero calls**, Device Owner, TEST_ONLY and LOCKED kept, exit 0
+  (`spare-upgrade-check.txt`).
+- **Exercised:** Wi-Fi page reads **Connected to Wi-Fi** and the nearby-network
+  fallback (Location is off on the spare, mode 0). The platform reports one
+  validated, non-portal Wi-Fi network; the page shows no internet warning, also
+  after 12 s (past the 10 s grace). No overall read failure
+  (`spare-wifi-check.txt`, `spare-wifi-page.png`; names never read into logs).
+- **Not exercised on the spare:** sign-in-page and no-internet messages (no live
+  portal or outage); read-failure text.
+- **Readback:** Location mode 0, saved networks exactly unchanged, font scale 1.0.

@@ -1,0 +1,77 @@
+PASS: read Location mode before
+PASS: read saved networks before
+PASS: read font scale before
+Location before: 0 | saved network lines: 3
+PASS: read connectivity
+platform: wifi agents=1 validated=True captive_portal=False
+PASS: press Home
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^More$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Phone settings$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Wi-Fi$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+Wi-Fi page: ‹ Phone settings | Wi-Fi | Connected to Wi-Fi | Nearby networks | Nearby networks can't be shown right now. | Joining a network comes in a later test build.
+PASS: overall read succeeded
+PASS: page says connected (platform connected)
+PASS: validated Wi-Fi shows no internet warning
+PASS: capture spare-wifi-page.png
+PASS: valid PNG spare-wifi-page.png
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: still no warning after 12 s (past 10 s grace)
+After 12 s warnings: []
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^‹ Phone settings$
+PASS: press Home
+PASS: read package version
+PASS: version is preview-29
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: read Telecom current calls
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: read Location after
+PASS: Location unchanged
+PASS: read saved networks after
+PASS: saved networks exactly unchanged (names withheld)
+PASS: read font after
+PASS: font scale unchanged
+exit=0
