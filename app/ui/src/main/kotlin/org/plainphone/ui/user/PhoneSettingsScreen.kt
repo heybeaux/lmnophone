@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.ui.user
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -26,9 +29,11 @@ data class PhoneSettingsUiState(
     val missedCallsUnavailable: Boolean = false,
     val unreadTextsUnavailable: Boolean = false,
     val unsupportedApps: Boolean = false,
+    val pendingChange: String? = null,
 )
 
 sealed interface PhoneSettingsEvent {
+    data object OpenWaitingChange : PhoneSettingsEvent
     data object OpenBrightness : PhoneSettingsEvent
     data object OpenSound : PhoneSettingsEvent
     data object OpenBattery : PhoneSettingsEvent
@@ -44,6 +49,23 @@ fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEven
         .padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S6),
         verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4)) {
         ScreenLink(stringResource(R.string.back_more), { onEvent(PhoneSettingsEvent.Back) }, centered = false)
+        state.pendingChange?.let { change ->
+            val spoken = stringResource(R.string.settings_waiting_spoken, change)
+            val shape = RoundedCornerShape(PlainphoneSpace.BoxRadius)
+            Row(Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                .background(PlainphoneColors.Fill1, shape)
+                .plainphoneAction(shape) { onEvent(PhoneSettingsEvent.OpenWaitingChange) }
+                .clearAndSetSemantics { contentDescription = spoken }
+                .padding(PlainphoneSpace.S4),
+                horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2),
+                verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
+                    Text(stringResource(R.string.wait_title), style = PlainphoneType.Row)
+                    Text(change, style = PlainphoneType.Body)
+                }
+                Text("›", style = PlainphoneType.Row.copy(color = PlainphoneColors.Ink2))
+            }
+        }
         SettingsRow(stringResource(R.string.settings_brightness)) { onEvent(PhoneSettingsEvent.OpenBrightness) }
         SettingsRow(stringResource(R.string.settings_sound)) { onEvent(PhoneSettingsEvent.OpenSound) }
         SettingsRow(stringResource(R.string.settings_battery)) { onEvent(PhoneSettingsEvent.OpenBattery) }

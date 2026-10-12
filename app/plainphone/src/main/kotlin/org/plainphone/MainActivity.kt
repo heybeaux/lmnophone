@@ -60,6 +60,8 @@ import org.plainphone.boot.CheckingScreen
 import org.plainphone.boot.HomeGate
 import org.plainphone.boot.cancelStage
 import org.plainphone.boot.confirmStage
+import org.plainphone.boot.settingsWaitingChange
+import org.plainphone.boot.waitingChangeTextResource
 import org.plainphone.boot.pendingChange
 import org.plainphone.policy.NoticeTap
 import org.plainphone.policy.WaitingChangeKind
@@ -249,6 +251,8 @@ class MainActivity : ComponentActivity() {
                 }
                 return@setContent
             }
+            val waitingRead by runtime.waitingRead.collectAsState()
+            val settingsWait = settingsWaitingChange(waitingRead)
             PlainphoneShell(shell.state, snapshot, mapper, shell.navigator ?: return@setContent,
                 notice = notice, onNotice = ::openNotice,
                 counts = counts,
@@ -256,9 +260,11 @@ class MainActivity : ComponentActivity() {
                 versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() },
                 sound = sound, onSound = ::onSound,
                 brightness = brightness, battery = battery, onBrightness = ::onBrightness,
-                settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps),
+                settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps,
+                    pendingChange = settingsWait?.let { getString(waitingChangeTextResource(it.kind), getString(R.string.app_name)) }),
                 onSettings = { event ->
                     when (event) {
+                        PhoneSettingsEvent.OpenWaitingChange -> settingsWait?.let { openCancel(it.requestId) }
                         PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenSound, PhoneSettingsEvent.OpenBattery ->
                             shell.state = shell.navigator!!.onSettings(shell.state, event).state
                         is PhoneSettingsEvent.ShowCommunicationCountsChanged -> {
@@ -341,12 +347,7 @@ class MainActivity : ComponentActivity() {
     /** Anyone holding the phone may cancel the pending change [requestId], without a PIN, if it is still pending. */
     private fun openCancel(requestId: String) {
         val wait = runtime.waitingNotice.value?.takeIf { confirmStage(requestId, it) == WaitingStage.ConfirmCancel } ?: return
-        val change = when (wait.kind) {
-            WaitingChangeKind.TURN_OFF -> getString(R.string.wait_change_turn_off, getString(R.string.app_name))
-            WaitingChangeKind.ADD_PERSON, WaitingChangeKind.HAND_OVER, WaitingChangeKind.REMOVE_PERSON ->
-                getString(R.string.wait_change_people)
-            else -> getString(R.string.wait_change_setup)
-        }
+        val change = getString(waitingChangeTextResource(wait.kind), getString(R.string.app_name))
         cancelScreen = CancelScreen(requestId, WaitingChangeUiState(stage = WaitingStage.ConfirmCancel, change = change,
             turningOff = wait.kind == WaitingChangeKind.TURN_OFF))
     }

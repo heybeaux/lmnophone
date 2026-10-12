@@ -359,6 +359,7 @@ Each opens one simple screen. Android Settings never appears.
 **When a change is waiting**, the page starts with a grey box, above the rows: **"A change is waiting"**, second
 line `{what}` (as on U9), and `›`. It opens U9. This is the place the waiting change and its PIN-free Cancel can
 always be found (trusted-person-controls, "Where Cancel is reachable"), whatever the home screen's line shows.
+Spoken label: **A change is waiting, {what}. Opens the change.**
 
 | Screen | Content | Primary |
 |---|---|---|

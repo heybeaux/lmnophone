@@ -31,9 +31,10 @@ android {
         applicationId = "org.plainphone"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        testInstrumentationRunner = "org.plainphone.counts.CombinedCountInstrumentation"
-        versionCode = 22
-        versionName = "0.1.0-preview-22"
+        testInstrumentationRunner = providers.gradleProperty("previewTestRunner")
+            .getOrElse("org.plainphone.counts.CombinedCountInstrumentation")
+        versionCode = 23
+        versionName = "0.1.0-preview-23"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())

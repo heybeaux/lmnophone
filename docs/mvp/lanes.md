@@ -116,6 +116,10 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
   The preview supplies sample identities; it offers no helper-number or SOS action.
 - Covers: home (with the single notice line), More, ask for an app, blocked link, Wi-Fi messages, the trusted-person screens ("Who are you?", PIN, approvals, permissions, people, waits and cancel), Plainphone settings, setup, turning off, About, and "What Plainphone can't stop".
 
+`PhoneSettingsUiState.pendingChange` is the optional current U9 description.
+`PhoneSettingsEvent.OpenWaitingChange` opens the existing PIN-free cancel route;
+the host reads the same waiting store as Home and rechecks the request on tap.
+
 **`:device` / `:plainphone` (lane D):** implements `JournalStore`, `PolicyStore` and `KeyDerivation`. It also provides:
 - `PolicyApplier`, which applies a `PolicyPlan` through DPM and reads it back;
   its device-internal `DevicePolicyPort.packageHidden` reads only installed-user

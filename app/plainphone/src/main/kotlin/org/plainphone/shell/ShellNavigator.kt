@@ -113,6 +113,7 @@ class ShellNavigator(
         org.plainphone.ui.user.PhoneSettingsEvent.OpenSound -> push(s, ShellRoute.Sound)
         org.plainphone.ui.user.PhoneSettingsEvent.OpenBattery -> push(s, ShellRoute.Battery)
         org.plainphone.ui.user.PhoneSettingsEvent.Back -> back(s)
+        org.plainphone.ui.user.PhoneSettingsEvent.OpenWaitingChange,
         is org.plainphone.ui.user.PhoneSettingsEvent.ShowCommunicationCountsChanged -> Step(s)
     }
 

@@ -88,3 +88,15 @@ fun cancelStage(result: WaitingOutcome?): WaitingStage? = when (result) {
     WaitingOutcome.IGNORED -> null
     else -> WaitingStage.StillCancelling
 }
+
+/** U7 follows the same current store read as Home; mature changes no longer offer Cancel. */
+fun settingsWaitingChange(read: WaitingRead?): WaitingNotice? =
+    read?.notice?.takeIf { it.phase == WaitingPhase.PENDING }
+
+/** The existing U9 description, shared by its U7 entry point. */
+fun waitingChangeTextResource(kind: WaitingChangeKind): Int = when (kind) {
+    WaitingChangeKind.TURN_OFF -> org.plainphone.R.string.wait_change_turn_off
+    WaitingChangeKind.ADD_PERSON, WaitingChangeKind.HAND_OVER, WaitingChangeKind.REMOVE_PERSON ->
+        org.plainphone.R.string.wait_change_people
+    else -> org.plainphone.R.string.wait_change_setup
+}
