@@ -85,20 +85,32 @@ class AndroidInstallerPort(context: Context, private val statusSender: (sessionI
 }
 
 /**
- * [ApkInspector] through `getPackageArchiveInfo` with `GET_SIGNING_CERTIFICATES`, which makes
- * Android verify the APK signature while collecting the certificates. The signer set is the current
- * one (`apkContentsSigners`), as for installed apps. A file without verified signing info is null.
+ * [ApkInspector] through `getPackageArchiveInfo`, which makes Android verify the APK signature while
+ * collecting the certificates. The signer set is the current one (`signingInfo.apkContentsSigners`),
+ * as for installed apps, never the rotation history. A file without verified signing info is null.
+ *
+ * Android 13 (API 33) collects and verifies certificates for an archive only when GET_SIGNATURES is
+ * set, yet fills `signingInfo` only for GET_SIGNING_CERTIFICATES (R4, PLA-207; sources in
+ * `spikes/installer-boundary/evidence/`), so [flagsFor] asks for both there. Other levels collect
+ * with GET_SIGNING_CERTIFICATES alone. The legacy `signatures` array is never read.
  */
 class ArchiveApkInspector(context: Context) : ApkInspector {
     private val pm = context.packageManager
 
     override fun inspect(apk: File): ApkFacts? = try {
         @Suppress("DEPRECATION")
-        val info = pm.getPackageArchiveInfo(apk.path, PackageManager.GET_SIGNING_CERTIFICATES)
+        val info = pm.getPackageArchiveInfo(apk.path, flagsFor(Build.VERSION.SDK_INT))
         val signers = info?.signingInfo?.apkContentsSigners?.map { CertDigests.sha256(it.toByteArray()) }?.toSet()
         if (info == null || signers.isNullOrEmpty()) null
         else ApkFacts(PackageName(info.packageName), signers, info.longVersionCode)
     } catch (_: Exception) {
         null
+    }
+
+    companion object {
+        @Suppress("DEPRECATION")
+        fun flagsFor(sdk: Int): Int =
+            if (sdk == 33) PackageManager.GET_SIGNING_CERTIFICATES or PackageManager.GET_SIGNATURES
+            else PackageManager.GET_SIGNING_CERTIFICATES
     }
 }
