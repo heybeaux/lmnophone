@@ -17,7 +17,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import java.time.LocalDateTime
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import org.plainphone.boot.BuildControl
@@ -80,12 +79,13 @@ class MainActivity : ComponentActivity() {
                         WaitingChangeScreen(cancel.state) { onCancelEvent(cancel, it) }
                     } else if (attentionOpen) {
                         // Under "needs attention" the pending change and its PIN-free Cancel are here (wiring 4).
-                        val wait by runtime.waitingNotice.collectAsState()
-                        NeedsAttentionScreen(NeedsAttentionUiState(pendingChange(wait, ZonedDateTime.now(),
+                        // Timed from the pass's read, so it names the same time as Home's line.
+                        val read by runtime.waitingRead.collectAsState()
+                        NeedsAttentionScreen(NeedsAttentionUiState(pendingChange(read,
                             DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)))) { event ->
                             when (event) {
                                 NeedsAttentionEvent.Back -> attentionOpen = false
-                                NeedsAttentionEvent.CancelChange -> wait?.let { openCancel(it.requestId) }
+                                NeedsAttentionEvent.CancelChange -> read?.notice?.let { openCancel(it.requestId) }
                             }
                         }
                     } else Home(notice)

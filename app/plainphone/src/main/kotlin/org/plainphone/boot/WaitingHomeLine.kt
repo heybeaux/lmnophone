@@ -49,6 +49,13 @@ fun pendingChange(wait: WaitingNotice?, now: ZonedDateTime, time: DateTimeFormat
     return PendingChange(kind, committing = wait.phase != WaitingPhase.PENDING)
 }
 
+/** One pass's read of the current operation ([notice], null with none) and the time it was read. */
+data class WaitingRead(val notice: WaitingNotice?, val at: ZonedDateTime)
+
+/** [pendingChange] for [read], timed from when it was read, so it names the same time as Home's line. */
+fun pendingChange(read: WaitingRead?, time: DateTimeFormatter): PendingChange? =
+    read?.let { pendingChange(it.notice, it.at, time) }
+
 /** [now] plus [remainingMillis], rounded up to the shown minute (PLA-371 R2), and its day. */
 private fun turnOffAt(remainingMillis: Long, now: ZonedDateTime, time: DateTimeFormatter): Pair<String, HomeNoticeDay> {
     val exact = now.plus(remainingMillis, ChronoUnit.MILLIS)
