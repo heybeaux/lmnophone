@@ -1,0 +1,10 @@
+build=35
+apk_sha256=3bf57f7abb0bef367f58d645ff8228ec04e0b1c666e58a7d688700603e336772
+branch=release/preview-35@5d87cedc (preview-34@7465fb3d + pla-4-13/postpone@6833f25a)
+installed_local=2026-10-12 14:28:50 PDT (21:28:50Z, lastUpdateTime)
+upgrade=34-to-35-in-place, same signer, gate exit 0 (242 PASS)
+system_update_policy=SystemUpdatePolicy (type: 3, windowStart: 0, windowEnd: 0, freezes: []) after gate restart; none before install
+pending_update_record=absent (no update pending)
+emergency=More>Emergency and Phone both exactly 911, zero Telecom calls
+safety_diff=none (location 0, BT on, bonded 0, font 1.0, ringtone, ring volume 5, saved-list hash d32466f0bb5f98e0)
+not exercised on spare: pending-update Home line, RELEASE_UPDATE_POLICY undo (emulator + host tests only)
