@@ -40,6 +40,9 @@ import org.plainphone.policy.FrictionSettings
 import org.plainphone.policy.FrictionSettingsPatch
 import org.plainphone.policy.FrictionSettingsReceipt
 import org.plainphone.policy.IncomingPersonEnrollment
+import org.plainphone.policy.IncomingSelfManagedEnrollment
+import org.plainphone.policy.ModeSwitchPatch
+import org.plainphone.policy.SelfManagedEnrollmentConfirmations
 import org.plainphone.policy.LockoutNotice
 import org.plainphone.policy.PermissionChoice
 import org.plainphone.policy.PermissionGrantCapability
@@ -364,7 +367,6 @@ internal object AuthorityCodec {
     }
 
     private fun DataOutputStream.operation(op: WaitingOperation) {
-        if (op.modePatch != null) unsupported()
         writeUTF(op.identity.requestId); writeUTF(op.identity.cancelCode); writeUTF(op.starter.value)
         writeLong(op.generation); writeLong(op.structureGeneration); writeUTF(op.mode.name); time(op.startedAt)
         writeUTF(op.phase.name); recipients(op.recipientGenerations, op.recipientContacts); writeInt(op.restoredSteps)
@@ -374,7 +376,10 @@ internal object AuthorityCodec {
         optional(op.frictionPatch) { p ->
             writeUTF(p.starter.value); writeLong(p.generation); writeLong(p.structureGeneration); friction(p.source); friction(p.target)
         }
-        optional(op.peoplePatch) { peoplePatch(it) }
+        // Schema 6 wrote this byte as a boolean for the people patch; 2 marks a mode patch (PLA-97).
+        // Records without a mode patch keep their bytes; a build before PLA-97 reads tag 2 as damaged.
+        val mode = op.modePatch
+        if (mode != null) { writeByte(2); modePatch(mode) } else optional(op.peoplePatch) { peoplePatch(it) }
     }
 
     private fun DataInputStream.operation(peoplePatches: Boolean): WaitingOperation {
@@ -386,9 +391,16 @@ internal object AuthorityCodec {
         val patch = optional {
             requireNotNull(FrictionSettingsPatch.restore(TrustedPersonId(readUTF()), readLong(), readLong(), friction(), friction()))
         }
-        val people = if (peoplePatches) optional { peoplePatch() } else null
+        var people: TrustedPersonPatch? = null
+        var switch: ModeSwitchPatch? = null
+        if (peoplePatches) when (readByte().toInt()) {
+            0 -> Unit
+            1 -> people = peoplePatch()
+            2 -> switch = modePatch()
+            else -> throw IllegalArgumentException()
+        }
         return WaitingOperation(identity, starter, generation, structure, mode, startedAt, phase, generations, restored,
-            skipper, skipperGeneration, people, contacts, stopper, stopperGeneration, null, patch)
+            skipper, skipperGeneration, people, contacts, stopper, stopperGeneration, switch, patch)
     }
 
     /** The original patch and pending enrollment; only verifiers are stored, never a recovery code. */
@@ -396,33 +408,76 @@ internal object AuthorityCodec {
         writeUTF(p.kind.name); writeUTF(p.starter.value); writeLong(p.structureGeneration)
         list(p.dependencyGenerations.entries.sortedBy { it.key.value }) { (id, g) -> writeUTF(id.value); writeLong(g) }
         list(p.removedSlots.map { it.value }.sorted()) { writeUTF(it) }
-        optional(p.incoming) { e ->
-            writeUTF(e.person.value); credential(e.credential); writeUTF(e.resetProtectionUserId)
-            with(e.confirmations) {
-                listOf(inPerson, nameAndNumberEntered, ownPinSet, recoveryCodeReceived, resetProtectionIdFromOwnDevice,
-                    testTextReceived, offDeviceSignInChecked, independentSecondFactorChecked, accountAtLeast72HoursOld)
+        optional(p.incoming) { incomingPerson(it) }
+    }
+
+    private fun DataOutputStream.incomingPerson(e: IncomingPersonEnrollment) {
+        writeUTF(e.person.value); credential(e.credential); writeUTF(e.resetProtectionUserId)
+        with(e.confirmations) {
+            listOf(inPerson, nameAndNumberEntered, ownPinSet, recoveryCodeReceived, resetProtectionIdFromOwnDevice,
+                testTextReceived, offDeviceSignInChecked, independentSecondFactorChecked, accountAtLeast72HoursOld)
+        }.forEach { writeBoolean(it) }
+        witness(e.witness)
+    }
+
+    private fun DataOutputStream.witness(w: EnrollmentWitness) = when (w) {
+        EnrollmentWitness.Helper -> writeByte(0)
+        is EnrollmentWitness.CurrentPerson -> { writeByte(1); writeUTF(w.person.value) }
+    }
+
+    private fun DataInputStream.witness(): EnrollmentWitness = when (readByte().toInt()) {
+        0 -> EnrollmentWitness.Helper
+        1 -> EnrollmentWitness.CurrentPerson(TrustedPersonId(readUTF()))
+        else -> throw IllegalArgumentException()
+    }
+
+    private fun DataInputStream.incomingPerson(): IncomingPersonEnrollment {
+        val person = TrustedPersonId(readUTF()); val credential = credential(); val account = readUTF()
+        val c = EnrollmentConfirmations(flag(), flag(), flag(), flag(), flag(), flag(), flag(), flag(), flag())
+        return requireNotNull(IncomingPersonEnrollment.restore(person, credential, account, c, witness()))
+    }
+
+    /** The original mode-switch patch and exactly one pending enrollment; only verifiers are stored (PLA-97). */
+    private fun DataOutputStream.modePatch(p: ModeSwitchPatch) {
+        writeUTF(p.starter.value); writeUTF(p.sourceMode.name); writeLong(p.structureGeneration)
+        list(p.dependencyGenerations.entries.sortedBy { it.key.value }) { (id, g) -> writeUTF(id.value); writeLong(g) }
+        val self = p.incomingSelfManaged
+        val person = p.incomingTrustedPerson
+        if (self != null) {
+            writeByte(0)
+            writeUTF(self.person.value); credential(self.credential); writeUTF(self.resetProtectionUserId)
+            with(self.confirmations) {
+                listOf(ownPinSet, recoveryCodeReceived, resetProtectionIdFromOwnDevice, offDeviceSignInChecked,
+                    independentSecondFactorChecked, accountAtLeast72HoursOld)
             }.forEach { writeBoolean(it) }
-            when (val w = e.witness) {
-                EnrollmentWitness.Helper -> writeByte(0)
-                is EnrollmentWitness.CurrentPerson -> { writeByte(1); writeUTF(w.person.value) }
-            }
+            witness(self.witness)
+        } else {
+            writeByte(1); incomingPerson(requireNotNull(person))
         }
+    }
+
+    private fun DataInputStream.modePatch(): ModeSwitchPatch {
+        val starter = TrustedPersonId(readUTF()); val source = Mode.valueOf(readUTF()); val structure = readLong()
+        val dependencies = map { TrustedPersonId(readUTF()) to readLong() }
+        var self: IncomingSelfManagedEnrollment? = null
+        var person: IncomingPersonEnrollment? = null
+        when (readByte().toInt()) {
+            0 -> {
+                val id = TrustedPersonId(readUTF()); val credential = credential(); val account = readUTF()
+                val c = SelfManagedEnrollmentConfirmations(flag(), flag(), flag(), flag(), flag(), flag())
+                self = requireNotNull(IncomingSelfManagedEnrollment.restore(id, credential, account, c, witness()))
+            }
+            1 -> person = incomingPerson()
+            else -> throw IllegalArgumentException()
+        }
+        return requireNotNull(ModeSwitchPatch.restore(starter, source, structure, dependencies, self, person))
     }
 
     private fun DataInputStream.peoplePatch(): TrustedPersonPatch {
         val kind = WaitingChangeKind.valueOf(readUTF()); val starter = TrustedPersonId(readUTF()); val structure = readLong()
         val dependencies = map { TrustedPersonId(readUTF()) to readLong() }
         val removed = set { TrustedPersonId(readUTF()) }
-        val incoming = optional {
-            val person = TrustedPersonId(readUTF()); val credential = credential(); val account = readUTF()
-            val c = EnrollmentConfirmations(flag(), flag(), flag(), flag(), flag(), flag(), flag(), flag(), flag())
-            val witness = when (readByte().toInt()) {
-                0 -> EnrollmentWitness.Helper
-                1 -> EnrollmentWitness.CurrentPerson(TrustedPersonId(readUTF()))
-                else -> throw IllegalArgumentException()
-            }
-            requireNotNull(IncomingPersonEnrollment.restore(person, credential, account, c, witness))
-        }
+        val incoming = optional { incomingPerson() }
         return requireNotNull(TrustedPersonPatch.restore(kind, starter, structure, dependencies, removed, incoming))
     }
 
