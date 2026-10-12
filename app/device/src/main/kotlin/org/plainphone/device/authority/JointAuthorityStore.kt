@@ -594,8 +594,12 @@ class JointAuthorityStore internal constructor(
             expectedWaiting: WaitingState, expectedElevation: ElevationRecord): Boolean = commit { s ->
             val op = expectedWaiting.operation ?: return@commit null
             val patch = op.modePatch ?: return@commit null
+            // Structure only, as the policy's candidate: a PIN or code replaced after COMMITTING never
+            // stops the switch, so the outgoing holders' old generations are not rechecked (PLA-423 P1).
             if (op.phase != WaitingPhase.COMMITTING || applied(expectedWaiting, expectedCredentials) ||
-                !patch.dependenciesMatch(expectedCredentials) || !clearOfAuthority(expectedElevation)) return@commit null
+                expectedCredentials.mode != patch.sourceMode || expectedCredentials.structureGeneration != patch.structureGeneration ||
+                expectedCredentials.people.keys != patch.removedSlots || patch.incomingPerson in expectedCredentials.people ||
+                !clearOfAuthority(expectedElevation)) return@commit null
             val profile = expectedCredentials.recoveryProfile ?: return@commit null
             if (expectedCredentials.revision == Long.MAX_VALUE || expectedCredentials.structureGeneration == Long.MAX_VALUE) return@commit null
             // The one acceptable result, built from the stored patch the same way as the policy's candidate.
