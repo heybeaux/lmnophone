@@ -1,0 +1,220 @@
+PASS: arguments: serial APK output-directory [label]
+PASS: owned emulator serial
+preview-17 gate 2026-10-12T04:36:28.370253+00:00
+Install skipped; earlier in-place install evidence carried forward.
+PASS: read package version
+PASS: version is preview-17
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: owned profile emulator only
+PASS: restart
+PASS: wait for device
+PASS: read boot status
+PASS: read boot status
+PASS: read boot status
+PASS: read boot status
+PASS: read boot status
+PASS: wake screen
+PASS: dismiss no-PIN keyguard
+PASS: swipe unlock
+PASS: read boot gate log
+PASS: Home after full read-back
+full read-back=10-11 21:36:48.287; home shown=10-11 21:36:48.459
+PASS: read package version
+PASS: version is preview-17
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: press Home
+PASS: restore root host driver for AVD sdcard EFAULT
+PASS: wait for root host driver
+PASS: host driver uid
+PASS: root host driver; app UID unchanged
+PASS: press Home
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^More$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Emergency 9-1-1
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: More > Emergency prefill exactly 911
+PASS: read Telecom current calls
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: capture more-emergency-911.png
+PASS: valid PNG more-emergency-911.png
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/deleteButton$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/deleteButton$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/deleteButton$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dial field empty (raw text='Phone Number')
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dial field empty (raw text='Phone Number')
+PASS: press Home
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Phone(?:,.*)?$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dial field empty (raw text='Phone Number')
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: dial field empty (raw text='Phone Number')
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/nine$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/one$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/one$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: Phone typed field exactly 911
+PASS: read Telecom current calls
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: capture phone-911.png
+PASS: valid PNG phone-911.png
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/deleteButton$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read exactly one dial field
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap com\.google\.android\.dialer:id/deleteButton$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI

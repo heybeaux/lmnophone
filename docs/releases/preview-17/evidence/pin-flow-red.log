@@ -78,22 +78,22 @@
 > Task :plainphone:processDebugJavaRes UP-TO-DATE
 
 > Task :plainphone:compileDebugUnitTestKotlin FAILED
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:10:26 Unresolved reference 'PinScreenPort'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:15:9 'entry' overrides nothing.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:16:9 'enroll' overrides nothing.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:17:9 'authenticate' overrides nothing.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:20:33 Unresolved reference 'PinScreenFlow'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:23:22 Unresolved reference 'PinPage'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:25:22 Unresolved reference 'PinPage'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:27:22 Unresolved reference 'PinPage'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:30:33 Unresolved reference 'PinScreenFlow'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:33:22 Unresolved reference 'PinPage'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:35:22 Unresolved reference 'PinPage'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:38:33 Unresolved reference 'PinScreenFlow'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:45:33 Unresolved reference 'PinScreenFlow'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:48:39 Unresolved reference 'PinPage'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:50:22 Unresolved reference 'PinPage'.
-e: file:///Users/beauxwalton/projects/plainphone-policy-preview17/app/plainphone/src/test/kotlin/org/plainphone/shell/TestBuildNavigatorTest.kt:32:46 Unresolved reference 'OpenTrustedPerson'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:10:26 Unresolved reference 'PinScreenPort'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:15:9 'entry' overrides nothing.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:16:9 'enroll' overrides nothing.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:17:9 'authenticate' overrides nothing.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:20:33 Unresolved reference 'PinScreenFlow'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:23:22 Unresolved reference 'PinPage'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:25:22 Unresolved reference 'PinPage'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:27:22 Unresolved reference 'PinPage'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:30:33 Unresolved reference 'PinScreenFlow'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:33:22 Unresolved reference 'PinPage'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:35:22 Unresolved reference 'PinPage'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:38:33 Unresolved reference 'PinScreenFlow'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:45:33 Unresolved reference 'PinScreenFlow'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:48:39 Unresolved reference 'PinPage'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/PinScreenFlowTest.kt:50:22 Unresolved reference 'PinPage'.
+e: file://<worktree>/app/plainphone/src/test/kotlin/org/plainphone/shell/TestBuildNavigatorTest.kt:32:46 Unresolved reference 'OpenTrustedPerson'.
 
 FAILURE: Build failed with an exception.
 
