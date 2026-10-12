@@ -22,6 +22,11 @@ class PreviewTurnOffScreenshotTest(private val scale: Float) {
     @Test fun intro() = turnOff(TurnOffStage.Intro)
     @Test fun firstConfirmation() = turnOff(TurnOffStage.FirstConfirmation)
     @Test fun lastConfirmation() = turnOff(TurnOffStage.LastConfirmation)
+    @Test fun selfManagedReleaseConfirmation() = turnOff(TurnOffStage.FirstConfirmation, AdminContext("Alex"), false)
+    @Test fun supervisedPreviewConfirmation() = turnOff(TurnOffStage.FirstConfirmation, AdminContext("Alex", "Jo"), true)
+    @Test fun supervisedReleaseConfirmation() = turnOff(TurnOffStage.FirstConfirmation, AdminContext("Alex", "Jo"), false)
+    @Test fun selfManagedReleaseLastCheck() = turnOff(TurnOffStage.LastConfirmation, AdminContext("Alex"), false)
+    @Test fun supervisedReleaseLastCheck() = turnOff(TurnOffStage.LastConfirmation, AdminContext("Alex", "Jo"), false)
     @Test fun freshPin() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
         PinScreen(PinUiState(AdminContext("Alex"), PinStage.Enter)) {}
     } } }
@@ -31,8 +36,8 @@ class PreviewTurnOffScreenshotTest(private val scale: Float) {
     @Test fun maturityNotice() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
         HomeScreen(HomeUiState("10:42", "Monday 12 October", "Mon 12 Oct", emptyList(), HomeNotice.PreviewTurnOffClosed)) {}
     } } }
-    private fun turnOff(stage: TurnOffStage) = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
-        TurnOffScreen(TurnOffUiState(AdminContext("Alex"), stage, helper = "Sam", testBuild = true)) {}
+    private fun turnOff(stage: TurnOffStage, context: AdminContext = AdminContext("Alex"), testBuild: Boolean = true) = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+        TurnOffScreen(TurnOffUiState(context, stage, helper = "Sam", testBuild = testBuild)) {}
     } } }
     private fun waiting(stage: WaitingStage) = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
         WaitingChangeScreen(WaitingChangeUiState(AdminContext("Alex"), stage, "Turn LMNOPhone off", happensAt = "10:42",
