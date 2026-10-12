@@ -15,7 +15,9 @@ class SystemUpdatePostponeTest {
         var afterWrite: UpdatePolicyRead? = null,
         var failRead: Boolean = false,
         var failWrite: Boolean = false,
+        var failClear: Boolean = false,
     ) : SystemUpdatePolicyPort {
+        var clears = 0
         val writes = mutableListOf<UpdatePolicyKind>()
         var reads = 0
         override fun isDeviceOwner() = owner
@@ -28,6 +30,11 @@ class SystemUpdatePostponeTest {
             if (failWrite) throw IllegalStateException(DETAIL)
             writes += kind
             held = afterWrite ?: UpdatePolicyRead(kind, 0)
+        }
+        override fun clear() {
+            if (failClear) throw IllegalStateException(DETAIL)
+            clears++
+            held = UpdatePolicyRead(UpdatePolicyKind.NONE, 0)
         }
     }
 
@@ -83,6 +90,28 @@ class SystemUpdatePostponeTest {
         assertEquals(PostponeStatus.NOT_OWNER, postpone(port).apply())
         assertEquals(0, port.reads)
         assertTrue(port.writes.isEmpty())
+    }
+
+    /**
+     * The driver's undo (API 35 keeps the policy after `dpm remove-active-admin` and reboot): release clears
+     * it and later re-applies in this process leave it cleared, so DO can then be removed.
+     */
+    @Test fun releaseClearsAndLaterReappliesLeaveItCleared() {
+        val port = FakePort()
+        val postpone = postpone(port)
+        postpone.apply()
+        assertEquals(PostponeStatus.RELEASED, postpone.release())
+        assertEquals(UpdatePolicyRead(UpdatePolicyKind.NONE, 0), port.held)
+        assertEquals(PostponeStatus.RELEASED, postpone.apply())
+        assertEquals(1, port.writes.size)
+        assertEquals(1, port.clears)
+    }
+
+    @Test fun releaseNeedsDeviceOwnerAndNeverThrows() {
+        assertEquals(PostponeStatus.NOT_OWNER, postpone(FakePort(owner = false)).release())
+        val failing = postpone(FakePort(failClear = true))
+        assertEquals(PostponeStatus.FAILED, failing.release())
+        assertEquals(PostponeStatus.SET, failing.apply())
     }
 
     /** Logs carry only the status and policy shape: no build fingerprint, serial or exception message. */
