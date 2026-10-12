@@ -5,17 +5,22 @@ package org.plainphone.device
 import org.plainphone.core.PackageName
 import org.plainphone.policy.PolicyPlan
 
-/** Read-only, process-local evidence. Caller must separately require a verified full unlocked pass. */
+/**
+ * Read-only, process-local evidence. Capture, invalidation and targeted reads are dispatcher-confined.
+ * The immutable snapshot is published atomically; broadcast receipt may read [hasSnapshot] off-thread.
+ * Caller must separately require a verified full unlocked pass.
+ */
 class PackageChangeReadback(
     private val port: DevicePolicyPort,
     private val liveProtected: () -> Set<PackageName>,
     private val launchable: (PackageName) -> Boolean,
     private val journalClear: () -> Boolean,
 ) {
-    private var states = emptyMap<PackageName, PackageState>()
-    private var lockTask = emptySet<PackageName>()
+    private data class Snapshot(val states: Map<PackageName, PackageState>, val lockTask: Set<PackageName>)
+    @Volatile private var snapshot: Snapshot? = null
+    val hasSnapshot: Boolean get() = snapshot != null
 
-    fun invalidate() { states = emptyMap(); lockTask = emptySet() }
+    fun invalidate() { snapshot = null }
 
     fun capture(systemPackages: Set<PackageName>, plan: PolicyPlan, sessionPackages: Set<PackageName>) =
         capture(systemPackages, plan.hidden,
@@ -35,16 +40,16 @@ class PackageChangeReadback(
                 val state = try { port.packageState(name) } catch (_: Exception) { null }
                 if (state != null && state.hidden == (name in hidden)) snapshot[name] = state
             }
-            states = snapshot.toMap()
-            lockTask = expectedLockTask.toSet()
+            this.snapshot = Snapshot(snapshot.toMap(), expectedLockTask.toSet())
         } catch (_: Exception) { invalidate() }
     }
 
     /** Null/throw/unknown/mismatch is not proof. This never writes or grants access. */
     fun unchanged(name: PackageName): Boolean = try {
-        val before = states[name]
+        val captured = snapshot
+        val before = captured?.states?.get(name)
         before != null && journalClear() && name !in liveProtected() &&
-            port.lockTaskPackages() == lockTask && name !in lockTask &&
+            port.lockTaskPackages() == captured.lockTask && name !in captured.lockTask &&
             port.packageState(name) == before &&
             // Component enable changes can create a new launcher without changing app-level flags.
             // A hidden app remains contained regardless of launcher changes.

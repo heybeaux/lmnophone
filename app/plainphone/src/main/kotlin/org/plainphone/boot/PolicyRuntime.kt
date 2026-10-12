@@ -88,7 +88,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     @Volatile private var lastGate = HomeGate.CHECKING
     @Volatile private var checkingHeld = false
     private val noticeState = MutableStateFlow<HomeNotice?>(null)
-    private val packageEvents = PackageEventBurst(dispatcher::post, ::run)
+    private val packageEvents = PackageEventBurst(dispatcher::post, ::run) { packageReadback.hasSnapshot }
     private val runsState = MutableStateFlow(0)
     private val refreshState = MutableStateFlow(HomeRefresh(null, 0))
     val refresh: StateFlow<HomeRefresh> = refreshState
@@ -177,7 +177,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     /** Hook for the wiring slice: run after every trusted-person action commits. */
     fun afterTrustedPersonAction() = reapply("trusted-person")
 
-    private fun run(reason: String) {
+    private fun run(reason: String, packageMaySkip: Boolean = true) {
         if (!dpm.isDeviceOwnerApp(context.packageName)) {
             bootCoverage.invalidate()
             packageReadback.invalidate()
@@ -205,14 +205,6 @@ class PolicyRuntime private constructor(private val context: Context) {
                     null
                 }
                 userUnlocked.recordPass(locked)
-                if (!locked && outcome?.ready == true && !outcome.needsAttention && !boot.retryPending &&
-                    BuildControl.control === NegativeControl.None) {
-                    preview.lastPlan?.let { plan ->
-                        timings.measure("packageSnapshot") {
-                            packageReadback.capture(preview.systemPackages, plan, SESSION_PACKAGES)
-                        }
-                    }
-                }
                 bootMillis = SystemClock.elapsedRealtime() - started
                 outcome
             },
@@ -223,11 +215,24 @@ class PolicyRuntime private constructor(private val context: Context) {
             },
             packageUnchanged = {
                 val name = reason.removePrefix("package:PACKAGE_CHANGED:")
-                packageReadback.unchanged(PackageName(name))
+                packageMaySkip && packageReadback.unchanged(PackageName(name))
             },
             afterPackageSkip = { outcome ->
                 publishPass(reason, locked, outcome, refreshHome = false)
                 lastGate == HomeGate.READY
+            },
+            afterPublished = { id ->
+                // BootPassCoverage has now checked full verification, publication and retry state.
+                // Freeze this pass's inputs; later passes must never supply an older capture's plan.
+                preview.lastPlan?.let { plan ->
+                    val systemPackages = preview.systemPackages.toSet()
+                    bootCoverage.captureAfterPublished(dispatcher::post) {
+                        val captureStarted = SystemClock.elapsedRealtime()
+                        packageReadback.capture(systemPackages, plan, SESSION_PACKAGES)
+                        Log.i(TAG, "packageSnapshot pass=$id ms=${SystemClock.elapsedRealtime() - captureStarted} " +
+                            "captured=${packageReadback.hasSnapshot} at=${SystemClock.elapsedRealtime()}")
+                    }
+                }
             },
             afterPass = { outcome ->
                 try {

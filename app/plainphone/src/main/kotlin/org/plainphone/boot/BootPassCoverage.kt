@@ -11,7 +11,18 @@ internal class BootPassCoverage {
     private var last: Pass? = null
     private var nextId = 0L
 
-    fun invalidate() { last = null }
+    private var generation = 0L
+
+    fun invalidate() { last = null; generation++ }
+
+    /** Queue only after publication. Any intervening run/invalidation cancels this capture. */
+    fun captureAfterPublished(post: (() -> Unit) -> Unit, capture: () -> Unit) {
+        val pass = last ?: return
+        val expectedGeneration = generation
+        post {
+            if (generation == expectedGeneration && last === pass) capture()
+        }
+    }
 
     /**
      * [locked] is read live before starting work. Only a full pass started after that read says
@@ -30,6 +41,7 @@ internal class BootPassCoverage {
         skipped: (Long) -> Unit,
         packageUnchanged: () -> Boolean = { false },
         afterPackageSkip: (BootOutcome?) -> Boolean = afterPass,
+        afterPublished: (Long) -> Unit = {},
     ) {
         val eligible = last.takeIf { !locked && !retryPending() }
         val packageCovered = eligible != null && reason.startsWith("package:PACKAGE_CHANGED:") &&
@@ -48,7 +60,10 @@ internal class BootPassCoverage {
         val applied = outcome?.apply
         if (!locked && published && outcome != null && !outcome.locked && outcome.ready &&
             applied?.complete == true && applied.applied.containsAll(FULL_STAGES) &&
-            !outcome.needsAttention && !retryPending()) last = pass
+            !outcome.needsAttention && !retryPending()) {
+            last = pass
+            if (covered == null) afterPublished(pass.id)
+        }
     }
 
     private companion object {
