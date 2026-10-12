@@ -19,6 +19,7 @@ import java.io.File
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +32,12 @@ import org.plainphone.device.DpmResetProtectionPort
 import org.plainphone.device.ReadbackPolicyApplier
 import org.plainphone.device.ResetProtectionEffects
 import org.plainphone.device.SerialDispatcher
+import org.plainphone.device.approval.AndroidManifestFacts
+import org.plainphone.device.approval.ApprovalRecovery
+import org.plainphone.device.approval.DeviceApprovalEffects
+import org.plainphone.device.approval.DpmPermissionGrantPort
+import org.plainphone.device.approval.PublishedHomeApps
+import org.plainphone.device.approval.RecordedPermissionManifests
 import org.plainphone.device.authority.AuthorityPass
 import org.plainphone.device.authority.DeviceReconciliationEffects
 import org.plainphone.device.authority.DpmDeviceOwnerReader
@@ -47,6 +54,10 @@ import org.plainphone.device.runtime.FileClockStateStore
 import org.plainphone.device.storage.FileFlipFailureStore
 import org.plainphone.device.storage.FileJournalStore
 import org.plainphone.device.storage.FilePolicyStore
+import org.plainphone.policy.AppApprovalController
+import org.plainphone.policy.AppApprovalIdSource
+import org.plainphone.policy.AppApprovalState
+import org.plainphone.policy.BatteryState
 import org.plainphone.policy.PersonAuthorityConsumer
 import org.plainphone.core.Mode
 import org.plainphone.policy.NoticeInput
@@ -78,6 +89,11 @@ enum class HomeGate { CHECKING, READY, NOT_READY }
  * Every run also reads the current waiting operation fresh from the one authority store ([authority])
  * and, once unlocked, reconciles a confirmed lost waiting record without a PIN. Nothing writes that
  * store until trusted people are set up, so on a phone without them both read nothing and change nothing.
+ *
+ * App approvals ([approvals], PLA-281): every unlocked run first gives the approval controller one retry,
+ * and every policy input (the boot re-apply and waiting reconciliation) carries the stored approval state,
+ * none while an approval operation is pending. Home is ready only if the approvals the run used are still
+ * current. While one is pending the alarm runs every 5 minutes.
  */
 class PolicyRuntime private constructor(private val context: Context) {
     private val dispatcher = SerialDispatcher()
@@ -100,7 +116,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val authorityStore = JointAuthorityStore(File(protectedDir, "authority"))
     private val authority: AuthorityPass by lazy {
         AuthorityPass(authorityStore, authorityStore.waitingReconciler(
-            { assembler.assemble().input },
+            { assembler.assemble().input.copy(approvalState = approvals.forPass()) },
             DeviceReconciliationEffects(
                 // The common startup revocation: the session journal's revoke and protected-state check.
                 revoke = { boot.sessions.onStart() },
@@ -114,23 +130,51 @@ class PolicyRuntime private constructor(private val context: Context) {
             PersonAuthorityConsumer { _, _, _ -> false },
         ))
     }
+    private val runtimeFacts = AndroidRuntimeFacts(context)
+    /** The one proven clock in device-protected storage, shared by waiting checkpoints and app approvals. */
+    private val clock by lazy {
+        ProvenRunningClock(FileClockStateStore(File(protectedDir, "clock")), runtimeFacts::bootTime, authorityStore::reserveEpoch)
+    }
     /**
      * The pending wait's checkpoints and PIN-free cancel: one per process, on the same store, with the
      * proven clock in device-protected storage. No grant is accepted; nothing here starts or skips a wait.
      */
     private val waiting: WaitingCheckpoints by lazy {
-        val facts = AndroidRuntimeFacts(context)
-        WaitingCheckpoints(
-            authorityStore,
-            ProvenRunningClock(FileClockStateStore(File(protectedDir, "clock")), facts::bootTime, authorityStore::reserveEpoch),
-            facts::battery,
-            PersonAuthorityConsumer { _, _, _ -> false },
-        )
+        WaitingCheckpoints(authorityStore, clock, runtimeFacts::battery, PersonAuthorityConsumer { _, _, _ -> false })
     }
+    /**
+     * The one app-approval controller on [dispatcher], over the same authority store. No grant is accepted
+     * yet (PIN entry is not wired), so only recovery of an already-recorded operation can change anything.
+     */
+    private val approvals: ApprovalRecovery by lazy {
+        val store = authorityStore.approvals
+        val grants = DpmPermissionGrantPort(context, admin)
+        val manifests = RecordedPermissionManifests(store::read, AndroidManifestFacts(context, grants, packagesPort::fingerprint))
+        val neverHide = {
+            try {
+                PolicyEngine.decide(assembler.assemble().input).neverHide
+            } catch (_: RuntimeException) {
+                null
+            }
+        }
+        ApprovalRecovery(dispatcher, store, AppApprovalController(
+            store, authorityStore.credentials::read, PersonAuthorityConsumer { _, _, _ -> false }, boot.sessions, clock,
+            { assembler.assemble().input.copy(waitingOperation = authority.waitingOperation()) },
+            manifests, { runtimeFacts.battery() ?: UNKNOWN_BATTERY },
+            DeviceApprovalEffects(dispatcher, port, grants, PublishedHomeApps(), neverHide, manifests),
+            AppApprovalIdSource { UUID.randomUUID().toString() },
+        ))
+    }
+    /** The approval state the current run's plan used; read by its hand-back check. Dispatcher only. */
+    private var passApprovals: AppApprovalState? = null
     private val boot = BootReapply(
         FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT),
         port, SESSION_PACKAGES,
-        { locked -> PolicyEngine.decide(assembler.assemble().input.copy(lockedBoot = locked, waitingOperation = authority.waitingOperation())) },
+        { locked ->
+            passApprovals = approvals.forPass()
+            PolicyEngine.decide(assembler.assemble().input.copy(lockedBoot = locked, waitingOperation = authority.waitingOperation(),
+                approvalState = passApprovals))
+        },
         restrictionFilter,
         { stage, error -> Log.w(TAG, "stage $stage failed: ${error ?: "readback mismatch"}", error) },
         floor = { osFloor(packagesPort) },
@@ -237,6 +281,21 @@ class PolicyRuntime private constructor(private val context: Context) {
     /** Hook for the wiring slice: run after every trusted-person action commits. */
     fun afterTrustedPersonAction() = reapply("trusted-person")
 
+    /** One whole app-approval operation as one dispatcher task, then the pass after a trusted-person action. */
+    fun <T> approvalOperation(block: AppApprovalController.() -> T, done: (T?) -> Unit = {}) = dispatcher.post {
+        val result = try {
+            approvals.operation(block)
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "approval operation threw", e)
+            null
+        }
+        try {
+            run("trusted-person")
+        } finally {
+            done(result)
+        }
+    }
+
     /** The phone's own cancel of the pending wait it shows; no PIN. The pass that follows reads the result. */
     fun cancelWait(requestId: String, done: (WaitingOutcome?) -> Unit = {}) = dispatcher.post {
         val result = try {
@@ -269,6 +328,9 @@ class PolicyRuntime private constructor(private val context: Context) {
             Log.e(TAG, "waiting checkpoint threw", e)
             null
         }
+        // One approval retry before deciding; a recovered activation is in this pass's approvals (PLA-281).
+        val approval = approvals.beforePass(locked)?.also { Log.i(TAG, "approval recovery after $reason: $it") }
+        passApprovals = null
         val outcome = try {
             boot.run(locked)
         } catch (e: RuntimeException) {
@@ -291,9 +353,11 @@ class PolicyRuntime private constructor(private val context: Context) {
             Log.e(TAG, "authority attention check threw", e)
             true
         }
-        // While a wait is pending, the checkpoint alarm runs every 5 minutes; otherwise it is left as it was.
-        if (waited != null) try {
-            val period = waiting.periodMillis(ReapplyAlarm.PERIOD_MILLIS)
+        // While a wait or an approval operation is pending, the alarm runs every 5 minutes; otherwise it is left as it was.
+        val approvalPending = approval != null && approvals.pending() == true
+        if (waited != null || approvalPending) try {
+            val waitPeriod = if (waited != null) waiting.periodMillis(ReapplyAlarm.PERIOD_MILLIS) else ReapplyAlarm.PERIOD_MILLIS
+            val period = if (approvalPending) minOf(waitPeriod, APPROVAL_RETRY_MILLIS) else waitPeriod
             if (period != ReapplyAlarm.PERIOD_MILLIS) ReapplyAlarm.schedule(context, period)
         } catch (e: RuntimeException) {
             Log.e(TAG, "checkpoint alarm threw", e)
@@ -324,7 +388,9 @@ class PolicyRuntime private constructor(private val context: Context) {
             waitingNoticeState.value = wait
             noticeTapState.value = line?.tap
             noticeState.value = homeLine(line, ZonedDateTime.now(), DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
-            lastGate = if (outcome?.ready == true && !pinned) HomeGate.READY else HomeGate.NOT_READY
+            // Hand-back: the approvals this pass decided with must still be current (PLA-281).
+            val handback = approvals.handback(passApprovals)
+            lastGate = if (outcome?.ready == true && !pinned && handback) HomeGate.READY else HomeGate.NOT_READY
             if (!checkingHeld) gateState.value = lastGate
             when (action) {
                 RecoveryAction.HOME_FORWARD ->
@@ -367,6 +433,10 @@ class PolicyRuntime private constructor(private val context: Context) {
         private val MESSAGES = PackageName("com.google.android.apps.messaging")
         /** Every package a session window can relax: Play, plus a matching inventory's Settings packages (none compiled in yet). */
         private val SESSION_PACKAGES = setOf(PackageName("com.android.vending"))
+        /** The alarm period while an approval operation stays pending. */
+        private const val APPROVAL_RETRY_MILLIS = 5 * 60 * 1000L
+        /** An unreadable battery allows no discretionary unhide. */
+        private val UNKNOWN_BATTERY = BatteryState(0, false)
 
         @Volatile private var instance: PolicyRuntime? = null
 
