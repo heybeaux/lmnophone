@@ -8,7 +8,11 @@ import java.time.temporal.ChronoUnit
 import org.plainphone.policy.HomeNoticeKind
 import org.plainphone.policy.NoticeLine
 import org.plainphone.policy.NoticeTap
+import org.plainphone.policy.WaitingChangeKind
 import org.plainphone.policy.WaitingNotice
+import org.plainphone.policy.WaitingPhase
+import org.plainphone.ui.home.PendingChange
+import org.plainphone.ui.home.PendingChangeKind
 import org.plainphone.policy.WaitingOutcome
 import org.plainphone.ui.home.HomeNotice
 import org.plainphone.ui.home.HomeNoticeDay
@@ -24,17 +28,33 @@ import org.plainphone.policy.HomeNotice as PolicyLine
 fun homeLine(line: PolicyLine?, now: ZonedDateTime, time: DateTimeFormatter): HomeNotice? = when (line?.kind) {
     null -> null
     HomeNoticeKind.NEEDS_ATTENTION -> HomeNotice.NeedsAttention
-    HomeNoticeKind.TURN_OFF_WAITING -> {
-        // Rounded up to the shown minute (PLA-371 R2): never earlier than maturity, also across midnight.
-        val exact = now.plus(line.remainingMillis ?: 0L, ChronoUnit.MILLIS)
-        val minute = exact.truncatedTo(ChronoUnit.MINUTES)
-        val at = if (minute == exact) minute else minute.plusMinutes(1)
-        HomeNotice.TurnOffWaiting(at.format(time),
-            HomeNoticeDay(at.toLocalDate(), ChronoUnit.DAYS.between(now.toLocalDate(), at.toLocalDate()).toInt()))
-    }
+    HomeNoticeKind.TURN_OFF_WAITING -> turnOffAt(line.remainingMillis ?: 0L, now, time).let { (t, day) -> HomeNotice.TurnOffWaiting(t, day) }
     HomeNoticeKind.PEOPLE_WAITING -> HomeNotice.PeopleChangeWaiting
     HomeNoticeKind.SETUP_WAITING -> HomeNotice.ModeChangeWaiting
     else -> null
+}
+
+/**
+ * The pending change for the needs-attention screen (wiring 4), from the same projection as Home's line:
+ * a turn-off with the same rounded-up time and day; committing or rolling back shows as in progress,
+ * so the screen offers no Cancel. Null with no current change.
+ */
+fun pendingChange(wait: WaitingNotice?, now: ZonedDateTime, time: DateTimeFormatter): PendingChange? {
+    wait ?: return null
+    val kind = when (wait.kind) {
+        WaitingChangeKind.TURN_OFF -> turnOffAt(wait.remainingMillis, now, time).let { (t, day) -> PendingChangeKind.TurnOff(t, day) }
+        WaitingChangeKind.ADD_PERSON, WaitingChangeKind.HAND_OVER, WaitingChangeKind.REMOVE_PERSON -> PendingChangeKind.People
+        WaitingChangeKind.SWITCH_MODE, WaitingChangeKind.SHORTEN_COUNTDOWN, WaitingChangeKind.RAISE_DAILY_LIMIT -> PendingChangeKind.Setup
+    }
+    return PendingChange(kind, committing = wait.phase != WaitingPhase.PENDING)
+}
+
+/** [now] plus [remainingMillis], rounded up to the shown minute (PLA-371 R2), and its day. */
+private fun turnOffAt(remainingMillis: Long, now: ZonedDateTime, time: DateTimeFormatter): Pair<String, HomeNoticeDay> {
+    val exact = now.plus(remainingMillis, ChronoUnit.MILLIS)
+    val minute = exact.truncatedTo(ChronoUnit.MINUTES)
+    val at = if (minute == exact) minute else minute.plusMinutes(1)
+    return at.format(time) to HomeNoticeDay(at.toLocalDate(), ChronoUnit.DAYS.between(now.toLocalDate(), at.toLocalDate()).toInt())
 }
 
 /**
