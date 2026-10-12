@@ -34,6 +34,7 @@ import org.plainphone.device.ReadbackPolicyApplier
 import org.plainphone.device.resetProtectionFor
 import org.plainphone.device.SerialDispatcher
 import org.plainphone.device.authority.AuthorityPass
+import org.plainphone.device.authority.DeviceModeSwitchEffects
 import org.plainphone.device.authority.DeviceReconciliationEffects
 import org.plainphone.device.authority.DpmDeviceOwnerReader
 import org.plainphone.device.authority.JointAuthorityStore
@@ -147,13 +148,16 @@ class PolicyRuntime private constructor(private val context: Context) {
         WaitingCheckpoints(authorityStore, provenClock, facts::battery, PersonAuthorityConsumer { _, _, _ -> false })
     }
     /**
-     * The directed callback for a committing or rolling-back people change (wiring 5): one step per pass,
+     * The directed callback for a committing or rolling-back people change (wiring 5) or mode switch
+     * (PLA-97; nothing can start one yet, so product switching stays unavailable): one step per pass,
      * in the direction its record holds, through the exact reset-protection set, broadcast and readback.
      * The fresh-PIN stop is not wired, so no grant is accepted.
      */
     private val peopleDriver: PeopleCommitDriver by lazy {
-        PeopleCommitDriver(authorityStore, resetEffects, provenClock,
-            PersonAuthorityConsumer { _, _, _ -> false })
+        PeopleCommitDriver(authorityStore,
+            // Mode switches too (PLA-97): the common revocation, then this pass's protected readback.
+            DeviceModeSwitchEffects({ boot.sessions.onStart() }, { boot.readBackProtected() }, resetEffects, authorityStore),
+            provenClock, PersonAuthorityConsumer { _, _, _ -> false })
     }
     /** Whether this pass's keep set rests on a completely read floor (PLA-399 finding 1). */
     private val floorCompleteness = FloorCompleteness()

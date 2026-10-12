@@ -105,6 +105,8 @@ class BootReapply(
 ) {
     private val applier = ReadbackPolicyApplier(port, onFailure)
     private var plan: PolicyPlan? = null
+    /** [plan] was built for a locked boot: a partial protected policy. */
+    private var planLocked = true
     /** [floor] returned a floor in this pass's [fallbackPlan]. */
     private var fallbackFloorRead = false
     private var applied: ApplyResult? = null
@@ -117,11 +119,19 @@ class BootReapply(
 
     val sessions = SessionController(journal, Effects(), { null }, null, { _, _ -> false })
 
+    /**
+     * Reads this pass's protected plan back and writes nothing (PLA-97: a mode switch's protected-state
+     * check after its revocation). False with no plan, with a locked-boot plan (which leaves out the full
+     * sweep, the exact lock-task list and Home, PLA-439 R1), on any mismatch or on a throw.
+     */
+    fun readBackProtected(): Boolean = !planLocked && plan?.let { attempt { applier.readBack(it) } } == true
+
     fun run(locked: Boolean): BootOutcome {
         applied = null
         runFlipFailures.clear()
         runFlipped.clear()
         fallbackFloorRead = false
+        planLocked = locked
         plan = attempt { filter.apply(decide(locked)) }
         val ready = attempt { sessions.onStart() } == true
         // Emergency repair does not depend on the revoke, on an earlier stage or on a plan. The journal
