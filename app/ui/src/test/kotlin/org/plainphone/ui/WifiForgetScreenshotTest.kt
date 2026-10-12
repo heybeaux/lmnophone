@@ -54,13 +54,14 @@ class WifiForgetScreenshotTest(private val scale: Float) {
                 val texts=nodes.flatMap{it.config.getOrElse(SemanticsProperties.Text){emptyList()}}.map{it.text}
                 assertTrue("Calls and texts still work" in texts)
                 assertTrue("when the phone has signal (the bars at the top of the screen)." in texts)
-                for(label in listOf("Forget this network","OK")) {
+                assertFalse("Forget this network" in texts)
+                for(label in listOf("OK")) {
                     val node=nodes.single{it.config.getOrElse(SemanticsProperties.Text){emptyList()}.any{it.text==label}}
                     assertTrue(node.boundsInRoot.bottom<=592f)
                     node.config[SemanticsActions.OnClick].action!!.invoke()
                 }
-                assertTrue(WifiMessageEvent.ForgetNetwork in events);assertTrue(WifiMessageEvent.Ok in events)
-            }) { HomeTestFrame { WifiMessageScreen(WifiMessageUiState(problem),events::add) } }
+                assertFalse(WifiMessageEvent.ForgetNetwork in events);assertTrue(WifiMessageEvent.Ok in events)
+            }) { HomeTestFrame { WifiMessageScreen(WifiMessageUiState(problem, canForget=false),events::add) } }
         }
     }
     companion object {
