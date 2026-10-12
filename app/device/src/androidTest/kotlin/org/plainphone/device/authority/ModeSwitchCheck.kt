@@ -38,7 +38,7 @@ import org.plainphone.policy.WaitingSkipSupport
  * readback or which account a wipe accepts. No Device Owner needed. Run each phase in a new process;
  * reboot between phases to test restart:
  *
- * - `-e phase mode-seed`: set up alex and jo (supervised) with an empty ledger, start the switch to a
+ * - `-e phase mode-seed`: set up alex and jo (supervised), write one synthetic debit, start the switch to a
  *   synthetic self-managed holder, and skip the wait with jo's recovery code: COMMITTING, jo rotated.
  * - `-e phase mode-apply`: the COMMITTING record survived; one executor step swaps to the self-managed
  *   holder (APPLIED) with the target list; the ledger is unchanged.
@@ -88,6 +88,12 @@ class ModeSwitchCheck(private val ctx: Context, private val log: (String) -> Uni
         val credentials = CredentialState(Mode.TRUSTED, holders,
             recoveryProfile = RecoveryProfile(holders.keys.associateWith { "account-${it.value}" }, "account-backup", friction))
         expect(InitialProvisioning(w.store).provision(credentials, "live") == ProvisionOutcome.CREATED, "supervised genesis created")
+        // One synthetic turn debit, which the switch and both reboots must keep (PLA-441 note).
+        val genesis = checkNotNull(w.store.elevationStore.read())
+        val debited = org.plainphone.policy.ElevationRecord(1, org.plainphone.policy.ElevationState(org.plainphone.policy.ElevationLedger(
+            listOf(org.plainphone.policy.ElevationDebit("pla97-debit", org.plainphone.core.RunningTime("pla97-epoch", 1_000))))))
+        expect(w.store.elevationStore.compareAndSet(genesis, debited, w.store.credentials.read()), "one synthetic debit written")
+        val joBefore = checkNotNull(w.store.credentials.read()).people.getValue(jo).generation
         val incoming = checkNotNull(IncomingSelfManagedEnrollment.confirm(sam, "account-sam",
             w.vault.prepareCredential("135791".toCharArray()), SelfManagedEnrollmentConfirmations(true, true, true, true, true, true),
             EnrollmentWitness.CurrentPerson(alex)))
@@ -99,12 +105,17 @@ class ModeSwitchCheck(private val ctx: Context, private val log: (String) -> Uni
         val op = Wired().store.waitingStore.read()?.operation
         expect(op?.phase == WaitingPhase.COMMITTING && op.skipper == jo, "COMMITTING with skipper jo")
         val disk = Wired().store
-        state.writeText("${start.requestId}\n${digest(disk.credentials.read()!!)}\n${elevationDigest(disk)}\n")
+        val rotated = checkNotNull(disk.credentials.read()).people.getValue(jo).generation
+        expect(rotated == joBefore + 1 && op?.skipperGeneration == rotated, "jo rotated exactly once and bound to the skip")
+        val old = Wired().vault.authenticate(jo, "246810".toCharArray(), org.plainphone.policy.PrivilegedAction("probe", "probe"))
+        expect(old !is org.plainphone.policy.PinResult.Authorized, "jo's replaced PIN no longer works")
+        state.writeText("${start.requestId}\n${digest(Wired().store.credentials.read()!!)}\n${elevationDigest(disk)}\n${bootId()}\n")
         note("seeded; credentials ${digest(disk.credentials.read()!!).take(16)}")
     }
 
     fun apply() {
-        val (id, before, elevation) = state.readLines()
+        val (id, before, elevation, seedBoot) = state.readLines()
+        expect(bootId() != seedBoot, "a reboot since the seed (${seedBoot.take(8)} -> ${bootId().take(8)})")
         val w = Wired()
         val creds = w.store.credentials.read()
         expect(creds != null && digest(creds) == before, "seeded credentials survived exactly")
@@ -117,12 +128,14 @@ class ModeSwitchCheck(private val ctx: Context, private val log: (String) -> Uni
         expect(after?.mode == Mode.SELF_MANAGED && after.people.keys == setOf(sam) && after.appliedPeopleChange?.requestId == id,
             "self-managed holder with applied marker read back")
         expect(elevationDigest(disk) == elevation, "elevation record unchanged")
-        state.writeText("$id\n${digest(after!!)}\n$elevation\n")
+        expect(disk.elevationStore.read()?.state?.ledger?.debits?.map { it.id } == listOf("pla97-debit"), "the debit survived the swap")
+        state.writeText("$id\n${digest(after!!)}\n$elevation\n${bootId()}\n")
         note("applied; credentials ${digest(after).take(16)}")
     }
 
     fun complete() {
-        val (id, swapped, elevation) = state.readLines()
+        val (id, swapped, elevation, applyBoot) = state.readLines()
+        expect(bootId() != applyBoot, "a reboot since the swap (${applyBoot.take(8)} -> ${bootId().take(8)})")
         val w = Wired()
         val creds = w.store.credentials.read()
         expect(creds != null && digest(creds) == swapped, "swapped credentials survived exactly")
@@ -132,7 +145,11 @@ class ModeSwitchCheck(private val ctx: Context, private val log: (String) -> Uni
         expect(disk.waitingStore.read()?.operation?.phase == WaitingPhase.COMPLETED, "COMPLETED read back")
         expect(digest(disk.credentials.read()!!) == swapped, "credentials unchanged by completion")
         expect(elevationDigest(disk) == elevation, "elevation record unchanged")
-        expect(Wired().people.tick(id, WaitingPhase.COMMITTING).outcome == PeopleChangeOutcome.IGNORED, "stale step ignored")
+        expect(disk.elevationStore.read()?.state?.ledger?.debits?.map { it.id } == listOf("pla97-debit"), "the debit survived completion")
+        val stale = Wired()
+        val credentialsBefore = digest(stale.store.credentials.read()!!)
+        expect(stale.people.tick(id, WaitingPhase.COMMITTING).outcome == PeopleChangeOutcome.IGNORED &&
+            stale.effects.calls.isEmpty() && digest(Wired().store.credentials.read()!!) == credentialsBefore, "stale step ignored with no effect or write")
         note("boot ${AndroidRuntimeFacts(ctx).bootTime()?.bootId}")
     }
 
@@ -141,6 +158,10 @@ class ModeSwitchCheck(private val ctx: Context, private val log: (String) -> Uni
         expect(!dir.exists(), "check folder removed")
     }
 
+    /** The kernel boot ID, which changes on every reboot. */
+    private fun bootId(): String = File("/proc/sys/kernel/random/boot_id").readText().trim()
+
+    /** Canonical encodings of the decoded sections, not raw file bytes. */
     private fun digest(c: CredentialState): String = hex(checkNotNull(AuthorityCodec.encodeCredentials(c)))
     private fun elevationDigest(store: JointAuthorityStore): String = hex(checkNotNull(AuthorityCodec.encodeElevation(checkNotNull(store.elevationStore.read()))))
     private fun hex(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
