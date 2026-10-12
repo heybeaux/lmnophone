@@ -1,0 +1,7 @@
+Before implementation, build 26 baseline:
+TextSizeControllerTest: unresolved TextSizePort/TextSizeController.
+TextSizeScreenshotTest: unresolved TextSizeUiState/TextSizeScreen.
+UpdateArticleTest > updateUsesAnAndTurningOffUsesCurrentName FAILED
+org.junit.ComparisonFailure at UpdateArticleTest.kt:22
+1 test completed, 1 failed.
+Tests-first source checkpoint: a4699b89.

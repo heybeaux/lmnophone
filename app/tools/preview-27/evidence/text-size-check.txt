@@ -1,0 +1,205 @@
+PASS: output directory required
+Text size check 2026-10-12T13:22:55.627048+00:00
+PASS: read font scale
+PASS: start at scale 1.0
+PASS: deny settings app-op
+PASS: press Home
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^More$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Phone settings$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Text size$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: missing permission reports failure
+PASS: one Smaller text control
+PASS: Smaller text disabled without permission
+PASS: one Bigger text control
+PASS: Bigger text disabled without permission
+PASS: capture text-size-denied.png
+PASS: valid PNG text-size-denied.png
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap Bigger text
+PASS: read font scale
+PASS: disabled tap leaves scale unchanged
+PASS: grant settings app-op
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: one Bigger text control
+PASS: permission refresh enables bigger text
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap Bigger text
+PASS: read font scale
+PASS: app write/readback scale 1.15
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: confirmed percentage 1.15
+PASS: successful change has no failure line
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap Bigger text
+PASS: read font scale
+PASS: app write/readback scale 1.3
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: confirmed percentage 1.3
+PASS: successful change has no failure line
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap Bigger text
+PASS: read font scale
+PASS: app write/readback scale 1.5
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: confirmed percentage 1.5
+PASS: successful change has no failure line
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap Bigger text
+PASS: read font scale
+PASS: app write/readback scale 1.8
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: confirmed percentage 1.8
+PASS: successful change has no failure line
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap Bigger text
+PASS: read font scale
+PASS: app write/readback scale 2.0
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: confirmed percentage 2.0
+PASS: successful change has no failure line
+PASS: capture text-size-200.png
+PASS: valid PNG text-size-200.png
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: one Bigger text control
+PASS: 200 percent disables bigger text
+PASS: set unlisted test value
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: unlisted value shown as read
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap Smaller text
+PASS: read font scale
+PASS: unlisted value moves down to 130
+PASS: set unlisted test value
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap Bigger text
+PASS: read font scale
+PASS: unlisted value moves up to 150
+PASS: revoke settings app-op
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: one Bigger text control
+PASS: permission loss disables control
+PASS: permission loss reports failure
+PASS: restore text scale
+PASS: reset settings app-op
+PASS: read font scale
+PASS: restored scale 1.0
+WRITE_SETTINGS left at default (not granted).
+PASS: press Home
+PASS: read package version
+PASS: version is preview-27
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+exit=0

@@ -1,0 +1,44 @@
+Preview 27 candidate — author evidence
+
+Built: versionCode 27, versionName 0.1.0-preview-27.
+APK SHA-256: a943703e45b88ea00cb35b2d727b7d0e1e2bd9e73a2f1ad5429ebcc3ca97a131
+Signer SHA-256: 99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd
+Compared local signed APK certificates for builds 23, 24, 25 and 26: identical.
+
+Installed: owned emulator-5880 (pla363-policy-a35), in-place from 26.
+Install gate started 2026-10-12T13:21:07.961779Z; installer reported Success.
+Readback: version 27, Device Owner, TEST_ONLY, LOCKED; same after restart.
+Both More emergency prefill and manually typed Phone field exactly 911.
+Telecom current-call sections empty. No call commands/buttons executed.
+
+Exercised: no write permission -> failure line, both controls disabled,
+button tap leaves scale 1.0. Grant WRITE_SETTINGS -> app writes/readbacks
+1.15, 1.3, 1.5, 1.8, 2.0; each screen reports matching percentage and no
+failure. 200% disables Bigger text. Outside 1.42 shows 142% and steps down
+to 1.3 or up to 1.5. Permission revocation disables controls and reports
+failure. Finally restored scale 1.0 and WRITE_SETTINGS default (not granted).
+
+Host: tests-first commit a4699b89. Before implementation, new controller and
+screen types were absent (compile failures); UpdateArticleTest failed on the
+old article. Implementation e0246d84. 30 device settings tests, 10 navigation
+tests, and copy regression passed. Affected Paparazzi selection passed
+71 test methods (including multi-snapshot fixtures); 103 changed/new goldens
+visually inspected. New Text size fixtures cover normal, upper limit, denied
+permission, and unavailable readback at 1.0/1.3/1.5/1.8/2.0. Gate Python tests:
+9 carried checks plus 1 build-27 exact-version/recovery check passed.
+
+Requirements: U7 Text size; built-in basic settings without Android Settings;
+PLA-420 authorized steps/readback/permission limitation and article correction.
+Interface documentation updated in docs/mvp/lanes.md. Existing brightness,
+sound, counts, lock-task lists and emergency implementation are unchanged.
+
+Known limit: On this preview the tester grants the permission once by adb;
+a real setup step is open work. This is an experimental preview; no spare
+installation or spare text-size exercise is claimed by the author.
+
+Repeat from repository root with Android platform-tools on PATH:
+bash app/tools/preview-27/upgrade-check.sh emulator-5880 app/plainphone/build/outputs/apk/debug/plainphone-debug.apk <output-directory>
+python3 app/tools/preview-27/text_size_check.py <output-directory>
+
+Screenshots contain only synthetic emulator data and the emergency dial field.
+Inspected all four evidence images before commit.
