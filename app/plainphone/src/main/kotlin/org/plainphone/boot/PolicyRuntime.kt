@@ -327,15 +327,16 @@ class PolicyRuntime private constructor(private val context: Context) {
     /** Package events come in bursts: at most one queued run for them. */
     fun onPackageEvent(reason: String) = packageEvents.add(reason)
 
-    /**
-     * `onSystemUpdatePending` (device-lockdown): records the time Android reports (-1 clears it) and
-     * updates Home's line now, without a re-apply pass. Logs no build details.
-     */
     /** The setup command's undo of the postpone policy ([SystemUpdatePostpone.release]), on the pass thread. */
     fun releaseUpdatePolicy(done: (PostponeStatus) -> Unit) = dispatcher.post { done(updatePostpone.release()) }
 
+    /**
+     * `onSystemUpdatePending` (device-lockdown): records the time Android reports (-1 clears it) and
+     * updates Home's line now, without a re-apply pass. Logs no build details. Nothing thrown here may
+     * leave the shared dispatcher (Android's uncaught handler would end the app).
+     */
     fun onSystemUpdatePending(receivedTime: Long) = dispatcher.post {
-        val pending = try { pendingUpdate.onPending(receivedTime) } catch (e: RuntimeException) {
+        val pending = try { pendingUpdate.onPending(receivedTime) } catch (e: Exception) {
             Log.e(TAG, "system update pending record failed: ${e.javaClass.simpleName}")
             false
         }

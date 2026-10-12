@@ -60,17 +60,25 @@ class SystemUpdatePostpone(private val port: SystemUpdatePolicyPort, private val
         return status
     }
 
-    /** Clears the policy and stops [apply] for the rest of this process. */
+    /**
+     * Clears the policy and, once it reads back as none, stops [apply] for the rest of this process. If it
+     * still reads back as set, or the clear or readback fails, re-applies stay on and the status says so.
+     */
     fun release(): PostponeStatus = try {
         if (!port.isDeviceOwner()) PostponeStatus.NOT_OWNER
         else {
-            released = true
             port.clear()
-            log("system update policy released: cleared until restart")
-            PostponeStatus.RELEASED
+            val after = port.read()
+            if (after.kind == UpdatePolicyKind.NONE) {
+                released = true
+                log("system update policy released: cleared until restart")
+                PostponeStatus.RELEASED
+            } else {
+                log("system update policy release readback mismatch: kind=${after.kind} freezePeriods=${after.freezePeriods}")
+                PostponeStatus.MISMATCH
+            }
         }
     } catch (e: RuntimeException) {
-        released = false
         log("system update policy release failed: ${e.javaClass.simpleName}")
         PostponeStatus.FAILED
     }

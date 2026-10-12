@@ -17,7 +17,7 @@ import org.plainphone.update.PostponeStatus
  * - `ACTION_SET_STARTER --esa packages a,b,c` saves the starter list, then re-applies.
  * - `ACTION_APPLY` re-applies the saved list.
  * - `ACTION_RELEASE_UPDATE_POLICY` clears the postpone update policy until the app restarts, so the
- *   driver can then remove Device Owner without leaving it behind (PLA-447). Result 0 when cleared.
+ *   driver can then remove Device Owner without leaving it behind (PLA-447). Result 0 only when it reads back cleared.
  *
  * Both go through [PolicyRuntime] (log tag `PlainphoneBoot`, reason `setup`). The result code is 0 when
  * the re-apply read back and Home may show.

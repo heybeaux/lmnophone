@@ -13,19 +13,24 @@ import org.plainphone.ui.home.HomeNotice
  * damaged record is removed. The record holds no fingerprint or serial.
  */
 class PendingSystemUpdate(private val file: File, private val build: String) {
-    /** Records [receivedTime], or clears with a negative one. Returns whether an update is pending. */
+    /**
+     * Records [receivedTime], or clears with a negative one. Returns whether an update is pending. A failed
+     * write (for example a full disk) is not pending and never throws: it runs on the shared policy thread.
+     */
     fun onPending(receivedTime: Long): Boolean {
         if (receivedTime < 0) {
             file.delete()
             return false
         }
         val tmp = File(file.parentFile, file.name + ".tmp")
-        tmp.writeText("v1\n$receivedTime\n$build\n")
-        if (!tmp.renameTo(file)) {
-            tmp.delete()
-            return false
+        val written = try {
+            tmp.writeText("v1\n$receivedTime\n$build\n")
+            tmp.renameTo(file)
+        } catch (_: java.io.IOException) {
+            false
         }
-        return true
+        if (!written) tmp.delete()
+        return written
     }
 
     fun pending(): Boolean = receivedTime() != null
