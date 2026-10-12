@@ -29,7 +29,8 @@ enum class ProvisionOutcome {
  * operation keeps its conservative recovery; it is not an invitation to provision.
  *
  * Serialized with every other store write. Setup may call it again with the same credentials after
- * any outcome: a genesis that already reads back is [ProvisionOutcome.CREATED] without a write.
+ * any outcome: a genesis that already reads back is [ProvisionOutcome.CREATED] after a directory
+ * sync, with no record write. Only absent copies or an interrupted genesis count as vacant.
  */
 class InitialProvisioning(private val store: JointAuthorityStore) {
     fun provision(credentials: CredentialState, storageGeneration: String = UUID.randomUUID().toString()): ProvisionOutcome {
@@ -39,16 +40,22 @@ class InitialProvisioning(private val store: JointAuthorityStore) {
         val expected = AuthorityCodec.encodeCredentials(credentials) ?: return ProvisionOutcome.REFUSED
         return store.serialized(ProvisionOutcome.UNAVAILABLE) {
             when {
-                isGenesis(expected) -> ProvisionOutcome.CREATED
+                isGenesis(expected) -> durable()
                 !store.vacant() -> ProvisionOutcome.EXISTING
                 else -> {
-                    // False is not acknowledged: decide only from what reads back.
+                    // False is not acknowledged: decide from what reads back, then make it durable.
                     store.initialize(credentials, WaitingState(storageGeneration = storageGeneration), ElevationRecord())
-                    if (isGenesis(expected)) ProvisionOutcome.CREATED else ProvisionOutcome.UNAVAILABLE
+                    if (isGenesis(expected)) durable() else ProvisionOutcome.UNAVAILABLE
                 }
             }
         }
     }
+
+    /**
+     * A visible genesis is not proof of a durable one: a copy's rename may have had no successful
+     * directory sync (PLA-409 R2). CREATED only after a barrier that succeeds now.
+     */
+    private fun durable() = if (store.durabilityBarrier()) ProvisionOutcome.CREATED else ProvisionOutcome.UNAVAILABLE
 
     private fun isGenesis(credentials: ByteArray): Boolean {
         val saved = store.credentials.read()?.let(AuthorityCodec::encodeCredentials) ?: return false

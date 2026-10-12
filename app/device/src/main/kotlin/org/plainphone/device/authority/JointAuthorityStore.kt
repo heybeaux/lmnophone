@@ -667,8 +667,7 @@ class JointAuthorityStore internal constructor(
      */
     fun initialize(credentials: CredentialState, waiting: WaitingState, elevation: ElevationRecord,
         approvals: AppApprovalState = AppApprovalState()): Boolean = coordinator.run(false) {
-        // Copies without any fence are a creation that never committed; they may be replaced.
-        if (fenceA.exists() || fenceB.exists() || load() != null) return@run false
+        if (!firstSetupVacant()) return@run false
         // Enrollment is the only place an empty Update record is created.
         val sections = listOf(AuthorityCodec.encodeCredentials(credentials) ?: return@run false,
             AuthorityCodec.encodeWaiting(waiting) ?: return@run false, AuthorityCodec.encodeElevation(elevation) ?: return@run false,
@@ -680,8 +679,23 @@ class JointAuthorityStore internal constructor(
         save(null, genesis)
     }
 
-    /** No fence and no readable record: the only state [initialize] writes over ([InitialProvisioning], PLA-97). */
-    internal fun vacant(): Boolean = coordinator.run(false) { !fenceA.exists() && !fenceB.exists() && load() == null }
+    /** The only state [initialize] writes over ([InitialProvisioning], PLA-97); see [firstSetupVacant]. */
+    internal fun vacant(): Boolean = coordinator.run(false) { firstSetupVacant() }
+
+    /**
+     * Callers hold the coordinator. No fence, no readable record, and each copy file is absent or an
+     * interrupted genesis (sequence 0) that never committed, so replacing it loses nothing. A copy of
+     * a used record, a damaged copy or another schema's copy is never vacant, even with both fences
+     * gone (PLA-409 R1): missing is not vacant.
+     */
+    private fun firstSetupVacant(): Boolean = !fenceA.exists() && !fenceB.exists() && load() == null &&
+        listOf(copyA, copyB).all { !it.exists() || it.read()?.let(Snapshot::decode)?.sequence == 0L }
+
+    /**
+     * A directory sync with nothing written: makes every visible entry durable, including renames
+     * whose own sync failed. True only when it succeeded (PLA-409 R2).
+     */
+    internal fun durabilityBarrier(): Boolean = coordinator.run(false) { syncDirectory() }
 
     /**
      * Explicit startup step, run before any controller reads this store. A record written by a
