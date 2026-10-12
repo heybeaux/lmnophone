@@ -23,7 +23,11 @@ public class Files extends ContentProvider {
 
     private File fileFor(Uri uri) throws FileNotFoundException {
         String name = uri.getLastPathSegment();
-        if (name == null || name.contains("/") || name.startsWith(".")) throw new FileNotFoundException(String.valueOf(uri));
+        try {
+            SpikeSafety.requireSharedFile(name);
+        } catch (IllegalArgumentException rejected) {
+            throw new FileNotFoundException("Not a shared spike fixture");
+        }
         return new File(new File(getContext().getFilesDir(), "share"), name);
     }
 
@@ -37,6 +41,7 @@ public class Files extends ContentProvider {
     }
 
     @Override public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
+        if (!"r".equals(mode)) throw new FileNotFoundException("Read-only spike fixture");
         Log.i("Files.openFile uid=" + android.os.Binder.getCallingUid() + " " + uri + " mode=" + mode);
         return ParcelFileDescriptor.open(fileFor(uri), ParcelFileDescriptor.MODE_READ_ONLY);
     }

@@ -19,6 +19,7 @@ public final class VoiceMms {
      * storage format ("#!AMR\n" + frames), using the platform encoder. No microphone is used.
      */
     public static byte[] synthAmr(int seconds) throws IOException {
+        SpikeSafety.requireDuration(seconds);
         MediaFormat fmt = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AMR_NB, 8000, 1);
         fmt.setInteger(MediaFormat.KEY_BIT_RATE, 12200);
         MediaCodec codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AMR_NB);
@@ -77,6 +78,7 @@ public final class VoiceMms {
      */
     public static byte[] sendReq(String to, String transactionId, String partType, String partName,
             byte[] data) throws IOException {
+        SpikeSafety.requireFakeRecipient(to);
         ByteArrayOutputStream o = new ByteArrayOutputStream();
         o.write(0x8C); o.write(0x80);                 // X-Mms-Message-Type: m-send-req
         o.write(0x98); text(o, transactionId);        // X-Mms-Transaction-ID

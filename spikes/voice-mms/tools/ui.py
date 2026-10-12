@@ -5,9 +5,17 @@
 import re, subprocess, sys, xml.etree.ElementTree as ET
 
 serial, cmd = sys.argv[1], sys.argv[2]
+if not re.fullmatch(r"emulator-59[0-9]{2}", serial):
+    sys.exit("Use only the private emulator-59xx assigned to this spike")
+if cmd not in ("dump", "tap"):
+    sys.exit("Use dump or tap")
 adb = ["adb", "-s", serial]
-subprocess.run(adb + ["shell", "uiautomator", "dump", "/sdcard/u.xml"], capture_output=True)
-root = ET.fromstring(subprocess.run(adb + ["exec-out", "cat", "/sdcard/u.xml"], capture_output=True).stdout)
+avd_name = subprocess.run(adb + ["shell", "getprop", "ro.boot.qemu.avd_name"],
+                          capture_output=True, check=True, text=True).stdout.strip()
+if avd_name != "pla458-a35":
+    sys.exit("Use only the private pla458-a35 AVD assigned to this spike")
+subprocess.run(adb + ["shell", "uiautomator", "dump", "/sdcard/u.xml"], capture_output=True, check=True)
+root = ET.fromstring(subprocess.run(adb + ["exec-out", "cat", "/sdcard/u.xml"], capture_output=True, check=True).stdout)
 nodes = list(root.iter("node"))
 if cmd == "dump":
     for n in nodes:

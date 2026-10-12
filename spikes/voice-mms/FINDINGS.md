@@ -7,6 +7,8 @@
 - Probe app `org.plainphone.spike458.probe`: SEND_SMS, READ_SMS and READ_PHONE_STATE only. It does **not** hold the SMS role (`env`: `probeHoldsSmsRole=false defaultSms=com.google.android.apps.messaging`).
 - Only fictional numbers were used (555-0100, 555-0101). No real messages were sent. The emulator has no real MMSC, so "sent" means delivered to a loopback fake MMSC (`tools/fake_mmsc.py`). No emergency numbers. No physical phones.
 - AOSP citations are from tag `android-15.0.0_r1`.
+- Requirement-by-requirement coverage and limitations: `REQUIREMENTS.md`. These results are a feasibility spike, not product acceptance or evidence of real recipient delivery.
+- Correction verification: `evidence/DELTA-CHECKS.md` and `evidence/delta-5984.log`, labelled separately from the original run.
 
 ## Answers
 
@@ -17,6 +19,7 @@
   - `TelephonyPermissions.checkSubscriptionAssociatedWithUser`;
   - `noteOp(OP_SEND_SMS)` == MODE_ALLOWED.
   - There is **no SMS-role or default-app check.**
+  - Permission denial throws; a disallowed SEND_SMS app-op or active subscription/user mismatch returns without calling the send service or its callback. A timeout therefore means **unknown**, not a confirmed transport failure. These denied paths are source-backed, not additional emulator runs.
   - Probe app-ops: SEND_SMS allow, READ_SMS allow, WRITE_SMS ignore.
 - **Carrier gate:** `packages/services/Mms/src/com/android/mms/service/MmsService.java` l.258 rejects the send before any network work if the MMS config has `enabledMMS=false`. It returns `MMS_ERROR_MMS_DISABLED_BY_CARRIER` (12). The emulator's carrier config has `enabledMMS=false`.
 - **PDU:** a hand-written m-send-req encoder (`common/VoiceMms.java#sendReq`, about 50 lines). It produces one `multipart/mixed` part, `audio/amr`, From `insert-address-token`, To `<n>/TYPE=PLMN`. **No third-party library, so no licence question.** The audio is real AMR-NB 12.2 kbps from MediaCodec on a synthetic tone (no microphone).
@@ -50,7 +53,8 @@
 - **The carrier gate applies here too, with no override possible:** with `enabledMMS=false`, tapping Send shows a toast and logs `checkDraftForActionPreconditions … resultPrecondition: MMS_DISABLED`. After `cmd phone cc set-value enabledMMS true`, the result is `PASSED`, `MmsServiceBroker: sendMessage() by com.google.android.apps.messaging`, and the fake MMSC received Messages' own PDU (SMIL plus our identical AMR bytes, renamed `recording000000.amr`).
 - **Learning the outcome:**
   - Our READ_SMS ContentObserver on `content://mms` fired and showed the new row (`creator=com.google.android.apps.messaging`, msg_box 2), then `resp_st=128` once the MMSC accepted it.
-  - **Failures (msg_box 4/5) are invisible to us** (restricted view, see Q1), so we can only infer "not sent yet" by a timeout. "Sent" can be matched by thread/recipient plus date plus part size.
+  - **A SENT row alone is not completion.** The observed path A failure was briefly visible in SENT before disappearing, and the path B SENT row initially had `resp_st=null`. For this Messages version, `resp_st=128` plus the observed MMSC response supports MMSC acceptance, not delivery to or playback by a recipient.
+  - **OUTBOX (4) and FAILED (5) are invisible to us** (restricted view, see Q1). A timeout means **unknown**: the user may have cancelled, MMS may be disabled, transport may have failed, or the caller may have died. Thread/recipient, timestamp and part size are only heuristics; concurrent messages can collide. The share handoff provides no documented send-result callback to this app. Do not label it reliable failure detection or infer an automatic retry.
 - **Lock task** (probe as Device Owner on the emulator, `startLockTask`, `mLockTaskModeState=LOCKED`):
   - When Messages is **not** on `setLockTaskPackages`, the handoff is silently blocked: `ActivityTaskManager: Attempted Lock Task Mode violation … LaunchConversationActivity`. `startActivity` threw nothing, and the probe stayed on screen (`b6-…png`).
   - With `[probe, com.google.android.apps.messaging]`, Messages opened inside lock task with the audio staged and no status or navigation bar (`b7-…png`).
@@ -62,6 +66,7 @@
 - **Seeding:**
   - The throwaway `seeder/` app briefly held `android.app.role.SMS` (`cmd role add-role-holder`) and inserted one inbox MMS: m_type 132, from 555-0100, one 4 s `audio/amr` part, 6406 bytes, sha `9ceaf2da…`.
   - The role was then restored to Messages and verified with `get-role-holders`.
+  - The old seeder log reported `defaultSms=null` even while shell role readback showed the seeder. The revised seeder checks `RoleManager.isRoleHeld(ROLE_SMS)` explicitly before any writes; package visibility is not evidence of role absence.
 - **Probe results (no role):**
   - The observer fired on `content://mms/inbox/4`.
   - `list` shows `_id=4 msg_box=1 m_type=132 … part _id=6 ct=audio/amr` with addr types 137 (from) and 151 (to).
@@ -69,6 +74,7 @@
   - MediaExtractor reports `audio/3gpp 8000 Hz mono durationUs=4000000`.
   - MediaPlayer reports `durationMs=4000`, then `isPlaying=true positionMs=1354` after 1.5 s.
 - Messages shows "555-0100 sent audio", unread (`c1-…png`).
+- The revised `play` command selects a downloaded INBOX m-retrieve-conf and then that message's audio part, rather than the newest global audio part (which could belong to an outgoing or hidden failed message). Missing inbox/audio, revoked READ_SMS and decoder errors remain explicit unsuccessful probe commands, not successful playback.
 - **Limitation:** the seed was written straight into the provider, not delivered over the air. In real life the item first exists as an m-notification-ind, which is *excluded* from our view, until Messages downloads it (auto-retrieve). Then it appears as m_type 132 in INBOX. If auto-retrieve is off (for example when roaming), we see nothing until the user downloads it in Messages.
 
 ### 4. Size limits
@@ -79,11 +85,16 @@
   - AAC-LC 24 kbps mono: about **3000 B/s**, plus a few KB of container.
   - m-send-req overhead: about 93 B.
 
-| Limit (KiB = 1024 B) | AMR-NB 12.2 kbps | AAC-LC 24 kbps mono |
-|---|---|---|
-| 300 KB | ≈ 192 s | ≈ 102 s |
-| 600 KB | ≈ 384 s | ≈ 205 s |
-| 1 MB | ≈ 655 s | ≈ 349 s |
+| Limit | Bytes | AMR-NB 12.2 kbps storage | AAC-LC 24 kbps mono |
+|---|---|---|---|
+| 300 KB (decimal) | 300000 | ≈ 187.4 s | ≈ 100.0 s |
+| 600 KB (decimal) | 600000 | ≈ 374.9 s | ≈ 200.0 s |
+| 1 MB (decimal) | 1000000 | ≈ 624.9 s | ≈ 333.3 s |
+| 300 KiB | 307200 | ≈ 191.9 s | ≈ 102.4 s |
+| 600 KiB | 614400 | ≈ 383.9 s | ≈ 204.8 s |
+| 1 MiB (emulator value) | 1048576 | ≈ 655.3 s | ≈ 349.5 s |
+
+- AMR calculation: `floor((budgetBytes - 93 - 6) / 32) * 0.020`. AAC estimate: `(budgetBytes - 93) / 3000`, before container and encoder variation. These are approximate upper budgets, not tested carrier duration limits. The previous table used binary units despite its KB/MB labels.
 
 - Keep about a 10% margin. Read the limit at runtime from `getCarrierConfigValues()`; don't hard-code it.
 
@@ -104,18 +115,56 @@
 
 ## Reproduce
 
+Use only the private API 35 `pla458-a35` AVD assigned to this spike, launched with `-read-only` on a verified-free 59xx port. The original run used 5960; the correction run used 5984 after a 5960 collision. Check both console identity and the ADB `ro.boot.qemu.avd_name` property before commands; a serial alone does not establish ownership. Do not run these commands against another AVD or any physical phone. The apps additionally reject hardware other than goldfish/ranchu and recipients outside the fictional 555-01xx fixture range. The helper rejects non-59xx serials and a mismatched ADB AVD name. Synthetic clips are bounded to 1–60 seconds for this probe; that is not a carrier duration limit.
+
+This spike uses `probe/Files.java`, a dependency-free, read-only **FileProvider-style stand-in**, not AndroidX FileProvider. URI grants and ClipData were exercised; the exact AndroidX implementation remains untested. Only `voice.amr` and `send.pdu` are shareable, and write modes are rejected.
+
 ```sh
-./build.sh                                  # needs ANDROID_HOME, build-tools 35.0.0, android-35
-adb -s emulator-NNNN install -r -t build/probe.apk
+cd spikes/voice-mms
+./build.sh                                  # ANDROID_HOME, JDK, build-tools 35.0.0, android-35
+S=emulator-5984                             # verified private assigned emulator only
+adb -s "$S" emu avd name                    # must report pla458-a35
+test "$(adb -s "$S" shell getprop ro.boot.qemu.avd_name | tr -d '\r')" = pla458-a35
+adb -s "$S" install -r -t -g build/probe.apk
+adb -s "$S" shell pm grant org.plainphone.spike458.probe android.permission.SEND_SMS
+adb -s "$S" shell pm grant org.plainphone.spike458.probe android.permission.READ_SMS
+adb -s "$S" shell pm grant org.plainphone.spike458.probe android.permission.READ_PHONE_STATE
+adb -s "$S" shell appops get org.plainphone.spike458.probe SEND_SMS
+adb -s "$S" shell appops get org.plainphone.spike458.probe READ_SMS
 P=org.plainphone.spike458.probe/org.plainphone.spike458.Probe
-adb -s emulator-NNNN shell am start -n $P --es cmd config        # Q4
-adb -s emulator-NNNN shell am start -n $P --es cmd encode --ei seconds 5
-adb -s emulator-NNNN shell am start -n $P --es cmd sendA [--ez override true]   # Q1
-adb -s emulator-NNNN shell am start -n $P --es cmd sendB --es mode sendto --es to 5550101  # Q2
-adb -s emulator-NNNN shell am start -n $P --es cmd list|parts|play            # Q3
+adb -s "$S" shell am start -n "$P" --es cmd env
+adb -s "$S" shell am start -n "$P" --es cmd config
+adb -s "$S" shell am start -n "$P" --es cmd encode --ei seconds 5
+adb -s "$S" shell am start -n "$P" --es cmd sendA
+adb -s "$S" shell am start -n "$P" --es cmd sendA --ez override true
+adb -s "$S" shell am start -n "$P" --es cmd sendB --es mode sendto --es to 5550101
+adb -s "$S" shell am start -n "$P" --es cmd list
+adb -s "$S" shell am start -n "$P" --es cmd parts
+
+adb -s "$S" install -r -t build/seeder.apk
+adb -s "$S" shell cmd role add-role-holder android.app.role.SMS org.plainphone.spike458.seeder 0
+adb -s "$S" shell cmd role get-role-holders android.app.role.SMS
+adb -s "$S" shell am start -W -n org.plainphone.spike458.seeder/org.plainphone.spike458.Seeder --ei seconds 4
+adb -s "$S" shell cmd role add-role-holder android.app.role.SMS com.google.android.apps.messaging 0
+adb -s "$S" shell cmd role get-role-holders android.app.role.SMS
+adb -s "$S" shell am start -n "$P" --es cmd env
+adb -s "$S" shell am start -n "$P" --es cmd list
+adb -s "$S" shell am start -n "$P" --es cmd play
 ```
 
 - Logs use tag `PLA458`.
 - Fake MMSC: run `python3 tools/fake_mmsc.py`, then set the APN mmsc with `content update --uri content://telephony/carriers/<id> --bind mmsc:s:http\://10.0.2.2\:59580/mms`.
 - Carrier MMS on: `cmd phone cc set-value enabledMMS true` (test override; `cmd phone cc clear-values` undoes it).
 - Use a `-read-only` AVD so all of this is thrown away on shutdown.
+- Restore the Messages role even if seeding fails. Stop lock task and remove the test-only admin before cleanup. The original run verified Messages restored, no owners, carrier overrides cleared, both spike apps uninstalled, then shut down emulator-5960 and stopped the loopback MMSC/logcat.
+
+## Primary-source pointers
+
+Each path below is pinned to `android-15.0.0_r1`; method names are more durable than line numbers. These primary sources support the enforcement and restricted-view claims above, alongside the committed emulator evidence.
+
+- MMS broker: `https://android.googlesource.com/platform/frameworks/base/+/android-15.0.0_r1/services/core/java/com/android/server/MmsServiceBroker.java` — `BinderService.sendMessage`.
+- MMS carrier gate: `https://android.googlesource.com/platform/packages/services/Mms/+/android-15.0.0_r1/src/com/android/mms/service/MmsService.java` — `sendMessage`.
+- System persistence: `https://android.googlesource.com/platform/packages/services/Mms/+/android-15.0.0_r1/src/com/android/mms/service/SendRequest.java` — `persistIfRequired`.
+- Default-app check: `https://android.googlesource.com/platform/frameworks/base/+/android-15.0.0_r1/telephony/common/com/android/internal/telephony/SmsApplication.java` — `shouldWriteMessageForPackageAsUser`.
+- Restricted reads: `https://android.googlesource.com/platform/packages/providers/TelephonyProvider/+/android-15.0.0_r1/src/com/android/providers/telephony/ProviderUtil.java` — `isAccessRestricted`; same tree's `MmsProvider.java` — `getPduTable`; `MmsSmsDatabaseHelper.java` — `createMmsTables`.
+- Public API contract: `https://developer.android.com/reference/android/telephony/SmsManager` — `sendMultimediaMessage`, `getCarrierConfigValues`, MMS result constants. The stock API 35 emulator's disabled-MMS result was 12; the source selects this or configuration error according to its feature flag, so do not assume 12 for every API 35 build.

@@ -17,6 +17,11 @@ public class Seeder extends Activity {
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         try {
+            SpikeSafety.requireEmulatorHardware(android.os.Build.HARDWARE);
+            boolean holdsSmsRole = getSystemService(android.app.role.RoleManager.class)
+                    .isRoleHeld(android.app.role.RoleManager.ROLE_SMS);
+            Log.i("seeder holdsSmsRole=" + holdsSmsRole);
+            if (!holdsSmsRole) throw new IllegalStateException("Seeder must temporarily hold the SMS role");
             Log.i("seeder defaultSms=" + Telephony.Sms.getDefaultSmsPackage(this));
             byte[] amr = VoiceMms.synthAmr(getIntent().getIntExtra("seconds", 4));
             long now = System.currentTimeMillis() / 1000L;

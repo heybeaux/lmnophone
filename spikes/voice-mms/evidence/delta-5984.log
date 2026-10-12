@@ -1,0 +1,33 @@
+10-12 15:48:03.316  4314  4314 I PLA458  : cmd=env
+10-12 15:48:03.332  4314  4314 I PLA458  : env sdk=35 defaultSms=com.google.android.apps.messaging probeHoldsSmsRole=false SEND_SMS=0 READ_SMS=0 defaultSmsSubId=1
+10-12 15:48:03.769  4314  4314 I PLA458  : cmd=encode
+10-12 15:48:03.772  4314  4314 E PLA458  : java.lang.IllegalArgumentException: Use 1 to 60 seconds of synthetic audio
+10-12 15:48:03.871  4314  4314 I PLA458  : cmd=sendB
+10-12 15:48:03.882  4314  4314 E PLA458  : java.lang.IllegalArgumentException: Only fictional 555-01xx recipients are allowed
+10-12 15:48:03.919  4314  4314 I PLA458  : cmd=sendB
+10-12 15:48:03.919  4314  4314 E PLA458  : java.lang.IllegalStateException: Run encode before sendB
+10-12 15:48:04.271  4395  4395 I PLA458  : seeder holdsSmsRole=false
+10-12 15:48:04.271  4395  4395 E PLA458  : seeder threw
+10-12 15:48:04.271  4395  4395 E PLA458  : java.lang.IllegalStateException: Seeder must temporarily hold the SMS role
+10-12 15:48:04.392  4395  4395 I PLA458  : seeder holdsSmsRole=true
+10-12 15:48:04.395  4395  4395 I PLA458  : seeder defaultSms=null
+10-12 15:48:04.770  4395  4395 I PLA458  : seeder inserted msg=content://mms/1
+10-12 15:48:04.778  4395  4395 I PLA458  : seeder addr from=content://mms/addr/1
+10-12 15:48:04.781  4395  4395 I PLA458  : seeder addr to=content://mms/addr/2
+10-12 15:48:04.785  4395  4395 I PLA458  : seeder part=content://mms/part/2
+10-12 15:48:04.796  4395  4395 I PLA458  : seeder wrote audio bytes=6406 sha256=9ceaf2daa1bdda1f
+10-12 15:48:04.876  4314  4314 I PLA458  : cmd=env
+10-12 15:48:04.882  4314  4314 I PLA458  : env sdk=35 defaultSms=com.google.android.apps.messaging probeHoldsSmsRole=false SEND_SMS=0 READ_SMS=0 defaultSmsSubId=1
+10-12 15:48:04.912  4314  4314 I PLA458  : cmd=list
+10-12 15:48:04.918  4314  4314 I PLA458  : list content://mms rows=1
+10-12 15:48:04.947  4314  4314 I PLA458  : list mms _id=1 thread=1 msg_box=1 m_type=132 date=1791845284 creator=org.plainphone.spike458.seeder ct_t=application/vnd.wap.multipart.mixed resp_st=null read=0 | part _id=2 ct=audio/amr name=voice.amr cl=voice.amr | addrTypes=137,151,
+10-12 15:48:04.976  4314  4314 I PLA458  : cmd=play
+10-12 15:48:05.004  4314  4314 I PLA458  : play inbox mms=1 audio parts found=1
+10-12 15:48:05.016  4314  4314 I PLA458  : play read content://mms/part/2 bytes=6406 header=#!AMR sha256=9ceaf2daa1bdda1f
+10-12 15:48:05.070  4314  4314 I PLA458  : play extractor tracks=1 format0={sample-rate=8000, track-id=1, durationUs=4000000, mime=audio/3gpp, channel-count=1}
+10-12 15:48:05.200  4314  4314 I PLA458  : play MediaPlayer prepared durationMs=4000
+10-12 15:48:06.702  4314  4314 I PLA458  : play after 1500ms isPlaying=true positionMs=1271
+10-12 15:48:08.035  4314  4314 I PLA458  : cmd=encode
+10-12 15:48:08.280  4314  4314 I PLA458  : encode seconds=5 bytes=8006 firstFrameToc=0x3c sha256=798b971b35f969d3
+10-12 15:50:12.645  4554  4554 I PLA458  : cmd=play
+10-12 15:50:12.653  4554  4554 E PLA458  : java.lang.SecurityException: Permission Denial: reading com.android.providers.telephony.MmsProvider uri content://mms/inbox from pid=4554, uid=10207 requires android.permission.READ_SMS, or grantUriPermission()

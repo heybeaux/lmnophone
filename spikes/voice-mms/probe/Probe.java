@@ -50,6 +50,7 @@ public class Probe extends Activity {
         Log.i("cmd=" + cmd);
         if (cmd == null) return;
         try {
+            SpikeSafety.requireEmulatorHardware(android.os.Build.HARDWARE);
             switch (cmd) {
                 case "env": env(); break;
                 case "config": config(); break;
@@ -135,7 +136,12 @@ public class Probe extends Activity {
     }
 
     private void sendB(String mode, String to, boolean noAddr) {
+        SpikeSafety.requireFakeRecipient(to);
+        if (!"send".equals(mode) && !"sendto".equals(mode) && !"chooser".equals(mode)) {
+            throw new IllegalArgumentException("Use send, sendto or chooser");
+        }
         File amr = share("voice.amr");
+        if (!amr.isFile()) throw new IllegalStateException("Run encode before sendB");
         Uri uri = Files.uriFor("voice.amr");
         Intent i;
         if ("sendto".equals(mode)) {
@@ -210,13 +216,19 @@ public class Probe extends Activity {
     }
 
     private void play() throws Exception {
+        long messageId = -1;
+        try (Cursor messages = getContentResolver().query(Uri.parse("content://mms/inbox"),
+                new String[] {"_id"}, "m_type=132", null, "_id DESC")) {
+            if (messages != null && messages.moveToFirst()) messageId = messages.getLong(0);
+        }
+        if (messageId < 0) throw new IllegalStateException("No downloaded inbox MMS; run the seeder first");
         long partId = -1;
-        try (Cursor p = getContentResolver().query(Uri.parse("content://mms/part"),
+        try (Cursor p = getContentResolver().query(Uri.parse("content://mms/" + messageId + "/part"),
                 new String[] {"_id", "ct", "mid"}, "ct LIKE 'audio/%'", null, "_id DESC")) {
-            Log.i("play audio parts found=" + (p == null ? "null" : p.getCount()));
+            Log.i("play inbox mms=" + messageId + " audio parts found=" + (p == null ? "null" : p.getCount()));
             if (p != null && p.moveToFirst()) partId = p.getLong(0);
         }
-        if (partId < 0) return;
+        if (partId < 0) throw new IllegalStateException("The inbox MMS has no audio part");
         Uri part = Uri.parse("content://mms/part/" + partId);
         byte[] bytes;
         try (InputStream in = getContentResolver().openInputStream(part)) {
