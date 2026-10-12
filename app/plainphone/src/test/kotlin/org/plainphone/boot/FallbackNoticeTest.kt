@@ -1,0 +1,42 @@
+// Copyright 2026 LMNOPhone contributors
+// SPDX-License-Identifier: Apache-2.0
+package org.plainphone.boot
+
+import org.junit.Assert.*
+import org.junit.Test
+import org.plainphone.core.PackageName
+import org.plainphone.device.boot.Containment
+
+class FallbackNoticeTest {
+    private val settings = PackageName("com.android.settings")
+    private val keychain = PackageName("com.android.keychain")
+    private val installer = PackageName("com.google.android.packageinstaller")
+
+    @Test fun namesEveryRefusedPackageTheDisclosureDoesNotCover() {
+        val notice = fallbackNotice(Containment(emptySet(), setOf(settings, keychain, installer), recorded = true),
+            setOf(settings) + PERMISSION_CONTROLLERS) { it.value.substringAfterLast('.') }
+        assertEquals(listOf("keychain", "packageinstaller"), notice.others)
+        assertFalse(notice.incomplete)
+    }
+
+    @Test fun anUnrecordedContainmentIsIncomplete() {
+        assertTrue(fallbackNotice(Containment(emptySet(), emptySet(), recorded = false), emptySet()) { it.value }.incomplete)
+    }
+}
+
+class FallbackStepTest {
+    @Test fun containsOnlyAfterUnlockWhenLockTaskCannotStartWithKeyguard() {
+        assertEquals(FallbackStep.CONTAIN, fallbackStep(userLocked = false, LockTaskState.NONE, mayEnterLockTask = false))
+        assertEquals(FallbackStep.CONTAIN, fallbackStep(userLocked = false, LockTaskState.PINNED, mayEnterLockTask = false))
+        assertEquals(FallbackStep.CONTAIN, fallbackStep(userLocked = false, LockTaskState.UNREADABLE, mayEnterLockTask = false))
+        // Before the PIN the locked-boot plan's keep set is smaller; the keyguard is up anyway.
+        assertEquals(FallbackStep.NONE, fallbackStep(userLocked = true, LockTaskState.NONE, mayEnterLockTask = false))
+    }
+
+    @Test fun liftsOnlyWhileLockedWithKeyguard() {
+        assertEquals(FallbackStep.LIFT, fallbackStep(userLocked = false, LockTaskState.LOCKED, mayEnterLockTask = true))
+        assertEquals(FallbackStep.NONE, fallbackStep(userLocked = false, LockTaskState.LOCKED, mayEnterLockTask = false))
+        // Home has not started lock task yet: nothing to contain, nothing to lift.
+        assertEquals(FallbackStep.NONE, fallbackStep(userLocked = false, LockTaskState.NONE, mayEnterLockTask = true))
+    }
+}
