@@ -70,3 +70,36 @@ Consequence for the adapter: abandoning a committed session cancels it, so start
 sessions with `isCommitted() == false`, and never a session this process has itself committed
 (that covers the ~16 ms before `isCommitted()` turns true, for an in-process `UpdateProtocol.onStart`
 rerun). Committed sessions are left to finish; startup readback then classifies them.
+
+Update (PLA-210): "never a session this process has itself committed" is now durable. Each session
+ID is written to a synced marker file (`CommitMemory`) before `commit()`, so every adapter instance
+and every later process skips it during the ~16 ms window, and nothing is abandoned when the markers
+cannot be read. `committedSessionPending` reads `getSessionInfo(id)`: a present session never
+reads "gone".
+
+## Archive signer read on API 33 and API 35 (R4, PLA-207 / PLA-210), 2026-10-11
+
+Source (from the PLA-207 review): Android 13 r1 `PackageManager.getPackageArchiveInfo` collects and
+verifies certificates only when `GET_SIGNATURES` is set
+([PackageManager.java#8067](https://android.googlesource.com/platform/frameworks/base/+/android-13.0.0_r1/core/java/android/content/pm/PackageManager.java#8067)),
+and [PackageParser](https://android.googlesource.com/platform/frameworks/base/+/android-13.0.0_r1/core/java/android/content/pm/PackageParser.java#891)
+leaves `signingInfo` null when nothing was collected, so `GET_SIGNING_CERTIFICATES` alone refuses
+every valid APK there (fail closed). API 30-32 and 34+ collect for either flag. `ArchiveApkInspector`
+now asks for both flags on API 33 only and still reads only `signingInfo.apkContentsSigners`, the
+exact current signer set; the legacy `signatures` array is never read.
+
+Run: `app/device/check-fixtures/update-target/run-check.sh <serial> <port>` (the PLA-167 check, with
+the PLA-210 adapter) on fresh AVDs with no lock PIN and no accounts:
+
+| AVD | Build | Result | Signer read |
+|---|---|---|---|
+| pla210-a33 | API 33, `TE1A.240213.009` userdebug | `evidence/update-check-api33.txt`: update and pending2 PASS (44 ok) | tampered APK: no facts; key B APK reads exactly signer B; v2 reads exactly pinned key A |
+| pla210-a35 | API 35, `AE3A.240806.043` userdebug | `evidence/update-check-api35.txt`: update and pending2 PASS (44 ok) | same |
+
+Both runs also show the Device Owner install finishing with `STATUS_SUCCESS` and no
+`STATUS_PENDING_USER_ACTION` broadcast, and abandonment right after `commit()` (while
+`isCommitted()` still read false) keeping the install. `pending1` ends with "Process crashed" by
+design (it kills itself after commit). Python `BrokenPipeError` tracebacks from `serve.py` (the
+client closing early on refused downloads) were dropped from the saved output; they named
+workstation paths. Not run: a control with the old flag on API 33 (the source above is the
+evidence for the defect), and OEM or patched API 33 builds.

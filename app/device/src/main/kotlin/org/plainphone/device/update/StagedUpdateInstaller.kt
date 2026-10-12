@@ -28,7 +28,10 @@ import org.plainphone.policy.UpdateInstaller
  *   markers cannot be read nothing is abandoned. Markers of sessions that are gone are dropped.
  * - [committedSessionPending] reads `getSessionInfo(id)`: present and committed (or present and
  *   remembered, during the lag) is pending, absent is gone, anything else or any failure is unknown.
- *   A present session never reads gone.
+ *   A present session never reads gone. Residual: a committed session parked in
+ *   `STATUS_PENDING_USER_ACTION` would read pending with no attention signal. As Device Owner the
+ *   self-update finished with `STATUS_SUCCESS` and no user action on API 33 and API 35
+ *   (`spikes/installer-boundary/evidence/update-check-api33.txt`, `-api35.txt`).
  */
 class StagedUpdateInstaller(private val port: InstallerPort, private val inspector: ApkInspector,
     private val staging: UpdateStaging, private val commits: CommitMemory, private val pinnedSelf: ApprovalBinding,
