@@ -36,6 +36,8 @@ import org.plainphone.policy.SessionPhase
  * `-e phase reset` runs the PLA-92 reset-protection check ([org.plainphone.device.apply.ResetProtectionCheck]);
  * `-e phase reserve` runs the PLA-92 identity reservation check (no Device Owner needed);
  * `-e phase vault` runs the PLA-92 vault runtime check (no Device Owner needed);
+ * `-e phase ledger-seed`, `ledger-after` and `ledger-cleanup` run the PLA-97 initial ledger check
+ * ([org.plainphone.device.authority.InitialLedgerCheck], no Device Owner needed);
  * `-e phase permissions` runs the PLA-86 hidden-package permission check ([org.plainphone.device.apply.HiddenPermissionCheck]);
  * `-e phase window` runs the PLA-186 approval permission window check ([org.plainphone.device.apply.PermissionWindowCheck]);
  * `-e phase uid`, `pause-preparing`, `pause-editing`, `recover` and `containment-cleanup` run the PLA-219 window
@@ -70,6 +72,9 @@ class DirectBootJournalCheck : Instrumentation() {
                 "reset" -> org.plainphone.device.apply.ResetProtectionCheck(targetContext, ::note).check()
                 "reserve" -> org.plainphone.device.authority.IdentityReservationCheck(targetContext, ::note).check()
                 "vault" -> org.plainphone.device.authority.VaultRuntimeCheck(targetContext, ::note).check()
+                "ledger-seed" -> org.plainphone.device.authority.InitialLedgerCheck(targetContext, ::note).seed()
+                "ledger-after" -> org.plainphone.device.authority.InitialLedgerCheck(targetContext, ::note).after()
+                "ledger-cleanup" -> org.plainphone.device.authority.InitialLedgerCheck(targetContext, ::note).cleanup()
                 "facts" -> org.plainphone.device.facts.PackageFactsCheck(targetContext, args, ::note).facts()
                 "rotated" -> org.plainphone.device.facts.PackageFactsCheck(targetContext, args, ::note).rotated()
                 "permissions" -> org.plainphone.device.apply.HiddenPermissionCheck(targetContext, args, ::note).check()
