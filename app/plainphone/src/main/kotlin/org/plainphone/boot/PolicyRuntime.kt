@@ -282,13 +282,6 @@ class PolicyRuntime private constructor(private val context: Context) {
             Log.e(TAG, "waiting checkpoint threw", e)
             null
         }
-        // Then a committing or rolling-back people change takes its next step, before deciding (wiring 5).
-        val drove = try {
-            peopleDriver.drive()?.also { Log.i(TAG, "people change after $reason: ${it.outcome} failure=${it.failure}") }
-        } catch (e: RuntimeException) {
-            Log.e(TAG, "people change step threw", e)
-            null
-        }
         val outcome = try {
             boot.run(locked)
         } catch (e: RuntimeException) {
@@ -297,6 +290,14 @@ class PolicyRuntime private constructor(private val context: Context) {
         }
         userUnlocked.recordPass(locked)
         log(reason, outcome, SystemClock.elapsedRealtime() - started)
+        // A committing or rolling-back people change takes its next step only after this pass's startup
+        // revoked every session and read back (PLA-390 R1); otherwise it waits for the next pass.
+        val drove = try {
+            peopleDriver.driveAfter(outcome)?.also { Log.i(TAG, "people change after $reason: ${it.outcome} failure=${it.failure}") }
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "people change step threw", e)
+            null
+        }
         // Full policy input exists only after unlock, so a lost record is reconciled only then.
         val reconciled = if (locked) null else try {
             authority.reconcileIfLost()?.also { Log.i(TAG, "lost waiting record: outcome=${it.outcome} failure=${it.failure}") }

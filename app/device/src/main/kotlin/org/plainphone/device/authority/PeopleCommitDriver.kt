@@ -3,6 +3,7 @@
 package org.plainphone.device.authority
 
 import org.plainphone.core.RunningClock
+import org.plainphone.device.boot.BootOutcome
 import org.plainphone.policy.PeopleChangeController
 import org.plainphone.policy.PeopleChangeResult
 import org.plainphone.policy.PeopleResetProtectionEffects
@@ -18,6 +19,10 @@ import org.plainphone.policy.WaitingPhase
  * and the controller re-checks both, so a stale forward step can never resume a rollback. A failure
  * keeps the record where it is (old holders while committing) and the next pass retries.
  *
+ * Only after startup (PLA-390 R1): [driveAfter] takes the common startup's [BootOutcome] and runs the step
+ * only when it is ready, which means its session revocation succeeded. A failed or missing startup
+ * runs nothing; its own emergency repair still ran, and the next pass retries.
+ *
  * Pending waits belong to [WaitingCheckpoints]; turn-off and mode switches are not driven here.
  */
 class PeopleCommitDriver(
@@ -30,8 +35,11 @@ class PeopleCommitDriver(
         store.waitingStore, store.credentials, store.peopleCommitter, effects, clock, authority,
     )
 
-    /** One step of a committing or rolling-back people change; null when there is none. */
-    fun drive(): PeopleChangeResult? {
+    /** One step after a ready [startup]; null when the startup was not ready or there is no such change. */
+    fun driveAfter(startup: BootOutcome?): PeopleChangeResult? = if (startup?.ready == true) drive() else null
+
+    /** One step of a committing or rolling-back people change; null when there is none. Callers go through [driveAfter]. */
+    internal fun drive(): PeopleChangeResult? {
         val op = store.waitingStore.read()?.operation ?: return null
         if (op.peoplePatch == null) return null
         if (op.phase != WaitingPhase.COMMITTING && op.phase != WaitingPhase.ROLLING_BACK) return null
