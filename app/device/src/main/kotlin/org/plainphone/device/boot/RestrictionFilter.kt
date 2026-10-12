@@ -26,8 +26,8 @@ class RestrictionFilter(val withheld: Set<Restriction>) {
 
     /**
      * True when this build withholds DISALLOW_FACTORY_RESET: it then withholds the reset-protection
-     * write as well (Lead decision on PLA-92), so a recovery-mode erase never meets a reset-protection
-     * policy on a test phone. See `resetProtectionFor`.
+     * write as well (Lead decision on PLA-92): a test build never writes a new reset-protection policy.
+     * It does not read or clear one that is already set. See `resetProtectionFor`.
      */
     val withholdsResetProtection: Boolean get() = Restriction.DISALLOW_FACTORY_RESET in withheld
 

@@ -11,8 +11,9 @@ import org.plainphone.device.boot.RestrictionFilter
 
 /**
  * Lead decision on PLA-92 (2026-10-12): test builds withhold the reset-protection write, under the same
- * filter that withholds DISALLOW_FACTORY_RESET. A recovery-mode erase on the spare must never meet a
- * reset-protection policy. Only the account count is recorded, never the IDs.
+ * filter that withholds DISALLOW_FACTORY_RESET, so a test build never writes a new reset-protection
+ * policy. It does not read or clear a policy that is already set. Only the account count is recorded,
+ * never the IDs.
  */
 class ResetProtectionWithheldTest {
     private class Port : ResetProtectionPort {
