@@ -19,6 +19,7 @@ import java.io.File
 class AndroidInstallerPort(context: Context, private val statusSender: (sessionId: Int) -> IntentSender) : InstallerPort {
     private val installer = context.packageManager.packageInstaller
     private val pm = context.packageManager
+    private val ownPackage = context.packageName
 
     override fun ownSessions(): List<OwnSession>? = try {
         installer.mySessions.map { OwnSession(it.sessionId, it.isCommitted, it.appPackageName) }
@@ -63,6 +64,10 @@ class AndroidInstallerPort(context: Context, private val statusSender: (sessionI
 
     override fun commit(sessionId: Int) {
         installer.openSession(sessionId).use { it.commit(statusSender(sessionId)) }
+    }
+
+    override fun sessionInfo(sessionId: Int): OwnSession? = installer.getSessionInfo(sessionId)?.let {
+        OwnSession(it.sessionId, it.isCommitted, it.appPackageName.takeIf { _ -> it.installerPackageName == ownPackage })
     }
 
     override fun abandon(sessionId: Int): Boolean = try {
