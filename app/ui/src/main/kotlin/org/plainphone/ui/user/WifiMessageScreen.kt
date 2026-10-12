@@ -13,8 +13,10 @@ import org.plainphone.ui.theme.PlainphoneType
 /** Approved U7 messages only. No route into an unapproved sign-in window. */
 @Composable
 fun WifiMessageScreen(state: WifiMessageUiState, onEvent: (WifiMessageEvent) -> Unit) {
-    TaskScreen(stringResource(R.string.wifi_title), stringResource(R.string.wifi_forget),
-        { onEvent(WifiMessageEvent.ForgetNetwork) }, secondary = stringResource(R.string.user_ok),
+    TaskScreen(stringResource(R.string.wifi_title),
+        stringResource(if (state.canForget) R.string.wifi_forget else R.string.user_ok),
+        { onEvent(if (state.canForget) WifiMessageEvent.ForgetNetwork else WifiMessageEvent.Ok) },
+        secondary = if (state.canForget) stringResource(R.string.user_ok) else null,
         onSecondary = { onEvent(WifiMessageEvent.Ok) }) {
         Text(stringResource(R.string.wifi_signal), style = PlainphoneType.Body)
         Text(stringResource(when (state.problem) {

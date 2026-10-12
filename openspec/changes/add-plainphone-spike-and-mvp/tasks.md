@@ -106,3 +106,10 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [x] Probe temporary Location, connection retention and Location-off reconnection on API 35.
 - [x] Complete affected goldens and in-place emulator upgrade gate.
 - [ ] Lead opposite-model review and in-place spare install/readback.
+
+### Authorized tap-time Forget preview (PLA-448 / PLA-460)
+- [x] Restore connected Forget and calls-first message navigation on delivered preview 36.
+- [x] Open owned Location at tap time; bound identity acquisition; remove only the connected validated ID; verify the remaining set and disconnection; clean up using the existing call-aware controller.
+- [x] Cover Location-off, no-ID, duplicate taps, delayed identity, failed readback and cleanup with red-first JVM tests.
+- [x] Verify five font scales for changed screens, plus join/Bluetooth, navigation, emergency and update-postpone regressions.
+- [x] Prove connected-only removal and Location-off cleanup on a private API 35 emulator; no spare access or live calls.

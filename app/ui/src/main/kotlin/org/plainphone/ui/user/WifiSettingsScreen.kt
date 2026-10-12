@@ -26,19 +26,20 @@ data class WifiSettingsUiState(val enabled: Boolean = true, val connected: Boole
     val network: String? = null, val nearby: List<String>? = null,
     val readFailed: Boolean = false, val internetStatus: WifiInternetUiStatus? = null,
     val locationOff: Boolean = false, val locationEnableFailed: Boolean = false,
-    val locationOffFailed: Boolean = false, val choices: List<WifiNearbyUi> = emptyList())
+    val locationOffFailed: Boolean = false, val canForget: Boolean = false, val forgetFailed: Boolean = false, val choices: List<WifiNearbyUi> = emptyList())
 data class WifiNearbyUi(val id: String, val name: String, val connected: Boolean = false)
 
 /** The host supplies current facts and handles the explicit Location and network actions. */
 @Composable
 fun WifiSettingsScreen(state: WifiSettingsUiState, onBack: () -> Unit,
-    onShow: () -> Unit = {}, onSelect: (String) -> Unit = {}) {
+    onShow: () -> Unit = {}, onSelect: (String) -> Unit = {},
+    onForget: () -> Unit = {}, onMessage: () -> Unit = {}) {
     if (state.locationOff && state.enabled && !state.readFailed) {
         TaskScreen(title = stringResource(R.string.settings_wifi),
             back = stringResource(R.string.settings_back), onBack = onBack,
             primary = stringResource(R.string.wifi_show_nearby), onPrimary = onShow) {
             if (state.locationOffFailed) Text(stringResource(R.string.wifi_location_off_failed), style = PlainphoneType.Body)
-            WifiConnection(state)
+            WifiConnection(state, onForget, onMessage)
             Text(stringResource(R.string.wifi_nearby), style = PlainphoneType.Row, modifier = Modifier.semantics { heading() })
             Text(stringResource(R.string.wifi_location_explanation), style = PlainphoneType.Body)
             if (state.locationEnableFailed) Text(stringResource(R.string.wifi_nearby_unavailable), style = PlainphoneType.Body)
@@ -56,7 +57,7 @@ fun WifiSettingsScreen(state: WifiSettingsUiState, onBack: () -> Unit,
         } else if (!state.enabled) {
             Text(stringResource(R.string.wifi_off), style = PlainphoneType.Body)
         } else {
-            WifiConnection(state)
+            WifiConnection(state, onForget, onMessage)
             Text(stringResource(R.string.wifi_nearby), style = PlainphoneType.Row, modifier = Modifier.semantics { heading() })
             if (state.locationOff) {
                 Text(stringResource(R.string.wifi_location_explanation), style = PlainphoneType.Body)
@@ -78,16 +79,19 @@ fun WifiSettingsScreen(state: WifiSettingsUiState, onBack: () -> Unit,
 }
 
 @Composable
-private fun WifiConnection(state: WifiSettingsUiState) {
+private fun WifiConnection(state: WifiSettingsUiState, onForget: () -> Unit, onMessage: () -> Unit) {
+    if (state.forgetFailed) Text(stringResource(R.string.wifi_status_unavailable), style = PlainphoneType.Body)
     Text(when {
                 !state.connected -> stringResource(R.string.wifi_not_connected)
                 state.network == null -> stringResource(R.string.wifi_connected_unnamed)
                 else -> stringResource(R.string.wifi_connected_named, state.network)
             }, style = PlainphoneType.Body)
+            if (state.connected && state.canForget)
+                ScreenLink(stringResource(R.string.wifi_forget), onForget, centered = false)
             if (state.connected) state.internetStatus?.let {
-                Text(stringResource(when (it) {
+                ScreenLink(stringResource(when (it) {
                     WifiInternetUiStatus.SignInRequired -> R.string.wifi_signin
                     WifiInternetUiStatus.NoInternet -> R.string.wifi_no_internet
-                }), style = PlainphoneType.Body)
+                }), onMessage, centered = false)
             }
 }

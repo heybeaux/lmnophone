@@ -758,3 +758,16 @@ Settings or sign-in page opens, and Forget never changes Location.
 Build 33's Location cleanup also shows **Location is still on. LMNOPhone couldn't
 turn it off.** after 60 seconds of unknown call state while owned Location needs
 to turn off. It keeps retrying and never turns Location off during a known call.
+
+### Tap-time Wi-Fi Forget Location window
+
+Board accepted on [PLA-448](/PLA/issues/PLA-448), candidate [PLA-460](/PLA/issues/PLA-460).
+This supersedes the deferred build-34 Location rule above. Show **Forget this network**
+only while Wi-Fi is connected and validated, including when Location is off.
+At the tap, briefly enable owned Location, read the connected saved ID, remove only
+that ID and read back the remaining saved IDs and disconnection, then restore owned
+Location. Already-on Location stays on. Use the build-33 cleanup on leaving, calls,
+failure and restart, including **Location is still on. LMNOPhone couldn't turn it off.**
+If identity cannot be read, remove nothing and show **Wi-Fi status can't be read right now.**
+The calls-first problem screen remains reachable from the sign-in/no-internet message.
+When Forget is unavailable, its only action is **OK**, returning to Wi-Fi.

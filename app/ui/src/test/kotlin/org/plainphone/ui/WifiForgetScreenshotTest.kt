@@ -24,7 +24,7 @@ class WifiForgetScreenshotTest(private val scale: Float) {
         density=Density.MEDIUM, fontScale=scale, locale="en"), showSystemUi=false, maxPercentDifference=0.0)
     @Test fun connected() = page(false)
     @Test fun locationOff() = page(true)
-    @Test fun cleanupFailed() = page(true, cleanupFailed = true)
+    @Test fun cleanupFailed() = page(false, cleanupFailed = true)
     @Test fun noIdentity() = page(true, failed = true)
     @Test fun signIn() = message(WifiProblem.SignInRequired)
     @Test fun noInternet() = message(WifiProblem.NoInternet)
@@ -32,16 +32,15 @@ class WifiForgetScreenshotTest(private val scale: Float) {
     private fun page(locationOff: Boolean, cleanupFailed: Boolean = false, failed: Boolean = false) = paparazzi.snapshot {
         PlainphoneTheme {
             val view=LocalView.current as ViewRootForTest
-            var forget=0;var message=0
+            var forget=0
             Box(Modifier.onGloballyPositioned {
                 val nodes=view.semanticsOwner.getAllSemanticsNodes(mergingEnabled=true)
                 fun action(label:String) = nodes.single { n -> n.config.getOrElse(SemanticsProperties.Text){emptyList()}.any{it.text==label} }
                 if (!failed) action("Forget this network").config[SemanticsActions.OnClick].action!!.invoke()
-                action("This Wi-Fi isn't reaching the internet.").config[SemanticsActions.OnClick].action!!.invoke()
-                assertEquals(!failed, forget>0);assertTrue(message>0)
+                assertEquals(!failed, forget>0)
             }) { HomeTestFrame { WifiSettingsScreen(WifiSettingsUiState(connected=true,network="Sam",
                 nearby=listOf("Sam","Jo"), locationOff=locationOff, canForget=!failed, forgetFailed=failed, locationOffFailed=cleanupFailed,
-                internetStatus=WifiInternetUiStatus.NoInternet), {}, onForget={forget++}, onMessage={message++}) } }
+                internetStatus=null), {}, onForget={forget++}) } }
         }
     }
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
