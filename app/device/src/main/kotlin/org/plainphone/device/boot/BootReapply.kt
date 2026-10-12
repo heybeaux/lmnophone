@@ -117,6 +117,12 @@ class BootReapply(
 
     val sessions = SessionController(journal, Effects(), { null }, null, { _, _ -> false })
 
+    /**
+     * Reads this pass's protected plan back and writes nothing (PLA-97: a mode switch's protected-state
+     * check after its revocation). False with no plan, on any mismatch or on a throw.
+     */
+    fun readBackProtected(): Boolean = plan?.let { attempt { applier.readBack(it) } } == true
+
     fun run(locked: Boolean): BootOutcome {
         applied = null
         runFlipFailures.clear()

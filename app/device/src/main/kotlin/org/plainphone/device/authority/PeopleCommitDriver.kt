@@ -4,6 +4,7 @@ package org.plainphone.device.authority
 
 import org.plainphone.core.RunningClock
 import org.plainphone.device.boot.BootOutcome
+import org.plainphone.policy.ModeSwitchEffects
 import org.plainphone.policy.PeopleChangeController
 import org.plainphone.policy.PeopleChangeResult
 import org.plainphone.policy.PeopleResetProtectionEffects
@@ -23,7 +24,12 @@ import org.plainphone.policy.WaitingPhase
  * only when it is ready, which means its session revocation succeeded. A failed or missing startup
  * runs nothing; its own emergency repair still ran, and the next pass retries.
  *
- * Pending waits belong to [WaitingCheckpoints]; turn-off and mode switches are not driven here.
+ * Mode switches (PLA-97) are driven only when [effects] is a [org.plainphone.policy.ModeSwitchEffects]
+ * such as [DeviceModeSwitchEffects]: the controller then commits through [JointAuthorityStore.modeCommitter],
+ * which passes people changes to the same people committer. With plain reset-protection effects a mode
+ * switch is left alone. Nothing here starts or skips a switch.
+ *
+ * Pending waits belong to [WaitingCheckpoints]; turn-off is not driven here.
  */
 class PeopleCommitDriver(
     private val store: JointAuthorityStore,
@@ -31,17 +37,18 @@ class PeopleCommitDriver(
     clock: RunningClock,
     authority: PersonAuthorityConsumer,
 ) {
+    private val modes = effects is ModeSwitchEffects
     private val controller = PeopleChangeController(
-        store.waitingStore, store.credentials, store.peopleCommitter, effects, clock, authority,
+        store.waitingStore, store.credentials, if (modes) store.modeCommitter else store.peopleCommitter, effects, clock, authority,
     )
 
     /** One step after a ready [startup]; null when the startup was not ready or there is no such change. */
     fun driveAfter(startup: BootOutcome?): PeopleChangeResult? = if (startup?.ready == true) drive() else null
 
-    /** One step of a committing or rolling-back people change; null when there is none. Callers go through [driveAfter]. */
+    /** One step of a committing or rolling-back people change or mode switch; null when there is none. Callers go through [driveAfter]. */
     internal fun drive(): PeopleChangeResult? {
         val op = store.waitingStore.read()?.operation ?: return null
-        if (op.peoplePatch == null) return null
+        if (op.peoplePatch == null && (op.modePatch == null || !modes)) return null
         if (op.phase != WaitingPhase.COMMITTING && op.phase != WaitingPhase.ROLLING_BACK) return null
         return controller.tick(op.identity.requestId, op.phase)
     }
