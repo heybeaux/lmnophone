@@ -1,0 +1,264 @@
+{
+  "time_utc": "2026-10-12T04:36:13.185423+00:00",
+  "serial": "<emulator>",
+  "before": {
+    "owner": "1 owner:\nUser  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated",
+    "restriction_names_in_dump": [
+      "no_add_clone_profile",
+      "no_add_managed_profile",
+      "no_add_private_profile",
+      "no_add_user",
+      "no_bluetooth_sharing",
+      "no_config_cell_broadcasts",
+      "no_config_credentials",
+      "no_config_date_time",
+      "no_config_vpn",
+      "no_config_wifi",
+      "no_create_windows",
+      "no_fun",
+      "no_install_unknown_sources",
+      "no_install_unknown_sources_globally",
+      "no_modify_accounts",
+      "no_network_reset",
+      "no_outgoing_calls",
+      "no_safe_boot",
+      "no_sms",
+      "no_system_error_dialogs",
+      "no_usb_file_transfer",
+      "no_user_switch",
+      "no_wallpaper"
+    ],
+    "active_restriction_sections": [
+      {
+        "section": "Restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile"
+        ]
+      },
+      {
+        "section": "Device policy restrictions:",
+        "values": [
+          "no_add_managed_profile",
+          "no_config_vpn",
+          "no_modify_accounts"
+        ]
+      },
+      {
+        "section": "Effective restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile",
+          "no_add_user",
+          "no_config_cell_broadcasts",
+          "no_config_date_time",
+          "no_config_vpn",
+          "no_create_windows",
+          "no_install_unknown_sources_globally",
+          "no_modify_accounts",
+          "no_network_reset",
+          "no_safe_boot",
+          "no_system_error_dialogs",
+          "no_usb_file_transfer",
+          "no_user_switch"
+        ]
+      },
+      {
+        "section": "Device policy global restrictions:",
+        "values": [
+          "no_add_user",
+          "no_config_cell_broadcasts",
+          "no_config_date_time",
+          "no_create_windows",
+          "no_install_unknown_sources_globally",
+          "no_network_reset",
+          "no_safe_boot",
+          "no_system_error_dialogs",
+          "no_usb_file_transfer",
+          "no_user_switch"
+        ]
+      },
+      {
+        "section": "Guest restrictions:",
+        "values": [
+          "no_config_credentials",
+          "no_config_wifi",
+          "no_install_unknown_sources",
+          "no_outgoing_calls",
+          "no_sms"
+        ]
+      }
+    ],
+    "lock_packages": [
+      "com.android.camera2",
+      "com.android.phone",
+      "com.android.server.telecom",
+      "com.google.android.apps.maps",
+      "com.google.android.apps.messaging",
+      "com.google.android.apps.safetyhub",
+      "com.google.android.cellbroadcastreceiver",
+      "com.google.android.dialer",
+      "org.plainphone"
+    ],
+    "lock_features": 53,
+    "lock_state": "LOCKED",
+    "first_install_time": "2026-10-11 14:05:10",
+    "count_preference": "ABSENT",
+    "package_flags": {
+      "hidden": [
+        "com.android.chrome",
+        "com.android.stk",
+        "com.android.vending",
+        "com.google.android.apps.docs",
+        "com.google.android.apps.photos",
+        "com.google.android.apps.youtube.music",
+        "com.google.android.calendar",
+        "com.google.android.contacts",
+        "com.google.android.deskclock",
+        "com.google.android.documentsui",
+        "com.google.android.gm",
+        "com.google.android.googlequicksearchbox",
+        "com.google.android.youtube"
+      ],
+      "suspended": [],
+      "disabled": [
+        "com.android.nfc",
+        "com.google.android.devicelockcontroller",
+        "com.google.android.gms.supervision"
+      ],
+      "packages_read": 244
+    }
+  },
+  "after": {
+    "owner": "1 owner:\nUser  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated",
+    "restriction_names_in_dump": [
+      "no_add_clone_profile",
+      "no_add_managed_profile",
+      "no_add_private_profile",
+      "no_add_user",
+      "no_bluetooth_sharing",
+      "no_config_cell_broadcasts",
+      "no_config_credentials",
+      "no_config_date_time",
+      "no_config_vpn",
+      "no_config_wifi",
+      "no_create_windows",
+      "no_fun",
+      "no_install_unknown_sources",
+      "no_install_unknown_sources_globally",
+      "no_modify_accounts",
+      "no_network_reset",
+      "no_outgoing_calls",
+      "no_safe_boot",
+      "no_sms",
+      "no_system_error_dialogs",
+      "no_usb_file_transfer",
+      "no_user_switch",
+      "no_wallpaper"
+    ],
+    "active_restriction_sections": [
+      {
+        "section": "Restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile"
+        ]
+      },
+      {
+        "section": "Device policy restrictions:",
+        "values": [
+          "no_add_managed_profile",
+          "no_config_vpn",
+          "no_modify_accounts"
+        ]
+      },
+      {
+        "section": "Effective restrictions:",
+        "values": [
+          "no_add_clone_profile",
+          "no_add_managed_profile",
+          "no_add_private_profile",
+          "no_add_user",
+          "no_config_cell_broadcasts",
+          "no_config_date_time",
+          "no_config_vpn",
+          "no_create_windows",
+          "no_install_unknown_sources_globally",
+          "no_modify_accounts",
+          "no_network_reset",
+          "no_safe_boot",
+          "no_system_error_dialogs",
+          "no_usb_file_transfer",
+          "no_user_switch"
+        ]
+      },
+      {
+        "section": "Device policy global restrictions:",
+        "values": [
+          "no_add_user",
+          "no_config_cell_broadcasts",
+          "no_config_date_time",
+          "no_create_windows",
+          "no_install_unknown_sources_globally",
+          "no_network_reset",
+          "no_safe_boot",
+          "no_system_error_dialogs",
+          "no_usb_file_transfer",
+          "no_user_switch"
+        ]
+      },
+      {
+        "section": "Guest restrictions:",
+        "values": [
+          "no_config_credentials",
+          "no_config_wifi",
+          "no_install_unknown_sources",
+          "no_outgoing_calls",
+          "no_sms"
+        ]
+      }
+    ],
+    "lock_packages": [
+      "com.android.camera2",
+      "com.android.phone",
+      "com.android.server.telecom",
+      "com.google.android.apps.maps",
+      "com.google.android.apps.messaging",
+      "com.google.android.apps.safetyhub",
+      "com.google.android.cellbroadcastreceiver",
+      "com.google.android.dialer",
+      "org.plainphone"
+    ],
+    "lock_features": 53,
+    "lock_state": "LOCKED",
+    "first_install_time": "2026-10-11 14:05:10",
+    "count_preference": "ABSENT",
+    "package_flags": {
+      "hidden": [
+        "com.android.chrome",
+        "com.android.stk",
+        "com.android.vending",
+        "com.google.android.apps.docs",
+        "com.google.android.apps.photos",
+        "com.google.android.apps.youtube.music",
+        "com.google.android.calendar",
+        "com.google.android.contacts",
+        "com.google.android.deskclock",
+        "com.google.android.documentsui",
+        "com.google.android.gm",
+        "com.google.android.googlequicksearchbox",
+        "com.google.android.youtube"
+      ],
+      "suspended": [],
+      "disabled": [
+        "com.android.nfc",
+        "com.google.android.devicelockcontroller",
+        "com.google.android.gms.supervision"
+      ],
+      "packages_read": 244
+    }
+  }
+}

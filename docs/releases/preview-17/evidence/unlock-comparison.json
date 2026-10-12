@@ -1,0 +1,22 @@
+{
+  "16": {
+    "first_home_log": "10-11 20:08:35.350   946   946 I PlainphoneBoot: home shown lockTask=LOCKED at=14893",
+    "full_unlocked_passes": 3,
+    "full_reasons": [
+      "user-unlocked",
+      "package:PACKAGE_CHANGED:android",
+      "package-burst"
+    ],
+    "lost_reconcile_lines": []
+  },
+  "17": {
+    "first_home_log": "10-11 21:36:48.459   949   949 I PlainphoneBoot: home shown lockTask=LOCKED at=14008",
+    "full_unlocked_passes": 3,
+    "full_reasons": [
+      "user-unlocked",
+      "package:PACKAGE_CHANGED:android",
+      "package-burst"
+    ],
+    "lost_reconcile_lines": []
+  }
+}

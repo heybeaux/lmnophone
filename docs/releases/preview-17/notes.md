@@ -6,7 +6,7 @@ in this preview and show “Not in this test build”. No PIN is included in the
 
 ## Try it
 
-1. Open **More**, then the trusted-person row.
+1. Open **More** → **For Sam and Jo** (the retained preview names).
 2. First time only: enter a PIN of at least six digits in both fields and tap
    **Continue**. Choose a test PIN you can remember; there is no PIN recovery or
    PIN-change route in this preview. Keep the PIN out of issue notes and screenshots.
@@ -16,6 +16,9 @@ in this preview and show “Not in this test build”. No PIN is included in the
 5. Restart the phone. The PIN remains set, and entry is still required.
 
 ## Limits
+
+The shared controls screen still contains some old “Plainphone” wording.
+The preview Home retains sample trusted-person names; the PIN record is self-managed.
 
 The PIN is a real authority record that later builds will read. Existing or damaged
 records are never replaced by setup. Five wrong PIN attempts start the existing
@@ -40,3 +43,5 @@ UI hierarchy text and visible Home instead.
 The earlier `blocker.md` and `evidence/checkpoint.md` describe superseded scopes
 and a version-16 compilation checkpoint. This document records the Lead’s final
 PIN-only scope on [PLA-387](/PLA/issues/PLA-387).
+
+[Release case](/PLA/cases/PLA-C68); [emulator evidence](/PLA/cases/PLA-C69).

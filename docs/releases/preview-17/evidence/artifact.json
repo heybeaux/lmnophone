@@ -1,0 +1,11 @@
+{
+  "apk_sha256": "d662781d994c22134a6991f630eea82a1618ab939fa3c9faac1735f9d5c29f12",
+  "installed_apk_sha256": "d662781d994c22134a6991f630eea82a1618ab939fa3c9faac1735f9d5c29f12",
+  "gzip_sha256": "6cdf292db2859ea3f3628250e456aa4ebfb08a487c443ba2d02681bd7ccce768",
+  "signer_sha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "code_commit": "d48e7395",
+  "versionCode": 17,
+  "versionName": "0.1.0-preview-17",
+  "attachmentId": "ad19ed97-5b2f-48fb-94b5-66aa850df3a2",
+  "contentPath": "/api/attachments/ad19ed97-5b2f-48fb-94b5-66aa850df3a2/content"
+}

@@ -1,0 +1,12 @@
+{
+  "installed_at_utc": "2026-10-12T04:33:54.389531+00:00",
+  "apk_sha256": "d662781d994c22134a6991f630eea82a1618ab939fa3c9faac1735f9d5c29f12",
+  "readback": [
+    "versionCode=17 minSdk=30 targetSdk=36",
+    "versionName=0.1.0-preview-17",
+    "lastUpdateTime=2026-10-11 21:33:53",
+    "firstInstallTime=2026-10-11 14:05:10"
+  ],
+  "upgrade": "16 to 17, in place",
+  "target": "owned API 35 emulator"
+}

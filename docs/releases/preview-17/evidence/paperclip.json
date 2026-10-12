@@ -1,0 +1,46 @@
+{
+  "releaseCase": {
+    "id": "39cfb8a5-0444-4e89-8a87-f89d842e3235",
+    "identifier": "PLA-C68"
+  },
+  "qaCase": {
+    "id": "6d426fff-cff4-433e-b7a3-04147b236eb2",
+    "identifier": "PLA-C69"
+  },
+  "reportAttachmentId": "08f99aa5-1f76-436f-9c8e-a7b3d0f81f0b",
+  "caseAttachments": [
+    {
+      "file": "gate.log",
+      "id": "c0eb25df-8e3e-4f8b-915d-04bfa92ef997"
+    },
+    {
+      "file": "pin-route.jsonl",
+      "id": "342c5a96-18cb-45ea-9722-e7070a0c94a8"
+    },
+    {
+      "file": "boot-gate.txt",
+      "id": "3d96175e-ddc1-4117-b001-36cdc5919395"
+    },
+    {
+      "file": "final-safety.json",
+      "id": "28484994-b099-4586-86b8-77dea8d5ec5e"
+    },
+    {
+      "file": "more-emergency-911.png",
+      "id": "b989999d-ccbd-4b31-b123-f6ba1ec136af"
+    },
+    {
+      "file": "phone-911.png",
+      "id": "6b14805d-56a8-4d3c-8c53-fe41c84e1e0e"
+    },
+    {
+      "file": "protected-controls.png",
+      "id": "c9f48287-1328-4502-9dfb-f0193c24b569"
+    },
+    {
+      "file": "home-after-pin.png",
+      "id": "ef01949b-cfee-41b6-bbaf-4227e4a25b67"
+    }
+  ],
+  "remoteApkHashVerified": true
+}
