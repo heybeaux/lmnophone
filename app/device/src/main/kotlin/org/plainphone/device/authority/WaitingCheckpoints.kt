@@ -6,6 +6,7 @@ import org.plainphone.policy.BatteryState
 import org.plainphone.policy.PersonAuthorityConsumer
 import org.plainphone.core.RunningClock
 import org.plainphone.policy.WaitingChangeController
+import org.plainphone.policy.WaitingNotice
 import org.plainphone.policy.WaitingOutcome
 import org.plainphone.policy.WaitingPhase
 
@@ -23,6 +24,7 @@ import org.plainphone.policy.WaitingPhase
  * - An unknown [battery] counts as low, so it never lets a turn-off commit.
  * - [periodMillis] is the checkpoint alarm's period: [PENDING_PERIOD_MILLIS] while a wait is pending.
  * - [cancel] needs no PIN: the phone's own cancel of the request it shows.
+ * - [notice] is what Home shows for the operation (policy NoticeLine input).
  *
  * Nothing here starts a wait, skips one or completes a committing one.
  */
@@ -49,11 +51,26 @@ class WaitingCheckpoints(
         return controller.tick(requestId, battery() ?: UNKNOWN_BATTERY)
     }
 
+    /**
+     * The Home notice projection (`NoticeLine` input) of the current operation; null with none, or once it
+     * finished. A pending wait carries the proven time still to run; with no clock reading the whole wait
+     * remains, so Home never names an earlier time. Committing or rolling back carries 0.
+     */
+    fun notice(): WaitingNotice? {
+        val op = store.waitingStore.read()?.operation ?: return null
+        if (op.phase == WaitingPhase.COMPLETED || op.phase == WaitingPhase.CANCELLED) return null
+        val remaining = if (op.phase != WaitingPhase.PENDING) 0L else
+            clock.checkpoint()?.proven?.let { (WAIT_MILLIS - it.since(op.startedAt)).coerceIn(0L, WAIT_MILLIS) } ?: WAIT_MILLIS
+        return WaitingNotice(op.identity.requestId, op.kind, op.phase, remaining)
+    }
+
     /** The phone's own cancel of [requestId]. No PIN. */
     fun cancel(requestId: String): WaitingOutcome = controller.cancel(requestId)
 
     companion object {
         const val PENDING_PERIOD_MILLIS = 5 * 60 * 1000L
+        /** The 24 hours of proven running time every wait needs (the controller's maturity rule). */
+        const val WAIT_MILLIS = 86_400_000L
         /** Treated as low and not charging. */
         private val UNKNOWN_BATTERY = BatteryState(0, false)
     }
