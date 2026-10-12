@@ -12,7 +12,7 @@ OpenSpec: 3 changes validated, 0 failures. git diff --check PASS.
 Tests-first checkpoint: fa6d8c1f (controller absent, compilation fails as recorded).
 
 INSTALLED: emulator-5880 only, in-place 27 -> 28 at 2026-10-12T13:54:11Z.
-Package lastUpdateTime: 2026-10-12 06:54:11 (emulator America/Los_Angeles).
+Package lastUpdateTime: 2026-10-12 06:54:11 (emulator America/Vancouver).
 Device Owner, TEST_ONLY, LOCKED retained before/after reboot. Home follows full readback.
 No spare commands. Lead owns the single opposite-model review and spare installation.
 
