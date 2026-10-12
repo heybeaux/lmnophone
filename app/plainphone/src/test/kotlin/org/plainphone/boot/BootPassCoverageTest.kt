@@ -113,6 +113,78 @@ class BootPassCoverageTest {
         assertEquals(listOf(1L), f.skips)
     }
 
+    @Test fun unchangedGroupSkipsWithoutHomeRefreshAndKeepsPassAndCapture() {
+        val f = Fixture(); f.run("user-unlocked")
+        val tasks = mutableListOf<() -> Unit>()
+        var captures = 0
+        f.coverage.captureAfterPublished({ tasks += it }) { captures++ }
+        val reads = mutableListOf<String>()
+        repeat(2) {
+            f.coverage.run("package-burst", false, { false },
+                packageReasons = listOf("package:PACKAGE_CHANGED:one", "package:PACKAGE_CHANGED:two"),
+                packageUnchanged = { name -> reads += name; true },
+                apply = { fail("full pass"); good }, afterPass = { fail("Home refresh"); true },
+                skipped = { f.skips += it }, afterPackageSkip = { true },
+                afterPublished = { fail("skip must not create a new capture") })
+        }
+        assertEquals(listOf("one", "two", "one", "two"), reads)
+        assertEquals(listOf(1L, 1L), f.skips)
+        assertEquals(1, f.applies)
+        assertEquals(1, f.publications)
+        tasks.single()()
+        assertEquals(1, captures)
+    }
+
+    @Test fun everyGroupFailureFallsBackToFullPass() {
+        for (mode in listOf("changed", "added", "removed", "replaced", "before-snapshot",
+            "locked", "retry", "absent", "throws", "empty")) {
+            val f = Fixture()
+            if (mode != "absent") f.run("user-unlocked")
+            val before = f.applies
+            val reasons = when (mode) {
+                "added" -> listOf("package:PACKAGE_CHANGED:one", "package:PACKAGE_ADDED:two")
+                "removed" -> listOf("package:PACKAGE_CHANGED:one", "package:PACKAGE_REMOVED:two")
+                "replaced" -> listOf("package:PACKAGE_CHANGED:one", "package:PACKAGE_REPLACED:two")
+                "empty" -> emptyList()
+                else -> listOf("package:PACKAGE_CHANGED:one", "package:PACKAGE_CHANGED:two")
+            }
+            val reads = mutableListOf<String>()
+            var refreshed = false
+            f.coverage.run("package-burst", mode == "locked", { mode == "retry" },
+                packageReasons = reasons, packageMaySkip = mode != "before-snapshot",
+                packageUnchanged = { name ->
+                    reads += name
+                    if (mode == "throws" && name == "two") error("unreadable")
+                    !(mode == "changed" && name == "two")
+                },
+                apply = { f.applies++; good }, afterPass = { refreshed = true; true },
+                skipped = { fail(mode) }, afterPackageSkip = { fail(mode); true })
+            assertEquals(mode, before + 1, f.applies)
+            assertTrue(mode, refreshed)
+            if (mode in listOf("changed", "throws")) assertEquals(mode, listOf("one", "two"), reads)
+            else assertTrue(mode, reads.isEmpty())
+        }
+    }
+
+    @Test fun onePreSnapshotEventMakesWholeDispatchedGroupIneligible() {
+        val f = Fixture(); f.run("user-unlocked")
+        val tasks = mutableListOf<() -> Unit>()
+        var captured = false
+        val burst = PackageEventBurst({ tasks += it }, { reasons, maySkip ->
+            f.coverage.run("package-burst", false, { false },
+                packageReasons = reasons, packageMaySkip = maySkip,
+                packageUnchanged = { fail("receipt-time eligibility lost"); true },
+                apply = { f.applies++; good }, afterPass = { f.publications++; true },
+                skipped = { fail("must apply") })
+        }, { captured })
+        burst.add("package:PACKAGE_CHANGED:one")
+        captured = true
+        burst.add("package:PACKAGE_CHANGED:two")
+        tasks.single()()
+        assertEquals(2, f.applies)
+        assertEquals(2, f.publications)
+    }
+
     @Test fun proofCannotOverrideOtherTriggersOrInvalidCoverage() {
         for (reason in listOf("package:PACKAGE_ADDED:example", "package:PACKAGE_REMOVED:example",
             "package:PACKAGE_REPLACED:example", "updated", "user-unlocked", "start", "alarm",

@@ -20,21 +20,21 @@ class PackageEventBurstTest {
         assertEquals(listOf(false, true), eligibility)
     }
 
-    @Test fun mixedPackagesOrActionsAlwaysRequireFullPass() {
+    @Test fun mixedPackagesAndActionsRetainAllReasons() {
         for (other in listOf("package:PACKAGE_CHANGED:two", "package:PACKAGE_ADDED:one",
             "package:PACKAGE_REMOVED:one", "package:PACKAGE_REPLACED:one")) {
             val tasks = mutableListOf<() -> Unit>()
-            val handled = mutableListOf<String>()
+            val handled = mutableListOf<List<String>>()
             val burst = PackageEventBurst({ tasks += it }, { reason, _ -> handled += reason })
             burst.add("package:PACKAGE_CHANGED:one"); burst.add(other)
             assertEquals(1, tasks.size)
             tasks.removeAt(0)()
-            assertEquals(listOf("package-burst"), handled)
+            assertEquals(listOf(listOf("package:PACKAGE_CHANGED:one", other)), handled)
         }
     }
     @Test fun identicalEventsCoalesceAndEventsDuringRunGetAnotherPass() {
         val tasks = mutableListOf<() -> Unit>()
-        val handled = mutableListOf<String>()
+        val handled = mutableListOf<List<String>>()
         lateinit var burst: PackageEventBurst
         burst = PackageEventBurst({ tasks += it }, { reason, _ ->
             handled += reason
@@ -42,6 +42,6 @@ class PackageEventBurstTest {
         })
         repeat(2) { burst.add("package:PACKAGE_CHANGED:one") }
         tasks.removeAt(0)(); tasks.removeAt(0)()
-        assertEquals(listOf("package:PACKAGE_CHANGED:one", "package:PACKAGE_CHANGED:two"), handled)
+        assertEquals(listOf(listOf("package:PACKAGE_CHANGED:one"), listOf("package:PACKAGE_CHANGED:two")), handled)
     }
 }
