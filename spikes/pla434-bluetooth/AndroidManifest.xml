@@ -1,0 +1,6 @@
+<!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.plainphone.spike434">
+<uses-sdk android:minSdkVersion="33" android:targetSdkVersion="36"/>
+<application android:label="Throwaway Bluetooth probe" android:debuggable="true" android:testOnly="true"/>
+<instrumentation android:name="org.plainphone.spike434.BluetoothProbe" android:targetPackage="org.plainphone"/>
+</manifest>

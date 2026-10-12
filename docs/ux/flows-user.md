@@ -692,3 +692,22 @@ gives them.
 
 Approved count permission disclosure (design revision 2, D7):
 "LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say."
+
+### Build 32 nearby Bluetooth preview
+
+Approved in [PLA-434](/PLA/issues/PLA-434). Fully-on Bluetooth replaces the
+build-30 preview line with **Pair a new device** (`›`). Off and unreadable
+states keep their existing lines and have no new row.
+
+The new page shows **‹ Bluetooth**, **Pair a new device**, then **Looking for
+nearby devices…** while scanning. Named, unpaired devices appear as rows,
+sorted ignoring case, without duplicates, at most twenty. When scanning ends,
+**Look again** is the primary action. An empty result says **No devices found.
+Make sure the other device is ready to pair, then tap Look again.** Failure
+says **Nearby devices can't be shown right now.** Leaving or pausing stops the
+scan. Bluetooth and Location are never changed.
+
+Selecting a row shows **‹ Pair a new device**, the device name, and **Pairing
+from LMNOPhone isn't ready yet.** There is no Pair button: the emulator probe
+found Android's confirmation is rejected under lock task. No pairing call
+ships. Names are ephemeral display data only, never logs or saved evidence.

@@ -84,3 +84,20 @@ All LMNOPhone screens SHALL:
 #### Scenario: Large text
 - **WHEN** the text size is set to the largest option
 - **THEN** every LMNOPhone screen still shows its primary action without horizontal scrolling
+
+### Requirement: Build 32 Bluetooth discovery preview
+The authorized preview SHALL offer nearby Bluetooth discovery only while
+Bluetooth is fully on, with BLUETOOTH_SCAN marked neverForLocation and no
+Location use. It SHALL NOT change Bluetooth, add a system package to lock task,
+or attempt pairing while the pairing confirmation is known to be inaccessible.
+
+#### Scenario: Discover nearby devices
+- **WHEN** the user opens Pair a new device
+- **THEN** discovery starts and named unpaired devices are sorted ignoring case, deduplicated by identity and limited to twenty
+- **AND** completion offers Look again with U7 empty/error copy as appropriate
+- **AND** leaving or pausing cancels discovery and clears its observations
+
+#### Scenario: Pairing not ready
+- **WHEN** the user selects a nearby device
+- **THEN** its name and the U7 pairing-not-ready message appear with Back only
+- **AND** no bond request, system Settings launch or lock-task change occurs
