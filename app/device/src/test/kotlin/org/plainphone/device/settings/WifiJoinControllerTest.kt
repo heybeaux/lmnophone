@@ -5,9 +5,9 @@ import org.junit.Assert.*
 import org.junit.Test
 class WifiJoinControllerTest {
     private class Location : WifiLocationPort {
-        var on=false; var marker=false; var idle:Boolean?=true; var canWrite=true; var canMark=true
+        var on=false; var marker=false; var failedReadAfterEnable=false; var idle:Boolean?=true; var canWrite=true; var canMark=true
         val writes=mutableListOf<Boolean>()
-        override fun enabled()=on
+        override fun enabled(): Boolean { if(on && failedReadAfterEnable) throw SecurityException(); return on }
         override fun owned()=marker
         override fun saveOwned(value:Boolean):Boolean { if(!canMark)return false;marker=value;return true }
         override fun callIdle()=idle
@@ -43,6 +43,11 @@ class WifiJoinControllerTest {
     @Test fun markerFailureNeverEnablesAndEnableFailureDoesNotClaimSuccess() {
         val p=Location().apply{canMark=false};val c=WifiLocationController(p){0};assertFalse(c.show());assertTrue(p.writes.isEmpty())
         p.canMark=true;p.canWrite=false;assertFalse(c.show());assertFalse(p.on)
+    }
+    @Test fun failedEnableReadbackImmediatelyStartsCleanup() {
+        val p=Location().apply{failedReadAfterEnable=true};val c=WifiLocationController(p){0}
+        assertFalse(c.show());assertTrue(p.marker)
+        p.failedReadAfterEnable=false;c.tick();assertFalse(p.on);assertFalse(p.marker)
     }
     private class Join:WifiJoinPort {
         var result:Int?=7;var status=WifiJoinOutcome.Waiting;var calls=0;var cancels=0
