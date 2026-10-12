@@ -28,6 +28,13 @@ class TestBuildNavigatorTest {
         }
     }
 
+    @Test fun voicePracticeOpensFromMoreAndBackReturnsToMore() {
+        val step = nav.onMore(at(ShellRoute.More), MoreEvent.OpenVoicePractice)
+        assertEquals(at(ShellRoute.More, ShellRoute.VoicePractice), step.state)
+        assertNull(step.effect)
+        assertEquals(at(ShellRoute.More), nav.back(step.state).state)
+    }
+
     @Test fun aboutOpensU8AndOkOrBackReturnsToMore() {
         val step = nav.onMore(at(ShellRoute.More), MoreEvent.OpenAbout)
         assertEquals(at(ShellRoute.More, ShellRoute.About), step.state)
