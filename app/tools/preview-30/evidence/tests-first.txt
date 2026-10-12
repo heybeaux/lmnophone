@@ -1,0 +1,4 @@
+Tests-first commit: 101a118b
+./gradlew :device:testDebugUnitTest --tests '*BluetoothControllerTest'
+Expected compile failure before implementation: BluetoothPort, BluetoothFacts, BluetoothAdapterState and BluetoothController are unresolved.
+BUILD FAILED.

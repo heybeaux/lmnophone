@@ -1,0 +1,15 @@
+Source base: 650779b1 (accepted preview-29).
+Tests-first: 101a118b. Implementation: e0d9cca9.
+BluetoothControllerTest: 7 tests, zero failures; includes names, none, unnamed,
+more than ten, off/turning-on/turning-off/absent, read failure and missing grant.
+plainphone:testDebugUnitTest: 202 tests, zero failures.
+Selected Paparazzi: 68 test methods, zero failures; 83 changed goldens inspected.
+Bluetooth states and Phone settings at 1.0/1.3/1.5/1.8/2.0; More fixtures affected
+by the subtitle are included. Synthetic names only.
+ui:lintDebug: PASS.
+openspec validate --all: 3 passed, 0 failed.
+Final APK: :plainphone:assembleDebug completed successfully.
+Separate unchanged baseline lint failures, no suppression or disabled checks:
+- device: 5 MissingPermission errors in unchanged AndroidWifi.kt (43/44/49/55).
+- plainphone: StateFlowValueCalledInComposition in unchanged PinAccessActivity.kt:99.
+AndroidBluetooth has zero lint errors after explicit checks and library permission declarations.

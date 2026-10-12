@@ -1,0 +1,5 @@
+Installed final APK is byte-identical to candidate.
+SHA-256: 3a9f12dab2c02e89d0510dd49e03ca81bd0575527ee6d88781e9d83b54e5eca5
+versionCode=30; versionName=0.1.0-preview-30
+In-place 29 to 30: 2026-10-12 15:30:46Z
+Final artifact in-place update: 2026-10-12 15:32:36Z

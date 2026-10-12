@@ -1,0 +1,10 @@
+PASS: check owned emulator
+PASS: correct emulator
+PASS: read Bluetooth state and bonded count (names withheld)
+PASS: one adapter state
+PASS: one bonded devices section
+PASS: bonded rows parse without recording names
+PASS: read Location mode
+PASS: read saved networks (names withheld)
+PASS: initial Bluetooth ON
+{"bluetooth": "ON", "bondedCount": 0, "location": "3", "savedNetworksSha256": "6260342d8d2bf086c2f5a1a58f63fdf432e9ba293b241fc4a9133d6e9c4eb848"}

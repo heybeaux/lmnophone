@@ -1,0 +1,104 @@
+PASS: check owned emulator
+PASS: correct emulator
+PASS: read Bluetooth state and bonded count (names withheld)
+PASS: one adapter state
+PASS: one bonded devices section
+PASS: bonded rows parse without recording names
+PASS: read Location mode
+PASS: read saved networks (names withheld)
+PASS: upgrade preserved Bluetooth, bonded count, Location and saved networks
+PASS: set owned-emulator Location off for probe
+PASS: press Home
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^More$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Phone settings$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: settings rows in requested order
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Bluetooth$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: Location-off Bluetooth ON page readable
+PASS: paired count=0 matches platform
+PASS: preview limitation shown
+PASS: read own permission grant
+PASS: own BLUETOOTH_CONNECT grant read back
+PASS: no BLUETOOTH_SCAN requested
+PASS: turn owned-emulator Bluetooth off
+PASS: wait for Bluetooth off
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: visible poll shows off without stale list
+PASS: off state retains limitation
+PASS: restore owned-emulator Bluetooth ON
+PASS: wait for Bluetooth on
+PASS: restore original Location mode
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: visible poll shows restored ON state
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^‹ Phone settings$
+PASS: press Home
+PASS: read package version
+PASS: version is preview-30
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: read Telecom current calls
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: read Bluetooth state and bonded count (names withheld)
+PASS: one adapter state
+PASS: one bonded devices section
+PASS: bonded rows parse without recording names
+PASS: read Location mode
+PASS: read saved networks (names withheld)
+PASS: final Bluetooth, bonded count, Location and saved networks exactly unchanged
+{"before": {"bluetooth": "ON", "bondedCount": 0, "location": "3", "savedNetworksSha256": "6260342d8d2bf086c2f5a1a58f63fdf432e9ba293b241fc4a9133d6e9c4eb848"}, "after": {"bluetooth": "ON", "bondedCount": 0, "location": "3", "savedNetworksSha256": "6260342d8d2bf086c2f5a1a58f63fdf432e9ba293b241fc4a9133d6e9c4eb848"}}
+exit=0
