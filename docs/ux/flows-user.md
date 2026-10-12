@@ -732,3 +732,23 @@ A restart recovers the durable ownership marker. Failed restoration shows
 **Location is still on. LMNOPhone couldn't turn it off.** on the Wi-Fi page.
 There is no Forget action or system Settings route. Saved configurations are never
 rewritten; the existing configuration is used when that network was already saved.
+
+### Build 34 Wi-Fi Forget subset
+
+Authorized in [PLA-444](/PLA/issues/PLA-444). Beneath the connected line, show
+**Forget this network** only when the current saved configuration is identifiable.
+The tap removes only that configuration, with a fresh identity check. No confirm
+screen. Read back disconnection and exactly one fewer distinct saved network ID;
+otherwise show **Wi-Fi status can't be read right now.**
+
+The existing sign-in or ten-second no-internet message opens the Wi-Fi messages
+screen above: **Calls and texts still work**, then **when the phone has signal
+(the bars at the top of the screen).**, the matching message unchanged, and
+**Forget this network stops the phone trying to join this Wi-Fi.** Primary:
+**Forget this network**. Secondary: **OK**. OK, Back, and Forget return to Wi-Fi.
+Forget is unavailable if the connection can no longer be identified. No system
+Settings or sign-in page opens, and Forget never changes Location.
+
+Build 33's Location cleanup also shows **Location is still on. LMNOPhone couldn't
+turn it off.** after 60 seconds of unknown call state while owned Location needs
+to turn off. It keeps retrying and never turns Location off during a known call.

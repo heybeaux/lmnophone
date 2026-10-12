@@ -353,3 +353,17 @@ marked Location at application startup and continues deferred cleanup after paus
 `WifiSettingsUiState` adds Location status and selectable transient choices.
 The Activity owns ephemeral password text and FLAG_SECURE while joining. Policy,
 lock-task, emergency and authority interfaces are unchanged.
+
+### Preview 34 connected Wi-Fi Forget seam
+
+`:device/settings` exports `WifiForgetPort` (fresh connected ID and distinct saved
+IDs, connected-only remove) and `WifiForgetController`. A removal needs the
+expected visible connection to match at tap time and again at the Android write.
+It performs one write, then polls for exact saved-set subtraction and confirmed
+disconnection for at most ten seconds. Failure uses the existing unreadable line.
+`WifiJoinSession` owns readback across Activity changes; no identity is persisted.
+`:ui` adds `canForget`, `onForget` and `onMessage` to the Wi-Fi page, and a disabled
+Forget state to the existing message screen. `ShellNavigator.openWifiMessage`
+opens that screen from Wi-Fi; OK/Back/Forget return there. The host retains the
+message's selected configuration ID and rejects stale taps. No policy, emergency,
+lock-task or authority interface changes.

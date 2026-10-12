@@ -13,6 +13,7 @@ interface WifiLocationPort {
 class WifiLocationController(private val port: WifiLocationPort, private val now: () -> Long) {
     private var started: Long? = null
     private var closing = false
+    private var unknownCallSince: Long? = null
     var offFailed = false
         private set
     fun recover() { closing = true; tick() }
@@ -32,15 +33,24 @@ class WifiLocationController(private val port: WifiLocationPort, private val now
         if (started?.let { now() - it >= 300_000 || now() < it } == true) { started = null; closing = true }
         if (!closing) return
         try {
-            if (!port.owned()) { closing = false; return }
+            if (!port.owned()) { closing = false; unknownCallSince = null; offFailed = false; return }
             if (port.enabled()) {
-                if (port.callIdle() != true) return
+                when (port.callIdle()) {
+                    null -> {
+                        val time = now()
+                        if (unknownCallSince == null || time < unknownCallSince!!) unknownCallSince = time
+                        if (time - unknownCallSince!! >= 60_000) offFailed = true
+                        return
+                    }
+                    false -> { unknownCallSince = null; return }
+                    true -> unknownCallSince = null
+                }
                 try { port.setEnabled(false) } catch (_: Exception) { }
             }
             // Even a thrown write can have taken effect. Keep the marker until confirmed off.
             val stillOn = port.enabled()
             offFailed = stillOn
-            if (!stillOn && port.saveOwned(false)) closing = false
+            if (!stillOn) { unknownCallSince = null; if (port.saveOwned(false)) closing = false }
         } catch (_: Exception) { offFailed = true }
     }
 }

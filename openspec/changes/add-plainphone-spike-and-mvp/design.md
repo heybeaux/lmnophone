@@ -331,3 +331,9 @@ Location controller. Device-protected ownership is committed before enabling;
 cleanup is read back, deferred during calls, retried, and recovered at startup.
 Passwords stay ephemeral in the visible UI and are passed only to Android's
 network configuration. No lock-task list or emergency policy changes.
+
+Build 34 (PLA-444) adds connected-only Wi-Fi removal. The pure controller uses
+only distinct saved IDs and connection state. The Android adapter rechecks the
+current ID immediately before removeNetwork; success requires exact set
+subtraction and confirmed disconnection. The existing calls-first message screen
+is reached from the live internet-status line. Forget changes no Location state.

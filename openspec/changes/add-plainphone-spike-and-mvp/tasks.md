@@ -106,3 +106,9 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [x] Probe temporary Location, connection retention and Location-off reconnection on API 35.
 - [x] Complete affected goldens and in-place emulator upgrade gate.
 - [ ] Lead opposite-model review and in-place spare install/readback.
+
+## Build 34 authorized preview subset (PLA-444)
+- [x] Add connected-only Forget with exact saved-ID and disconnection readback.
+- [x] Route the internet-status message to the approved calls-first screen.
+- [x] Warn after unknown-call cleanup reaches 60 seconds; preserve literal Wi-Fi credential bytes.
+- [x] Add focused regression tests and Wi-Fi goldens at five text scales.

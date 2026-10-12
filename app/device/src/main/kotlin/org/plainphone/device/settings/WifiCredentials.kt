@@ -2,4 +2,5 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.device.settings
 
-internal fun quoteWifiValue(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+/** Android removes the outer quotes; embedded characters are literal bytes. */
+internal fun quoteWifiValue(value: String) = "\"" + value + "\""

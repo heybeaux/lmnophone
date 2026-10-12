@@ -1,0 +1,16 @@
+--------- beginning of main
+10-12 12:13:29.867  4664  4765 I WifiForgetProbe: locked=true
+10-12 12:13:29.870  4664  4765 I WifiForgetProbe: currentIdReadableLocationOff=true
+10-12 12:13:30.881  4664  4765 I WifiForgetProbe: savedCountBefore=4
+10-12 12:13:30.890  4664  4765 I WifiForgetProbe: ownAdd=true
+10-12 12:13:30.892  4664  4765 I WifiForgetProbe: ownAddedCount=6
+10-12 12:13:30.896  4664  4765 I WifiForgetProbe: ownRemove=true
+10-12 12:13:30.898  4664  4765 I WifiForgetProbe: ownRemovedCount=4
+10-12 12:13:30.903  4664  4765 I WifiForgetProbe: selectOriginal=true
+10-12 12:13:32.908  4664  4765 I WifiForgetProbe: externalRemove=true
+10-12 12:13:33.911  4664  4765 I WifiForgetProbe: savedCountAfter=2
+10-12 12:13:33.912  4664  4765 I WifiForgetProbe: originalStillSaved=true
+10-12 12:13:33.913  4664  4765 I WifiForgetProbe: originalStillConnected=true
+10-12 12:13:33.914  4664  4765 I WifiForgetProbe: lockedAfter=true
+10-12 12:13:33.914  4664  4765 I WifiForgetProbe: complete=true
+10-12 12:13:33.915  4664  4765 I WifiForgetProbe: locationRestored=true
