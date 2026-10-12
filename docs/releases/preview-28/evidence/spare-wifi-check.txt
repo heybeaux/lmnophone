@@ -1,0 +1,47 @@
+PASS: read Location mode before
+PASS: read saved networks before
+PASS: read wifi status
+wifi status first line: Wifi is enabled
+connected: True
+PASS: press Home
+PASS: tap ^More$
+More texts: ‹ Home | More | Phone settings | Wi-Fi, brightness, sound, text size, battery | (remaining rows unchanged from build 27; names omitted)
+PASS: tap ^Phone settings$
+Settings texts: ‹ More | Wi-Fi | › | Brightness | › | Sound | › | Text size | › | Battery | › | Show missed calls and unread texts on Home | Counts texts and picture messages. Chat (RCS) messages and other apps aren't supported, so they may be missing from the number. | LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say.
+PASS: tap ^Wi-Fi$
+Wi-Fi page texts (names redacted below): 6 strings
+  ‹ Phone settings
+  Wi-Fi
+  Connected to Wi-Fi
+  Nearby networks
+  Nearby networks can't be shown right now.
+  Joining a network comes in a later test build.
+PASS: no raw SSID quoting or unknown marker
+PASS: capture spare-wifi-page.png
+PASS: valid PNG spare-wifi-page.png
+After 3 s: 6 strings
+PASS: tap ^‹ Phone settings$
+PASS: tap ^Text size$
+PASS: new Text size sample is installed
+PASS: back
+PASS: press Home
+PASS: read package version
+PASS: version is preview-28
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: read Telecom current calls
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: read Location mode after
+PASS: read saved networks after
+PASS: Location mode unchanged: 0
+PASS: saved networks exactly unchanged (2 entries)
+PASS: read final permission state
+Final location permissions: android.permission.ACCESS_FINE_LOCATION: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]; android.permission.ACCESS_COARSE_LOCATION: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+PASS: font
+font_scale: 1.0
