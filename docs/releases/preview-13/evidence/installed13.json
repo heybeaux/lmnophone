@@ -1,0 +1,10 @@
+{
+  "installed_at_utc": "2026-10-12T01:15:16.412559+00:00",
+  "version_code": 13,
+  "version_name": "0.1.0-preview-13",
+  "apk_sha256": "03d099128f7acdbf11992362c169eea88796c37d65c7e348ef7d0f670bd5ac12",
+  "signer_sha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "installed_hash_matches": true,
+  "first_install_time": "2026-10-11 14:05:10",
+  "previous_version": 12
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "46f31c4c-8656-4e76-a38d-b2f4784ee522",
+    "identifier": "PLA-C57",
+    "type": "release_notes"
+  },
+  {
+    "id": "449d19b6-9331-4ccd-9432-c398dc33dabe",
+    "identifier": "PLA-C58",
+    "type": "qa_gate_run"
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "label": "component-disabled-skip",
+    "command": [
+      "pm",
+      "disable",
+      "--user",
+      "0",
+      "com.google.android.contacts/com.android.contacts.activities.PeopleActivity"
+    ],
+    "result": "Component {com.google.android.contacts/com.android.contacts.activities.PeopleActivity} new state: disabled",
+    "hidden": "true",
+    "enabled": "0",
+    "skipped": true
+  },
+  {
+    "label": "component-restored-skip",
+    "command": [
+      "pm",
+      "default-state",
+      "--user",
+      "0",
+      "com.google.android.contacts/com.android.contacts.activities.PeopleActivity"
+    ],
+    "result": "Component {com.google.android.contacts/com.android.contacts.activities.PeopleActivity} new state: default",
+    "hidden": "true",
+    "enabled": "0",
+    "skipped": true
+  },
+  {
+    "label": "app-disabled-full",
+    "command": [
+      "pm",
+      "disable",
+      "--user",
+      "0",
+      "com.google.android.contacts"
+    ],
+    "result": "Package com.google.android.contacts new state: disabled",
+    "hidden": "true",
+    "enabled": "2",
+    "skipped": false
+  },
+  {
+    "label": "app-restored-full",
+    "command": [
+      "pm",
+      "default-state",
+      "--user",
+      "0",
+      "com.google.android.contacts"
+    ],
+    "result": "Package com.google.android.contacts new state: default",
+    "hidden": "true",
+    "enabled": "0",
+    "skipped": false
+  }
+]
