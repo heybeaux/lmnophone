@@ -56,8 +56,8 @@ class WifiSettingsScreenshotTest(private val scale: Float) {
                 val offline = "This Wi-Fi isn't reaching the internet."
                 assertEquals(state.internetStatus == WifiInternetUiStatus.SignInRequired, portal in text)
                 assertEquals(state.internetStatus == WifiInternetUiStatus.NoInternet, offline in text)
-                // The Back link is the only action; network labels cannot be tapped.
-                assertEquals(1, nodes.count { it.config.contains(SemanticsActions.OnClick) })
+                // Internet messages open the approved explanation; nearby labels remain read-only.
+                assertEquals(1 + if (state.internetStatus != null) 1 else 0, nodes.count { it.config.contains(SemanticsActions.OnClick) })
             }) { HomeTestFrame { WifiSettingsScreen(state, {}) } }
         }
     }
