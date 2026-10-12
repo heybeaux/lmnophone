@@ -23,3 +23,10 @@ Builds: `3fac0bfd` debug (sha256 `249d8738de6f09cc…`), then in place `1b5bd0fd
 | 11–12 | `FEATURE_FAULT --ez on false` | features 119, Home LOCKED, `fallback lifted=211`; the only suspended package is YouTube, as before the test |
 
 Afterwards: `pm unsuspend com.google.android.youtube`, test app uninstalled.
+
+## Delta re-check at `88108093` (PLA-399 F1–F3 fix), 2026-10-12
+
+In-place debug install (sha256 `e125a07691713ae2…`) on the same AVD; then `FEATURE_FAULT --ez on true`, reboot, PIN:
+- `fallback containment: suspended=211 … recorded=true` (same count and refused list as `1b5bd0fd`); no `no complete keep set` line, so the floor reads complete here and the new gate does not disable containment.
+- `FEATURE_FAULT --ez on false`: `reapply reason=feature-fault-off … applied=[…LOCK_TASK, HOME]`, `fallback lifted=211`, Home LOCKED; `dumpsys package packages` shows 0 `suspended=true`.
+The F1–F3 failure paths themselves are JVM-only (failure injection); they were not induced on the AVD.
