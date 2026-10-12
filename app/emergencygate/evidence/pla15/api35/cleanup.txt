@@ -1,0 +1,1 @@
+# cleanup ok=1 call: mCallState=0 held 3 s, Telecom mCalls none live, modem call list empty, mCallState=0 after both; test number 7357: absent; PIN: cleared; Device Owner: absent
