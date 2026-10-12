@@ -31,6 +31,9 @@ class ModeSwitchSkipTest {
     private val skipPin get() = CharArray(6) { '7' }
 
     private fun bytes(c: CredentialState): ByteArray = checkNotNull(AuthorityCodec.encodeCredentials(c))
+    /** One holder's complete credential (verifiers, counters, generation, contact) as stored. */
+    private fun holder(c: CredentialState, person: org.plainphone.core.TrustedPersonId): ByteArray =
+        bytes(CredentialState(c.mode, mapOf(person to c.people.getValue(person))))
     private fun files(rig: ModeSwitchRig) = rig.dir.listFiles()!!.filter { it.isFile && it.name.endsWith(".rec") }
         .associate { it.name to it.readBytes() }
     private fun assertUntouched(what: String, before: Map<String, ByteArray>, rig: ModeSwitchRig) {
@@ -49,7 +52,7 @@ class ModeSwitchSkipTest {
         // Only the skipper's PIN and code rotated, in the same write that moved the operation.
         assertEquals(old.revision + 1, skipped.revision)
         assertEquals(old.people.getValue(JO).generation + 1, skipped.people.getValue(JO).generation)
-        assertEquals(old.people.getValue(ALEX).generation, skipped.people.getValue(ALEX).generation)
+        assertArrayEquals(holder(old, ALEX), holder(skipped, ALEX)) // the other holder is untouched
         assertEquals(Mode.TRUSTED, skipped.mode)
         val op = checkNotNull(rig.journal().operation)
         assertEquals(WaitingPhase.COMMITTING, op.phase)
@@ -91,8 +94,13 @@ class ModeSwitchSkipTest {
         val wrong = rig.credentials()
         assertEquals(WaitingPhase.PENDING, rig.journal().operation?.phase)
         assertEquals(1, wrong.people.getValue(JO).recoveryCounter.failures)
-        assertEquals(rig.credentials().people.keys, setOf(ALEX, JO))
-        assertEquals(Mode.TRUSTED, wrong.mode)
+        // Everything except Jo's recovery failure counter is exactly as before.
+        val oldState = checkNotNull(AuthorityCodec.decodeCredentials(old))
+        val jo = wrong.people.getValue(JO)
+        assertArrayEquals(holder(oldState, ALEX), holder(wrong, ALEX))
+        assertArrayEquals(holder(oldState, JO), holder(CredentialState(wrong.mode, mapOf(JO to jo.copy(recoveryCounter = oldState.people.getValue(JO).recoveryCounter))), JO))
+        assertEquals(Mode.TRUSTED, wrong.mode); assertEquals(oldState.structureGeneration, wrong.structureGeneration)
+        assertEquals(oldState.recoveryProfile?.resetProtectionUserIds, wrong.recoveryProfile?.resetProtectionUserIds)
     }
 
     @Test fun aCrashAtEveryWritePointOfTheSkipLeavesPendingWithOldCredentialsOrCommittingWithTheRotation() {
@@ -107,6 +115,9 @@ class ModeSwitchSkipTest {
             when (phase) {
                 WaitingPhase.PENDING -> assertArrayEquals("$point", old, bytes(now))
                 WaitingPhase.COMMITTING -> {
+                    val before = checkNotNull(AuthorityCodec.decodeCredentials(old))
+                    assertEquals("$point", before.people.getValue(JO).generation + 1, now.people.getValue(JO).generation)
+                    assertArrayEquals("$point", holder(before, ALEX), holder(now, ALEX))
                     assertEquals("$point", JO, rig.journal().operation?.skipper)
                     assertEquals("$point", now.people.getValue(JO).generation, rig.journal().operation?.skipperGeneration)
                     assertEquals("$point", PeopleChangeOutcome.APPLIED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
