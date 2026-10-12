@@ -1,0 +1,78 @@
+PASS: read Location mode before
+PASS: read saved networks before
+PASS: read Bluetooth manager
+PASS: read package permissions
+before: Location mode 0 | saved network lines 3 | Bluetooth state ON | bonded count 0 | own CONNECT grant True
+PASS: press Home
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^More$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Phone settings$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+Phone settings rows: Wi-Fi | Bluetooth | Brightness | Sound | Text size | Battery
+PASS: Bluetooth row directly after Wi-Fi, other rows unchanged
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Bluetooth$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+Bluetooth page (known strings only): ‹ Phone settings | Bluetooth | Paired with: | No paired devices. | Pairing a new device comes in a later test build. | other text rows withheld: 0
+PASS: read succeeded
+PASS: read package permissions
+PASS: own BLUETOOTH_CONNECT granted by Device Owner
+PASS: ON with zero bonded shows No paired devices
+PASS: pairing-later note shown
+PASS: capture spare-bluetooth-page.png
+PASS: valid PNG spare-bluetooth-page.png
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^‹ Phone settings$
+PASS: press Home
+PASS: read package version
+PASS: version is preview-30
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: read Telecom current calls
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: read Bluetooth manager
+PASS: Bluetooth state and bonded count unchanged
+PASS: read Location after
+PASS: Location unchanged
+PASS: read saved networks after
+PASS: saved networks exactly unchanged (names withheld)
+exit=0
