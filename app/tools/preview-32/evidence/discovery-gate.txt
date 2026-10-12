@@ -1,0 +1,155 @@
+PASS: check owned emulator
+PASS: correct owned emulator
+PASS: read Bluetooth state and bonded count (names withheld)
+PASS: one adapter state
+PASS: one bonded devices section
+PASS: bonded rows parsed
+PASS: read Location mode
+PASS: read ringtone without recording title
+PASS: read saved networks without names
+PASS: upgrade preserved captured settings
+PASS: set owned-emulator Location off
+PASS: press Home
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^More$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Phone settings$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Bluetooth$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: fully-on Bluetooth offers nearby page
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^Pair a new device$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: scan starts on open
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: one synthetic peer found with Location off
+PASS: duplicate discovery events make one row
+PASS: completion offers Look again
+nearby synthetic peer count=1
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap synthetic peer row (name withheld)
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: device page honestly has no Pair action
+PASS: read discovery state without names
+PASS: platform discovery flag readable
+PASS: leaving nearby page stops discovery
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^‹ Pair a new device$
+PASS: read discovery state without names
+PASS: platform discovery flag readable
+PASS: back to nearby starts a fresh scan
+PASS: pause app using screen off (not SOS)
+PASS: read discovery state without names
+PASS: platform discovery flag readable
+PASS: pause cancels discovery
+PASS: wake screen
+PASS: dismiss no-PIN keyguard
+PASS: turn owned-emulator Bluetooth off during scan
+PASS: wait for Bluetooth off
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: off mid-scan clears list and shows error
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: read tap bounds
+PASS: tap target has positive bounds
+PASS: tap ^‹ Bluetooth$
+PASS: wake screen before UI
+PASS: dismiss no-PIN keyguard before UI
+PASS: dump UI
+PASS: UI dump completed
+PASS: read UI XML
+PASS: remove transient UI dump
+PASS: off page has no discovery row
+PASS: read app scan permission
+PASS: SCAN grant independently read back
+PASS: restore Bluetooth on
+PASS: wait for Bluetooth on
+PASS: restore original Location
+PASS: press Home
+PASS: read package version
+PASS: version is preview-32
+PASS: testOnly retained
+PASS: read Device Owner
+PASS: Device Owner retained
+PASS: read lock task
+PASS: lock task LOCKED
+PASS: read Telecom current calls
+PASS: read exactly one Telecom current-call section
+PASS: Telecom current-call header is empty
+PASS: read complete Telecom current-call section
+PASS: Telecom has zero current calls
+PASS: read Bluetooth state and bonded count (names withheld)
+PASS: one adapter state
+PASS: one bonded devices section
+PASS: bonded rows parsed
+PASS: read Location mode
+PASS: read ringtone without recording title
+PASS: read saved networks without names
+PASS: final Bluetooth, bonds, Location, ringtone, saved networks unchanged
+{"before": {"bluetooth": "ON", "bondedCount": 0, "location": "3", "ringtoneSha256": "3b4725151d1b04ac5cb35e488be6190a8e89686a272c1910b1b650adf372a775", "savedNetworksSha256": "6260342d8d2bf086c2f5a1a58f63fdf432e9ba293b241fc4a9133d6e9c4eb848"}, "after": {"bluetooth": "ON", "bondedCount": 0, "location": "3", "ringtoneSha256": "3b4725151d1b04ac5cb35e488be6190a8e89686a272c1910b1b650adf372a775", "savedNetworksSha256": "6260342d8d2bf086c2f5a1a58f63fdf432e9ba293b241fc4a9133d6e9c4eb848"}}
+exit=0

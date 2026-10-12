@@ -20,7 +20,7 @@ data class BluetoothSettingsUiState(val enabled: Boolean = false,
     val paired: List<String?> = emptyList(), val readFailed: Boolean = true)
 
 @Composable
-fun BluetoothSettingsScreen(state: BluetoothSettingsUiState, onBack: () -> Unit) {
+fun BluetoothSettingsScreen(state: BluetoothSettingsUiState, onBack: () -> Unit, onPairNew: () -> Unit = {}) {
     Column(Modifier.fillMaxSize().background(PlainphoneColors.Paper)
         .verticalScroll(rememberScrollState()).padding(PlainphoneSpace.S6),
         verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4)) {
@@ -37,6 +37,8 @@ fun BluetoothSettingsScreen(state: BluetoothSettingsUiState, onBack: () -> Unit)
                 else state.paired.forEach { Text(it ?: stringResource(R.string.bluetooth_unnamed), style = PlainphoneType.Body) }
             }
         }
-        Text(stringResource(R.string.bluetooth_preview_note), style = PlainphoneType.Small)
+        if (state.enabled && !state.readFailed)
+            BluetoothChoiceRow(stringResource(R.string.bluetooth_pair_new), onPairNew)
+        else Text(stringResource(R.string.bluetooth_preview_note), style = PlainphoneType.Small)
     }
 }

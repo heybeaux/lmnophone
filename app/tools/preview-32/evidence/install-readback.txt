@@ -1,0 +1,6 @@
+Final artifact installed UTC: 2026-10-12T17:34:32.257555+00:00
+APK sha256: a03b1e022fd072f252b725186cdb13808033e74df5103a24189beba11020f6eb
+versionCode=32 minSdk=30 targetSdk=36
+versionName=0.1.0-preview-32
+lastUpdateTime=2026-10-12 10:34:30
+pkgFlags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ]

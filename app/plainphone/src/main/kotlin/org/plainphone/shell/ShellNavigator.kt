@@ -19,6 +19,8 @@ sealed interface ShellRoute {
     data object More : ShellRoute
     data object About : ShellRoute
     data object WifiSettings : ShellRoute
+    data object BluetoothDiscovery : ShellRoute
+    data class BluetoothDevice(val name: String) : ShellRoute
     data object BluetoothSettings : ShellRoute
     data object Sound : ShellRoute
     data object Ringtone : ShellRoute

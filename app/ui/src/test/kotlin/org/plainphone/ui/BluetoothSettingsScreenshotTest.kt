@@ -40,7 +40,8 @@ class BluetoothSettingsScreenshotTest(private val scale: Float) {
                 val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
                 val text = nodes.flatMap { it.config.getOrElse(SemanticsProperties.Text) { emptyList() } }.map { it.text }
                 assertTrue("Bluetooth" in text)
-                assertTrue("Pairing a new device comes in a later test build." in text)
+                assertEquals(!state.readFailed && state.enabled, "Pair a new device" in text)
+                assertEquals(state.readFailed || !state.enabled, "Pairing a new device comes in a later test build." in text)
                 assertEquals(!state.readFailed && !state.enabled, "Bluetooth is off." in text)
                 assertEquals(state.readFailed, "Bluetooth status can't be read right now." in text)
                 assertEquals(!state.readFailed && state.enabled, "Paired with:" in text)
@@ -49,7 +50,7 @@ class BluetoothSettingsScreenshotTest(private val scale: Float) {
                 if (!state.readFailed && state.enabled) state.paired.forEach {
                     assertTrue((it ?: "Unnamed device") in text)
                 }
-                assertEquals(1, nodes.count { it.config.contains(SemanticsActions.OnClick) })
+                assertEquals(if (!state.readFailed && state.enabled) 2 else 1, nodes.count { it.config.contains(SemanticsActions.OnClick) })
             }) { HomeTestFrame { BluetoothSettingsScreen(state, {}) } }
         }
     }

@@ -1,0 +1,2 @@
+emulator-5880: bonded before probe=0, after probe=0, after candidate gate=0; no bond existed to remove
+emulator-5934: bonded before probe=0, after probe=0, after candidate gate=0; no bond existed to remove

@@ -32,4 +32,12 @@
     <string name="ringtone_not_set">Not set</string>
     <string name="ringtone_current_stays">Your current ringtone stays until you choose another.</string>
     <string name="ringtone_failed">Ringtone couldn\'t be changed.</string>
+    <string name="bluetooth_pair_new">Pair a new device</string>
+    <string name="bluetooth_back">‹ Bluetooth</string>
+    <string name="bluetooth_back_pair">‹ Pair a new device</string>
+    <string name="bluetooth_look_again">Look again</string>
+    <string name="bluetooth_looking">Looking for nearby devices…</string>
+    <string name="bluetooth_nearby_none">No devices found. Make sure the other device is ready to pair, then tap Look again.</string>
+    <string name="bluetooth_nearby_error">Nearby devices can\'t be shown right now.</string>
+    <string name="bluetooth_pair_not_ready">Pairing from LMNOPhone isn\'t ready yet.</string>
 </resources>

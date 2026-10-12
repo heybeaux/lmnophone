@@ -1,0 +1,11 @@
+Pre-implementation :device:testDebugUnitTest --tests *BluetoothDiscoveryControllerTest
+BUILD FAILED at compileDebugUnitTestKotlin (new types not implemented).
+9:26 Unresolved reference 'BluetoothDiscoveryPort'.
+15:24 Unresolved reference 'BluetoothDiscoveryEvent'.
+17:38 Unresolved reference 'BluetoothDiscoveryEvent'.
+24:22 Unresolved reference 'BluetoothDiscoveryEvent'.
+27:60 Unresolved reference 'BluetoothDiscoveryController'.
+31:57 Unresolved reference 'BluetoothDiscoveryController'.
+35:17 Unresolved reference 'BluetoothDiscoveryController'.
+39:33 Unresolved reference 'BluetoothDiscoveryController'.
+Checkpoint: 75f810c7.

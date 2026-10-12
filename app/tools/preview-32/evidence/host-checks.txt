@@ -1,0 +1,13 @@
+Tests first: 10 new BluetoothDiscoveryController tests failed compilation before implementation
+(missing types); initial new screenshot tests likewise failed compilation before UI implementation.
+Controller + existing Bluetooth JVM tests: 17 passed.
+Plainphone JVM tests: 203 passed.
+BluetoothSettings + BluetoothDiscovery Paparazzi verification: 70 passed, fontScale 1/1.3/1.5/1.8/2.
+55 changed/new golden files inspected, including long names, at every scale. Off/error goldens unchanged.
+Lint: no errors in changed Bluetooth files. Established baseline only:
+  AndroidWifi.kt:43/44/49/55: five MissingPermission errors.
+  PinAccessActivity.kt:99: StateFlowValueCalledInComposition, one error.
+No checks disabled. OpenSpec: all three changes validate.
+Final delta: stop() returns when no discovery receiver is owned, avoiding cancellation of unrelated
+system discovery when MainActivity pauses on another page. The same 17 Bluetooth tests and final
+APK build pass. Candidate UI gate exercised this final artifact.

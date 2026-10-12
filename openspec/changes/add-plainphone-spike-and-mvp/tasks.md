@@ -90,3 +90,11 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [ ] 6.2 AE: Fix every confirmed finding, or Lead records it as a leftover risk accepted by Beaux.
 - [ ] 6.3 Lead: (Includes the gate 2.6 carry-overs: #2 unattended updates on the MVP build, #3/#5 signed-in app checks and web-leak acceptance, #4, #6, and the boot-loop risk on that phone.) Ask Beaux to approve the target phone model and one unit, and to record acceptance of the custody limit and the leftover risks. Include the checklist to complete before handover: Q3 on that build; Q10 with a board-approved recovery-wipe procedure; Q13 manufacturer extras; Q14 device emergency checks (no live call unless there is an agreed procedure); the PLA-22 unhide/power-loss mitigation on that build (Q6, with a board-approved recovery-wipe fallback); RCS on the carrier; iPhone group texts; Wi-Fi calling on ordinary Wi-Fi with the policy on, including that the carrier's IMS / Carrier Services packages are never hidden (Telegram 4481: used sometimes); must-have apps, signed in by Beaux himself on the first real LMNOPhone build (PLA-20 deferral, card `2d9260a3`), using the **carry-over checklist** in `spikes/device-moto/RESULT.md` § B-Q4 signed in: Telegram's in-app browser, Web tabs and mini apps first; Outlook's Privacy & Cookies web view after sign-in and after sign-out; links in one Gmail HTML test message; outside links, notifications, sign-out and sign-in again for Slack, Spotify, Telegram and Outlook. Each app's web-leak note stays "before sign-in only" until then.
 - [ ] 6.4 Lead: After two weeks on Beaux's phone, ask Beaux to approve the partner's phone.
+
+## Authorized build 32 Bluetooth discovery subset ([PLA-434](/PLA/issues/PLA-434))
+- [x] Probe Location-off discovery and lock-task pairing between two private emulators.
+- [x] Tests first: bounded nearby list, filtering, retry/end/error and lifecycle cancellation.
+- [x] Own SCAN grant/readback, Bluetooth-only routes and pairing-not-ready device screen.
+- [x] Changed screenshot checks at 1.0/1.3/1.5/1.8/2.0, with every changed image inspected.
+- [x] In-place emulator upgrade, discovery exercise, no-call emergency and unchanged-setting readbacks.
+- [ ] Single Lead review and in-place spare installation.

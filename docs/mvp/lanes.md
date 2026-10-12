@@ -327,3 +327,16 @@ returns success from Done only after matching read-back (or no change).
 `ringtoneTitle`, with `SoundEvent.OpenRingtone` opening `ShellRoute.Ringtone`.
 The host stops previews on leave/pause, polls the grant only while visible, and
 re-reads the title for Sound. No policy, lock-task or permission contract changes.
+
+### Preview 32 nearby Bluetooth seam
+
+`:device/settings` exports `BluetoothDiscoveryPort` and a pure
+`BluetoothDiscoveryController`, with main-thread events, permission/adapter
+availability checks, capped ephemeral results and cancellation on close.
+`AndroidBluetoothDiscovery` grants its own SCAN permission (neverForLocation),
+reads it back, observes discovery while visible, and never bonds or changes
+Bluetooth/Location. API 30 reports unavailable: this preview's no-Location scan
+path requires API 31+. `:ui` renders `BluetoothDiscoveryUiState`, emits
+Back/LookAgain/Select events, and shows a name-only device page with the honest
+pairing-not-ready line. `:plainphone` owns route selection and cancels on pause
+or leave. No policy-engine or lock-task interface changes.

@@ -8,6 +8,11 @@ import androidx.compose.runtime.DisposableEffect
 import android.media.AudioManager
 import org.plainphone.device.settings.AndroidVolume
 import org.plainphone.device.settings.VolumeController
+import org.plainphone.device.settings.AndroidBluetoothDiscovery
+import org.plainphone.device.settings.BluetoothDiscoveryController
+import org.plainphone.ui.user.BluetoothDiscoveryUiState
+import org.plainphone.ui.user.NearbyBluetoothOption
+import org.plainphone.ui.user.BluetoothDiscoveryEvent
 import org.plainphone.device.settings.AndroidBluetooth
 import org.plainphone.device.settings.BluetoothController
 import org.plainphone.ui.user.BluetoothSettingsUiState
@@ -129,6 +134,30 @@ import org.plainphone.ui.trusted.WaitingStage
 class MainActivity : ComponentActivity() {
     private val shell: ShellViewModel by viewModels()
     private lateinit var communication: AndroidCommunicationCounts
+    private var discovery by mutableStateOf(BluetoothDiscoveryUiState())
+    private val discoverySource by lazy { AndroidBluetoothDiscovery(this) }
+    private val discoveryController by lazy { BluetoothDiscoveryController(discoverySource) { value ->
+        discovery = BluetoothDiscoveryUiState(value.looking,
+            value.devices.map { NearbyBluetoothOption(it.id, it.name) }, value.failed)
+    } }
+    private fun openDiscovery() {
+        if (!resumed || shell.state.current != ShellRoute.BluetoothSettings) return
+        syncBluetooth()
+        if (bluetooth.enabled && !bluetooth.readFailed)
+            shell.state = shell.state.copy(stack = shell.state.stack + ShellRoute.BluetoothDiscovery)
+    }
+    private fun onDiscovery(event: BluetoothDiscoveryEvent) {
+        if (!resumed || shell.state.current != ShellRoute.BluetoothDiscovery) return
+        when (event) {
+            BluetoothDiscoveryEvent.Back -> shell.state = shell.navigator!!.back(shell.state).state
+            BluetoothDiscoveryEvent.LookAgain -> if (!discovery.looking && !discovery.failed) discoveryController.open()
+            is BluetoothDiscoveryEvent.Select -> {
+                discoveryController.checkAvailable()
+                val selected = discoveryController.state.devices.firstOrNull { it.id == event.id } ?: return
+                shell.state = shell.state.copy(stack = shell.state.stack + ShellRoute.BluetoothDevice(selected.name))
+            }
+        }
+    }
     private val bluetoothSource by lazy { AndroidBluetooth(this) }
     private val bluetoothController by lazy { BluetoothController(bluetoothSource) }
     private var bluetooth by mutableStateOf(BluetoothSettingsUiState())
@@ -274,11 +303,19 @@ class MainActivity : ComponentActivity() {
                 onDispose { source?.close() }
             }
             DisposableEffect(basicSettingsVisible, shell.state.current) {
+                val scanVisible = basicSettingsVisible && shell.state.current == ShellRoute.BluetoothDiscovery
+                if (scanVisible) { discoverySource.onOpen(); discoveryController.open() }
+                onDispose { if (scanVisible) discoveryController.close() }
+            }
+            DisposableEffect(basicSettingsVisible, shell.state.current) {
                 val chooserVisible = basicSettingsVisible && shell.state.current == ShellRoute.Ringtone
                 if (chooserVisible) { ringtoneController.onOpen(); syncRingtone() }
                 onDispose { if (chooserVisible) ringtoneController.onLeave() }
             }
             LaunchedEffect(basicSettingsVisible, shell.state.current) {
+                if (basicSettingsVisible && shell.state.current == ShellRoute.BluetoothDiscovery) {
+                    while (true) { discoveryController.checkAvailable(); delay(1_000) }
+                }
                 if (basicSettingsVisible && shell.state.current == ShellRoute.Ringtone) {
                     while (true) {
                         ringtoneController.refreshPermission()
@@ -402,6 +439,7 @@ class MainActivity : ComponentActivity() {
                 wifi = wifi, bluetooth = bluetooth,
                 sound = sound, onSound = ::onSound,
                 ringtone = ringtone, onRingtone = ::onRingtone,
+                discovery = discovery, onDiscovery = ::onDiscovery, onPairNew = ::openDiscovery,
                 brightness = brightness, battery = battery, onBrightness = ::onBrightness,
                 settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps,
                     pendingChange = settingsWait?.let { getString(waitingChangeTextResource(it.kind), getString(R.string.app_name)) }),
@@ -440,6 +478,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        discoveryController.close()
         ringtoneController.stopPreview()
         resumed = false
         communication.controller.setVisible(false)

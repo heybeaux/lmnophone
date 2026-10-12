@@ -39,3 +39,10 @@ INSTRUMENTATION_STATUS_CODE: 0
 INSTRUMENTATION_STATUS: bondedAfter=0
 INSTRUMENTATION_STATUS_CODE: 0
 INSTRUMENTATION_CODE: -1
+
+Initiator logcat excerpt (synthetic test, no device name retained):
+BluetoothPairingRequest: Receive ACTION_PAIRING_REQUEST pairingVariant=2 canBondWithoutDialog=false
+ActivityTaskManager: Attempted Lock Task Mode violation ... com.android.settings/.bluetooth.BluetoothPairingDialog
+ActivityTaskManager: START ... cmp=com.android.settings/.bluetooth.BluetoothPairingDialog ... result code=101
+Peer showed Android pairing confirmation. Initiator confirmation did not appear.
+Peer request cancelled; readback BOND_NONE. Both bonded counts remained zero.

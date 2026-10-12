@@ -49,6 +49,9 @@ fun PlainphoneShell(
     onTextSize: (TextSizeEvent) -> Unit,
     wifi: WifiSettingsUiState,
     bluetooth: BluetoothSettingsUiState,
+    discovery: BluetoothDiscoveryUiState,
+    onDiscovery: (BluetoothDiscoveryEvent) -> Unit,
+    onPairNew: () -> Unit,
     sound: SoundUiState,
     onSound: (SoundEvent) -> Unit,
     ringtone: RingtoneUiState,
@@ -69,7 +72,10 @@ fun PlainphoneShell(
                 ShellRoute.About -> AboutScreen(AboutUiState(versionName, snapshot.trustedPeople,
                     snapshot.requestRecipient, stringResource(R.string.product_name), isDeviceSecure)) { onStep(navigator.onAbout(state, it)) }
                 ShellRoute.TextSize -> TextSizeScreen(textSize, onTextSize)
-                ShellRoute.BluetoothSettings -> BluetoothSettingsScreen(bluetooth) { onStep(navigator.back(state)) }
+                ShellRoute.BluetoothSettings -> BluetoothSettingsScreen(bluetooth,
+                    { onStep(navigator.back(state)) }, onPairNew)
+                ShellRoute.BluetoothDiscovery -> BluetoothDiscoveryScreen(discovery, onDiscovery)
+                is ShellRoute.BluetoothDevice -> BluetoothDeviceScreen(route.name) { onStep(navigator.back(state)) }
                 ShellRoute.WifiSettings -> WifiSettingsScreen(wifi) { onStep(navigator.back(state)) }
                 ShellRoute.Sound -> SoundScreen(sound, onSound)
                 ShellRoute.Ringtone -> RingtoneScreen(ringtone, onRingtone)
