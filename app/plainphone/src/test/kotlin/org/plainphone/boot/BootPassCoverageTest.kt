@@ -25,6 +25,48 @@ class BootPassCoverageTest {
                 afterPass = { publications++; publishedReady }, skipped = { skips += it })
     }
 
+    @Test fun unchangedPackageSkipsWithoutHomeRefresh() {
+        val f = Fixture(); f.run("start")
+        f.coverage.run("package:PACKAGE_CHANGED:example", false, { false },
+            packageUnchanged = { true }, apply = { fail("full pass"); good },
+            afterPass = { fail("refresh"); true }, skipped = { f.skips += it },
+            afterPackageSkip = { true })
+        assertEquals(listOf(1L), f.skips)
+    }
+
+    @Test fun proofCannotOverrideOtherTriggersOrInvalidCoverage() {
+        for (reason in listOf("package:PACKAGE_ADDED:example", "package:PACKAGE_REMOVED:example",
+            "package:PACKAGE_REPLACED:example", "updated", "user-unlocked", "start", "alarm",
+            "trusted-person", "pin-ended", "package-burst")) {
+            val f = Fixture(); f.run("start")
+            f.coverage.run(reason, false, { false }, packageUnchanged = { true },
+                apply = { f.applies++; good }, afterPass = { true }, skipped = { fail(reason) })
+            assertEquals(reason, 2, f.applies)
+        }
+        for (mode in listOf("absent", "locked", "retry", "failed", "attention", "unverified")) {
+            val f = Fixture()
+            if (mode != "absent") f.run("start", outcome = when (mode) {
+                "failed" -> good.copy(ready = false)
+                "attention" -> good.copy(flipRecordUnknown = true)
+                "unverified" -> good.copy(apply = null)
+                else -> good
+            })
+            f.coverage.run("package:PACKAGE_CHANGED:example", mode == "locked", { mode == "retry" },
+                packageUnchanged = { fail(mode); true }, apply = { good },
+                afterPass = { true }, skipped = { fail(mode) })
+        }
+    }
+
+    @Test fun falseOrThrowingProofRunsFullPass() {
+        for (throws in listOf(false, true)) {
+            val f = Fixture(); f.run("start")
+            f.coverage.run("package:PACKAGE_CHANGED:example", false, { false },
+                packageUnchanged = { if (throws) error("read") else false },
+                apply = { f.applies++; good }, afterPass = { true }, skipped = { fail() })
+            assertEquals(2, f.applies)
+        }
+    }
+
     @Test fun fullPassCoversBothLateBootTriggersButKeepsSideEffects() {
         val f = Fixture()
         f.run("user-unlocked")
