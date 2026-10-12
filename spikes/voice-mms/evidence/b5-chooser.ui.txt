@@ -1,0 +1,8 @@
+android.widget.TextView | text='Sharing 1 file' desc='' rid=com.android.intentresolver:id/headline pkg=com.android.intentresolver [42,1413][313,1476]
+android.widget.TextView | text='voice.amr' desc='' rid=com.android.intentresolver:id/content_preview_filename pkg=com.android.intentresolver [189,1570][331,1613]
+android.widget.TextView | text='No recommended people to share with' desc='' rid=android:id/chooser_row_text_option pkg=com.android.intentresolver [0,1859][1080,1910]
+android.widget.TextView | text='Quick Share' desc='' rid=android:id/text1 pkg=com.android.intentresolver [11,2225][205,2268]
+android.widget.TextView | text='Messages' desc='' rid=android:id/text1 pkg=com.android.intentresolver [227,2225][421,2268]
+android.widget.TextView | text='Drive' desc='' rid=android:id/text1 pkg=com.android.intentresolver [443,2225][637,2268]
+android.widget.TextView | text='Bluetooth' desc='' rid=android:id/text1 pkg=com.android.intentresolver [659,2225][853,2268]
+android.widget.TextView | text='Gmail' desc='' rid=android:id/text1 pkg=com.android.intentresolver [875,2225][1069,2268]

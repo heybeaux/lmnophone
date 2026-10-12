@@ -1,0 +1,7 @@
+android.widget.TextView | text='Select conversation' desc='' rid=com.google.android.apps.messaging:id/alertTitle pkg=com.google.android.apps.messaging [154,903][710,995]
+android.widget.TextView | text='555-0101' desc='555-0101' rid=com.google.android.apps.messaging:id/name pkg=com.google.android.apps.messaging [270,1069][446,1133]
+android.widget.TextView | text='555-0101' desc='555-0101' rid=com.google.android.apps.messaging:id/details pkg=com.google.android.apps.messaging [270,1133][428,1189]
+android.widget.TextView | text='555-0100' desc='555-0100' rid=com.google.android.apps.messaging:id/name pkg=com.google.android.apps.messaging [270,1253][458,1317]
+android.widget.TextView | text='555-0100' desc='555-0100' rid=com.google.android.apps.messaging:id/details pkg=com.google.android.apps.messaging [270,1317][439,1373]
+android.widget.Button | text='Cancel' desc='' rid=android:id/button2 pkg=com.google.android.apps.messaging [415,1445][600,1571]
+android.widget.Button | text='New message' desc='' rid=android:id/button1 pkg=com.google.android.apps.messaging [621,1445][926,1571]

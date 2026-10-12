@@ -1,0 +1,14 @@
+fake MMSC on 127.0.0.1:59580
+POST /mms from 127.0.0.1 len=8099 content-type=application/vnd.wap.mms-message ua=GoldfishNexus
+headers: {'Message-Type': '0x80', 'Transaction-ID': 'T1a132311606', 'MMS-Version': '0x92', 'From': '81', 'To': '5550100/TYPE=PLMN', 'Content-Type': 'well-known 0x23'}
+parts: 1
+part 0: headers='.audio/amr..voice.amr.."<voice.amr>..voice.amr.' dataLen=8006 dataHead=b'#!AMR\n' sha256=798b971b35f969d3
+POST /mms from 127.0.0.1 len=8393 content-type=application/vnd.wap.mms-message ua=GoldfishNexus
+headers: {'Message-Type': '0x80', 'Transaction-ID': 'T1a132378b22', 'MMS-Version': '0x92', 'Date': '6acd5e17', 'From': '8018ea2b31353535313233343536372f545950453d504c4d4e00', 'To': '\x13ê5550101/TYPE=PLMN', 'Message-Class': '0x80', 'Expiry': '8103093a80', 'Priority': '0x81', 'Delivery-Report': '0x81', 'Read-Report': '0x81', 'Content-Type': 'general(27 bytes)'}
+parts: 2
+part 0: headers='.application/smil..smil.xml.."<smil>..smil.xml.' dataLen=142 dataHead=b'<smil>' sha256=ad9c9e132a8480b5
+part 1: headers='..audio/amr..recording000000.amr.."<recording000000>..recording000000.amr.' dataLen=8006 dataHead=b'#!AMR\n' sha256=798b971b35f969d3
+POST /mms from 127.0.0.1 len=8099 content-type=application/vnd.wap.mms-message ua=GoldfishNexus
+headers: {'Message-Type': '0x80', 'Transaction-ID': 'T1a1323b9e1c', 'MMS-Version': '0x92', 'From': '81', 'To': '5550100/TYPE=PLMN', 'Content-Type': 'well-known 0x23'}
+parts: 1
+part 0: headers='.audio/amr..voice.amr.."<voice.amr>..voice.amr.' dataLen=8006 dataHead=b'#!AMR\n' sha256=798b971b35f969d3

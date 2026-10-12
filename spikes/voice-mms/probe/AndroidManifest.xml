@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 LMNOPhone contributors. SPDX-License-Identifier: Apache-2.0. THROWAWAY (PLA-458). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.plainphone.spike458.probe">
+  <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="35"/>
+  <uses-permission android:name="android.permission.SEND_SMS"/>
+  <uses-permission android:name="android.permission.READ_SMS"/>
+  <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+  <queries>
+    <package android:name="com.google.android.apps.messaging"/>
+    <intent><action android:name="android.intent.action.SEND"/><data android:mimeType="audio/*"/></intent>
+    <intent><action android:name="android.intent.action.SENDTO"/><data android:scheme="smsto"/></intent>
+  </queries>
+  <application android:label="PLA-458 voice MMS probe" android:debuggable="true" android:testOnly="true">
+    <activity android:name="org.plainphone.spike458.Probe" android:exported="true" android:launchMode="singleTask">
+      <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+    </activity>
+    <receiver android:name="org.plainphone.spike458.Sent" android:exported="false"/>
+    <receiver android:name="org.plainphone.spike458.Admin" android:exported="true" android:permission="android.permission.BIND_DEVICE_ADMIN">
+      <meta-data android:name="android.app.device_admin" android:resource="@xml/device_admin"/>
+      <intent-filter><action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/></intent-filter>
+    </receiver>
+    <provider android:name="org.plainphone.spike458.Files" android:authorities="org.plainphone.spike458.probe.files"
+        android:exported="false" android:grantUriPermissions="true"/>
+  </application>
+</manifest>
