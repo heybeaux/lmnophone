@@ -276,3 +276,13 @@ is false for ring in silent/vibrate; `VolumeController.onOpen()` clears old fail
 and reads fresh state. `SoundUiState` carries `ringFailed`, `mediaFailed` and
 `ringAdjustable` separately. The host refreshes only while the page is resumed
 and visible; UI only presents supplied state.
+
+### Preview 27 Text size seam
+
+`:device` supplies `TextSizeController(TextSizePort)` and `AndroidTextSize` for
+U7. The port reads the actual system scale, checks write capability and reports
+write success; the controller selects the approved steps and reads back every
+attempt. `TextSizeState` contains the confirmed scale, enabled directions and
+failure flag. `:ui` renders `TextSizeUiState` and emits `TextSizeEvent`
+(Smaller/Bigger/Done); `:plainphone` formats the percentage, polls only while
+the page is visible, and owns navigation. No policy or lock-task list changes.

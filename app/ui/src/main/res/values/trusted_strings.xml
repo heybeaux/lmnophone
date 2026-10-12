@@ -48,7 +48,7 @@
     <string name="admin_people">Trusted people</string>
     <string name="admin_history">History</string>
     <string name="admin_waits">Waits and limits</string>
-    <string name="admin_update">Install a LMNOPhone update</string>
+    <string name="admin_update">Install an LMNOPhone update</string>
     <string name="admin_change_pin">Change PIN</string>
     <string name="admin_switch">Let someone look after this phone</string>
     <string name="admin_turn_off">Turn LMNOPhone off</string>

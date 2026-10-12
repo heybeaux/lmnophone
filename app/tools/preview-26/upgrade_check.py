@@ -102,6 +102,7 @@ def check_target(serial, env):
 
 
 class Gate:
+    VERSION = 26
     def __init__(self, serial, out):
         self.serial, self.out = serial, Path(out)
         self.out.mkdir(parents=True, exist_ok=True)
@@ -159,7 +160,7 @@ class Gate:
 
     def readback(self):
         package = self.sh('read package version', 'dumpsys', 'package', 'org.plainphone')
-        require('versionCode=26 ' in package and 'versionName=0.1.0-preview-26' in package, 'version is preview-26')
+        require(f'versionCode={self.VERSION} ' in package and f'versionName=0.1.0-preview-{self.VERSION}' in package, f'version is preview-{self.VERSION}')
         require('TEST_ONLY' in package, 'testOnly retained')
         owner = self.sh('read Device Owner', 'dpm', 'list-owners')
         require(any('org.plainphone/.PlainphoneAdminReceiver' in l and 'DeviceOwner' in l for l in owner.splitlines()), 'Device Owner retained')
@@ -225,7 +226,7 @@ def main():
         require(len(sys.argv) in (4, 5), 'arguments: serial APK output-directory [label]')
         serial, apk, out = sys.argv[1:4]
         check_target(serial, os.environ)
-        print('preview-26 gate '+datetime.datetime.now(datetime.timezone.utc).isoformat(), flush=True)
+        print(f'preview-{Gate.VERSION} gate '+datetime.datetime.now(datetime.timezone.utc).isoformat(), flush=True)
         gate = Gate(serial, out)
         if os.environ.get('SKIP_INSTALL') != '1':
             print('APK sha256='+hashlib.sha256(Path(apk).read_bytes()).hexdigest(), flush=True)

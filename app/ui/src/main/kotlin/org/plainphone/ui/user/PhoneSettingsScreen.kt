@@ -36,6 +36,7 @@ sealed interface PhoneSettingsEvent {
     data object OpenWaitingChange : PhoneSettingsEvent
     data object OpenBrightness : PhoneSettingsEvent
     data object OpenSound : PhoneSettingsEvent
+    data object OpenTextSize : PhoneSettingsEvent
     data object OpenBattery : PhoneSettingsEvent
     data object Back : PhoneSettingsEvent
     data class ShowCommunicationCountsChanged(val enabled: Boolean) : PhoneSettingsEvent
@@ -68,6 +69,7 @@ fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEven
         }
         SettingsRow(stringResource(R.string.settings_brightness)) { onEvent(PhoneSettingsEvent.OpenBrightness) }
         SettingsRow(stringResource(R.string.settings_sound)) { onEvent(PhoneSettingsEvent.OpenSound) }
+        SettingsRow(stringResource(R.string.settings_text_size)) { onEvent(PhoneSettingsEvent.OpenTextSize) }
         SettingsRow(stringResource(R.string.settings_battery)) { onEvent(PhoneSettingsEvent.OpenBattery) }
         Row(Modifier.fillMaxWidth().heightIn(min = 56.dp)
             .toggleable(value = state.showCommunicationCounts, role = Role.Switch,

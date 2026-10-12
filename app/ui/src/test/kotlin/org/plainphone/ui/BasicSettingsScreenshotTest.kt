@@ -41,7 +41,7 @@ class BasicSettingsScreenshotTest(private val scale: Float) {
         SoundScreen(SoundUiState(VolumeUiState(0, 1, 7), VolumeUiState(7, 0, 15), ringAdjustable = false), {})
     }
     private val soundLabels = listOf("Lower ring volume", "Raise ring volume", "Lower media volume", "Raise media volume", "Ring volume", "Media volume")
-    @Test fun moreSettingsCopy() = shot("Brightness, sound, battery") { MoreScreen(MoreUiState(MoreMode.Trusted(listOf("Sam"), "Sam")), {}) }
+    @Test fun moreSettingsCopy() = shot("Brightness, sound, text size, battery") { MoreScreen(MoreUiState(MoreMode.Trusted(listOf("Sam"), "Sam")), {}) }
     @Test fun floor() = brightnessShot(BrightnessUiState(10, false))
     @Test fun failed() = brightnessShot(BrightnessUiState(50, false, true), "Brightness couldn't be changed.")
     @Test fun unavailable() = brightnessShot(BrightnessUiState(null, false, true), "Brightness couldn't be changed.")

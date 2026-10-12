@@ -420,6 +420,25 @@ picker must not open from lock task.
 Brightness hides the percentage while **Adjust automatically** is on and shows
 it again when off. Battery shows **Charged** when Android reports full.
 
+### Build 27 Text size subset
+
+Approved in [PLA-420](/PLA/issues/PLA-420). Phone settings rows are **Brightness**,
+**Sound**, **Text size**, **Battery**, then the unchanged counts switch. More's
+subtitle is **Brightness, sound, text size, battery**.
+
+Text size shows **‹ Phone settings**, **Text size**, the sample sentence
+**LMNOPhone's own screens will still fit.**, the confirmed percentage, **−** and
+**+**, then **Bigger text may push some apps' words off the edge. LMNOPhone's own
+screens will still fit.**, and **Done**. Spoken labels are **Smaller text** and
+**Bigger text**. Failure copy: **Text size couldn't be changed.**
+
+Steps are 100, 115, 130, 150, 180 and 200 percent. Other existing values are shown
+unchanged; each control chooses the nearest listed step in that direction.
+Only Android's read-back value is shown. Without the settings-write grant, both
+controls are disabled and the failure line appears. This preview requires a
+one-time tester grant by adb; setup integration remains open. Android Settings
+never opens from this page.
+
 ### Build 22 Sound corrections
 
 Approved in [PLA-404](/PLA/issues/PLA-404). Failure lines appear below the stream

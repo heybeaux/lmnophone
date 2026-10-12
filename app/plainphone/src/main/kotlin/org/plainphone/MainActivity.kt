@@ -8,6 +8,11 @@ import androidx.compose.runtime.DisposableEffect
 import android.media.AudioManager
 import org.plainphone.device.settings.AndroidVolume
 import org.plainphone.device.settings.VolumeController
+import org.plainphone.device.settings.AndroidTextSize
+import org.plainphone.device.settings.TextSizeController
+import org.plainphone.ui.user.TextSizeUiState
+import org.plainphone.ui.user.TextSizeEvent
+import java.math.BigDecimal
 import org.plainphone.ui.user.SoundUiState
 import org.plainphone.ui.user.SoundStream
 import org.plainphone.ui.user.SoundEvent
@@ -111,6 +116,21 @@ import org.plainphone.ui.trusted.WaitingStage
 class MainActivity : ComponentActivity() {
     private val shell: ShellViewModel by viewModels()
     private lateinit var communication: AndroidCommunicationCounts
+    private val textSizeController by lazy { TextSizeController(AndroidTextSize(this)) }
+    private var textSize by mutableStateOf(TextSizeUiState())
+    private fun syncTextSize() {
+        val value = textSizeController.state
+        val percent = value.scale?.let { BigDecimal(it.toString()).multiply(BigDecimal(100)).stripTrailingZeros().toPlainString() }
+        textSize = TextSizeUiState(percent, value.canDecrease, value.canIncrease, value.failed)
+    }
+    private fun onTextSize(event: TextSizeEvent) {
+        when (event) {
+            TextSizeEvent.Done -> shell.state = shell.navigator!!.back(shell.state).state
+            TextSizeEvent.Smaller -> textSizeController.adjust(false)
+            TextSizeEvent.Bigger -> textSizeController.adjust(true)
+        }
+        syncTextSize()
+    }
     private val brightnessController by lazy {
         BrightnessController(AndroidBrightness(this, ComponentName(this, PlainphoneAdminReceiver::class.java)))
     }
@@ -196,6 +216,15 @@ class MainActivity : ComponentActivity() {
                 onDispose { source?.close() }
             }
             LaunchedEffect(basicSettingsVisible, shell.state.current) {
+                if (basicSettingsVisible && shell.state.current == ShellRoute.TextSize) {
+                    textSizeController.onOpen()
+                    syncTextSize()
+                    while (true) {
+                        delay(1_000)
+                        textSizeController.refresh()
+                        syncTextSize()
+                    }
+                }
                 if (basicSettingsVisible && shell.state.current == ShellRoute.Sound) {
                     ringVolume.onOpen()
                     mediaVolume.onOpen()
@@ -279,6 +308,7 @@ class MainActivity : ComponentActivity() {
                 counts = counts,
                 isDeviceSecure = getSystemService(KeyguardManager::class.java).isDeviceSecure,
                 versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() },
+                textSize = textSize, onTextSize = ::onTextSize,
                 sound = sound, onSound = ::onSound,
                 brightness = brightness, battery = battery, onBrightness = ::onBrightness,
                 settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps,
@@ -286,7 +316,7 @@ class MainActivity : ComponentActivity() {
                 onSettings = { event ->
                     when (event) {
                         PhoneSettingsEvent.OpenWaitingChange -> settingsWait?.let { openCancel(it.requestId) }
-                        PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenSound, PhoneSettingsEvent.OpenBattery ->
+                        PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenTextSize, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenSound, PhoneSettingsEvent.OpenBattery ->
                             shell.state = shell.navigator!!.onSettings(shell.state, event).state
                         is PhoneSettingsEvent.ShowCommunicationCountsChanged -> {
                             communication.controller.setEnabled(event.enabled)

@@ -27,7 +27,7 @@
     <string name="update_getting">Getting the update…</string>
     <string name="update_getting_body">Keep the phone near the Wi-Fi. This can take up to 2 minutes.</string>
     <string name="update_unreachable">Couldn\'t get the update from that address. Check it with %1$s. Nothing has changed.</string>
-    <string name="update_too_big">That file is too big to be a LMNOPhone update. Nothing has changed.</string>
+    <string name="update_too_big">That file is too big to be an LMNOPhone update. Nothing has changed.</string>
     <string name="update_invalid">That file isn\'t a genuine LMNOPhone update, so it wasn\'t installed. Nothing has changed. Tell %1$s.</string>
     <string name="update_not_newer">This phone already has that version or a newer one. Nothing has changed.</string>
     <string name="update_confirm">Install update %1$s?</string>
@@ -38,11 +38,11 @@
     <string name="opening_play">the Play Store</string>
     <string name="opening_settings">full phone settings</string>
     <string name="opening_app">adding %1$s</string>
-    <string name="opening_update">a LMNOPhone update</string>
+    <string name="opening_update">an LMNOPhone update</string>
     <string name="opening_play_title">Open the Play Store?</string>
     <string name="opening_settings_title">Open full phone settings?</string>
     <string name="opening_app_title">Add a hidden app?</string>
-    <string name="opening_update_title">Install a LMNOPhone update?</string>
+    <string name="opening_update_title">Install an LMNOPhone update?</string>
     <string name="opening_before_body">First there\'s a %1$d-minute wait. Then you tap Start, and %2$s is open for %3$d minutes. This uses 1 of your %4$d openings left today. Restarting the phone stops the wait, and nothing is used up.</string>
     <string name="opening_start_wait">Start the wait</string>
     <string name="opening_countdown">Opening up in %1$d minutes</string>

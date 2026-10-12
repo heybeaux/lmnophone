@@ -6,6 +6,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Preview text-size control: tester grants the app-op; no Settings launch. -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <!-- Recovery reads whether a call is ongoing and reopens its screen (PLA-322 finding 1). The Device
          Owner grants it to itself; it never reads numbers or call details. -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
