@@ -18,6 +18,8 @@ sealed interface ShellRoute {
     data object Home : ShellRoute
     data object More : ShellRoute
     data object About : ShellRoute
+    data object Brightness : ShellRoute
+    data object Battery : ShellRoute
     data object PhoneSettings : ShellRoute
     data object AskForApp : ShellRoute
     data class RequestResult(val result: AppRequestResult) : ShellRoute
@@ -103,6 +105,13 @@ class ShellNavigator(
         MoreEvent.OpenAbout -> push(s, ShellRoute.About)
         MoreEvent.AddApp,
         MoreEvent.OpenSelfManagedSettings -> if (testBuild) notInBuild(s) else Step(s)
+    }
+
+    fun onSettings(s: ShellState, e: org.plainphone.ui.user.PhoneSettingsEvent): Step = when (e) {
+        org.plainphone.ui.user.PhoneSettingsEvent.OpenBrightness -> push(s, ShellRoute.Brightness)
+        org.plainphone.ui.user.PhoneSettingsEvent.OpenBattery -> push(s, ShellRoute.Battery)
+        org.plainphone.ui.user.PhoneSettingsEvent.Back -> back(s)
+        is org.plainphone.ui.user.PhoneSettingsEvent.ShowCommunicationCountsChanged -> Step(s)
     }
 
     fun onAbout(s: ShellState, e: AboutEvent): Step = when (e) {

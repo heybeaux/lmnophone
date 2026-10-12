@@ -392,6 +392,20 @@ The initial UI slice includes Back, this switch and its coverage/status text onl
 The host maps `MoreEvent.OpenPhoneSettings` to this screen and owns persistence,
 permissions and count sources; the other settings remain separate work.
 
+### Build 20 U7 subset
+
+Brightness and Battery appear above the existing counts switch. Wi-Fi, Bluetooth,
+Sound and Text size remain outside this preview. Brightness shows the confirmed
+percentage, a slider from 10% to 100%, − and +, **Adjust automatically**, and
+**Done**. Manual controls are disabled while automatic adjustment is on.
+Battery has **‹ Phone settings** for Back, the level and the charging line.
+
+TODO(copy), for the focused build review: U7 did not define unavailable/error
+wording. This preview uses **Brightness couldn't be changed.** on a failed write
+or read, and **Battery level isn't available.** for an unknown level. Unknown
+charging status has no charging line. No requested value is presented as saved
+until Android reads it back.
+
 ### Wi-Fi messages (exact text, from web-containment)
 
 | When | Message | Action |

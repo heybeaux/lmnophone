@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.plainphone.ui.R
 import org.plainphone.ui.components.ScreenLink
+import org.plainphone.ui.components.plainphoneAction
 import org.plainphone.ui.theme.*
 
 /** Host owns the saved preference, permissions and availability; this screen only renders them. */
@@ -28,11 +29,13 @@ data class PhoneSettingsUiState(
 )
 
 sealed interface PhoneSettingsEvent {
+    data object OpenBrightness : PhoneSettingsEvent
+    data object OpenBattery : PhoneSettingsEvent
     data object Back : PhoneSettingsEvent
     data class ShowCommunicationCountsChanged(val enabled: Boolean) : PhoneSettingsEvent
 }
 
-/** PIN-free destination for MoreEvent.OpenPhoneSettings. Other settings are a later slice. */
+/** PIN-free destination for MoreEvent.OpenPhoneSettings. Brightness and Battery are the first U7 rows. */
 @Composable
 fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEvent) -> Unit) {
     Column(Modifier.fillMaxSize().background(PlainphoneColors.Paper)
@@ -40,6 +43,8 @@ fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEven
         .padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S6),
         verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4)) {
         ScreenLink(stringResource(R.string.back_more), { onEvent(PhoneSettingsEvent.Back) }, centered = false)
+        SettingsRow(stringResource(R.string.settings_brightness)) { onEvent(PhoneSettingsEvent.OpenBrightness) }
+        SettingsRow(stringResource(R.string.settings_battery)) { onEvent(PhoneSettingsEvent.OpenBattery) }
         Row(Modifier.fillMaxWidth().heightIn(min = 56.dp)
             .toggleable(value = state.showCommunicationCounts, role = Role.Switch,
                 onValueChange = { onEvent(PhoneSettingsEvent.ShowCommunicationCountsChanged(it)) })
@@ -59,5 +64,14 @@ fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEven
             if (state.unreadTextsUnavailable) Text(stringResource(R.string.settings_texts_unavailable,
                 stringResource(R.string.app_name)), style = PlainphoneType.Small)
         }
+    }
+}
+
+@Composable
+private fun SettingsRow(title: String, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).plainphoneAction(onClick = onClick)
+        .padding(vertical = PlainphoneSpace.S2), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, style = PlainphoneType.Row, modifier = Modifier.weight(1f))
+        Text("›", style = PlainphoneType.Row.copy(color = PlainphoneColors.Ink3))
     }
 }

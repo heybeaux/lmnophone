@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import org.plainphone.R
+import org.plainphone.ui.user.*
 import org.plainphone.ui.user.AboutScreen
 import org.plainphone.ui.user.AboutUiState
 import org.plainphone.ui.user.PhoneSettingsScreen
@@ -44,6 +45,9 @@ fun PlainphoneShell(
     onNotice: () -> Unit,
     settings: PhoneSettingsUiState,
     onSettings: (PhoneSettingsEvent) -> Unit,
+    brightness: BrightnessUiState,
+    battery: BatteryUiState,
+    onBrightness: (BrightnessEvent) -> Unit,
     onStep: (Step) -> Unit,
 ) {
     BackHandler { onStep(navigator.back(state)) }
@@ -56,6 +60,8 @@ fun PlainphoneShell(
                 }
                 ShellRoute.About -> AboutScreen(AboutUiState(versionName, snapshot.trustedPeople,
                     snapshot.requestRecipient, stringResource(R.string.product_name), isDeviceSecure)) { onStep(navigator.onAbout(state, it)) }
+                ShellRoute.Brightness -> BrightnessScreen(brightness, onBrightness)
+                ShellRoute.Battery -> BatteryScreen(battery) { onStep(navigator.back(state)) }
                 ShellRoute.PhoneSettings -> PhoneSettingsScreen(settings, onSettings)
                 ShellRoute.More -> MoreScreen(mapper.more(snapshot)) { onStep(navigator.onMore(state, it)) }
                 ShellRoute.AskForApp ->

@@ -1,0 +1,16 @@
+<!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <string name="settings_brightness">Brightness</string>
+    <string name="settings_battery">Battery</string>
+    <string name="settings_back">‹ Phone settings</string>
+    <string name="brightness_automatic">Adjust automatically</string>
+    <string name="brightness_minus">−</string>
+    <string name="brightness_plus">+</string>
+    <string name="brightness_percent">%1$d%%</string>
+    <!-- TODO(copy): U7 lacks failure and unknown-level copy. Lead review on PLA-395. -->
+    <string name="brightness_failed">Brightness couldn\'t be changed.</string>
+    <string name="battery_unknown">Battery level isn\'t available.</string>
+    <string name="battery_level">Battery: %1$d%%</string>
+    <string name="battery_charging">Charging</string>
+    <string name="battery_not_charging">Not charging</string>
+</resources>

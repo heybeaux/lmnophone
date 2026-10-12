@@ -237,3 +237,16 @@ controls screen. The screen stores no grant and every privileged action remains
 unhosted. `PinScreenFlow` ignores callbacks after close and rejects duplicate
 submits; `PinAccessActivity` clears input and access on pause. Enrollment has no
 reset-protection profile, starts no wait, and leaves the preview starter plan intact.
+
+## Build 20 basic-settings seam
+
+`ShellRoute.Brightness` and `ShellRoute.Battery` return to `PhoneSettings` on Done
+or Back. `:ui` receives `BrightnessUiState(percent?, automatic, failed)` and
+`BatteryUiState(percent?, charging?)`; it emits `BrightnessEvent` and Back only.
+The host observes battery broadcasts only while Battery is visible. `:device`
+exports `AndroidBrightness` through `BrightnessPort` and `BrightnessController`:
+DPM-only writes with readback, a 26/255 manual minimum, and rollback attempted on
+write/readback failure. A failed rollback is never called success; actual values
+or unavailable state are shown. Automatic brightness remains Android-controlled;
+manual controls are disabled until it is turned off. No permissions or policy
+lists change. These seams implement the approved U7 subset in [PLA-395](/PLA/issues/PLA-395).

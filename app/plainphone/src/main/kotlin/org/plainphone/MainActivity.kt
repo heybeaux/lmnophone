@@ -3,6 +3,14 @@
 package org.plainphone
 
 import android.app.KeyguardManager
+import android.content.ComponentName
+import androidx.compose.runtime.DisposableEffect
+import org.plainphone.device.settings.AndroidBrightness
+import org.plainphone.device.settings.BrightnessController
+import org.plainphone.settings.BatterySource
+import org.plainphone.ui.user.BatteryUiState
+import org.plainphone.ui.user.BrightnessUiState
+import org.plainphone.ui.user.BrightnessEvent
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -85,6 +93,24 @@ import org.plainphone.ui.trusted.WaitingStage
 class MainActivity : ComponentActivity() {
     private val shell: ShellViewModel by viewModels()
     private lateinit var communication: AndroidCommunicationCounts
+    private val brightnessController by lazy {
+        BrightnessController(AndroidBrightness(this, ComponentName(this, PlainphoneAdminReceiver::class.java)))
+    }
+    private var brightness by mutableStateOf(BrightnessUiState(null, false))
+    private var battery by mutableStateOf(BatteryUiState())
+    private fun syncBrightness() {
+        val value = brightnessController.state
+        brightness = BrightnessUiState(value.percent, value.automatic, value.failed)
+    }
+    private fun onBrightness(event: BrightnessEvent) {
+        when (event) {
+            BrightnessEvent.Done -> shell.state = shell.navigator!!.back(shell.state).state
+            is BrightnessEvent.Adjust -> brightnessController.adjust(event.delta)
+            is BrightnessEvent.SetPercent -> brightnessController.setPercent(event.percent)
+            is BrightnessEvent.SetAutomatic -> brightnessController.setAutomatic(event.enabled)
+        }
+        syncBrightness()
+    }
     private var resumed by mutableStateOf(false)
     private var counts by mutableStateOf(CommunicationCounts())
     private var callsUnavailable by mutableStateOf(false)
@@ -126,6 +152,18 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(runs) { enterLockTask() }
             val homeVisible = resumed && gate == HomeGate.READY && shell.phone != null && shell.state.current == ShellRoute.Home && cancelScreen == null && !attentionOpen
             val settingsVisible = resumed && gate == HomeGate.READY && shell.phone != null && shell.state.current == ShellRoute.PhoneSettings
+            val basicSettingsVisible = resumed && gate == HomeGate.READY && cancelScreen == null && !attentionOpen
+            DisposableEffect(basicSettingsVisible, shell.state.current) {
+                val source = if (basicSettingsVisible && shell.state.current == ShellRoute.Battery)
+                    BatterySource(this@MainActivity) { battery = it } else null
+                onDispose { source?.close() }
+            }
+            LaunchedEffect(basicSettingsVisible, shell.state.current) {
+                if (basicSettingsVisible && shell.state.current == ShellRoute.Brightness) {
+                    brightnessController.refresh()
+                    syncBrightness()
+                }
+            }
             SideEffect {
                 communication.controller.setVisible(homeVisible)
                 communication.controller.setSettingsVisible(settingsVisible)
@@ -173,10 +211,12 @@ class MainActivity : ComponentActivity() {
                 counts = counts,
                 isDeviceSecure = getSystemService(KeyguardManager::class.java).isDeviceSecure,
                 versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() },
+                brightness = brightness, battery = battery, onBrightness = ::onBrightness,
                 settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps),
                 onSettings = { event ->
                     when (event) {
-                        PhoneSettingsEvent.Back -> shell.state = shell.navigator!!.back(shell.state).state
+                        PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenBattery ->
+                            shell.state = shell.navigator!!.onSettings(shell.state, event).state
                         is PhoneSettingsEvent.ShowCommunicationCountsChanged -> {
                             communication.controller.setEnabled(event.enabled)
                             syncCounts()
