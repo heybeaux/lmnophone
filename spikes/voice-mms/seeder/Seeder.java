@@ -10,7 +10,7 @@ import android.os.Bundle;
 import android.provider.Telephony;
 import java.io.OutputStream;
 
-/** Writes one inbox MMS (m-retrieve-conf) from a fictional number with a single audio/amr part. */
+/** Writes one inbox MMS (m-retrieve-conf) from a fictional number with a single audio part: audio/amr, or audio/mp4 with --es format aac. */
 public class Seeder extends Activity {
     static final String FROM = "5550100";
 
@@ -23,7 +23,12 @@ public class Seeder extends Activity {
             Log.i("seeder holdsSmsRole=" + holdsSmsRole);
             if (!holdsSmsRole) throw new IllegalStateException("Seeder must temporarily hold the SMS role");
             Log.i("seeder defaultSms=" + Telephony.Sms.getDefaultSmsPackage(this));
-            byte[] amr = VoiceMms.synthAmr(getIntent().getIntExtra("seconds", 4));
+            int seconds = getIntent().getIntExtra("seconds", 4);
+            boolean aac = "aac".equals(getIntent().getStringExtra("format"));
+            String partType = aac ? "audio/mp4" : "audio/amr";
+            String partName = aac ? "voice.m4a" : "voice.amr";
+            byte[] amr = aac ? VoiceAac.synthM4a(new java.io.File(getCacheDir(), "voice.m4a"), seconds) : VoiceMms.synthAmr(seconds);
+            Log.i("seeder format=" + partType + " seconds=" + seconds);
             long now = System.currentTimeMillis() / 1000L;
             long thread = Telephony.Threads.getOrCreateThreadId(this, FROM);
             ContentValues m = new ContentValues();
@@ -55,10 +60,10 @@ public class Seeder extends Activity {
             Log.i("seeder addr to=" + getContentResolver().insert(Uri.parse("content://mms/" + id + "/addr"), to));
             ContentValues p = new ContentValues();
             p.put("mid", Long.parseLong(id));
-            p.put("ct", "audio/amr");
-            p.put("cid", "<voice.amr>");
-            p.put("cl", "voice.amr");
-            p.put("name", "voice.amr");
+            p.put("ct", partType);
+            p.put("cid", "<" + partName + ">");
+            p.put("cl", partName);
+            p.put("name", partName);
             Uri part = getContentResolver().insert(Uri.parse("content://mms/" + id + "/part"), p);
             Log.i("seeder part=" + part);
             try (OutputStream o = getContentResolver().openOutputStream(part)) { o.write(amr); }

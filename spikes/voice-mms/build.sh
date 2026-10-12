@@ -12,7 +12,9 @@ out=build
 rm -rf "$out"; mkdir -p "$out"
 for app in probe seeder; do
   w="$out/$app"; mkdir -p "$w/classes" "$w/dex" "$w/res"
-  javac -Xlint:-options -source 8 -target 8 -cp "$jar" -d "$w/classes" common/*.java $app/*.java
+  extra=()
+  if [ "$app" = probe ]; then extra=(mmslib/*.java mmslib/pdu/*.java); fi
+  javac -Xlint:-options -source 8 -target 8 -cp "$jar" -d "$w/classes" common/*.java $app/*.java ${extra[@]+"${extra[@]}"}
   (cd "$w/classes" && jar cf ../classes.jar .)
   "$bt/d8" --lib "$jar" --min-api 30 --output "$w/dex" "$w/classes.jar"
   resargs=()

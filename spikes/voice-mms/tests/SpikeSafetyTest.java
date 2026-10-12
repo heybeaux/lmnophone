@@ -23,10 +23,10 @@ public final class SpikeSafetyTest {
         for (int seconds : new int[] {-1, 0, 61, Integer.MAX_VALUE}) {
             rejected(() -> SpikeSafety.requireDuration(seconds));
         }
-        for (String name : new String[] {"voice.amr", "send.pdu"}) {
+        for (String name : new String[] {"voice.amr", "voice.m4a", "send.pdu"}) {
             SpikeSafety.requireSharedFile(name);
         }
-        for (String name : new String[] {null, "", "../voice.amr", "other.amr", "voice.amr/extra"}) {
+        for (String name : new String[] {null, "", "../voice.amr", "other.amr", "voice.amr/extra", "../voice.m4a", "voice.m4a/extra"}) {
             rejected(() -> SpikeSafety.requireSharedFile(name));
         }
         System.out.println("Spike safety: emulator, 100 fictional recipients, durations and shared files PASS");

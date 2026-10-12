@@ -9,11 +9,11 @@
 - AOSP citations are from tag `android-15.0.0_r1`.
 - Requirement-by-requirement coverage and limitations: `REQUIREMENTS.md`. These results are a feasibility spike, not product acceptance or evidence of real recipient delivery.
 - Correction verification: `evidence/DELTA-CHECKS.md` and `evidence/delta-5984.log`, labelled separately from the original run.
-- **Partial answer to the Lead's later AAC request:** the encoder and emulator runs use `audio/amr`, not an AAC `.m4a` part labelled `audio/mp4`. No AAC clip was encoded, sent, persisted or played, and no AOSP `mmslib` subset was vendored. The AAC duration table is a bitrate estimate only. The original timebox permits partial results; the AMR evidence is not acceptance of the requested AAC variant.
+- **AAC follow-up (the Lead's later priority):** `evidence/AAC-CHECKS.md`, run on the same private AVD as `emulator-5986`. A vendored AOSP `mmslib` subset builds an m-send-req with one AAC `.m4a` part labelled `audio/mp4`; the probe (no SMS role) sends it, the system writes it to `content://mms/sent`, Google Messages shows it as an audio attachment, and a seeded incoming AAC part plays with READ_SMS only. Still emulator-only: no real MMSC, no real recipient, and the AAC table below now uses the measured container overhead but remains an estimate of carrier limits.
 
 ## Answers
 
-### 1. Send path A: our app sends the MMS itself (`SmsManager.sendMultimediaMessage`). **Works for the AMR fixture, no role needed.**
+### 1. Send path A: our app sends the MMS itself (`SmsManager.sendMultimediaMessage`). **Works for the AMR and AAC fixtures, no role needed.**
 
 - **What is enforced:** `frameworks/base/services/core/java/com/android/server/MmsServiceBroker.java` `sendMessage()` (around l.336–360) checks:
   - `enforceCallingPermission(SEND_SMS)`;
@@ -23,7 +23,9 @@
   - Permission denial throws; a disallowed SEND_SMS app-op or active subscription/user mismatch returns without calling the send service or its callback. A timeout therefore means **unknown**, not a confirmed transport failure. These denied paths are source-backed, not additional emulator runs.
   - Probe app-ops: SEND_SMS allow, READ_SMS allow, WRITE_SMS ignore.
 - **Carrier gate:** `packages/services/Mms/src/com/android/mms/service/MmsService.java` l.258 rejects the send before any network work if the MMS config has `enabledMMS=false`. It returns `MMS_ERROR_MMS_DISABLED_BY_CARRIER` (12). The emulator's carrier config has `enabledMMS=false`.
-- **PDU:** a hand-written m-send-req encoder (`common/VoiceMms.java#sendReq`, about 50 lines). It produces one `multipart/mixed` part, `audio/amr`, From `insert-address-token`, To `<n>/TYPE=PLMN`. **No third-party library, so no licence question.** The audio is real AMR-NB 12.2 kbps from MediaCodec on a synthetic tone (no microphone).
+- **AAC via `mmslib` (`evidence/AAC-CHECKS.md`):** `probe/MmsLibSend.java` builds a `SendReq` with the vendored AOSP `mmslib` (`PduComposer`): multipart/mixed, no SMIL, one `audio/mp4` part `voice.m4a` (5 s synthetic AAC-LC 24 kbps mono, 18209 B). Stock config: `resultCode=12`, no row. With `enabledMMS=true` and the fake MMSC: RESULT_OK, `uri=content://mms/sent/1`, row msg_box 2 SENT, `resp_st=128`, `creator` = probe, part `ct=audio/mp4`. The fake MMSC received an 18344-byte PDU whose part sha256 (`54afb889…`) equals the encoder output. Google Messages lists "You: Audio clip" and shows an audio attachment of 00:04 with a play button; playback inside Messages was not proved.
+- **`mmslib` source and licence:** copied from `platform/packages/apps/Messaging` tag `android-15.0.0_r1`, `src/com/android/messaging/mmslib/`. Apache-2.0, original Esmertec AG / The Android Open Source Project headers kept, each file marked as modified. Files: `InvalidHeaderValueException`, `MmsException`, and `pdu/{CharacterSets, EncodedStringValue, GenericPdu, MultimediaMessagePdu, PduBody, PduComposer, PduContentTypes, PduHeaders, PduPart, SendReq}`. Changes: package renamed to `org.plainphone.spike458.mmslib`, `androidx.collection.SimpleArrayMap` replaced by `java.util.HashMap`. `audio/mp4` is not in the AOSP well-known content-type table, so `PduComposer` writes it as a text string. The Lead's note says Klinker android-smsmms was archived in March 2026 (not re-checked here).
+- **PDU (AMR, original run):** a hand-written m-send-req encoder (`common/VoiceMms.java#sendReq`, about 50 lines). It produces one `multipart/mixed` part, `audio/amr`, From `insert-address-token`, To `<n>/TYPE=PLMN`. **No third-party library, so no licence question.** The audio is real AMR-NB 12.2 kbps from MediaCodec on a synthetic tone (no microphone).
 - **Runs** (`evidence/logcat-pla458.log`, `evidence/logcat-system-mms.log`, `evidence/fake-mmsc.log`):
 
 | Run | Setup | sentIntent | Provider row | Messages UI |
@@ -64,6 +66,8 @@
 
 ### 3. Receiving. **Works with READ_SMS only.**
 
+- **AAC follow-up:** a seeded inbox m-retrieve-conf with one `audio/mp4` `voice.m4a` part (15137 B) is listed and played by the probe with READ_SMS only: MediaExtractor reports `audio/mp4a-latm`, AAC-LC, 16 kHz mono, 24 kbps, 3968 ms; MediaPlayer `isPlaying=true` at 1452 ms (`evidence/AAC-CHECKS.md`). The original AMR results follow.
+
 - **Seeding:**
   - The throwaway `seeder/` app briefly held `android.app.role.SMS` (`cmd role add-role-holder`) and inserted one inbox MMS: m_type 132, from 555-0100, one 4 s `audio/amr` part, 6406 bytes, sha `9ceaf2da…`.
   - The role was then restored to Messages and verified with `get-role-holders`.
@@ -83,7 +87,7 @@
 - `SmsManager.getCarrierConfigValues()` and `CarrierConfigManager.getConfigForSubId()` both report `maxMessageSize` / `KEY_MMS_MAX_MESSAGE_SIZE_INT` = **1048576** (1 MiB), `enabledMMS=false`, `allowAttachAudio=true`.
 - Rates:
   - AMR-NB 12.2 kbps (RFC 4867 storage format): 32 bytes per 20 ms frame = **1600 B/s**, plus a 6-byte header. Measured: 5 s = 8006 B.
-  - AAC-LC 24 kbps mono: about **3000 B/s**, plus a few KB of container.
+  - AAC-LC 24 kbps mono: about **3000 B/s**, plus container. Measured with the MediaCodec/MediaMuxer `.m4a`: 5 s = 18209 B and 4 s = 15137 B, i.e. about 3072 B/s plus about 2.85 KB of MPEG-4 container (this encoder's real rate is a little above the nominal 24 kbps).
   - m-send-req overhead: about 93 B.
 
 | Limit | Bytes | AMR-NB 12.2 kbps storage | AAC-LC 24 kbps mono |
@@ -95,13 +99,13 @@
 | 600 KiB | 614400 | ≈ 383.9 s | ≈ 204.8 s |
 | 1 MiB (emulator value) | 1048576 | ≈ 655.3 s | ≈ 349.5 s |
 
-- AMR calculation: `floor((budgetBytes - 93 - 6) / 32) * 0.020`. AAC estimate: `(budgetBytes - 93) / 3000`, before container and encoder variation. These are approximate upper budgets, not tested carrier duration limits. The previous table used binary units despite its KB/MB labels.
+- AMR calculation: `floor((budgetBytes - 93 - 6) / 32) * 0.020`. AAC estimate: `(budgetBytes - 93) / 3000`, before container and encoder variation; with the measured 3072 B/s and about 2.85 KB of container the AAC figures are about 2–3% lower (for example about 340 s at 1 MiB). These are approximate upper budgets, not tested carrier duration limits. The previous table used binary units despite its KB/MB labels.
 
 - Keep about a 10% margin. Read the limit at runtime from `getCarrierConfigValues()`; don't hard-code it.
 
 ## Recommendation for PLA-453 (spike opinion, not a decision)
 
-- **Path A** gives LMNOPhone full control: one tap and no Messages UI, which fits a user who can't read. It needs SEND_SMS and our own PDU encoder, and depends on the carrier having MMS enabled.
+- **Path A** gives LMNOPhone full control: one tap and no Messages UI, which fits a user who can't read. It needs SEND_SMS and a PDU encoder (the vendored Apache-2.0 AOSP `mmslib` subset worked on the emulator), and depends on the carrier having MMS enabled.
   - The probe's SEND_SMS and READ_SMS are hard-restricted. They were granted because adb allowlisted them (`RESTRICTION_INSTALLER_EXEMPT`). The production install and updater path must allowlist SEND_SMS the same way the existing READ_SMS is.
 - **Path B** needs no new permission, but the user must find and tap a small "Send MMS" icon inside Messages, and Messages must be on the lock-task list.
 
@@ -113,12 +117,14 @@
 4. Whether the path A sentIntent and the persisted row behave the same over a real MMS APN (separate `mms` APN type on the carrier), including the time to `MMS_ERROR_HTTP_FAILURE` with no signal.
 5. The path B warm-task draft loss with the production LMNOPhone launcher and lock task.
 6. Whether Messages, with RCS off, ever converts these into RCS (it shouldn't); and group MMS (more than one family member) addressing.
+7. Real MMSC and recipient handling of the AAC `.m4a` part labelled `audio/mp4`: whether the carrier accepts or transcodes it, and whether Android and iPhone recipients play it.
+8. Playback of the outgoing AAC clip inside Google Messages (the emulator UI showed the attachment, but a Play tap was not proved to start playback).
 
 ## Reproduce
 
 Use only the private API 35 `pla458-a35` AVD assigned to this spike, launched with `-read-only` on a verified-free 59xx port. The original run used 5960; the correction run used 5984 after a 5960 collision. Check both console identity and the ADB `ro.boot.qemu.avd_name` property before commands; a serial alone does not establish ownership. Do not run these commands against another AVD or any physical phone. The apps additionally reject hardware other than goldfish/ranchu and recipients outside the fictional 555-01xx fixture range. The helper rejects non-59xx serials and a mismatched ADB AVD name. Synthetic clips are bounded to 1–60 seconds for this probe; that is not a carrier duration limit.
 
-This spike uses `probe/Files.java`, a dependency-free, read-only **FileProvider-style stand-in**, not AndroidX FileProvider. URI grants and ClipData were exercised; the exact AndroidX implementation remains untested. Only `voice.amr` and `send.pdu` are shareable, and write modes are rejected.
+This spike uses `probe/Files.java`, a dependency-free, read-only **FileProvider-style stand-in**, not AndroidX FileProvider. URI grants and ClipData were exercised; the exact AndroidX implementation remains untested. Only `voice.amr`, `voice.m4a` and `send.pdu` are shareable, and write modes are rejected.
 
 ```sh
 cd spikes/voice-mms
@@ -138,6 +144,8 @@ adb -s "$S" shell am start -n "$P" --es cmd config
 adb -s "$S" shell am start -n "$P" --es cmd encode --ei seconds 5
 adb -s "$S" shell am start -n "$P" --es cmd sendA
 adb -s "$S" shell am start -n "$P" --es cmd sendA --ez override true
+adb -s "$S" shell am start -n "$P" --es cmd encodeAac --ei seconds 5
+adb -s "$S" shell am start -n "$P" --es cmd sendAac     # mmslib PDU, one audio/mp4 part
 adb -s "$S" shell am start -n "$P" --es cmd sendB --es mode sendto --es to 5550101
 adb -s "$S" shell am start -n "$P" --es cmd list
 adb -s "$S" shell am start -n "$P" --es cmd parts
@@ -146,6 +154,7 @@ adb -s "$S" install -r -t build/seeder.apk
 adb -s "$S" shell cmd role add-role-holder android.app.role.SMS org.plainphone.spike458.seeder 0
 adb -s "$S" shell cmd role get-role-holders android.app.role.SMS
 adb -s "$S" shell am start -W -n org.plainphone.spike458.seeder/org.plainphone.spike458.Seeder --ei seconds 4
+# AAC variant: add --es format aac (audio/mp4, voice.m4a)
 adb -s "$S" shell cmd role add-role-holder android.app.role.SMS com.google.android.apps.messaging 0
 adb -s "$S" shell cmd role get-role-holders android.app.role.SMS
 adb -s "$S" shell am start -n "$P" --es cmd env
@@ -155,7 +164,7 @@ adb -s "$S" shell am start -n "$P" --es cmd play
 
 - Logs use tag `PLA458`.
 - Fake MMSC: run `python3 tools/fake_mmsc.py`, then set the APN mmsc with `content update --uri content://telephony/carriers/<id> --bind mmsc:s:http\://10.0.2.2\:59580/mms`.
-- Carrier MMS on: `cmd phone cc set-value enabledMMS true` (test override; `cmd phone cc clear-values` undoes it).
+- Carrier MMS on: `cmd phone cc set-value enabledMMS true` (test override; `cmd phone cc clear-values` undoes it). On this image it needs `adb -s "$S" root` first (shell user gets `Permission denied`); use root only on the private emulator. Quote the APN binding for the remote shell: `adb -s "$S" shell "content update --uri content://telephony/carriers/<id> --bind 'mmsc:s:http\://10.0.2.2\:59580/mms'"`.
 - Use a `-read-only` AVD so all of this is thrown away on shutdown.
 - Restore the Messages role even if seeding fails. Stop lock task and remove the test-only admin before cleanup. The original run verified Messages restored, no owners, carrier overrides cleared, both spike apps uninstalled, then shut down emulator-5960 and stopped the loopback MMSC/logcat.
 

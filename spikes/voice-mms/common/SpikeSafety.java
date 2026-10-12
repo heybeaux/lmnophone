@@ -25,8 +25,8 @@ public final class SpikeSafety {
     }
 
     public static void requireSharedFile(String name) {
-        if (!"voice.amr".equals(name) && !"send.pdu".equals(name)) {
-            throw new IllegalArgumentException("Only the two spike fixtures can be shared");
+        if (!"voice.amr".equals(name) && !"voice.m4a".equals(name) && !"send.pdu".equals(name)) {
+            throw new IllegalArgumentException("Only the three spike fixtures can be shared");
         }
     }
 }

@@ -1,0 +1,55 @@
+--------- beginning of main
+10-12 16:12:49.818 I/PLA458  ( 3921): cmd=env
+10-12 16:12:49.835 I/PLA458  ( 3921): env sdk=35 defaultSms=com.google.android.apps.messaging probeHoldsSmsRole=false SEND_SMS=0 READ_SMS=0 defaultSmsSubId=1
+10-12 16:12:51.410 I/PLA458  ( 3921): cmd=config
+10-12 16:12:51.415 I/PLA458  ( 3921): SmsManager.getCarrierConfigValues: aliasEnabled=false aliasMaxChars=48 aliasMinChars=2 allowAttachAudio=true config_cellBroadcastAppLinks=true emailGatewayNumber= enableGroupMms=true enableMMSDeliveryReports=false enableMMSReadReports=false enableMultipartSMS=true enableSMSDeliveryReports=true enabledMMS=false enabledNotifyWapMMSC=false enabledTransID=false httpParams= httpSocketTimeout=60000 maxImageHeight=1944 maxImageWidth=2592 maxMessageSize=1048576 maxMessageTextSize=-1 maxSubjectLength=40 mmsCloseConnection=true naiSuffix= recipientLimit=2147483647 sendMultipartSmsAsSeparateMessages=false smsToMmsTextLengthThreshold=-1 smsToMmsTextThreshold=-1 supportHttpCharsetHeader=false supportMmsContentDisposition=true uaProfTagName=x-wap-profile uaProfUrl= userAgent=
+10-12 16:12:51.415 I/PLA458  ( 3921): MMS_CONFIG_MAX_MESSAGE_SIZE=1048576 MMS_CONFIG_MMS_ENABLED=false
+10-12 16:12:51.424 I/PLA458  ( 3921): CarrierConfigManager KEY_MMS_MAX_MESSAGE_SIZE_INT=1048576 KEY_MMS_MMS_ENABLED_BOOL=false KEY_MMS_MAX_IMAGE_WIDTH_INT=2592 KEY_MMS_UA_PROF_URL_STRING=
+10-12 16:12:53.621 I/PLA458  ( 3921): cmd=encodeAac
+10-12 16:12:54.057 I/PLA458  ( 3921): encodeAac seconds=5 bytes=18209 box=ftypmp42 sha256=54afb889aacb80d0
+10-12 16:12:59.708 I/PLA458  ( 3921): cmd=sendAac
+10-12 16:12:59.717 I/PLA458  ( 3921): sendAac part bytes=18209 partSha256=54afb889aacb80d0 pdu bytes=18344 sha256=eb66a4582b8d1684
+10-12 16:12:59.729 I/PLA458  ( 3921): before-sendAac content://mms rows=0
+10-12 16:12:59.811 I/PLA458  ( 3921): sendAac sendMultimediaMessage returned (no exception) overrides=null
+10-12 16:12:59.812 I/PLA458  ( 3921): sentIntent resultCode=12
+10-12 16:12:59.820 I/PLA458  ( 3921): after-sentIntent content://mms rows=0
+10-12 16:13:54.177 I/PLA458  ( 3921): cmd=config
+10-12 16:13:54.180 I/PLA458  ( 3921): SmsManager.getCarrierConfigValues: aliasEnabled=false aliasMaxChars=48 aliasMinChars=2 allowAttachAudio=true config_cellBroadcastAppLinks=true emailGatewayNumber= enableGroupMms=true enableMMSDeliveryReports=false enableMMSReadReports=false enableMultipartSMS=true enableSMSDeliveryReports=true enabledMMS=false enabledNotifyWapMMSC=false enabledTransID=false httpParams= httpSocketTimeout=60000 maxImageHeight=1944 maxImageWidth=2592 maxMessageSize=1048576 maxMessageTextSize=-1 maxSubjectLength=40 mmsCloseConnection=true naiSuffix= recipientLimit=2147483647 sendMultipartSmsAsSeparateMessages=false smsToMmsTextLengthThreshold=-1 smsToMmsTextThreshold=-1 supportHttpCharsetHeader=false supportMmsContentDisposition=true uaProfTagName=x-wap-profile uaProfUrl= userAgent=
+10-12 16:13:54.180 I/PLA458  ( 3921): MMS_CONFIG_MAX_MESSAGE_SIZE=1048576 MMS_CONFIG_MMS_ENABLED=false
+10-12 16:13:54.182 I/PLA458  ( 3921): CarrierConfigManager KEY_MMS_MAX_MESSAGE_SIZE_INT=1048576 KEY_MMS_MMS_ENABLED_BOOL=false KEY_MMS_MAX_IMAGE_WIDTH_INT=2592 KEY_MMS_UA_PROF_URL_STRING=
+10-12 16:13:57.215 I/PLA458  ( 3921): cmd=sendAac
+10-12 16:13:57.221 I/PLA458  ( 3921): sendAac part bytes=18209 partSha256=54afb889aacb80d0 pdu bytes=18344 sha256=a2fae2328911d722
+10-12 16:13:57.232 I/PLA458  ( 3921): before-sendAac content://mms rows=0
+10-12 16:13:57.244 I/PLA458  ( 3921): sendAac sendMultimediaMessage returned (no exception) overrides=null
+10-12 16:13:57.244 I/PLA458  ( 3921): sentIntent resultCode=12
+10-12 16:13:57.250 I/PLA458  ( 3921): after-sentIntent content://mms rows=0
+--------- beginning of main
+10-12 16:14:43.000 I/PLA458  ( 3921): CarrierConfigManager KEY_MMS_MAX_MESSAGE_SIZE_INT=1048576 KEY_MMS_MMS_ENABLED_BOOL=true KEY_MMS_MAX_IMAGE_WIDTH_INT=2592 KEY_MMS_UA_PROF_URL_STRING=
+10-12 16:14:46.057 I/PLA458  ( 3921): cmd=sendAac
+10-12 16:14:46.061 I/PLA458  ( 3921): sendAac part bytes=18209 partSha256=54afb889aacb80d0 pdu bytes=18344 sha256=2984d90f53b12ffc
+10-12 16:14:46.072 I/PLA458  ( 3921): before-sendAac content://mms rows=0
+10-12 16:14:46.083 I/PLA458  ( 3921): sendAac sendMultimediaMessage returned (no exception) overrides=null
+10-12 16:14:46.087 I/PLA458  ( 3921): Files.openFile uid=1001 content://org.plainphone.spike458.probe.files/send.pdu mode=r
+10-12 16:14:46.183 I/PLA458  ( 3921): sentIntent resultCode=-1 android.telephony.extra.LAST_CONNECTION_FAILURE_CAUSE_CODE=0 uri=content://mms/sent/1 android.telephony.extra.MMS_DATA=byte[33] android.telephony.extra.HANDLED_BY_CARRIER_APP=false
+10-12 16:14:46.188 I/PLA458  ( 3921): after-sentIntent content://mms rows=1
+10-12 16:14:46.195 I/PLA458  ( 3921): after-sentIntent mms _id=1 thread=1 msg_box=2 m_type=128 date=1791846886 creator=org.plainphone.spike458.probe ct_t=application/vnd.wap.multipart.mixed resp_st=128 read=1 | part _id=2 ct=audio/mp4 name=voice.m4a cl=voice.m4a | addrTypes=137,151,
+10-12 16:19:23.969 I/PLA458  ( 5049): seeder holdsSmsRole=true
+10-12 16:19:23.986 I/PLA458  ( 5049): seeder defaultSms=null
+10-12 16:19:24.469 I/PLA458  ( 5049): seeder format=audio/mp4 seconds=4
+10-12 16:19:24.554 I/PLA458  ( 5049): seeder inserted msg=content://mms/2
+10-12 16:19:24.581 I/PLA458  ( 5049): seeder addr from=content://mms/addr/3
+10-12 16:19:24.592 I/PLA458  ( 5049): seeder addr to=content://mms/addr/4
+10-12 16:19:24.618 I/PLA458  ( 5049): seeder part=content://mms/part/3
+10-12 16:19:24.632 I/PLA458  ( 5049): seeder wrote audio bytes=15137 sha256=cae51c12d692f521
+10-12 16:19:28.862 I/PLA458  ( 5151): cmd=env
+10-12 16:19:28.877 I/PLA458  ( 5151): env sdk=35 defaultSms=com.google.android.apps.messaging probeHoldsSmsRole=false SEND_SMS=0 READ_SMS=0 defaultSmsSubId=1
+10-12 16:19:30.814 I/PLA458  ( 5151): cmd=list
+10-12 16:19:30.822 I/PLA458  ( 5151): list content://mms rows=2
+10-12 16:19:30.831 I/PLA458  ( 5151): list mms _id=1 thread=1 msg_box=2 m_type=128 date=1791846886 creator=org.plainphone.spike458.probe ct_t=application/vnd.wap.multipart.mixed resp_st=128 read=1 | part _id=2 ct=audio/mp4 name=voice.m4a cl=voice.m4a | addrTypes=137,151,
+10-12 16:19:30.848 I/PLA458  ( 5151): list mms _id=2 thread=1 msg_box=1 m_type=132 date=1791847164 creator=org.plainphone.spike458.seeder ct_t=application/vnd.wap.multipart.mixed resp_st=null read=0 | part _id=3 ct=audio/mp4 name=voice.m4a cl=voice.m4a | addrTypes=137,151,
+10-12 16:19:32.853 I/PLA458  ( 5151): cmd=play
+10-12 16:19:32.864 I/PLA458  ( 5151): play inbox mms=2 audio parts found=1
+10-12 16:19:32.878 I/PLA458  ( 5151): play read content://mms/part/3 bytes=15137 header=ft sha256=cae51c12d692f521
+10-12 16:19:32.889 I/PLA458  ( 5151): play extractor tracks=1 format0={max-bitrate=24000, sample-rate=16000, track-id=1, durationUs=3968000, mime=audio/mp4a-latm, profile=2, channel-count=1, bitrate=24000, language=```, aac-profile=2, max-input-size=262, csd-0=java.nio.HeapByteBuffer[pos=0 lim=2 cap=2]}
+10-12 16:19:32.925 I/PLA458  ( 5151): play MediaPlayer prepared durationMs=3968
+10-12 16:19:34.428 I/PLA458  ( 5151): play after 1500ms isPlaying=true positionMs=1452

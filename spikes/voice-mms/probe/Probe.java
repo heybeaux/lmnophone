@@ -56,6 +56,8 @@ public class Probe extends Activity {
                 case "config": config(); break;
                 case "encode": encode(i.getIntExtra("seconds", 5)); break;
                 case "sendA": sendA(i.getBooleanExtra("override", false)); break;
+                case "encodeAac": encodeAac(i.getIntExtra("seconds", 5)); break;
+                case "sendAac": sendAac(i.getBooleanExtra("override", false)); break;
                 case "sendB": sendB(i.getStringExtra("mode"), i.getStringExtra("to") != null ? i.getStringExtra("to") : FAKE_TO, i.getBooleanExtra("noaddr", false)); break;
                 case "watch": watch(); break;
                 case "list": dumpMms(this, "list"); break;
@@ -133,6 +135,34 @@ public class Probe extends Activity {
         }
         getSystemService(SmsManager.class).sendMultimediaMessage(this, uri, null, overrides, sent);
         Log.i("sendA sendMultimediaMessage returned (no exception) overrides=" + overrides);
+    }
+
+    private void encodeAac(int seconds) throws Exception {
+        byte[] m4a = VoiceAac.synthM4a(share("voice.m4a"), seconds);
+        String brand = m4a.length > 12 ? new String(m4a, 4, 8, "US-ASCII") : "";
+        Log.i("encodeAac seconds=" + seconds + " bytes=" + m4a.length + " box=" + brand + " sha256=" + sha(m4a));
+    }
+
+    /** Same dispatch as sendA, but the m-send-req comes from the vendored AOSP mmslib with one audio/mp4 part. */
+    private void sendAac(boolean override) throws Exception {
+        File m4a = share("voice.m4a");
+        if (!m4a.isFile()) encodeAac(5);
+        byte[] data = java.nio.file.Files.readAllBytes(m4a.toPath());
+        byte[] pdu = MmsLibSend.sendReq(this, FAKE_TO, "audio/mp4", "voice.m4a", data);
+        try (FileOutputStream o = new FileOutputStream(share("send.pdu"))) { o.write(pdu); }
+        Log.i("sendAac part bytes=" + data.length + " partSha256=" + sha(data) + " pdu bytes=" + pdu.length + " sha256=" + sha(pdu));
+        dumpMms(this, "before-sendAac");
+        Uri uri = Files.uriFor("send.pdu");
+        grantUriPermission("com.android.phone", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        PendingIntent sent = PendingIntent.getBroadcast(this, 2, new Intent(this, Sent.class),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+        Bundle overrides = null;
+        if (override) {
+            overrides = new Bundle();
+            overrides.putBoolean(SmsManager.MMS_CONFIG_MMS_ENABLED, true);
+        }
+        getSystemService(SmsManager.class).sendMultimediaMessage(this, uri, null, overrides, sent);
+        Log.i("sendAac sendMultimediaMessage returned (no exception) overrides=" + overrides);
     }
 
     private void sendB(String mode, String to, boolean noAddr) {

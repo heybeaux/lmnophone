@@ -36,6 +36,7 @@ public class Files extends ContentProvider {
     @Override public String getType(Uri uri) {
         String n = String.valueOf(uri.getLastPathSegment());
         if (n.endsWith(".amr")) return "audio/amr";
+        if (n.endsWith(".m4a")) return "audio/mp4";
         if (n.endsWith(".pdu")) return "application/vnd.wap.mms-message";
         return "application/octet-stream";
     }
