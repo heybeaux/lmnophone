@@ -20,7 +20,8 @@ copy, except where a flow said "red" (see [What changed in the flow files](#what
 3. **Never use colour alone to mean something.** That is already true, since there is none. State is shown by fill
    (black or white), a word, or a tick (✓).
 4. **No app icons on the home screen.** Names only, as text. LMNOPhone's own screens use no icons either; the only
-   glyphs are `›` (opens a page), `‹` (back), `✓` and `^`.
+   glyphs are `›` (opens a page), `‹` (back), `✓` and `^`. **One exception:** voice messages, for a person who doesn't read
+   (see [Voice messages: pictures and symbols](#voice-messages-pictures-and-symbols)).
 5. **No Emergency button on the home screen** (Beaux, Telegram 4487: "I don't want users bumping it by
    accident"). 9-1-1 is always reachable, never from one accidental tap on the home screen. See
    [Calling 9-1-1](#calling-9-1-1).
@@ -416,3 +417,26 @@ text, wrap the whole number below the label within the same touch target;
 measure that row before choosing the existing Home compact-layout fallbacks.
 Each row remains one accessible action. Zero or unavailable counts disappear.
 The switch and coverage/status copy are in U7 of `flows-user.md`.
+
+## Voice messages: pictures and symbols
+
+The only place LMNOPhone draws pictures or symbols. Why, and the exact scope: [README.md](README.md#pictures-and-symbols-in-voice-messages-only).
+Screens and words: [flows-voice-messages.md](flows-voice-messages.md). Mockups: [voice-messages/](voice-messages/).
+
+| Thing | Look | Size |
+|---|---|---|
+| Person picture | Photo in greyscale (saturation 0), cropped to a circle; or the first letter, `paper` on an `ink` circle, Lexend 500 | 120 dp on V1 cards and V2; 96 dp on later screens |
+| Record | Filled `ink` circle | 28 dp, before the word, 12 dp gap |
+| Stop | Filled `ink` square, 2 dp corner radius | 24 dp |
+| Play | Filled `ink` triangle pointing right | 28 dp |
+| Send | `ink` circle outline 2.5 dp with a right arrow | 28 dp |
+| Delete | `ink` ✕, 3 dp strokes | 24 dp |
+| Family (Home row only) | Two head-and-shoulders outlines, 2.5 dp `ink` stroke | Matches the `app` text cap height, before "Family" |
+| On a black button | The same symbol in `paper` | as above |
+| Recording band | `ink` band under the status bar, `paper` text "Recording" after a `paper` circle | 56 dp tall (taller than the "For Sam" band, so it is seen) |
+| Sound bar | `ink` bar in a `fill-2` track, radius-pill | 16 dp tall, full width |
+| Length line | `ink` line filling a `fill-2` track, left to right; no numbers | 6 dp tall |
+| Buttons on these screens | Same shapes as elsewhere (primary black, outline white) | 72 dp minimum height |
+
+No colour, no shadows, no animation except the sound bar (off with "Remove animations"). Symbols are drawn as vector
+images in the app, not as font characters, so they look the same on every phone.

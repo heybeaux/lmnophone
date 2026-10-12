@@ -16,6 +16,7 @@ spec is silent, the gap is listed under [Open questions](#open-questions-for-the
 | [flows-setup.md](flows-setup.md) | On-phone setup (steps 1–8: mode, people, PINs, connect and privacy steps, reset protection, apps, limits, unplug) and the handover check |
 | [flows-people-modes-and-waits.md](flows-people-modes-and-waits.md) | Two trusted people ("Who are you?"), changes that wait 24 hours (start, cancel, skip, stuck, recovered), switching mode, self-managed mode, History, every text, and the exact-strings index with flags ([PLA-42](/PLA/issues/PLA-42)) |
 | [starter-catalog.md](starter-catalog.md) | Web-leak notes for Slack, Spotify, Telegram, Phone, Messages and Camera, each with the version reviewed |
+| [flows-voice-messages.md](flows-voice-messages.md) | Voice messages for a person who doesn't read or write: choose a family person by picture, record, listen, send, hear replies; spoken words for every screen; unsent-message retention ([PLA-456](/PLA/issues/PLA-456)) |
 | [design-tokens.md](design-tokens.md) | The look: Lexend, black and white only, sizes, spacing, components; mockups in [mockups/](mockups/plainphone-screens.html) ([PLA-36](/PLA/issues/PLA-36)) |
 | [copy-test.md](copy-test.md) | How the copy was tested on people who had never seen it, and what they said |
 | [../setup-guide.md](../setup-guide.md) | The written guide for the helper (task 5.3) |
@@ -69,6 +70,38 @@ Android 14 and later scale text up to 200%. Every screen in these files was writ
 
 Touch targets are at least 48dp, and contrast meets WCAG 2.2 AA (calm-home-screen, "Readable by default").
 The home-screen layout at 200% is mocked up in [flows-user.md](flows-user.md#u1-home-screen) and in [design-tokens.md](design-tokens.md#when-the-screen-is-short).
+
+## Pictures and symbols in voice messages only
+
+**The rule everywhere else stays:** text only, no icons, black, white and grey, Lexend. This section is the one
+exception, and it is as narrow as it can be.
+
+**Why.** Beaux (Telegram 3474, [PLA-453](/PLA/issues/PLA-453)) asked for voice messages so that someone who can't read
+or write can talk with their family. "Text only" was written to keep the phone calm for readers. For a person who
+can't read, text only means the phone can't be used at all. Accessibility wins over the look here, so pictures and
+a few symbols are allowed, but only where that person has to act without reading.
+
+**Exactly what is allowed** (and nothing more):
+
+1. **Person pictures** on the voice-message screens: a photo the trusted person chose for each family person, or,
+   without a photo, the person's first letter in a black circle. Shown in greyscale. Always with the person's name
+   in text, and the name is spoken.
+2. **Six action symbols** on the voice-message screens: Record (filled circle), Stop (filled square), Play
+   (triangle), Send (arrow in a circle), Delete (✕) and Back (`‹`, already allowed). Each always sits **before its
+   word**, never alone, and the screen speaks what to tap.
+3. **One symbol on the home screen**: the Family symbol (two head-and-shoulders outlines) before the word "Family",
+   on the voice-messages row only. No other home row gets a picture or symbol.
+
+**Still not allowed, even here:** colour (pictures are greyscale; nothing red for Record), app icons, badges or dots
+(a new message shows as the words "New message" with the Play symbol on that person's card, not as a count),
+emoji, animation beyond the sound bar while recording, and symbols without words.
+
+**Spoken words** are part of the exception: these screens speak a short sentence when they open, using Android's
+text-to-speech. Other LMNOPhone screens don't speak (TalkBack still works everywhere, as before).
+
+Symbols and sizes are in [design-tokens.md](design-tokens.md#voice-messages-pictures-and-symbols). The words and
+spoken text are in [flows-voice-messages.md](flows-voice-messages.md). Widening the exception (for example, pictures
+for every home-screen app) is a separate decision for Beaux, not part of this one.
 
 ## Words we use, and words we never show
 
