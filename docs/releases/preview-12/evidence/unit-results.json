@@ -1,0 +1,50 @@
+{
+  "device/testDebugUnitTest": {
+    "tests": 647,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "device/testReleaseUnitTest": {
+    "tests": 647,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "plainphone/testCtlNoAlertLockTaskUnitTest": {
+    "tests": 147,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "plainphone/testCtlNoAlertUnitTest": {
+    "tests": 147,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "plainphone/testCtlNoDialerLockTaskUnitTest": {
+    "tests": 147,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "plainphone/testCtlNoPhoneUnitTest": {
+    "tests": 147,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "plainphone/testDebugUnitTest": {
+    "tests": 147,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "plainphone/testReleaseUnitTest": {
+    "tests": 147,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

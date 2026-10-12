@@ -1,0 +1,10 @@
+{
+  "installed_at_utc": "2026-10-12T00:33:08.205260+00:00",
+  "versionCode": 12,
+  "versionName": "0.1.0-preview-12",
+  "apk_sha256": "b8834d1a678dfa942895c13a27e7fc531b5f87b251d86a67a7f53d463c1a243b",
+  "installed_apk_sha256": "b8834d1a678dfa942895c13a27e7fc531b5f87b251d86a67a7f53d463c1a243b",
+  "signer_sha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "upgrade_from": 11,
+  "reset_or_uninstall": false
+}
