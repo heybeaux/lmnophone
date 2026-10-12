@@ -5,6 +5,7 @@ package org.plainphone.device.authority
 import java.io.File
 import java.security.MessageDigest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.plainphone.core.BootTime
 import org.plainphone.core.BuildInventory
 import org.plainphone.core.ClockReading
@@ -118,16 +119,35 @@ internal class ModeSwitchRig(mode: Mode, val dir: File, val friction: FrictionSe
     fun toSelfManaged() = start(waiting.prepareSelfManaged(ALEX, checkNotNull(IncomingSelfManagedEnrollment.confirm(SAM, "account-sam",
         vault.prepareCredential(newPin), SelfManagedEnrollmentConfirmations(true, true, true, true, true, true),
         EnrollmentWitness.CurrentPerson(ALEX)))), ALEX)
+    /** The incoming supervised holder's recovery code from [toSupervised]. */
+    var incomingCode: String? = null
     fun toSupervised() = start(waiting.prepareSupervised(SAM, checkNotNull(IncomingPersonEnrollment.confirm(ALEX,
-        PersonContact("synthetic-alex", "synthetic-number-alex"), "account-alex", vault.prepareCredential(newPin),
+        PersonContact("synthetic-alex", "synthetic-number-alex"), "account-alex",
+        vault.prepareCredential(newPin).also { incomingCode = it.recoveryCode },
         EnrollmentConfirmations(true, true, true, true, true, true, true, true, true), EnrollmentWitness.Helper))), SAM)
     fun mature(id: String) { at(now.proven.totalMillis + DAY); assertEquals(WaitingOutcome.COMMITTING, waiting.tick(id, BATTERY)) }
     fun elevations() = ElevationController(store.elevationStore, { store.credentials.read() }, vault, clock, store::activeLimits,
         { POLICY }, { BATTERY }, SESSIONS, AppApprovalIdSource { "turn-${++sequence}" })
-    /** Runs [block] with a crash at [point] of the next store write that reaches it. */
-    fun <T> crashAt(point: WritePoint, block: () -> T): Result<T> {
-        faults = StorageFaults { at, _ -> if (at == point) throw SimulatedCrash() }
-        return try { runCatching(block) } finally { faults = StorageFaults { _, _ -> } }
+    /**
+     * Runs [block] with one crash at [point] of the next store write that reaches it. Fails unless
+     * that hook fired and [block] ended with exactly that crash (PLA-432 R1): any other exception,
+     * or none, is a test failure.
+     */
+    fun crashAt(point: WritePoint, block: () -> Unit) {
+        val crash = SimulatedCrash(); var hits = 0
+        faults = StorageFaults { at, _ -> if (at == point && hits++ == 0) throw crash }
+        val thrown = try { runCatching(block).exceptionOrNull() } finally { faults = StorageFaults { _, _ -> } }
+        assertEquals("$point hook hits", 1, hits)
+        assertSame("$point ended with its own crash", crash, thrown)
+    }
+
+    /** As [crashAt], for one crash before effect [step]. */
+    fun crashBefore(step: String, block: () -> Unit) {
+        val crash = SimulatedCrash(); var hits = 0
+        effects.onCall = { if (it == step && hits++ == 0) throw crash }
+        val thrown = try { runCatching(block).exceptionOrNull() } finally { effects.onCall = null }
+        assertEquals("$step hook hits", 1, hits)
+        assertSame("$step ended with its own crash", crash, thrown)
     }
 
     companion object {

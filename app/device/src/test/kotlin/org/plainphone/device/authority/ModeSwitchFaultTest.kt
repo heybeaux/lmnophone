@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.device.authority
 
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -12,130 +13,197 @@ import org.junit.rules.TemporaryFolder
 import org.plainphone.core.Mode
 import org.plainphone.device.authority.ModeSwitchRig.Companion.ALEX
 import org.plainphone.device.authority.ModeSwitchRig.Companion.SAM
+import org.plainphone.policy.AppliedPeopleChange
+import org.plainphone.policy.CredentialState
 import org.plainphone.policy.ElevationOutcome
 import org.plainphone.policy.ElevationTarget
 import org.plainphone.policy.PeopleChangeOutcome
+import org.plainphone.policy.RecoveryProfile
+import org.plainphone.policy.RecoveryResult
 import org.plainphone.policy.WaitingEvent
 import org.plainphone.policy.WaitingPhase
 
 /**
- * PLA-97 slice 3: faults at every mode-switch boundary over the file-backed joint record. An effect
- * failure or a crash at any write point leaves the old or the new credentials, never a mix; a retry
- * from a new process finishes exactly once; and the durable fence on new elevation authority holds
- * until the terminal write. JVM file-system tests: no Android durability or real wipe accounts.
+ * PLA-97 slice 3: faults at mode-switch boundaries over the file-backed joint record, self-managed
+ * to supervised (the other direction and the policy-level before/after matrix are in
+ * ModeSwitchCommitTest and the policy's ModeSwitchControllerTest). The whole encoded credential
+ * record (verifiers, generations, recovery profile, marker) is either exactly the old one or exactly
+ * the new candidate; the elevation record keeps its bytes; a retry from a new process finishes once,
+ * and a landed swap is never reapplied. Every crash proves its own hook fired. JVM file-system
+ * tests: no Android durability or real wipe accounts.
  */
 class ModeSwitchFaultTest {
     @get:Rule val tmp = TemporaryFolder()
 
-    private fun rig(mode: Mode) = ModeSwitchRig(mode, tmp.newFolder())
+    private fun bytes(c: CredentialState): ByteArray = checkNotNull(AuthorityCodec.encodeCredentials(c))
 
-    /** Old self-managed holder sam, or the switched supervised holder alex; nothing in between. */
-    private fun assertOldOrNew(rig: ModeSwitchRig, what: String) {
-        val c = rig.credentials()
-        assertTrue("$what: ${c.mode} ${c.people.keys}",
-            (c.mode == Mode.SELF_MANAGED && c.people.keys == setOf(SAM) && c.structureGeneration == 0L && c.appliedPeopleChange == null) ||
-                (c.mode == Mode.TRUSTED && c.people.keys == setOf(ALEX) && c.structureGeneration == 1L && c.appliedPeopleChange != null))
-    }
+    /** The old record, the exact new candidate and the elevation bytes, taken once the switch is COMMITTING. */
+    private inner class Switch(val rig: ModeSwitchRig) {
+        val id = rig.toSupervised().also { rig.mature(it) }
+        val elevation = checkNotNull(AuthorityCodec.encodeElevation(rig.ledger()))
+        lateinit var old: ByteArray
+        lateinit var new: ByteArray
+        init { capture() }
 
-    /** Drives the switch to COMPLETED from a new process and checks it applied once. */
-    private fun finish(rig: ModeSwitchRig, id: String, what: String) {
-        rig.wire()
-        val first = rig.people.tick(id, WaitingPhase.COMMITTING).outcome
-        if (first == PeopleChangeOutcome.APPLIED) assertEquals(what, PeopleChangeOutcome.COMPLETED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
-        else assertEquals(what, PeopleChangeOutcome.COMPLETED, first)
-        val c = rig.credentials()
-        assertEquals(what, Mode.TRUSTED, c.mode); assertEquals(what, setOf(ALEX), c.people.keys); assertEquals(what, 1L, c.structureGeneration)
-        assertEquals(what, WaitingPhase.COMPLETED, rig.journal().operation?.phase)
-        assertEquals(what, 1, rig.journal().texts.count { it.event == WaitingEvent.COMPLETED })
-    }
-
-    @Test fun anEffectFailureAtEveryStepChangesNoCredentialsAndARetryFinishes() {
-        for (step in ModeSwitchFakeEffects.STEPS) {
-            val rig = rig(Mode.SELF_MANAGED)
-            val id = rig.toSupervised(); rig.mature(id)
-            rig.effects.failAt = step
-            assertEquals(step, PeopleChangeOutcome.NEEDS_ATTENTION, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
-            assertOldOrNew(rig, step)
-            assertEquals(step, Mode.SELF_MANAGED, rig.credentials().mode)
-            assertEquals(step, WaitingPhase.COMMITTING, rig.journal().operation?.phase)
-            rig.effects.failAt = null
-            finish(rig, id, step)
+        /**
+         * Takes the old record and the exact new candidate from the stored credentials now. Call again
+         * after a legitimate credential write, such as the fresh-PIN authentication before a stop.
+         */
+        fun capture() {
+            val oldState = rig.credentials()
+            old = bytes(oldState)
+            val journal = rig.journal()
+            val incoming = checkNotNull(journal.operation?.modePatch?.incomingTrustedPerson)
+            new = bytes(CredentialState(Mode.TRUSTED, mapOf(ALEX to incoming.credential), oldState.revision + 1, 1,
+                oldState.pendingNotices, RecoveryProfile(mapOf(ALEX to "account-alex"), "account-backup", rig.friction),
+                AppliedPeopleChange(id, journal.storageGeneration, 1)))
         }
-    }
 
-    @Test fun aCrashAtEveryEffectStepResumesForwardFromANewProcess() {
-        for (step in ModeSwitchFakeEffects.STEPS) {
-            val rig = rig(Mode.SELF_MANAGED)
-            val id = rig.toSupervised(); rig.mature(id)
-            rig.effects.onCall = { if (it == step) throw SimulatedCrash() }
-            assertTrue(step, runCatching { rig.people.tick(id, WaitingPhase.COMMITTING) }.isFailure)
-            rig.effects.onCall = null
-            assertEquals(step, Mode.SELF_MANAGED, rig.credentials().mode)
-            finish(rig, id, step)
+        /** Exactly the old or the new record, with the elevation bytes untouched; true when the swap landed. */
+        fun oldOrNew(what: String): Boolean {
+            val now = bytes(rig.credentials())
+            assertArrayEquals(what, elevation, AuthorityCodec.encodeElevation(rig.ledger()))
+            if (now.contentEquals(old)) return false
+            assertArrayEquals(what, new, now)
+            return true
         }
-    }
 
-    @Test fun aCrashAtEveryWritePointOfTheSwapLeavesOldOrNewAndFinishesOnce() {
-        for (point in WritePoint.entries) {
-            val rig = rig(Mode.SELF_MANAGED)
-            val id = rig.toSupervised(); rig.mature(id)
-            assertTrue("$point fired", rig.crashAt(point) { rig.people.tick(id, WaitingPhase.COMMITTING) }.isFailure)
+        /** From a new process: a landed swap completes at once with no reset write; otherwise applies, then completes. */
+        fun finish(what: String, landed: Boolean, final: ByteArray = new) {
             rig.wire()
-            assertOldOrNew(rig, "$point")
-            // Before or after a landed swap, a fresh-PIN stop is offered only before it.
-            val landed = rig.credentials().appliedPeopleChange != null
-            assertEquals("$point", landed, rig.people.prepareStop(id, SAM) == null)
-            finish(rig, id, "$point")
+            val calls = rig.effects.calls.size
+            if (landed) {
+                assertEquals(what, PeopleChangeOutcome.COMPLETED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
+                val retry = rig.effects.calls.drop(calls)
+                assertTrue("$what: $retry", "set" !in retry && "broadcast" !in retry)
+            } else {
+                assertEquals(what, PeopleChangeOutcome.APPLIED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
+                assertEquals(what, PeopleChangeOutcome.COMPLETED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
+                assertEquals(what, setOf("account-alex", "account-backup"), rig.effects.applied)
+            }
+            assertArrayEquals(what, final, bytes(rig.credentials()))
+            assertArrayEquals(what, elevation, AuthorityCodec.encodeElevation(rig.ledger()))
+            assertEquals(what, WaitingPhase.COMPLETED, rig.journal().operation?.phase)
+            assertEquals(what, 1, rig.journal().texts.count { it.event == WaitingEvent.COMPLETED })
         }
     }
 
-    @Test fun aCrashAtEveryWritePointOfTheCompletionFinishesOnce() {
+    private fun switch() = Switch(ModeSwitchRig(Mode.SELF_MANAGED, tmp.newFolder()))
+
+    @Test fun anEffectFailureAtEveryStepLeavesTheExactOldRecordAndARetryFinishes() {
+        for (step in ModeSwitchFakeEffects.STEPS) {
+            val s = switch()
+            s.rig.effects.failAt = step
+            assertEquals(step, PeopleChangeOutcome.NEEDS_ATTENTION, s.rig.people.tick(s.id, WaitingPhase.COMMITTING).outcome)
+            assertTrue(step, !s.oldOrNew(step))
+            assertEquals(step, WaitingPhase.COMMITTING, s.rig.journal().operation?.phase)
+            s.rig.effects.failAt = null
+            s.finish(step, landed = false)
+        }
+    }
+
+    @Test fun aCrashBeforeEveryEffectStepLeavesTheExactOldRecordAndResumesForward() {
+        for (step in ModeSwitchFakeEffects.STEPS) {
+            val s = switch()
+            s.rig.crashBefore(step) { s.rig.people.tick(s.id, WaitingPhase.COMMITTING) }
+            assertTrue(step, !s.oldOrNew(step))
+            s.finish(step, landed = false)
+        }
+    }
+
+    @Test fun aCrashAtEveryWritePointOfTheSwapLeavesExactlyOldOrNewAndFinishesOnce() {
         for (point in WritePoint.entries) {
-            val rig = rig(Mode.SELF_MANAGED)
-            val id = rig.toSupervised(); rig.mature(id)
-            assertEquals("$point", PeopleChangeOutcome.APPLIED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
-            assertTrue("$point fired", rig.crashAt(point) { rig.people.tick(id, WaitingPhase.COMMITTING) }.isFailure)
-            val phase = rig.journal().operation?.phase
+            val s = switch()
+            s.rig.crashAt(point) { s.rig.people.tick(s.id, WaitingPhase.COMMITTING) }
+            s.rig.wire()
+            val landed = s.oldOrNew("$point")
+            // A fresh-PIN stop is offered exactly while the swap has not landed.
+            assertEquals("$point", landed, s.rig.people.prepareStop(s.id, SAM) == null)
+            s.finish("$point", landed)
+        }
+    }
+
+    @Test fun aCrashAtEveryWritePointOfTheCompletionFinishesOnceWithoutReapplying() {
+        for (point in WritePoint.entries) {
+            val s = switch()
+            assertEquals("$point", PeopleChangeOutcome.APPLIED, s.rig.people.tick(s.id, WaitingPhase.COMMITTING).outcome)
+            s.rig.crashAt(point) { s.rig.people.tick(s.id, WaitingPhase.COMMITTING) }
+            assertTrue("$point", s.oldOrNew("$point"))
+            val phase = s.rig.journal().operation?.phase
             assertTrue("$point: $phase", phase == WaitingPhase.COMMITTING || phase == WaitingPhase.COMPLETED)
-            if (phase == WaitingPhase.COMMITTING) finish(rig, id, "$point") else {
-                rig.wire()
-                assertEquals("$point", PeopleChangeOutcome.IGNORED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
-                assertEquals("$point", 1, rig.journal().texts.count { it.event == WaitingEvent.COMPLETED })
+            if (phase == WaitingPhase.COMMITTING) s.finish("$point", landed = true) else {
+                s.rig.wire()
+                assertEquals("$point", PeopleChangeOutcome.IGNORED, s.rig.people.tick(s.id, WaitingPhase.COMMITTING).outcome)
+                assertArrayEquals("$point", s.new, bytes(s.rig.credentials()))
+                assertEquals("$point", 1, s.rig.journal().texts.count { it.event == WaitingEvent.COMPLETED })
             }
         }
     }
 
+    @Test fun anIncomingCredentialRotatedAfterTheSwapSurvivesCompletion() {
+        val s = switch()
+        assertEquals(PeopleChangeOutcome.APPLIED, s.rig.people.tick(s.id, WaitingPhase.COMMITTING).outcome)
+        // The new holder replaces their PIN before the completion runs (for example after a crash).
+        val replaced = s.rig.vault.recover(ALEX, checkNotNull(s.rig.incomingCode).toCharArray(), CharArray(6) { '8' })
+        assertTrue(replaced is RecoveryResult.Replaced)
+        val rotated = s.rig.credentials()
+        assertEquals(1L, rotated.people.getValue(ALEX).generation)
+        s.finish("rotated", landed = true, final = bytes(rotated))
+    }
+
     @Test fun anUnacknowledgedSwapNeedsAttentionAndCompletesWithoutReapplying() {
-        val rig = rig(Mode.SELF_MANAGED)
-        val id = rig.toSupervised(); rig.mature(id)
-        val result = SearchDenial(WritePoint.AFTER_COPY_B).run(rig.dir, { rig.faults = it }) { rig.people.tick(id, WaitingPhase.COMMITTING) }
+        val s = switch()
+        val result = SearchDenial(WritePoint.AFTER_COPY_B).run(s.rig.dir, { s.rig.faults = it }) {
+            s.rig.people.tick(s.id, WaitingPhase.COMMITTING)
+        }
         assertEquals(PeopleChangeOutcome.NEEDS_ATTENTION, result.outcome)
-        assertEquals(Mode.TRUSTED, rig.credentials().mode) // the swap landed although it was not acknowledged
-        assertNull(rig.people.prepareStop(id, SAM))
-        finish(rig, id, "unacknowledged")
+        assertTrue(s.oldOrNew("unacknowledged")) // the swap landed although it was not acknowledged
+        assertNull(s.rig.people.prepareStop(s.id, SAM))
+        s.finish("unacknowledged", landed = true)
     }
 
     @Test fun aCrashAtEveryWritePointOfTheStopLeavesCommittingOrRollingBack() {
         for (point in WritePoint.entries) {
-            val rig = rig(Mode.SELF_MANAGED)
-            val id = rig.toSupervised(); rig.mature(id)
-            val stop = checkNotNull(rig.people.prepareStop(id, SAM))
-            val grant = rig.auth(SAM, stop.action)
-            assertTrue("$point fired", rig.crashAt(point) { rig.people.stop(stop, grant) }.isFailure)
-            rig.wire()
-            val phase = rig.journal().operation?.phase
+            val s = switch()
+            val stop = checkNotNull(s.rig.people.prepareStop(s.id, SAM))
+            val grant = s.rig.auth(SAM, stop.action)
+            s.capture() // authentication itself writes the credential record
+            s.rig.crashAt(point) { s.rig.people.stop(stop, grant) }
+            s.rig.wire()
+            assertTrue("$point", !s.oldOrNew("$point"))
+            val phase = s.rig.journal().operation?.phase
             assertTrue("$point: $phase", phase == WaitingPhase.COMMITTING || phase == WaitingPhase.ROLLING_BACK)
             if (phase == WaitingPhase.ROLLING_BACK) {
                 // A landed rollback never resumes forward.
-                assertEquals("$point", PeopleChangeOutcome.IGNORED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
-                assertEquals("$point", PeopleChangeOutcome.CANCELLED, rig.people.tick(id, WaitingPhase.ROLLING_BACK).outcome)
-                assertEquals("$point", Mode.SELF_MANAGED, rig.credentials().mode)
-            } else finish(rig, id, "$point")
+                assertEquals("$point", PeopleChangeOutcome.IGNORED, s.rig.people.tick(s.id, WaitingPhase.COMMITTING).outcome)
+                assertEquals("$point", PeopleChangeOutcome.CANCELLED, s.rig.people.tick(s.id, WaitingPhase.ROLLING_BACK).outcome)
+                assertArrayEquals("$point", s.old, bytes(s.rig.credentials()))
+            } else s.finish("$point", landed = false)
+        }
+    }
+
+    @Test fun aCrashAtEveryWritePointOfTheCancelledWriteFinishesTheRollbackOnce() {
+        for (point in WritePoint.entries) {
+            val s = switch()
+            val stop = checkNotNull(s.rig.people.prepareStop(s.id, SAM))
+            assertEquals("$point", PeopleChangeOutcome.ROLLING_BACK, s.rig.people.stop(stop, s.rig.auth(SAM, stop.action)).outcome)
+            s.capture() // authentication itself writes the credential record
+            s.rig.crashAt(point) { s.rig.people.tick(s.id, WaitingPhase.ROLLING_BACK) }
+            s.rig.wire()
+            val phase = s.rig.journal().operation?.phase
+            assertTrue("$point: $phase", phase == WaitingPhase.ROLLING_BACK || phase == WaitingPhase.CANCELLED)
+            if (phase == WaitingPhase.ROLLING_BACK)
+                assertEquals("$point", PeopleChangeOutcome.CANCELLED, s.rig.people.tick(s.id, WaitingPhase.ROLLING_BACK).outcome)
+            assertEquals("$point", WaitingPhase.CANCELLED, s.rig.journal().operation?.phase)
+            assertEquals("$point", 1, s.rig.journal().texts.count { it.event == WaitingEvent.CANCELLED_AFTER_ROLLBACK })
+            assertArrayEquals("$point", s.old, bytes(s.rig.credentials()))
+            assertArrayEquals("$point", s.elevation, AuthorityCodec.encodeElevation(s.rig.ledger()))
+            assertEquals("$point", setOf("account-sam", "account-backup"), s.rig.effects.applied)
         }
     }
 
     @Test fun theDurableOperationFencesNewElevationUntilTheTerminalWriteEvenAfterARestart() {
-        val rig = rig(Mode.SELF_MANAGED)
+        val rig = ModeSwitchRig(Mode.SELF_MANAGED, tmp.newFolder())
         val id = rig.toSupervised()
         // Pending: normal self-managed rules apply.
         rig.wire()
