@@ -27,7 +27,12 @@ class BasicSettingsScreenshotTest(private val scale: Float) {
         density = Density.MEDIUM, fontScale = scale, locale = "en"),
         showSystemUi = false, maxPercentDifference = 0.0)
     @Test fun brightness() = brightnessShot(BrightnessUiState(50, false))
-    @Test fun automatic() = brightnessShot(BrightnessUiState(50, true))
+    @Test fun automatic() = shot(forbidden = listOf("50%")) { BrightnessScreen(BrightnessUiState(50, true), {}) }
+    @Test fun manualPercentageReturns() = brightnessShot(BrightnessUiState(50, false), "50%")
+    @Test fun charged() = batteryShot(BatteryUiState(100, status = BatteryStatus.Charged), "Charged")
+    @Test fun sound() = shot("Ring volume", "Media volume", "Done") { SoundScreen(SoundUiState(VolumeUiState(4, 1, 7), VolumeUiState(7, 0, 15)), {}) }
+    @Test fun soundFailed() = shot("Volume couldn't be changed.") { SoundScreen(SoundUiState(VolumeUiState(4, 1, 7), VolumeUiState(7, 0, 15), true), {}) }
+    @Test fun moreSettingsCopy() = shot("Brightness, sound, battery") { MoreScreen(MoreUiState(MoreMode.Trusted(listOf("Sam"), "Sam")), {}) }
     @Test fun floor() = brightnessShot(BrightnessUiState(10, false))
     @Test fun failed() = brightnessShot(BrightnessUiState(50, false, true), "Brightness couldn't be changed.")
     @Test fun unavailable() = brightnessShot(BrightnessUiState(null, false, true), "Brightness couldn't be changed.")
@@ -37,13 +42,14 @@ class BasicSettingsScreenshotTest(private val scale: Float) {
     private fun brightnessShot(state: BrightnessUiState, vararg expected: String) = shot(*expected) { BrightnessScreen(state, {}) }
     private fun batteryShot(state: BatteryUiState, vararg expected: String) = shot(*expected) { BatteryScreen(state, {}) }
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-    private fun shot(vararg expected: String, content: @androidx.compose.runtime.Composable () -> Unit) = paparazzi.snapshot {
+    private fun shot(vararg expected: String, forbidden: List<String> = emptyList(), content: @androidx.compose.runtime.Composable () -> Unit) = paparazzi.snapshot {
         PlainphoneTheme {
             val view = LocalView.current as ViewRootForTest
             Box(Modifier.onGloballyPositioned {
                 val texts = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = false)
                     .flatMap { it.config.getOrElse(SemanticsProperties.Text) { emptyList() } }.map { it.text }
                 expected.forEach { assertTrue("Missing $it in $texts", it in texts) }
+                forbidden.forEach { assertTrue("Unexpected $it in $texts", it !in texts) }
             }) { HomeTestFrame(content) }
         }
     }

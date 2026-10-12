@@ -6,6 +6,11 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class BatteryValuesTest {
+    @Test fun fullIsDistinctFromCharging() {
+        assertEquals(org.plainphone.ui.user.BatteryStatus.Charged, batteryStatus(android.os.BatteryManager.BATTERY_STATUS_FULL))
+        assertEquals(org.plainphone.ui.user.BatteryStatus.Charging, batteryStatus(android.os.BatteryManager.BATTERY_STATUS_CHARGING))
+        assertNull(batteryStatus(-1))
+    }
     @Test fun percentageUsesScaleAndRejectsMissingOrInvalidLevels() {
         assertEquals(64, batteryPercent(64, 100))
         assertEquals(64, batteryPercent(128, 200))
