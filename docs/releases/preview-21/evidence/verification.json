@@ -1,0 +1,57 @@
+{
+  "base": "429898d9697084b188b9423030e1237ef741fc12",
+  "testsFirstCommit": "181f4868",
+  "implementationCommit": "353c9015",
+  "red": "VolumeControllerTest failed compilation before production code: VolumePort/VolumeReading/VolumeController absent. Settings tests also failed on absent Sound and BatteryStatus types.",
+  "hostTests": {
+    "plainphone": 187,
+    "volume": 8,
+    "brightness": "PASS"
+  },
+  "screenshots": {
+    "fontScales": [
+      1,
+      1.3,
+      1.5,
+      1.8,
+      2
+    ],
+    "viewportDp": "360x640 with existing system-bar reservation",
+    "passed": [
+      "BasicSettingsScreenshotTest",
+      "CommunicationCountsScreenshotTest",
+      "AboutScreenScreenshotTest",
+      "UserScreensScreenshotTest.more*"
+    ],
+    "goldensInspected": 58
+  },
+  "lint": [
+    "ui:lintDebug PASS",
+    "device:lintDebug PASS",
+    "plainphone:lintDebug PASS"
+  ],
+  "upgradeGate": {
+    "exit": 0,
+    "unchangedFromPreview20ExceptVersions": true,
+    "moreRoute": "exactly 911",
+    "phoneRoute": "exactly 911",
+    "currentCalls": 0,
+    "testOnly": true,
+    "deviceOwner": true,
+    "lockTask": "LOCKED",
+    "driver": "Existing gate_on_root_avd.py restores emulator host root after restart for the previously recorded sdcard EFAULT; app remains unprivileged."
+  },
+  "source": "https://developer.android.com/reference/android/media/AudioManager#setStreamVolume(int,%20int,%20int)",
+  "noNewPermissions": true,
+  "limitations": [
+    "Ringtone picker excluded: another app screen must not open from lock task.",
+    "Existing silent/vibrate mode is not changed by this page. Rejected volume writes show the failure line.",
+    "A failed or partially applied write attempts restoration. If Android also rejects restoration, the final confirmed reading/error remains authoritative; no invented success.",
+    "This is emulator evidence only. Lead owns review and spare install."
+  ],
+  "artifact": {
+    "apkSha256": "e4258a2549fe265c486ebfc4d759e9cea9628ff81092eabaa539d9440dae81b8",
+    "gzipSha256": "7228579af46827d7a17e770f4f794fed822d9b97875bae3a4956c9a339cf7b04",
+    "attachmentId": "07b35c8d-cd0f-4a12-9de8-a0d51e5afd92"
+  }
+}

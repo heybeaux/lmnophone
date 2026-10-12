@@ -1,0 +1,104 @@
+{
+  "timeUtc": "2026-10-12T08:28:17.472693+00:00",
+  "records": [
+    {
+      "action": "plus",
+      "stream": 2,
+      "level": 6,
+      "min": 0,
+      "max": 7
+    },
+    {
+      "action": "minus",
+      "stream": 2,
+      "level": 5,
+      "min": 0,
+      "max": 7
+    },
+    {
+      "action": "slider maximum",
+      "stream": 2,
+      "level": 7,
+      "min": 0,
+      "max": 7
+    },
+    {
+      "action": "slider floor",
+      "stream": 2,
+      "level": 1,
+      "min": 0,
+      "max": 7
+    },
+    {
+      "action": "minus at floor",
+      "stream": 2,
+      "level": 1,
+      "min": 0,
+      "max": 7
+    },
+    {
+      "action": "slider middle",
+      "stream": 2,
+      "level": 4,
+      "min": 0,
+      "max": 7
+    },
+    {
+      "action": "plus",
+      "stream": 3,
+      "level": 6,
+      "min": 0,
+      "max": 15
+    },
+    {
+      "action": "minus",
+      "stream": 3,
+      "level": 5,
+      "min": 0,
+      "max": 15
+    },
+    {
+      "action": "slider maximum",
+      "stream": 3,
+      "level": 15,
+      "min": 0,
+      "max": 15
+    },
+    {
+      "action": "slider floor",
+      "stream": 3,
+      "level": 0,
+      "min": 0,
+      "max": 15
+    },
+    {
+      "action": "minus at floor",
+      "stream": 3,
+      "level": 0,
+      "min": 0,
+      "max": 15
+    },
+    {
+      "action": "slider middle",
+      "stream": 3,
+      "level": 7,
+      "min": 0,
+      "max": 15
+    },
+    {
+      "action": "automatic hides percentage; manual restores it; battery full shows Charged"
+    }
+  ],
+  "originalAndRestored": {
+    "2": {
+      "level": 5,
+      "min": 0,
+      "max": 7
+    },
+    "3": {
+      "level": 5,
+      "min": 0,
+      "max": 15
+    }
+  }
+}

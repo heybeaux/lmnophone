@@ -1,0 +1,13 @@
+PASS {'action': 'plus', 'stream': 2, 'level': 6, 'min': 0, 'max': 7}
+PASS {'action': 'minus', 'stream': 2, 'level': 5, 'min': 0, 'max': 7}
+PASS {'action': 'slider maximum', 'stream': 2, 'level': 7, 'min': 0, 'max': 7}
+PASS {'action': 'slider floor', 'stream': 2, 'level': 1, 'min': 0, 'max': 7}
+PASS {'action': 'minus at floor', 'stream': 2, 'level': 1, 'min': 0, 'max': 7}
+PASS {'action': 'slider middle', 'stream': 2, 'level': 4, 'min': 0, 'max': 7}
+PASS {'action': 'plus', 'stream': 3, 'level': 6, 'min': 0, 'max': 15}
+PASS {'action': 'minus', 'stream': 3, 'level': 5, 'min': 0, 'max': 15}
+PASS {'action': 'slider maximum', 'stream': 3, 'level': 15, 'min': 0, 'max': 15}
+PASS {'action': 'slider floor', 'stream': 3, 'level': 0, 'min': 0, 'max': 15}
+PASS {'action': 'minus at floor', 'stream': 3, 'level': 0, 'min': 0, 'max': 15}
+PASS {'action': 'slider middle', 'stream': 3, 'level': 7, 'min': 0, 'max': 15}
+PASS build 21 routes and volume restoration

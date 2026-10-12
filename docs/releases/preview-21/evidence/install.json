@@ -1,0 +1,11 @@
+{
+  "timeUtc": "2026-10-12T08:25:51.451919+00:00",
+  "upgrade": "20\u219221 in place",
+  "device": "owned pla363-policy-a35 / emulator-5880",
+  "sha256": "e4258a2549fe265c486ebfc4d759e9cea9628ff81092eabaa539d9440dae81b8",
+  "versionCode": 21,
+  "versionName": "0.1.0-preview-21",
+  "signerSha256": "99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd",
+  "installed": true,
+  "exercised": false
+}
