@@ -1,0 +1,13 @@
+Build 26 spare copy check (Lead, PLA-417), 2026-10-12 UTC, UI text readback via uiautomator.
+Installed in place over 25 at 12:51:13Z (lastUpdateTime 05:51:13 local). Gate exit=0.
+Before: suspended=0 hidden=42 DeviceOwner LOCKED. After: suspended=0 hidden=42 DeviceOwner LOCKED.
+More > For Sam and Jo > PIN > menu:
+  "You hold the PIN. LMNOPhone adds waits so that distraction takes effort. It's friction, not a lock."
+  "What LMNOPhone can't stop"
+  "Install a LMNOPhone update"   (article nit: should read "an LMNOPhone"; deferred to next build)
+  "Turn LMNOPhone off"
+Turn LMNOPhone off > intro: "This makes your phone an ordinary Android phone again." ... "This test build doesn't send texts."
+Are you sure?: "LMNOPhone will be turned off on your phone."
+Yes > PIN > Last check: "Once it's off, only Sam can turn it back on, using a computer. ..."
+Tapped Cancel at Last check. No wait started; Home shows no turn-off notice. No calls placed.
+Admin screens are FLAG_SECURE (screenshots blank), so text readback is the record.
