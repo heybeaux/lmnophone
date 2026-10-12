@@ -103,6 +103,7 @@ class ModeSwitchCommitTest {
         val clock = RunningClock { now }
         var sequence = 0
         val effects = Effects()
+        val codes = mutableMapOf<TrustedPersonId, String>()
         lateinit var store: JointAuthorityStore
         lateinit var vault: PinVault
         lateinit var waiting: WaitingChangeController
@@ -111,7 +112,7 @@ class ModeSwitchCommitTest {
         init {
             wire()
             val holders = (if (mode == Mode.TRUSTED) listOf(alex, jo) else listOf(sam)).associateWith { id ->
-                vault.prepareCredential(pin).credential.let {
+                vault.prepareCredential(pin).also { codes[id] = it.recoveryCode }.credential.let {
                     if (mode == Mode.TRUSTED) it.copy(contact = PersonContact("synthetic-${id.value}", "synthetic-number-${id.value}")) else it
                 }
             }
@@ -276,6 +277,24 @@ class ModeSwitchCommitTest {
         rig.wire()
         assertEquals(PeopleChangeOutcome.COMPLETED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
         assertEquals(listOf("between"), rig.ledger().state.ledger.debits.map { it.id })
+    }
+
+    // PLA-423 P1: a credential change after COMMITTING never stops the switch (structure, not old generations).
+    @Test fun aPinReplacedAfterCommittingDoesNotStallEitherDirection() {
+        for ((mode, holder) in listOf(Mode.TRUSTED to jo, Mode.SELF_MANAGED to sam)) {
+            val rig = Rig(mode)
+            val id = if (mode == Mode.TRUSTED) rig.toSelfManaged() else rig.toSupervised()
+            rig.mature(id)
+            val before = rig.credentials().people.getValue(holder).generation
+            assertTrue(rig.vault.recover(holder, rig.codes.getValue(holder).toCharArray(), CharArray(6) { '8' })
+                is org.plainphone.policy.RecoveryResult.Replaced)
+            assertEquals(before + 1, rig.credentials().people.getValue(holder).generation)
+            assertEquals(PeopleChangeOutcome.APPLIED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
+            assertEquals(if (mode == Mode.TRUSTED) Mode.SELF_MANAGED else Mode.TRUSTED, rig.credentials().mode)
+            rig.wire()
+            assertEquals(PeopleChangeOutcome.COMPLETED, rig.people.tick(id, WaitingPhase.COMMITTING).outcome)
+            assertEquals(WaitingPhase.COMPLETED, rig.journal().operation?.phase)
+        }
     }
 
     @Test fun aControllerOnAnotherWaitingStoreInstanceIgnoresTheSwitch() {
