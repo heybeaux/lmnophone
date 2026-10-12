@@ -57,6 +57,15 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
   race verification remain lane D work; JVM contract fakes do not prove Android
   containment, including shared-UID behavior.
 - `AppApprovalEffects`: `openPermissionWindow(identity): Boolean` removes the pending app from applied lock-task access and Home, reads those exclusions back, then unhides with synchronous flush and live readback. `closePermissionWindow(identity): Boolean` re-hides and reads back; it never restores access. Policy calls `setPermission` only inside this window, all DENY before ALLOW, and requires `readPermissions` to work both visible and hidden. Every attempted open is followed by close, including failure. Pending PREPARING/EDITING recovery hides before startup gates; both ports enforce the live never-hide guard. Lane D implements these effects and `containFailedActivation(packages: Set<PackageName>): Boolean`: idempotently remove every supplied discretionary package from lock task and Home, hide it, and return true only after reading all three exclusions back. After a failed activation, policy supplies the immutable intersection of the attempted activation plan’s unhide and lock-task sets, minus its never-hide and emergency UI sets. Every pending phase (including PREPARING, COMMITTED, EDITING, WITHDRAWING and REMOVING) carries one target-only containment obligation until its outcome is verified and durably completed. `withPendingContainment` guards every effectful recovery entry before hide, session, battery, permission and plan gates. It reconstructs the singleton from the durable journal, excludes known protected packages, and still calls the adapter when facts are null or throw. The adapter's live floor guard remains mandatory. Unrelated approved apps are never included in this pre-gate cleanup. Failed, throwing or unverified containment returns NOT_READY and keeps the journal and receipts; verified containment may then return LOW_BATTERY. Refused withdrawal authorization remains non-mutating. Authorized withdrawal keeps containment through plan and session recovery. The journal has no prior-permission snapshot, so edit withdrawal completes restrictively using `withdrawalPlan`, apply/readback and a plan/facts recheck, without a battery gate. One completion CAS removes the approval, saves `removedApps[name] = op.record.identity`, clears pending and appends the fixed WITHDRAWN receipt. It never writes permissions, opens a permission window or activates/unhides the target; no choices are reconstructed. Failed, throwing or unverified steps return NOT_READY and retain WITHDRAWING and its receipts. Fresh `prepareReapproval` works after restart; `preparePermissionEdit` remains unavailable for the removed app. New-app withdrawal, removal and PREPARING drop also complete restrictively. Every unsuccessful final activation contains the attempted activation plan's discretionary set and retains its pending direction. The joint-store `save()` contract is unchanged: true acknowledges durability; false does not. `applyPolicy` still contains its own partial failures; `readBackPolicy` stays read-only.
+- `UpdateInstaller.committedSessionPending(sessionId: Int): Boolean?`: lane D supplies read-only
+  committed-session presence (true pending, false confirmed gone, null unknown). Pending submissions
+  block replacement until version readback confirms installation or the session disappears. Startup
+  abandons only uncommitted own sessions; commit memory belongs to one adapter instance. The internal
+  `UpdateProtocol` constructor now also requires `bootTime: () -> BootTime?`, a pure monotonic read
+  without storage/checkpoint work. After durable use-up, a deadline-bearing submission past its
+  deadline is marked FAILED by result-only CAS without install or refund; its receipt is retained.
+  Supervised submissions have no deadline. Update remains disabled; lane D implements these seams
+  before any separately reviewed production wiring.
 - `SessionController`: the supervised-session and elevation contract (start, end, revoke-on-start from the journal). Journal and policy persistence go through interfaces that lane D implements: `JournalStore`, `PolicyStore`.
 - `PinVault`: PIN and recovery-code logic.
   - Separate counters and the exact lockout schedule.
@@ -85,6 +94,13 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 **`:ui` (lane B) exports:** one `@Composable` per screen, with this shape:
 - `XScreen(state: XUiState, onEvent: (XEvent) -> Unit)`.
 - `XUiState` and `XEvent` are plain Kotlin types owned by lane B.
+- `home.NeedsAttentionScreen(NeedsAttentionUiState, onEvent)` displays an optional
+  `PendingChange(kind, committing)`. `PendingChangeKind.TurnOff(time, day)` requires
+  the same host time/day snapshot as Home; `People` and `Setup` need no date.
+  `CancelChange` opens `WaitingChangeScreen` at `WaitingStage.ConfirmCancel` with
+  a null context, without a PIN. The host rechecks the live change before acting;
+  `Back` returns home. Committing state removes Cancel. Calls and Emergency stay
+  reachable through host navigation; this screen does not launch either.
 - Covers: home (with the single notice line), More, ask for an app, blocked link, Wi-Fi messages, the trusted-person screens ("Who are you?", PIN, approvals, permissions, people, waits and cancel), Plainphone settings, setup, turning off, About, and "What Plainphone can't stop".
 
 **`:device` / `:plainphone` (lane D):** implements `JournalStore`, `PolicyStore` and `KeyDerivation`. It also provides:

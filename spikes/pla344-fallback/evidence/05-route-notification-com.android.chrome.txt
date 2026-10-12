@@ -1,0 +1,6 @@
+Broadcasting: Intent { act=org.plainphone.test.NOTIFY flg=0x400000 cmp=org.plainphone/.boot.TestHook (has extras) }
+Broadcast completed: result=0
+notification bounds="[179,678][891,731]"
+    topResumedActivity=ActivityRecord{7e307f7 u0 com.android.settings/.enterprise.ActionDisabledByAdminDialog t9}
+    mLockTaskModeState=NONE
+10-12 00:55:49.019   572   593 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN flg=0x10000000 cmp=com.android.chrome/com.google.android.apps.chrome.Main} with LAUNCH_SINGLE_INSTANCE_PER_TASK from uid 10207 (realCallingUid=10178) (BAL_ALLOW_VISIBLE_WINDOW) result code=0

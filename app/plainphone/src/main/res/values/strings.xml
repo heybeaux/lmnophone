@@ -10,6 +10,15 @@
     <string name="checking_title">%1$s is checking the phone</string>
     <string name="checking_body">This takes a moment. You can still make calls.</string>
     <string name="checking_attention">%1$s needs attention. You can still make calls.</string>
+    <!-- Fallback containment details (PLA-344; board-approved disclosure, card da306a1a). -->
+    <string name="fallback_disclosure">Until this is fixed, Settings and the app-permissions screen can still be opened.</string>
+    <!-- %1$s is a comma-separated list of app names. -->
+    <string name="fallback_others">These can also still be opened: %1$s.</string>
+    <string name="fallback_incomplete">Other apps could not be blocked yet.</string>
     <string name="checking_phone">Phone</string>
     <string name="checking_emergency">Emergency call</string>
+    <!-- The pending change on the PIN-free cancel screen: "This won't happen: %1$s." %1$s is the app name. -->
+    <string name="wait_change_turn_off">turn %1$s off</string>
+    <string name="wait_change_people">change the trusted people</string>
+    <string name="wait_change_setup">change how this phone is set up</string>
 </resources>

@@ -33,4 +33,11 @@ class UpdateSourceTest {
             assertNull(bad, UpdateSource.parse(bad))
         }
     }
+
+    @Test fun refusesAnOverLongPath() {
+        // R3 (PLA-207): bound the request line before anything connects.
+        val longest = "/" + "a".repeat(UpdateSource.MAX_PATH_CHARS - 1)
+        assertEquals(longest, UpdateSource.parse("http://192.168.1.20:8080$longest")!!.path)
+        assertNull(UpdateSource.parse("http://192.168.1.20:8080${longest}a"))
+    }
 }

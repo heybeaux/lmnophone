@@ -1,0 +1,22 @@
+Starting: Intent { cmp=org.plainphone.test344/android.app.Activity }
+Status: ok
+LaunchState: WARM
+Activity: com.android.settings/.enterprise.ActionDisabledByAdminDialog
+TotalTime: 70
+WaitTime: 72
+Complete
+    topResumedActivity=ActivityRecord{ed8ef5d u0 com.android.settings/.enterprise.ActionDisabledByAdminDialog t7}
+    mLockTaskModeState=NONE
+resource-id="com.android.settings:id/action_bar_root"
+resource-id="android:id/content"
+resource-id="com.android.settings:id/parentPanel"
+resource-id="com.android.settings:id/customPanel"
+resource-id="com.android.settings:id/custom"
+resource-id="com.android.settings:id/admin_support_icon"
+text="Blocked by work policy"
+resource-id="com.android.settings:id/admin_support_dialog_title"
+text="For more info, contact your IT admin"
+resource-id="com.android.settings:id/admin_support_msg"
+resource-id="com.android.settings:id/buttonPanel"
+text="Close"
+resource-id="android:id/button1"

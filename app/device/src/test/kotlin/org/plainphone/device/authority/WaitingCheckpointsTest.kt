@@ -235,4 +235,48 @@ class WaitingCheckpointsTest {
         assertEquals(WaitingOutcome.CANCELLED, rig.checkpoints.checkpoint())
         assertFalse(rig.phase() == WaitingPhase.COMMITTING)
     }
+
+    // Wiring 3: the notice projection for Home (policy NoticeLine input).
+    @Test fun noNoticeWithoutAWait() {
+        assertNull(Rig(fresh = false).checkpoints.notice())
+        assertNull(Rig().checkpoints.notice())
+    }
+
+    /** A pending wait's notice carries the proven time still to run; a reading never shortens it. */
+    @Test fun aPendingNoticeCarriesTheRemainingProvenTime() {
+        val rig = Rig()
+        rig.startTurnOff()
+        rig.advance(3_600_000L)
+        val notice = rig.checkpoints.notice()!!
+        assertEquals("wait-1", notice.requestId)
+        assertEquals(WaitingChangeKind.TURN_OFF, notice.kind)
+        assertEquals(WaitingPhase.PENDING, notice.phase)
+        assertEquals(day - 3_600_000L, notice.remainingMillis)
+    }
+
+    /** Without a clock reading the whole 24 hours remain, so Home never names an earlier time. */
+    @Test fun anUnreadableClockShowsTheFullWait() {
+        val rig = Rig()
+        rig.startTurnOff()
+        rig.advance(day / 2)
+        var boot: org.plainphone.core.BootTime? = null
+        val blind = WaitingCheckpoints(rig.store,
+            ProvenRunningClock(FileClockStateStore(File(rig.dir, "clock")), { boot }, { rig.store.reserveEpoch() }),
+            { rig.battery }, PersonAuthorityConsumer { _, _, _ -> false })
+        assertEquals(day, blind.notice()!!.remainingMillis)
+    }
+
+    @Test fun committingAndCancelledNotices() {
+        val rig = Rig()
+        rig.startTurnOff()
+        rig.advance(day)
+        assertEquals(WaitingOutcome.COMMITTING, rig.checkpoints.checkpoint())
+        val committing = rig.checkpoints.notice()!!
+        assertEquals(WaitingPhase.COMMITTING, committing.phase)
+        assertEquals(0L, committing.remainingMillis)
+        val other = Rig()
+        other.startTurnOff()
+        assertEquals(WaitingOutcome.CANCELLED, other.checkpoints.cancel("wait-1"))
+        assertNull(other.checkpoints.notice())
+    }
 }

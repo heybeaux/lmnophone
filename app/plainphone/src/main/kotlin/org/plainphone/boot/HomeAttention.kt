@@ -14,7 +14,8 @@ fun homeNotice(outcome: BootOutcome?): HomeNotice? = if (outcome?.needsAttention
 
 /**
  * The checking screen says "LMNOPhone needs attention" when an unlocked re-apply finished not ready
- * with an attention notice, for example lock-task features that do not read back (Keyguard first):
+ * with the attention notice (a waiting-change line is not attention), for example lock-task features that do not read back (Keyguard first):
  * Home then stays out of lock task and cannot draw, so its own notice would never show.
  */
-fun checkingShowsAttention(gate: HomeGate, notice: HomeNotice?): Boolean = gate == HomeGate.NOT_READY && notice != null
+fun checkingShowsAttention(gate: HomeGate, notice: HomeNotice?): Boolean =
+    gate == HomeGate.NOT_READY && notice == HomeNotice.NeedsAttention

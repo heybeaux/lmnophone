@@ -30,6 +30,9 @@ import org.plainphone.PlainphoneAdminReceiver
  *   emergency gate can test its Phone (PLA-245; the real checking screen lasts under a second).
  * - `org.plainphone.test.IN_CALL --ez on true|false`: stands in for an ongoing call in recovery's call
  *   check (PLA-322 finding 1), so the in-call restore path runs without placing a call.
+ * - `org.plainphone.test.FEATURE_FAULT --ez on true|false`: on clears the lock-task features and makes the
+ *   runtime drop every feature write until off ([FeatureFault], survives reboot), so the features never
+ *   read back with KEYGUARD (PLA-344 fallback containment). Off queues a re-apply.
  */
 class TestHook : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -48,6 +51,13 @@ class TestHook : BroadcastReceiver() {
             }
             "org.plainphone.test.HOLD" -> PolicyRuntime.get(context).holdChecking(intent.getBooleanExtra("hold", false))
             "org.plainphone.test.IN_CALL" -> PolicyRuntime.get(context).inCallStandIn = intent.getBooleanExtra("on", false).takeIf { it }
+            "org.plainphone.test.FEATURE_FAULT" -> if (intent.getBooleanExtra("on", false)) {
+                FeatureFault.marker(context).createNewFile()
+                dpm.setLockTaskFeatures(admin, 0)
+            } else {
+                FeatureFault.marker(context).delete()
+                PolicyRuntime.get(context).reapply("feature-fault-off")
+            }
             "org.plainphone.test.NOTIFY" -> {
                 val target = intent.getStringExtra("component")?.let(ComponentName::unflattenFromString) ?: return
                 val notifications = context.getSystemService(NotificationManager::class.java)

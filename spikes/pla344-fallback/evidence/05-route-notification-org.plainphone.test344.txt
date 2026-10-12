@@ -1,0 +1,6 @@
+Broadcasting: Intent { act=org.plainphone.test.NOTIFY flg=0x400000 cmp=org.plainphone/.boot.TestHook (has extras) }
+Broadcast completed: result=0
+notification bounds="[179,678][891,731]"
+    topResumedActivity=ActivityRecord{8715508 u0 com.android.settings/.enterprise.ActionDisabledByAdminDialog t10}
+    mLockTaskModeState=NONE
+10-12 00:55:59.446   572  2174 I ActivityTaskManager: START u0 {act=android.intent.action.MAIN flg=0x10000000 cmp=org.plainphone.test344/android.app.Activity} with LAUNCH_MULTIPLE from uid 10207 (realCallingUid=10178) (BAL_ALLOW_VISIBLE_WINDOW) result code=0

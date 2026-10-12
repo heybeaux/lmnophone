@@ -25,6 +25,8 @@ class StagedUpdateInstallerTest {
     private val pinned = ApprovalBinding(self, setOf(key))
     private val port = FakeInstallerPort()
     private val staging by lazy { UpdateStaging(File(tmp.root, "update-staging")) }
+    private val commitDir by lazy { File(tmp.root, "update-commits") }
+    private val commits by lazy { CommitMemory(commitDir) }
     private var inspections = 0
     private var duringInspect: () -> Unit = {}
     private var overrideFacts: String? = null
@@ -40,7 +42,7 @@ class StagedUpdateInstallerTest {
     private var selfChecks = 0
     private var selfCheckResult: () -> Boolean = { true }
     private val installer by lazy {
-        StagedUpdateInstaller(port, inspector, staging, pinned) { selfChecks++; selfCheckResult() }
+        StagedUpdateInstaller(port, inspector, staging, commits, pinned) { selfChecks++; selfCheckResult() }
     }
 
     private fun apk(pkg: String = self.value, signers: String = key.value, version: Long = 2) = "$pkg;$signers;$version"
@@ -147,7 +149,7 @@ class StagedUpdateInstallerTest {
         for (bad in listOf(apk(pkg = "org.other"), apk(signers = "cd".repeat(32)), "badsig;x;2")) {
             staging.clear()
             val port = FakeInstallerPort()
-            val installer = StagedUpdateInstaller(port, inspector, staging, pinned) { true }
+            val installer = StagedUpdateInstaller(port, inspector, staging, commits, pinned) { true }
             stage(apk())
             installer.prepare()!!
             overrideFacts = bad
@@ -249,7 +251,7 @@ class StagedUpdateInstallerTest {
 
     @Test fun restartedProcessAbandonsTheUncommittedSessionOfTheLastProcess() {
         val id = prepared()
-        val restarted = StagedUpdateInstaller(port, inspector, staging, pinned) { true }
+        val restarted = StagedUpdateInstaller(port, inspector, staging, commits, pinned) { true }
         assertTrue(restarted.abandonOwnSessions())
         assertTrue(port.calls.contains("abandon $id"))
         assertTrue(port.sessions.isEmpty())
@@ -330,5 +332,106 @@ class StagedUpdateInstallerTest {
         assertFalse(installer.postUpdateSelfCheck())
         selfCheckResult = { false }
         assertFalse(installer.postUpdateSelfCheck())
+    }
+
+    // R1 (PLA-207/PLA-210): committed-session readback through getSessionInfo.
+
+    @Test fun committedSessionReadsPendingWhilePresentAndFalseOnlyWhenGone() {
+        val id = prepared()
+        installer.finalFacts()!!
+        installer.commit(id)
+        assertEquals(true, installer.committedSessionPending(id))
+        port.sessions.remove(id)
+        assertEquals(false, installer.committedSessionPending(id))
+    }
+
+    @Test fun presentSessionNeverReadsGone() {
+        // Present, isCommitted still false (the ~16 ms lag), and remembered: pending.
+        port.commitShowsAtOnce = false
+        val id = prepared()
+        installer.finalFacts()!!
+        installer.commit(id)
+        assertEquals(true, installer.committedSessionPending(id))
+        // Present, never committed by this app: unknown, never false.
+        val open = port.leftover(self.value)
+        assertNull(installer.committedSessionPending(open))
+        // Present but bound to another package: unknown, never false.
+        val other = port.leftover("org.other", committed = true)
+        assertNull(installer.committedSessionPending(other))
+    }
+
+    @Test fun failedSessionReadIsUnknown() {
+        val id = prepared()
+        installer.finalFacts()!!
+        installer.commit(id)
+        port.infoThrows = true
+        assertNull(installer.committedSessionPending(id))
+    }
+
+    @Test fun unreadableCommitMemoryMakesAnUncommittedReadingUnknown() {
+        port.commitShowsAtOnce = false
+        val id = prepared()
+        installer.finalFacts()!!
+        installer.commit(id)
+        val restarted = StagedUpdateInstaller(port, inspector, staging, CommitMemory(File(tmp.root, "missing/nested")), pinned) { true }
+        File(tmp.root, "missing").apply { mkdirs(); setReadable(false); setExecutable(false) }
+        try {
+            assertNull(restarted.committedSessionPending(id))
+        } finally {
+            File(tmp.root, "missing").apply { setReadable(true); setExecutable(true) }
+        }
+    }
+
+    // P3: commit memory is durable, so a second instance (or process) never abandons during the lag.
+
+    @Test fun anotherInstanceKeepsASessionCommittedBeforeIsCommittedTurnsTrue() {
+        port.commitShowsAtOnce = false
+        val id = prepared()
+        installer.finalFacts()!!
+        installer.commit(id)
+        assertFalse(port.sessions.getValue(id).committed)
+        val second = StagedUpdateInstaller(port, inspector, staging, CommitMemory(commitDir), pinned) { true }
+        assertTrue(second.abandonOwnSessions())
+        assertFalse(port.calls.contains("abandon $id"))
+        assertTrue(id in port.sessions)
+        assertEquals(true, second.committedSessionPending(id))
+    }
+
+    @Test fun commitIsRefusedWhenItCannotBeRemembered() {
+        val id = prepared()
+        installer.finalFacts()!!
+        commitDir.mkdirs()
+        commitDir.setWritable(false)
+        try {
+            try { installer.commit(id); fail("commit without a durable marker") } catch (_: IllegalStateException) {}
+            assertFalse(port.calls.contains("commit $id"))
+            // Never retried: the session stays unusable for commit.
+            try { installer.commit(id); fail("second commit") } catch (_: IllegalStateException) {}
+        } finally {
+            commitDir.setWritable(true)
+        }
+        assertFalse(port.calls.contains("commit $id"))
+    }
+
+    @Test fun unreadableCommitMemoryAbandonsNothing() {
+        val open = port.leftover(self.value)
+        commitDir.mkdirs()
+        commitDir.setReadable(false)
+        try {
+            assertFalse(installer.abandonOwnSessions())
+            assertFalse(port.calls.contains("abandon $open"))
+        } finally {
+            commitDir.setReadable(true)
+        }
+    }
+
+    @Test fun markersOfGoneSessionsArePrunedAtStartup() {
+        val id = prepared()
+        installer.finalFacts()!!
+        installer.commit(id)
+        assertTrue(File(commitDir, "$id").exists())
+        port.sessions.remove(id)
+        assertTrue(installer.abandonOwnSessions())
+        assertFalse(File(commitDir, "$id").exists())
     }
 }

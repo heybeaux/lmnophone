@@ -707,6 +707,126 @@ class PeopleTransactionsTest {
         assertEquals(0L, rig.credentials().people.getValue(anna).generation)
     }
 
+    // ---- Wiring 5: the pass drives a committing or rolling-back people change in its recorded direction ----
+    private fun Rig.driver() = PeopleCommitDriver(store, effects, clock, vault)
+
+    @Test fun driverIsIdleWithoutACommittingPeopleChange() {
+        val rig = Rig()
+        assertNull("vacant", rig.driver().drive())
+        rig.startAdd()
+        assertNull("pending is the checkpoint's, not the driver's", rig.driver().drive())
+        assertTrue(rig.effects.calls.isEmpty())
+    }
+
+    @Test fun driverIgnoresACommittingTurnOff() {
+        val rig = Rig()
+        val r = checkNotNull(rig.waiting.prepareTurnOff(anna))
+        assertEquals(WaitingOutcome.PENDING, rig.waiting.startTurnOff(r, rig.auth(anna, r.action), true, true))
+        rig.mature(r.requestId)
+        assertNull(rig.driver().drive())
+        assertEquals(WaitingPhase.COMMITTING, rig.journal().operation!!.phase)
+    }
+
+    @Test fun driverCompletesACommittingAddThroughResetProtection() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        // Two passes: the patch lands with reset protection applied and read back, then the change completes.
+        assertEquals(PeopleChangeOutcome.APPLIED, rig.driver().drive()!!.outcome)
+        assertEquals(listOf("set", "broadcast", "readback"), rig.effects.calls)
+        assertEquals(setOf(anna, cleo), rig.credentials().people.keys)
+        assertEquals(PeopleChangeOutcome.COMPLETED, rig.driver().drive()!!.outcome)
+        assertEquals(WaitingPhase.COMPLETED, rig.journal().operation!!.phase)
+        assertNull("finished", rig.driver().drive())
+    }
+
+    /** A failed reset set keeps COMMITTING and the old holders; the next pass retries forward. */
+    @Test fun driverKeepsOldHoldersWhenResetProtectionFails() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        rig.effects.failAt = "set"
+        val failed = rig.driver().drive()!!
+        assertEquals(PeopleChangeOutcome.NEEDS_ATTENTION, failed.outcome)
+        assertEquals(setOf(anna), rig.credentials().people.keys)
+        assertEquals(WaitingPhase.COMMITTING, rig.journal().operation!!.phase)
+        rig.effects.failAt = null
+        rig.wire()
+        assertEquals(PeopleChangeOutcome.APPLIED, rig.driver().drive()!!.outcome)
+        assertEquals(PeopleChangeOutcome.COMPLETED, rig.driver().drive()!!.outcome)
+        assertEquals(setOf(anna, cleo), rig.credentials().people.keys)
+    }
+
+    /** After a stop, the driver follows the recorded rollback and never resumes forward. */
+    @Test fun driverFollowsTheRecordedRollback() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        val stop = checkNotNull(rig.people.prepareStop(id, anna))
+        rig.effects.failAt = "set"
+        // The stop saves ROLLING_BACK first; its reset restore fails, so the rollback is left to finish.
+        assertEquals(PeopleChangeOutcome.ROLLING_BACK, rig.people.stop(stop, rig.auth(anna, stop.action)).outcome)
+        assertEquals(WaitingPhase.ROLLING_BACK, rig.journal().operation!!.phase)
+        rig.effects.failAt = null
+        rig.wire()
+        assertEquals(PeopleChangeOutcome.CANCELLED, rig.driver().drive()!!.outcome)
+        assertEquals(setOf(anna), rig.credentials().people.keys)
+        assertEquals(setOf("account-anna", "account-backup"), rig.effects.applied)
+        assertNull(rig.driver().drive())
+    }
+
+    // ---- PLA-390 R1: the people step runs only after the common startup revocation succeeded ----
+    private val play = org.plainphone.core.PackageName("com.android.vending")
+    private val home = org.plainphone.core.PackageName("org.plainphone")
+    private val dialer = org.plainphone.core.PackageName("com.android.dialer")
+    private val sms = org.plainphone.core.PackageName("com.example.messages")
+
+    /** The Verifier's composition: Play visible and in lock task, the real BootReapply and its revocation. */
+    private fun startup(port: org.plainphone.device.FakeDevicePolicyPort) = org.plainphone.device.boot.BootReapply(
+        org.plainphone.device.storage.FileJournalStore(tmp.newFolder(), null, "model", "build"), port, setOf(play), { locked ->
+            org.plainphone.policy.PolicyEngine.decide(org.plainphone.policy.PolicyInput(
+                model = "model", fingerprint = "build", plainphone = home, messages = sms,
+                installed = listOf(home, dialer, sms, play).map { org.plainphone.policy.InstalledPackage(it, it != home, 1) },
+                identities = listOf(
+                    org.plainphone.policy.FloorIdentity(dialer, org.plainphone.policy.FloorRole.SYSTEM_DIALER, org.plainphone.policy.FloorRole.SYSTEM_DIALER.source),
+                    org.plainphone.policy.FloorIdentity(sms, org.plainphone.policy.FloorRole.SMS, org.plainphone.policy.FloorRole.SMS.source)),
+                lockedBoot = locked))
+        }, org.plainphone.device.boot.RestrictionFilter.TEST_BUILD)
+
+    private fun leftoverPlay() = org.plainphone.device.FakeDevicePolicyPort(
+        listOf(play, home, dialer, sms).associate { it.value to org.plainphone.device.visible() }).apply { lockTask = setOf(home, dialer, play) }
+
+    /** The Verifier's probe in the runtime's corrected order: startup first, then the people step. */
+    @Test fun reviewStartupRevokesPlayBeforePeopleResetEffect() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        rig.wire()
+        val port = leftoverPlay()
+        rig.effects.onCall = { step ->
+            assertTrue("$step reached before startup revoked Play lock-task access", play !in port.lockTask)
+            assertTrue("$step reached before startup hid Play", port.hidden(play.value))
+        }
+        val outcome = startup(port).run(false)
+        assertTrue(outcome.ready)
+        assertEquals(PeopleChangeOutcome.APPLIED, rig.driver().driveAfter(outcome)!!.outcome)
+    }
+
+    /** A failed revocation means no people step: no reset effect, the record and old holders stay, the next pass retries. */
+    @Test fun failedStartupRevocationSkipsThePeopleStep() {
+        val rig = Rig()
+        val id = rig.startAdd(); rig.mature(id)
+        rig.wire()
+        val port = leftoverPlay().apply { hidesStick = false }
+        val outcome = startup(port).run(false)
+        assertFalse("Play stays visible, so revocation failed", outcome.ready)
+        assertNull(rig.driver().driveAfter(outcome))
+        assertNull("no startup outcome at all", rig.driver().driveAfter(null))
+        assertTrue(rig.effects.calls.isEmpty())
+        assertEquals(WaitingPhase.COMMITTING, rig.journal().operation!!.phase)
+        assertEquals(setOf(anna), rig.credentials().people.keys)
+        port.hidesStick = true
+        val next = startup(port).run(false)
+        assertTrue(next.ready)
+        assertEquals(PeopleChangeOutcome.APPLIED, rig.driver().driveAfter(next)!!.outcome)
+    }
+
     private fun Rig.startRemove(): String = start(waiting.prepareRemove(anna, ben))
 
     private fun holderBytes(state: CredentialState, person: TrustedPersonId): ByteArray =

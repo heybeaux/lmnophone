@@ -16,6 +16,7 @@
                 <action android:name="org.plainphone.test.NOTIFY" />
                 <action android:name="org.plainphone.test.HOLD" />
                 <action android:name="org.plainphone.test.IN_CALL" />
+                <action android:name="org.plainphone.test.FEATURE_FAULT" />
             </intent-filter>
         </receiver>
     </application>

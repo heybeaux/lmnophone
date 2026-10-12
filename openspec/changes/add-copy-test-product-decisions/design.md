@@ -331,14 +331,19 @@ During on-phone setup, straight after the user signs in to Google, the guide and
 
 The API 35 emulator evidence in `mvp/device:spikes/installer-boundary/README.md` and
 `evidence/app-self-update-api35.txt` establishes the protocol selected by Lead in PLA-126.
-The durable deadline check binds **authority use-up**, not the platform's install start:
+PLA-209 tightens the deadline boundary after the PLA-207 review:
 
-- **G2 — pause after use-up:** the process may resume and start the install after the deadline,
-  but only of the exact hash-bound, pinned-signer, strictly newer self package.
+- **G2 — pause around use-up:** check the deadline in `finalCheck` and again with one pure boot-clock
+  read after durable use-up. If the deadline passed, record FAILED without committing the install;
+  keep the spent turn and receipt/outbox. The remaining gap is only between that clock read and the
+  platform call, bound to the exact hash, pinned signer and strictly newer self package.
 - **G1 — crash before commit:** a crash between the joint use-up/SUBMITTED write and `commit()`
-  spends the turn and installs nothing. Startup abandons all own sessions before revoking
-  temporary elevation authority. It classifies the submission by installed version and never retries
-  the install or refunds the turn.
+  spends the turn and installs nothing. Startup abandons only uncommitted own sessions before
+  revoking temporary elevation authority. Committed sessions are kept (X6) and tracked by R1:
+  version equality means INSTALLED and runs the self-check; otherwise a pending session stays
+  SUBMITTED and blocks replacement, unknown presence returns NOT_READY, and confirmed absence means
+  FAILED. Commit-attempt memory belongs to one adapter instance, not the whole process. Startup
+  never retries installation or refunds the turn.
 - **G3 — mutable session:** no write is allowed after the final hash read through `Session.openRead`.
   This is an adapter code rule, not a platform guarantee. `setChecksums` does not bind the digest.
 
