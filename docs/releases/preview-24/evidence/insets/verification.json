@@ -1,0 +1,89 @@
+{
+  "issue": "PLA-413",
+  "base": "5f41145f",
+  "test_first_commit": "ba3b216f",
+  "emulator": "emulator-5880",
+  "avd": "pla363-policy-a35",
+  "api": 35,
+  "versionCode": 24,
+  "versionName": "0.1.0-preview-24",
+  "apkSha256": "569c9c901d85878980baefc5de6e21e6714f39f3403ca689712bfb4568e489ac",
+  "installTime": "2026-10-12T11:24:19Z",
+  "installReadback": "versionCode=24 versionName=0.1.0-preview-24",
+  "appUnitTests": {
+    "tests": 192,
+    "failures": 0
+  },
+  "goldens": {
+    "tests": 37,
+    "failures": 0,
+    "classes": [
+      "NeedsAttentionScreenshotTest",
+      "TrustedScreensScreenshotTest"
+    ],
+    "rerecorded": false
+  },
+  "red": [
+    {
+      "button": "Yes, cancel it",
+      "bounds": [
+        63,
+        2232,
+        1017,
+        2379
+      ],
+      "navigation": [
+        0,
+        2274,
+        1080,
+        2400
+      ]
+    }
+  ],
+  "limitations": [
+    "Attention route covered by existing screen goldens and matching source wrappers; no dedicated live attention-route exercise.",
+    "Only emulator exercised. No spare commands or calls."
+  ],
+  "green": [
+    {
+      "button": "Yes, cancel it",
+      "bounds": [
+        63,
+        2106,
+        1017,
+        2253
+      ],
+      "navigation": [
+        0,
+        2274,
+        1080,
+        2400
+      ]
+    },
+    {
+      "button": "OK",
+      "bounds": [
+        63,
+        2106,
+        1017,
+        2253
+      ],
+      "navigation": [
+        0,
+        2274,
+        1080,
+        2400
+      ]
+    },
+    {
+      "result": "PASS: center taps cancel and return to Phone settings; durable cancellation"
+    }
+  ],
+  "fixtureRestore": "INSTRUMENTATION_RESULT: fixture=Original authority and clock restored byte for byte\nINSTRUMENTATION_RESULT: outcome=PASS\nINSTRUMENTATION_CODE: -1",
+  "navigationModeRestored": "2",
+  "commands": [
+    "./gradlew :plainphone:testDebugUnitTest :plainphone:assembleDebug",
+    "./gradlew :ui:verifyPaparazziDebug --tests org.plainphone.ui.NeedsAttentionScreenshotTest --tests org.plainphone.ui.TrustedScreensScreenshotTest",
+    "python3 app/tools/tests/waiting-insets.py emulator-5880 <evidence-directory>"
+  ]
+}

@@ -32,11 +32,18 @@ def dump():
     shell('uiautomator', 'dump', '/data/local/tmp/waiting-insets.xml')
     return ET.fromstring(shell('cat', '/data/local/tmp/waiting-insets.xml'))
 
-def node(label):
-    matches = [n for n in dump().iter('node')
+def node(label, clickable=False):
+    root = dump()
+    matches = [n for n in root.iter('node')
                if label in (n.get('text'), n.get('content-desc'))]
     assert len(matches) == 1, f'Expected one {label!r}, found {len(matches)}'
-    return matches[0]
+    match = matches[0]
+    if clickable:
+        parents = {child: parent for parent in root.iter() for child in parent}
+        while match.get('clickable') != 'true':
+            match = parents.get(match)
+            assert match is not None, f'No clickable ancestor for {label!r}'
+    return match
 
 def bounds(n):
     return list(map(int, re.findall(r'\d+', n.get('bounds'))))
@@ -44,7 +51,7 @@ def bounds(n):
 def tap(label):
     assert label in ('More', 'Phone settings', 'Yes, cancel it', 'OK',
                     'A change is waiting, turn LMNOPhone (preview) off. Opens the change.')
-    x, y, right, bottom = bounds(node(label))
+    x, y, right, bottom = bounds(node(label, clickable=True))
     shell('input', 'tap', str((x + right) // 2), str((y + bottom) // 2))
     time.sleep(.5)
 
@@ -61,7 +68,7 @@ def fixture(phase):
     assert 'outcome=PASS' in result, result
 
 def above_navigation(label):
-    button = bounds(node(label))
+    button = bounds(node(label, clickable=True))
     # Read the actual WindowManager inset, not a guessed dp-to-pixel conversion.
     frames = set(re.findall(
         r'InsetsSource id=\w+ type=navigationBars frame=(\[\d+,\d+\]\[\d+,\d+\]) visible=true',
@@ -102,9 +109,10 @@ try:
     node('Cancelled')
     above_navigation('OK')
     tap('OK')
-    node('More')
+    node('Brightness')
+    assert not any(n.get('text') == 'Cancelled' for n in dump().iter('node'))
     fixture('verify')
-    records.append({'result': 'PASS: center taps cancel and return Home; durable cancellation'})
+    records.append({'result': 'PASS: center taps cancel and return to Phone settings; durable cancellation'})
 finally:
     try:
         if seeded:
