@@ -75,4 +75,34 @@ class WaitingHomeLineTest {
         org.junit.Assert.assertFalse(checkingShowsAttention(HomeGate.NOT_READY,
             HomeNotice.TurnOffWaiting("21:30", HomeNoticeDay(LocalDate.of(2026, 10, 12), 1))))
     }
+
+    // PLA-371 R2: the shown time is rounded up, so it is never earlier than maturity.
+    @Test fun reviewTimeRoundsUpToTheMinute() {
+        val at = ZonedDateTime.parse("2026-10-11T21:30:45Z")
+        val shown = homeLine(NoticeLine.decide(NoticeInput(Mode.TRUSTED, false,
+            WaitingNotice("wait-1", WaitingChangeKind.TURN_OFF, WaitingPhase.PENDING, 86_400_000L))).line, at, time)
+        assertEquals(HomeNotice.TurnOffWaiting("21:31", HomeNoticeDay(LocalDate.of(2026, 10, 12), 1)), shown)
+    }
+
+    @Test fun roundingUpCrossesMidnight() {
+        val at = ZonedDateTime.parse("2026-10-11T23:59:00.001Z")
+        val shown = homeLine(NoticeLine.decide(NoticeInput(Mode.TRUSTED, false,
+            WaitingNotice("wait-1", WaitingChangeKind.TURN_OFF, WaitingPhase.PENDING, 0L))).line, at, time)
+        assertEquals(HomeNotice.TurnOffWaiting("00:00", HomeNoticeDay(LocalDate.of(2026, 10, 12), 1)), shown)
+    }
+
+    @Test fun anExactMinuteIsNotRounded() {
+        assertEquals(HomeNotice.TurnOffWaiting("21:30", HomeNoticeDay(LocalDate.of(2026, 10, 12), 1)),
+            line(false, WaitingChangeKind.TURN_OFF, remaining = 86_400_000L))
+    }
+
+    // PLA-371 R1: an open confirmation follows the current operation.
+    @Test fun anOpenConfirmationFollowsTheOperation() {
+        fun current(phase: WaitingPhase, id: String = "wait-1") = WaitingNotice(id, WaitingChangeKind.TURN_OFF, phase, 0)
+        assertEquals(WaitingStage.ConfirmCancel, confirmStage("wait-1", current(WaitingPhase.PENDING)))
+        assertEquals("no Cancel from committing on", WaitingStage.Committing, confirmStage("wait-1", current(WaitingPhase.COMMITTING)))
+        assertEquals(WaitingStage.Committing, confirmStage("wait-1", current(WaitingPhase.ROLLING_BACK)))
+        assertNull("finished", confirmStage("wait-1", null))
+        assertNull("another request", confirmStage("wait-1", current(WaitingPhase.PENDING, "wait-2")))
+    }
 }
