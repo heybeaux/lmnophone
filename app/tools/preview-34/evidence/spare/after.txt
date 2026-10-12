@@ -1,0 +1,15 @@
+time=2026-10-12T19:41:52Z
+location_mode=0
+bluetooth_on=1
+font_scale=1.0
+ringtone=content://media/internal/audio/media/32?title=Moto&canonical=1
+ring_volume=5
+bonded_count=0
+saved_networks_count=1
+saved_networks_sha=d32466f0bb5f98e0
+    versionCode=34 minSdk=30 targetSdk=36
+    versionName=0.1.0-preview-34
+    lastUpdateTime=2026-10-12 12:39:45
+mLockTaskModeState=LOCKED
+1 owner:
+User  0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated

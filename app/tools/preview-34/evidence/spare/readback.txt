@@ -1,0 +1,9 @@
+build=34
+apk_sha256=6138736a8fd4d34a11d17ba063fe334b3edda7091549eecdf28f121baacf7557
+installed_local=2026-10-12 12:39:45 PDT (19:39:45Z, lastUpdateTime)
+upgrade=33-to-34-in-place, gate exit 0
+emergency=More>Emergency and Phone both exactly 911, zero Telecom calls
+safety_diff=none (location 0, BT on, bonded 0, font 1.0, ringtone, ring volume, saved-list hash d32466f0bb5f98e0)
+saved_networks_count note: distinct network IDs (1); builds 32-33 notes counted list rows (2); hash identical
+wifi_location owned=false
+not exercised on spare: F1 unknown-call warning, F2 special-character join (host-tested only)
