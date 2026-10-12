@@ -25,6 +25,47 @@ class BootPassCoverageTest {
                 afterPass = { publications++; publishedReady }, skipped = { skips += it })
     }
 
+    @Test fun captureRunsInNextTaskAfterReadyPublication() {
+        val coverage = BootPassCoverage()
+        val tasks = mutableListOf<() -> Unit>()
+        val events = mutableListOf<String>()
+        coverage.run("user-unlocked", false, { false }, apply = { events += "apply"; good },
+            afterPass = { events += "home-published"; true }, skipped = {},
+            afterPublished = { coverage.captureAfterPublished({ tasks += it }) { events += "capture" } })
+        assertEquals(listOf("apply", "home-published"), events)
+        tasks.single()()
+        assertEquals(listOf("apply", "home-published", "capture"), events)
+    }
+
+    @Test fun interveningPassOrInvalidationDiscardsPendingCapture() {
+        for (intervening in listOf("invalidate", "alarm", "boot", "failed")) {
+            val f = Fixture(); val tasks = mutableListOf<() -> Unit>()
+            f.run("user-unlocked")
+            f.coverage.captureAfterPublished({ tasks += it }) { fail(intervening) }
+            when (intervening) {
+                "invalidate" -> f.coverage.invalidate()
+                "failed" -> f.run("alarm", outcome = good.copy(ready = false))
+                else -> f.run(intervening)
+            }
+            tasks.single()()
+        }
+    }
+
+    @Test fun unavailableCoverageCannotScheduleCapture() {
+        for (mode in listOf("locked", "failed", "attention", "retry", "publication")) {
+            val f = Fixture()
+            f.pending = mode == "retry"; f.publishedReady = mode != "publication"
+            f.coverage.run("start", mode == "locked", { f.pending }, apply = {
+                when (mode) {
+                    "failed" -> good.copy(ready = false)
+                    "attention" -> good.copy(flipRecordUnknown = true)
+                    else -> good
+                }
+            }, afterPass = { f.publishedReady }, skipped = {}, afterPublished = { fail(mode) })
+            f.coverage.captureAfterPublished({ fail(mode) }) { fail(mode) }
+        }
+    }
+
     @Test fun unchangedPackageSkipsWithoutHomeRefresh() {
         val f = Fixture(); f.run("start")
         f.coverage.run("package:PACKAGE_CHANGED:example", false, { false },

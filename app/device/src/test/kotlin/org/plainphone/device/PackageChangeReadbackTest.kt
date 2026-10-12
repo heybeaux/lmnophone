@@ -21,6 +21,24 @@ class PackageChangeReadbackTest {
         fun capture(excluded: Set<PackageName> = emptySet()) = readback.capture(
             setOf(app), if (hidden) setOf(app) else emptySet(), excluded, emptySet())
     }
+    @Test fun snapshotRemainsUnavailableUntilEveryReadCompletes() {
+        val f = Fixture()
+        lateinit var coverage: PackageChangeReadback
+        val port = object : DevicePolicyPort by f.port {
+            override fun packageState(name: PackageName): PackageState? {
+                assertFalse(coverage.hasSnapshot)
+                assertFalse(coverage.unchanged(app))
+                return f.port.packageState(name)
+            }
+        }
+        coverage = PackageChangeReadback(port, { emptySet() }, { false }, { true })
+        assertFalse(coverage.hasSnapshot)
+        coverage.capture(setOf(app), setOf(app), emptySet(), emptySet())
+        assertTrue(coverage.hasSnapshot)
+        coverage.invalidate()
+        assertFalse(coverage.hasSnapshot)
+    }
+
     @Test fun planFloorGuardHomeLockTaskAndSessionNamesEachPreventCoverage() {
         val base = PolicyEngine.decide(PolicyInput("test", "test", PackageName("example.home"),
             PackageName("example.sms"), listOf(InstalledPackage(app, true, 1)), emptyList()))
