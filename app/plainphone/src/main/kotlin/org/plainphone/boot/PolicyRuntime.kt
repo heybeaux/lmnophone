@@ -44,7 +44,9 @@ import org.plainphone.device.boot.BootReapply
 import org.plainphone.device.boot.FallbackContainment
 import org.plainphone.device.facts.AndroidPackageSystemPort
 import org.plainphone.device.facts.LivePolicyInputAssembler
-import org.plainphone.device.facts.osFloor
+import org.plainphone.device.facts.FloorCompleteness
+import org.plainphone.device.facts.LivePolicyFacts
+import org.plainphone.device.facts.osFloorRead
 import org.plainphone.device.runtime.AndroidRuntimeFacts
 import org.plainphone.device.runtime.FileClockStateStore
 import org.plainphone.device.storage.FileFlipFailureStore
@@ -133,16 +135,23 @@ class PolicyRuntime private constructor(private val context: Context) {
             PersonAuthorityConsumer { _, _, _ -> false },
         )
     }
+    /** Whether this pass's keep set rests on a completely read floor (PLA-399 finding 1). */
+    private val floorCompleteness = FloorCompleteness()
     private val boot = BootReapply(
         FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT),
         port, SESSION_PACKAGES,
-        { locked -> PolicyEngine.decide(assembler.assemble().input.copy(lockedBoot = locked, waitingOperation = authority.waitingOperation())) },
+        { locked ->
+            lateinit var facts: LivePolicyFacts
+            floorCompleteness.facts { assembler.assemble().also { facts = it }.unreadableFloorRoles }
+            PolicyEngine.decide(facts.input.copy(lockedBoot = locked, waitingOperation = authority.waitingOperation()))
+        },
         restrictionFilter,
         { stage, error -> Log.w(TAG, "stage $stage failed: ${error ?: "readback mismatch"}", error) },
-        floor = { osFloor(packagesPort) },
+        floor = { floorCompleteness.osFloor { osFloorRead(packagesPort) } },
         home = PackageName(context.packageName),
         turnOffCommitting = { authority.turnOffCommitting() },
         flipFailures = FileFlipFailureStore(File(protectedDir, "flip-failures")),
+        floorComplete = { floorCompleteness.complete },
     )
     /**
      * Fallback containment (PLA-344): suspends what it can while lock task cannot start with KEYGUARD,
@@ -373,14 +382,14 @@ class PolicyRuntime private constructor(private val context: Context) {
     private fun fallbackPass(userLocked: Boolean, outcome: BootOutcome?) {
         when (fallbackStep(userLocked, lockTaskState(), mayEnterLockTask())) {
             FallbackStep.CONTAIN -> {
-                val keep = outcome?.keep.orEmpty()
-                if (home !in keep) {
-                    Log.w(TAG, "fallback containment skipped: no keep set this pass")
+                val keep = containmentKeep(outcome, home)
+                if (keep == null) {
+                    Log.w(TAG, "fallback containment skipped: no complete keep set this pass")
                     fallbackState.value = FallbackNotice(emptyList(), incomplete = true)
                     return
                 }
                 val result = try {
-                    containment.contain(keep + PLATFORM_KEEP)
+                    containment.contain(keep)
                 } catch (e: RuntimeException) {
                     Log.e(TAG, "fallback containment threw", e)
                     null

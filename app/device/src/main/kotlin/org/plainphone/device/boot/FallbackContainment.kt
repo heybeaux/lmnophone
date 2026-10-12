@@ -42,8 +42,10 @@ data class Containment(val suspended: Set<PackageName>, val refused: Set<Package
  * apps are contained by suspension instead:
  * - [contain] suspends every installed package outside `keep` (the lock-task UI list, the emergency
  *   floor, the never-hide dependencies and Home). A package is added to the [record] and the record is
- *   acknowledged before it is suspended; then each is read back. A package already suspended by someone
- *   else is not ours and is never recorded. A recorded package that is now in `keep` is lifted at once.
+ *   acknowledged durable in this process before anything is suspended; then each is read back. A package
+ *   already suspended by someone else is not ours and is never recorded. An entry is dropped only when it
+ *   reads back unsuspended (or refused and suspended by someone else); an unknown readback keeps it.
+ *   A recorded package that is now in `keep` is lifted at once.
  * - [liftIfLocked] lifts exactly the recorded set, and only while lock task reads LOCKED and the
  *   features read back with KEYGUARD ([locked] and [keyguard], read right before). An entry leaves the
  *   record only once its lift reads back.
@@ -65,6 +67,13 @@ class FallbackContainment(
     @Volatile var mayHoldSuspensions: Boolean = true
         private set
 
+    /**
+     * The set this process last saved with an acknowledgement; null until then, and after a save that was
+     * not acknowledged. A read is never an acknowledgement: `RecordFile` can leave bytes visible after a
+     * failed directory sync (PLA-399 finding 3).
+     */
+    private var acknowledged: Set<PackageName>? = null
+
     fun contain(keep: Set<PackageName>): Containment {
         val saved = attempt { record.read() } ?: return Containment(emptySet(), emptySet(), recorded = false)
         mayHoldSuspensions = true
@@ -79,16 +88,23 @@ class FallbackContainment(
             true -> {} // Suspended by someone else: not ours, never recorded, never lifted.
             null -> unread += name
         }
-        // Record first. Without an acknowledged record nothing new is suspended.
-        val recorded = (ours == saved && fresh.isEmpty()) || attempt { record.save(ours + fresh) } == true
+        // Record first. Without a save acknowledged in this process nothing is suspended, not even an
+        // entry that only reads back from the record.
+        val wanted = ours + fresh
+        val recorded = acknowledged == wanted || save(wanted)
         // Never (re)suspend a kept package, even one whose lift above did not read back.
-        val target = (if (recorded) ours + fresh else ours) - keep
-        if (target.isNotEmpty()) attempt { port.setSuspended(target, true) }
-        val suspended = target.filterTo(mutableSetOf()) { attempt { port.suspended(it) } == true }
-        // A refused package was never suspended by us, so a later lift must not touch it.
-        val refusedFresh = (fresh intersect target) - suspended
-        if (refusedFresh.isNotEmpty()) attempt { record.save(ours + fresh - refusedFresh) }
-        return Containment(suspended, target - suspended + unread, recorded && installed != null)
+        val target = if (recorded) wanted - keep else emptySet()
+        val androidRefused = if (target.isEmpty()) emptySet() else attempt { port.setSuspended(target, true) }.orEmpty()
+        val reads = (if (recorded) target else ours - keep).associateWith { attempt { port.suspended(it) } }
+        val suspended = reads.filterValues { it == true }.keys
+        // An entry leaves the record only on positive evidence that our suspension is not in place: it reads
+        // unsuspended, or Android refused it and it reads suspended by someone else. A throw from the
+        // suspend call or the readback keeps the entry, so a later lift still releases it (PLA-399 finding 2).
+        val notOurs = (fresh intersect target).filterTo(mutableSetOf()) {
+            reads[it] == false || (it in androidRefused && reads[it] == true)
+        }
+        if (notOurs.isNotEmpty()) save(wanted - notOurs)
+        return Containment(suspended - notOurs, target - suspended + notOurs + unread, recorded && installed != null)
     }
 
     /** Null when lock task is not LOCKED with KEYGUARD, the record cannot be read, or a lift does not read back. */
@@ -101,7 +117,7 @@ class FallbackContainment(
         }
         val lifted = lift(ours)
         val left = ours - lifted
-        if (attempt { record.save(left) } != true) return null
+        if (!save(left)) return null
         mayHoldSuspensions = left.isNotEmpty()
         return lifted.takeIf { left.isEmpty() }
     }
@@ -112,6 +128,10 @@ class FallbackContainment(
         attempt { port.setSuspended(names, false) }
         return names.filterTo(mutableSetOf()) { attempt { port.suspended(it) }.let { it == false } || isGone(it) }
     }
+
+    /** Saves [names]; true only when acknowledged durable. Remembers the acknowledged set for this process. */
+    private fun save(names: Set<PackageName>): Boolean =
+        (attempt { record.save(names) } == true).also { acknowledged = if (it) names else null }
 
     private fun isGone(name: PackageName): Boolean = try {
         port.suspended(name) == null
