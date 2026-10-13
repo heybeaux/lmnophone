@@ -20,8 +20,8 @@ class BluetoothDiscoveryControllerTest {
             return succeeds
         }
         override fun stop() { stops++ }
-        fun found(id: String, name: String?, bonded: Boolean = false) =
-            callback(BluetoothDiscoveryEvent.Found(id, name, bonded))
+        fun found(id: String, name: String?, bonded: Boolean = false, audio: Boolean = false) =
+            callback(BluetoothDiscoveryEvent.Found(id, name, bonded, audio))
     }
     @Test fun startFailureDiscardsResultsAndStops() {
         val p = Port().apply { succeeds = false }; val c = BluetoothDiscoveryController(p)
@@ -41,6 +41,13 @@ class BluetoothDiscoveryControllerTest {
         p.found("4", null); p.found("5", " \u202E\n"); p.found("1", "Sam")
         assertEquals(listOf("alex", "Sam"), c.state.devices.map { it.name })
         assertTrue(c.state.looking)
+    }
+    @Test fun keepsTheAudioClassPerDeviceAndTheLatestReportWins() {
+        val p = Port(); val c = BluetoothDiscoveryController(p); c.open()
+        p.found("1", "Sam", audio = true); p.found("2", "Keys"); p.found("3", "Jo", audio = true)
+        p.found("3", "Jo", audio = false)
+        assertEquals(listOf("Jo" to false, "Keys" to false, "Sam" to true),
+            c.state.devices.map { it.name to it.audio })
     }
     @Test fun sortsBeforeCappingAtTwenty() {
         val p = Port(); val c = BluetoothDiscoveryController(p); c.open()
