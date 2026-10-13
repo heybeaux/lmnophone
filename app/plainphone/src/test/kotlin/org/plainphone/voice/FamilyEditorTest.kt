@@ -45,6 +45,21 @@ class FamilyEditorTest {
     @Test fun failedMicrophoneGrantDoesNotEnable() {
         val e = editor(false); e.event(FamilyEvent.Enable)
         assertFalse(store.read().enabled); assertTrue(e.state.failed)
+        assertTrue(e.state.micFailed)
+    }
+    @Test fun microphoneFailureClearsAfterSuccessfulRetry() {
+        var grant = false
+        val e = FamilyEditor(store, AdminContext("Alex", "Sam"), { true }, { grant }, {}, {}, {})
+        e.open(); e.event(FamilyEvent.Enable)
+        assertTrue(e.state.micFailed)
+        grant = true; e.event(FamilyEvent.Enable)
+        assertTrue(store.read().enabled)
+        assertFalse(e.state.failed); assertFalse(e.state.micFailed)
+    }
+    @Test fun throwingMicrophoneGrantUsesMicrophoneError() {
+        val e = FamilyEditor(store, AdminContext("Alex", "Sam"), { true }, { error("unavailable") }, {}, {}, {})
+        e.open(); e.event(FamilyEvent.Enable)
+        assertFalse(store.read().enabled); assertTrue(e.state.micFailed)
     }
     @Test fun removeRequiresConfirmationAndDeletesOnlyThatDraft() {
         val e = editor(); add(e)
