@@ -46,6 +46,8 @@ import org.plainphone.device.authority.PinEnrollmentResult
 import org.plainphone.device.authority.PinAccessResult
 import org.plainphone.device.authority.PreviewPinAccess
 import org.plainphone.device.authority.PreviewTurnOff
+import org.plainphone.device.authority.PreviewChangePin
+import org.plainphone.device.authority.PinChangeOutcome
 import org.plainphone.device.runtime.Pbkdf2KeyDerivation
 import org.plainphone.device.runtime.SecureEntropy
 import org.plainphone.policy.PinVault
@@ -170,6 +172,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val vault by lazy { PinVault(authorityStore.credentials, Pbkdf2KeyDerivation, SecureEntropy, runningClock) }
     private val pins by lazy { PreviewPinAccess(authorityStore, vault) }
     private val turnOff by lazy { PreviewTurnOff(authorityStore, vault, runningClock) }
+    private val pinChange by lazy { PreviewChangePin(authorityStore, vault) }
     private val waiting: WaitingCheckpoints by lazy {
         WaitingCheckpoints(
             authorityStore,
@@ -374,6 +377,21 @@ class PolicyRuntime private constructor(private val context: Context) {
         done(result)
     }
     fun closeTurnOff(flow: String) = dispatcher.post { turnOff.close(flow) }
+
+    /** Change PIN (PLA-494): the old PIN's grant stays on this dispatcher, bound to [flow]. */
+    fun checkChangePin(flow: String, pin: CharArray, done: (PinAccessResult) -> Unit) = dispatcher.post {
+        val result = try { pinChange.authenticate(flow, pin) } catch (_: RuntimeException) { PinAccessResult.Unavailable }
+        finally { pin.fill('\u0000') }
+        done(result)
+    }
+    fun closeChangePin(flow: String) = dispatcher.post { pinChange.close(flow) }
+    /** A pass always follows, even after a failure: its checkpoint cancels a wait the old PIN started. */
+    fun changePin(flow: String, newPin: CharArray, done: (PinChangeOutcome) -> Unit) = dispatcher.post {
+        val result = try { pinChange.change(flow, newPin) } catch (_: RuntimeException) { PinChangeOutcome.FAILED }
+        finally { newPin.fill('\u0000') }
+        Log.i(TAG, "pin change: $result")
+        try { run("pin-change") } finally { done(result) }
+    }
     fun startTurnOff(flow: String, first: Boolean, second: Boolean, done: (WaitingOutcome) -> Unit) = dispatcher.post {
         val result = try { turnOff.start(flow, first, second) } catch (_: RuntimeException) { WaitingOutcome.NOT_READY }
         try { run("turn-off-start") } finally { done(result) }

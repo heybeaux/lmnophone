@@ -23,6 +23,8 @@ data class PinUiState(
     val freshExplanation: Boolean = false, val recoveryCode: String = "",
     val recoveryLockout: RecoveryLockoutKind = RecoveryLockoutKind.PinAvailable,
     val pinWait: String = "", val helper: String = "", val wrongRecoveryCode: Boolean = false,
+    /** Change PIN: the two new PINs differed (or weren't valid); nothing was written. */
+    val mismatch: Boolean = false,
 )
 sealed interface PinEvent {
     data class ValueChanged(val value: String) : PinEvent

@@ -75,6 +75,7 @@ fun PinScreen(state: PinUiState, onEvent: (PinEvent) -> Unit) {
                 Words(s(R.string.admin_code_help, state.helper.withoutBidiControls()))
             }
             PinStage.NewPin -> {
+                if (state.mismatch) Words(s(R.string.admin_pin_mismatch))
                 SecretField(s(R.string.admin_pin_label), state.value, "pin-input", true, !state.sending) { onEvent(PinEvent.ValueChanged(it)) }
                 SecretField(s(R.string.admin_pin_again), state.confirmation, "pin-confirm", true, !state.sending) { onEvent(PinEvent.ConfirmationChanged(it)) }
             }
@@ -85,6 +86,14 @@ fun PinScreen(state: PinUiState, onEvent: (PinEvent) -> Unit) {
                 other?.let { Words(s(R.string.admin_code_other, it)) }
             }
         }
+    }
+}
+
+/** Change PIN result (PLA-494). A failure doesn't promise which PIN works: an unacknowledged write may have landed. */
+@Composable
+fun PinChangeResultScreen(context: AdminContext, changed: Boolean, onOk: () -> Unit) {
+    AdminFrame(context, s(R.string.admin_change_pin), s(R.string.user_ok), onOk) {
+        Words(s(if (changed) R.string.admin_pin_changed else R.string.admin_pin_change_failed))
     }
 }
 
