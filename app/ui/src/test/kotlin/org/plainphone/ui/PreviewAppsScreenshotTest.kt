@@ -23,9 +23,16 @@ class PreviewAppsScreenshotTest(private val scale: Float) {
     @Test fun list() = shot { AppsOnPhoneScreen(AppsOnPhoneUiState(context, listOf(
         AppOnPhone(app, canMoveDown = true), AppOnPhone(InstalledApp("camera", "Camera", ""), canMoveUp = true),
         AppOnPhone(InstalledApp("sms", "Messages", ""), alwaysOn = true),
-        AppOnPhone(InstalledApp("phone", "Phone", ""), alwaysOn = true)))) {} }
-    @Test fun detail() = shot { PreviewAppDetailScreen(context, app.name, "123.456.789") {} }
-    @Test fun removeConfirm() = shot { AppReviewScreen(AppReviewUiState(context, app, stage = AppReviewStage.Remove)) {} }
+        AppOnPhone(InstalledApp("phone", "Phone", ""), alwaysOn = true)), canAddHidden = true)) {} }
+    @Test fun detail() = shot { PreviewAppDetailScreen(context, app.name, "123.456.789", onBack = {}) {} }
+    @Test fun removeConfirm() = shot { AppReviewScreen(AppReviewUiState(context, app, stage = AppReviewStage.Remove, previewSubset = true)) {} }
+    @Test fun hiddenList() = shot { PreviewHiddenAppsScreen(context, listOf(HiddenAppRow(app.id, app.name)), false, false, {}, {}) }
+    @Test fun hiddenEmpty() = shot { PreviewHiddenAppsScreen(context, emptyList(), false, false, {}, {}) }
+    @Test fun hiddenUnreadable() = shot { PreviewHiddenAppsScreen(context, emptyList(), true, false, {}, {}) }
+    @Test fun addReview() = review(AppReviewStage.Review)
+    @Test fun addUnreviewed() = review(AppReviewStage.Unreviewed)
+    @Test fun addConfirm() = review(AppReviewStage.Confirm)
+    private fun review(stage: AppReviewStage) = shot { AppReviewScreen(AppReviewUiState(context, app, stage = stage, helper = "Sam", previewSubset = true)) {} }
     private fun shot(content: @Composable () -> Unit) = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame { content() } } }
     companion object {
         @JvmStatic @Parameterized.Parameters(name = "fontScale={0}")
