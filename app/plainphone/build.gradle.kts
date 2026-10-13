@@ -33,8 +33,8 @@ android {
         targetSdk = libs.versions.targetSdk.get().toInt()
         testInstrumentationRunner = providers.gradleProperty("previewTestRunner")
             .getOrElse("org.plainphone.counts.CombinedCountInstrumentation")
-        versionCode = 39
-        versionName = "0.1.0-preview-39"
+        versionCode = 40
+        versionName = "0.1.0-preview-40"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.toVersion(libs.versions.jdk.get())
