@@ -1,0 +1,24 @@
+PLA-457 voice practice, private emulator check (2026-10-13 UTC)
+AVD pla219-a35 (API 35 google_apis arm64), -read-only -no-window -no-snapshot -no-audio -port 5976; identity readback: emu avd name = pla219-a35
+Note: without -no-audio the emulator crashed twice when the microphone opened (QEMU hanging threads, host audio input). -no-audio still gives a working virtual microphone.
+Commit under test: pla-voice/slice-1 @ 6a38142f + VoicePracticeInstrumentation (this commit)
+Build: ./gradlew -PpreviewTestRunner=org.plainphone.voice.VoicePracticeInstrumentation :plainphone:assembleDebug :plainphone:assembleDebugAndroidTest
+
+Setup (read-only image; nothing persists):
+  adb shell dpm remove-active-admin --user 0 org.plainphone.device.test/org.plainphone.device.apply.CheckAdmin   (left in the base image by another check)
+  adb install -t -r plainphone-debug.apk ; adb install -t -r plainphone-debug-androidTest.apk
+  adb shell dpm set-device-owner org.plainphone/.PlainphoneAdminReceiver  -> Success
+Readback before first run:
+  android.permission.RECORD_AUDIO: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+After the Device Owner self-grant (AndroidMicAccess.selfGrant, no runtime prompt):
+  android.permission.RECORD_AUDIO: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+
+am instrument -w -r org.plainphone.test/org.plainphone.voice.VoicePracticeInstrumentation (second run, grant already in place):
+INSTRUMENTATION_RESULT: outcome=PASS uid=10210 grant before=true after=true; AacM4a bytes=9941 durationMs=2183 events=[]; AmrNb bytes=3494 durationMs=2180 events=[]; onStop: Review draftBytes=10001 header=true
+INSTRUMENTATION_CODE: -1
+
+Meaning: each format wrote a real file with a valid header (ftyp / #!AMR) and MediaMetadataRetriever reads ~2.2 s;
+the microphone was open (activeRecordingConfigurations non-empty) while recording and closed after stop;
+MainActivity.onStop (callActivityOnStop) stopped a live practice recording, released the microphone and kept
+the take as an unsent message (Review). logcat: abandonAudioFocus from org.plainphone right after onStop.
+Not covered here: the real microphone privacy toggle (emulator has none), incoming call, screen off.
