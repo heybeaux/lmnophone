@@ -83,3 +83,27 @@ Those source expressions match the base. No checks were disabled.
 The candidate APK exceeds Paperclip's 10 MB attachment limit. Its hash and build
 path above identify the local artifact for the shared-workspace driver; source
 and screenshots are available on the pushed branch and issue work products.
+
+## Opposite-model review and delivery handoff
+
+[PLA-515](/PLA/issues/PLA-515#comment-ff8d39b3-dec2-4627-af93-8fb1adc19bb3)
+returned **PASS** for code range `7761bf65..71941c47`. The reviewer independently
+ran the six targeted test classes and inspected the normal/200% goldens.
+Subsequent commits contain evidence and documentation only; the APK hash above
+is unchanged. Full-suite and emulator results remain the author's evidence.
+
+Three Low findings are retained for Lead disposition and do not block the
+reviewer's merge/driver handoff:
+
+1. System Back during post-save re-apply can return to stale app details. A second
+   removal attempt then gives the misleading "Nothing changed" save-failure text.
+2. Recovery-code actions in the removal PIN screen return to app details instead
+   of the existing unsupported-feature explanation.
+3. App details and removal confirmation rely on system Back; neither has an
+   on-screen Back action. The designer plans a separate copy/spec correction.
+
+No code correction or extra review gate was added for these nonblocking findings.
+The Lead routes integration onto the latest release and the spare driver installs
+it. Resolve the small PinAccessActivity overlap with the voice-Send increment and
+inspect the merge with `git show --remerge-diff`. The author has not installed this
+slice on the spare or assigned a final release number.

@@ -121,4 +121,5 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [x] Atomically preserve order across process restart and in-place upgrades; remove from starter list then re-apply, without uninstalling.
 - [x] Inspect list/details/confirmation goldens at 360×640 dp and five scales through 200%; record existing baseline failures separately.
 - [x] Private read-only API 35 emulator: reorder/Home, reboot, wrong PIN/Back, removal/hidden readback, data-preserving setup-command restoration and in-place upgrade. No calls or spare access.
-- [ ] Opposite-model review on [PLA-515](/PLA/issues/PLA-515), then Lead-routed spare installation on the latest release.
+- [x] Opposite-model review on [PLA-515](/PLA/issues/PLA-515): PASS for `7761bf65..71941c47`, with three nonblocking Low findings recorded for the Lead.
+- [ ] Lead-routed spare installation on the latest release.
