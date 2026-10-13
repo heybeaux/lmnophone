@@ -1,0 +1,31 @@
+PLA-491 delta, APK sha256 709802337cdd70feb1e64d6550ee16ca726b2362656d18a67e04b6455904cab7 (code a44fb242)
+AVD pla460-policy-a35 API 35
+baseline: saved=46842ff38dd3c317 ids=0, location=0 connected=0 calls=0 installed versionCode=43
+install 43 (PLA-491 fix) start 2026-10-13T14:36:35Z
+Success
+install end 2026-10-13T14:36:36Z
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+on 43:  versionCode=43 minSdk=30 targetSdk=36  versionName=0.1.0-preview-43  flags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ] 
+DO: User 0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+ mLockTaskModeState=LOCKED
+== P1: the question ends when the connection is replaced (same network, new connection, name hidden with Location off)
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+   before: saved=f9c43212bcb5a399 ids=0,4, location=0 connected=1
+   question: Forget this network?|The Wi-Fi this phone is connected to|You will need its password to join it again.|Keep|Forget
+   after reconnect: saved=f9c43212bcb5a399 ids=0,4, location=0 connected=1
+   page: ‹ Phone settings|Wi-Fi|Connected to Wi-Fi|Forget this network|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks
+== P2a: Forget, then Home at once; reopen after the readback ends
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+   before: saved=f9c43212bcb5a399 ids=0,4, location=0 connected=1
+   t+13s at Home: saved=46842ff38dd3c317 ids=0, location=0 connected=0
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+   reopened: ‹ Phone settings|Wi-Fi|The network was forgotten.|Not connected|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks
+   opened again after it was shown: ‹ Phone settings|Wi-Fi|Not connected|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks
+== P2b: Forget, then Back to Phone settings at once; reopen Wi-Fi after the readback ends
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+   before: saved=3471c40d176c2bb6 ids=0,5, location=0 connected=1
+   left to: ‹ More|Wi-Fi|›|Bluetooth|›|Brightness|›|Sound|›|Text size|›|Battery|›|Show missed calls and unread texts on Home|Counts texts and picture messages. Chat (RCS) messages and other apps aren't supported, so they may be missing from the number.|LMNOPhone keeps permission to check calls and texts after you turn this off. It never reads what they say.
+   t+13s: saved=46842ff38dd3c317 ids=0, location=0 connected=0
+   reopened: ‹ Phone settings|Wi-Fi|The network was forgotten.|Not connected|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks
+   opened again after it was shown: ‹ Phone settings|Wi-Fi|Not connected|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks
+final: saved=6346f323c92c0a7e ids=0,6, location=0 connected=1 bluetooth_on=1 calls=0
