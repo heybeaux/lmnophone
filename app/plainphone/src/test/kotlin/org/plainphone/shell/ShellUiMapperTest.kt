@@ -89,6 +89,12 @@ class ShellUiMapperTest {
         assertEquals(HomeNotice.SelfManagedMonthlyCheck, map.home(self).notice)
     }
 
+    /** Preview builds show the practice row in both modes; it was never set on the spare (PLA-457 build 38). */
+    @Test fun moreShowsVoicePracticeRow() {
+        assertTrue(map.more(base).voicePractice)
+        assertTrue(map.more(base.copy(mode = Mode.SELF_MANAGED)).voicePractice)
+    }
+
     @Test fun moreFollowsMode() {
         assertEquals(MoreMode.Trusted(listOf("Sam", "Jo"), "Sam"), map.more(base).mode)
         assertEquals(MoreMode.SelfManaged(10), map.more(base.copy(mode = Mode.SELF_MANAGED)).mode)
