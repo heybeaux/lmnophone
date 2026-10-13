@@ -27,7 +27,7 @@ class PinEnrollmentTest {
         val dir = tmp.newFolder()
         val store = JointAuthorityStore(dir)
         val secret = pin()
-        assertEquals(PinEnrollmentResult.CREATED, PinEnrollment(store, vault(store)).create(person, secret))
+        assertTrue(PinEnrollment(store, vault(store)).create(person, secret) is PinEnrollmentResult.Created)
         assertTrue(secret.all { it == '\u0000' })
         val reopened = JointAuthorityStore(dir)
         assertEquals(Mode.SELF_MANAGED, reopened.credentials.read()!!.mode)
@@ -42,7 +42,7 @@ class PinEnrollmentTest {
     @Test fun existingEnrollmentCannotBeReplacedByOpeningSetupAgain() {
         val store = JointAuthorityStore(tmp.newFolder())
         val enrollment = PinEnrollment(store, vault(store))
-        assertEquals(PinEnrollmentResult.CREATED, enrollment.create(person, pin()))
+        assertTrue(enrollment.create(person, pin()) is PinEnrollmentResult.Created)
         val before = store.credentials.read()!!.people.getValue(person).pin.hash
         assertEquals(PinEnrollmentResult.UNAVAILABLE, enrollment.create(person, CharArray(6) { '2' }))
         assertArrayEquals(before, store.credentials.read()!!.people.getValue(person).pin.hash)
@@ -74,7 +74,7 @@ class PinEnrollmentTest {
     @Test fun pinOnlyEnrollmentCannotPretendToProvideFrictionSettings() {
         val store = JointAuthorityStore(tmp.newFolder())
         val auth = vault(store)
-        assertEquals(PinEnrollmentResult.CREATED, PinEnrollment(store, auth).create(person, pin()))
+        assertTrue(PinEnrollment(store, auth).create(person, pin()) is PinEnrollmentResult.Created)
         val waits = WaitingChangeController(store.waitingStore, store.credentials::read, clock,
             auth, store.identities, store.cancelIntents)
         assertNull(waits.prepareFriction(person, FrictionSettings(1_200_000, 2)))

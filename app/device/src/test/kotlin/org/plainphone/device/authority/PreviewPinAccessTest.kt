@@ -28,7 +28,7 @@ class PreviewPinAccessTest {
         val dir = tmp.newFolder()
         val host = host(dir)
         assertEquals(PinEntry.SETUP, host.entry())
-        assertEquals(PinEnrollmentResult.CREATED, host.enroll(pin()))
+        assertTrue(host.enroll(pin()) is PinEnrollmentResult.Created)
         assertEquals(PinEntry.ENTER, host.entry())
         val wrong = CharArray(6) { '2' }
         assertTrue(host.authenticate(wrong) is PinAccessResult.Wrong)
@@ -66,7 +66,7 @@ class PreviewPinAccessTest {
 
     @Test fun pinOnlyEnrollmentHasNoWaitOrLostRecordOrInventedProfile() {
         val dir = tmp.newFolder()
-        assertEquals(PinEnrollmentResult.CREATED, host(dir).enroll(pin()))
+        assertTrue(host(dir).enroll(pin()) is PinEnrollmentResult.Created)
         val store = JointAuthorityStore(dir)
         assertNull(store.credentials.read()!!.recoveryProfile)
         assertNotNull(store.waitingStore.read())

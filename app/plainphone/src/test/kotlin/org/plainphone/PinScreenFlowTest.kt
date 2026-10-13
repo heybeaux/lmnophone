@@ -14,7 +14,8 @@ class PinScreenFlowTest {
         lateinit var recovered: (RecoveryAccessResult) -> Unit
         var recoveries = 0
         var rotations = 0
-        override fun recoveryWaits(done: (org.plainphone.policy.CredentialWaits?) -> Unit) { done(org.plainphone.policy.CredentialWaits(0, 0)) }
+        var waits = org.plainphone.policy.CredentialWaits(0, 0)
+        override fun recoveryWaits(done: (org.plainphone.policy.CredentialWaits?) -> Unit) { done(waits) }
         override fun rotateRecovery(pin: CharArray, done: (RecoveryAccessResult) -> Unit) { rotations++; pin.fill('\u0000'); recovered = done }
         override fun recover(code: CharArray, newPin: CharArray, done: (RecoveryAccessResult) -> Unit) {
             recoveries++; code.fill('\u0000'); newPin.fill('\u0000'); recovered = done
@@ -210,6 +211,26 @@ class PinScreenFlowTest {
         val lateRaw = CharArray(32) { 'c' }
         f.close(); p.recovered(RecoveryAccessResult.Issued(OneTimeRecoveryCode(lateRaw)))
         assertTrue(lateRaw.all { it == '\u0000' })
+        assertEquals(PinPage.LOADING, f.state.page)
+    }
+
+    @Test fun recoveryWaitRefreshDoesNotSubmitAndReopensEntryWhenProvenTimeExpires() {
+        val p = Port(); val f = PinScreenFlow(p) {}
+        f.open(); p.entry(PinEntry.ENTER)
+        p.waits = org.plainphone.policy.CredentialWaits(30_000, 60_000)
+        f.useRecovery(); assertEquals(PinPage.RECOVERY_LOCKED, f.state.page)
+        p.waits = org.plainphone.policy.CredentialWaits(0, 30_000)
+        f.refreshWaits(); assertEquals(0L, f.state.pinWaitMillis)
+        p.waits = org.plainphone.policy.CredentialWaits(0, 0)
+        f.refreshWaits(); assertEquals(PinPage.RECOVERY, f.state.page)
+        assertEquals(0, p.recoveries); assertEquals(0, p.checks)
+    }
+    @Test fun enrollmentCallbackAfterCloseWipesItsUnclaimedCode() {
+        val p = Port(); val f = PinScreenFlow(p) {}
+        f.open(); p.entry(PinEntry.SETUP); f.submit(pin('1')); f.close()
+        val raw = CharArray(32) { 'a' }; val once = OneTimeRecoveryCode(raw)
+        p.enrolled(PinEnrollmentResult.Created(once))
+        assertNull(once.take()); assertTrue(raw.all { it == '\u0000' })
         assertEquals(PinPage.LOADING, f.state.page)
     }
 

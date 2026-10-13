@@ -54,7 +54,7 @@ class PreviewRecoveryTest {
             val dir = tmp.newFolder()
             val store = JointAuthorityStore(dir) { at, _ -> if (armed && at == point) { fired = true; throw SimulatedCrash() } }
             val vault = vault(store)
-            PinEnrollment(store, vault).create(self, pin())
+            val original = (PinEnrollment(store, vault).create(self, pin()) as PinEnrollmentResult.Created).code.take()!!
             val action = PrivilegedAction("preview:new-recovery-code", "one")
             val grant = (vault.authenticate(self, pin(), action) as PinResult.Authorized).authority
             val before = store.credentials.read()!!.people.getValue(self)
@@ -70,8 +70,8 @@ class PreviewRecoveryTest {
             assertEquals(before.pinCounter, after.pinCounter)
             assertEquals(before.generation, after.generation)
             val old = before.recovery.hash.contentEquals(after.recovery.hash)
-            val result = vault(reopened).recover(self, nextCode.toCharArray(), pin())
-            assertEquals("$point old-or-new", !old, result is RecoveryResult.Replaced)
+            val result = vault(reopened).recover(self, if (old) original else nextCode.toCharArray(), pin())
+            assertTrue("$point surviving code works", result is RecoveryResult.Replaced)
         }
     }
 }

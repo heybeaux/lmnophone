@@ -242,4 +242,8 @@
     <string name="permission_health">Movement and health sensors</string>
     <string name="permission_health_why">Count steps or read heart rate</string>
     <string name="wait_recovered_self">%1$s looks after this phone.</string>
+    <string name="admin_new_recovery_code">New recovery code</string>
+    <plurals name="recovery_wait_seconds"><item quantity="one">%d second</item><item quantity="other">%d seconds</item></plurals>
+    <plurals name="recovery_wait_minutes"><item quantity="one">%d minute</item><item quantity="other">%d minutes</item></plurals>
+    <string name="recovery_wait_hour">1 hour</string>
 </resources>

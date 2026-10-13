@@ -105,6 +105,7 @@ fun PinChangeResultScreen(context: AdminContext, changed: Boolean, onOk: () -> U
     AdminDestination.Limits -> R.string.admin_limits; AdminDestination.People -> R.string.admin_people
     AdminDestination.History -> R.string.admin_history; AdminDestination.Waits -> R.string.admin_waits
     AdminDestination.UpdatePlainphone -> R.string.admin_update; AdminDestination.ChangePin -> R.string.admin_change_pin
+    AdminDestination.NewRecoveryCode -> R.string.admin_new_recovery_code
     AdminDestination.SwitchMode -> R.string.admin_switch; AdminDestination.TurnOff -> R.string.admin_turn_off
 }, user)
 

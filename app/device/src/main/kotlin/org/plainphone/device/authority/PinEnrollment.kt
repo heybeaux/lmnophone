@@ -10,7 +10,13 @@ import org.plainphone.policy.ElevationRecord
 import org.plainphone.policy.PinVault
 import org.plainphone.policy.WaitingState
 
-enum class PinEnrollmentResult { CREATED, INVALID_PIN, UNAVAILABLE }
+sealed interface PinEnrollmentResult {
+    class Created(val code: OneTimeRecoveryCode) : PinEnrollmentResult {
+        override fun toString() = "Created(redacted)"
+    }
+    data object INVALID_PIN : PinEnrollmentResult
+    data object UNAVAILABLE : PinEnrollmentResult
+}
 
 /**
  * Real first-use PIN enrollment, invoked only after the user confirms a PIN in the UI.
@@ -32,8 +38,9 @@ class PinEnrollment(private val store: JointAuthorityStore, private val vault: P
             val read = store.credentials.read()
             if (saved && store.migrate() && read?.mode == Mode.SELF_MANAGED &&
                 read.people.keys == setOf(person) && read.recoveryProfile == null &&
-                read.people.getValue(person).pin.hash.contentEquals(prepared.credential.pin.hash))
-                PinEnrollmentResult.CREATED else PinEnrollmentResult.UNAVAILABLE
+                read.people.getValue(person).pin.hash.contentEquals(prepared.credential.pin.hash) &&
+                read.people.getValue(person).recovery.hash.contentEquals(prepared.credential.recovery.hash))
+                PinEnrollmentResult.Created(OneTimeRecoveryCode(prepared.recoveryCode.toCharArray())) else PinEnrollmentResult.UNAVAILABLE
         }
     } catch (_: RuntimeException) {
         PinEnrollmentResult.UNAVAILABLE

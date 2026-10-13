@@ -113,3 +113,6 @@ sealed interface RecoveryResult {
     data class Delayed(val remainingMillis: Long) : RecoveryResult
     data object Unavailable : RecoveryResult
 }
+
+/** Remaining proven-running-time waits; neither credential is checked by this read. */
+data class CredentialWaits(val pinMillis: Long, val recoveryMillis: Long)

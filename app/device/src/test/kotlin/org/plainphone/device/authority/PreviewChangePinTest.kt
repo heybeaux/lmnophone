@@ -29,7 +29,7 @@ class PreviewChangePinTest {
         val turnOff = PreviewTurnOff(store, vault, clock)
         val checkpoints = WaitingCheckpoints(store, clock, { BatteryState(80, true) },
             PersonAuthorityConsumer { _, _, _ -> false }, testBuild = true)
-        init { assertEquals(PinEnrollmentResult.CREATED, menu.enroll(old())) }
+        init { assertTrue(menu.enroll(old()) is PinEnrollmentResult.Created) }
         fun self() = store.credentials.read()!!.people.values.single()
     }
 

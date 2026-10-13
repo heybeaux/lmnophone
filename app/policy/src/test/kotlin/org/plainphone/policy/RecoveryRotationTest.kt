@@ -11,11 +11,15 @@ class RecoveryRotationTest {
     private var now = 0L
     private var state: CredentialState? = null
     private var fail = false
+    private var falseAfterWrite = false
+    private var staleReadback = false
+    private var stale: CredentialState? = null
     private val store = object : CredentialStore {
-        override fun read() = state
+        override fun read() = stale ?: state
         override fun compareAndSet(expected: CredentialState, replacement: CredentialState): Boolean {
             if (fail || state !== expected) return false
-            state = replacement; return true
+            if (staleReadback) stale = expected
+            state = replacement; return !falseAfterWrite
         }
     }
     private val vault = PinVault(store, KeyDerivation { chars, salt, _ ->
@@ -63,6 +67,13 @@ class RecoveryRotationTest {
         assertEquals(RecoveryResult.Unavailable, vault.replaceRecoveryCode(person, g, action))
         fail = false
         assertIs<RecoveryResult.Replaced>(vault.recover(person, old.toCharArray(), pin()))
+    }
+    @Test fun `unacknowledged landing and stale readback never report a code`() {
+        enroll(); val first = grant(); falseAfterWrite = true
+        assertEquals(RecoveryResult.Unavailable, vault.replaceRecoveryCode(person, first, action))
+        falseAfterWrite = false
+        val second = grant(); staleReadback = true
+        assertEquals(RecoveryResult.Unavailable, vault.replaceRecoveryCode(person, second, action))
     }
     @Test fun `recovery is independent of PIN wait with identical schedule`() {
         val code = enroll()

@@ -22,7 +22,7 @@ class PreviewTurnOffTest {
         }, SecretEntropy { n -> ByteArray(n) { (++sequence).toByte() } }, clock)
         val menu = PreviewPinAccess(store, vault)
         val turnOff = PreviewTurnOff(store, vault, clock)
-        init { assertEquals(PinEnrollmentResult.CREATED, menu.enroll(pin())) }
+        init { assertTrue(menu.enroll(pin()) is PinEnrollmentResult.Created) }
     }
     @Test fun menuPinCannotStartAndBothConfirmationsAreRequired() {
         val r = Rig()

@@ -25,10 +25,10 @@ data class PinUiState(
     val pinWait: String = "", val helper: String = "", val wrongRecoveryCode: Boolean = false,
     /** Change PIN: the two new PINs differed (or weren't valid); nothing was written. */
     val mismatch: Boolean = false,
-)
+) { override fun toString() = "PinUiState(stage=$stage, redacted)" }
 sealed interface PinEvent {
-    data class ValueChanged(val value: String) : PinEvent
-    data class ConfirmationChanged(val value: String) : PinEvent
+    data class ValueChanged(val value: String) : PinEvent { override fun toString() = "ValueChanged(redacted)" }
+    data class ConfirmationChanged(val value: String) : PinEvent { override fun toString() = "ConfirmationChanged(redacted)" }
     data object Continue : PinEvent
     data object EnterPin : PinEvent
     data object UseRecoveryCode : PinEvent
@@ -36,7 +36,7 @@ sealed interface PinEvent {
     data object Ok : PinEvent
 }
 
-enum class AdminDestination { VoiceMessages, AddApp, HiddenApp, Apps, Requests, Updates, Settings, Limits, People, History, Waits, UpdatePlainphone, ChangePin, SwitchMode, TurnOff }
+enum class AdminDestination { VoiceMessages, AddApp, HiddenApp, Apps, Requests, Updates, Settings, Limits, People, History, Waits, UpdatePlainphone, ChangePin, NewRecoveryCode, SwitchMode, TurnOff }
 data class AdminMenuItem(val destination: AdminDestination, val detail: String = "")
 data class AdminNotice(val id: String, val text: String)
 data class AdminMenuUiState(val context: AdminContext, val items: List<AdminMenuItem>,
