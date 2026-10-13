@@ -1,0 +1,17 @@
+build=41
+apk_sha256=8572398a2cc87c56bb1c12a79c3ad2b471ebee028155a213d70f3f2e8e3a0d12
+branch=release/preview-41@75cc62d0 (release/preview-40@b90cf1b1 + pla-voice/slice-1c@c79ad8fa; review PLA-481 APPROVE, one P3 nonblocking finding deferred)
+signer_sha256=99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd (same as builds 36-40)
+installed_local=2026-10-13 01:36:16 PDT (2026-10-13 08:36:16Z, lastUpdateTime)
+upgrade=40-to-41-in-place, gate exit 0 (244 PASS incl. restart)
+owner=Device Owner retained, testOnly retained, lock task LOCKED
+emergency=More>Emergency and Phone both exactly 911 (gate), zero Telecom calls
+safety_diff=version and lastUpdateTime only vs build 40 (location 0, font 1.0, ring 5, saved-list hash d32466f0bb5f98e0, bonded 0, TalkBack off, mic grant POLICY_FIXED, SystemUpdatePolicy type 3)
+exercised_on_spare (synthetic person Sam; room audio, kept only on the phone, deleted at the end; nothing sent), 01:40-01:46 PDT:
+  More > Practice voice messages > Sam > Record (MIC client 1, uid org.plainphone) > Stop -> Review, take sam.m4a 27690 B sha 9bcde58a...
+  Review, font 1.3 / 2.0 / 1.0 (each read back): stays on Review for Sam, Record again/Delete/Listen re-laid out (Record again [401,1596][760,1664] at 1.3, [333,1583][828,1677] at 2.0), take sha unchanged each time (voice41-review-*.png)
+  Recording, font 1.3 / 2.0 / 1.0: MIC clients 1 -> 0, back on Review for Sam with "Recording stopped.", new take kept each time (21089 / 20864 / 21064 B, sha changed) (voice41-recording-*.png)
+  Delete -> Person "Deleted."; font 1.3 -> same Person screen with "Deleted." (voice41-person-1.3.png); voice-practice folder empty
+  font restored 1.0, read back 1.0; Back x3 to Home; lock task LOCKED; MIC clients 0; Telecom calls 0
+known limitation (PLA-481 finding 1, deferred): on the people list a text-size change replays the spoken intro; Person/Review/MicOff restore silently
+not exercised on spare: display size, dark theme, locale changes (same recreation path, not driven); MicOff restore (host test only); what was heard by ear (driver is remote)
