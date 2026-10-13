@@ -10,7 +10,7 @@ package org.plainphone.device.voice
  * Main thread only.
  */
 class VoicePracticeSession(
-    private val controller: VoicePracticeController,
+    val controller: VoicePracticeController,
     private val arm: () -> Unit,
     private val disarm: () -> Unit,
 ) {
@@ -21,13 +21,16 @@ class VoicePracticeSession(
         private set
     private var activityStopped = false
 
-    /** The route appeared. */
-    fun show() {
+    /** The route appeared; [place] when it is coming back after a configuration change (PLA-479). */
+    fun show(place: VoicePlace? = null) {
         if (showing) return
         showing = true
         setArmed(!activityStopped)
-        controller.open()
+        controller.open(place)
     }
+
+    /** Where the screen is, for a configuration change; null when the route isn't showing. */
+    fun place(): VoicePlace? = if (showing) controller.place() else null
 
     /** The route went away (Back, Home key). Recording stops and is kept. */
     fun hide() {

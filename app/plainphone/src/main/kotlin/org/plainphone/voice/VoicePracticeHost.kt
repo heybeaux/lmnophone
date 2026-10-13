@@ -30,6 +30,7 @@ import org.plainphone.device.voice.VoiceFormat
 import org.plainphone.device.voice.VoiceNotice
 import org.plainphone.device.voice.VoicePeople
 import org.plainphone.device.voice.VoicePerson
+import org.plainphone.device.voice.VoicePlace
 import org.plainphone.device.voice.VoicePracticeController
 import org.plainphone.device.voice.VoicePracticeSession
 import org.plainphone.device.voice.VoicePrompt
@@ -148,11 +149,20 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
         callState = TelephonyManager.CALL_STATE_IDLE
     }
 
-    /** The practice route appeared. */
-    fun open() = session.show()
+    /** Where the screen was before MainActivity was recreated; used by the next [open] only. */
+    private var restoring: VoicePlace? = null
+
+    /** The practice route appeared, back at the kept place after a configuration change. */
+    fun open() = session.show(restoring.also { restoring = null })
 
     /** The practice route went away: stops recording (keeping it), playback and speech. */
-    fun close() = session.hide()
+    fun close() { restoring = null; session.hide() }
+
+    /** MainActivity.onStop during a configuration change: where the screen is (PLA-479). */
+    fun place(): VoicePlace? = session.place()
+
+    /** MainActivity.onCreate after a configuration change: the next [open] comes back to [place]. */
+    fun restoreOnOpen(place: VoicePlace?) { restoring = place }
 
     /** MainActivity.onStop: stops all audio and the listeners; the screen and its draft stay. */
     fun onActivityStop() = session.activityStopped()

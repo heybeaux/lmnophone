@@ -317,4 +317,104 @@ class VoicePracticeControllerTest {
         c.close()
         assertFalse(recorder.running); assertTrue(player.stops > 0)
     }
+
+    // PLA-479: a configuration change (text size) recreates MainActivity. The practice comes back to the same
+    // screen and person; a recording is stopped by onStop first and its take kept ("Recording stopped.").
+
+    private fun session(store: VoiceDraftStore): VoicePracticeSession =
+        VoicePracticeSession(VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }), {}, {})
+            .also { it.activityStarted(); it.show() }
+
+    /** MainActivity's order on a recreation: onStop, keep the place, the route goes away, a new host opens it. */
+    private fun recreate(old: VoicePracticeSession, store: VoiceDraftStore): VoicePracticeController {
+        old.activityStopped()
+        val place = old.place()
+        old.hide()
+        speaker.spoken.clear()
+        val c = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now })
+        VoicePracticeSession(c, {}, {}).apply { activityStarted(); show(place) }
+        return c
+    }
+
+    @Test fun personScreenSurvivesARecreation() {
+        val store = store(); val s = session(store); val c = s.controller
+        c.dispatch(Choose(sam))
+        val after = recreate(s, store)
+        assertEquals(VoiceState.Person(sam), after.state)
+        assertEquals("a text-size change is not a new screen: nothing is said again", emptyList<String>(), speaker.spoken)
+    }
+
+    @Test fun reviewWithATakeSurvivesARecreation() {
+        val store = store(); val s = session(store); val c = s.controller
+        c.dispatch(Choose(sam)); c.recordFor(3_000)
+        val kept = (c.state as VoiceState.Review).draft
+        val after = recreate(s, store)
+        val review = after.state as VoiceState.Review
+        assertEquals(sam, review.person)
+        assertEquals(kept, review.draft)
+        assertFalse(review.playing)
+        assertTrue(store.file("sam").length() > 0)
+        assertEquals(emptyList<String>(), speaker.spoken)
+        assertEquals(1, recorder.starts)
+    }
+
+    @Test fun recordingDuringARecreationStopsKeepsTheTakeAndSaysSo() {
+        val store = store(); val s = session(store); val c = s.controller
+        c.dispatch(Choose(sam)); c.dispatch(Record); now += 2_000
+        assertTrue(recorder.running)
+        val after = recreate(s, store)
+        assertFalse("the microphone is released", recorder.running)
+        assertEquals(1, recorder.stops)
+        assertEquals("never starts recording again by itself", 1, recorder.starts)
+        assertFalse(gate.held)
+        val review = after.state as VoiceState.Review
+        assertEquals(sam, review.person)
+        assertEquals(VoiceNotice.Interrupted, review.notice)
+        assertEquals(store.draft("sam"), review.draft)
+        assertTrue(store.file("sam").length() > 0)
+    }
+
+    @Test fun tooShortARecordingDuringARecreationStaysOnThePersonWithItsNotice() {
+        val store = store(); val s = session(store); val c = s.controller
+        c.dispatch(Choose(sam)); c.dispatch(Record); now += 300
+        val after = recreate(s, store)
+        assertFalse(recorder.running)
+        assertEquals(VoiceState.Person(sam, VoiceNotice.NothingRecorded), after.state)
+        assertNull(store.draft("sam"))
+    }
+
+    @Test fun micOffSurvivesARecreationWithTheEarlierTake() {
+        val store = store(); val s = session(store); val c = s.controller
+        c.dispatch(Choose(sam)); c.recordFor(3_000)
+        mic.problem = MicProblem.PrivacyToggle; c.dispatch(RecordAgain)
+        val after = recreate(s, store)
+        assertEquals(VoiceState.MicUnavailable(sam, MicProblem.PrivacyToggle, store.draft("sam")), after.state)
+    }
+
+    @Test fun peopleListAndUnknownPlacesOpenAsUsual() {
+        val store = store(); val s = session(store)
+        val after = recreate(s, store)
+        assertEquals(VoiceState.ChoosePerson, after.state)
+        assertEquals(listOf("Intro null"), speaker.spoken)
+        speaker.spoken.clear()
+        val c = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now })
+        c.open(VoicePlace("nobody", VoicePlace.Screen.Review))
+        assertEquals(VoiceState.ChoosePerson, c.state)
+    }
+
+    @Test fun aReviewWhoseTakeIsGoneComesBackOnThePerson() {
+        val store = store(); val s = session(store); val c = s.controller
+        c.dispatch(Choose(sam)); c.recordFor(3_000)
+        s.activityStopped(); val place = s.place(); s.hide()
+        store.delete("sam")
+        val after = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now })
+        after.open(place)
+        assertEquals(VoiceState.Person(sam), after.state)
+    }
+
+    @Test fun noPlaceIsKeptOnceTheRouteIsGone() {
+        val store = store(); val s = session(store)
+        s.controller.dispatch(Choose(sam)); s.hide()
+        assertNull(s.place())
+    }
 }
