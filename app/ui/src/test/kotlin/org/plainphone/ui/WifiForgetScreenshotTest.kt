@@ -26,21 +26,30 @@ class WifiForgetScreenshotTest(private val scale: Float) {
     @Test fun locationOff() = page(true)
     @Test fun cleanupFailed() = page(false, cleanupFailed = true)
     @Test fun noIdentity() = page(true, failed = true)
+    @Test fun forgotten() = page(false, result = WifiForgetUiResult.Removed, connected = false)
+    @Test fun notForgotten() = page(true, result = WifiForgetUiResult.NotRemoved)
+    @Test fun askNamed() = ask("Sam", "Sam")
+    @Test fun askUnnamed() = ask(null, "The Wi-Fi this phone is connected to")
+    @Test fun askLongName() = ask("Grandma and Grandpa's upstairs network 5G", "Grandma and Grandpa's upstairs network 5G")
     @Test fun signIn() = message(WifiProblem.SignInRequired)
     @Test fun noInternet() = message(WifiProblem.NoInternet)
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-    private fun page(locationOff: Boolean, cleanupFailed: Boolean = false, failed: Boolean = false) = paparazzi.snapshot {
+    private fun page(locationOff: Boolean, cleanupFailed: Boolean = false, failed: Boolean = false,
+        result: WifiForgetUiResult? = null, connected: Boolean = true) = paparazzi.snapshot {
         PlainphoneTheme {
             val view=LocalView.current as ViewRootForTest
             var forget=0
             Box(Modifier.onGloballyPositioned {
                 val nodes=view.semanticsOwner.getAllSemanticsNodes(mergingEnabled=true)
                 fun action(label:String) = nodes.single { n -> n.config.getOrElse(SemanticsProperties.Text){emptyList()}.any{it.text==label} }
-                if (!failed) action("Forget this network").config[SemanticsActions.OnClick].action!!.invoke()
-                assertEquals(!failed, forget>0)
-            }) { HomeTestFrame { WifiSettingsScreen(WifiSettingsUiState(connected=true,network="Sam",
-                nearby=listOf("Sam","Jo"), locationOff=locationOff, canForget=!failed, forgetFailed=failed, locationOffFailed=cleanupFailed,
-                internetStatus=null), {}, onForget={forget++}) } }
+                val texts=nodes.flatMap{it.config.getOrElse(SemanticsProperties.Text){emptyList()}}.map{it.text}
+                assertEquals(result==WifiForgetUiResult.Removed, "The network was forgotten." in texts)
+                assertEquals(result==WifiForgetUiResult.NotRemoved, "The network was not forgotten." in texts)
+                if (!failed && connected) action("Forget this network").config[SemanticsActions.OnClick].action!!.invoke()
+                assertEquals(!failed && connected, forget>0)
+            }) { HomeTestFrame { WifiSettingsScreen(WifiSettingsUiState(connected=connected,network="Sam".takeIf { connected },
+                nearby=listOf("Sam","Jo"), locationOff=locationOff, canForget=!failed && connected, forgetFailed=failed, locationOffFailed=cleanupFailed,
+                internetStatus=null, forgetResult=result), {}, onForget={forget++}) } }
         }
     }
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
@@ -61,6 +70,28 @@ class WifiForgetScreenshotTest(private val scale: Float) {
                 }
                 assertFalse(WifiMessageEvent.ForgetNetwork in events);assertTrue(WifiMessageEvent.Ok in events)
             }) { HomeTestFrame { WifiMessageScreen(WifiMessageUiState(problem, canForget=false),events::add) } }
+        }
+    }
+    /** Forget asks first (PLA-488): the name, the password line, Forget and Keep, both reachable above the fold. */
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+    private fun ask(network: String?, shown: String) = paparazzi.snapshot {
+        PlainphoneTheme {
+            val view=LocalView.current as ViewRootForTest
+            val events=mutableListOf<WifiForgetConfirmEvent>()
+            Box(Modifier.onGloballyPositioned {
+                val nodes=view.semanticsOwner.getAllSemanticsNodes(mergingEnabled=true)
+                val texts=nodes.flatMap{it.config.getOrElse(SemanticsProperties.Text){emptyList()}}.map{it.text}
+                assertTrue("Forget this network?" in texts)
+                assertTrue(shown in texts)
+                assertTrue("You will need its password to join it again." in texts)
+                for(label in listOf("Forget","Keep")) {
+                    val node=nodes.single{it.config.getOrElse(SemanticsProperties.Text){emptyList()}.any{it.text==label}}
+                    assertTrue(node.boundsInRoot.bottom<=640f)
+                    assertTrue(node.boundsInRoot.height>=48f)
+                    node.config[SemanticsActions.OnClick].action!!.invoke()
+                }
+                assertEquals(listOf(WifiForgetConfirmEvent.Forget, WifiForgetConfirmEvent.Keep), events.distinct())
+            }) { HomeTestFrame { WifiForgetConfirmScreen(WifiForgetConfirmUiState(network), events::add) } }
         }
     }
     companion object {
