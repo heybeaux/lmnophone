@@ -7,6 +7,7 @@ import java.io.IOException
 import java.security.MessageDigest
 import org.plainphone.device.voice.VoiceDraftStore
 import org.plainphone.device.voice.VoicePerson
+import org.plainphone.device.voice.VoiceSendPort
 
 /** The Android side of a send. [AndroidMmsPort] is the real one. */
 interface MmsPort {
@@ -122,11 +123,11 @@ class VoiceSender(
     private val processId: String,
     private val clock: () -> Long,
     private val newAttemptId: () -> String,
-) {
+) : VoiceSendPort {
     /** Called with the person id after a result is recorded. */
     var onUpdate: (String) -> Unit = {}
 
-    fun send(person: VoicePerson): SendView {
+    override fun send(person: VoicePerson): SendView {
         if (!VoiceSendStore.ID.matches(person.id)) return SendView(SendStatus.NotSent(SendProblem.OtherError), false, 0)
         val previous = store.read(person.id)
         val failures = previous?.failures ?: 0
@@ -187,10 +188,10 @@ class VoiceSender(
     }
 
     /** What to show for [personId], or null when nothing was sent. */
-    fun view(personId: String): SendView? = store.read(personId)?.let(::shown)
+    override fun view(personId: String): SendView? = store.read(personId)?.let(::shown)
 
     /** The person has seen the outcome. */
-    fun seen(personId: String) {
+    override fun seen(personId: String) {
         val record = store.read(personId) ?: return
         if (!record.seen) try { store.write(personId, record.copy(seen = true)) } catch (_: IOException) { }
     }

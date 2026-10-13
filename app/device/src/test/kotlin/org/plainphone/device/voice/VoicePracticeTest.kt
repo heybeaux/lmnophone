@@ -168,7 +168,7 @@ class VoicePracticeTest {
         for (e in events(Random(1)).take(200)) if (e !is RecordingFinished) assertEquals(Transition(s), reduce(s, e))
     }
 
-    /** Random walks: no send, the recorder only runs while Recording is shown, and every exit finishes it. */
+    /** Random walks without Send or Try again (PLA-499): no send, the recorder only runs while Recording is shown, and every exit finishes it. */
     @Test fun invariantsHoldOnRandomWalks() {
         val random = Random(457)
         repeat(2_000) {
@@ -185,7 +185,8 @@ class VoicePracticeTest {
                     }
                     is FinishRecording -> { assertTrue("finish only a running recorder: $s $e", recorderRunning); recorderRunning = false }
                     is StartPlayback -> assertTrue(t.state is Review && (t.state as Review).playing)
-                    is Speak, StopPlayback, is DeleteDraft, Leave -> Unit
+                    is SendDraft -> fail("a send without Send or Try again: $s $e")
+                    is Speak, StopPlayback, is DeleteDraft, Leave, is SendSeen -> Unit
                 }
                 if (recorderRunning) assertTrue("recorder running only while Recording is shown: $s $e -> ${t.state}", t.state is Recording)
                 val next = t.state.person
@@ -195,9 +196,10 @@ class VoicePracticeTest {
                 s = t.state
             }
         }
-        assertEquals(6, VoiceState::class.java.declaredClasses.count { VoiceState::class.java.isAssignableFrom(it) })
-        assertTrue(VoiceState::class.java.declaredClasses.none { it.simpleName.contains("Sent") })
-        assertTrue(VoiceEffect::class.java.declaredClasses.none { it.simpleName.contains("Send") })
+        // The six practice states plus Sending, Sent and Not sent; the one send effect is SendDraft (VoiceSendFlowTest).
+        assertEquals(9, VoiceState::class.java.declaredClasses.count { VoiceState::class.java.isAssignableFrom(it) })
+        assertEquals(listOf("SendDraft"), VoiceEffect::class.java.declaredClasses.map { it.simpleName }
+            .filter { it.startsWith("Send") && !it.endsWith("Seen") })
     }
 
     private fun events(random: Random) = generateSequence {

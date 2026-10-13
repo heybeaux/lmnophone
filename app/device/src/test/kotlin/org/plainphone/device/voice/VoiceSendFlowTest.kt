@@ -209,6 +209,12 @@ class VoiceSendFlowTest {
         cap: () -> Long = { 120_000L }) = VoicePracticeController(recorder, Player(), store, MicAccess { null }, speaker,
         Gate(), { now }, sender = sender, people = people, recordCapMs = cap).also { it.open() }
 
+    /** VoiceSender on a confirmed Sent: the record says Sent and LMNOPhone's own draft is deleted. */
+    private fun sentLikeVoiceSender(personId: String) {
+        sender.views[personId] = SendView(SendStatus.Sent, false, 0)
+        store.delete(personId)
+    }
+
     private fun VoicePracticeController.recorded(person: VoicePerson) {
         dispatch(Choose(person)); dispatch(Record); now += 2_000; dispatch(Stop)
         assertTrue(state is VoiceState.Review)
@@ -253,7 +259,7 @@ class VoiceSendFlowTest {
     @Test fun anAnswerForSomeoneNotOnScreenWaitsForNextTime() {
         val c = controller()
         c.recorded(sam); c.dispatch(Send); c.dispatch(Back)
-        sender.views["sam"] = SendView(SendStatus.Sent, false, 0)
+        sentLikeVoiceSender("sam")
         c.sendChanged("sam")
         assertEquals(VoiceState.ChoosePerson, c.state)
         assertTrue(sender.seen.isEmpty())
@@ -322,7 +328,7 @@ class VoiceSendFlowTest {
         c.recorded(sam); c.dispatch(Send)
         val place = c.place()
         assertEquals(VoicePlace("sam", VoicePlace.Screen.Send), place)
-        sender.views["sam"] = SendView(SendStatus.Sent, false, 0)
+        sentLikeVoiceSender("sam")
         val again = controller()
         speaker.spoken.clear()
         again.open(place)
