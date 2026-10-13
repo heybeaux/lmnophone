@@ -11,6 +11,14 @@ class PinScreenFlowTest {
         lateinit var entry: (PinEntry) -> Unit
         lateinit var enrolled: (PinEnrollmentResult) -> Unit
         lateinit var checked: (PinAccessResult) -> Unit
+        lateinit var recovered: (RecoveryAccessResult) -> Unit
+        var recoveries = 0
+        var rotations = 0
+        override fun recoveryWaits(done: (org.plainphone.policy.CredentialWaits?) -> Unit) { done(org.plainphone.policy.CredentialWaits(0, 0)) }
+        override fun rotateRecovery(pin: CharArray, done: (RecoveryAccessResult) -> Unit) { rotations++; pin.fill('\u0000'); recovered = done }
+        override fun recover(code: CharArray, newPin: CharArray, done: (RecoveryAccessResult) -> Unit) {
+            recoveries++; code.fill('\u0000'); newPin.fill('\u0000'); recovered = done
+        }
         var checks = 0
         var starts = 0
         lateinit var started: (org.plainphone.policy.WaitingOutcome) -> Unit
@@ -69,7 +77,9 @@ class PinScreenFlowTest {
     @Test fun enrollmentRequiresFreshEntryAndWrongPinCannotOpenMenu() {
         val p = Port(); val f = PinScreenFlow(p) {}
         f.open(); p.entry(PinEntry.SETUP)
-        f.submit(CharArray(6) { '1' }); p.enrolled(PinEnrollmentResult.CREATED)
+        f.submit(CharArray(6) { '1' }); p.enrolled(PinEnrollmentResult.Created(OneTimeRecoveryCode(CharArray(32) { 'a' })))
+        assertEquals(PinPage.RECOVERY_ISSUED, f.state.page)
+        f.codeWritten()
         assertEquals(PinPage.ENTER, f.state.page)
         f.submit(CharArray(6) { '2' }); p.checked(PinAccessResult.Wrong(0))
         assertEquals(PinPage.ENTER, f.state.page); assertTrue(f.state.wrong)
@@ -171,4 +181,36 @@ class PinScreenFlowTest {
         f.open(); p.entry(PinEntry.ENTER)
         f.changePin(); assertEquals(PinPage.ENTER, f.state.page)
     }
+    @Test fun recoveryDropsChangeGrantRequiresNewPinTwiceAndDoesNotOpenMenu() {
+        val (p, f) = menu()
+        f.changePin(); f.useRecovery()
+        assertEquals(PinPage.RECOVERY, f.state.page)
+        assertTrue(p.closedChanges.isNotEmpty())
+        f.submitRecovery(CharArray(32) { 'a' })
+        assertEquals(PinPage.RECOVERY_NEW, f.state.page)
+        f.submitNewPin(pin('2'), pin('3')); assertEquals(0, p.recoveries)
+        f.submitNewPin(pin('2'), pin('2')); f.submitNewPin(pin('2'), pin('2'))
+        assertEquals(1, p.recoveries)
+        p.recovered(RecoveryAccessResult.WrongCode(30_000, 20_000))
+        assertEquals(PinPage.RECOVERY_LOCKED, f.state.page)
+        assertEquals(20_000L, f.state.pinWaitMillis)
+        f.enterPin(); assertEquals(PinPage.ENTER, f.state.page)
+    }
+    @Test fun rotationRequiresItsOwnPinAndCodeIsClearedOnExitAndStaleCallbacks() {
+        val (p, f) = menu()
+        f.newRecoveryCode(); assertEquals(PinPage.RECOVERY_PIN, f.state.page)
+        f.submit(pin('1')); assertEquals(1, p.rotations)
+        val raw = CharArray(32) { 'b' }; val once = OneTimeRecoveryCode(raw)
+        p.recovered(RecoveryAccessResult.Issued(once))
+        assertEquals(PinPage.RECOVERY_ISSUED, f.state.page)
+        assertNull(once.take())
+        assertFalse(f.state.toString().contains(raw.concatToString()))
+        f.codeWritten(); assertTrue(raw.all { it == '\u0000' })
+        assertEquals(PinPage.ENTER, f.state.page)
+        val lateRaw = CharArray(32) { 'c' }
+        f.close(); p.recovered(RecoveryAccessResult.Issued(OneTimeRecoveryCode(lateRaw)))
+        assertTrue(lateRaw.all { it == '\u0000' })
+        assertEquals(PinPage.LOADING, f.state.page)
+    }
+
 }
