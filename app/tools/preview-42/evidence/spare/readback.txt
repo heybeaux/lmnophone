@@ -1,0 +1,15 @@
+build=42
+apk_sha256=678123cb01a298d6d3f504910502575aa7152afdc8000d4420ec9e9051ea977a
+branch=release/preview-42@8008d947 (release/preview-41@cc75b664 + PLA-484 tests 280cfa93 + fix 96c442cc; review PLA-485 APPROVE, no findings)
+signer_sha256=99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd (same as builds 36-41)
+installed_local=2026-10-13 02:57:27 PDT (2026-10-13 09:57:27Z, lastUpdateTime)
+upgrade=41-to-42-in-place, gate exit 0 (242 PASS lines; distinct check set identical to build 41 except the version line; restart included)
+owner=Device Owner retained, lock task LOCKED
+emergency=More>Emergency exactly 911 (gate), zero Telecom calls
+safety_diff=version and lastUpdateTime only vs build 41 (location 0, font 1.0, ring 5, saved-list hash d32466f0bb5f98e0, bonded 0, TalkBack off, mic grant POLICY_FIXED, SystemUpdatePolicy type 3); unchanged again after the exercise
+exercised_on_spare (synthetic people list Sam/Jo/Alex; no recording, nothing sent), 03:03-03:07 PDT:
+  More > Practice voice messages: people list, intro spoken once (1 TTS AudioTrack start, uid 10316 speech)
+  font 1.3 / 2.0 / 1.0 (each read back): MainActivity destroyed and recreated each time (wm_on_destroy/on_create), people list shown each time, TTS starts stay 1 (intro not spoken again), lock task LOCKED
+  Back to More, reopen: intro spoken once more (TTS starts 2) - a fresh open still introduces
+  font restored 1.0, read back 1.0; Back x2 to Home; lock task LOCKED; MIC clients 0; Telecom calls 0
+not exercised on spare: what was heard by ear (driver is remote; audio-track readback only); display size/locale/dark theme recreations (same path, not driven); TalkBack on

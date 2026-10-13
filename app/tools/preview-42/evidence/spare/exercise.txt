@@ -1,0 +1,9 @@
+open (fresh, from More): 1 TTS start(s)
+font 1.3 readback=1.3 people_list_shown=1 tts_starts_total=1 mLockTaskModeState=LOCKED
+font 2.0 readback=2.0 people_list_shown=1 tts_starts_total=1 mLockTaskModeState=LOCKED
+font 1.0 readback=1.0 people_list_shown=1 tts_starts_total=1 mLockTaskModeState=LOCKED
+back to More, reopen (fresh): tts_starts_total=2
+final font=1.0
+mLockTaskModeState=LOCKED
+telecom_calls=0
+mic_clients=0

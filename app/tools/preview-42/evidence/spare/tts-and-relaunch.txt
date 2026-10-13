@@ -1,0 +1,12 @@
+# TTS (uid 10316, USAGE_MEDIA speech) player starts, dumpsys audio PlayerBase log
+10-13 03:03:40:742 player piid:103 event:started
+# after Back to More and a fresh reopen
+10-13 03:03:40:742 player piid:103 event:started
+10-13 03:06:31:642 player piid:111 event:started
+# MainActivity relaunches (events log)
+10-13 03:05:36.748  2567  2567 I wm_on_destroy_called: [188085213,org.plainphone.MainActivity,performDestroy,3
+10-13 03:05:36.764  2567  2567 I wm_on_create_called: [188085213,org.plainphone.MainActivity,performCreate,5,0
+10-13 03:05:45.878  2567  2567 I wm_on_destroy_called: [188085213,org.plainphone.MainActivity,performDestroy,0
+10-13 03:05:45.900  2567  2567 I wm_on_create_called: [188085213,org.plainphone.MainActivity,performCreate,8,0
+10-13 03:05:54.921  2567  2567 I wm_on_destroy_called: [188085213,org.plainphone.MainActivity,performDestroy,1
+10-13 03:05:54.947  2567  2567 I wm_on_create_called: [188085213,org.plainphone.MainActivity,performCreate,7,0
