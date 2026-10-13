@@ -1,0 +1,20 @@
+PLA-494 emulator check: AVD pla460-policy-a35 API 35, read-only, port 5966. PINs synthetic, emulator only, not recorded.
+APK sha256 db6224ca8d1664a660a10ecdee13a588d0646617c44db74a1a8031711ea08679
+before: version=versionCode=43 mLockTaskModeState=LOCKED DO=1 calls=0
+install 44 start 2026-10-13T18:23:11Z
+Success
+install 44 end 2026-10-13T18:23:12Z
+after install: versionCode=44 versionName=0.1.0-preview-44 LOCKED DO=1 calls=0
+== menu opened with the 43 PIN: Your settings|Your settings|You hold the PIN. LMNOPhone adds
+== Change PIN: Your settings|Your PIN|Enter your PIN to make changes on this phone.|PIN|Forgot PIN? Use recovery code|Continue
+== Back on old-PIN page -> Your settings|Your settings|You hold the PIN. LMNOPhone adds
+== new PIN page: Your settings|Choose a new PIN|PIN|Type it again|Continue
+== different second entry: Your settings|Choose a new PIN|The two PINs aren't the same. Try again.|PIN|Type it again|Continue
+== Back on new-PIN page -> Your settings|Your settings|You hold the PIN. LMNOPhone adds
+== result: Your settings|Change PIN|PIN changed.|OK
+== OK -> Your settings|Your settings|You hold the PIN. LMNOPhone adds
+== old PIN after change: Your settings|Your PIN|Enter your PIN to make changes on this phone.|That PIN isn't right. Try again.|PIN|Forgot PIN? Use recovery code|Continue
+== new PIN: Your settings|Your settings|You hold the PIN. LMNOPhone adds
+== change back: Your settings|Change PIN|PIN changed.|OK
+== original PIN after change back: Your settings|Your settings|You hold the PIN. LMNOPhone adds
+state: version=versionCode=44 mLockTaskModeState=LOCKED DO=1 calls=0
