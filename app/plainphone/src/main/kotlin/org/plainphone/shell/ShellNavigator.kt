@@ -18,6 +18,8 @@ sealed interface ShellRoute {
     data object Home : ShellRoute
     data object More : ShellRoute
     data object About : ShellRoute
+    /** Voice messages, practice only (PLA-457): nothing is sent. */
+    data object VoicePractice : ShellRoute
     data object WifiSettings : ShellRoute
     data object BluetoothDiscovery : ShellRoute
     data class BluetoothDevice(val name: String) : ShellRoute
@@ -110,6 +112,7 @@ class ShellNavigator(
         MoreEvent.OpenPhoneSettings -> push(s, ShellRoute.PhoneSettings)
         MoreEvent.OpenTrustedPerson -> Step(s, ShellEffect.OpenTrustedPerson)
         MoreEvent.OpenAbout -> push(s, ShellRoute.About)
+        MoreEvent.OpenVoicePractice -> push(s, ShellRoute.VoicePractice)
         MoreEvent.AddApp,
         MoreEvent.OpenSelfManagedSettings -> if (testBuild) notInBuild(s) else Step(s)
     }
