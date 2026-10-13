@@ -1,0 +1,5 @@
+# recovery code from remove PIN
+'Not in this test build yet' '' enabled=true [60,177][892,265]
+'This part of LMNOPhone comes in a later test build. Nothing was changed or sent.' '' enabled=true [60,305][1020,426]
+'OK' '' enabled=true [506,508][575,564]
+camera installed=true hidden=false

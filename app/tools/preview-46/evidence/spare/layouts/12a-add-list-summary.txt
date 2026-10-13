@@ -1,0 +1,11 @@
+# Add a hidden app list (private names withheld: the spare's hidden apps include the owner's own apps)
+heading: 'Add a hidden app'; footer: 'Go back'
+eligible apps listed: 31
+Camera listed: True
+Chrome listed: False
+Play Store listed: False
+Settings listed: False
+Files listed: False
+Google listed: False
+Firefox listed: False
+browser/store/settings-like labels: []

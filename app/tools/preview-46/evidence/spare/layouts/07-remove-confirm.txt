@@ -1,0 +1,7 @@
+camera: User 0: ceDataInode=<n> deDataInode=<n> installed=true hidden=false suspended=false firstInstall=firstInstallTime=2026-10-0812:56:34 dpmHidden=1
+# confirm
+'For Sam' '' enabled=true [60,137][1020,197]
+'Remove Camera?' '' enabled=true [60,337][668,425]
+"Camera will disappear from the home screen straight away. Nothing is deleted: if you add it again later, Alex's things in it will still be there." '' enabled=true [60,465][1020,716]
+'Go back' '' enabled=true [448,2012][633,2068]
+'Remove' '' enabled=true [452,2162][629,2218]

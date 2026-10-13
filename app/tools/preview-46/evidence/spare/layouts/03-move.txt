@@ -1,0 +1,22 @@
+font=1.0
+Your settings|Your PIN|Enter your PIN to make changes on this phone.|PIN|Forgot PIN? Use recovery code|Continue
+
+# after Move Camera down
+'For Sam' '' enabled=true [60,137][1020,197]
+'Apps on this phone' '' enabled=true [60,337][724,425]
+'Maps' '' enabled=true [60,511][205,580]
+'' 'Move Maps up' enabled=true [60,665][1020,805]
+'Move up' '' enabled=true [100,705][288,761]
+'' 'Move Maps down' enabled=true [60,845][1020,985]
+'Move down' '' enabled=true [100,885][351,941]
+'Camera' '' enabled=true [60,1071][273,1140]
+'' 'Move Camera up' enabled=true [60,1225][1020,1365]
+'Move up' '' enabled=true [100,1265][288,1321]
+'' 'Move Camera down' enabled=true [60,1405][1020,1545]
+'Move down' '' enabled=true [100,1445][351,1501]
+'Messages' '' enabled=true [60,1585][324,1654]
+'Always on' '' enabled=true [60,1694][281,1750]
+'Phone' '' enabled=true [60,1790][229,1859]
+'Always on' '' enabled=true [60,1899][281,1955]
+'Add a hidden app' '' enabled=true [60,2041][541,2110]
+'Go back' '' enabled=true [448,2172][633,2228]

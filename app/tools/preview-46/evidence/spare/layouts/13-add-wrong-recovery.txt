@@ -1,0 +1,14 @@
+# PIN
+For Sam|Sam's PIN|Enter your PIN to look after Alex's phone.|LMNOPhone asks for your PIN for each change, so nobody else can make one if the phone is put down.|PIN|Forgot PIN? Use recovery code|Continue
+
+# after wrong PIN
+For Sam|Sam's PIN|Enter your PIN to look after Alex's phone.|LMNOPhone asks for your PIN for each change, so nobody else can make one if the phone is put down.|That PIN isn't right. Try again.|PIN|Forgot PIN? Use recovery code|Continue
+
+camera installed=true hidden=true starter=0
+# recovery code from add PIN
+Not in this test build yet|This part of LMNOPhone comes in a later test build. Nothing was changed or sent.|OK
+
+# after OK
+For Sam|Apps on this phone|Maps|Move up|Move down|Messages|Always on|Phone|Always on|Add a hidden app|Go back
+
+camera installed=true hidden=true

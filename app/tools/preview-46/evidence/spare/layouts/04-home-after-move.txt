@@ -1,0 +1,7 @@
+# after Move up on top item (Maps):
+For Sam|Apps on this phone|Maps|Move up|Move down|Camera|Move up|Move down|Messages|Always on|Phone|Always on|Add a hidden app|Go back
+
+home order: Sam adds apps with you, For Sam and Jo, Where Sam or Jo add apps, with a PIN, Practice voice messages, Record and listen. Nothing is sent., About this phone
+order file: MAPS CAMERA 
+home order: Maps, Camera, Messages, Phone
+2:41|Tuesday 13 October|Camera|Maps|Messages|Phone|More
