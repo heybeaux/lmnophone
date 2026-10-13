@@ -63,6 +63,16 @@ class VoicePracticeTest {
             reduce(Saving(sam, older), RecordingFinished(null)).state)
     }
 
+    /** A take that turned out silent is the privacy-toggle screen, with the earlier draft kept (PLA-475). */
+    @Test fun silentTakeIsTheMicrophoneOffScreen() {
+        for (notice in listOf(null, VoiceNotice.Interrupted, VoiceNotice.MaxLength)) {
+            assertEquals(Transition(VoiceState.MicUnavailable(sam, MicProblem.PrivacyToggle, older),
+                listOf(Speak(VoicePrompt.MicOff, sam))), reduce(Saving(sam, older, notice), RecordingFinished(null, silenced = true)))
+        }
+        assertEquals(VoiceState.MicUnavailable(sam, MicProblem.PrivacyToggle, null),
+            reduce(Saving(sam, null), RecordingFinished(null, silenced = true)).state)
+    }
+
     @Test fun recorderThatCannotStartIsBusyAndKeepsThePersonOrDraft() {
         val t = reduce(Recording(sam, null), CouldNotStart)
         assertEquals(Transition(Person(sam, VoiceNotice.MicBusy),
