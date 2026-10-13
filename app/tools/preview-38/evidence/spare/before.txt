@@ -1,0 +1,11 @@
+version=versionName=0.1.0-preview-37
+lastUpdate=lastUpdateTime=2026-10-1215:59:12
+saved_networks_sha=d32466f0bb5f98e0
+bonded=0
+location=0
+font=1.0
+ring=5
+mic=
+owner= admin=ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
+locktask=mLockTaskModeState=LOCKED
+sup=SystemUpdatePolicy (type: 3, windowStart: 0, windowEnd: 0, freezes: [])

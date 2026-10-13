@@ -1,0 +1,12 @@
+build=38
+apk_sha256=5a2480e515acb78483c51ac6cd709b8fb25d4ef0d1001b6e18d19a80f47bbc8a
+branch=release/preview-38@25e3a79c (release/preview-37@fd4b2e09 + pla-voice/slice-1@0e5125f7; Verifier PLA-465 REQUEST CHANGES -> PLA-469 delta APPROVE)
+signer_sha256=99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd (same as builds 36/37)
+installed_local=2026-10-12 20:43:34 PDT (2026-10-13 03:43:34Z, lastUpdateTime)
+upgrade=37-to-38-in-place, gate exit 0 (244 PASS incl. restart)
+owner=Device Owner retained, testOnly retained, lock task LOCKED
+system_update_policy=SystemUpdatePolicy (type: 3, windowStart: 0, windowEnd: 0, freezes: []) kept
+emergency=More>Emergency and Phone both exactly 911 (gate), zero Telecom calls
+safety_diff=none (location 0, font 1.0, ring 5, saved-list hash d32466f0bb5f98e0, bonded 0)
+exercised: More on the spare shows NO "Voice messages (practice)" row: ShellUiMapper.more never set voicePractice.
+  Voice practice is unreachable in build 38. Fixed in pla-voice/slice-1@abf05d35 (test 301c7751) -> build 39.
