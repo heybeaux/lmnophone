@@ -36,29 +36,37 @@ class VoicePracticeScreenshotTest(private val scale: Float, private val name: St
 
     @Test fun choosePerson() = shot(VoiceUiState.ChoosePerson(listOf(person, VoicePersonUi("jo", "Jo"),
         VoicePersonUi("alex", "Alex")))) { texts, nodes ->
-        assertTrue("Who is it for?" in texts)
+        assertTrue("Who do you want to talk to?" in texts)
         for (n in listOf(name, "Jo", "Alex")) assertTrue(n, nodes.any { n in label(it) && it.clickable() })
     }
     @Test fun person() = shot(VoiceUiState.Person(person)) { texts, nodes ->
         assertTrue(name in texts); bigButton(nodes, "Record"); assertTrue("Hear name" in texts)
     }
     @Test fun personNothingRecorded() = shot(VoiceUiState.Person(person, VoiceUiNotice.NothingRecorded)) { texts, nodes ->
-        assertTrue("Nothing was recorded." in texts); bigButton(nodes, "Record")
+        assertTrue("That was too short." in texts); bigButton(nodes, "Record")
     }
     @Test fun recording() = shot(VoiceUiState.Recording(person)) { texts, nodes ->
-        assertTrue("Recording" in texts); bigButton(nodes, "Stop")
+        assertTrue("Recording – practice" in texts); bigButton(nodes, "Stop")
         assertFalse(nodes.any { "Record" in label(it) && it.clickable() })
     }
     @Test fun review() = shot(VoiceUiState.Review(person, playing = false)) { _, nodes ->
         bigButton(nodes, "Listen")
         for (action in listOf("Record again", "Delete")) assertTrue(action, nodes.any { action in label(it) && it.clickable() })
     }
-    @Test fun reviewPlaying() = shot(VoiceUiState.Review(person, playing = true)) { _, nodes -> bigButton(nodes, "Stop") }
+    @Test fun reviewPlaying() = shot(VoiceUiState.Review(person, playing = true)) { _, nodes -> bigButton(nodes, "Stop listening") }
     @Test fun reviewMaxLength() = shot(VoiceUiState.Review(person, notice = VoiceUiNotice.MaxLength)) { texts, _ ->
-        assertTrue("That is the longest a message can be." in texts)
+        assertTrue("That's as long as a message can be." in texts)
     }
     @Test fun reviewInterrupted() = shot(VoiceUiState.Review(person, notice = VoiceUiNotice.Interrupted)) { texts, _ ->
         assertTrue("Recording stopped." in texts)
+    }
+    @Test fun personMicBusy() = shot(VoiceUiState.Person(person, VoiceUiNotice.Busy)) { texts, nodes ->
+        assertTrue("The microphone is busy. Try again in a moment." in texts); bigButton(nodes, "Record")
+    }
+    /** V9: an unsent message from earlier names its person and offers Listen and Delete, never Send. */
+    @Test fun reviewUnsent() = shot(VoiceUiState.Review(person, notice = VoiceUiNotice.Unsent)) { texts, nodes ->
+        assertTrue("Your message to $name isn't sent yet" in texts); bigButton(nodes, "Listen")
+        assertTrue(nodes.any { "Delete" in label(it) && it.clickable() })
     }
     @Test fun micPermission() = shot(VoiceUiState.MicOff(person, VoiceUiMicProblem.NotAllowed)) { texts, nodes ->
         assertTrue("The microphone is not allowed." in texts); bigButton(nodes, "Try again")
@@ -90,7 +98,7 @@ class VoicePracticeScreenshotTest(private val scale: Float, private val name: St
                     val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
                     val texts = nodes.flatMap { n -> n.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
                     // Every screen says it is a practice; nothing offers to send.
-                    assertTrue("Practice — not sent" in texts)
+                    assertTrue("Practice – not sent" in texts)
                     assertFalse(nodes.any { label(it).contains("Send", ignoreCase = true) })
                     assertFalse(texts.any { '!' in it })
                     assertTrue(nodes.any { label(it).startsWith("‹ ") && it.clickable() })
