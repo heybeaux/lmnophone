@@ -5,6 +5,9 @@ Telegram 3474). Spec: `openspec/changes/add-voice-messages/`. Mockups: [voice-me
 Status: **draft copy for the local prototype ([PLA-457](/PLA/issues/PLA-457)) and the Lead.** Sending depends on the
 transport the Lead chooses ([PLA-458](/PLA/issues/PLA-458)); every "sent" below means what that transport can truly
 report, nothing more.
+Addendum [PLA-501](/PLA/issues/PLA-501): Beaux chose **A + B**. LMNOPhone's own screens send voice messages as
+picture messages (MMS, A), and chat (RCS) stays on in Messages (B). Changes: **Messages with {person}** on V2, V12
+split by reply kind, and the "Sent" / replies line for the trusted person (VT1, VT4).
 
 Words, placeholders and the never-say list are in [README.md](README.md). Screen IDs (V1, V2…) never appear on
 screen. Each screen gives:
@@ -74,6 +77,7 @@ Changes from the proposal, and why:
 | Delete | a cross (✕) | "Delete" |
 | Back | `‹` (already in use across LMNOPhone) | "Back" |
 | Family (Home row only) | two simple head-and-shoulders outlines | "Family" |
+| Messages (V2 only) | a speech-bubble outline | "Messages with {person}" |
 
 Person pictures: a photo chosen by the trusted person, or, with no photo, the person's **first letter** in a large
 black circle (white letter). Pictures are shown in **black and white** (greyscale) in LMNOPhone, like everything else.
@@ -122,19 +126,39 @@ order).
 
 **On screen**
 - The person's picture, large, at the top, and their name under it in `title`.
-- If Sam has sent a message not yet played: a large outline button **▶ Listen to Sam** above the black button (see V12).
+- Directly under the name, always: a large outline button **Messages with Sam**, with the Messages symbol before
+  the words.
+- If Sam has sent a message not yet played: a large outline button **▶ Listen to Sam**, under Messages with Sam and
+  above the black button (see V12).
 - Black button (pinned to the bottom): **● Record**
 - **‹ Back** (text link above it).
 
-**Spoken** (when the screen opens): **"Sam. Tap Record to talk to Sam."**
+Order, top to bottom: picture, name, **Messages with Sam**, (**▶ Listen to Sam**), **‹ Back**, **● Record**.
+Messages with Sam is always the button nearest the name, and never next to Record, so it is learned by place and
+can't be hit when reaching for Record. At least 24 dp between buttons, as everywhere here.
+
+**Spoken** (when the screen opens): **"Sam. Tap Record to talk to Sam, or Messages to see what Sam sent."**
 If Sam has a new message: **"Sam. Sam sent you a message. Tap Listen to hear it, or Record to talk to Sam."**
 
 **Tapping the picture or name:** says **"Sam."** again.
 
 **Tapping ● Record:** goes to V3. If the microphone can't be used, goes to V10 instead and never starts.
 
+**Tapping Messages with Sam:** says **"Opening Messages."**, then opens the phone's Messages app straight at the
+conversation with Sam's number (the number from VT2). Back in Messages, or Family on Home, returns here, and V2
+speaks again as it opens. If Messages can't open, Alex stays on V2 and sees **Messages didn't open.**, spoken
+**"Messages didn't open. Ask Sam for help."** (`{tp}`).
+
 **Notes**
-- If there is already an unsent message for Sam, this screen is not shown: V9 shows instead.
+- If there is already an unsent message for Sam, this screen is not shown: V9 shows instead. V9 has no Messages
+  button (it is about the unsent message); Messages on Home still works.
+- **Messages with Sam is always shown**, whether or not anything new is there. LMNOPhone can't see chat (RCS)
+  messages, so it can't know. Nothing in LMNOPhone ever says "no new messages".
+- Accessibility name: "Messages with Sam, opens Messages".
+- Messages is Google's app, not LMNOPhone's: LMNOPhone doesn't speak there, and the words there are Google's. Alex
+  plays a voice message there with its own play button. The trusted person shows this once (VT4).
+- It opens only the Messages app that the Home **Messages** row already opens. It adds no new app and no new way
+  out of LMNOPhone.
 
 ---
 
@@ -363,12 +387,22 @@ recording.
 
 ## V12. A message from a family person
 
-How the reply arrives depends on the transport (PLA-453/PLA-458). This is the design if LMNOPhone can read the reply
-as a voice recording from a family person on the list. If it can't, the person hears replies in the Messages app,
-and this screen isn't built.
+Replies come in two kinds (PLA-501, A + B). Which kind arrives is chosen by Sam's phone and the network, not by
+Alex or LMNOPhone:
 
-**When it arrives:** the Messages app's usual notification sound plays (LMNOPhone adds no sound of its own). The
-Family row on Home doesn't change (no badges). On V1, Sam's card shows the Play symbol and **New message**.
+| Reply kind | Usually from | Where Alex hears it |
+|---|---|---|
+| Picture message (MMS) with a voice recording | Phones where chat is off or can't be used at that moment | **In LMNOPhone**: V1 shows **New message**, V2 shows **▶ Listen to Sam** (V12a) |
+| Chat message (RCS) | Phones with chat (RCS) on, which most Android phones have: most family replies | **Only in Messages**: V2 → **Messages with Sam**, then Messages' own play button |
+
+**When either arrives:** the Messages app's usual notification sound plays (LMNOPhone adds no sound of its own). The
+Family row on Home doesn't change (no badges).
+- **Picture message:** on V1, Sam's card shows the Play symbol and **New message**; V12a below.
+- **Chat message:** nothing in LMNOPhone changes, because LMNOPhone can't see it. Alex finds it with **Messages with
+  Sam** on V2 ("…or Messages to see what Sam sent."). LMNOPhone never says there is nothing new.
+
+What Alex is told stays simple and true: Listen plays what LMNOPhone has; Messages with Sam shows everything Sam
+sent. Alex isn't asked to know which kind a reply is. The longer explanation is for the trusted person (VT4).
 
 ### V12a. Listen to Sam
 
@@ -386,6 +420,7 @@ again**. **● Record** stays below it, so replying is one tap.
   message." between. Play again replays the last one heard.
 - Only the latest 5 messages from Sam can be played here. Older ones stay in the Messages app.
 - A voice message from someone **not** on the family list never shows here. It stays in the Messages app.
+- A chat (RCS) reply never shows here, even from Sam. It is only in Messages (Messages with Sam).
 - Picture messages without sound (a photo) aren't shown here in this version.
 
 ---
@@ -418,7 +453,7 @@ phone.
 |---|---|---|
 | An unsent message (after Stop, Back, an interruption, No signal or Not sent) | LMNOPhone's own private storage on the phone, one per family person | Sent, deleted, replaced by Record again, or **7 days** after it was recorded, whichever is first. Then erased. |
 | A sent message | Wherever the chosen transport keeps sent messages (for picture messages, the phone's own message store, like any text) | As long as that store keeps it. LMNOPhone erases **its own** copy as soon as the send succeeds. |
-| A message from a family person | Where the transport puts it (the Messages app) | As the Messages app keeps it. LMNOPhone keeps no copy. |
+| A message from a family person | The Messages app (picture messages also in the phone's message store, which LMNOPhone reads to play them; chat messages only in Messages) | As the Messages app keeps it. LMNOPhone keeps no copy. |
 | A recording shorter than 1 second | Nowhere | Dropped at once. |
 
 - Nothing is backed up, uploaded or sent anywhere else. No one can listen to an unsent message except on this phone,
@@ -451,6 +486,9 @@ The person using the phone can see everything that happens.
   fails: **LMNOPhone couldn't turn on the microphone. Try again, or ask {helper}.**
 - When on: the list of family people (picture and name, `›`), then **Add a person**, then text link **Turn off voice
   messages** (confirm: **Turn off voice messages? Messages Alex hasn't sent will be erased.** / **Turn off**).
+- When on, under Add a person, in `body`: **"Sent" means the phone company accepted the message, not that it was
+  heard. Replies may show only in Messages; Alex opens them with "Messages with" on each person's screen.** Then the
+  text link **How replies work ›** (VT4).
 
 ### VT2. Add or change a family person
 
@@ -469,6 +507,22 @@ Fields, one per screen:
 - Adding or removing a person is **not** a waiting change: it can only narrow or widen who Alex talks to by voice,
   and Sam is there with the phone. (Lead: confirm this fits trusted-person-controls.)
 
+### VT4. How replies work
+
+Reached from VT1 (text link). Read only; nothing to set.
+- Title: **How replies work**
+- Body:
+  **Alex's messages go as picture messages, through the phone company. "Sent" means the phone company accepted
+  it. It doesn't mean it arrived or was heard.**
+
+  **Family can reply in two ways. A voice reply sent as a picture message plays on Alex's Family screens. A reply
+  sent as a chat message (RCS), which Android phones with chat turned on in Messages usually send, shows only in the
+  Messages app. LMNOPhone can't see or play those.**
+
+  **To hear them, Alex taps "Messages with" on that person's screen. Messages opens at that person's conversation,
+  and Alex taps the play button there. Show Alex this once.**
+- Text link: **‹ Back** (to VT1).
+
 ### VT3. Text Sam gets
 
 None. Voice messages add no LMNOPhone text to the trusted person. Sam is not told when Alex sends or gets a message.
@@ -486,9 +540,12 @@ Placeholders: `{person}` (family person's shown name), `{person_spoken}` (spoken
 | V1 title | Who do you want to talk to? | Who do you want to talk to? |
 | V1 new | New message | {person} sent you a message. |
 | V1 unsent | Not sent yet | – |
-| V2 | {person} · ● Record · ‹ Back | {person}. Tap Record to talk to {person}. |
+| V2 | {person} · Messages with {person} · ● Record · ‹ Back | {person}. Tap Record to talk to {person}, or Messages to see what {person} sent. |
 | V2 with new | ▶ Listen to {person} | {person}. {person} sent you a message. Tap Listen to hear it, or Record to talk to {person}. |
 | V2 picture tap | – | {person}. |
+| V2 messages · `voice_open_messages` (new) | Messages with {person} | Opening Messages. (`voice_say_opening_messages`, new) |
+| V2 messages, TalkBack · `voice_open_messages_desc` (new) | – | Messages with {person}, opens Messages |
+| V2 messages failed · `voice_messages_failed` (new) | Messages didn't open. | Messages didn't open. Ask {tp} for help. (`voice_say_messages_failed`, new) |
 | V3 before | – | Talk to {person} after the beep. |
 | V3 band | ● Recording | – |
 | V3 to | To {person} | – |
@@ -523,9 +580,11 @@ Placeholders: `{person}` (family person's shown name), `{person_spoken}` (spoken
 | V13 V10a short · `voice_mic_off` | The microphone is turned off. Ask for help to turn it on. Calls and texts still work. | The microphone is turned off. Ask {tp} for help. (`voice_say_mic_off`) / no name known: The microphone is turned off. Ask for help. (`voice_say_mic_off_short`, new) |
 | V13 V10b short · `voice_mic_not_allowed` | Voice messages aren't set up. Ask for help. Calls and texts still work. | Voice messages need {tp}. Ask {tp} for help. (`voice_say_mic_not_allowed`) / no name known: Voice messages aren't set up. Ask for help. (`voice_say_mic_not_allowed_short`, new) |
 | V13 microphone failed · `voice_mic_error` | The microphone didn't work. Try again. | The microphone didn't work. Tap Try again. (`voice_say_mic_error`, new) |
+| VT1 replies · `voice_tp_sent_meaning` (new) | "Sent" means the phone company accepted the message, not that it was heard. Replies may show only in Messages; {user} opens them with "Messages with" on each person's screen. · How replies work › | – |
+| VT4 · `voice_tp_replies_title`, `voice_tp_replies_body` (new) | How replies work · (three paragraphs, VT4) | – |
 | U8 | Voice messages · Voice messages go only to the family people {tp} added. A message you don't send is kept on this phone for 7 days, then erased. No one else can hear it. | – |
 
-The symbols (●, ■, ▶, ➤, ✕) in this table stand for the drawn symbols; they are **not** characters in the string.
+The symbols (●, ■, ▶, ➤, ✕, and the Messages speech bubble) in this table stand for the drawn symbols; they are **not** characters in the string.
 The string is the word only ("Record"); the screen draws the symbol before it. `‹` and `✓` are characters, as
 elsewhere.
 
