@@ -1,0 +1,26 @@
+// Copyright 2026 LMNOPhone contributors
+// SPDX-License-Identifier: Apache-2.0
+package org.plainphone.voice
+
+import android.content.Context
+import java.io.File
+import org.plainphone.device.voice.VoicePeople
+import org.plainphone.device.voice.VoicePerson
+import org.plainphone.device.voice.send.VoiceNumber
+
+/**
+ * Test build only: real sending is off unless adb set a number for Sam with TestHook `VOICE_SEND`
+ * (shell-only). The number lives only in this app's no-backup storage on the test phone: never in source,
+ * logs or evidence. Read when the voice screen's host is created, so a change needs the app restarted.
+ * Until the family list (slice 2b) exists, this is the only way a person can be sent to.
+ */
+object VoiceSendBuild {
+    fun marker(context: Context) = File(context.noBackupFilesDir, "test-voice-send")
+
+    /** Null: real sending is off and every screen stays practice. */
+    fun people(context: Context): List<VoicePerson>? {
+        val number = try { marker(context).takeIf { it.isFile }?.readText()?.trim() } catch (_: Exception) { null }
+        if (number == null || VoiceNumber.normalize(number) == null) return null
+        return VoicePeople.practice.map { if (it.id == "sam") it.copy(phoneNumber = number) else it }
+    }
+}

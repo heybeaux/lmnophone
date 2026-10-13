@@ -322,7 +322,7 @@ class MainActivity : ComponentActivity() {
         BrightnessController(AndroidBrightness(this, ComponentName(this, PlainphoneAdminReceiver::class.java)))
     }
     private val ringtoneController by lazy { RingtoneController(AndroidRingtone(this)) }
-    /** Voice messages practice (PLA-457): records and plays on this phone only. Never sends. */
+    /** Voice messages (PLA-457, PLA-499): practice, plus Send only where the build turns real sending on. */
     private val voice by lazy {
         VoicePracticeHost(this, ComponentName(this, PlainphoneAdminReceiver::class.java)) {
             val names = shell.phone?.snapshot()?.trustedPeople.orEmpty()

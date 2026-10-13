@@ -55,4 +55,32 @@
     <string name="voice_say_mic_not_allowed_short">Voice messages aren\'t set up. Ask for help.</string>
     <string name="voice_say_mic_error">The microphone didn\'t work. Tap Try again.</string>
     <string name="voice_say_play">This message could not play. Record again, or delete.</string>
+
+    <!-- Slice 2a (PLA-499), shown only where real sending is on. Words from docs/ux/flows-voice-messages.md
+         ("Exact strings", branch pla-voice/ux @ 6c250b7d): V3 band, V4-V9. "Sent" means only that the phone
+         network accepted the message: never "delivered", "received" or "heard". -->
+    <string name="voice_recording">Recording</string>
+    <string name="voice_send_to">Send to %1$s</string>
+    <string name="voice_sending">Sending to %1$s</string>
+    <string name="voice_sent">Sent to %1$s ✓</string>
+    <string name="voice_done">Done</string>
+    <string name="voice_not_sent">Not sent to %1$s</string>
+    <string name="voice_still_here">Your message is still on this phone.</string>
+    <!-- V7 again: %1$s = the trusted person. -->
+    <string name="voice_not_sent_again">If this keeps happening, ask %1$s to look at the phone.</string>
+    <string name="voice_no_signal">No phone signal</string>
+    <string name="voice_no_signal_body">Your message is kept on this phone. Try again when there is signal.</string>
+
+    <string name="voice_say_choose">Who do you want to talk to?</string>
+    <string name="voice_say_review_send">Listen, record again, or send to %1$s.</string>
+    <string name="voice_say_max_send">That\'s as long as a message can be. Listen, record again, or send to %1$s.</string>
+    <string name="voice_say_unsent_send">Your message to %1$s isn\'t sent yet. Listen, send, or delete.</string>
+    <string name="voice_say_sending">Sending to %1$s.</string>
+    <string name="voice_say_sent">Sent to %1$s.</string>
+    <string name="voice_say_not_sent">The message didn\'t send. It\'s still on the phone. Tap Try again.</string>
+    <string name="voice_say_not_sent_again">The message didn\'t send. It\'s still on the phone. Tap Try again. If this keeps happening, ask %2$s for help.</string>
+    <string name="voice_say_no_signal">There\'s no phone signal. Your message is kept. Try again later.</string>
+    <!-- TODO(copy): no approved words for "no answer known after a restart". Built only from approved V7 words:
+         it says neither sent nor not sent. -->
+    <string name="voice_say_not_confirmed">Your message is still on this phone. Tap Try again.</string>
 </resources>
