@@ -3,7 +3,10 @@
 
 Author branch `pla-apps/add-hidden`, based on accepted T5 `aa984cec`.
 Review: [PLA-519](/PLA/issues/PLA-519), one Product & UX Designer review of
-`aa984cec..7747ad8f`. Review is pending; this document does not claim PASS.
+`aa984cec..7747ad8f`. **APPROVE**, with no Blocker/High/Medium findings:
+[review verdict](/PLA/issues/PLA-519#comment-7db3973b-8f21-44fa-a9f2-9b69cb0c8e4e).
+The reviewer independently passed the targeted host tests and all preview golden
+comparisons. Evidence commits after that head contain no app-code changes.
 
 Apps on this phone now ends with Add a hidden app. Eligible installed hidden apps
 appear by name with monochrome icons. Empty/unreadable lists have plain messages
@@ -82,3 +85,17 @@ were also checked. Initial harness attempts needed menu scrolling at 360x640 and
 matching the existing Go back label; no app change was needed. Original visible
 order was restored, the marker removed, and the read-only AVD was shut down.
 No physical-device operation, call or send occurred.
+
+
+## Review disposition and delivery
+
+The single opposite-model review approves this bounded preview for installation;
+no correction or delta check is requested. One Low copy finding is deferred:
+T4 uses the same synthetic helper name Sam as existing preview routes. A later
+coherent copy/profile change should resolve all helper-name call sites together,
+using a stored helper or approved helper-free copy. This is recorded for the Lead
+and does not hold this increment. No second review chain is opened.
+
+The Lead routes this reviewed branch to the sole spare driver for integration
+onto the latest release, numbering and an in-place install. The APK above was
+built and exercised on the private emulator only; no spare installation is claimed.
