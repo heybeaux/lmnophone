@@ -58,8 +58,10 @@ class AndroidBluetoothDiscovery(context: Context) : BluetoothDiscoveryPort {
             addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
             addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
         }
-        // Bluetooth sends these as protected system broadcasts; other apps can't reach this receiver.
-        if (Build.VERSION.SDK_INT >= 33) app.registerReceiver(listener, filter, Context.RECEIVER_NOT_EXPORTED)
+        // Exported on purpose: the Bluetooth app sends these as uid 1002, not system, so a
+        // RECEIVER_NOT_EXPORTED filter is never a target (API 35 emulator, PLA-488). They are
+        // protected broadcasts, so other apps still can't send them here.
+        if (Build.VERSION.SDK_INT >= 33) app.registerReceiver(listener, filter, Context.RECEIVER_EXPORTED)
         else { @Suppress("UnspecifiedRegisterReceiverFlag") app.registerReceiver(listener, filter) }
         receiver = listener
         return adapter?.startDiscovery() == true
