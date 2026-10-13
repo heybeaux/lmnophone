@@ -23,7 +23,8 @@ data class FamilyPersonRow(val id: String, val name: String)
 data class FamilyUiState(val context: AdminContext, val stage: FamilyStage = FamilyStage.List,
     val enabled: Boolean = false, val people: List<FamilyPersonRow> = emptyList(),
     val name: String = "", val spokenName: String = "", val number: String = "", val editing: Boolean = false,
-    val canContinue: Boolean = false, val canAdd: Boolean = true, val failed: Boolean = false) {
+    val canContinue: Boolean = false, val canAdd: Boolean = true, val failed: Boolean = false,
+    val micFailed: Boolean = false, val helperName: String = context.trustedPersonName ?: context.userName) {
     override fun toString() = "FamilyUiState(redacted)"
 }
 sealed interface FamilyEvent {
@@ -31,9 +32,15 @@ sealed interface FamilyEvent {
     data object Enable : FamilyEvent
     data object Add : FamilyEvent
     data class Edit(val id: String) : FamilyEvent
-    data class Name(val value: String) : FamilyEvent
-    data class SpokenName(val value: String) : FamilyEvent
-    data class Number(val value: String) : FamilyEvent
+    data class Name(val value: String) : FamilyEvent {
+        override fun toString() = "Name(redacted)"
+    }
+    data class SpokenName(val value: String) : FamilyEvent {
+        override fun toString() = "SpokenName(redacted)"
+    }
+    data class Number(val value: String) : FamilyEvent {
+        override fun toString() = "Number(redacted)"
+    }
     data object Hear : FamilyEvent
     data object Continue : FamilyEvent
     data object AskRemove : FamilyEvent
@@ -48,15 +55,15 @@ fun FamilyScreen(state: FamilyUiState, onEvent: (FamilyEvent) -> Unit) {
         FamilyStage.Name -> stringResource(R.string.family_name)
         FamilyStage.Number -> stringResource(R.string.family_number)
         FamilyStage.Picture -> stringResource(R.string.family_picture)
-        FamilyStage.Confirm -> if (state.editing) stringResource(R.string.family_name) else
+        FamilyStage.Confirm -> if (state.editing) stringResource(R.string.family_edit_confirm, state.name) else
             stringResource(R.string.family_confirm, state.name, state.context.userName)
-        FamilyStage.Remove -> stringResource(R.string.family_remove_confirm, state.name)
+        FamilyStage.Remove -> stringResource(R.string.family_remove_confirm, state.name, state.context.userName)
         FamilyStage.TurnOff -> stringResource(R.string.family_disable_confirm, state.context.userName)
     }
     val primary = when (state.stage) {
         FamilyStage.List -> if (state.enabled) null else stringResource(R.string.family_enable)
         FamilyStage.Confirm -> stringResource(if (state.editing) R.string.waits_save else R.string.family_add_confirm)
-        FamilyStage.Remove -> stringResource(R.string.family_remove)
+        FamilyStage.Remove -> stringResource(R.string.family_remove_button)
         FamilyStage.TurnOff -> stringResource(R.string.family_turn_off)
         FamilyStage.Picture -> stringResource(R.string.family_letter)
         else -> stringResource(R.string.admin_continue)
@@ -64,7 +71,8 @@ fun FamilyScreen(state: FamilyUiState, onEvent: (FamilyEvent) -> Unit) {
     AdminFrame(state.context, title, primary,
         onPrimary = { onEvent(if (state.stage == FamilyStage.List) FamilyEvent.Enable else FamilyEvent.Continue) },
         enabled = state.canContinue, secondary = stringResource(R.string.family_back), onSecondary = { onEvent(FamilyEvent.Back) }) {
-        if (state.failed) Words(stringResource(R.string.family_error))
+        if (state.micFailed) Words(stringResource(R.string.family_mic_error, state.helperName))
+        else if (state.failed) Words(stringResource(R.string.family_error))
         when (state.stage) {
             FamilyStage.List -> {
                 if (!state.enabled) Words(stringResource(R.string.family_off_body, state.context.userName))

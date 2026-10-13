@@ -379,3 +379,17 @@ it with joining and shared owned Location cleanup. UI gains `canForget`,
 - `VoicePracticeController` accepts `people` and `draftStore` providers for restoration and draft isolation; `VoicePerson.spokenName` defaults to its display name. Family microphone permission is only granted from the PIN menu; the family recorder checks the existing grant.
 - `:ui` exports `FamilyScreen(FamilyUiState, FamilyEvent)`. The host owns storage, validation, voice preview and live PIN-menu authority. Fields clear on pause. `HomeUiState.showFamily` and `HomeEvent.OpenFamily` carry the Home route; `ShellUiMapper.home` supplies the flag from the production snapshot.
 - `FamilyMessages.intent` creates package-explicit `ACTION_SENDTO smsto:` for Google Messages without content or automatic sending. Lock-task policy is unchanged. `VoiceUiEvent.OpenMessages` emits only an action; MainActivity resolves the current recipient and launches it.
+
+### Voice family correction (PLA-504)
+
+`FamilyUiState.micFailed` distinguishes a refused/failed microphone grant from a
+save error; `helperName` supplies the named helper for the approved error copy.
+`FamilyEditor` preserves that helper across refreshes. Name, spoken-name and
+number entry events redact their `toString()` output.
+
+`VoicePrompt.OpeningMessages` and `MessagesUnavailable` map to the approved
+Messages handoff speech. `AndroidVoiceSpeaker.speakBeforeAction` completes the
+prompt before calling the host's existing Messages opener; stopping speech
+cancels that pending action. Failed/unavailable speech falls through, with a
+five-second backstop for a stalled engine. These are speech/navigation seams;
+recipient resolution and the destination app remain in the existing adapter.

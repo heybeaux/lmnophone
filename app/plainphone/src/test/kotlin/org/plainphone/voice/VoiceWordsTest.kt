@@ -23,6 +23,13 @@ class VoiceWordsTest {
         }
     }
 
+    @Test fun familyPromptsExplainMessagesAndTheFailedHandoff() {
+        assertEquals(R.string.family_say_person, VoiceWords.res(VoicePrompt.Person, true, family = true))
+        assertEquals(R.string.voice_say_person, VoiceWords.res(VoicePrompt.Person, true, family = false))
+        assertEquals(R.string.family_say_opening_messages, VoiceWords.res(VoicePrompt.OpeningMessages, true))
+        assertEquals(R.string.family_say_messages_unavailable, VoiceWords.res(VoicePrompt.MessagesUnavailable, true))
+    }
+
     @Test fun everyPromptHasWords() {
         val ids = VoicePrompt.entries.map { VoiceWords.res(it, helperKnown = true) }
         assertEquals(ids.size, ids.toSet().size)

@@ -36,7 +36,7 @@ enum class VoiceNotice { MaxLength, Interrupted, NothingRecorded, Deleted, Could
 
 /** What the phone says aloud (UX doc V1-V13, practice wording). The host maps each to a string. */
 enum class VoicePrompt { Intro, Name, Person, Review, Unsent, TooShort, MaxLength, Busy, Deleted, MicOff, MicNotAllowed,
-    MicError, CouldNotPlay }
+    MicError, CouldNotPlay, OpeningMessages, MessagesUnavailable }
 
 sealed interface VoiceState {
     val person: VoicePerson? get() = null

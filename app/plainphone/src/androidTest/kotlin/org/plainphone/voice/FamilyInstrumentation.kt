@@ -67,11 +67,11 @@ class FamilyInstrumentation : Instrumentation() {
             waitFor("people list") { find("Who do you want to talk to?") != null }
             shot("people")
             tap("Sam")
-            waitFor("Messages action") { find(targetContext.getString(org.plainphone.ui.R.string.family_messages)) != null }
+            waitFor("Messages action") { find(targetContext.getString(org.plainphone.ui.R.string.family_messages, "Sam")) != null }
             shot("person")
             val activityManager = targetContext.getSystemService(ActivityManager::class.java)
             check(activityManager.lockTaskModeState == ActivityManager.LOCK_TASK_MODE_LOCKED)
-            tap(targetContext.getString(org.plainphone.ui.R.string.family_messages))
+            tap(targetContext.getString(org.plainphone.ui.R.string.family_messages, "Sam"))
             waitFor("Google Messages foreground") { uiAutomation.rootInActiveWindow?.packageName?.toString() == "com.google.android.apps.messaging" }
             waitFor("selected conversation") { find("555-0100") != null }
             Thread.sleep(1200) // Wait for the conversation frame, not its transient launch activity.

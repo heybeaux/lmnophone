@@ -63,10 +63,13 @@ class FamilyScreenshotTest(private val scale: Float, private val name: String) {
     @Test fun picture() = family(FamilyStage.Picture)
     @Test fun confirm() = family(FamilyStage.Confirm)
     @Test fun remove() = family(FamilyStage.Remove)
-    private fun family(stage: FamilyStage) = shot { FamilyScreen(FamilyUiState(
+    @Test fun editConfirm() = family(FamilyStage.Confirm, editing = true)
+    @Test fun microphoneFailure() = shot { FamilyScreen(FamilyUiState(
+        AdminContext("Alex", "Sam"), failed = true, micFailed = true, canContinue = true), {}) }
+    private fun family(stage: FamilyStage, editing: Boolean = false) = shot { FamilyScreen(FamilyUiState(
         context = AdminContext("Alex", "Sam"), stage = stage, enabled = true,
         people = listOf(FamilyPersonRow("sam", name)), name = name, spokenName = name,
-        number = "555-0100", canContinue = true), {}) }
+        number = "555-0100", canContinue = true, editing = editing), {}) }
     private fun shot(content: @androidx.compose.runtime.Composable () -> Unit) = paparazzi.snapshot {
         PlainphoneTheme { HomeTestFrame(content) }
     }

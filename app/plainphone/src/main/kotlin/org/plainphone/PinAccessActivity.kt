@@ -38,7 +38,7 @@ class PinAccessActivity : ComponentActivity() {
             { page.page == PinPage.MENU && lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) },
             { org.plainphone.device.voice.AndroidMicAccess(this, android.content.ComponentName(this, PlainphoneAdminReceiver::class.java)).selfGrant() },
             { name -> familySpeaker.speakOnRequest(org.plainphone.device.voice.VoicePrompt.Name, org.plainphone.device.voice.VoicePerson("name", name)) },
-            { family = null; familyEditor = null }, { family = it }).also { it.open() }
+            { family = null; familyEditor = null }, { family = it }, helperName = "Sam").also { it.open() }
     }
     private var confirmation by mutableStateOf("")
     private val runtime by lazy { PolicyRuntime.get(this) }

@@ -21,11 +21,16 @@
     <string name="family_letter">Use a letter</string>
     <string name="family_confirm">Add %1$s to %2$s\'s family list?</string>
     <string name="family_add_confirm">Add</string>
-    <!-- TODO(copy): awaiting VT2 edit/remove/error and the A+B action addendum. -->
-    <string name="family_messages">TODO(copy): Open in Messages</string>
-    <string name="family_remove">TODO(copy): Remove person</string>
-    <string name="family_remove_confirm">TODO(copy): Remove %1$s and erase their unsent message?</string>
-    <string name="family_error">TODO(copy): Could not save. Check the details and try again.</string>
+    <string name="family_messages">Messages with %1$s</string>
+    <string name="family_remove">Remove from the list</string>
+    <string name="family_remove_confirm">Remove %1$s? A message %2$s hasn\'t sent to %1$s will be erased.</string>
+    <string name="family_error">That didn\'t save. Nothing changed. Try again.</string>
     <string name="family_mic_error">LMNOPhone couldn\'t turn on the microphone. Try again, or ask %1$s.</string>
-    <string name="family_messages_unavailable">TODO(copy): Messages could not open. Try again.</string>
+    <string name="family_messages_unavailable">Messages didn\'t open.</string>
+    <string name="family_remove_button">Remove</string>
+    <string name="family_edit_confirm">Save changes for %1$s?</string>
+    <string name="family_messages_desc">Messages with %1$s, opens Messages</string>
+    <string name="family_say_opening_messages">Opening Messages.</string>
+    <string name="family_say_messages_unavailable">Messages didn\'t open. Ask %2$s for help.</string>
+    <string name="family_say_person">%1$s. Tap Record to talk to %1$s, or Messages to see what %1$s sent.</string>
 </resources>

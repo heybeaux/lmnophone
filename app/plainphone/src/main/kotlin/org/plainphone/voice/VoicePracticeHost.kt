@@ -196,13 +196,18 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
             VoiceUiEvent.Back -> controller.dispatch(VoiceEvent.Back)
             VoiceUiEvent.HearName -> controller.sayName()
             VoiceUiEvent.OpenMessages -> if (family && (controller.state is VoiceState.Person || controller.state is VoiceState.Review)) {
-                val id = controller.state.person?.id ?: return
+                val person = controller.state.person ?: return
                 controller.close(Interruption.AppStopped)
-                // The receiving callback resolves this opaque id again; numbers never enter UI state.
-                if (!openMessages(id)) ui = when (val current = ui) {
-                    is VoiceUiState.Person -> current.copy(messagesUnavailable = true)
-                    is VoiceUiState.Review -> current.copy(messagesUnavailable = true)
-                    else -> current
+                speaker.speakBeforeAction(VoicePrompt.OpeningMessages, person) {
+                    // The receiving callback resolves this opaque id again; numbers never enter UI state.
+                    if (!openMessages(person.id)) {
+                        ui = when (val current = ui) {
+                            is VoiceUiState.Person -> current.copy(messagesUnavailable = true)
+                            is VoiceUiState.Review -> current.copy(messagesUnavailable = true)
+                            else -> current
+                        }
+                        runCatching { speaker.speak(VoicePrompt.MessagesUnavailable, person) }
+                    }
                 }
             }
         }
@@ -210,7 +215,7 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
 
     private fun words(prompt: VoicePrompt, person: VoicePerson?): String {
         val helper = helper()
-        return app.getString(VoiceWords.res(prompt, helper.isNotBlank()), person?.spokenName.orEmpty(), helper)
+        return app.getString(VoiceWords.res(prompt, helper.isNotBlank(), family), person?.spokenName.orEmpty(), helper)
     }
 
     fun shutdown() { close(); speaker.shutdown() }
@@ -218,10 +223,10 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
 
 /** Spoken words per prompt (docs/ux/flows-voice-messages.md, PLA-472). Help words name the trusted person when known. */
 internal object VoiceWords {
-    fun res(prompt: VoicePrompt, helperKnown: Boolean): Int = when (prompt) {
+    fun res(prompt: VoicePrompt, helperKnown: Boolean, family: Boolean = false): Int = when (prompt) {
         VoicePrompt.Intro -> R.string.voice_say_intro
         VoicePrompt.Name -> R.string.voice_say_name
-        VoicePrompt.Person -> R.string.voice_say_person
+        VoicePrompt.Person -> if (family) R.string.family_say_person else R.string.voice_say_person
         VoicePrompt.Review -> R.string.voice_say_review
         VoicePrompt.Unsent -> R.string.voice_say_unsent
         VoicePrompt.TooShort -> R.string.voice_say_too_short
@@ -232,5 +237,7 @@ internal object VoiceWords {
         VoicePrompt.MicNotAllowed -> if (helperKnown) R.string.voice_say_mic_not_allowed else R.string.voice_say_mic_not_allowed_short
         VoicePrompt.MicError -> R.string.voice_say_mic_error
         VoicePrompt.CouldNotPlay -> R.string.voice_say_play
+        VoicePrompt.OpeningMessages -> R.string.family_say_opening_messages
+        VoicePrompt.MessagesUnavailable -> R.string.family_say_messages_unavailable
     }
 }

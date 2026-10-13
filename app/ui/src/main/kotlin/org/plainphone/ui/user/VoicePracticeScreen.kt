@@ -74,7 +74,7 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
             .padding(horizontal = PlainphoneSpace.S6).padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S4),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            ScreenLink(stringResource(if (state is VoiceUiState.ChoosePerson) { if (state.fromHome) R.string.family_back else R.string.back_more } else R.string.voice_back_people),
+            if (!(state is VoiceUiState.Person && state.openMessages)) ScreenLink(stringResource(if (state is VoiceUiState.ChoosePerson) { if (state.fromHome) R.string.family_back else R.string.back_more } else R.string.voice_back_people),
                 { onEvent(VoiceUiEvent.Back) }, centered = false)
             Text(stringResource(R.string.voice_practice_label), style = PlainphoneType.Button.copy(color = PlainphoneColors.Ink2),
                 modifier = Modifier.fillMaxWidth().background(PlainphoneColors.Fill1, RoundedCornerShape(PlainphoneSpace.BoxRadius))
@@ -86,17 +86,17 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
                     for (p in state.people) PersonRow(p, state.fromHome) { onEvent(VoiceUiEvent.Choose(p.id)) }
                 }
                 is VoiceUiState.Person -> {
-                    PersonHeader(state.person, onEvent)
+                    PersonHeader(state.person, onEvent, showHearLink = !state.openMessages)
                     Notice(state.notice, state.person)
                     if (state.messagesUnavailable) Text(stringResource(R.string.family_messages_unavailable), style = PlainphoneType.Body)
-                    if (state.openMessages) SmallButton(stringResource(R.string.family_messages), null) { onEvent(VoiceUiEvent.OpenMessages) }
+                    if (state.openMessages) MessagesButton(state.person, onEvent)
                 }
                 is VoiceUiState.Recording -> PersonHeader(state.person, onEvent, hearName = false)
                 is VoiceUiState.Review -> {
                     PersonHeader(state.person, onEvent)
                     Notice(state.notice, state.person)
                     if (state.messagesUnavailable) Text(stringResource(R.string.family_messages_unavailable), style = PlainphoneType.Body)
-                    if (state.openMessages) SmallButton(stringResource(R.string.family_messages), null) { onEvent(VoiceUiEvent.OpenMessages) }
+                    if (state.openMessages) MessagesButton(state.person, onEvent)
                 }
                 is VoiceUiState.MicOff -> {
                     PersonHeader(state.person, onEvent)
@@ -115,7 +115,10 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally) {
             when (state) {
                 is VoiceUiState.ChoosePerson -> Unit
-                is VoiceUiState.Person -> BigButton(stringResource(R.string.voice_record), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
+                is VoiceUiState.Person -> {
+                    if (state.openMessages) ScreenLink(stringResource(R.string.family_back), { onEvent(VoiceUiEvent.Back) })
+                    BigButton(stringResource(R.string.voice_record), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
+                }
                 is VoiceUiState.Recording -> {
                     Row(Modifier.padding(bottom = PlainphoneSpace.S2).semantics(mergeDescendants = true) {
                         liveRegion = LiveRegionMode.Polite
@@ -162,7 +165,7 @@ private fun PersonRow(person: VoicePersonUi, family: Boolean = false, onClick: (
 }
 
 @Composable
-private fun PersonHeader(person: VoicePersonUi, onEvent: (VoiceUiEvent) -> Unit, hearName: Boolean = true) {
+private fun PersonHeader(person: VoicePersonUi, onEvent: (VoiceUiEvent) -> Unit, hearName: Boolean = true, showHearLink: Boolean = true) {
     val hear = { onEvent(VoiceUiEvent.HearName) }
     Spacer(Modifier.height(PlainphoneSpace.S4))
     PersonPicture(person, if (person.pictureInInk && hearName) 120.dp else 96.dp, onHearName = if (hearName) hear else null)
@@ -171,8 +174,8 @@ private fun PersonHeader(person: VoicePersonUi, onEvent: (VoiceUiEvent) -> Unit,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(top = PlainphoneSpace.S2).semantics { heading() })
     // The picture carries this action for TalkBack, so the link is hidden there and not offered twice (UX V2).
-    if (hearName) Box(Modifier.clearAndSetSemantics {}) { ScreenLink(stringResource(R.string.voice_hear_name), hear) }
-    else Spacer(Modifier.height(48.dp))
+    if (hearName && showHearLink) Box(Modifier.clearAndSetSemantics {}) { ScreenLink(stringResource(R.string.voice_hear_name), hear) }
+    else if (!hearName) Spacer(Modifier.height(48.dp))
 }
 
 /**
@@ -234,8 +237,9 @@ private fun BigButton(word: String, symbol: Symbol, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SmallButton(word: String, symbol: Symbol?, onClick: () -> Unit) {
+private fun SmallButton(word: String, symbol: Symbol?, description: String? = null, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 72.dp)
+        .semantics { if (description != null) contentDescription = description }
         .border(PlainphoneSpace.Border, PlainphoneColors.Ink, RoundedCornerShape(PlainphoneSpace.BoxRadius))
         .plainphoneAction(shape = RoundedCornerShape(PlainphoneSpace.BoxRadius), onClick = onClick)
         .padding(horizontal = PlainphoneSpace.S4, vertical = PlainphoneSpace.S3),
@@ -244,6 +248,13 @@ private fun SmallButton(word: String, symbol: Symbol?, onClick: () -> Unit) {
         if (symbol != null) SymbolMark(symbol, 20.dp, PlainphoneColors.Ink)
         Text(word, style = PlainphoneType.Button, textAlign = TextAlign.Center)
     }
+}
+
+@Composable
+private fun MessagesButton(person: VoicePersonUi, onEvent: (VoiceUiEvent) -> Unit) {
+    SmallButton(stringResource(R.string.family_messages, person.name), null,
+        stringResource(R.string.family_messages_desc, person.name)) { onEvent(VoiceUiEvent.OpenMessages) }
+    Spacer(Modifier.height(PlainphoneSpace.S6))
 }
 
 /** Monochrome symbols, no semantics: the paired word is the accessible name. */

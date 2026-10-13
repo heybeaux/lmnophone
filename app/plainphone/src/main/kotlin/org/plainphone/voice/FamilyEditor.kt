@@ -11,8 +11,9 @@ import java.util.UUID
 class FamilyEditor(private val store: FamilyStore, context: AdminContext,
     private val authorized: () -> Boolean, private val grantMic: () -> Boolean,
     private val hear: (String) -> Unit, private val leave: () -> Unit,
-    private val changed: (FamilyUiState) -> Unit) {
-    var state = FamilyUiState(context)
+    private val changed: (FamilyUiState) -> Unit,
+    private val helperName: String = context.trustedPersonName ?: context.userName) {
+    var state = FamilyUiState(context, helperName = helperName)
         private set
     private var id: String? = null
     fun open() { if (authorized()) refresh() }
@@ -21,10 +22,10 @@ class FamilyEditor(private val store: FamilyStore, context: AdminContext,
         try {
             val list = store.read()
             id = null
-            publish(FamilyUiState(state.context, enabled = list.enabled,
+            publish(FamilyUiState(state.context, helperName = helperName, enabled = list.enabled,
                 people = list.people.map { FamilyPersonRow(it.id, it.name) }, canContinue = true,
                 canAdd = list.people.size < FamilyRules.MAX_PEOPLE))
-        } catch (_: Exception) { publish(FamilyUiState(state.context, failed = true)) }
+        } catch (_: Exception) { publish(FamilyUiState(state.context, helperName = helperName, failed = true)) }
     }
     fun event(event: FamilyEvent) {
         if (!authorized()) return
@@ -38,7 +39,10 @@ class FamilyEditor(private val store: FamilyStore, context: AdminContext,
                     else -> refresh()
                 }
                 FamilyEvent.Enable -> if (state.stage == FamilyStage.List && !state.enabled) {
-                    check(grantMic()); store.setEnabled(true); refresh()
+                    val granted = try { grantMic() } catch (_: Exception) { false }
+                    if (!granted) { publish(state.copy(failed = true, micFailed = true)); return }
+                    publish(state.copy(failed = false, micFailed = false))
+                    store.setEnabled(true); refresh()
                 }
                 FamilyEvent.Add -> if (state.stage == FamilyStage.List && state.enabled && state.canAdd) {
                     id = UUID.randomUUID().toString().replace("-", "")
