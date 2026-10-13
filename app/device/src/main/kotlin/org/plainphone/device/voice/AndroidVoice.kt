@@ -42,10 +42,12 @@ class AndroidVoiceRecorder(context: Context) : VoiceRecorder {
     private var autoStopped = false
     private var callback: AudioManager.AudioRecordingCallback? = null
     private val pending = mutableListOf<Runnable>()
+    /** Any non-zero peak since capture began. */
+    private var heard = false
 
     override fun start(file: File, format: VoiceFormat, maxMs: Long, listener: VoiceRecorder.Listener) {
         check(recorder == null) { "already recording" }
-        autoStopped = false; running = false
+        autoStopped = false; running = false; heard = false
         @Suppress("DEPRECATION")
         val r = if (Build.VERSION.SDK_INT >= 31) MediaRecorder(app) else MediaRecorder()
         recorder = r
@@ -97,11 +99,19 @@ class AndroidVoiceRecorder(context: Context) : VoiceRecorder {
         schedule(Runnable { if (clientSilenced()) listener.onSilenced() }, 300)
         // The first reading only resets the peak; any non-zero reading after it means real audio.
         try { r.maxAmplitude } catch (_: Exception) { }
-        var heard = false
         for (at in SILENCE_STEP_MS..SILENCE_WINDOW_MS step SILENCE_STEP_MS) schedule(Runnable {
             if (!heard) heard = try { r.maxAmplitude > 0 } catch (_: Exception) { true }
             if (!heard && at >= SILENCE_WINDOW_MS) listener.onSilenced()
         }, at)
+    }
+
+    override fun silent(): Boolean {
+        val r = recorder ?: return false
+        if (!running) return false
+        if (clientSilenced()) return true
+        // Peak since the last reading; an unreadable recorder (e.g. auto-stopped at max length) counts as heard.
+        if (!heard) heard = try { r.maxAmplitude > 0 } catch (_: Exception) { true }
+        return !heard
     }
 
     private fun clientSilenced() =
@@ -210,9 +220,14 @@ class AndroidVoiceSpeaker(context: Context, private val text: (VoicePrompt, Voic
     private var queued: String? = null
     private var tts: TextToSpeech? = null
 
-    override fun speak(prompt: VoicePrompt, person: VoicePerson?) {
-        if (app.getSystemService(AccessibilityManager::class.java)?.isTouchExplorationEnabled == true) return
-        if (audio.mode != AudioManager.MODE_NORMAL) return
+    override fun speak(prompt: VoicePrompt, person: VoicePerson?) = speak(prompt, person, requested = false)
+
+    /** The picture's "hear the name": under TalkBack it is the only way to hear it in the phone's voice. */
+    override fun speakOnRequest(prompt: VoicePrompt, person: VoicePerson?) = speak(prompt, person, requested = true)
+
+    private fun speak(prompt: VoicePrompt, person: VoicePerson?, requested: Boolean) {
+        val touch = app.getSystemService(AccessibilityManager::class.java)?.isTouchExplorationEnabled == true
+        if (!shouldSpeak(touch, audio.mode, requested)) return
         val words = text(prompt, person)
         if (tts == null) tts = TextToSpeech(app) { status ->
             ready = status == TextToSpeech.SUCCESS
@@ -230,4 +245,10 @@ class AndroidVoiceSpeaker(context: Context, private val text: (VoicePrompt, Voic
 
     override fun stop() { queued = null; try { tts?.stop() } catch (_: Exception) { } }
     fun shutdown() { try { tts?.shutdown() } catch (_: Exception) { }; tts = null; ready = false; queued = null }
+
+    companion object {
+        /** Never during a call. Under TalkBack (it reads the screen) only what the person asked for. */
+        fun shouldSpeak(touchExploration: Boolean, audioMode: Int, requested: Boolean) =
+            audioMode == AudioManager.MODE_NORMAL && (requested || !touchExploration)
+    }
 }

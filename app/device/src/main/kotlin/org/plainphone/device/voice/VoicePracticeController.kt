@@ -18,6 +18,12 @@ interface VoiceRecorder {
     }
     /** Starts recording into [file]. Throws if the microphone or file can't be opened. */
     fun start(file: File, format: VoiceFormat, maxMs: Long, listener: Listener)
+    /**
+     * Asked just before [stop] when the take would be kept: true when Android silenced this recording or
+     * it has captured nothing but digital zero so far (the privacy toggle), even inside the silence window.
+     * Never throws.
+     */
+    fun silent(): Boolean
     /** Stops and releases. True when the file was finalised with audio. Never throws. */
     fun stop(): Boolean
 }
@@ -45,6 +51,8 @@ fun interface MicAccess { fun problem(): MicProblem? }
 /** Text-to-speech. [person] is null only for prompts about the whole practice. */
 interface VoiceSpeaker {
     fun speak(prompt: VoicePrompt, person: VoicePerson?)
+    /** The person asked for these words (the picture's "hear the name"): said even when TalkBack is on. */
+    fun speakOnRequest(prompt: VoicePrompt, person: VoicePerson?) = speak(prompt, person)
     /** Silences speech at once, before the microphone opens or when the person taps. */
     fun stop()
 }
@@ -118,7 +126,7 @@ class VoicePracticeController(
     private fun usesAudio(s: VoiceState) = s is VoiceState.Recording || (s as? VoiceState.Review)?.playing == true
 
     /** "Hear name" on a person's screen. */
-    fun sayName() { state.person?.let { say(VoicePrompt.Name, it) } }
+    fun sayName() { state.person?.let { safely { speaker.speakOnRequest(VoicePrompt.Name, it) } } }
 
     private fun say(prompt: VoicePrompt, person: VoicePerson?) = safely { speaker.speak(prompt, person) }
 
@@ -126,7 +134,11 @@ class VoicePracticeController(
         when (effect) {
             is VoiceEffect.Speak -> say(effect.prompt, effect.person)
             is VoiceEffect.StartRecording -> start(effect.personId)
-            is VoiceEffect.FinishRecording -> dispatch(VoiceEvent.RecordingFinished(finish(effect)))
+            is VoiceEffect.FinishRecording -> {
+                // A silent take (PLA-475): asked before stopping, so a Stop inside the silence window can't keep it.
+                val silenced = effect.keep && recording?.started == true && try { recorder.silent() } catch (_: Exception) { false }
+                dispatch(VoiceEvent.RecordingFinished(finish(effect.copy(keep = effect.keep && !silenced)), silenced))
+            }
             is VoiceEffect.StartPlayback -> if (!acquire()) dispatch(VoiceEvent.PlaybackFailed) else try {
                 player.play(store.file(effect.personId),
                     onDone = { if ((state as? VoiceState.Review)?.playing == true) dispatch(VoiceEvent.PlaybackEnded) },

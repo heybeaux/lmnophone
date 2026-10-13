@@ -55,8 +55,11 @@ sealed interface VoiceEvent {
     data class MicUnavailable(val problem: MicProblem) : VoiceEvent
     /** The recorder refused to start (for example another app holds the microphone). */
     data object CouldNotStart : VoiceEvent
-    /** Result of [VoiceEffect.FinishRecording]: the kept draft, or null when nothing usable was saved. */
-    data class RecordingFinished(val draft: VoiceDraft?) : VoiceEvent
+    /**
+     * Result of [VoiceEffect.FinishRecording]: the kept draft, or null when nothing usable was saved.
+     * [silenced]: the take was silent (privacy toggle) and was not kept, even if Android hadn't said so yet.
+     */
+    data class RecordingFinished(val draft: VoiceDraft?, val silenced: Boolean = false) : VoiceEvent
 }
 
 sealed interface VoiceEffect {
@@ -110,6 +113,7 @@ object VoicePractice {
                 val p = s.person
                 when {
                     s.problem != null -> micUnavailable(p, s.problem, s.previous)
+                    e.silenced -> micUnavailable(p, MicProblem.PrivacyToggle, s.previous)
                     draft == null -> Transition(VoiceState.Person(p, VoiceNotice.NothingRecorded), speak(VoicePrompt.TooShort, p))
                     e.draft == null -> Transition(VoiceState.Review(p, draft, notice = VoiceNotice.NothingRecorded),
                         speak(VoicePrompt.TooShort, p))
