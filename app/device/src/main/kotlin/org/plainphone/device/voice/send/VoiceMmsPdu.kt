@@ -128,7 +128,12 @@ object MmsPduReader {
             var version = false
             while (c.hasMore()) {
                 val field = c.octet()
-                if (field < 0x80) return null
+                if (field < 0x80) {
+                    c.pos--
+                    if (c.text().isEmpty()) return null
+                    c.skipValue()
+                    continue
+                }
                 when (field and 0x7F) {
                     H_MESSAGE_TYPE -> return null
                     H_TRANSACTION_ID -> {

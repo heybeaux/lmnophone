@@ -12,7 +12,7 @@ phone, integrate the family list, or claim recipient receipt/playback.
 | Minimal vendored encoder with attribution | Original Apache headers and modification notes in `voice/mms`; root `NOTICE` |
 | App-private PDU, read-only per-attempt URI, non-exported receiver/provider | `VoiceSendPermissionTest`; original emulator handoff proof |
 | Default data subscription; no result inferred at handoff | `AndroidMmsPort`; `VoiceSenderTest` persisted-Sending-at-handoff test |
-| Sent only for RESULT_OK and a complete OK m-send-conf | `MmsSendResultTest`: all result codes, missing/refused/malformed confirmation, complete optional headers |
+| Sent only for RESULT_OK and a complete OK m-send-conf | `MmsSendResultTest`: all result codes, missing/refused/malformed confirmation, complete optional and application-extension headers |
 | Malformed tails, conflicting headers, missing mandatory headers cannot produce Sent | New damaged-confirmation table; no early return after the OK byte |
 | No signal, MMS off, too big, missing permission and transport failure keep the draft | `VoiceSenderTest`; original MMS-off/unreachable-MMSC emulator cases |
 | A permission read or send permission exception does not crash | New permission-read exception test plus existing handoff SecurityException test |
@@ -36,7 +36,9 @@ phone, integrate the family list, or claim recipient receipt/playback.
 ## Corrections and validation
 
 Tests-first commit `de6829af`: 58 targeted tests, six new failing regressions.
-After correction the same 58 pass. Full device tests: 1031 pass; plainphone
+After correction the same 58 pass. An additional application-extension regression
+test first failed, then passed: complete extension headers before or after the
+status are accepted, but a truncated extension is not. Full device tests: 1032 pass; plainphone
 tests: 252 pass. Debug assembly and release Kotlin compilation pass.
 
 `device:lintDebug` initially found two new voice errors at the signal read.

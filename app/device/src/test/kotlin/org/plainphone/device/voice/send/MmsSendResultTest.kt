@@ -61,4 +61,15 @@ class MmsSendResultTest {
         val data = ok + byteArrayOf(0x8B.toByte(), 'T'.code.toByte(), 0)
         assertEquals(SendStatus.Sent, MmsSendResult.map(MmsSendResult.RESULT_OK, data))
     }
+
+    @Test fun aCompleteApplicationExtensionDoesNotHideTheActualAnswer() {
+        val extension = "X-Result\u0000carrier\u0000".toByteArray(Charsets.US_ASCII)
+        val header = ok.copyOfRange(0, 2)
+        val remainder = ok.copyOfRange(2, ok.size)
+        for (data in listOf(ok + extension, header + extension + remainder)) {
+            assertEquals(SendStatus.Sent, MmsSendResult.map(MmsSendResult.RESULT_OK, data))
+        }
+        assertEquals(SendStatus.NotSent(SendProblem.OtherError),
+            MmsSendResult.map(MmsSendResult.RESULT_OK, ok + extension.copyOf(extension.size - 1)))
+    }
 }
