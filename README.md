@@ -19,7 +19,7 @@ LMNOPhone (say it like the alphabet song: "elemeno-phone") is an open-source "fo
 
 <sub>Left: the preview-2 test build running as the phone's manager on an Android 15 emulator. Middle and right: the More page and the blocked-link screen, rendered by the screenshot tests in `app/ui`. "Sam" is a sample trusted person.</sub>
 
-> **Status: early and not ready for anyone's daily phone.** The MVP (the first small version that works end to end) is being built as open source. Test builds run on emulators and on one spare test phone. See [Where things stand](#where-things-stand).
+> **Status: early and not ready for anyone's daily phone.** The MVP (the first small version that works end to end) is being built as open source. Test builds run on emulators and on one spare test phone. **What's built, what's next and when: [the roadmap](docs/ROADMAP.md).**
 
 ## Contents
 
@@ -90,15 +90,9 @@ More: [docs/ux/flows-limits-and-off.md](docs/ux/flows-limits-and-off.md).
 
 The design is written and approved. The MVP is being built in small, reviewed slices. Preview builds are marked `testOnly`, so on an emulator or test phone they can be removed with one command. They stay that way until removal is proven on real hardware. The skeleton build on `main` isn't a test build.
 
-| Build | Target date | What it adds |
-|---|---|---|
-| preview-1 | Fri 9 Oct 2026, **done** | The look, with no control over the phone |
-| preview-2: hiding live | Sun 11 Oct 2026 | Device Owner, the home screen, lock task. Apps outside a fixed starter list are hidden. Settings are applied again after a restart. |
-| preview-3: trusted person | Tue 13 Oct 2026 | PIN and recovery code, "Ask for an app" by text, adding an app and choosing what it can use, a supervised Play Store session |
-| preview-4: links and waits | Thu 15 Oct 2026 | Blocked links and browser rules, two trusted people, 24-hour waits with Cancel, the notice line, self-managed mode |
-| test-1: full custody contract | Sat 17 Oct 2026 | Turning LMNOPhone off with a full restore, start-up before unlock, updates, the setup flow, the monthly check |
+**Roadmap: [docs/ROADMAP.md](docs/ROADMAP.md).** It is the one place for the build on the test phone, the next two committed builds, the eight after them in order, what a usable MVP means, and every build delivered so far. The team updates it after each install and records every changed promise.
 
-Dates are targets and may move. Features that aren't ready yet say "Not in this test build yet" on the phone. Nothing pretends to work.
+Features that aren't ready yet say "Not in this test build yet" on the phone. Nothing pretends to work.
 
 **Branches.** `main` holds the reviewed work: the policy engine (`:policy`), the link rules (`:links`), the user screens (`:ui`), and the Gradle skeleton. The Android wiring (`:device`, `:plainphone`) is being built on `mvp/device`, and the preview builds are cut from `release/*` branches. On `main` today, the app installs but shows a blank screen. It isn't a home screen yet, and it has no way to be removed except wiping the phone.
 
