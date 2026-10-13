@@ -124,6 +124,8 @@ import org.plainphone.ui.trusted.WaitingChangeEvent
 import org.plainphone.ui.trusted.WaitingChangeScreen
 import org.plainphone.ui.trusted.WaitingChangeUiState
 import org.plainphone.ui.trusted.WaitingStage
+import org.plainphone.voice.VoicePracticeHost
+import org.plainphone.device.voice.Interruption
 
 /**
  * Plainphone Home. Keyguard first (PLA-264 finding 1): the manifest never starts lock task; Home calls
@@ -280,6 +282,13 @@ class MainActivity : ComponentActivity() {
         BrightnessController(AndroidBrightness(this, ComponentName(this, PlainphoneAdminReceiver::class.java)))
     }
     private val ringtoneController by lazy { RingtoneController(AndroidRingtone(this)) }
+    /** Voice messages practice (PLA-457): records and plays on this phone only. Never sends. */
+    private val voice by lazy {
+        VoicePracticeHost(this, ComponentName(this, PlainphoneAdminReceiver::class.java)) {
+            val names = shell.phone?.snapshot()?.trustedPeople.orEmpty()
+            if (names.size >= 2) getString(org.plainphone.ui.R.string.names_or, names[0], names[1]) else names.firstOrNull().orEmpty()
+        }.also { host -> host.onLeave = { shell.state = shell.navigator?.back(shell.state)?.state ?: shell.state } }
+    }
     private var ringtone by mutableStateOf(RingtoneUiState())
     private fun syncRingtone() {
         val value = ringtoneController.state
@@ -525,6 +534,7 @@ class MainActivity : ComponentActivity() {
                 ringtone = ringtone, onRingtone = ::onRingtone,
                 discovery = discovery, onDiscovery = ::onDiscovery, onPairNew = ::openDiscovery,
                 brightness = brightness, battery = battery, onBrightness = ::onBrightness,
+                voice = voice.ui, onVoiceOpen = voice::open, onVoiceClose = { voice.close() }, onVoice = voice::onEvent,
                 settings = PhoneSettingsUiState(countsEnabled, callsUnavailable, messagesUnavailable, unsupportedCountApps,
                     pendingChange = settingsWait?.let { getString(waitingChangeTextResource(it.kind), getString(R.string.app_name)) }),
                 onSettings = { event ->
@@ -573,7 +583,14 @@ class MainActivity : ComponentActivity() {
         super.onPause()
     }
 
+    /** Not visible any more: a recording stops here and is kept (UX V11). */
+    override fun onStop() {
+        voice.close(Interruption.AppStopped)
+        super.onStop()
+    }
+
     override fun onDestroy() {
+        voice.shutdown()
         ringtoneController.onLeave()
         communication.close()
         super.onDestroy()

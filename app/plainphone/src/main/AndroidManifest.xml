@@ -16,6 +16,9 @@
     <!-- Recovery reads whether a call is ongoing and reopens its screen (PLA-322 finding 1). The Device
          Owner grants it to itself; it never reads numbers or call details. -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- Voice messages practice (PLA-457): records only while the Recording screen shows. The Device
+         Owner grants it to itself (no runtime prompt: it is blocked in lock task). Never sends. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- The 15-minute re-apply is an exact alarm (ReapplyAlarm). -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission

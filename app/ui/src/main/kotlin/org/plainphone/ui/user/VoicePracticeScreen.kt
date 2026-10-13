@@ -34,7 +34,7 @@ import org.plainphone.ui.theme.*
  * is a monochrome initial for now, and record/stop/listen symbols always come with their word.
  */
 data class VoicePersonUi(val id: String, val name: String)
-enum class VoiceUiNotice { MaxLength, Interrupted, NothingRecorded, Deleted, CouldNotPlay }
+enum class VoiceUiNotice { MaxLength, Interrupted, NothingRecorded, Deleted, CouldNotPlay, Busy, Unsent }
 enum class VoiceUiMicProblem { NotAllowed, TurnedOff, DidNotWork }
 
 sealed interface VoiceUiState {
@@ -78,7 +78,7 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
             }
             is VoiceUiState.Person -> {
                 PersonHeader(state.person, onEvent)
-                Notice(state.notice)
+                Notice(state.notice, state.person)
                 BigButton(stringResource(R.string.voice_record), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
             }
             is VoiceUiState.Recording -> {
@@ -88,14 +88,14 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
                 }, verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
                     SymbolMark(Symbol.Record, 20.dp, PlainphoneColors.Ink)
-                    Text(stringResource(R.string.voice_recording), style = PlainphoneType.Row)
+                    Text(stringResource(R.string.voice_recording_practice), style = PlainphoneType.Row)
                 }
                 BigButton(stringResource(R.string.voice_stop), Symbol.Stop) { onEvent(VoiceUiEvent.Stop) }
             }
             is VoiceUiState.Review -> {
                 PersonHeader(state.person, onEvent)
-                Notice(state.notice)
-                if (state.playing) BigButton(stringResource(R.string.voice_stop), Symbol.Stop) { onEvent(VoiceUiEvent.Stop) }
+                Notice(state.notice, state.person)
+                if (state.playing) BigButton(stringResource(R.string.voice_stop_listening), Symbol.Stop) { onEvent(VoiceUiEvent.Stop) }
                 else BigButton(stringResource(R.string.voice_listen), Symbol.Play) { onEvent(VoiceUiEvent.Play) }
                 Spacer(Modifier.height(PlainphoneSpace.S6))
                 SmallButton(stringResource(R.string.voice_record_again), Symbol.Record) { onEvent(VoiceUiEvent.RecordAgain) }
@@ -159,14 +159,16 @@ private fun initial(name: String): String {
 }
 
 @Composable
-private fun Notice(notice: VoiceUiNotice?) {
+private fun Notice(notice: VoiceUiNotice?, person: VoicePersonUi) {
     if (notice == null) { Spacer(Modifier.height(PlainphoneSpace.S4)); return }
-    Text(stringResource(when (notice) {
+    Text(if (notice == VoiceUiNotice.Unsent) stringResource(R.string.voice_notice_unsent, person.name) else stringResource(when (notice) {
         VoiceUiNotice.MaxLength -> R.string.voice_notice_max
         VoiceUiNotice.Interrupted -> R.string.voice_notice_interrupted
         VoiceUiNotice.NothingRecorded -> R.string.voice_notice_nothing
         VoiceUiNotice.Deleted -> R.string.voice_notice_deleted
         VoiceUiNotice.CouldNotPlay -> R.string.voice_notice_play
+        VoiceUiNotice.Busy -> R.string.voice_notice_busy
+        VoiceUiNotice.Unsent -> error("formatted above")
     }), style = PlainphoneType.Body, textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(vertical = PlainphoneSpace.S4).semantics { liveRegion = LiveRegionMode.Polite })
 }

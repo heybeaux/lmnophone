@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import org.plainphone.R
@@ -65,10 +66,15 @@ fun PlainphoneShell(
     brightness: BrightnessUiState,
     battery: BatteryUiState,
     onBrightness: (BrightnessEvent) -> Unit,
+    voice: VoiceUiState,
+    onVoiceOpen: () -> Unit,
+    onVoiceClose: () -> Unit,
+    onVoice: (VoiceUiEvent) -> Unit,
     onStep: (Step) -> Unit,
 ) {
     BackHandler {
         if (state.current == ShellRoute.WifiSettings && wifiJoin != null) onWifiJoin(WifiJoinEvent.Cancel)
+        else if (state.current == ShellRoute.VoicePractice) onVoice(VoiceUiEvent.Back)
         else onStep(navigator.back(state))
     }
     PlainphoneTheme {
@@ -81,6 +87,11 @@ fun PlainphoneShell(
                 ShellRoute.About -> AboutScreen(AboutUiState(versionName, snapshot.trustedPeople,
                     snapshot.requestRecipient, stringResource(R.string.product_name), isDeviceSecure)) { onStep(navigator.onAbout(state, it)) }
                 ShellRoute.TextSize -> TextSizeScreen(textSize, onTextSize)
+                ShellRoute.VoicePractice -> {
+                    // Leaving this route by any way (Back, Home key) stops the recorder and keeps the take.
+                    DisposableEffect(Unit) { onVoiceOpen(); onDispose(onVoiceClose) }
+                    VoicePracticeScreen(voice, onVoice)
+                }
                 ShellRoute.BluetoothSettings -> BluetoothSettingsScreen(bluetooth,
                     { onStep(navigator.back(state)) }, onPairNew)
                 ShellRoute.BluetoothDiscovery -> BluetoothDiscoveryScreen(discovery, onDiscovery)
