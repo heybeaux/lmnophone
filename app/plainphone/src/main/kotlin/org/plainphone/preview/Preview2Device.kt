@@ -8,7 +8,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
 import android.util.Log
-import java.io.File
+import org.plainphone.device.PreviewAppListStore
+import org.plainphone.policy.EmergencyFloor
+import org.plainphone.policy.PreviewAppRules
 import org.plainphone.core.PackageName
 import org.plainphone.device.ReapplyTimings
 import org.plainphone.device.facts.AndroidPackageSystemPort
@@ -23,7 +25,7 @@ class Preview2Device(private val context: Context) {
     private val dpm = context.getSystemService(DevicePolicyManager::class.java)
     private val pm = context.packageManager
     private val plainphone = PackageName(context.packageName)
-    private val starterFile = File(context.filesDir, "starter-list.txt")
+    private val appList = PreviewAppListStore(context.filesDir)
 
     // Refreshed only by a full plan; used solely for optional post-verification readback evidence.
     internal var lastPlan: PolicyPlan? = null
@@ -37,15 +39,34 @@ class Preview2Device(private val context: Context) {
     val isOwner: Boolean get() = dpm.isDeviceOwnerApp(context.packageName)
 
     /** The setup script's list, one package per line. Empty until the script has run. */
-    fun starter(): Set<PackageName> =
-        if (starterFile.exists()) starterFile.readLines().map(String::trim).filter(String::isNotEmpty).map(::PackageName).toSet()
-        else emptySet()
+    fun starter(): Set<PackageName> = appList.starter().mapTo(linkedSetOf(), ::PackageName)
 
-    fun saveStarter(packages: List<String>) {
-        val tmp = File(starterFile.path + ".tmp")
-        tmp.writeText(packages.joinToString("\n", postfix = "\n"))
-        check(tmp.renameTo(starterFile)) { "could not save the starter list" }
+    fun saveStarter(packages: List<String>) = appList.saveStarter(packages)
+
+    /** Re-read OS identities before every edit; unreadable floor facts refuse the edit. */
+    fun protectedApps(): Set<String> {
+        val (installed, floor) = PreviewPackageInput.read(AndroidPackageSystemPort(context), ReapplyTimings())
+        check(floor.unreadable.isEmpty()) { "floor unavailable" }
+        val protected = EmergencyFloor.compute(installed, floor.identities)
+        check(protected.hasSystemDialer) { "dialer unavailable" }
+        return (protected.neverHide + keepVisible()).mapTo(mutableSetOf()) { it.value } +
+            setOfNotNull(dialer(), sms(), context.packageName, SAFETY_HUB)
     }
+
+    fun moveApp(id: String, delta: Int, active: () -> Boolean): Boolean {
+        val protected = protectedApps()
+        val next = PreviewAppRules.move(homeApps().map { it.first }, id, delta, protected) ?: return false
+        if (!active()) return false
+        appList.saveOrder(next)
+        return true
+    }
+
+    fun removeApp(id: String, active: () -> Boolean): Boolean {
+        val protected = protectedApps()
+        return active() && appList.remove(id, protected)
+    }
+
+    fun appVersion(id: String): String = pm.getPackageInfo(id, 0).versionName.orEmpty()
 
     /**
      * The plan for one re-apply ([org.plainphone.boot.PolicyRuntime]). Before the first unlock the
@@ -61,7 +82,7 @@ class Preview2Device(private val context: Context) {
         floorUnreadable = floor.unreadable
         if (locked) return Preview2Plan.decideLocked(plainphone, installed, floor.identities)
         val starter = starter()
-        check(starter.isNotEmpty()) { "no starter list yet" }
+        check(appList.configured()) { "no starter list yet" }
         val plan = Preview2Plan.decide(plainphone, installed, floor.identities, launchable(), starter,
             keepVisible(), setOf(PackageName(SAFETY_HUB)))
         Log.i(TAG, "PREVIEW2 PLAN hidden=${plan.hidden.size} lockTask=${plan.lockTaskPackages.map { it.value }.sorted()} " +
@@ -74,14 +95,10 @@ class Preview2Device(private val context: Context) {
     }
 
     /** Starter apps to list on Home, with their launcher labels. Phone and Messages have their own rows. */
-    fun homeApps(): List<Pair<String, String>> {
-        val own = setOf(dialer(), sms(), context.packageName)
-        return starter().map { it.value }.filter { it !in own }.mapNotNull { name ->
-            val intent = pm.getLaunchIntentForPackage(name) ?: return@mapNotNull null
-            val label = pm.resolveActivity(intent, 0)?.loadLabel(pm)?.toString() ?: return@mapNotNull null
-            name to label
-        }.sortedBy { it.second.lowercase() }
-    }
+    fun homeApps(): List<Pair<String, String>> =
+        PreviewHomeApps.read(appList, setOfNotNull(dialer(), sms(), context.packageName)) { name ->
+            pm.getLaunchIntentForPackage(name)?.let { pm.resolveActivity(it, 0)?.loadLabel(pm)?.toString() }
+        }
 
     /**
      * Hidden apps stay in the query through MATCH_UNINSTALLED_PACKAGES. Disabled apps are left out: they

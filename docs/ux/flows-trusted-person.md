@@ -340,6 +340,16 @@ is hard at large text sizes) and opens its own page when tapped:
 - **Primary:** Remove
 - **Then:** PIN (fresh; self-managed: the user's PIN, no wait and no opening used). "Removed."
 
+### T5 preview subset
+
+The first preview includes order, installed version, and fresh-PIN removal.
+It omits permissions, web-leak notes, dates, self-managed wording, and adding
+hidden apps. The detail metadata is **Version {installed}**.
+If saving fails before replacement, reuse the existing save-failure sentence:
+**"That didn't save. Nothing changed. Try again."** Return to the list with
+**Back**. A failed post-save check uses the existing **LMNOPhone needs attention**
+screen; it must not say "Removed." or "Nothing changed."
+
 ## T6. An app didn't update
 
 **Spec:** approved-apps ("Unresolved failures SHALL stay listed in trusted-person mode").
