@@ -23,6 +23,7 @@ import org.plainphone.device.voice.AndroidVoiceRecorder
 import org.plainphone.device.voice.AndroidVoiceSpeaker
 import org.plainphone.device.voice.Interruption
 import org.plainphone.device.voice.MicProblem
+import org.plainphone.device.voice.VoiceAudioGate
 import org.plainphone.device.voice.VoiceDraftStore
 import org.plainphone.device.voice.VoiceEvent
 import org.plainphone.device.voice.VoiceFormat
@@ -30,6 +31,7 @@ import org.plainphone.device.voice.VoiceNotice
 import org.plainphone.device.voice.VoicePeople
 import org.plainphone.device.voice.VoicePerson
 import org.plainphone.device.voice.VoicePracticeController
+import org.plainphone.device.voice.VoicePracticeSession
 import org.plainphone.device.voice.VoicePrompt
 import org.plainphone.device.voice.VoiceState
 import org.plainphone.ui.R
@@ -68,9 +70,11 @@ object VoiceUiMapper {
 }
 
 /**
- * Hosts the practice for MainActivity. [open] when the screen appears, [close] when it goes away or
- * the activity stops. While open it listens for screen-off and calls; while recording it holds
- * transient audio focus. Each of those stops the recorder and keeps the take (UX V11). Never sends.
+ * Hosts the practice for MainActivity. [open] when the screen appears, [close] when it goes away,
+ * [onActivityStop] and [onActivityStart] with the activity. While the screen shows and the activity is
+ * started it listens for screen-off and calls; while recording or playing it holds transient audio
+ * focus. Each of those stops the recorder (keeping the take) or the playback (UX V11). Recording and
+ * playback are refused while a call rings or is up, or when focus is refused. Never sends.
  *
  * Drafts live in noBackupFilesDir/voice-practice: app-private, credential-encrypted, never backed up.
  * They are kept until deleted and pruned 7 days after saving ([VoiceDraftStore.RETENTION_MS]).
@@ -82,20 +86,41 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
     private val speaker = AndroidVoiceSpeaker(app, ::words)
     private val format = VoiceFormat.AacM4a
     val store = VoiceDraftStore(File(app.noBackupFilesDir, "voice-practice"), format) { System.currentTimeMillis() }
-    private val controller = VoicePracticeController(AndroidVoiceRecorder(app), AndroidVoicePlayer(), store,
-        AndroidMicAccess(app, admin), speaker, SystemClock::elapsedRealtime, format)
+    private var focus: AudioFocusRequest? = null
+    /** Last state from the call listener, which reports the current state as soon as it is armed. */
+    private var callState = TelephonyManager.CALL_STATE_IDLE
+
+    private val gate: VoiceAudioGate = object : VoiceAudioGate {
+        override fun acquire(): Boolean {
+            if (callState != TelephonyManager.CALL_STATE_IDLE || audio.mode != AudioManager.MODE_NORMAL) return false
+            if (focus != null) return true
+            val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+                .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+                .setOnAudioFocusChangeListener { change ->
+                    if (change < 0) controller.close(Interruption.AudioFocusLost)
+                }.build()
+            // Refused during a call, for example (no delayed gain: this asks now or not at all).
+            if (audio.requestAudioFocus(request) != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) return false
+            focus = request
+            return true
+        }
+        override fun release() {
+            focus?.let { audio.abandonAudioFocusRequest(it) }
+            focus = null
+        }
+    }
+
+    private val controller: VoicePracticeController = VoicePracticeController(AndroidVoiceRecorder(app), AndroidVoicePlayer(), store,
+        AndroidMicAccess(app, admin), speaker, gate, SystemClock::elapsedRealtime, format)
+    private val session = VoicePracticeSession(controller, ::arm, ::disarm)
 
     var ui by mutableStateOf<VoiceUiState>(VoiceUiMapper.map(VoiceState.ChoosePerson))
         private set
     var onLeave: () -> Unit = {}
-    private var opened = false
-    private var focus: AudioFocusRequest? = null
 
     init {
-        controller.onChange = { state ->
-            ui = VoiceUiMapper.map(state)
-            if (state is VoiceState.Recording) holdFocus() else dropFocus()
-        }
+        controller.onChange = { state -> ui = VoiceUiMapper.map(state) }
         controller.onLeave = { onLeave() }
     }
 
@@ -105,29 +130,35 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
 
     private val calls = object : TelephonyCallback(), TelephonyCallback.CallStateListener {
         override fun onCallStateChanged(state: Int) {
+            callState = state
             if (state != TelephonyManager.CALL_STATE_IDLE) controller.close(Interruption.Call)
         }
     }
 
-    fun open() {
-        if (opened) return
-        opened = true
+    private fun arm() {
         app.registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF), Context.RECEIVER_NOT_EXPORTED)
         try { telephony.registerTelephonyCallback(app.mainExecutor, calls) } catch (_: Exception) {
-            // No phone-state access: the call's audio-focus loss still stops the recorder.
+            // No phone-state access: audio mode and focus refusal still keep a call out.
         }
-        controller.open()
     }
 
-    /** Stops recording (keeping it), playback and speech. Safe to call more than once. */
-    fun close(cause: Interruption = Interruption.AppStopped) {
-        controller.close(cause)
-        dropFocus()
-        if (!opened) return
-        opened = false
+    private fun disarm() {
         try { app.unregisterReceiver(screenOff) } catch (_: Exception) { }
         try { telephony.unregisterTelephonyCallback(calls) } catch (_: Exception) { }
+        callState = TelephonyManager.CALL_STATE_IDLE
     }
+
+    /** The practice route appeared. */
+    fun open() = session.show()
+
+    /** The practice route went away: stops recording (keeping it), playback and speech. */
+    fun close() = session.hide()
+
+    /** MainActivity.onStop: stops all audio and the listeners; the screen and its draft stay. */
+    fun onActivityStop() = session.activityStopped()
+
+    /** MainActivity.onStart: re-arms the listeners if the practice is still on screen. */
+    fun onActivityStart() = session.activityStarted()
 
     fun onEvent(e: VoiceUiEvent) {
         when (e) {
@@ -141,23 +172,6 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
             VoiceUiEvent.Back -> controller.dispatch(VoiceEvent.Back)
             VoiceUiEvent.HearName -> controller.sayName()
         }
-    }
-
-    private fun holdFocus() {
-        if (focus != null) return
-        val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
-            .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
-            .setOnAudioFocusChangeListener { change ->
-                if (change < 0) controller.close(Interruption.AudioFocusLost)
-            }.build()
-        focus = request
-        audio.requestAudioFocus(request)
-    }
-
-    private fun dropFocus() {
-        focus?.let { audio.abandonAudioFocusRequest(it) }
-        focus = null
     }
 
     private fun words(prompt: VoicePrompt, person: VoicePerson?): String {

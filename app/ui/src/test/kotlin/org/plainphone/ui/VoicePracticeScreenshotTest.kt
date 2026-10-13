@@ -82,10 +82,18 @@ class VoicePracticeScreenshotTest(private val scale: Float, private val name: St
         n.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }).joinToString(" ")
     private fun SemanticsNode.clickable() = config.contains(SemanticsActions.OnClick)
 
-    /** Record, stop and play targets are at least 96 dp (density 1: px = dp) and name their action. */
+    /**
+     * Record, stop and play targets are at least 96 dp (density 1: px = dp), name their action and are
+     * fully on screen without scrolling (PLA-465 finding 3): not clipped, and inside the frame's visible
+     * area, which ends [FRAME_BOTTOM] above the 640 dp screen. Node size alone passes when scrolled away.
+     */
     private fun bigButton(nodes: List<SemanticsNode>, word: String) {
         val node = nodes.single { it.clickable() && label(it).startsWith(word) }
         assertTrue("$word ${node.size}", node.size.width >= 96 && node.size.height >= 96)
+        // boundsInRoot is clipped by the scrolling parent, so a part-hidden button is smaller than its size.
+        val b = node.boundsInRoot
+        assertTrue("$word visible: $b of ${node.size}", b.height >= node.size.height - 0.5f &&
+            b.width >= node.size.width - 0.5f && b.top >= 0f && b.bottom <= 640f - FRAME_BOTTOM)
     }
 
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
@@ -111,6 +119,8 @@ class VoicePracticeScreenshotTest(private val scale: Float, private val name: St
     }
 
     companion object {
+        /** HomeTestFrame's bottom padding (the navigation bar stand-in). */
+        private const val FRAME_BOTTOM = 48f
         @JvmStatic @Parameterized.Parameters(name = "fontScale={0},name={1}")
         fun matrix() = listOf(1f, 1.3f, 1.5f, 1.8f, 2f).flatMap { s ->
             listOf("Sam", "Alexandria Montgomery-Fitzwilliam").map { arrayOf<Any>(s, it) }
