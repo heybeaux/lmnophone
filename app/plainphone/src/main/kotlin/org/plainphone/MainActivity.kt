@@ -184,27 +184,35 @@ class MainActivity : ComponentActivity() {
     private var wifiJoin by mutableStateOf<WifiJoinUiState?>(null)
     private var wifiEnableFailed = false
     private fun wifiVisible() = resumed && (shell.state.current == ShellRoute.WifiSettings || shell.state.current is ShellRoute.Wifi)
-    private fun forgetWifi() {
+    private fun forgetWifi(connection: Long) {
         if (!wifiVisible() || wifiJoin != null) return
         if (!wifi.canForget) return
         wifiSource.onOpen()
-        wifiSession.forget.forget()
+        wifiSession.forget.forget(connection)
         wifiSession.schedule()
         syncWifi()
     }
     private var wifiForgetAsk by mutableStateOf<WifiForgetConfirmUiState?>(null)
+    /** The live connection the question was asked about (PLA-491). */
+    private var wifiForgetAskConnection: Long? = null
+    private var wifiConnection: Long? = null
     /** Forget asks first (PLA-488); the question names the network it was asked about. */
     private fun askForgetWifi() {
         if (!wifiVisible() || wifiJoin != null) return
         syncWifi()
         if (!wifi.canForget) return
+        val connection = wifiConnection ?: return
+        wifiForgetAskConnection = connection
         wifiForgetAsk = WifiForgetConfirmUiState(wifi.network)
     }
     private fun onWifiForgetAsk(event: WifiForgetConfirmEvent) {
         val ask = wifiForgetAsk ?: return
         if (event == WifiForgetConfirmEvent.Forget && wifiVisible()) {
             syncWifi()
-            if (wifiForgetStillAsked(ask, wifi)) { wifiForgetAsk = null; forgetWifi(); return }
+            val connection = wifiForgetAskConnection
+            if (connection != null && wifiForgetStillAsked(ask, connection, wifi, wifiConnection)) {
+                wifiForgetAsk = null; forgetWifi(connection); return
+            }
         }
         wifiForgetAsk = null
         if (wifiVisible()) syncWifi()
@@ -290,7 +298,10 @@ class MainActivity : ComponentActivity() {
                 WifiForgetResult.NotRemoved -> WifiForgetUiResult.NotRemoved
                 null -> null
             })
-        wifiForgetAsk = wifiForgetAsk?.takeIf { wifiForgetStillAsked(it, wifi) }
+        wifiConnection = current?.connectionId?.takeIf { current.connected }
+        wifiForgetAsk = wifiForgetAsk?.takeIf { wifiForgetStillAsked(it, wifiForgetAskConnection, wifi, wifiConnection) }
+        // The settled outcome is on screen now; the next open may clear it (PLA-491).
+        if (resumed && shell.state.current == ShellRoute.WifiSettings && wifiForgetAsk == null) wifiSession.forget.presented()
     }
     private val textSizeController by lazy { TextSizeController(AndroidTextSize(this)) }
     private var textSize by mutableStateOf(TextSizeUiState())

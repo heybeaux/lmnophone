@@ -51,20 +51,24 @@ class WifiForgetProbe : Instrumentation() {
             check(!locationPort.enabled() && !locationPort.owned())
             val port = AndroidWifiForget(app)
             check(port.read().connectedId == null)
+            // PLA-491: the connection handle the question binds to is readable with Location off.
+            val asked = checkNotNull(port.read().connection)
+            result.putString("asked_connection_readable_location_off", "true")
             var removedId: Int? = null
             val observed = object : org.plainphone.device.settings.WifiForgetPort {
                 override fun read() = port.read().also {
                     result.putString("last_read", "connected=${it.connected} validated=${it.validated} identity_readable=${it.connectedId != null} saved_count=${it.savedIds.size} location_on=${locationPort.enabled()}")
                 }
-                override fun removeConnected(networkId: Int): Boolean {
+                override fun removeConnected(networkId: Int, connection: Long): Boolean {
                     check(locationPort.enabled())
                     check(networkId != sentinelId)
                     removedId = networkId
-                    return port.removeConnected(networkId)
+                    check(connection == asked)
+                    return port.removeConnected(networkId, connection)
                 }
             }
             val controller = WifiForgetController(observed, location, SystemClock::elapsedRealtime)
-            runOnMainSync { controller.forget() }
+            runOnMainSync { controller.forget(asked) }
             repeat(120) {
                 if (controller.pending) { Thread.sleep(100); runOnMainSync { controller.refresh(); location.tick() } }
             }
@@ -84,11 +88,12 @@ class WifiForgetProbe : Instrumentation() {
             check(Settings.Secure.getInt(app.contentResolver, Settings.Secure.LOCATION_MODE) == 0)
             result.putString("after", "one_connected_id_removed=true other_saved_ids_preserved=true disconnected=true location_mode=0 owned=false")
             // No connected ID: prove a second tap cannot remove the remaining sentinel.
-            runOnMainSync { controller.onOpen(); controller.forget() }
+            runOnMainSync { controller.presented(); controller.onOpen(); controller.forget(asked) }
             repeat(30) {
                 if (controller.pending) { Thread.sleep(100); runOnMainSync { controller.refresh(); location.tick() } }
             }
-            check(controller.failed && !controller.pending)
+            // The asked connection is gone (PLA-491): nothing is removed.
+            check(controller.result == org.plainphone.device.settings.WifiForgetResult.NotRemoved && !controller.pending)
             check(!locationPort.enabled() && !locationPort.owned())
             runOnMainSync { check(location.show()) }
             Thread.sleep(2_000)

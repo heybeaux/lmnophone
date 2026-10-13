@@ -124,6 +124,10 @@ fun PlainphoneShell(
     }
 }
 
-/** Forget runs only for the network the question named, while it is still connected and forgettable (PLA-488). */
-fun wifiForgetStillAsked(ask: WifiForgetConfirmUiState, wifi: WifiSettingsUiState) =
-    wifi.connected && wifi.canForget && ask.network == wifi.network
+/**
+ * Forget runs only for the network the question named, while it is still connected and forgettable (PLA-488),
+ * on the same live connection: names cannot tell unnamed or same-label networks apart (PLA-491).
+ */
+fun wifiForgetStillAsked(ask: WifiForgetConfirmUiState, askedConnection: Long?, wifi: WifiSettingsUiState,
+    connection: Long?) =
+    wifi.connected && wifi.canForget && ask.network == wifi.network && askedConnection != null && askedConnection == connection
