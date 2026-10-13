@@ -54,6 +54,8 @@ fun PlainphoneShell(
     onWifiShow: () -> Unit,
     onWifiSelect: (String) -> Unit,
     onWifiForget: () -> Unit,
+    wifiForgetAsk: WifiForgetConfirmUiState?,
+    onWifiForgetAsk: (WifiForgetConfirmEvent) -> Unit,
     onWifiMessage: () -> Unit,
     bluetooth: BluetoothSettingsUiState,
     discovery: BluetoothDiscoveryUiState,
@@ -74,6 +76,7 @@ fun PlainphoneShell(
 ) {
     BackHandler {
         if (state.current == ShellRoute.WifiSettings && wifiJoin != null) onWifiJoin(WifiJoinEvent.Cancel)
+        else if (state.current == ShellRoute.WifiSettings && wifiForgetAsk != null) onWifiForgetAsk(WifiForgetConfirmEvent.Keep)
         else if (state.current == ShellRoute.VoicePractice) onVoice(VoiceUiEvent.Back)
         else onStep(navigator.back(state))
     }
@@ -97,6 +100,7 @@ fun PlainphoneShell(
                 ShellRoute.BluetoothDiscovery -> BluetoothDiscoveryScreen(discovery, onDiscovery)
                 is ShellRoute.BluetoothDevice -> BluetoothDeviceScreen(route.name) { onStep(navigator.back(state)) }
                 ShellRoute.WifiSettings -> if (wifiJoin != null) WifiJoinScreen(wifiJoin, onWifiJoin)
+                    else if (wifiForgetAsk != null) WifiForgetConfirmScreen(wifiForgetAsk, onWifiForgetAsk)
                     else WifiSettingsScreen(wifi, { onStep(navigator.back(state)) }, onWifiShow, onWifiSelect, onWifiForget, onWifiMessage)
                 ShellRoute.Sound -> SoundScreen(sound, onSound)
                 ShellRoute.Ringtone -> RingtoneScreen(ringtone, onRingtone)
@@ -119,3 +123,7 @@ fun PlainphoneShell(
         }
     }
 }
+
+/** Forget runs only for the network the question named, while it is still connected and forgettable (PLA-488). */
+fun wifiForgetStillAsked(ask: WifiForgetConfirmUiState, wifi: WifiSettingsUiState) =
+    wifi.connected && wifi.canForget && ask.network == wifi.network

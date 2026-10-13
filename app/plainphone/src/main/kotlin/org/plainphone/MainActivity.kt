@@ -26,6 +26,11 @@ import org.plainphone.device.settings.WifiController
 import org.plainphone.device.settings.WifiInternetStatus
 import org.plainphone.ui.user.WifiInternetUiStatus
 import org.plainphone.ui.user.WifiSettingsUiState
+import org.plainphone.ui.user.WifiForgetConfirmUiState
+import org.plainphone.ui.user.WifiForgetConfirmEvent
+import org.plainphone.ui.user.WifiForgetUiResult
+import org.plainphone.device.settings.WifiForgetResult
+import org.plainphone.shell.wifiForgetStillAsked
 import org.plainphone.device.settings.AndroidRingtone
 import org.plainphone.device.settings.RingtoneController
 import org.plainphone.ui.user.RingtoneUiState
@@ -187,6 +192,23 @@ class MainActivity : ComponentActivity() {
         wifiSession.schedule()
         syncWifi()
     }
+    private var wifiForgetAsk by mutableStateOf<WifiForgetConfirmUiState?>(null)
+    /** Forget asks first (PLA-488); the question names the network it was asked about. */
+    private fun askForgetWifi() {
+        if (!wifiVisible() || wifiJoin != null) return
+        syncWifi()
+        if (!wifi.canForget) return
+        wifiForgetAsk = WifiForgetConfirmUiState(wifi.network)
+    }
+    private fun onWifiForgetAsk(event: WifiForgetConfirmEvent) {
+        val ask = wifiForgetAsk ?: return
+        if (event == WifiForgetConfirmEvent.Forget && wifiVisible()) {
+            syncWifi()
+            if (wifiForgetStillAsked(ask, wifi)) { wifiForgetAsk = null; forgetWifi(); return }
+        }
+        wifiForgetAsk = null
+        if (wifiVisible()) syncWifi()
+    }
     private fun openWifiMessage() {
         if (!wifiVisible() || wifiJoin != null) return
         syncWifi()
@@ -218,6 +240,7 @@ class MainActivity : ComponentActivity() {
         })
     }
     private fun leaveWifi() {
+        wifiForgetAsk = null
         wifiSession.leave()
         wifiJoin = null
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
@@ -261,7 +284,13 @@ class MainActivity : ComponentActivity() {
             canForget = current?.connected == true && current.validated == true &&
                 !value.readFailed && !wifiSession.forget.pending && !wifiSession.forget.failed,
             forgetFailed = wifiSession.forget.failed,
-            choices = choices.map { WifiNearbyUi(it.ssid, it.name, value.connected && it.ssid == rawCurrent) })
+            choices = choices.map { WifiNearbyUi(it.ssid, it.name, value.connected && it.ssid == rawCurrent) },
+            forgetResult = when (wifiSession.forget.result) {
+                WifiForgetResult.Removed -> WifiForgetUiResult.Removed
+                WifiForgetResult.NotRemoved -> WifiForgetUiResult.NotRemoved
+                null -> null
+            })
+        wifiForgetAsk = wifiForgetAsk?.takeIf { wifiForgetStillAsked(it, wifi) }
     }
     private val textSizeController by lazy { TextSizeController(AndroidTextSize(this)) }
     private var textSize by mutableStateOf(TextSizeUiState())
@@ -398,8 +427,9 @@ class MainActivity : ComponentActivity() {
             }
             DisposableEffect(basicSettingsVisible, shell.state.current) {
                 val scanVisible = basicSettingsVisible && shell.state.current == ShellRoute.BluetoothDiscovery
-                if (scanVisible) { discoverySource.onOpen(); discoveryController.open() }
-                onDispose { if (scanVisible) discoveryController.close() }
+                // Back from a pause: a new search, not the stopped one's "No devices found" (PLA-488).
+                if (scanVisible) { discoverySource.onOpen(); if (discoveryController.paused) discoveryController.resume() else discoveryController.open() }
+                onDispose { if (scanVisible && resumed) discoveryController.close() }
             }
             DisposableEffect(basicSettingsVisible, shell.state.current) {
                 val chooserVisible = basicSettingsVisible && shell.state.current == ShellRoute.Ringtone
@@ -532,7 +562,7 @@ class MainActivity : ComponentActivity() {
                 textSize = textSize, onTextSize = ::onTextSize,
                 wifi = wifi, wifiJoin = wifiJoin, onWifiJoin = ::onWifiJoin,
                 onWifiShow = ::showNearbyWifi, onWifiSelect = ::selectWifi,
-                onWifiForget = ::forgetWifi, onWifiMessage = ::openWifiMessage, bluetooth = bluetooth,
+                onWifiForget = ::askForgetWifi, wifiForgetAsk = wifiForgetAsk, onWifiForgetAsk = ::onWifiForgetAsk, onWifiMessage = ::openWifiMessage, bluetooth = bluetooth,
                 sound = sound, onSound = ::onSound,
                 ringtone = ringtone, onRingtone = ::onRingtone,
                 discovery = discovery, onDiscovery = ::onDiscovery, onPairNew = ::openDiscovery,
@@ -577,7 +607,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         leaveWifi()
-        discoveryController.close()
+        discoveryController.pause()
         ringtoneController.stopPreview()
         resumed = false
         communication.controller.setVisible(false)

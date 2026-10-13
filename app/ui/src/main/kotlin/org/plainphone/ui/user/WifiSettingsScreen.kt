@@ -21,12 +21,15 @@ import org.plainphone.ui.components.plainphoneAction
 import org.plainphone.ui.theme.*
 
 enum class WifiInternetUiStatus { SignInRequired, NoInternet }
+/** The last Forget's outcome, only when Android's readback or the attempt itself settled it. */
+enum class WifiForgetUiResult { Removed, NotRemoved }
 
 data class WifiSettingsUiState(val enabled: Boolean = true, val connected: Boolean = false,
     val network: String? = null, val nearby: List<String>? = null,
     val readFailed: Boolean = false, val internetStatus: WifiInternetUiStatus? = null,
     val locationOff: Boolean = false, val locationEnableFailed: Boolean = false,
-    val locationOffFailed: Boolean = false, val canForget: Boolean = false, val forgetFailed: Boolean = false, val choices: List<WifiNearbyUi> = emptyList())
+    val locationOffFailed: Boolean = false, val canForget: Boolean = false, val forgetFailed: Boolean = false, val choices: List<WifiNearbyUi> = emptyList(),
+    val forgetResult: WifiForgetUiResult? = null)
 data class WifiNearbyUi(val id: String, val name: String, val connected: Boolean = false)
 
 /** The host supplies current facts and handles the explicit Location and network actions. */
@@ -81,6 +84,12 @@ fun WifiSettingsScreen(state: WifiSettingsUiState, onBack: () -> Unit,
 @Composable
 private fun WifiConnection(state: WifiSettingsUiState, onForget: () -> Unit, onMessage: () -> Unit) {
     if (state.forgetFailed) Text(stringResource(R.string.wifi_status_unavailable), style = PlainphoneType.Body)
+    state.forgetResult?.let {
+        Text(stringResource(when (it) {
+            WifiForgetUiResult.Removed -> R.string.wifi_forget_removed
+            WifiForgetUiResult.NotRemoved -> R.string.wifi_forget_not_removed
+        }), style = PlainphoneType.Body)
+    }
     Text(when {
                 !state.connected -> stringResource(R.string.wifi_not_connected)
                 state.network == null -> stringResource(R.string.wifi_connected_unnamed)

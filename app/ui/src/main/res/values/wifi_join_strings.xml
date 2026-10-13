@@ -13,4 +13,11 @@
     <string name="wifi_joining">Joining…</string>
     <string name="wifi_join_failed">Couldn\'t join. Check the password and try again.</string>
     <string name="wifi_location_off_failed">Location is still on. LMNOPhone couldn\'t turn it off.</string>
+    <string name="wifi_forget_ask_title">Forget this network?</string>
+    <string name="wifi_forget_ask_unnamed">The Wi-Fi this phone is connected to</string>
+    <string name="wifi_forget_ask_password">You will need its password to join it again.</string>
+    <string name="wifi_forget_ask_forget">Forget</string>
+    <string name="wifi_forget_ask_keep">Keep</string>
+    <string name="wifi_forget_removed">The network was forgotten.</string>
+    <string name="wifi_forget_not_removed">The network was not forgotten.</string>
 </resources>
