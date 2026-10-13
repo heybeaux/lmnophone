@@ -1,0 +1,2 @@
+after reboot 2026-10-13T21:42:37Z: home order: Maps, Camera, Messages, Phone
+version=versionCode=46 mLockTaskModeState=LOCKED DO=1 calls=0

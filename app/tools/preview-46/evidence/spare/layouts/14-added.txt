@@ -1,0 +1,29 @@
+# t+1
+For Sam|Sam's PIN|Enter your PIN to look after Alex's phone.|LMNOPhone asks for your PIN for each change, so nobody else can make one if the phone is put down.|PIN|Forgot PIN? Use recovery code|Continue
+
+# t+2
+For Sam|Done. Camera is on the home screen.|OK
+
+# t+3
+For Sam|Done. Camera is on the home screen.|OK
+
+# t+4
+For Sam|Done. Camera is on the home screen.|OK
+
+# t+5
+For Sam|Done. Camera is on the home screen.|OK
+
+# final
+'For Sam' '' enabled=true [60,137][1020,197]
+'Done. Camera is on the home screen.' '' enabled=true [60,337][1020,515]
+'OK' '' enabled=true [506,2162][575,2218]
+camera installed=true hidden=false starter=1
+ceDataInode unchanged since before removal (data kept)
+firstInstall firstInstallTime=2026-10-0812:56:34
+# list
+For Sam|Apps on this phone|Maps|Move up|Move down|Camera|Move up|Move down|Messages|Always on|Phone|Always on|Add a hidden app|Go back
+
+home order: Maps, Camera, Messages, Phone
+after reboot 2026-10-13T21:54:37Z: home order: Maps, Camera, Messages, Phone
+camera installed=true hidden=false
+version=versionCode=46 mLockTaskModeState=LOCKED DO=1 calls=0

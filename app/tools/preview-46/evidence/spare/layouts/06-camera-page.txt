@@ -1,0 +1,7 @@
+# Camera page
+'For Sam' '' enabled=true [60,137][1020,197]
+'Camera' '' enabled=true [60,337][333,425]
+'Version 9.1.1.55' '' enabled=true [60,465][390,521]
+'Go back' '' enabled=true [448,2012][633,2068]
+"Remove from Alex's phone" '' enabled=true [247,2162][833,2218]
+# installed versionName: versionName=9.1.1.55

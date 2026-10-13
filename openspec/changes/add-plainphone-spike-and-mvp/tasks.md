@@ -113,3 +113,13 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [x] Cover Location-off, no-ID, duplicate taps, delayed identity, failed readback and cleanup with red-first JVM tests.
 - [x] Verify five font scales for changed screens, plus join/Bluetooth, navigation, emergency and update-postpone regressions.
 - [x] Prove connected-only removal and Location-off cleanup on a private API 35 emulator; no spare access or live calls.
+
+### Authorized T5 app-list preview ([PLA-514](/PLA/issues/PLA-514))
+
+- [x] Tests first: production Home order persistence, floor refusal, fresh PIN, Back/pause cancellation, failed atomic save and failed re-apply.
+- [x] Trusted-person T5 list, installed-version page and Remove confirmation, with fixed Messages/Phone and live floor guards.
+- [x] Atomically preserve order across process restart and in-place upgrades; remove from starter list then re-apply, without uninstalling.
+- [x] Inspect list/details/confirmation goldens at 360×640 dp and five scales through 200%; record existing baseline failures separately.
+- [x] Private read-only API 35 emulator: reorder/Home, reboot, wrong PIN/Back, removal/hidden readback, data-preserving setup-command restoration and in-place upgrade. No calls or spare access.
+- [x] Opposite-model review on [PLA-515](/PLA/issues/PLA-515): PASS for `7761bf65..71941c47`, with three nonblocking Low findings recorded for the Lead.
+- [ ] Lead-routed spare installation on the latest release.

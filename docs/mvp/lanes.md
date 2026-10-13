@@ -429,7 +429,7 @@ permission logic. Debug sending is opt-in through the shell-only test hook;
 release stays practice-only until the family-list integration (slice 2b).
 No policy-engine, emergency-floor or lock-task interface changes.
 
-### Voice family send wiring (PLA-513, build 46)
+### Voice family send wiring (PLA-513, build 47)
 
 `VoicePracticeHost` builds a `VoiceSendRoute` from the current mode: the family
 list uses `VoiceSendEngine.get(context, VoiceSendChannel.Family)` and
@@ -442,3 +442,27 @@ the family flags (`fromHome`, `openMessages`, `pictureInInk`) with the send flag
 (`canSend`, `practice`). Removal, turn-off and number changes still erase drafts
 through `FamilyStore` before the list changes; the host reads the list again on
 each `open()`.
+
+## T5 preview app-list seam (PLA-514)
+
+`PreviewAppListStore` in `:device` preserves the existing credential-encrypted
+`starter-list.txt` and atomically stores `app-order.txt` alongside it. The
+production `PreviewHomeApps.read` mapper and T5 use the same stored order.
+`PreviewAppRules` in `:policy` refuses removal/movement of live protected entries.
+`PolicyRuntime.previewApps`, `movePreviewApp`, and `removePreviewApp` serialize
+preview reads and changes with policy passes. Removal consumes a fresh
+app-bound PIN grant through `PreviewPinAccess.authenticateRemoval`, rechecks the
+live floor and cancellation, saves the starter list, and runs normal re-apply.
+Only successful re-apply readback permits the Removed screen. Activity pause
+revokes pending UI work. These preview seams do not change the full-MVP APIs.
+
+T4 preview ([PLA-517](/PLA/issues/PLA-517)) adds `PreviewAppRules.canAdd` and
+`AndroidPreviewHiddenApps.read`: hidden, installed, enabled launcher entries only,
+with live browser/catalog, floor, Settings, Home, store and installer exclusions.
+Unreadable facts yield no list. `PolicyRuntime.previewHiddenApps` / `addPreviewApp`
+use the same dispatcher; `PreviewPinAccess.authenticateAddition` consumes a fresh
+`preview:add` grant for that app. Save re-reads eligibility and the selected
+version/signers, then `PreviewAppListStore.add` publishes appended order before
+starter membership under the common lock. Failed membership restores old order;
+a crash before membership leaves the app hidden. Only ready re-apply readback
+permits Added. This preview does not change permissions or the locked/floor plan.

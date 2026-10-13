@@ -1,0 +1,27 @@
+# PIN screen
+'For Sam' '' enabled=true [60,137][1020,197]
+"Sam's PIN" '' enabled=true [60,337][421,425]
+"Enter your PIN to look after Alex's phone." '' enabled=true [60,465][967,521]
+'LMNOPhone asks for your PIN for each change, so nobody else can make one if the phone is put down.' '' enabled=true [60,561][1020,747]
+'PIN' '' enabled=true [60,787][136,837]
+'' 'PIN' enabled=true [100,887][980,1007]
+'Forgot PIN? Use recovery code' '' enabled=true [193,2012][887,2068]
+'Continue' '' enabled=true [441,2162][639,2218]
+# after wrong PIN
+'For Sam' '' enabled=true [60,137][1020,197]
+"Sam's PIN" '' enabled=true [60,337][421,425]
+"Enter your PIN to look after Alex's phone." '' enabled=true [60,465][967,521]
+'LMNOPhone asks for your PIN for each change, so nobody else can make one if the phone is put down.' '' enabled=true [60,561][1020,747]
+"That PIN isn't right. Try again." '' enabled=true [60,787][715,843]
+'PIN' '' enabled=true [60,883][136,933]
+'' 'PIN' enabled=true [100,983][980,1103]
+'Forgot PIN? Use recovery code' '' enabled=true [193,2012][887,2068]
+'Continue' '' enabled=true [441,2162][639,2218]
+camera installed=true hidden=false
+# after Back
+'For Sam' '' enabled=true [60,137][1020,197]
+'Camera' '' enabled=true [60,337][333,425]
+'Version 9.1.1.55' '' enabled=true [60,465][390,521]
+'Go back' '' enabled=true [448,2012][633,2068]
+"Remove from Alex's phone" '' enabled=true [247,2162][833,2218]
+camera installed=true hidden=false

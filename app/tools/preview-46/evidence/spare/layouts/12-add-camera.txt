@@ -1,0 +1,21 @@
+# T4a/T4b
+'For Sam' '' enabled=true [60,137][1020,197]
+'Add Camera?' '' enabled=true [60,337][528,425]
+'Camera' '' enabled=true [60,465][273,534]
+'Web pages inside this app' '' enabled=true [60,574][773,643]
+'Not reviewed yet – this app may open web pages inside it' '' enabled=true [100,723][980,862]
+"The LMNOPhone team checks apps for this and writes a note for each one. They haven't checked Camera. To ask them to, tell Sam." '' enabled=true [100,882][980,1133]
+"Don't add" '' enabled=true [432,2012][649,2068]
+'Next' '' enabled=true [487,2162][593,2218]
+# after Next
+'For Sam' '' enabled=true [60,137][1020,197]
+'Add an app nobody has checked?' '' enabled=true [60,337][1020,515]
+"The LMNOPhone team hasn't checked whether Camera can show web pages inside it. Some apps can show any website, which would let Alex reach websites this phone normally keeps out. If you're not sure, wait: ask Sam to get it checked first. You can also add it now and remove it later." '' enabled=true [60,555][1020,1001]
+"Don't add" '' enabled=true [432,2012][649,2068]
+'Add anyway' '' enabled=true [402,2162][678,2218]
+# after Add anyway
+'For Sam' '' enabled=true [60,137][1020,197]
+"Add Camera to Alex's phone?" '' enabled=true [60,337][1020,515]
+'It will appear on the home screen, below the other apps.' '' enabled=true [60,555][1020,676]
+'Go back' '' enabled=true [448,2012][633,2068]
+'Add Camera' '' enabled=true [402,2162][679,2218]

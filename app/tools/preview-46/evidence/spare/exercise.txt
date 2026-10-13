@@ -1,0 +1,42 @@
+# Build 46 on the spare: Apps on this phone (T5) + Add a hidden app (PLA-516)
+# 2026-10-13 21:26Z-21:56Z. PIN from the secrets file, never printed. No calls, no sends.
+# Trusted-person screens are FLAG_SECURE: screencaps are black, so each screen is recorded
+# as a uiautomator layout readback in layouts/ (text, enabled, bounds).
+# Spare starter list: Phone, Messages, Camera, Maps (no Calculator). Camera used for remove/add.
+
+1. Menu > Apps on this phone (layouts/01-list-1.0.txt, 02-list-2.0.txt)
+   1.0: Camera, Maps (Move up / Move down), Messages + Phone "Always on" with no buttons,
+        "Add a hidden app" last, "Go back" pinned above the 3-button nav bar (y2172-2228 < 2280).
+   2.0: same rows; after scrolling "Add a hidden app" [1907-2016] sits above "Go back" [2146-2240].
+   Text-size change recreates the screen at the PIN prompt (re-entered PIN). Restored 1.0, read back 1.0.
+   Observation: "Move up" on the top app and "Move down" on the last optional app are enabled
+   but do nothing (order unchanged).
+2. Move Camera down -> list Maps, Camera; Home at once: Maps, Camera, Messages, Phone
+   (layouts/03, 04; app-order.txt = MAPS CAMERA). Reboot 21:42Z: Home Maps, Camera, Messages, Phone (05).
+3. Camera page: "Camera", "Version 9.1.1.55" (= installed versionName), "Remove from Alex's phone",
+   on-screen "Go back" (06).
+4. Remove Camera (07, 08, 10, 11): confirm "Remove Camera?" says nothing is deleted.
+   Wrong PIN -> "That PIN isn't right. Try again.", Camera installed=true hidden=false.
+   System Back from the PIN screen -> Camera page, hidden=false.
+   Back ~0.25 s after Continue with the correct PIN -> landed on the list (not Camera's page);
+   the change was cancelled before saving: hidden=false, starter list still had Camera.
+   Could not catch Back during the "Removed" check itself.
+   Correct fresh PIN -> "Removed." after ~2 s. Camera installed=true hidden=true, not in the
+   enabled package list, out of starter-list.txt, ceDataInode unchanged (app data kept, no uninstall).
+   List: Maps, Messages, Phone. Home: Maps, Messages, Phone.
+5. Add a hidden app (12, 12a, 13, 14): list of 31 eligible apps with Camera; no Chrome/browser,
+   Play Store, Settings or Files (names otherwise withheld: owner apps).
+   Camera -> "Add Camera?" with "Not reviewed yet - this app may open web pages inside it" -> Next
+   -> "Add an app nobody has checked?" -> Add anyway -> "Add Camera to Alex's phone?" -> Add Camera
+   -> wrong PIN once: "That PIN isn't right", still hidden=true, not in starter list
+   -> correct fresh PIN -> "Done. Camera is on the home screen." after ~2 s.
+   Camera installed=true hidden=false, back in the starter list, ceDataInode and firstInstallTime
+   unchanged since before removal (data kept). List and Home: Maps, Camera, Messages, Phone
+   (end of the optional apps, above Messages/Phone). Reboot 21:54Z: same order, hidden=false.
+6. "Forgot PIN? Use recovery code" from the remove PIN screen (09) and the add PIN screen (13):
+   "Not in this test build yet. This part of LMNOPhone comes in a later test build. Nothing was
+   changed or sent." OK returns to the Apps list; nothing changed.
+7. Cleanup: Move Camera up -> Home Camera, Maps, Messages, Phone (original order). app-order.txt now
+   exists with CAMERA MAPS (same as the label order it replaces). Font 1.0. Home.
+   Starter list before: 4 entries sha256(sorted)[:16]=7dc15f281d9082f6; after: 4, 7dc15f281d9082f6.
+   after.txt vs before.txt: version and lastUpdateTime only. versionCode 46, DO, LOCKED, calls 0.

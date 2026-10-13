@@ -1,0 +1,5 @@
+PASS removed Calculator is offered; browser/Play Store/Settings absent
+PASS fresh wrong PIN and Back leave Calculator hidden and starter unchanged
+PASS Add via production screens, readback, appended Home order and app-private marker
+PASS guest reboot preserves added app, order, marker and Phone/Messages visibility. No calls or sends.
+PASS original visible order restored; AVD run is read-only

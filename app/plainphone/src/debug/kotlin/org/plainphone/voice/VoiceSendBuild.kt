@@ -24,7 +24,7 @@ object VoiceSendBuild {
     }
 
     /**
-     * Test build (PLA-513, build 46): real sending is on for every family person, to the number saved for them in
+     * Test build (PLA-513, build 47): real sending is on for every family person, to the number saved for them in
      * the family list. The debug build type is the whole gate: there is no marker. Release returns false.
      */
     fun familySend(): Boolean = true

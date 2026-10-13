@@ -371,6 +371,43 @@ class PolicyRuntime private constructor(private val context: Context) {
         done(pins.authenticate(pin))
     }
 
+    /** T5 preview: all app-list reads/writes share the policy pass dispatcher. */
+    fun previewApps(done: (List<org.plainphone.preview.PreviewAppRow>?) -> Unit) = dispatcher.post {
+        val rows = try {
+            val protected = preview.protectedApps()
+            preview.homeApps().map { (id, name) ->
+                org.plainphone.preview.PreviewAppRow(id, name, preview.appVersion(id), id in protected)
+            }
+        } catch (_: Exception) { null }
+        done(rows)
+    }
+    fun movePreviewApp(id: String, delta: Int, active: () -> Boolean, done: (Boolean) -> Unit) = dispatcher.post {
+        val saved = try { active() && preview.moveApp(id, delta, active) } catch (_: Exception) { false }
+        if (saved) refreshState.value = refreshState.value.copy(revision = refreshState.value.revision + 1)
+        done(saved)
+    }
+    fun removePreviewApp(id: String, pin: CharArray, active: () -> Boolean,
+        done: (org.plainphone.device.AppRemovalResult) -> Unit) = dispatcher.post {
+        val removal = org.plainphone.device.PreviewAppRemoval(
+            authenticate = pins::authenticateRemoval,
+            remove = { preview.removeApp(it, active) },
+            apply = { run("app-removed", packageMaySkip = false); gate.value == HomeGate.READY },
+        )
+        done(removal.remove(id, pin, active))
+    }
+
+    fun previewHiddenApps(done: (List<org.plainphone.device.PreviewHiddenApp>?) -> Unit) = dispatcher.post {
+        done(try { preview.hiddenApps() } catch (_: Exception) { null })
+    }
+    fun addPreviewApp(id: String, identity: String, pin: CharArray, active: () -> Boolean,
+        done: (org.plainphone.device.AppAdditionResult) -> Unit) = dispatcher.post {
+        val addition = org.plainphone.device.PreviewAppAddition(
+            authenticate = pins::authenticateAddition,
+            save = { preview.addApp(it, identity, active) },
+            apply = { run("app-added", packageMaySkip = false); gate.value == HomeGate.READY })
+        done(addition.add(id, pin, active))
+    }
+
     fun checkTurnOffPin(flow: String, pin: CharArray, done: (PinAccessResult) -> Unit) = dispatcher.post {
         val result = try { turnOff.authenticate(flow, pin) } catch (_: RuntimeException) { PinAccessResult.Unavailable }
         finally { pin.fill('\u0000') }
