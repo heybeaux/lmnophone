@@ -393,3 +393,27 @@ prompt before calling the host's existing Messages opener; stopping speech
 cancels that pending action. Failed/unavailable speech falls through, with a
 five-second backstop for a stalled engine. These are speech/navigation seams;
 recipient resolution and the destination app remain in the existing adapter.
+
+## T5 preview app-list seam (PLA-514)
+
+`PreviewAppListStore` in `:device` preserves the existing credential-encrypted
+`starter-list.txt` and atomically stores `app-order.txt` alongside it. The
+production `PreviewHomeApps.read` mapper and T5 use the same stored order.
+`PreviewAppRules` in `:policy` refuses removal/movement of live protected entries.
+`PolicyRuntime.previewApps`, `movePreviewApp`, and `removePreviewApp` serialize
+preview reads and changes with policy passes. Removal consumes a fresh
+app-bound PIN grant through `PreviewPinAccess.authenticateRemoval`, rechecks the
+live floor and cancellation, saves the starter list, and runs normal re-apply.
+Only successful re-apply readback permits the Removed screen. Activity pause
+revokes pending UI work. These preview seams do not change the full-MVP APIs.
+
+T4 preview ([PLA-517](/PLA/issues/PLA-517)) adds `PreviewAppRules.canAdd` and
+`AndroidPreviewHiddenApps.read`: hidden, installed, enabled launcher entries only,
+with live browser/catalog, floor, Settings, Home, store and installer exclusions.
+Unreadable facts yield no list. `PolicyRuntime.previewHiddenApps` / `addPreviewApp`
+use the same dispatcher; `PreviewPinAccess.authenticateAddition` consumes a fresh
+`preview:add` grant for that app. Save re-reads eligibility and the selected
+version/signers, then `PreviewAppListStore.add` publishes appended order before
+starter membership under the common lock. Failed membership restores old order;
+a crash before membership leaves the app hidden. Only ready re-apply readback
+permits Added. This preview does not change permissions or the locked/floor plan.
