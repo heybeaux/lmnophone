@@ -120,3 +120,27 @@ failed restoration SHALL retain the marker and show the approved failure copy.
 - **WHEN** joining fails or takes 30 seconds
 - **THEN** the password screen shows the approved retry line
 - **AND** leaving clears ephemeral credentials and restores owned Location once idle
+
+### Requirement: Tap-time connected Wi-Fi Forget
+The approved preview SHALL show Forget only for connected, validated Wi-Fi. A tap
+SHALL open the existing owned Location window, read the current saved configuration
+ID, remove only that configuration after a fresh identity check, and read back both
+disconnection from that ID and the exact remaining saved ID set. The window SHALL
+close after readback or failure, retaining the existing call-aware retry and durable
+restart recovery. Already-on Location SHALL be preserved. No system Settings or
+sign-in page SHALL open.
+
+#### Scenario: Forget with Location off
+- **WHEN** connected validated Wi-Fi is shown with Location off and Forget is tapped
+- **THEN** owned Location opens before identity is read, only that configuration is removed,
+  readback completes, and owned Location returns off
+- **AND** cleanup failure retains the marker and shows the existing Location warning
+
+#### Scenario: No readable connected identity
+- **WHEN** no valid saved connected ID can be read after the window opens
+- **THEN** no configuration is removed, cleanup runs, and the Wi-Fi status failure is shown
+
+#### Scenario: Wi-Fi problem message
+- **WHEN** the person taps the sign-in or ten-second no-internet message
+- **THEN** the calls-first message opens with unchanged problem copy and OK returns to Wi-Fi
+- **AND** Forget is absent while the connection is not validated

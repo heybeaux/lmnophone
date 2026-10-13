@@ -52,6 +52,8 @@ fun PlainphoneShell(
     onWifiJoin: (WifiJoinEvent) -> Unit,
     onWifiShow: () -> Unit,
     onWifiSelect: (String) -> Unit,
+    onWifiForget: () -> Unit,
+    onWifiMessage: () -> Unit,
     bluetooth: BluetoothSettingsUiState,
     discovery: BluetoothDiscoveryUiState,
     onDiscovery: (BluetoothDiscoveryEvent) -> Unit,
@@ -84,7 +86,7 @@ fun PlainphoneShell(
                 ShellRoute.BluetoothDiscovery -> BluetoothDiscoveryScreen(discovery, onDiscovery)
                 is ShellRoute.BluetoothDevice -> BluetoothDeviceScreen(route.name) { onStep(navigator.back(state)) }
                 ShellRoute.WifiSettings -> if (wifiJoin != null) WifiJoinScreen(wifiJoin, onWifiJoin)
-                    else WifiSettingsScreen(wifi, { onStep(navigator.back(state)) }, onWifiShow, onWifiSelect)
+                    else WifiSettingsScreen(wifi, { onStep(navigator.back(state)) }, onWifiShow, onWifiSelect, onWifiForget, onWifiMessage)
                 ShellRoute.Sound -> SoundScreen(sound, onSound)
                 ShellRoute.Ringtone -> RingtoneScreen(ringtone, onRingtone)
                 ShellRoute.Brightness -> BrightnessScreen(brightness, onBrightness)
@@ -98,7 +100,10 @@ fun PlainphoneShell(
                 is ShellRoute.BlockedLink -> BlockedLinkScreen(route.stage) { onStep(navigator.onLink(state, it)) }
                 ShellRoute.NotInBuild -> NotInBuildScreen { onStep(navigator.back(state)) }
                 is ShellRoute.Wifi ->
-                    WifiMessageScreen(WifiMessageUiState(route.problem)) { onStep(navigator.onWifi(state, it)) }
+                    WifiMessageScreen(WifiMessageUiState(route.problem, wifi.canForget)) {
+                        if (it == WifiMessageEvent.ForgetNetwork && state.stack.dropLast(1).lastOrNull() == ShellRoute.WifiSettings) onWifiForget()
+                        onStep(navigator.onWifi(state, it))
+                    }
             }
         }
     }

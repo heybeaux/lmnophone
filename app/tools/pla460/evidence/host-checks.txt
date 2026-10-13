@@ -1,0 +1,12 @@
+PLA-460 host validation on preview-36 base 9c18b15a
+Implementation: 7d91094e
+UTC: 2026-10-12T22:50:28.227272+00:00
+device: tests=131, failures=0, errors=0
+plainphone: tests=63, failures=0, errors=0
+ui: tests=195, failures=0, errors=0
+APK assembled: debug, testOnly, versionCode=36, versionName=0.1.0-preview-36 (candidate source branch; delivery build numbering belongs to Lead).
+APK SHA-256: 3c3c408603db4a90bb347859572ce1e8bd3869390459aaf075b3d24566779a19
+OpenSpec validate --all: PASS
+Changed/new goldens: 40, visually inspected at 1.0/1.3/1.5/1.8/2.0.
+Relevant baseline failures observed: none. No claim about unrun full suites.
+Spare: not installed or exercised by this author.

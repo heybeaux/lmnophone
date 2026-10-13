@@ -34,7 +34,6 @@ fun MoreScreen(state: MoreUiState, onEvent: (MoreEvent) -> Unit) {
             spokenText = stringResource(R.string.more_emergency_spoken)) {
             onEvent(MoreEvent.OpenEmergencyDialer)
         }
-        Spacer(Modifier.height(PlainphoneSpace.S4))
         MenuRow(stringResource(R.string.more_phone_settings), stringResource(R.string.more_phone_settings_note)) {
             onEvent(MoreEvent.OpenPhoneSettings)
         }

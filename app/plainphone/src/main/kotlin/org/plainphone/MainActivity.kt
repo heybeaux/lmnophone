@@ -176,16 +176,34 @@ class MainActivity : ComponentActivity() {
     private val wifiController by lazy { WifiController({ wifiSession.facts() }) { SystemClock.elapsedRealtime() } }
     private var wifiJoin by mutableStateOf<WifiJoinUiState?>(null)
     private var wifiEnableFailed = false
-    private fun wifiVisible() = resumed && shell.state.current == ShellRoute.WifiSettings
+    private fun wifiVisible() = resumed && (shell.state.current == ShellRoute.WifiSettings || shell.state.current is ShellRoute.Wifi)
+    private fun forgetWifi() {
+        if (!wifiVisible() || wifiJoin != null) return
+        if (!wifi.canForget) return
+        wifiSource.onOpen()
+        wifiSession.forget.forget()
+        wifiSession.schedule()
+        syncWifi()
+    }
+    private fun openWifiMessage() {
+        if (!wifiVisible() || wifiJoin != null) return
+        syncWifi()
+        val problem = when (wifi.internetStatus) {
+            WifiInternetUiStatus.SignInRequired -> org.plainphone.ui.user.WifiProblem.SignInRequired
+            WifiInternetUiStatus.NoInternet -> org.plainphone.ui.user.WifiProblem.NoInternet
+            null -> return
+        }
+        shell.state = shell.navigator!!.openWifiMessage(shell.state, problem).state
+    }
     private fun showNearbyWifi() {
-        if (!wifiVisible()) return
+        if (!wifiVisible() || wifiSession.forget.pending) return
         wifiSource.onOpen()
         wifiEnableFailed = !wifiSession.location.show()
         wifiSession.schedule()
         syncWifi()
     }
     private fun selectWifi(id: String) {
-        if (!wifiVisible()) return
+        if (!wifiVisible() || wifiSession.forget.pending) return
         val choice = wifiSession.joinPort.choices().firstOrNull { it.ssid == id } ?: return
         val current = try { wifiSession.facts() } catch (_: Exception) { return }
         if (current.connected && current.ssid?.removeSurrounding("\"") == id) return
@@ -224,11 +242,13 @@ class MainActivity : ComponentActivity() {
         val joining = wifiSession.join.state
         wifiJoin = if (joining.choice == null) null else wifiJoin?.copy(joining = joining.joining, failed = joining.failed)
         if (wifiJoin == null) window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+        wifiSession.forget.refresh()
         wifiController.refresh()
         val value = wifiController.state
         val locationOff = try { !wifiSession.locationPort.enabled() } catch (_: Exception) { false }
         val choices = if (!locationOff && !value.readFailed && value.enabled) wifiSession.joinPort.choices() else emptyList()
-        val rawCurrent = try { wifiSession.facts().ssid?.removeSurrounding("\"") } catch (_: Exception) { null }
+        val current = try { wifiSession.facts() } catch (_: Exception) { null }
+        val rawCurrent = current?.ssid?.removeSurrounding("\"")
         wifi = WifiSettingsUiState(value.enabled, value.connected, value.network, value.nearby,
             value.readFailed, when (value.internetStatus) {
                 WifiInternetStatus.SignInRequired -> WifiInternetUiStatus.SignInRequired
@@ -236,6 +256,9 @@ class MainActivity : ComponentActivity() {
                 null -> null
             }, locationOff = locationOff, locationEnableFailed = wifiEnableFailed,
             locationOffFailed = wifiSession.location.offFailed,
+            canForget = current?.connected == true && current.validated == true &&
+                !value.readFailed && !wifiSession.forget.pending && !wifiSession.forget.failed,
+            forgetFailed = wifiSession.forget.failed,
             choices = choices.map { WifiNearbyUi(it.ssid, it.name, value.connected && it.ssid == rawCurrent) })
     }
     private val textSizeController by lazy { TextSizeController(AndroidTextSize(this)) }
@@ -394,7 +417,7 @@ class MainActivity : ComponentActivity() {
                         bluetooth = BluetoothSettingsUiState()
                     }
                 }
-                if (basicSettingsVisible && shell.state.current == ShellRoute.WifiSettings) {
+                if (basicSettingsVisible && (shell.state.current == ShellRoute.WifiSettings || shell.state.current is ShellRoute.Wifi)) {
                     wifiEnableFailed = false
                     wifiSource.onOpen()
                     wifiController.onOpen()
@@ -496,7 +519,8 @@ class MainActivity : ComponentActivity() {
                 versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() },
                 textSize = textSize, onTextSize = ::onTextSize,
                 wifi = wifi, wifiJoin = wifiJoin, onWifiJoin = ::onWifiJoin,
-                onWifiShow = ::showNearbyWifi, onWifiSelect = ::selectWifi, bluetooth = bluetooth,
+                onWifiShow = ::showNearbyWifi, onWifiSelect = ::selectWifi,
+                onWifiForget = ::forgetWifi, onWifiMessage = ::openWifiMessage, bluetooth = bluetooth,
                 sound = sound, onSound = ::onSound,
                 ringtone = ringtone, onRingtone = ::onRingtone,
                 discovery = discovery, onDiscovery = ::onDiscovery, onPairNew = ::openDiscovery,
@@ -506,7 +530,8 @@ class MainActivity : ComponentActivity() {
                 onSettings = { event ->
                     when (event) {
                         PhoneSettingsEvent.OpenWaitingChange -> settingsWait?.let { openCancel(it.requestId) }
-                        PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenBluetooth, PhoneSettingsEvent.OpenWifi, PhoneSettingsEvent.OpenTextSize, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenSound, PhoneSettingsEvent.OpenBattery ->
+                        PhoneSettingsEvent.OpenWifi -> { wifiSession.forget.onOpen(); shell.state = shell.navigator!!.onSettings(shell.state, event).state }
+                        PhoneSettingsEvent.Back, PhoneSettingsEvent.OpenBluetooth, PhoneSettingsEvent.OpenTextSize, PhoneSettingsEvent.OpenBrightness, PhoneSettingsEvent.OpenSound, PhoneSettingsEvent.OpenBattery ->
                             shell.state = shell.navigator!!.onSettings(shell.state, event).state
                         is PhoneSettingsEvent.ShowCommunicationCountsChanged -> {
                             communication.controller.setEnabled(event.enabled)

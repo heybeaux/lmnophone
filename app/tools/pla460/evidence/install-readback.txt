@@ -1,0 +1,7 @@
+Dedicated emulator install readback
+Observed UTC: 2026-10-12T22:50:55.492680+00:00
+versionCode=36 minSdk=30 targetSdk=36
+versionName=0.1.0-preview-36
+lastUpdateTime=2026-10-12 15:49:27
+Installed APK SHA-256: 3c3c408603db4a90bb347859572ce1e8bd3869390459aaf075b3d24566779a19
+Matches built APK: true

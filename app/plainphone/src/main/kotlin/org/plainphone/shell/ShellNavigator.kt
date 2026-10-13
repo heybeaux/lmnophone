@@ -165,10 +165,14 @@ class ShellNavigator(
         }
     }
 
+    fun openWifiMessage(s: ShellState, problem: WifiProblem): Step =
+        if (s.current == ShellRoute.WifiSettings) push(s, ShellRoute.Wifi(problem)) else Step(s)
+
     fun onWifi(s: ShellState, e: WifiMessageEvent): Step = when (e) {
         WifiMessageEvent.Ok -> back(s)
-        // Forgetting a network isn't wired; a test build says so instead of looking done.
-        WifiMessageEvent.ForgetNetwork -> if (testBuild) notInBuild(s) else back(s)
+        // Only the live Wi-Fi settings route has a host-owned Forget operation.
+        WifiMessageEvent.ForgetNetwork -> if (s.stack.dropLast(1).lastOrNull() == ShellRoute.WifiSettings)
+            back(s) else if (testBuild) notInBuild(s) else back(s)
     }
 
     private fun push(s: ShellState, route: ShellRoute) = Step(s.copy(stack = s.stack + route))

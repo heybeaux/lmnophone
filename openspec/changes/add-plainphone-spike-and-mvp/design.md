@@ -331,3 +331,12 @@ Location controller. Device-protected ownership is committed before enabling;
 cleanup is read back, deferred during calls, retried, and recovered at startup.
 Passwords stay ephemeral in the visible UI and are passed only to Android's
 network configuration. No lock-task list or emergency policy changes.
+
+The PLA-448 board acceptance authorizes the tap-time Forget Location window (PLA-460).
+Reuse `WifiLocationController` and its device-protected marker in `WifiJoinSession`.
+Wi-Fi identity gets up to two seconds to reflect the enabled Location setting.
+The serialized Forget operation then has a ten-second readback bound and never iterates
+removals. Opening Location is followed by cleanup on every terminal path; session
+exit cancels pending verification and restores owned Location. The adapter rechecks
+the live connected ID immediately before removal. Eligibility uses connected and
+validated transport facts, so Location need not be enabled merely to render the row.

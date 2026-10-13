@@ -1,0 +1,14 @@
+build=36
+apk_sha256=22ce40dfe71b303e081941b4648e900bd354a605ffd7aeca769e587ff2ae05c2
+branch=release/preview-36@4c167341 (preview-35@fbb58cd0 + pla452/menu-spacing@78ee6de3, reviewed PLA-455 PASS)
+signer_sha256=99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd (same as build 35)
+installed_local=2026-10-12 15:21:20 PDT (22:21:20Z, lastUpdateTime)
+upgrade=35-to-36-in-place, gate exit 0 (243 PASS incl. restart)
+owner=Device Owner retained, testOnly retained, lock task LOCKED
+system_update_policy=SystemUpdatePolicy (type: 3, windowStart: 0, windowEnd: 0, freezes: []) kept
+emergency=More>Emergency and Phone both exactly 911 (gate), zero Telecom calls
+safety_diff=none (location 0, BT on, bonded 0, font 1.0, ring volume 5, ringtone hash, saved-list hash d32466f0bb5f98e0)
+exercised_on_spare_font_1.0:
+  home rows (px): Camera 1430-1570, Maps 1600-1740, Messages 1770-1910, Phone 1940-2080 -> every gap 30 px (12 dp); build 35 had Messages->Phone 0 px
+  more row text gaps (px): Emergency->Phone settings 80, Phone settings->Ask 80, Ask->trusted row 80; build 35 had 120/80/80
+not exercised on spare: font scales 1.3-2.0, long labels, counts on (host goldens only, PLA-454/PLA-455)

@@ -362,3 +362,11 @@ turning Location off during a known active call. `quoteWifiValue` adds only oute
 quotes so Android receives literal name/passphrase bytes. The connected Forget
 and message-route implementation at `c3a64c60` is deferred: API 35 redacts both
 current connection identity and CURRENT configurations at Location 0.
+
+**Tap-time Wi-Fi Forget preview (PLA-460, accepted PLA-448):** device adapter
+`WifiForgetPort.read(): WifiForgetFacts` supplies connected, validated, connectedId
+and distinct savedIds. `removeConnected(id)` rechecks the current validated identity
+before one removal. `WifiForgetController(port, location, now)` exports `forget`,
+`refresh`, `leave`, `onOpen`, `pending`, and `failed`. `WifiJoinSession` serializes
+it with joining and shared owned Location cleanup. UI gains `canForget`,
+`forgetFailed`, and Forget/message events; the host owns eligibility and effects.
