@@ -93,7 +93,10 @@ class VoiceSendScreenshotTest(private val scale: Float, private val name: String
     /** No answer after a restart: never shown as sent, and never as failed. */
     @Test fun notConfirmed() = shot(VoiceUiState.NotSent(person, VoiceUiSendProblem.NotConfirmed)) { texts, nodes ->
         assertFalse(texts.any { it.startsWith("Sent") || it.startsWith("Not sent") })
-        assertTrue("Your message is still on this phone." in texts)
+        assertTrue("Not sure it was sent" in texts)
+        assertTrue("Your message to ${person.name} is still on this phone. It may not have been sent. " +
+            "Look in Messages with ${person.name} before you send it again." in texts)
+        assertFalse(texts.any { "TODO" in it || "delivered" in it.lowercase() || "failed" in it.lowercase() })
         button(nodes, "Try again", 96)
     }
     /** V3 with sending on: the band no longer says practice. */
