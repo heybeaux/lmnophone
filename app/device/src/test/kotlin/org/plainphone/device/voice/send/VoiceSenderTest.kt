@@ -305,7 +305,7 @@ class VoiceSenderTest {
         assertTrue(port.sent.isEmpty())
     }
 
-    private class FakeMmsPort : MmsPort {
+    internal class FakeMmsPort : MmsPort {
         var permitted = true
         var signal: Boolean? = true
         var carrier: CarrierMms? = CarrierMms(enabled = true, maxMessageBytes = 1_048_576)
@@ -333,7 +333,7 @@ class VoiceSenderTest {
 
     init { port.peek = { store.read("sam")?.status } }
 
-    private companion object {
+    internal companion object {
         val OK_CONF = byteArrayOf(0x8C.toByte(), 0x81.toByte(), 0x98.toByte(), 'T'.code.toByte(), 0,
             0x8D.toByte(), 0x92.toByte(), 0x92.toByte(), 0x80.toByte())
     }
