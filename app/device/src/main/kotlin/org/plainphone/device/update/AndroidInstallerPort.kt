@@ -30,7 +30,7 @@ class AndroidInstallerPort(context: Context, private val statusSender: (sessionI
     override fun create(appPackage: PackageName, sizeBytes: Long): Int? = try {
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
             // Keep the default restricted-permission allowlist. Never set an empty set:
-            // READ_CALL_LOG / READ_SMS need installer exemption after an in-place update (counts D5).
+            // READ_CALL_LOG / READ_SMS / SEND_SMS need installer exemption after an in-place update (counts D5, voice send PLA-499).
             setAppPackageName(appPackage.value)
             setSize(sizeBytes)
             if (Build.VERSION.SDK_INT >= 31) setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
