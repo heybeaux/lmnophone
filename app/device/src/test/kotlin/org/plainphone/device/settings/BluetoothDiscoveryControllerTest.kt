@@ -78,4 +78,30 @@ class BluetoothDiscoveryControllerTest {
         p.found("1", "Sam", true); assertTrue(c.state.devices.isEmpty())
         p.found("2", "Jo"); p.found("2", null); assertTrue(c.state.devices.isEmpty())
     }
+    @Test fun pauseStopsAndResumeStartsANewSearch() {
+        val p = Port(); val c = BluetoothDiscoveryController(p); c.open(); val old = p.callback
+        p.found("1", "Sam"); p.callback(BluetoothDiscoveryEvent.Finished)
+        c.pause()
+        assertTrue(c.paused); assertTrue(p.stops > 0); assertTrue(c.state.devices.isEmpty())
+        old(BluetoothDiscoveryEvent.Found("2", "Jo", false)); assertTrue(c.state.devices.isEmpty())
+        c.resume()
+        assertFalse(c.paused); assertEquals(2, p.starts); assertTrue(c.state.looking); assertFalse(c.state.failed)
+        // The paused search's callbacks stay retired after the new search starts.
+        old(BluetoothDiscoveryEvent.Finished); assertTrue(c.state.looking)
+        p.found("3", "Al"); assertEquals(listOf("Al"), c.state.devices.map { it.name })
+    }
+    @Test fun resumeAfterLeavingThePageStartsNothing() {
+        val p = Port(); val c = BluetoothDiscoveryController(p); c.open(); c.pause(); c.close()
+        assertFalse(c.paused); c.resume(); assertEquals(1, p.starts); assertFalse(c.state.looking)
+        val q = Port(); val d = BluetoothDiscoveryController(q); d.pause(); d.resume(); assertEquals(0, q.starts)
+    }
+    @Test fun resumeWithoutPauseKeepsTheRunningSearch() {
+        val p = Port(); val c = BluetoothDiscoveryController(p); c.open(); p.found("1", "Sam")
+        c.resume(); assertEquals(1, p.starts); assertEquals(1, c.state.devices.size)
+    }
+    @Test fun resumeAfterAFailureTriesAgain() {
+        val p = Port().apply { ready = false }; val c = BluetoothDiscoveryController(p); c.open()
+        assertTrue(c.state.failed); c.pause(); p.ready = true; c.resume()
+        assertTrue(c.state.looking); assertFalse(c.state.failed); assertEquals(1, p.starts)
+    }
 }
