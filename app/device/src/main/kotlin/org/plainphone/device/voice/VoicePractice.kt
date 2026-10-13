@@ -212,6 +212,12 @@ object VoicePractice {
             VoiceEvent.Play -> Transition(VoiceState.Review(s.person, s.draft, playing = true),
                 listOf(VoiceEffect.StartPlayback(s.person.id)))
             VoiceEvent.Back -> Transition(VoiceState.ChoosePerson)
+            is VoiceEvent.SendUpdated -> if (e.personId != s.person.id) Transition(s) else when (val status = e.view.status) {
+                SendStatus.Sending -> Transition(s)
+                SendStatus.Sent -> sent(s.person)
+                is SendStatus.NotSent -> if (status.problem == s.problem && e.view.failures == s.failures) Transition(s)
+                    else notSent(s.person, s.draft, status.problem, e.view.failures)
+            }
             else -> Transition(s)
         }
         is VoiceState.MicUnavailable -> when (e) {
@@ -232,6 +238,8 @@ object VoicePractice {
         return when {
             status == SendStatus.Sending && draft != null ->
                 Transition(VoiceState.Sending(person, draft, announced = true), speak(VoicePrompt.Sending, person))
+            status == SendStatus.NotSent(SendProblem.NotConfirmed) && draft != null ->
+                notSent(person, draft, SendProblem.NotConfirmed, send.failures)
             send.seen -> null
             status == SendStatus.Sent && draft == null -> sent(person)
             status is SendStatus.NotSent && draft != null -> notSent(person, draft, status.problem, send.failures)

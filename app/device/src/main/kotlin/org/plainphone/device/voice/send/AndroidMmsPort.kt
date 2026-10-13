@@ -52,14 +52,19 @@ class AndroidMmsPort(context: Context) : MmsPort {
     } catch (_: Exception) { null }
 
     override fun hasSignal(): Boolean? = try {
-        val base = app.getSystemService(TelephonyManager::class.java)
-        val tm = if (SubscriptionManager.isValidSubscriptionId(subId())) base.createForSubscriptionId(subId()) else base
-        when (tm.serviceState?.state) {
-            ServiceState.STATE_IN_SERVICE -> true
-            ServiceState.STATE_OUT_OF_SERVICE, ServiceState.STATE_EMERGENCY_ONLY, ServiceState.STATE_POWER_OFF -> false
-            else -> null
+        if (app.checkSelfPermission(Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED ||
+            app.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            null
+        } else {
+            val base = app.getSystemService(TelephonyManager::class.java)
+            val tm = if (SubscriptionManager.isValidSubscriptionId(subId())) base.createForSubscriptionId(subId()) else base
+            when (tm.serviceState?.state) {
+                ServiceState.STATE_IN_SERVICE -> true
+                ServiceState.STATE_OUT_OF_SERVICE, ServiceState.STATE_EMERGENCY_ONLY, ServiceState.STATE_POWER_OFF -> false
+                else -> null
+            }
         }
-    } catch (_: Exception) { null }
+    } catch (_: SecurityException) { null } catch (_: Exception) { null }
 
     /**
      * SEND_SMS is hard-restricted: it holds only when the install allowlisted it (adb install, or the updater's

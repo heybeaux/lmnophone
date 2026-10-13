@@ -82,6 +82,8 @@ object MmsPduReader {
     data class Pdu(val messageType: Int, val to: List<String>, val contentType: String?, val parts: List<Part>)
 
     private const val H_MESSAGE_TYPE = 0x0C
+    private const val H_TRANSACTION_ID = 0x18
+    private const val H_MMS_VERSION = 0x0D
     private const val H_TO = 0x17
     private const val H_CONTENT_TYPE = 0x04
     private const val H_RESPONSE_STATUS = 0x12
@@ -121,13 +123,30 @@ object MmsPduReader {
         return try {
             val c = Cursor(pdu, 0, pdu.size)
             if (c.octet() != (0x80 or H_MESSAGE_TYPE) || c.octet() != MESSAGE_TYPE_SEND_CONF) return null
+            var status: Int? = null
+            var transaction = false
+            var version = false
             while (c.hasMore()) {
                 val field = c.octet()
                 if (field < 0x80) return null
-                if (field and 0x7F == H_RESPONSE_STATUS) return c.octet()
-                c.skipValue()
+                when (field and 0x7F) {
+                    H_MESSAGE_TYPE -> return null
+                    H_TRANSACTION_ID -> {
+                        if (transaction || c.text().isEmpty()) return null
+                        transaction = true
+                    }
+                    H_MMS_VERSION -> {
+                        if (version || c.octet() !in 0x90..0x93) return null
+                        version = true
+                    }
+                    H_RESPONSE_STATUS -> {
+                        if (status != null) return null
+                        status = c.octet().takeIf { it >= 0x80 } ?: return null
+                    }
+                    else -> c.skipValue()
+                }
             }
-            null
+            if (transaction && version) status else null
         } catch (_: IllegalArgumentException) { null }
     }
 

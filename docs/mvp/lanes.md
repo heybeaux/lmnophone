@@ -370,3 +370,29 @@ before one removal. `WifiForgetController(port, location, now)` exports `forget`
 `refresh`, `leave`, `onOpen`, `pending`, and `failed`. `WifiJoinSession` serializes
 it with joining and shared owned Location cleanup. UI gains `canForget`,
 `forgetFailed`, and Forget/message events; the host owns eligibility and effects.
+
+### Voice MMS send seam (PLA-499, slice 2a)
+
+`:device/voice` exports `VoiceSendPort.send(VoicePerson): SendView`,
+`view(personId): SendView?`, and `seen(personId)`. `VoicePracticeController`
+accepts an optional sender, injected people and `recordCapMs`; `canSend` requires
+both a sender and a normalized recipient number. Only explicit Review Send or
+Not sent Try again events produce `VoiceEffect.SendDraft`. Restoring, opening,
+reading outcomes and handling interruptions never send. `VoicePlace.Screen.Send`
+restores the current persisted answer, without restarting audio.
+
+`:device/voice/send` exports `VoiceSender`, `VoiceSendStore`, `SendStatus`,
+`SendProblem`, `CarrierMms` and `VoiceSendLimits`. `MmsPort` supplies carrier
+settings, signal and permission readback, one explicit send and per-attempt
+cleanup. `AndroidMmsPort` owns the default-data-subscription send, app-private
+PDU provider grant and result receiver. `Sent` needs RESULT_OK and a complete
+m-send-conf with OK status; unanswered attempts become `NotConfirmed` on restart
+or after the wait bound. Reading a confirmed outcome completes any interrupted
+deletion of its matching draft, never deleting a different recording.
+
+`:plainphone` supplies the build gate and recipient list, maps states to UI and
+posts result updates on the main thread only while the screen is visible.
+`:ui` takes `VoiceUiState` and emits Send/TryAgain/Done; it has no transport or
+permission logic. Debug sending is opt-in through the shell-only test hook;
+release stays practice-only until the family-list integration (slice 2b).
+No policy-engine, emergency-floor or lock-task interface changes.

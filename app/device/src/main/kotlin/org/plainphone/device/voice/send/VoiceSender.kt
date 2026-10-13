@@ -131,8 +131,12 @@ class VoiceSender(
         if (!VoiceSendStore.ID.matches(person.id)) return SendView(SendStatus.NotSent(SendProblem.OtherError), false, 0)
         val previous = store.read(person.id)
         val failures = previous?.failures ?: 0
-        val current = previous?.let(::shown)
+        val current = previous?.let {
+            if (it.status == SendStatus.Sent) deleteDraftIfSent(person.id, it.draftDigest)
+            shown(it)
+        }
         if (current?.status == SendStatus.Sending) return current
+        if (current?.status == SendStatus.Sent && drafts.draft(person.id) == null) return current
         val number = person.phoneNumber?.let(VoiceNumber::normalize)
         val audio = if (drafts.draft(person.id) != null) readOrNull(drafts.file(person.id)) else null
         if (number == null || audio == null || audio.isEmpty()) {
@@ -145,7 +149,8 @@ class VoiceSender(
             try { store.write(person.id, record) } catch (_: IOException) { }
             return SendView(record.status, false, record.failures)
         }
-        if (!port.permitted()) return refuse(SendProblem.NoPermission)
+        val permitted = try { port.permitted() } catch (_: Exception) { false }
+        if (!permitted) return refuse(SendProblem.NoPermission)
         val carrier = port.carrier()
         if (carrier?.enabled == false) return refuse(SendProblem.MmsOff)
         if (port.hasSignal() == false) return refuse(SendProblem.NoSignal)
@@ -159,7 +164,7 @@ class VoiceSender(
         }
         return try {
             port.send(person.id, attempt, pdu)
-            SendView(SendStatus.Sending, false, failures)
+            view(person.id) ?: SendView(SendStatus.Sending, false, failures)
         } catch (_: SecurityException) {
             port.release(attempt)
             refuse(SendProblem.NoPermission)
@@ -188,7 +193,10 @@ class VoiceSender(
     }
 
     /** What to show for [personId], or null when nothing was sent. */
-    override fun view(personId: String): SendView? = store.read(personId)?.let(::shown)
+    override fun view(personId: String): SendView? = store.read(personId)?.let {
+        if (it.status == SendStatus.Sent) deleteDraftIfSent(personId, it.draftDigest)
+        shown(it)
+    }
 
     /** The person has seen the outcome. */
     override fun seen(personId: String) {
