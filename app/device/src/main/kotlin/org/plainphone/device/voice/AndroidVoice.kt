@@ -57,14 +57,14 @@ class AndroidVoiceRecorder(context: Context) : VoiceRecorder {
                 VoiceFormat.AacM4a -> {
                     r.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                     r.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                    r.setAudioSamplingRate(44_100)
-                    r.setAudioEncodingBitRate(24_000)
+                    r.setAudioSamplingRate(format.sampleRate)
+                    r.setAudioEncodingBitRate(format.bitRate)
                 }
                 VoiceFormat.AmrNb -> {
                     r.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB)
                     r.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-                    r.setAudioSamplingRate(8_000)
-                    r.setAudioEncodingBitRate(12_200)
+                    r.setAudioSamplingRate(format.sampleRate)
+                    r.setAudioEncodingBitRate(format.bitRate)
                 }
             }
             r.setAudioChannels(format.channels)

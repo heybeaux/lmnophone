@@ -6,7 +6,10 @@ package org.plainphone.device.voice
  * Voice messages, slice 1 (PLA-457): a local practice. Record, stop, listen, record again, delete.
  * Nothing is ever sent: there is no sent state and no send effect. Transport is a later slice.
  */
-data class VoicePerson(val id: String, val name: String)
+/** [phoneNumber] is only for sending (PLA-499); practice people have none. Never log it. */
+data class VoicePerson(val id: String, val name: String, val phoneNumber: String? = null) {
+    override fun toString() = "VoicePerson(id=$id, name=$name, phoneNumber=${if (phoneNumber == null) "none" else "set"})"
+}
 
 /** Synthetic people for the practice. Never real names, photos or numbers. */
 object VoicePeople {

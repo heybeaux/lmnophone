@@ -220,6 +220,59 @@ class VoiceSenderTest {
         assertNull(sender().view("sam"))
     }
 
+    @Test fun aSecondSendWhileSendingKeepsTheOneAttempt() {
+        record()
+        val s = sender()
+        s.send(sam)
+        assertEquals(SendStatus.Sending, s.send(sam).status)
+        assertEquals("one hand-off only", 1, port.sent.size)
+    }
+
+    @Test fun aRepeatedOrConflictingAnswerChangesNothing() {
+        record()
+        val s = sender()
+        s.send(sam)
+        assertTrue(s.onResult("sam", "attempt1", 4, null))
+        assertFalse(s.onResult("sam", "attempt1", MmsSendResult.RESULT_OK, OK_CONF))
+        assertEquals(SendView(SendStatus.NotSent(SendProblem.OtherError), seen = false, failures = 1), s.view("sam"))
+        assertNotNull(drafts.draft("sam"))
+    }
+
+    @Test fun whenTheRecordCannotBeSavedNothingIsHandedOver() {
+        record()
+        File(root, "send").writeText("a file where the folder should be")
+        assertEquals(SendStatus.NotSent(SendProblem.OtherError), sender().send(sam).status)
+        assertTrue(port.sent.isEmpty())
+    }
+
+    @Test fun aRecordingReplacedInTheSameMillisecondIsKept() {
+        record()
+        val s = sender()
+        s.send(sam)
+        val newer = record(VoiceFormat.AacM4a.sample(4_000).also { it[it.size - 1] = 9 })
+        s.onResult("sam", "attempt1", MmsSendResult.RESULT_OK, OK_CONF)
+        assertEquals(SendStatus.Sent, s.view("sam")!!.status)
+        assertArrayEquals(newer, drafts.file("sam").readBytes())
+    }
+
+    @Test fun tryAgainAfterNotConfirmedIsANewSendOnlyWhenAsked() {
+        record()
+        sender("p1").send(sam)
+        val again = sender("p2")
+        assertEquals(SendStatus.NotSent(SendProblem.NotConfirmed), again.view("sam")!!.status)
+        assertEquals(1, port.sent.size)
+        assertEquals(SendStatus.Sending, again.send(sam).status)
+        assertEquals(2, port.sent.size)
+        assertFalse("the earlier attempt's late answer no longer counts",
+            again.onResult("sam", "attempt1", MmsSendResult.RESULT_OK, OK_CONF))
+    }
+
+    @Test fun aPersonIdThatIsNotOursIsRefused() {
+        record()
+        assertEquals(SendStatus.NotSent(SendProblem.OtherError), sender().send(VoicePerson("../sam", "Sam", "555-0100")).status)
+        assertTrue(port.sent.isEmpty())
+    }
+
     private class FakeMmsPort : MmsPort {
         var permitted = true
         var signal: Boolean? = true

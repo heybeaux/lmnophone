@@ -11,9 +11,11 @@ import java.io.IOException
  * (the classic MMS voice format) stays as the fallback. [header] is the magic at [magicOffset].
  */
 enum class VoiceFormat(val extension: String, val mimeType: String, val channels: Int,
-    val header: ByteArray, val magicOffset: Int) {
-    AacM4a("m4a", "audio/mp4", 1, "ftyp".toByteArray(Charsets.US_ASCII), 4),
-    AmrNb("amr", "audio/amr", 1, "#!AMR\n".toByteArray(Charsets.US_ASCII), 0);
+    val header: ByteArray, val magicOffset: Int, val sampleRate: Int, val bitRate: Int, val bytesPerSecond: Int) {
+    /** 24 kbit/s is 3000 bytes a second of audio; 352 more allow for the growing MP4 sample tables (PLA-499). */
+    AacM4a("m4a", "audio/mp4", 1, "ftyp".toByteArray(Charsets.US_ASCII), 4, 44_100, 24_000, 3_352),
+    /** 12.2 kbit/s is 1525 bytes a second plus one frame header byte in 32. */
+    AmrNb("amr", "audio/amr", 1, "#!AMR\n".toByteArray(Charsets.US_ASCII), 0, 8_000, 12_200, 1_600);
 
     /** True when [file] has this format's magic and holds at least one byte of audio after it. */
     fun looksRecorded(file: File): Boolean = try {
