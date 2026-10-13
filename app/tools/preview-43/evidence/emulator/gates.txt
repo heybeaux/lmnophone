@@ -7,3 +7,4 @@ sha256 b93ab8877fd51828dbb44d8aafc5b2e5843b049765da6afae80169166eb3801a (assembl
   Baseline, unrelated: 11 failures (BrandingScreenshotTest turnOff/attention 1.3-1.8, PreviewTurnOffScreenshotTest maturityNotice 1.0-2.0);
   the same 11 fail on build 42 at cf776505 (rerun this run). No check disabled.
 Emulator check (check.txt): owned read-only AVD pla460-policy-a35 API 35, in-place 42 -> 43 at 2026-10-13T13:02:30Z.
+:plainphone:lintDebug: 6 errors / 8 warnings, identical count on build 42 cf776505 (baseline: VoicePracticeHost NewApi x5, PinAccessActivity StateFlowValueCalledInComposition x1); none in PLA-488 files.
