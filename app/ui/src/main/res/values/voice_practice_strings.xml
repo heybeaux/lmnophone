@@ -2,17 +2,19 @@
 <!-- Copyright 2026 LMNOPhone contributors
      SPDX-License-Identifier: Apache-2.0 -->
 <!-- Voice messages slice 1 (PLA-457), practice only. Words from docs/ux/flows-voice-messages.md
-     ("Exact strings", branch pla-voice/ux @ 6488459c): V1-V4, V9, V13. Symbols are drawn, never typed.
-     TODO(copy) marks the few practice-only strings the doc doesn't cover yet. -->
+     ("Exact strings", branch pla-voice/ux @ d92a2ac8, PLA-472 practice-build rows): V1-V4, V9, V13.
+     Symbols are drawn, never typed. -->
 <resources>
-    <!-- TODO(copy): the doc's entry is the Home "Family" row; this preview uses a labelled More row. -->
-    <string name="more_voice">Voice messages (practice)</string>
+    <!-- Only until the Home "Family" row (V0) exists. -->
+    <string name="more_voice">Practice voice messages</string>
     <string name="more_voice_note">Record and listen. Nothing is sent.</string>
     <string name="voice_practice_label">Practice – not sent</string>
     <string name="voice_choose">Who do you want to talk to?</string>
     <string name="voice_back_people">‹ Back</string>
-    <!-- TODO(copy): the doc makes the picture itself the tap target for the name (V2 picture tap). -->
-    <string name="voice_hear_name">Hear name</string>
+    <!-- Small link under the name; the picture is the main tap target (V2 picture tap). -->
+    <string name="voice_hear_name">Hear the name</string>
+    <!-- TalkBack click label on the picture: "Double-tap to hear the name". -->
+    <string name="voice_hear_name_action">hear the name</string>
     <string name="voice_record">Record</string>
     <string name="voice_stop">Stop</string>
     <string name="voice_recording_practice">Recording – practice</string>
@@ -20,21 +22,19 @@
     <string name="voice_stop_listening">Stop listening</string>
     <string name="voice_record_again">Record again</string>
     <string name="voice_delete">Delete</string>
-    <!-- TODO(copy): the four notices below reuse the doc's spoken words on screen. -->
     <string name="voice_notice_max">That\'s as long as a message can be.</string>
-    <string name="voice_notice_nothing">That was too short.</string>
+    <string name="voice_notice_nothing">That was too short. Try again.</string>
     <string name="voice_notice_deleted">Deleted.</string>
     <string name="voice_notice_busy">The microphone is busy. Try again in a moment.</string>
     <!-- V9 -->
     <string name="voice_notice_unsent">Your message to %1$s isn\'t sent yet</string>
-    <!-- TODO(copy): not in the doc. -->
     <string name="voice_try_again">Try again</string>
     <string name="voice_notice_interrupted">Recording stopped.</string>
     <string name="voice_notice_play">This message could not play.</string>
-    <!-- TODO(copy): V10a/V10b name the trusted person; this practice build shows the short form. -->
-    <string name="voice_mic_not_allowed">The microphone is not allowed.</string>
-    <string name="voice_mic_off">The microphone is turned off.</string>
-    <string name="voice_mic_error">The microphone did not work.</string>
+    <!-- Short V10a/V10b: the words on screen never name the trusted person in practice. -->
+    <string name="voice_mic_not_allowed">Voice messages aren\'t set up. Ask for help. Calls and texts still work.</string>
+    <string name="voice_mic_off">The microphone is turned off. Ask for help to turn it on. Calls and texts still work.</string>
+    <string name="voice_mic_error">The microphone didn\'t work. Try again.</string>
     <!-- Spoken by TalkBack for the person's picture symbol. -->
     <string name="voice_picture">Picture of %1$s</string>
 
@@ -50,4 +50,9 @@
     <string name="voice_say_deleted">Deleted.</string>
     <string name="voice_say_mic_off">The microphone is turned off. Ask %2$s for help.</string>
     <string name="voice_say_mic_not_allowed">Voice messages need %2$s. Ask %2$s for help.</string>
+    <!-- When the phone doesn't know the trusted person's name. -->
+    <string name="voice_say_mic_off_short">The microphone is turned off. Ask for help.</string>
+    <string name="voice_say_mic_not_allowed_short">Voice messages aren\'t set up. Ask for help.</string>
+    <string name="voice_say_mic_error">The microphone didn\'t work. Tap Try again.</string>
+    <string name="voice_say_play">This message could not play. Record again, or delete.</string>
 </resources>
