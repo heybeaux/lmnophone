@@ -1,0 +1,2 @@
+INSTRUMENTATION_RESULT: outcome=PASS choose practice=false; review canSend=true practice=false take=10846 bytes; after Send: NotSent; answer: NotSent problem=NotSent stored=NotSent(problem=MmsOff) failures=1 draftKept=true
+INSTRUMENTATION_CODE: -1

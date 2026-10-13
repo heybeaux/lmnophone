@@ -1,0 +1,2 @@
+Row: 0 _id=1, msg_box=2, m_type=128, resp_st=128, creator=org.plainphone, ct_t=application/vnd.wap.multipart.mixed
+Row: 0 _id=2, ct=audio/mp4, name=voice.m4a, cl=voice.m4a
