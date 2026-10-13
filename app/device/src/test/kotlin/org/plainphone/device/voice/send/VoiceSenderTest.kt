@@ -123,6 +123,37 @@ class VoiceSenderTest {
         assertEquals(SendStatus.NotSent(SendProblem.NoPermission), s.view("sam")!!.status)
     }
 
+    @Test fun aPermissionReadFailureIsNoPermissionNeverACrash() {
+        record()
+        port.permissionFailure = SecurityException("permission unavailable")
+        val send = sender()
+        assertEquals(SendStatus.NotSent(SendProblem.NoPermission), send.send(sam).status)
+        assertEquals(SendStatus.NotSent(SendProblem.NoPermission), send.view("sam")!!.status)
+        assertTrue(port.sent.isEmpty())
+        assertNotNull(drafts.draft("sam"))
+    }
+
+    @Test fun aResultAtHandOffIsNotReplacedWithSending() {
+        record()
+        val send = sender()
+        port.onSend = { person, attempt -> send.onResult(person, attempt, MmsSendResult.RESULT_OK, OK_CONF) }
+        assertEquals(SendStatus.Sent, send.send(sam).status)
+        assertEquals(1, port.sent.size)
+        assertNull(drafts.draft("sam"))
+    }
+
+    @Test fun aRestartAfterSavingSentFinishesDeletingTheSentDraft() {
+        val audio = record()
+        sender("p1").send(sam)
+        val sending = store.read("sam")!!
+        store.write("sam", sending.copy(status = SendStatus.Sent))
+        assertArrayEquals(audio, drafts.file("sam").readBytes())
+        val restarted = sender("p2")
+        assertEquals(SendStatus.Sent, restarted.view("sam")!!.status)
+        assertNull(drafts.draft("sam"))
+        assertEquals("cleanup never sends", 1, port.sent.size)
+    }
+
     @Test fun aSecurityExceptionAtHandOffIsNoPermissionNeverACrash() {
         record()
         port.failure = SecurityException("no SEND_SMS")
@@ -278,17 +309,23 @@ class VoiceSenderTest {
         var signal: Boolean? = true
         var carrier: CarrierMms? = CarrierMms(enabled = true, maxMessageBytes = 1_048_576)
         var failure: RuntimeException? = null
+        var permissionFailure: RuntimeException? = null
+        var onSend: (String, String) -> Unit = { _, _ -> }
         val sent = mutableListOf<Triple<String, String, ByteArray>>()
         val released = mutableListOf<String>()
         var statusAtHandOff: SendStatus? = null
         var peek: () -> SendStatus? = { null }
         override fun carrier() = carrier
         override fun hasSignal() = signal
-        override fun permitted() = permitted
+        override fun permitted(): Boolean {
+            permissionFailure?.let { throw it }
+            return permitted
+        }
         override fun send(personId: String, attemptId: String, pdu: ByteArray) {
             statusAtHandOff = peek()
             failure?.let { throw it }
             sent += Triple(personId, attemptId, pdu)
+            onSend(personId, attemptId)
         }
         override fun release(attemptId: String) { released += attemptId }
     }

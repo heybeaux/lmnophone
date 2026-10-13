@@ -41,4 +41,24 @@ class MmsSendResultTest {
 
     private fun conf(status: Int) = byteArrayOf(0x8C.toByte(), 0x81.toByte(), 0x98.toByte(), 'T'.code.toByte(), 0,
         0x8D.toByte(), 0x92.toByte(), 0x92.toByte(), status.toByte())
+
+    @Test fun anOkStatusInsideADamagedConfirmationIsNeverSent() {
+        val malformed = listOf(
+            ok + byteArrayOf(0x8B.toByte()),
+            ok + byteArrayOf(0x8B.toByte(), 'T'.code.toByte()),
+            ok + byteArrayOf(0x92.toByte(), 0xE0.toByte()),
+            ok + byteArrayOf(0x8C.toByte(), 0x80.toByte()),
+            byteArrayOf(0x8C.toByte(), 0x81.toByte(), 0x92.toByte(), 0x80.toByte()),
+            byteArrayOf(0x8C.toByte(), 0x81.toByte(), 0x98.toByte(), 'T'.code.toByte(), 0, 0x92.toByte(), 0x80.toByte()),
+        )
+        for ((index, data) in malformed.withIndex()) {
+            assertEquals("damaged confirmation $index", SendStatus.NotSent(SendProblem.OtherError),
+                MmsSendResult.map(MmsSendResult.RESULT_OK, data))
+        }
+    }
+
+    @Test fun aCompleteConfirmationMayHaveHeadersAfterTheStatus() {
+        val data = ok + byteArrayOf(0x8B.toByte(), 'T'.code.toByte(), 0)
+        assertEquals(SendStatus.Sent, MmsSendResult.map(MmsSendResult.RESULT_OK, data))
+    }
 }

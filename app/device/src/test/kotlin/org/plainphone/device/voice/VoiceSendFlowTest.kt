@@ -135,6 +135,25 @@ class VoiceSendFlowTest {
         assertTrue(t.effects.none { it is VoiceEffect.DeleteDraft })
     }
 
+    @Test fun aLateAnswerUpdatesTheNotConfirmedScreenWithoutSendingAgain() {
+        val waiting = VoiceState.NotSent(sam, draft, SendProblem.NotConfirmed, 0)
+        val sent = reduce(waiting, SendUpdated("sam", view(SendStatus.Sent)))
+        assertEquals(VoiceState.Sent(sam), sent.state)
+        assertTrue(sends(sent).isEmpty())
+        val failed = reduce(waiting, SendUpdated("sam", notSent(SendProblem.NoSignal)))
+        assertEquals(VoiceState.NotSent(sam, draft, SendProblem.NoSignal, 1), failed.state)
+        assertTrue(sends(failed).isEmpty())
+        assertEquals(Transition(waiting), reduce(waiting, SendUpdated("jo", view(SendStatus.Sent))))
+        assertEquals(Transition(waiting), reduce(waiting, SendUpdated("sam", notSent(SendProblem.NotConfirmed, failures = 0))))
+    }
+
+    @Test fun anUnconfirmedAttemptStillShowsTryAgainWhenOpenedAgain() {
+        val chosen = reduce(VoiceState.ChoosePerson, Choose(sam, draft,
+            notSent(SendProblem.NotConfirmed, seen = true)))
+        assertEquals(VoiceState.NotSent(sam, draft, SendProblem.NotConfirmed, 1), chosen.state)
+        assertTrue(sends(chosen).isEmpty())
+    }
+
     @Test fun listenOnNotSentPlaysTheMessage() {
         val t = reduce(VoiceState.NotSent(sam, draft, SendProblem.OtherError, 1), Play)
         assertEquals(VoiceState.Review(sam, draft, playing = true), t.state)
