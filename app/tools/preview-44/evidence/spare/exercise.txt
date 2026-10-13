@@ -1,0 +1,17 @@
+start 2026-10-13T19:04:38Z version=versionCode=44 mLockTaskModeState=LOCKED DO=1 calls=0
+OK: original PIN opens the menu
+OK: Change PIN asks for the current PIN
+OK: current PIN accepted, new-PIN page
+OK: PIN changed shown
+OK: back on the menu
+changed to temporary at 2026-10-13T19:05:53Z
+OK: original PIN refused after the change (the one wrong try)
+OK: temporary PIN opens the menu
+OK: Change PIN asks for the current PIN
+OK: current PIN accepted, new-PIN page
+OK: PIN changed shown
+OK: back on the menu
+changed back at 2026-10-13T19:07:33Z
+OK: original PIN opens again
+end 2026-10-13T19:08:01Z version=versionCode=44 mLockTaskModeState=LOCKED DO=1 calls=0
+temporary PIN file deleted
