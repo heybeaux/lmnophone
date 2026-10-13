@@ -1,0 +1,10 @@
+10-13 12:46:49:744 new player piid:119 uid/pid:10316/8081 type:android.media.AudioTrack attr:AudioAttributes: usage=USAGE_MEDIA content=CONTENT_TYPE_SPEECH flags=0x800 tags= bundle=Bundle[mParcelledData.dataSize=68] session:177
+10-13 12:46:49:746 player piid:119 event:started
+10-13 12:46:49:774 player piid:119 format update:FormatInfo{isSpatialized=false, channelMask=0x1, sampleRate=24000}
+10-13 12:46:49:777 player piid:119 event:device updated deviceId:3
+10-13 12:46:54:143 player piid:119 event:stopped
+10-13 12:46:55:910 new player piid:127 uid/pid:10316/8081 type:android.media.AudioTrack attr:AudioAttributes: usage=USAGE_MEDIA content=CONTENT_TYPE_SPEECH flags=0x800 tags= bundle=Bundle[mParcelledData.dataSize=68] session:185
+10-13 12:46:55:911 player piid:127 event:started
+10-13 12:46:55:939 player piid:127 format update:FormatInfo{isSpatialized=false, channelMask=0x1, sampleRate=24000}
+10-13 12:46:55:942 player piid:127 event:device updated deviceId:3
+10-13 12:47:00:774 player piid:127 event:stopped

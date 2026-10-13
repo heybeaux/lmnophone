@@ -1,0 +1,25 @@
+PLA-505 build 45 family exercise on the spare, 2026-10-13 19:43-19:56Z (12:43-12:56 local).
+Fictional data only: person Sam, number 555-0100. Nothing typed or sent in Google Messages. No calls.
+
+1 Add Sam: menu (test PIN) > Voice messages > Turn on voice messages > Add a person > Name Sam,
+  spoken name Sam > Continue > number 5550100 > Continue > Use a letter > "Add Sam to Alex's family list?" > Add.
+  List shows Sam at once; store no_backup/voice-family = 1 entry (id, Sam, Sam, 5550100, Letter).
+2 Home: one "Family" row (desc "Family, voice messages") between Maps and Messages.
+  Text size 2.0: row fits, no clipping (03). Restored 1.0, read back font_scale=1.0.
+3 Family > Sam at 2.0 and 1.0: order picture, Sam, Messages with Sam, Back, Record (05, 06).
+  TTS at 1.0 (tts-1.0.txt, uid 10316 USAGE_MEDIA CONTENT_TYPE_SPEECH):
+    list intro started 12:46:49.746 stopped 12:46:54.143 (4.4 s)
+    Sam page   started 12:46:55.911 stopped 12:47:00.774 (4.9 s)
+4 Practice: Record > "Recording – practice" + Stop (07) > "Practice – not sent", Record again, Delete, Listen;
+  no Send (08). Draft file voice-family-drafts/<sam-id>.m4a 28711 bytes.
+5 Messages with Sam: Google Messages MainActivity at "Texting with 555-0100 (SMS/MMS)" (09), keyboard not shown,
+  mLockTaskModeState=LOCKED. FINDING: Back #1 lands on the Messages conversation list (shows other threads);
+  Back #2 returns to LMNOPhone on Sam's page with the take kept. Lock task stayed LOCKED throughout.
+6 Remove: menu > Voice messages > Sam > Remove from the list > "Remove Sam? A message Alex hasn't sent to Sam
+  will be erased." > Remove (10). voice-family-drafts empty; store has no people; Home has no Family row (11).
+7 Cleanup: Turn off voice messages (it was off before) > Turn off. Store 9 bytes, header only.
+  Messages kept an empty "555-0100" thread (Messages' own list only; telephony provider unchanged):
+  long-press > delete > "Move to trash" > it left the list. It stays in Messages' trash, which deletes it
+  after 30 days; the trash view sits behind the Messages account menu, so it was not emptied by hand.
+  Final: font 1.0, Home, LOCKED, Device Owner, zero calls; snapshot after.txt equals after-install.txt
+  except the time. Telephony counts unchanged from before install (messages-and-family-after.txt).

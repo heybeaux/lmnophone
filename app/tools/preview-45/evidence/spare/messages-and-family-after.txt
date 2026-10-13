@@ -1,0 +1,6 @@
+conversations=1
+sms=1
+sms_drafts=0
+mms=0
+family_files=0
+family_store_bytes=9
