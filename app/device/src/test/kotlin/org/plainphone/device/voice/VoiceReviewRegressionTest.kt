@@ -28,6 +28,7 @@ class VoiceReviewRegressionTest {
             output = file; recorderStarts++; takes++
             this@VoiceReviewRegressionTest.listener = listener
         }
+        override fun silent() = false
         override fun stop(): Boolean {
             output.writeBytes(VoiceFormat.AacM4a.sample() + takes.toByte())
             return true

@@ -22,6 +22,10 @@ class VoicePracticeControllerTest {
         var listener: VoiceRecorder.Listener? = null
         var lastFormat: VoiceFormat? = null
         var lastMaxMs = 0L
+        /** What [silent] reports; only asked while the recorder runs. */
+        var silentSoFar = false
+        var silentChecks = 0
+        override fun silent(): Boolean { silentChecks++; check(running); return silentSoFar }
         override fun start(file: File, format: VoiceFormat, maxMs: Long, listener: VoiceRecorder.Listener) {
             starts++
             failStart?.let { throw it }
@@ -57,7 +61,9 @@ class VoicePracticeControllerTest {
     private class Speaker : VoiceSpeaker {
         val spoken = mutableListOf<String>()
         var stops = 0
+        val requested = mutableListOf<String>()
         override fun speak(prompt: VoicePrompt, person: VoicePerson?) { spoken += "$prompt ${person?.name}" }
+        override fun speakOnRequest(prompt: VoicePrompt, person: VoicePerson?) { requested += "$prompt ${person?.name}" }
         override fun stop() { stops++ }
     }
 
@@ -201,6 +207,49 @@ class VoicePracticeControllerTest {
         assertEquals(1, recorder.stops)
         assertEquals(VoiceState.MicUnavailable(sam, MicProblem.PrivacyToggle, null), c.state)
         assertTrue(store.dir.list()!!.isEmpty())
+    }
+
+    /**
+     * PLA-475 finding 2: Stop at 1.1 s, after the 1 s minimum but before the 1.25 s zero-peak window and
+     * before Android reports the silencing. The recorder is asked before the take is kept, so the silent
+     * replacement is never kept or shown on Review, and the earlier draft stays byte for byte.
+     */
+    @Test fun silentTakeStoppedBeforeTheSilenceWindowIsNotKept() {
+        for (end in listOf<VoiceEvent>(Stop, Back, Interrupted(Interruption.ScreenOff), MaxLengthReached)) {
+            val store = store(); val c = controller(store)
+            c.dispatch(Choose(sam)); c.recordFor(3_000)
+            val kept = store.file("sam").readBytes(); val draft = (c.state as VoiceState.Review).draft
+            c.dispatch(RecordAgain); recorder.silentSoFar = true; now += 1_100; c.dispatch(end)
+            assertEquals("$end", VoiceState.MicUnavailable(sam, MicProblem.PrivacyToggle, draft), c.state)
+            assertArrayEquals("$end", kept, store.file("sam").readBytes())
+            assertFalse("$end", store.takeFile("sam").exists())
+            assertFalse("$end", recorder.running)
+            assertEquals("MicOff Sam", speaker.spoken.last())
+            recorder.silentSoFar = false; now += 10_000
+        }
+    }
+
+    @Test fun silentFirstTakeIsNotKeptEither() {
+        val store = store(); val c = controller(store)
+        c.dispatch(Choose(sam)); c.dispatch(Record); recorder.silentSoFar = true; now += 1_100; c.dispatch(Stop)
+        assertEquals(VoiceState.MicUnavailable(sam, MicProblem.PrivacyToggle, null), c.state)
+        assertTrue(store.dir.list()!!.isEmpty())
+    }
+
+    @Test fun audibleTakeIsAskedAboutAndKept() {
+        val store = store(); val c = controller(store)
+        c.dispatch(Choose(sam)); c.recordFor(1_100)
+        assertEquals(1, recorder.silentChecks)
+        assertTrue(c.state is VoiceState.Review)
+    }
+
+    /** PLA-475 finding 1: the picture's "hear the name" is the person's own request, so it is spoken even with TalkBack. */
+    @Test fun hearTheNameIsAnExplicitRequest() {
+        val c = controller(); c.dispatch(Choose(sam))
+        val automatic = speaker.spoken.toList()
+        c.sayName()
+        assertEquals(listOf("Name Sam"), speaker.requested)
+        assertEquals(automatic, speaker.spoken)
     }
 
     @Test fun recorderErrorWhileRecordingKeepsThePreviousDraft() {
