@@ -10,6 +10,26 @@ import org.plainphone.device.PreviewAppListStore
 
 class PreviewHomeAppsTest {
     @get:Rule val tmp = TemporaryFolder()
+    @Test fun addingBackAppAppendsAfterCurrentHomeOrderEvenWithStaleOrderEntry() {
+        val store = PreviewAppListStore(tmp.newFolder())
+        store.saveStarter(listOf("zebra", "camera", "phone"))
+        store.saveOrder(listOf("calculator", "zebra"))
+        fun home() = PreviewHomeApps.read(store, setOf("phone")) { it }.map { it.first }
+        assertTrue(store.add("calculator", home()) { true })
+        assertEquals(listOf("zebra", "camera", "calculator"), home())
+        assertEquals(home(), store.order())
+    }
+    @Test fun saveRechecksEligibilityAndFailedSavePreservesBothFiles() {
+        val dir = tmp.newFolder(); val store = PreviewAppListStore(dir)
+        store.saveStarter(listOf("camera")); store.saveOrder(listOf("camera"))
+        assertFalse(store.add("calculator", listOf("camera")) { false })
+        val failing = PreviewAppListStore(dir) { _, target ->
+            if (target.name == "starter-list.txt") throw java.io.IOException("injected")
+            java.nio.file.Files.move(java.io.File(dir, target.name + ".new").toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        }
+        assertThrows(java.io.IOException::class.java) { failing.add("calculator", listOf("camera")) { true } }
+        assertEquals(setOf("camera"), store.starter()); assertEquals(listOf("camera"), store.order())
+    }
     @Test fun productionMapperReadsPersistedOrderAndAppendsNewApps() {
         val dir = tmp.newFolder()
         val store = PreviewAppListStore(dir)

@@ -27,7 +27,7 @@ class PreviewAppsFlowTest {
         flow.submit(charArrayOf('1')); assertEquals(1, port.removes)
         flow.back(); assertFalse(port.active!!())
         port.callback!!(AppRemovalResult.Removed)
-        assertEquals(PreviewAppsStage.Details, flow.state.stage)
+        assertEquals(PreviewAppsStage.List, flow.state.stage)
     }
     @Test fun duplicateSubmissionIgnoredAndSaveErrorHonest() {
         val port = Port(); val flow = PreviewAppsFlow(port) {}
