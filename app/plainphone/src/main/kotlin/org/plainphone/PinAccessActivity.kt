@@ -63,6 +63,7 @@ class PinAccessActivity : ComponentActivity() {
                 }
                 else -> finish()
             } }
+            val waitingNow by runtime.waitingRead.collectAsState()
             PlainphoneTheme {
                 Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).systemBarsPadding().displayCutoutPadding()) {
                     when (page.page) {
@@ -80,7 +81,7 @@ class PinAccessActivity : ComponentActivity() {
                             sending = page.busy, wrongPin = page.wrong,
                             wait = DateUtils.formatElapsedTime((page.waitMillis + 999) / 1000),
                             // Change PIN: a new PIN cancels the wait the old one started (PLA-494).
-                            pendingChange = if (page.page == PinPage.CHANGE_OLD) waitingChangeName() else null,
+                            pendingChange = if (page.page == PinPage.CHANGE_OLD) waitingChangeName(waitingNow) else null,
                         )) { event -> when (event) {
                             is PinEvent.ValueChanged -> value = event.value
                             is PinEvent.ConfirmationChanged -> confirmation = event.value
@@ -158,8 +159,8 @@ class PinAccessActivity : ComponentActivity() {
         }
     }
 
-    private fun waitingChangeName(): String? {
-        val waiting = org.plainphone.boot.pendingChange(runtime.waitingRead.value,
+    private fun waitingChangeName(read: org.plainphone.boot.WaitingRead?): String? {
+        val waiting = org.plainphone.boot.pendingChange(read,
             java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)) ?: return null
         return if (waiting.kind is PendingChangeKind.TurnOff) getString(org.plainphone.ui.R.string.admin_turn_off) else null
     }
