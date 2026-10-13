@@ -98,6 +98,7 @@ class ShellNavigator(
         if (s.stack.size > 1) Step(s.copy(stack = s.stack.dropLast(1))) else Step(s, ShellEffect.Finish)
 
     fun onHome(s: ShellState, e: HomeEvent): Step = when (e) {
+        HomeEvent.OpenFamily -> push(s, ShellRoute.VoicePractice)
         HomeEvent.OpenMore -> push(s, ShellRoute.More)
         HomeEvent.OpenPhone -> Step(s, ShellEffect.OpenDialer)
         HomeEvent.OpenMessages -> Step(s, ShellEffect.OpenMessages)

@@ -323,11 +323,19 @@ class MainActivity : ComponentActivity() {
     }
     private val ringtoneController by lazy { RingtoneController(AndroidRingtone(this)) }
     /** Voice messages practice (PLA-457): records and plays on this phone only. Never sends. */
+    private val familyStore by lazy { org.plainphone.device.voice.AndroidFamilyStore.open(this) }
     private val voice by lazy {
         VoicePracticeHost(this, ComponentName(this, PlainphoneAdminReceiver::class.java)) {
             val names = shell.phone?.snapshot()?.trustedPeople.orEmpty()
             if (names.size >= 2) getString(org.plainphone.ui.R.string.names_or, names[0], names[1]) else names.firstOrNull().orEmpty()
-        }.also { host -> host.onLeave = { shell.state = shell.navigator?.back(shell.state)?.state ?: shell.state } }
+        }.also { host -> host.openMessages = { id ->
+            try {
+                familyStore.recipient(id)?.let { person ->
+                    startActivity(org.plainphone.device.voice.FamilyMessages.intent(person))
+                    true
+                } ?: false
+            } catch (_: Exception) { false }
+        }; host.onLeave = { shell.state = shell.navigator?.back(shell.state)?.state ?: shell.state } }
     }
     private var ringtone by mutableStateOf(RingtoneUiState())
     private fun syncRingtone() {
@@ -531,7 +539,8 @@ class MainActivity : ComponentActivity() {
             var snapshot by remember(phone) { mutableStateOf(phone.snapshot()) }
             LaunchedEffect(shell.state, phone) {
                 while (true) {
-                    snapshot = phone.snapshot()
+                    val family = try { familyStore.read() } catch (_: Exception) { org.plainphone.device.voice.FamilyList() }
+                    snapshot = phone.snapshot().copy(familyEnabled = family.enabled, familyCount = family.people.size)
                     delay(1_000)
                 }
             }

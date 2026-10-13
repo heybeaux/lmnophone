@@ -17,6 +17,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.view.accessibility.AccessibilityManager
 import java.io.File
 
@@ -217,7 +218,9 @@ class AndroidVoiceSpeaker(context: Context, private val text: (VoicePrompt, Voic
     private val app = context.applicationContext
     private val audio = app.getSystemService(AudioManager::class.java)
     private var ready = false
-    private var queued: String? = null
+    private val main = Handler(Looper.getMainLooper())
+    private val completion = VoiceSpeechCompletion()
+    private var queued: Pair<String, String>? = null
     private var tts: TextToSpeech? = null
 
     override fun speak(prompt: VoicePrompt, person: VoicePerson?) = speak(prompt, person, requested = false)
@@ -225,26 +228,57 @@ class AndroidVoiceSpeaker(context: Context, private val text: (VoicePrompt, Voic
     /** The picture's "hear the name": under TalkBack it is the only way to hear it in the phone's voice. */
     override fun speakOnRequest(prompt: VoicePrompt, person: VoicePerson?) = speak(prompt, person, requested = true)
 
-    private fun speak(prompt: VoicePrompt, person: VoicePerson?, requested: Boolean) {
+    /** Finish the spoken handoff before leaving; stop() cancels a stale navigation callback. */
+    fun speakBeforeAction(prompt: VoicePrompt, person: VoicePerson?, action: () -> Unit) {
+        var invoked = false
+        val once = {
+            if (!invoked) { invoked = true; stop(); action() }
+        }
+        try { speak(prompt, person, requested = false, once) }
+        catch (_: Exception) { once() }
+    }
+
+    private fun speak(prompt: VoicePrompt, person: VoicePerson?, requested: Boolean, action: (() -> Unit)? = null) {
+        stop()
         val touch = app.getSystemService(AccessibilityManager::class.java)?.isTouchExplorationEnabled == true
-        if (!shouldSpeak(touch, audio.mode, requested)) return
+        if (!shouldSpeak(touch, audio.mode, requested)) { action?.invoke(); return }
+        val id = completion.begin(action)
+        // A missing/stalled TTS engine must not trap the person on this screen.
+        if (action != null) main.postDelayed({ finished(id) }, 5_000)
         val words = text(prompt, person)
         if (tts == null) tts = TextToSpeech(app) { status ->
             ready = status == TextToSpeech.SUCCESS
             tts?.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
-            queued?.takeIf { ready }?.let { say(it) }
-            queued = null
+            tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) = Unit
+                override fun onDone(utteranceId: String?) { main.post { finished(utteranceId) } }
+                @Deprecated("Legacy TTS callback")
+                override fun onError(utteranceId: String?) { main.post { finished(utteranceId) } }
+            })
+            val waiting = queued.also { queued = null }
+            if (waiting != null) {
+                if (ready) say(waiting.first, waiting.second) else finished(waiting.second)
+            }
         }
-        if (ready) say(words) else queued = words
+        if (ready) say(words, id) else queued = words to id
     }
 
-    private fun say(words: String) {
-        tts?.speak(words, TextToSpeech.QUEUE_FLUSH, null, "voice-prompt")
+    private fun say(words: String, id: String) {
+        val result = try { tts?.speak(words, TextToSpeech.QUEUE_FLUSH, null, id) } catch (_: Exception) { TextToSpeech.ERROR }
+        if (result == TextToSpeech.ERROR) finished(id)
     }
 
-    override fun stop() { queued = null; try { tts?.stop() } catch (_: Exception) { } }
-    fun shutdown() { try { tts?.shutdown() } catch (_: Exception) { }; tts = null; ready = false; queued = null }
+    private fun finished(id: String?) {
+        completion.finish(id)
+    }
+
+    override fun stop() {
+        completion.cancel(); queued = null
+        main.removeCallbacksAndMessages(null)
+        try { tts?.stop() } catch (_: Exception) { }
+    }
+    fun shutdown() { stop(); try { tts?.shutdown() } catch (_: Exception) { }; tts = null; ready = false }
 
     companion object {
         /** Never during a call. Under TalkBack (it reads the screen) only what the person asked for. */

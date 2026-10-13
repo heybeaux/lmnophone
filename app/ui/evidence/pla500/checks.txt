@@ -1,0 +1,31 @@
+PLA-500 family slice, base preview-43 d0d4d14c. Experimental candidate; no spare install.
+
+Tests-first commits: 176e0b69 (FamilyStore absent), 39044682 (Home/family mapping absent).
+Host checks: 89 :device voice tests; 65 :plainphone voice/shell/PIN tests; zero failures/errors.
+Paparazzi verify: 412 test invocations passed (Family 90, Home 95, practice voice 225, trusted fixture loops 2).
+90 new family goldens: 360x640 dp with system-bar space, scales 1/1.3/1.5/1.8/2, Sam and long synthetic Sam/Jo/Alex name.
+Two intentional self-managed menu goldens changed because Voice messages is now an entry. All changed images inspected.
+OpenSpec: all 4 changes valid. Debug APK builds; testOnly retained.
+
+Private read-only AVD pla500-ui-a35, emulator-5780, Android 15/API35, 360x640 dp.
+Port checked before boot; AVD identity read back. Existing restriction-free preview setup used; no full debugging-disabling plan.
+Built: inherited version 0.1.0-preview-43, versionCode 43; Lead assigns integration preview number.
+Installed: this private emulator only, in-place. Hash below identifies candidate code beyond the inherited version label.
+Exercised: production Home Family row -> family person -> explicit Google Messages conversation for fictional 555-0100 -> Back.
+LOCKED before, during the actual conversation and after Back. No call, text or voice message sent.
+All-format draft and partial-take deletion exercised through AndroidFamilyStore.
+The first probe accepted a transient Google launch activity. Its screenshot was not conversation evidence.
+The final probe waits for the fictional conversation title; final Messages screenshot is the actual conversation.
+Google Messages version messages.android_20240528_00_RC01_alldpi.arm64-v8a.phone, versionCode235003840.
+No carrier/RCS voice reception or MMS delivery claimed.
+
+Limitations: Send absent, practice label retained; pictures are letters only. No photo import or reordering.
+TODO(copy) still marks Messages action/unavailable and family removal/save-error wording pending PLA-501.
+No real data used. Screenshots show Sam and fictional 555-0100 only. Google Messages' own colors are external-app UI.
+Storage source: https://developer.android.com/privacy-and-security/direct-boot (default app context is credential encrypted).
+Family storage rejects a device-protected Context and uses noBackupFilesDir; manifest allowBackup=false.
+
+APK SHA-256: 73bc2be9bd9dd003a4780b8af6daaed2329539f3fc929123bc84a6d10a217c72
+
+INSTRUMENTATION_RESULT: outcome=PASS: CE family; explicit SENDTO; production Home→Family→person→Messages; lock task before/during/after; Back returns; all-format draft removal. No send or call.
+INSTRUMENTATION_CODE: -1

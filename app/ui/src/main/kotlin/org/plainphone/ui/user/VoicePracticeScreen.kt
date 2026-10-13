@@ -35,15 +35,15 @@ import org.plainphone.ui.theme.*
  * This flow alone may use pictures and symbols for someone who cannot read: the person's picture
  * is a monochrome initial for now, and record/stop/listen symbols always come with their word.
  */
-data class VoicePersonUi(val id: String, val name: String)
+data class VoicePersonUi(val id: String, val name: String, val pictureInInk: Boolean = false)
 enum class VoiceUiNotice { MaxLength, Interrupted, NothingRecorded, Deleted, CouldNotPlay, Busy, Unsent }
 enum class VoiceUiMicProblem { NotAllowed, TurnedOff, DidNotWork }
 
 sealed interface VoiceUiState {
-    data class ChoosePerson(val people: List<VoicePersonUi>) : VoiceUiState
-    data class Person(val person: VoicePersonUi, val notice: VoiceUiNotice? = null) : VoiceUiState
+    data class ChoosePerson(val people: List<VoicePersonUi>, val fromHome: Boolean = false) : VoiceUiState
+    data class Person(val person: VoicePersonUi, val notice: VoiceUiNotice? = null, val openMessages: Boolean = false, val messagesUnavailable: Boolean = false) : VoiceUiState
     data class Recording(val person: VoicePersonUi) : VoiceUiState
-    data class Review(val person: VoicePersonUi, val playing: Boolean = false, val notice: VoiceUiNotice? = null) : VoiceUiState
+    data class Review(val person: VoicePersonUi, val playing: Boolean = false, val notice: VoiceUiNotice? = null, val openMessages: Boolean = false, val messagesUnavailable: Boolean = false) : VoiceUiState
     data class MicOff(val person: VoicePersonUi, val problem: VoiceUiMicProblem) : VoiceUiState
 }
 
@@ -57,6 +57,7 @@ sealed interface VoiceUiEvent {
     data object Delete : VoiceUiEvent
     data object Back : VoiceUiEvent
     data object HearName : VoiceUiEvent
+    data object OpenMessages : VoiceUiEvent
 }
 
 private enum class Symbol { Record, Stop, Play, Cross }
@@ -73,7 +74,7 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
             .padding(horizontal = PlainphoneSpace.S6).padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S4),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            ScreenLink(stringResource(if (state is VoiceUiState.ChoosePerson) R.string.back_more else R.string.voice_back_people),
+            if (!(state is VoiceUiState.Person && state.openMessages)) ScreenLink(stringResource(if (state is VoiceUiState.ChoosePerson) { if (state.fromHome) R.string.family_back else R.string.back_more } else R.string.voice_back_people),
                 { onEvent(VoiceUiEvent.Back) }, centered = false)
             Text(stringResource(R.string.voice_practice_label), style = PlainphoneType.Button.copy(color = PlainphoneColors.Ink2),
                 modifier = Modifier.fillMaxWidth().background(PlainphoneColors.Fill1, RoundedCornerShape(PlainphoneSpace.BoxRadius))
@@ -82,16 +83,20 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
                 is VoiceUiState.ChoosePerson -> {
                     Text(stringResource(R.string.voice_choose), style = PlainphoneType.Title,
                         modifier = Modifier.fillMaxWidth().padding(vertical = PlainphoneSpace.S4).semantics { heading() })
-                    for (p in state.people) PersonRow(p) { onEvent(VoiceUiEvent.Choose(p.id)) }
+                    for (p in state.people) PersonRow(p, state.fromHome) { onEvent(VoiceUiEvent.Choose(p.id)) }
                 }
                 is VoiceUiState.Person -> {
-                    PersonHeader(state.person, onEvent)
+                    PersonHeader(state.person, onEvent, showHearLink = !state.openMessages)
                     Notice(state.notice, state.person)
+                    if (state.messagesUnavailable) Text(stringResource(R.string.family_messages_unavailable), style = PlainphoneType.Body)
+                    if (state.openMessages) MessagesButton(state.person, onEvent)
                 }
                 is VoiceUiState.Recording -> PersonHeader(state.person, onEvent, hearName = false)
                 is VoiceUiState.Review -> {
                     PersonHeader(state.person, onEvent)
                     Notice(state.notice, state.person)
+                    if (state.messagesUnavailable) Text(stringResource(R.string.family_messages_unavailable), style = PlainphoneType.Body)
+                    if (state.openMessages) MessagesButton(state.person, onEvent)
                 }
                 is VoiceUiState.MicOff -> {
                     PersonHeader(state.person, onEvent)
@@ -110,7 +115,10 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally) {
             when (state) {
                 is VoiceUiState.ChoosePerson -> Unit
-                is VoiceUiState.Person -> BigButton(stringResource(R.string.voice_record), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
+                is VoiceUiState.Person -> {
+                    if (state.openMessages) ScreenLink(stringResource(R.string.family_back), { onEvent(VoiceUiEvent.Back) })
+                    BigButton(stringResource(R.string.voice_record), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
+                }
                 is VoiceUiState.Recording -> {
                     Row(Modifier.padding(bottom = PlainphoneSpace.S2).semantics(mergeDescendants = true) {
                         liveRegion = LiveRegionMode.Polite
@@ -138,7 +146,15 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
 }
 
 @Composable
-private fun PersonRow(person: VoicePersonUi, onClick: () -> Unit) {
+private fun PersonRow(person: VoicePersonUi, family: Boolean = false, onClick: () -> Unit) {
+    if (family) {
+        Column(Modifier.fillMaxWidth().plainphoneAction(onClick = onClick).padding(vertical = PlainphoneSpace.S4),
+            horizontalAlignment = Alignment.CenterHorizontally) {
+            PersonPicture(person, 120.dp, decorative = true)
+            Text(person.name, style = PlainphoneType.App, textAlign = TextAlign.Center)
+        }
+        return
+    }
     Row(Modifier.fillMaxWidth().plainphoneAction(onClick = onClick).heightIn(min = 96.dp)
         .padding(vertical = PlainphoneSpace.S3),
         verticalAlignment = Alignment.CenterVertically,
@@ -149,17 +165,17 @@ private fun PersonRow(person: VoicePersonUi, onClick: () -> Unit) {
 }
 
 @Composable
-private fun PersonHeader(person: VoicePersonUi, onEvent: (VoiceUiEvent) -> Unit, hearName: Boolean = true) {
+private fun PersonHeader(person: VoicePersonUi, onEvent: (VoiceUiEvent) -> Unit, hearName: Boolean = true, showHearLink: Boolean = true) {
     val hear = { onEvent(VoiceUiEvent.HearName) }
     Spacer(Modifier.height(PlainphoneSpace.S4))
-    PersonPicture(person, 96.dp, onHearName = if (hearName) hear else null)
+    PersonPicture(person, if (person.pictureInInk && hearName) 120.dp else 96.dp, onHearName = if (hearName) hear else null)
     // Never cut or shrunk (README, screen titles): a word too long for the line breaks with a hyphen.
     Text(person.name, style = PlainphoneType.Title.copy(hyphens = Hyphens.Auto, lineBreak = LineBreak.Heading),
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(top = PlainphoneSpace.S2).semantics { heading() })
     // The picture carries this action for TalkBack, so the link is hidden there and not offered twice (UX V2).
-    if (hearName) Box(Modifier.clearAndSetSemantics {}) { ScreenLink(stringResource(R.string.voice_hear_name), hear) }
-    else Spacer(Modifier.height(48.dp))
+    if (hearName && showHearLink) Box(Modifier.clearAndSetSemantics {}) { ScreenLink(stringResource(R.string.voice_hear_name), hear) }
+    else if (!hearName) Spacer(Modifier.height(48.dp))
 }
 
 /**
@@ -176,11 +192,11 @@ private fun PersonPicture(person: VoicePersonUi, size: Dp, decorative: Boolean =
         if (onHearName != null) onClick(label = actionLabel) { onHearName(); true }
     })) { Box(Modifier.fillMaxSize()
         .then(if (onHearName != null) Modifier.plainphoneAction(shape = CircleShape, onClick = onHearName) else Modifier)
-        .background(PlainphoneColors.Fill2, CircleShape)
+        .background(if (person.pictureInInk) PlainphoneColors.Ink else PlainphoneColors.Fill2, CircleShape)
         .border(PlainphoneSpace.Border, PlainphoneColors.Ink, CircleShape), contentAlignment = Alignment.Center) {
         // Sized in dp, not scaled with the text size: it is a picture.
         val letter = with(LocalDensity.current) { (size * 0.5f).toSp() }
-        Text(initial(person.name), style = PlainphoneType.Title.copy(fontSize = letter, lineHeight = letter), maxLines = 1)
+        Text(initial(person.name), style = PlainphoneType.Title.copy(fontSize = letter, lineHeight = letter, color = if (person.pictureInInk) PlainphoneColors.Paper else PlainphoneColors.Ink), maxLines = 1)
     } }
 }
 
@@ -221,8 +237,9 @@ private fun BigButton(word: String, symbol: Symbol, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SmallButton(word: String, symbol: Symbol?, onClick: () -> Unit) {
+private fun SmallButton(word: String, symbol: Symbol?, description: String? = null, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 72.dp)
+        .semantics { if (description != null) contentDescription = description }
         .border(PlainphoneSpace.Border, PlainphoneColors.Ink, RoundedCornerShape(PlainphoneSpace.BoxRadius))
         .plainphoneAction(shape = RoundedCornerShape(PlainphoneSpace.BoxRadius), onClick = onClick)
         .padding(horizontal = PlainphoneSpace.S4, vertical = PlainphoneSpace.S3),
@@ -231,6 +248,13 @@ private fun SmallButton(word: String, symbol: Symbol?, onClick: () -> Unit) {
         if (symbol != null) SymbolMark(symbol, 20.dp, PlainphoneColors.Ink)
         Text(word, style = PlainphoneType.Button, textAlign = TextAlign.Center)
     }
+}
+
+@Composable
+private fun MessagesButton(person: VoicePersonUi, onEvent: (VoiceUiEvent) -> Unit) {
+    SmallButton(stringResource(R.string.family_messages, person.name), null,
+        stringResource(R.string.family_messages_desc, person.name)) { onEvent(VoiceUiEvent.OpenMessages) }
+    Spacer(Modifier.height(PlainphoneSpace.S6))
 }
 
 /** Monochrome symbols, no semantics: the paired word is the accessible name. */
@@ -257,3 +281,6 @@ private fun SymbolMark(symbol: Symbol, size: Dp, color: androidx.compose.ui.grap
         }
     }
 }
+
+@Composable
+fun FamilyLetterPicture(name: String) = PersonPicture(VoicePersonUi("", name, pictureInInk = true), 120.dp, decorative = true)

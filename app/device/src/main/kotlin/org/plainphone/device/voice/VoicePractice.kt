@@ -6,7 +6,7 @@ package org.plainphone.device.voice
  * Voice messages, slice 1 (PLA-457): a local practice. Record, stop, listen, record again, delete.
  * Nothing is ever sent: there is no sent state and no send effect. Transport is a later slice.
  */
-data class VoicePerson(val id: String, val name: String)
+data class VoicePerson(val id: String, val name: String, val spokenName: String = name)
 
 /** Synthetic people for the practice. Never real names, photos or numbers. */
 object VoicePeople {
@@ -36,7 +36,7 @@ enum class VoiceNotice { MaxLength, Interrupted, NothingRecorded, Deleted, Could
 
 /** What the phone says aloud (UX doc V1-V13, practice wording). The host maps each to a string. */
 enum class VoicePrompt { Intro, Name, Person, Review, Unsent, TooShort, MaxLength, Busy, Deleted, MicOff, MicNotAllowed,
-    MicError, CouldNotPlay }
+    MicError, CouldNotPlay, OpeningMessages, MessagesUnavailable }
 
 sealed interface VoiceState {
     val person: VoicePerson? get() = null

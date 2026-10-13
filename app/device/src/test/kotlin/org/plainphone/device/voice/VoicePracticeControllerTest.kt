@@ -82,6 +82,21 @@ class VoicePracticeControllerTest {
         dispatch(Record); now += ms; dispatch(end)
     }
 
+    @Test fun restoresOnlyLiveFamilyAndUsesFamilyDraftStore() {
+        val practice = store()
+        val family = store()
+        val person = VoicePerson("familysam", "Sam", "Sam")
+        var people = listOf(person)
+        val c = VoicePracticeController(recorder, player, practice, mic, speaker, gate,
+            clock = { now }, people = { people }, draftStore = { family })
+        c.open(); c.dispatch(Choose(person)); c.recordFor(1500)
+        assertNotNull(family.draft(person.id)); assertNull(practice.draft(person.id))
+        val place = c.place(); c.open(place)
+        assertEquals(person, (c.state as VoiceState.Review).person)
+        people = emptyList(); c.open(place)
+        assertEquals(VoiceState.ChoosePerson, c.state)
+    }
+
     @Test fun recordsAacM4aMonoForAtMostTwoMinutesByDefault() {
         val c = controller(); c.dispatch(Choose(sam)); c.dispatch(Record)
         assertEquals(VoiceFormat.AacM4a, recorder.lastFormat)

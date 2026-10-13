@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <string name="family_home">Family</string>
+    <string name="family_accessibility">Family, voice messages</string>
+    <string name="family_back">‹ Back</string>
+    <string name="family_title">Voice messages</string>
+    <string name="family_for">Voice messages for %1$s</string>
+    <string name="family_off_body">%1$s can send and hear short voice messages, using pictures, without reading. Only people you add here can get them. You don\'t approve each message.</string>
+    <string name="family_enable">Turn on voice messages</string>
+    <string name="family_disable">Turn off voice messages</string>
+    <string name="family_disable_confirm">Turn off voice messages? Messages %1$s hasn\'t sent will be erased.</string>
+    <string name="family_turn_off">Turn off</string>
+    <string name="family_add">Add a person</string>
+    <string name="family_name">Name</string>
+    <string name="family_spoken_name">Their name, as %1$s says it</string>
+    <string name="family_hear">Hear it</string>
+    <string name="family_number">Phone number</string>
+    <string name="family_mobile">Their mobile number</string>
+    <string name="family_picture">Picture</string>
+    <string name="family_letter">Use a letter</string>
+    <string name="family_confirm">Add %1$s to %2$s\'s family list?</string>
+    <string name="family_add_confirm">Add</string>
+    <string name="family_messages">Messages with %1$s</string>
+    <string name="family_remove">Remove from the list</string>
+    <string name="family_remove_confirm">Remove %1$s? A message %2$s hasn\'t sent to %1$s will be erased.</string>
+    <string name="family_error">That didn\'t save. Nothing changed. Try again.</string>
+    <string name="family_mic_error">LMNOPhone couldn\'t turn on the microphone. Try again, or ask %1$s.</string>
+    <string name="family_messages_unavailable">Messages didn\'t open.</string>
+    <string name="family_remove_button">Remove</string>
+    <string name="family_edit_confirm">Save changes for %1$s?</string>
+    <string name="family_messages_desc">Messages with %1$s, opens Messages</string>
+    <string name="family_say_opening_messages">Opening Messages.</string>
+    <string name="family_say_messages_unavailable">Messages didn\'t open. Ask %2$s for help.</string>
+    <string name="family_say_person">%1$s. Tap Record to talk to %1$s, or Messages to see what %1$s sent.</string>
+</resources>
