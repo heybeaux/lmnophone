@@ -1,0 +1,5 @@
+APK sha256 db6224ca8d1664a660a10ecdee13a588d0646617c44db74a1a8031711ea08679
+ versionCode=44 minSdk=30 targetSdk=36
+ versionName=0.1.0-preview-44
+ lastUpdateTime=2026-10-13 11:51:55
+calls=0 location=0
