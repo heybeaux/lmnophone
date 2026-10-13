@@ -326,14 +326,16 @@ class VoicePracticeControllerTest {
             .also { it.activityStarted(); it.show() }
 
     /** MainActivity's order on a recreation: onStop, keep the place, the route goes away, a new host opens it. */
-    private fun recreate(old: VoicePracticeSession, store: VoiceDraftStore): VoicePracticeController {
+    private fun recreate(old: VoicePracticeSession, store: VoiceDraftStore): VoicePracticeController =
+        recreateSession(old, store).controller
+
+    private fun recreateSession(old: VoicePracticeSession, store: VoiceDraftStore): VoicePracticeSession {
         old.activityStopped()
         val place = old.place()
         old.hide()
         speaker.spoken.clear()
         val c = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now })
-        VoicePracticeSession(c, {}, {}).apply { activityStarted(); show(place) }
-        return c
+        return VoicePracticeSession(c, {}, {}).apply { activityStarted(); show(place) }
     }
 
     @Test fun personScreenSurvivesARecreation() {
@@ -391,15 +393,43 @@ class VoicePracticeControllerTest {
         assertEquals(VoiceState.MicUnavailable(sam, MicProblem.PrivacyToggle, store.draft("sam")), after.state)
     }
 
-    @Test fun peopleListAndUnknownPlacesOpenAsUsual() {
+    // PLA-484: the people list is a place too, so a text-size change there says nothing again.
+    @Test fun peopleListSurvivesARecreationSilently() {
         val store = store(); val s = session(store)
+        assertEquals(listOf("Intro null"), speaker.spoken)
+        assertNotNull("the people list is kept like the other screens", s.place())
         val after = recreate(s, store)
         assertEquals(VoiceState.ChoosePerson, after.state)
+        assertEquals("a text-size change is not a new screen: nothing is said again", emptyList<String>(), speaker.spoken)
+        assertEquals(0, recorder.starts)
+        assertFalse(gate.held)
+    }
+
+    @Test fun peopleListSurvivesRepeatedRecreationsSilently() {
+        val store = store(); var s = session(store)
+        repeat(3) {
+            // Text size 1.0 -> 1.3 -> 2.0 -> 1.0, as on the spare.
+            s = recreateSession(s, store)
+            assertEquals(VoiceState.ChoosePerson, s.controller.state)
+            assertEquals(emptyList<String>(), speaker.spoken)
+        }
+    }
+
+    @Test fun aFreshOpenStillSaysTheIntroOnce() {
+        val store = store(); val s = session(store)
         assertEquals(listOf("Intro null"), speaker.spoken)
-        speaker.spoken.clear()
+        s.hide(); speaker.spoken.clear()
+        s.show()
+        assertEquals(VoiceState.ChoosePerson, s.controller.state)
+        assertEquals("a new visit from More is a new screen", listOf("Intro null"), speaker.spoken)
+    }
+
+    @Test fun unknownPlacesOpenAsUsual() {
+        val store = store()
         val c = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now })
         c.open(VoicePlace("nobody", VoicePlace.Screen.Review))
         assertEquals(VoiceState.ChoosePerson, c.state)
+        assertEquals("not the screen it was on, so it is introduced", listOf("Intro null"), speaker.spoken)
     }
 
     @Test fun aReviewWhoseTakeIsGoneComesBackOnThePerson() {
