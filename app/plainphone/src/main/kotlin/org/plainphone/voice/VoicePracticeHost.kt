@@ -44,20 +44,20 @@ import org.plainphone.ui.user.VoiceUiState
 
 /** Practice states to screens. Saving still shows Recording: the recorder is being stopped. */
 object VoiceUiMapper {
-    fun map(s: VoiceState): VoiceUiState = when (s) {
-        VoiceState.ChoosePerson -> VoiceUiState.ChoosePerson(VoicePeople.practice.map(::person))
-        is VoiceState.Person -> VoiceUiState.Person(person(s.person), s.notice?.let(::notice))
-        is VoiceState.Recording -> VoiceUiState.Recording(person(s.person))
-        is VoiceState.Saving -> VoiceUiState.Recording(person(s.person))
-        is VoiceState.Review -> VoiceUiState.Review(person(s.person), s.playing, s.notice?.let(::notice))
-        is VoiceState.MicUnavailable -> VoiceUiState.MicOff(person(s.person), when (s.problem) {
+    fun map(s: VoiceState, people: List<VoicePerson> = VoicePeople.practice, family: Boolean = false): VoiceUiState = when (s) {
+        VoiceState.ChoosePerson -> VoiceUiState.ChoosePerson(people.map { person(it, family) }, fromHome = family)
+        is VoiceState.Person -> VoiceUiState.Person(person(s.person, family), s.notice?.let(::notice), openMessages = family)
+        is VoiceState.Recording -> VoiceUiState.Recording(person(s.person, family))
+        is VoiceState.Saving -> VoiceUiState.Recording(person(s.person, family))
+        is VoiceState.Review -> VoiceUiState.Review(person(s.person, family), s.playing, s.notice?.let(::notice), openMessages = family)
+        is VoiceState.MicUnavailable -> VoiceUiState.MicOff(person(s.person, family), when (s.problem) {
             MicProblem.PermissionRefused -> VoiceUiMicProblem.NotAllowed
             MicProblem.PrivacyToggle -> VoiceUiMicProblem.TurnedOff
             MicProblem.RecorderError -> VoiceUiMicProblem.DidNotWork
         })
     }
 
-    private fun person(p: VoicePerson) = VoicePersonUi(p.id, p.name)
+    private fun person(p: VoicePerson, family: Boolean) = VoicePersonUi(p.id, p.name, pictureInInk = family)
 
     private fun notice(n: VoiceNotice) = when (n) {
         VoiceNotice.MaxLength -> VoiceUiNotice.MaxLength
@@ -82,11 +82,17 @@ object VoiceUiMapper {
  */
 class VoicePracticeHost(context: Context, admin: ComponentName, private val helper: () -> String) {
     private val app = context.applicationContext
+    private val familyStore = org.plainphone.device.voice.AndroidFamilyStore.open(app)
+    private var family = false
+    private var people = VoicePeople.practice
+    var openMessages: (String) -> Boolean = { false }
     private val audio = app.getSystemService(AudioManager::class.java)
     private val telephony = app.getSystemService(TelephonyManager::class.java)
     private val speaker = AndroidVoiceSpeaker(app, ::words)
     private val format = VoiceFormat.AacM4a
-    val store = VoiceDraftStore(File(app.noBackupFilesDir, "voice-practice"), format) { System.currentTimeMillis() }
+    private val practiceStore = VoiceDraftStore(File(app.noBackupFilesDir, "voice-practice"), format) { System.currentTimeMillis() }
+    private val familyDrafts = VoiceDraftStore(org.plainphone.device.voice.AndroidFamilyStore.drafts(app), format) { System.currentTimeMillis() }
+    val store: VoiceDraftStore get() = if (family) familyDrafts else practiceStore
     private var focus: AudioFocusRequest? = null
     /** Last state from the call listener, which reports the current state as soon as it is armed. */
     private var callState = TelephonyManager.CALL_STATE_IDLE
@@ -113,7 +119,10 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
     }
 
     private val controller: VoicePracticeController = VoicePracticeController(AndroidVoiceRecorder(app), AndroidVoicePlayer(), store,
-        AndroidMicAccess(app, admin), speaker, gate, SystemClock::elapsedRealtime, format)
+        org.plainphone.device.voice.MicAccess {
+            val access = AndroidMicAccess(app, admin)
+            if (family) { if (access.granted()) null else MicProblem.PermissionRefused } else access.problem()
+        }, speaker, gate, SystemClock::elapsedRealtime, format, people = { people }, draftStore = { store })
     private val session = VoicePracticeSession(controller, ::arm, ::disarm)
 
     var ui by mutableStateOf<VoiceUiState>(VoiceUiMapper.map(VoiceState.ChoosePerson))
@@ -121,7 +130,7 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
     var onLeave: () -> Unit = {}
 
     init {
-        controller.onChange = { state -> ui = VoiceUiMapper.map(state) }
+        controller.onChange = { state -> ui = VoiceUiMapper.map(state, people, family) }
         controller.onLeave = { onLeave() }
     }
 
@@ -153,7 +162,12 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
     private var restoring: VoicePlace? = null
 
     /** The practice route appeared, back at the kept place after a configuration change. */
-    fun open() = session.show(restoring.also { restoring = null })
+    fun open() {
+        val list = try { familyStore.read() } catch (_: Exception) { org.plainphone.device.voice.FamilyList() }
+        family = list.visible
+        people = if (family) list.people.map { VoicePerson(it.id, it.name, it.spokenName) } else VoicePeople.practice
+        session.show(restoring.also { restoring = null })
+    }
 
     /** The practice route went away: stops recording (keeping it), playback and speech. */
     fun close() { restoring = null; session.hide() }
@@ -172,7 +186,7 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
 
     fun onEvent(e: VoiceUiEvent) {
         when (e) {
-            is VoiceUiEvent.Choose -> VoicePeople.practice.firstOrNull { it.id == e.id }
+            is VoiceUiEvent.Choose -> people.firstOrNull { it.id == e.id }
                 ?.let { controller.dispatch(VoiceEvent.Choose(it)) }
             VoiceUiEvent.Record -> controller.dispatch(VoiceEvent.Record)
             VoiceUiEvent.Stop -> controller.dispatch(VoiceEvent.Stop)
@@ -181,12 +195,22 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
             VoiceUiEvent.Delete -> controller.dispatch(VoiceEvent.Delete)
             VoiceUiEvent.Back -> controller.dispatch(VoiceEvent.Back)
             VoiceUiEvent.HearName -> controller.sayName()
+            VoiceUiEvent.OpenMessages -> if (family && (controller.state is VoiceState.Person || controller.state is VoiceState.Review)) {
+                val id = controller.state.person?.id ?: return
+                controller.close(Interruption.AppStopped)
+                // The receiving callback resolves this opaque id again; numbers never enter UI state.
+                if (!openMessages(id)) ui = when (val current = ui) {
+                    is VoiceUiState.Person -> current.copy(messagesUnavailable = true)
+                    is VoiceUiState.Review -> current.copy(messagesUnavailable = true)
+                    else -> current
+                }
+            }
         }
     }
 
     private fun words(prompt: VoicePrompt, person: VoicePerson?): String {
         val helper = helper()
-        return app.getString(VoiceWords.res(prompt, helper.isNotBlank()), person?.name.orEmpty(), helper)
+        return app.getString(VoiceWords.res(prompt, helper.isNotBlank()), person?.spokenName.orEmpty(), helper)
     }
 
     fun shutdown() { close(); speaker.shutdown() }

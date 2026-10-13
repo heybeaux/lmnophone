@@ -64,14 +64,17 @@ interface VoiceSpeaker {
 class VoicePracticeController(
     private val recorder: VoiceRecorder,
     private val player: VoicePlayer,
-    private val store: VoiceDraftStore,
+    store: VoiceDraftStore,
     private val mic: MicAccess,
     private val speaker: VoiceSpeaker,
     private val gate: VoiceAudioGate,
     private val clock: () -> Long,
     private val format: VoiceFormat = VoiceFormat.AacM4a,
     private val maxMs: Long = DEFAULT_MAX_MS,
+    private val people: () -> List<VoicePerson> = { VoicePeople.practice },
+    private val draftStore: () -> VoiceDraftStore = { store },
 ) {
+    private val store: VoiceDraftStore get() = draftStore()
     var state: VoiceState = VoiceState.ChoosePerson
         private set
     var onChange: (VoiceState) -> Unit = {}
@@ -119,7 +122,7 @@ class VoicePracticeController(
     /** The take is read again from the store: a pruned or deleted take shows the person's screen instead. */
     private fun restore(place: VoicePlace): VoiceState? {
         if (place.screen == VoicePlace.Screen.People) return VoiceState.ChoosePerson
-        val person = VoicePeople.practice.firstOrNull { it.id == place.personId } ?: return null
+        val person = people().firstOrNull { it.id == place.personId } ?: return null
         val draft = safeDraft(person.id)
         return when (place.screen) {
             VoicePlace.Screen.MicOff -> VoiceState.MicUnavailable(person, place.problem ?: MicProblem.RecorderError, draft)

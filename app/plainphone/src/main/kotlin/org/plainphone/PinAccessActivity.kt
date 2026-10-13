@@ -28,6 +28,18 @@ import org.plainphone.ui.trusted.*
 class PinAccessActivity : ComponentActivity() {
     private var page by mutableStateOf(PinPageState())
     private var value by mutableStateOf("")
+    private var family by mutableStateOf<FamilyUiState?>(null)
+    private var familyEditor: org.plainphone.voice.FamilyEditor? = null
+    private val familyStore by lazy { org.plainphone.device.voice.AndroidFamilyStore.open(this) }
+    private val familySpeaker by lazy { org.plainphone.device.voice.AndroidVoiceSpeaker(this) { _, person -> person?.spokenName.orEmpty() } }
+    private fun openFamily() {
+        if (page.page != PinPage.MENU) return
+        familyEditor = org.plainphone.voice.FamilyEditor(familyStore, AdminContext(PreviewPhone.sample().userName),
+            { page.page == PinPage.MENU && lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) },
+            { org.plainphone.device.voice.AndroidMicAccess(this, android.content.ComponentName(this, PlainphoneAdminReceiver::class.java)).selfGrant() },
+            { name -> familySpeaker.speakOnRequest(org.plainphone.device.voice.VoicePrompt.Name, org.plainphone.device.voice.VoicePerson("name", name)) },
+            { family = null; familyEditor = null }, { family = it }).also { it.open() }
+    }
     private var confirmation by mutableStateOf("")
     private val runtime by lazy { PolicyRuntime.get(this) }
     private val flow by lazy {
@@ -51,7 +63,7 @@ class PinAccessActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         setContent {
-            BackHandler { if (page.page == PinPage.NOT_IN_BUILD) flow.backFromUnsupported() else finish() }
+            BackHandler { if (family != null) familyEditor?.event(FamilyEvent.Back) else if (page.page == PinPage.NOT_IN_BUILD) flow.backFromUnsupported() else finish() }
             PlainphoneTheme {
                 Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).systemBarsPadding().displayCutoutPadding()) {
                     when (page.page) {
@@ -79,12 +91,12 @@ class PinAccessActivity : ComponentActivity() {
                             PinEvent.UseRecoveryCode -> { value = ""; confirmation = ""; flow.unsupported() }
                             else -> finish()
                         } }
-                        PinPage.MENU -> AdminMenuScreen(AdminMenuUiState(
+                        PinPage.MENU -> if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(AdminMenuUiState(
                             AdminContext(PreviewPhone.sample().userName), AdminDestination.entries.map { AdminMenuItem(it) },
                         )) { when (it) {
                             AdminMenuEvent.Done -> finish()
                             is AdminMenuEvent.OpenNotice -> flow.unsupported()
-                            is AdminMenuEvent.Open -> if (it.destination == AdminDestination.TurnOff) flow.turnOff() else flow.unsupported()
+                            is AdminMenuEvent.Open -> when (it.destination) { AdminDestination.TurnOff -> flow.turnOff(); AdminDestination.VoiceMessages -> openFamily(); else -> flow.unsupported() }
                         } }
                         PinPage.OFF_INTRO, PinPage.OFF_FIRST, PinPage.OFF_LAST -> TurnOffScreen(TurnOffUiState(
                             context = AdminContext(PreviewPhone.sample().userName),
@@ -123,9 +135,12 @@ class PinAccessActivity : ComponentActivity() {
         }
     }
 
+    override fun onDestroy() { familySpeaker.shutdown(); super.onDestroy() }
+
     override fun onResume() { super.onResume(); flow.open() }
     override fun onPause() {
         value = ""; confirmation = ""
+        family = null; familyEditor = null; familySpeaker.stop()
         flow.close()
         super.onPause()
     }

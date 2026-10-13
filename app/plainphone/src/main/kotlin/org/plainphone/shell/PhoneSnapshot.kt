@@ -29,6 +29,8 @@ data class PhoneSnapshot(
     val apps: List<ApprovedApp>,
     val notices: NoticeInput,
     val requests: List<SavedRequest>,
+    val familyEnabled: Boolean = false,
+    val familyCount: Int = 0,
 )
 
 /** Read side of the phone. The preview reads [PreviewPhone]; later D1 slices read `:device` and `:policy`. */

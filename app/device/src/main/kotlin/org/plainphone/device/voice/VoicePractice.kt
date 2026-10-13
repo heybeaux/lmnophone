@@ -6,7 +6,7 @@ package org.plainphone.device.voice
  * Voice messages, slice 1 (PLA-457): a local practice. Record, stop, listen, record again, delete.
  * Nothing is ever sent: there is no sent state and no send effect. Transport is a later slice.
  */
-data class VoicePerson(val id: String, val name: String)
+data class VoicePerson(val id: String, val name: String, val spokenName: String = name)
 
 /** Synthetic people for the practice. Never real names, photos or numbers. */
 object VoicePeople {

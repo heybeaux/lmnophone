@@ -34,7 +34,7 @@ sealed interface PinEvent {
     data object Ok : PinEvent
 }
 
-enum class AdminDestination { AddApp, HiddenApp, Apps, Requests, Updates, Settings, Limits, People, History, Waits, UpdatePlainphone, ChangePin, SwitchMode, TurnOff }
+enum class AdminDestination { VoiceMessages, AddApp, HiddenApp, Apps, Requests, Updates, Settings, Limits, People, History, Waits, UpdatePlainphone, ChangePin, SwitchMode, TurnOff }
 data class AdminMenuItem(val destination: AdminDestination, val detail: String = "")
 data class AdminNotice(val id: String, val text: String)
 data class AdminMenuUiState(val context: AdminContext, val items: List<AdminMenuItem>,

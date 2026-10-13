@@ -15,6 +15,7 @@ data class HomeUiState(
     /** Fresh, reliable host values only; null hides unavailable or switched-off counts. */
     val missedCalls: Int? = null,
     val unreadTexts: Int? = null,
+    val showFamily: Boolean = false,
 )
 
 /** IDs should be unique. Duplicate IDs remain renderable and are returned unchanged to the host. */
@@ -42,6 +43,7 @@ sealed interface HomeNotice {
 sealed interface HomeEvent {
     data object OpenPhone : HomeEvent
     data object OpenMessages : HomeEvent
+    data object OpenFamily : HomeEvent
     data object OpenMore : HomeEvent
     data object OpenNotice : HomeEvent
     data class OpenApp(val id: String) : HomeEvent

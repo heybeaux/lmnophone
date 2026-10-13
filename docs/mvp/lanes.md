@@ -370,3 +370,12 @@ before one removal. `WifiForgetController(port, location, now)` exports `forget`
 `refresh`, `leave`, `onOpen`, `pending`, and `failed`. `WifiJoinSession` serializes
 it with joining and shared owned Location cleanup. UI gains `canForget`,
 `forgetFailed`, and Forget/message events; the host owns eligibility and effects.
+
+## Voice family seam (PLA-500, slice 2b)
+
+- `:policy` exports `FamilyRules`: six-person bound and name/number validation.
+- `:device` exports `FamilyStore` / `AndroidFamilyStore`, storing enabled state and ordered `FamilyPerson` entries in credential-encrypted `noBackupFilesDir/voice-family`. `FamilyPicture.Letter` is the current picture type; photo import requires a later private-asset type. No contact provider or backup.
+- `VoiceRecipientSource.recipient(personId)` returns the enabled live recipient, including the number, or null. Send code must resolve by opaque id at the point of use. Numbers never enter voice UI state. Family drafts use `voice-family-drafts`; sample practice retains its existing directory. Removal, turn-off, and a number change erase the affected drafts first, fail closed if erasure fails, and do not expose recordings in trusted-person mode.
+- `VoicePracticeController` accepts `people` and `draftStore` providers for restoration and draft isolation; `VoicePerson.spokenName` defaults to its display name. Family microphone permission is only granted from the PIN menu; the family recorder checks the existing grant.
+- `:ui` exports `FamilyScreen(FamilyUiState, FamilyEvent)`. The host owns storage, validation, voice preview and live PIN-menu authority. Fields clear on pause. `HomeUiState.showFamily` and `HomeEvent.OpenFamily` carry the Home route; `ShellUiMapper.home` supplies the flag from the production snapshot.
+- `FamilyMessages.intent` creates package-explicit `ACTION_SENDTO smsto:` for Google Messages without content or automatic sending. Lock-task policy is unchanged. `VoiceUiEvent.OpenMessages` emits only an action; MainActivity resolves the current recipient and launches it.

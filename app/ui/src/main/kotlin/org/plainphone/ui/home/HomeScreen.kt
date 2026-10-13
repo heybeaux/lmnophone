@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -161,6 +162,17 @@ private fun HomeTop(state: HomeUiState, noticeLines: Int, inlineClock: Boolean,
 private fun HomeBottom(state: HomeUiState, exposeTags: Boolean = true, onEvent: (HomeEvent) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(top = PlainphoneSpace.S3)) {
         Column(verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S3)) {
+            if (state.showFamily) {
+                val label = stringResource(R.string.family_accessibility)
+                HomeRow(Modifier.testTag("home-family"), { onEvent(HomeEvent.OpenFamily) }) {
+                    Row(Modifier.clearAndSetSemantics { contentDescription = label },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S3)) {
+                        FamilySymbol()
+                        Text(stringResource(R.string.family_home), style = PlainphoneType.App)
+                    }
+                }
+            }
             CommunicationRow(stringResource(R.string.home_messages), state.unreadTexts,
                 R.plurals.home_unread_texts, if (exposeTags) "home-messages" else null) { onEvent(HomeEvent.OpenMessages) }
             CommunicationRow(stringResource(R.string.home_phone), state.missedCalls,
@@ -239,6 +251,21 @@ private fun HomePreview() {
             HomeScreen(HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct",
                 listOf(HomeApp("music", "Spotify"), HomeApp("chat", "Slack"), HomeApp("camera", "Camera")),
                 HomeNotice.ModeChangeWaiting), onEvent = {})
+        }
+    }
+}
+
+/** The single Home symbol authorized by the voice-message accessibility exception. */
+@Composable
+private fun FamilySymbol() {
+    androidx.compose.foundation.Canvas(Modifier.size(32.dp).clearAndSetSemantics {}) {
+        val ink = PlainphoneColors.Ink
+        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())
+        for (x in listOf(0.3f, 0.7f)) {
+            drawCircle(ink, size.width * 0.13f, androidx.compose.ui.geometry.Offset(size.width * x, size.height * 0.25f), style = stroke)
+            drawArc(ink, 180f, 180f, false,
+                topLeft = androidx.compose.ui.geometry.Offset(size.width * (x - 0.24f), size.height * 0.48f),
+                size = androidx.compose.ui.geometry.Size(size.width * 0.48f, size.height * 0.5f), style = stroke)
         }
     }
 }

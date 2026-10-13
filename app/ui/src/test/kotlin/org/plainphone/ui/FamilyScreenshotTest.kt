@@ -20,8 +20,8 @@ class FamilyScreenshotTest(private val scale: Float, private val name: String) {
         screenWidth = 360, screenHeight = 640, xdpi = 160, ydpi = 160,
         density = Density.MEDIUM, fontScale = scale, locale = "en"), showSystemUi = false)
     @Test fun home() = shot { HomeScreen(HomeUiState("10:42", "Tuesday 13 October", "Tue 13 Oct", showFamily = true), {}) }
-    @Test fun people() = shot { VoicePracticeScreen(VoiceUiState.ChoosePerson(listOf(VoicePersonUi("sam", name)), fromHome = true), {}) }
-    @Test fun messagesAction() = shot { VoicePracticeScreen(VoiceUiState.Person(VoicePersonUi("sam", name), openMessages = true), {}) }
+    @Test fun people() = shot { VoicePracticeScreen(VoiceUiState.ChoosePerson(listOf(VoicePersonUi("sam", name, pictureInInk = true)), fromHome = true), {}) }
+    @Test fun messagesAction() = shot { VoicePracticeScreen(VoiceUiState.Person(VoicePersonUi("sam", name, pictureInInk = true), openMessages = true), {}) }
     @Test fun familyMenu() = family(FamilyStage.List)
     @Test fun nameEntry() = family(FamilyStage.Name)
     @Test fun numberEntry() = family(FamilyStage.Number)
