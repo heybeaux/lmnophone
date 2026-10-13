@@ -1,0 +1,19 @@
+build=39
+apk_sha256=48a570139533819f847407fd138a1e71b8e6bca1003a0f0cac6392b7d4323550
+branch=release/preview-39@a0ecb069 (release/preview-38@c479163a + pla-voice/slice-1@abf05d35: More row fix; reviews PLA-465 -> PLA-469 APPROVE; row fix delta check PLA-470 in parallel)
+signer_sha256=99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd (same as builds 36-38)
+installed_local=2026-10-12 20:59:09 PDT (2026-10-13 03:59:09Z, lastUpdateTime)
+upgrade=38-to-39-in-place, gate exit 0 (243 PASS incl. restart)
+owner=Device Owner retained, testOnly retained, lock task LOCKED
+system_update_policy=SystemUpdatePolicy (type: 3, windowStart: 0, windowEnd: 0, freezes: []) kept
+emergency=More>Emergency and Phone both exactly 911 (gate), zero Telecom calls
+safety_diff=none vs build 37/38 (location 0, font 1.0, ring 5, saved-list hash d32466f0bb5f98e0, bonded 0)
+microphone=RECORD_AUDIO granted=false before first Record; granted=true flags POLICY_FIXED after (Device Owner self-grant, no prompt)
+exercised_on_spare_font_1.0 (synthetic person Sam; room audio, kept only on the phone, deleted at the end; nothing sent):
+  Home > More > "Voice messages (practice)" > band "Practice – not sent"; Sam, Jo, Alex listed (voice-choose.png)
+  Sam > Record: screen "Recording – practice" + Stop pinned; dumpsys audio RecordActivityMonitor: one active MIC client pack:org.plainphone, 1ch 44100 Hz, silenced:false (voice-recording.png)
+  Stop: mic released (no active record client); no_backup/voice-practice/sam.m4a 28265 B, header ftypmp42, ffprobe aac mono 44100 Hz 8.22 s (file read, not kept on host)
+  Listen: MediaPlayer u/pid org.plainphone state:started usage=USAGE_MEDIA content=SPEECH; button "Stop listening"; back to "Listen" at end (voice-listening.png)
+  Record again, then system Back key during recording: mic released, new take kept (sam.m4a 20722 B), Review shown (voice-after-back.png)
+  Delete: "Deleted." shown, voice-practice folder empty (voice-deleted.png); Back x3 to Home, lock task LOCKED
+not exercised on spare: incoming call, screen off, mic privacy toggle, TalkBack, fonts 1.3-2.0 (host goldens only), Hear name / spoken prompts audibly (TTS not checked by ear)
