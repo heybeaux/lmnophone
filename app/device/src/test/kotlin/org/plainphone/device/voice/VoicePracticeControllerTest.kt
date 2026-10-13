@@ -218,9 +218,9 @@ class VoicePracticeControllerTest {
         for (end in listOf<VoiceEvent>(Stop, Back, Interrupted(Interruption.ScreenOff), MaxLengthReached)) {
             val store = store(); val c = controller(store)
             c.dispatch(Choose(sam)); c.recordFor(3_000)
-            val kept = store.file("sam").readBytes()
+            val kept = store.file("sam").readBytes(); val draft = (c.state as VoiceState.Review).draft
             c.dispatch(RecordAgain); recorder.silentSoFar = true; now += 1_100; c.dispatch(end)
-            assertEquals("$end", VoiceState.MicUnavailable(sam, MicProblem.PrivacyToggle, VoiceDraft("sam", now - 4_100)), c.state)
+            assertEquals("$end", VoiceState.MicUnavailable(sam, MicProblem.PrivacyToggle, draft), c.state)
             assertArrayEquals("$end", kept, store.file("sam").readBytes())
             assertFalse("$end", store.takeFile("sam").exists())
             assertFalse("$end", recorder.running)
