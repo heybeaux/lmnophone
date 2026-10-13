@@ -10,6 +10,8 @@ import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.telephony.TelephonyCallback
 import android.telephony.TelephonyManager
@@ -28,6 +30,7 @@ import org.plainphone.device.voice.VoiceDraftStore
 import org.plainphone.device.voice.VoiceEvent
 import org.plainphone.device.voice.VoiceFormat
 import org.plainphone.device.voice.VoiceNotice
+import org.plainphone.device.voice.VoiceNumbers
 import org.plainphone.device.voice.VoicePeople
 import org.plainphone.device.voice.VoicePerson
 import org.plainphone.device.voice.VoicePlace
@@ -35,26 +38,56 @@ import org.plainphone.device.voice.VoicePracticeController
 import org.plainphone.device.voice.VoicePracticeSession
 import org.plainphone.device.voice.VoicePrompt
 import org.plainphone.device.voice.VoiceState
+import org.plainphone.device.voice.send.AndroidMmsPort
+import org.plainphone.device.voice.send.SendProblem
+import org.plainphone.device.voice.send.VoiceSendChannel
+import org.plainphone.device.voice.send.VoiceSendEngine
+import org.plainphone.device.voice.send.VoiceSendLimits
+import org.plainphone.device.voice.send.VoiceSender
 import org.plainphone.ui.R
 import org.plainphone.ui.user.VoicePersonUi
 import org.plainphone.ui.user.VoiceUiEvent
 import org.plainphone.ui.user.VoiceUiMicProblem
 import org.plainphone.ui.user.VoiceUiNotice
+import org.plainphone.ui.user.VoiceUiSendProblem
 import org.plainphone.ui.user.VoiceUiState
 
-/** Practice states to screens. Saving still shows Recording: the recorder is being stopped. */
+/**
+ * Voice states to screens. Saving still shows Recording: the recorder is being stopped. A screen keeps the
+ * practice band unless its person [canSend]; the people list keeps it while nobody on [people] can be sent to.
+ * [helper] (the trusted person) is named only after a second real failure (UX V7 again). Numbers never reach a screen.
+ */
 object VoiceUiMapper {
-    fun map(s: VoiceState, people: List<VoicePerson> = VoicePeople.practice, family: Boolean = false): VoiceUiState = when (s) {
-        VoiceState.ChoosePerson -> VoiceUiState.ChoosePerson(people.map { person(it, family) }, fromHome = family)
-        is VoiceState.Person -> VoiceUiState.Person(person(s.person, family), s.notice?.let(::notice), openMessages = family)
-        is VoiceState.Recording -> VoiceUiState.Recording(person(s.person, family))
-        is VoiceState.Saving -> VoiceUiState.Recording(person(s.person, family))
-        is VoiceState.Review -> VoiceUiState.Review(person(s.person, family), s.playing, s.notice?.let(::notice), openMessages = family)
+    fun map(
+        s: VoiceState,
+        people: List<VoicePerson> = VoicePeople.practice,
+        family: Boolean = false,
+        canSend: (VoicePerson) -> Boolean = { false },
+        helper: String = "",
+    ): VoiceUiState = when (s) {
+        VoiceState.ChoosePerson -> VoiceUiState.ChoosePerson(people.map { person(it, family) }, fromHome = family,
+            practice = people.none(canSend))
+        is VoiceState.Person -> VoiceUiState.Person(person(s.person, family), s.notice?.let(::notice), openMessages = family,
+            practice = !canSend(s.person))
+        is VoiceState.Recording -> VoiceUiState.Recording(person(s.person, family), !canSend(s.person))
+        is VoiceState.Saving -> VoiceUiState.Recording(person(s.person, family), !canSend(s.person))
+        is VoiceState.Review -> canSend(s.person).let { send ->
+            VoiceUiState.Review(person(s.person, family), s.playing, s.notice?.let(::notice), openMessages = family,
+                canSend = send, practice = !send)
+        }
         is VoiceState.MicUnavailable -> VoiceUiState.MicOff(person(s.person, family), when (s.problem) {
             MicProblem.PermissionRefused -> VoiceUiMicProblem.NotAllowed
             MicProblem.PrivacyToggle -> VoiceUiMicProblem.TurnedOff
             MicProblem.RecorderError -> VoiceUiMicProblem.DidNotWork
-        })
+        }, !canSend(s.person))
+        is VoiceState.Sending -> VoiceUiState.Sending(person(s.person, family))
+        is VoiceState.Sent -> VoiceUiState.Sent(person(s.person, family))
+        is VoiceState.NotSent -> when (s.problem) {
+            SendProblem.NoSignal -> VoiceUiState.NotSent(person(s.person, family), VoiceUiSendProblem.NoSignal)
+            SendProblem.NotConfirmed -> VoiceUiState.NotSent(person(s.person, family), VoiceUiSendProblem.NotConfirmed)
+            else -> VoiceUiState.NotSent(person(s.person, family), VoiceUiSendProblem.NotSent,
+                helper.takeIf { s.failures >= 2 && it.isNotBlank() })
+        }
     }
 
     private fun person(p: VoicePerson, family: Boolean) = VoicePersonUi(p.id, p.name, pictureInInk = family)
@@ -75,9 +108,15 @@ object VoiceUiMapper {
  * [onActivityStop] and [onActivityStart] with the activity. While the screen shows and the activity is
  * started it listens for screen-off and calls; while recording or playing it holds transient audio
  * focus. Each of those stops the recorder (keeping the take) or the playback (UX V11). Recording and
- * playback are refused while a call rings or is up, or when focus is refused. Never sends.
+ * playback are refused while a call rings or is up, or when focus is refused.
  *
- * Drafts live in noBackupFilesDir/voice-practice: app-private, credential-encrypted, never backed up.
+ * Real sending (PLA-499) goes through [VoiceSendRoute]: for the family list only where the build turns it on
+ * ([VoiceSendBuild.familySend]; release never), and for the practice only with the test build's adb marker. Then a
+ * person with a number gets Send; the send happens only on that tap or Try again, never by itself. Answers from the
+ * phone show only while the screen is visible; otherwise on the next start.
+ *
+ * Practice drafts live in noBackupFilesDir/voice-practice, family drafts in noBackupFilesDir/voice-family-drafts
+ * ([org.plainphone.device.voice.AndroidFamilyStore.drafts]): app-private, credential-encrypted, never backed up.
  * They are kept until deleted and pruned 7 days after saving ([VoiceDraftStore.RETENTION_MS]).
  */
 class VoicePracticeHost(context: Context, admin: ComponentName, private val helper: () -> String) {
@@ -118,20 +157,49 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
         }
     }
 
+    private val practiceNumbers: VoiceNumbers? = VoiceSendBuild.numbers(app)
+    private val practiceSender: VoiceSender? = practiceNumbers?.let { VoiceSendEngine.get(app, VoiceSendChannel.Practice) }
+    private val familySender: VoiceSender? =
+        if (VoiceSendBuild.familySend()) VoiceSendEngine.get(app, VoiceSendChannel.Family) else null
+    private val route = VoiceSendRoute({ family }, familySender, familyStore, practiceSender, practiceNumbers)
+    private val mms = AndroidMmsPort(app)
+    private val main = Handler(Looper.getMainLooper())
+
     private val controller: VoicePracticeController = VoicePracticeController(AndroidVoiceRecorder(app), AndroidVoicePlayer(), store,
         org.plainphone.device.voice.MicAccess {
             val access = AndroidMicAccess(app, admin)
             if (family) { if (access.granted()) null else MicProblem.PermissionRefused } else access.problem()
-        }, speaker, gate, SystemClock::elapsedRealtime, format, people = { people }, draftStore = { store })
+        }, speaker, gate, SystemClock::elapsedRealtime, format, people = { people }, draftStore = { store },
+        sender = route.port, recordCapMs = { VoiceSendLimits.maxRecordMs(mms.carrier(), format) }, numbers = route.numbers)
     private val session = VoicePracticeSession(controller, ::arm, ::disarm)
 
-    var ui by mutableStateOf<VoiceUiState>(VoiceUiMapper.map(VoiceState.ChoosePerson))
+    var ui by mutableStateOf<VoiceUiState>(VoiceUiMapper.map(VoiceState.ChoosePerson, people, family, controller::canSend))
         private set
     var onLeave: () -> Unit = {}
 
+    /** UX V6: after 10 seconds with no tap, Sent goes back to the people. Not a send: that is already done. */
+    private val sentReturn = Runnable {
+        if (session.armed && controller.state is VoiceState.Sent) controller.dispatch(VoiceEvent.Done)
+    }
+
+    /**
+     * An answer from the phone: shown now only while the screen is visible and showing that sender's people,
+     * else on the next start.
+     */
+    private fun sendUpdate(forFamily: Boolean): (String) -> Unit =
+        { id -> main.post { if (session.armed && family == forFamily) controller.sendChanged(id) } }
+    private val familyUpdate = sendUpdate(true)
+    private val practiceUpdate = sendUpdate(false)
+
     init {
-        controller.onChange = { state -> ui = VoiceUiMapper.map(state, people, family) }
+        controller.onChange = { state ->
+            ui = VoiceUiMapper.map(state, people, family, controller::canSend, helper())
+            main.removeCallbacks(sentReturn)
+            if (state is VoiceState.Sent) main.postDelayed(sentReturn, SENT_RETURN_MS)
+        }
         controller.onLeave = { onLeave() }
+        familySender?.onUpdate = familyUpdate
+        practiceSender?.onUpdate = practiceUpdate
     }
 
     private val screenOff = object : BroadcastReceiver() {
@@ -181,8 +249,18 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
     /** MainActivity.onStop: stops all audio and the listeners; the screen and its draft stay. */
     fun onActivityStop() = session.activityStopped()
 
-    /** MainActivity.onStart: re-arms the listeners if the practice is still on screen. */
-    fun onActivityStart() = session.activityStarted()
+    /**
+     * MainActivity.onStart: re-arms the listeners if the practice is still on screen, and shows any answer
+     * that came while it was away. Reads only: never sends.
+     */
+    fun onActivityStart() {
+        session.activityStarted()
+        if (session.armed) controller.state.person?.let { controller.sendChanged(it.id) }
+        if (session.armed && controller.state is VoiceState.Sent) {
+            main.removeCallbacks(sentReturn)
+            main.postDelayed(sentReturn, SENT_RETURN_MS)
+        }
+    }
 
     fun onEvent(e: VoiceUiEvent) {
         when (e) {
@@ -210,6 +288,9 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
                     }
                 }
             }
+            VoiceUiEvent.Send -> controller.dispatch(VoiceEvent.Send)
+            VoiceUiEvent.TryAgain -> controller.dispatch(VoiceEvent.TryAgain)
+            VoiceUiEvent.Done -> controller.dispatch(VoiceEvent.Done)
         }
     }
 
@@ -218,7 +299,17 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
         return app.getString(VoiceWords.res(prompt, helper.isNotBlank(), family), person?.spokenName.orEmpty(), helper)
     }
 
-    fun shutdown() { close(); speaker.shutdown() }
+    fun shutdown() {
+        close()
+        main.removeCallbacks(sentReturn)
+        familySender?.let { if (it.onUpdate === familyUpdate) it.onUpdate = {} }
+        practiceSender?.let { if (it.onUpdate === practiceUpdate) it.onUpdate = {} }
+        speaker.shutdown()
+    }
+
+    private companion object {
+        const val SENT_RETURN_MS = 10_000L
+    }
 }
 
 /** Spoken words per prompt (docs/ux/flows-voice-messages.md, PLA-472). Help words name the trusted person when known. */
@@ -239,5 +330,15 @@ internal object VoiceWords {
         VoicePrompt.CouldNotPlay -> R.string.voice_say_play
         VoicePrompt.OpeningMessages -> R.string.family_say_opening_messages
         VoicePrompt.MessagesUnavailable -> R.string.family_say_messages_unavailable
+        VoicePrompt.ChooseSend -> R.string.voice_say_choose
+        VoicePrompt.ReviewSend -> R.string.voice_say_review_send
+        VoicePrompt.MaxLengthSend -> R.string.voice_say_max_send
+        VoicePrompt.UnsentSend -> R.string.voice_say_unsent_send
+        VoicePrompt.Sending -> R.string.voice_say_sending
+        VoicePrompt.Sent -> R.string.voice_say_sent
+        VoicePrompt.NotSent -> R.string.voice_say_not_sent
+        VoicePrompt.NotSentAgain -> if (helperKnown) R.string.voice_say_not_sent_again else R.string.voice_say_not_sent
+        VoicePrompt.NoSignal -> R.string.voice_say_no_signal
+        VoicePrompt.NotConfirmed -> R.string.voice_say_not_confirmed
     }
 }

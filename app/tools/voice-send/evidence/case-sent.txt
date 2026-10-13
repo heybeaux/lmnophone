@@ -1,0 +1,2 @@
+INSTRUMENTATION_RESULT: outcome=PASS choose practice=false; review canSend=true practice=false take=11536 bytes; after Send: Sending; answer: Sent stored=Sent failures=0 draftKept=false
+INSTRUMENTATION_CODE: -1

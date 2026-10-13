@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
@@ -16,4 +17,17 @@
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- Voice messages (PLA-499): the message file for one send, readable only through a per-send grant to the
+         phone's MMS service, and the result of that send. Neither is exported. -->
+    <application>
+        <provider
+            android:name="org.plainphone.device.voice.send.VoiceSendFiles"
+            android:authorities="${applicationId}.voicesend"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+        <receiver
+            android:name="org.plainphone.device.voice.send.VoiceSendResultReceiver"
+            android:exported="false" />
+    </application>
 </manifest>

@@ -1,0 +1,8 @@
+All previously set carrier config override values has been cleared
+Success: Admin removed ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
+Success
+Success
+readback:
+enabledMMS                                                             BOOLEAN         false
+Row: 0 mmsc=http://mms.msg.eng.t-mobile.com/mms/wapenc
+no owners

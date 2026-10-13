@@ -393,3 +393,52 @@ prompt before calling the host's existing Messages opener; stopping speech
 cancels that pending action. Failed/unavailable speech falls through, with a
 five-second backstop for a stalled engine. These are speech/navigation seams;
 recipient resolution and the destination app remain in the existing adapter.
+
+### Voice MMS send seam (PLA-499, slice 2a)
+
+`:device/voice` exports `VoiceSendPort.send(VoicePerson, number): SendView`,
+`view(personId): SendView?`, `seen(personId)` and `VoiceNumbers.number(personId)`.
+`VoicePerson` never carries a number. `VoicePracticeController` accepts an
+optional sender, injected people, `recordCapMs` and a `VoiceNumbers` lookup;
+`canSend` requires both a sender and a normalized number for that person id,
+looked up again at every check and at the explicit send (a failing lookup counts
+as no number). The family list (PLA-500) plugs in as
+`VoiceNumbers { id -> source.recipient(id)?.number }`. Only explicit Review Send or
+Not sent Try again events produce `VoiceEffect.SendDraft`. Restoring, opening,
+reading outcomes and handling interruptions never send. `VoicePlace.Screen.Send`
+restores the current persisted answer, without restarting audio.
+
+`:device/voice/send` exports `VoiceSender`, `VoiceSendStore`, `SendStatus`,
+`SendProblem`, `CarrierMms` and `VoiceSendLimits`. `MmsPort` supplies carrier
+settings, signal and permission readback, one explicit send and per-attempt
+cleanup. `AndroidMmsPort` owns the default-data-subscription send, app-private
+PDU provider grant and result receiver. `Sent` needs RESULT_OK and a complete
+m-send-conf with OK status; unanswered attempts become `NotConfirmed` on restart
+or after the wait bound. Reading a confirmed outcome completes any interrupted
+deletion of its matching draft, never deleting a different recording.
+`VoiceSendChannel` (Practice, Family) binds each sender to one draft folder and
+its own send records; `VoiceSendEngine.get(context, channel)` keeps one sender per
+channel, and the channel key rides in the sentIntent so a late or post-restart
+answer reads and erases only that channel's drafts (a missing key means Practice;
+an unknown key only releases the outgoing file). Family sending is wired in PLA-513 (below).
+
+`:plainphone` supplies the build gate, people and number lookup, maps states to UI and
+posts result updates on the main thread only while the screen is visible.
+`:ui` takes `VoiceUiState` and emits Send/TryAgain/Done; it has no transport or
+permission logic. Debug sending is opt-in through the shell-only test hook;
+release stays practice-only until the family-list integration (slice 2b).
+No policy-engine, emergency-floor or lock-task interface changes.
+
+### Voice family send wiring (PLA-513, build 46)
+
+`VoicePracticeHost` builds a `VoiceSendRoute` from the current mode: the family
+list uses `VoiceSendEngine.get(context, VoiceSendChannel.Family)` and
+`VoiceNumbers { id -> familyStore.recipient(id)?.number }`, looked up at every
+check and every send; the practice keeps the PLA-499 test-build marker for
+practice Sam. A side without a sender has no numbers, so nobody there gets Send.
+`VoiceSendBuild.familySend()` is the gate: true in the debug build type, false
+in release. `VoiceUiMapper.map(state, people, family, canSend, helper)` combines
+the family flags (`fromHome`, `openMessages`, `pictureInInk`) with the send flags
+(`canSend`, `practice`). Removal, turn-off and number changes still erase drafts
+through `FamilyStore` before the list changes; the host reads the list again on
+each `open()`.

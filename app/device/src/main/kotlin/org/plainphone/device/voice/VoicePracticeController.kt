@@ -3,6 +3,10 @@
 package org.plainphone.device.voice
 
 import java.io.File
+import org.plainphone.device.voice.send.SendProblem
+import org.plainphone.device.voice.send.SendStatus
+import org.plainphone.device.voice.send.SendView
+import org.plainphone.device.voice.send.VoiceNumber
 
 /** Mono recorder. The host adapter wraps MediaRecorder; callbacks arrive on the main thread. */
 interface VoiceRecorder {
@@ -58,6 +62,23 @@ interface VoiceSpeaker {
 }
 
 /**
+ * A person's phone number, looked up by person id at the point of use (PLA-499). Null: no number, so no Send.
+ * The family list (PLA-500) supplies it from VoiceRecipientSource; numbers never enter [VoicePerson] or UI state.
+ */
+fun interface VoiceNumbers { fun number(personId: String): String? }
+
+/** The real sender (PLA-499, [org.plainphone.device.voice.send.VoiceSender]). Absent when real sending is off. */
+interface VoiceSendPort {
+    /**
+     * Hands the person's draft over once, to [number], and says where that send is. Called only for an explicit
+     * Send or Try again, with the number looked up at that moment. Never log [number].
+     */
+    fun send(person: VoicePerson, number: String): SendView
+    fun view(personId: String): SendView?
+    fun seen(personId: String)
+}
+
+/**
  * Runs [VoicePractice] and its effects. Not thread-safe: call from the main thread only.
  * The recorder runs only while [VoiceState.Recording] is the state, and every way out of it stops it.
  */
@@ -71,8 +92,15 @@ class VoicePracticeController(
     private val clock: () -> Long,
     private val format: VoiceFormat = VoiceFormat.AacM4a,
     private val maxMs: Long = DEFAULT_MAX_MS,
+    /** Read again on every use: the family list (PLA-500) can change while the host lives. */
     private val people: () -> List<VoicePerson> = { VoicePeople.practice },
     private val draftStore: () -> VoiceDraftStore = { store },
+    /** Null: real sending is off. Send and Try again are then ignored, and nothing is ever handed over. */
+    private val sender: VoiceSendPort? = null,
+    /** The longest message the carrier takes ([org.plainphone.device.voice.send.VoiceSendLimits.maxRecordMs]). */
+    private val recordCapMs: () -> Long = { maxMs },
+    /** Looked up again for every check and every send; never kept. */
+    private val numbers: VoiceNumbers = VoiceNumbers { null },
 ) {
     private val store: VoiceDraftStore get() = draftStore()
     var state: VoiceState = VoiceState.ChoosePerson
@@ -105,7 +133,7 @@ class VoicePracticeController(
         state = restored ?: VoiceState.ChoosePerson
         onChange(state)
         // A new visit, or a place that is gone (an unknown person): the people list is introduced.
-        if (restored == null) say(VoicePrompt.Intro, null)
+        if (restored == null) say(if (practice(null)) VoicePrompt.Intro else VoicePrompt.ChooseSend, null)
     }
 
     /** Where the practice is now, to come back to after a configuration change. */
@@ -117,6 +145,9 @@ class VoicePracticeController(
         // Only if asked before onStop stopped the recorder: whatever take is kept, it was interrupted.
         is VoiceState.Recording -> VoicePlace(s.person.id, VoicePlace.Screen.Review, VoiceNotice.Interrupted)
         is VoiceState.Saving -> VoicePlace(s.person.id, VoicePlace.Screen.Review, s.notice ?: VoiceNotice.Interrupted)
+        is VoiceState.Sending -> VoicePlace(s.person.id, VoicePlace.Screen.Send)
+        is VoiceState.Sent -> VoicePlace(s.person.id, VoicePlace.Screen.Send)
+        is VoiceState.NotSent -> VoicePlace(s.person.id, VoicePlace.Screen.Send)
     }
 
     /** The take is read again from the store: a pruned or deleted take shows the person's screen instead. */
@@ -130,12 +161,33 @@ class VoicePracticeController(
                 ?: VoiceState.Person(person)
             VoicePlace.Screen.Person -> draft?.let { VoiceState.Review(person, it) } ?: VoiceState.Person(person, place.notice)
             VoicePlace.Screen.People -> VoiceState.ChoosePerson
+            // Read again from the sender, the outcome shown as it was: never a new send.
+            VoicePlace.Screen.Send -> VoicePractice.reduce(VoiceState.ChoosePerson, VoiceEvent.Choose(person, draft,
+                if (canSend(person)) safeView(person.id)?.copy(seen = false) else null)).state
         }
     }
 
+    /** Send is offered only when real sending is on and [person] has a number that can be sent to. */
+    fun canSend(person: VoicePerson): Boolean = sender != null && sendableNumber(person.id) != null
+
+    /** A failing lookup (an unreadable family list) counts as no number: no Send, no crash. */
+    private fun sendableNumber(personId: String): String? =
+        try { numbers.number(personId)?.takeIf { VoiceNumber.normalize(it) != null } } catch (_: Exception) { null }
+
+    /** True while no one on the list can be sent to: every screen keeps the practice band and words. */
+    fun practice(person: VoicePerson? = state.person): Boolean = person?.let { !canSend(it) } ?: people().none(::canSend)
+
+    /** The sender has news for [personId] (an answer, or a send no longer waited for). Never sends. */
+    fun sendChanged(personId: String) {
+        val person = state.person?.takeIf { it.id == personId && canSend(it) } ?: return
+        safeView(person.id)?.let { dispatch(VoiceEvent.SendUpdated(person.id, it)) }
+    }
+
     fun dispatch(event: VoiceEvent) {
+        if ((event == VoiceEvent.Send || event == VoiceEvent.TryAgain) && state.person?.let(::canSend) != true) return
         val e = if (event is VoiceEvent.Choose && state == VoiceState.ChoosePerson)
-            event.copy(existing = safeDraft(event.person.id)) else event
+            event.copy(existing = safeDraft(event.person.id),
+                send = if (canSend(event.person)) safeView(event.person.id) else null) else event
         val before = state
         val t = VoicePractice.reduce(state, e)
         state = t.state
@@ -166,7 +218,7 @@ class VoicePracticeController(
 
     private fun run(effect: VoiceEffect) {
         when (effect) {
-            is VoiceEffect.Speak -> say(effect.prompt, effect.person)
+            is VoiceEffect.Speak -> say(words(effect.prompt, effect.person), effect.person)
             is VoiceEffect.StartRecording -> start(effect.personId)
             is VoiceEffect.FinishRecording -> {
                 // A silent take (PLA-475): asked before stopping, so a Stop inside the silence window can't keep it.
@@ -181,7 +233,32 @@ class VoicePracticeController(
             VoiceEffect.StopPlayback -> stopPlayer()
             is VoiceEffect.DeleteDraft -> try { store.delete(effect.personId) } catch (_: Exception) { }
             VoiceEffect.Leave -> onLeave()
+            is VoiceEffect.SendDraft -> {
+                val number = sendableNumber(effect.person.id)
+                val view = number?.let { n -> sender?.let { s -> try { s.send(effect.person, n) } catch (_: Exception) { null } } }
+                    ?: SendView(SendStatus.NotSent(SendProblem.OtherError), seen = false, failures = 1)
+                dispatch(VoiceEvent.SendUpdated(effect.person.id, view))
+            }
+            is VoiceEffect.SendSeen -> safely { sender?.seen(effect.personId) }
         }
+    }
+
+    /** With Send on screen, the words offer it (UX V4, V9). */
+    private fun words(prompt: VoicePrompt, person: VoicePerson): VoicePrompt = if (!canSend(person)) prompt else when (prompt) {
+        VoicePrompt.Review -> VoicePrompt.ReviewSend
+        VoicePrompt.MaxLength -> VoicePrompt.MaxLengthSend
+        VoicePrompt.Unsent -> VoicePrompt.UnsentSend
+        else -> prompt
+    }
+
+    /**
+     * The carrier's cap applies only to someone who can be sent to. 0 means "no limit" to MediaRecorder, so a
+     * cap too small for any message is never passed down: the send is refused as too big instead.
+     */
+    private fun maxMsFor(personId: String): Long {
+        if (people().firstOrNull { it.id == personId }?.let(::canSend) != true) return maxMs
+        val cap = try { recordCapMs() } catch (_: Exception) { 0L }
+        return if (cap > 0) minOf(cap, maxMs) else maxMs
     }
 
     private fun start(personId: String) {
@@ -194,7 +271,7 @@ class VoicePracticeController(
             dispatch(VoiceEvent.MicUnavailable(MicProblem.RecorderError)); return
         }
         try {
-            recorder.start(file, format, maxMs, take)
+            recorder.start(file, format, maxMsFor(personId), take)
             take.started = true
         } catch (_: Exception) {
             dispatch(VoiceEvent.CouldNotStart)
@@ -217,6 +294,7 @@ class VoicePracticeController(
     private fun acquire() = try { gate.acquire() } catch (_: Exception) { false }
     private fun stopPlayer() = safely { player.stop() }
     private fun safeDraft(personId: String) = try { store.draft(personId) } catch (_: Exception) { null }
+    private fun safeView(personId: String) = try { sender?.view(personId) } catch (_: Exception) { null }
     private inline fun safely(block: () -> Unit) { try { block() } catch (_: Exception) { } }
 
     companion object {

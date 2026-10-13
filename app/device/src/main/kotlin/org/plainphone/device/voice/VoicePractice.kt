@@ -2,10 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.device.voice
 
+import org.plainphone.device.voice.send.SendProblem
+import org.plainphone.device.voice.send.SendStatus
+import org.plainphone.device.voice.send.SendView
+
 /**
- * Voice messages, slice 1 (PLA-457): a local practice. Record, stop, listen, record again, delete.
- * Nothing is ever sent: there is no sent state and no send effect. Transport is a later slice.
+ * Voice messages. Slice 1 (PLA-457): a local practice. Record, stop, listen, record again, delete.
+ * Slice 2a (PLA-499): Send on the Review screen. [VoiceEffect.SendDraft] is emitted only for an explicit
+ * [VoiceEvent.Send] on Review or [VoiceEvent.TryAgain] on Not sent: never by itself, never again on its own.
+ * The controller drops both unless real sending is on and the person has a number, so the practice still sends nothing.
  */
+/** Never carries a phone number: the sender looks it up by [id] when Send is tapped ([VoiceNumbers]). */
 data class VoicePerson(val id: String, val name: String, val spokenName: String = name)
 
 /** Synthetic people for the practice. Never real names, photos or numbers. */
@@ -23,7 +30,7 @@ data class VoiceDraft(val personId: String, val savedAtMs: Long)
  */
 data class VoicePlace(val personId: String?, val screen: Screen, val notice: VoiceNotice? = null,
     val problem: MicProblem? = null) {
-    enum class Screen { People, Person, Review, MicOff }
+    enum class Screen { People, Person, Review, MicOff, Send }
 
     companion object {
         val People = VoicePlace(null, Screen.People)
@@ -36,7 +43,10 @@ enum class VoiceNotice { MaxLength, Interrupted, NothingRecorded, Deleted, Could
 
 /** What the phone says aloud (UX doc V1-V13, practice wording). The host maps each to a string. */
 enum class VoicePrompt { Intro, Name, Person, Review, Unsent, TooShort, MaxLength, Busy, Deleted, MicOff, MicNotAllowed,
-    MicError, CouldNotPlay, OpeningMessages, MessagesUnavailable }
+    MicError, CouldNotPlay, OpeningMessages, MessagesUnavailable,
+    /** With Send shown (PLA-499): the controller picks these instead of Intro, Review, MaxLength and Unsent. */
+    ChooseSend, ReviewSend, MaxLengthSend, UnsentSend,
+    Sending, Sent, NotSent, NotSentAgain, NoSignal, NotConfirmed }
 
 sealed interface VoiceState {
     val person: VoicePerson? get() = null
@@ -52,11 +62,18 @@ sealed interface VoiceState {
         val playing: Boolean = false, val notice: VoiceNotice? = null) : VoiceState
     data class MicUnavailable(override val person: VoicePerson, val problem: MicProblem,
         val previous: VoiceDraft?) : VoiceState
+    /** V5: handed to the phone's messaging, no answer yet. [announced]: "Sending to {person}" was said. */
+    data class Sending(override val person: VoicePerson, val draft: VoiceDraft, val announced: Boolean = false) : VoiceState
+    /** V6: the network accepted the message. Never "delivered" or "heard". The draft is gone. */
+    data class Sent(override val person: VoicePerson) : VoiceState
+    /** V7/V8, or not confirmed: the message is still on this phone. [failures] counts tries that didn't send. */
+    data class NotSent(override val person: VoicePerson, val draft: VoiceDraft, val problem: SendProblem,
+        val failures: Int) : VoiceState
 }
 
 sealed interface VoiceEvent {
     /** [existing] is the person's kept draft; the controller fills it in. */
-    data class Choose(val person: VoicePerson, val existing: VoiceDraft? = null) : VoiceEvent
+    data class Choose(val person: VoicePerson, val existing: VoiceDraft? = null, val send: SendView? = null) : VoiceEvent
     data object Record : VoiceEvent
     data object Stop : VoiceEvent
     data object Play : VoiceEvent
@@ -75,6 +92,14 @@ sealed interface VoiceEvent {
      * [silenced]: the take was silent (privacy toggle) and was not kept, even if Android hadn't said so yet.
      */
     data class RecordingFinished(val draft: VoiceDraft?, val silenced: Boolean = false) : VoiceEvent
+    /** The Send button (V4/V9). The only first send. */
+    data object Send : VoiceEvent
+    /** Try again (V7/V8). The only resend. */
+    data object TryAgain : VoiceEvent
+    /** Done on Sent (V6), or its 10-second return to the people. */
+    data object Done : VoiceEvent
+    /** Where [personId]'s send is now, from the sender. Never sends. */
+    data class SendUpdated(val personId: String, val view: SendView) : VoiceEvent
 }
 
 sealed interface VoiceEffect {
@@ -87,6 +112,10 @@ sealed interface VoiceEffect {
     data class DeleteDraft(val personId: String) : VoiceEffect
     /** Leave voice messages (back to More). */
     data object Leave : VoiceEffect
+    /** Hand the person's draft to the phone's messaging, once. */
+    data class SendDraft(val person: VoicePerson) : VoiceEffect
+    /** The send's outcome was shown. */
+    data class SendSeen(val personId: String) : VoiceEffect
 }
 
 data class Transition(val state: VoiceState, val effects: List<VoiceEffect> = emptyList())
@@ -94,7 +123,7 @@ data class Transition(val state: VoiceState, val effects: List<VoiceEffect> = em
 object VoicePractice {
     fun reduce(s: VoiceState, e: VoiceEvent): Transition = when (s) {
         VoiceState.ChoosePerson -> when (e) {
-            is VoiceEvent.Choose -> e.existing?.let {
+            is VoiceEvent.Choose -> chosen(e.person, e.existing, e.send) ?: e.existing?.let {
                 Transition(VoiceState.Review(e.person, it, notice = VoiceNotice.Unsent), speak(VoicePrompt.Unsent, e.person))
             } ?: Transition(VoiceState.Person(e.person), speak(VoicePrompt.Person, e.person))
             VoiceEvent.Back -> Transition(s, listOf(VoiceEffect.Leave))
@@ -157,8 +186,37 @@ object VoicePractice {
                         VoiceEffect.Speak(VoicePrompt.Deleted, s.person)))
                 VoiceEvent.Back -> Transition(VoiceState.ChoosePerson, listOf(VoiceEffect.StopPlayback))
                 is VoiceEvent.MicUnavailable -> micUnavailable(s.person, e.problem, s.draft, stop)
+                VoiceEvent.Send -> Transition(VoiceState.Sending(s.person, s.draft), stop + VoiceEffect.SendDraft(s.person))
                 else -> Transition(s)
             }
+        }
+        is VoiceState.Sending -> when {
+            // Leaving doesn't stop the send; the answer shows next time (UX V5).
+            e == VoiceEvent.Back -> Transition(VoiceState.ChoosePerson)
+            e is VoiceEvent.SendUpdated && e.personId == s.person.id -> when (val status = e.view.status) {
+                SendStatus.Sending -> if (s.announced) Transition(s)
+                    else Transition(s.copy(announced = true), speak(VoicePrompt.Sending, s.person))
+                SendStatus.Sent -> sent(s.person)
+                is SendStatus.NotSent -> notSent(s.person, s.draft, status.problem, e.view.failures)
+            }
+            else -> Transition(s)
+        }
+        is VoiceState.Sent -> when (e) {
+            VoiceEvent.Done, VoiceEvent.Back -> Transition(VoiceState.ChoosePerson)
+            else -> Transition(s)
+        }
+        is VoiceState.NotSent -> when (e) {
+            VoiceEvent.TryAgain -> Transition(VoiceState.Sending(s.person, s.draft), listOf(VoiceEffect.SendDraft(s.person)))
+            VoiceEvent.Play -> Transition(VoiceState.Review(s.person, s.draft, playing = true),
+                listOf(VoiceEffect.StartPlayback(s.person.id)))
+            VoiceEvent.Back -> Transition(VoiceState.ChoosePerson)
+            is VoiceEvent.SendUpdated -> if (e.personId != s.person.id) Transition(s) else when (val status = e.view.status) {
+                SendStatus.Sending -> Transition(s)
+                SendStatus.Sent -> sent(s.person)
+                is SendStatus.NotSent -> if (status.problem == s.problem && e.view.failures == s.failures) Transition(s)
+                    else notSent(s.person, s.draft, status.problem, e.view.failures)
+            }
+            else -> Transition(s)
         }
         is VoiceState.MicUnavailable -> when (e) {
             VoiceEvent.Record, VoiceEvent.RecordAgain -> record(s.person, s.previous)
@@ -168,6 +226,37 @@ object VoicePractice {
     }
 
     private fun speak(prompt: VoicePrompt, person: VoicePerson) = listOf(VoiceEffect.Speak(prompt, person))
+
+    /**
+     * Opening a person whose send is in progress, or whose outcome hasn't been shown yet. Null: the usual
+     * screens (a seen outcome leaves an unsent message, V9). Never sends.
+     */
+    private fun chosen(person: VoicePerson, draft: VoiceDraft?, send: SendView?): Transition? {
+        val status = send?.status ?: return null
+        return when {
+            status == SendStatus.Sending && draft != null ->
+                Transition(VoiceState.Sending(person, draft, announced = true), speak(VoicePrompt.Sending, person))
+            status == SendStatus.NotSent(SendProblem.NotConfirmed) && draft != null ->
+                notSent(person, draft, SendProblem.NotConfirmed, send.failures)
+            send.seen -> null
+            status == SendStatus.Sent && draft == null -> sent(person)
+            status is SendStatus.NotSent && draft != null -> notSent(person, draft, status.problem, send.failures)
+            else -> null
+        }
+    }
+
+    private fun sent(person: VoicePerson) =
+        Transition(VoiceState.Sent(person), listOf(VoiceEffect.Speak(VoicePrompt.Sent, person), VoiceEffect.SendSeen(person.id)))
+
+    private fun notSent(person: VoicePerson, draft: VoiceDraft, problem: SendProblem, failures: Int): Transition {
+        val prompt = when (problem) {
+            SendProblem.NoSignal -> VoicePrompt.NoSignal
+            SendProblem.NotConfirmed -> VoicePrompt.NotConfirmed
+            else -> if (failures >= 2) VoicePrompt.NotSentAgain else VoicePrompt.NotSent
+        }
+        return Transition(VoiceState.NotSent(person, draft, problem, failures),
+            listOf(VoiceEffect.Speak(prompt, person), VoiceEffect.SendSeen(person.id)))
+    }
 
     private fun micUnavailable(person: VoicePerson, problem: MicProblem, previous: VoiceDraft?,
         before: List<VoiceEffect> = emptyList()) = Transition(VoiceState.MicUnavailable(person, problem, previous),

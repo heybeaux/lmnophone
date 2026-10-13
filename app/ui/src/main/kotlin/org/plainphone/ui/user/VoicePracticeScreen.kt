@@ -31,23 +31,44 @@ import org.plainphone.ui.components.*
 import org.plainphone.ui.theme.*
 
 /**
- * Voice messages, slice 1 (PLA-457): a practice. Nothing is sent, and every state says so.
+ * Voice messages. Slice 1 (PLA-457) is a practice: nothing is sent, and every practice state says so.
+ * Slice 2a (PLA-499) adds Send (V4-V8) for someone who can be sent to, when real sending is on; those
+ * screens drop the practice band. "Sent" means only that the phone network accepted the message.
  * This flow alone may use pictures and symbols for someone who cannot read: the person's picture
  * is a monochrome initial for now, and record/stop/listen symbols always come with their word.
  */
 data class VoicePersonUi(val id: String, val name: String, val pictureInInk: Boolean = false)
 enum class VoiceUiNotice { MaxLength, Interrupted, NothingRecorded, Deleted, CouldNotPlay, Busy, Unsent }
 enum class VoiceUiMicProblem { NotAllowed, TurnedOff, DidNotWork }
+/** V7 (the network or phone said no), V8 (no phone signal), or no answer known after a restart. */
+enum class VoiceUiSendProblem { NoSignal, NotSent, NotConfirmed }
 
 sealed interface VoiceUiState {
-    data class ChoosePerson(val people: List<VoicePersonUi>, val fromHome: Boolean = false) : VoiceUiState
-    data class Person(val person: VoicePersonUi, val notice: VoiceUiNotice? = null, val openMessages: Boolean = false, val messagesUnavailable: Boolean = false) : VoiceUiState
-    data class Recording(val person: VoicePersonUi) : VoiceUiState
-    data class Review(val person: VoicePersonUi, val playing: Boolean = false, val notice: VoiceUiNotice? = null, val openMessages: Boolean = false, val messagesUnavailable: Boolean = false) : VoiceUiState
-    data class MicOff(val person: VoicePersonUi, val problem: VoiceUiMicProblem) : VoiceUiState
+    /** True: show "Practice – not sent". False only where this screen can really send. */
+    val practice: Boolean
+
+    data class ChoosePerson(val people: List<VoicePersonUi>, val fromHome: Boolean = false,
+        override val practice: Boolean = true) : VoiceUiState
+    data class Person(val person: VoicePersonUi, val notice: VoiceUiNotice? = null, val openMessages: Boolean = false,
+        val messagesUnavailable: Boolean = false, override val practice: Boolean = true) : VoiceUiState
+    data class Recording(val person: VoicePersonUi, override val practice: Boolean = true) : VoiceUiState
+    /** [canSend]: V4 with the black Send button. Without it, the practice review (V13). */
+    data class Review(val person: VoicePersonUi, val playing: Boolean = false, val notice: VoiceUiNotice? = null,
+        val openMessages: Boolean = false, val messagesUnavailable: Boolean = false,
+        val canSend: Boolean = false, override val practice: Boolean = true) : VoiceUiState
+    data class MicOff(val person: VoicePersonUi, val problem: VoiceUiMicProblem,
+        override val practice: Boolean = true) : VoiceUiState
+    /** V5: nothing to tap but Back; leaving doesn't stop the send. */
+    data class Sending(val person: VoicePersonUi) : VoiceUiState { override val practice get() = false }
+    /** V6. */
+    data class Sent(val person: VoicePersonUi) : VoiceUiState { override val practice get() = false }
+    /** V7, V8 or not confirmed. [helper]: the trusted person, named only after a second failure (V7 again). */
+    data class NotSent(val person: VoicePersonUi, val problem: VoiceUiSendProblem, val helper: String? = null) : VoiceUiState {
+        override val practice get() = false
+    }
 }
 
-/** Deliberately no send event. */
+/** Send and Try again are taps only: nothing here, or behind it, sends by itself. */
 sealed interface VoiceUiEvent {
     data class Choose(val id: String) : VoiceUiEvent
     data object Record : VoiceUiEvent
@@ -58,9 +79,12 @@ sealed interface VoiceUiEvent {
     data object Back : VoiceUiEvent
     data object HearName : VoiceUiEvent
     data object OpenMessages : VoiceUiEvent
+    data object Send : VoiceUiEvent
+    data object TryAgain : VoiceUiEvent
+    data object Done : VoiceUiEvent
 }
 
-private enum class Symbol { Record, Stop, Play, Cross }
+private enum class Symbol { Record, Stop, Play, Cross, Send }
 
 /**
  * The header and notices scroll; the actions (Record, Stop, Try again, and on review Record again, Delete
@@ -76,7 +100,7 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally) {
             if (!(state is VoiceUiState.Person && state.openMessages)) ScreenLink(stringResource(if (state is VoiceUiState.ChoosePerson) { if (state.fromHome) R.string.family_back else R.string.back_more } else R.string.voice_back_people),
                 { onEvent(VoiceUiEvent.Back) }, centered = false)
-            Text(stringResource(R.string.voice_practice_label), style = PlainphoneType.Button.copy(color = PlainphoneColors.Ink2),
+            if (state.practice) Text(stringResource(R.string.voice_practice_label), style = PlainphoneType.Button.copy(color = PlainphoneColors.Ink2),
                 modifier = Modifier.fillMaxWidth().background(PlainphoneColors.Fill1, RoundedCornerShape(PlainphoneSpace.BoxRadius))
                     .padding(horizontal = PlainphoneSpace.S4, vertical = PlainphoneSpace.S2), textAlign = TextAlign.Center)
             when (state) {
@@ -107,9 +131,38 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
                     }), style = PlainphoneType.Body, textAlign = TextAlign.Center,
                         modifier = Modifier.padding(vertical = PlainphoneSpace.S4).semantics { liveRegion = LiveRegionMode.Polite })
                 }
+                // The outcome title names the person, so it takes the name's place under the picture and stays
+                // on screen at any text size; the picture still says the name when tapped.
+                is VoiceUiState.Sending -> {
+                    PersonHeader(state.person, onEvent, title = false)
+                    SendTitle(stringResource(R.string.voice_sending, state.person.name))
+                }
+                is VoiceUiState.Sent -> {
+                    PersonHeader(state.person, onEvent, title = false)
+                    SendTitle(stringResource(R.string.voice_sent, state.person.name))
+                }
+                is VoiceUiState.NotSent -> {
+                    PersonHeader(state.person, onEvent, title = state.problem != VoiceUiSendProblem.NotSent)
+                    when (state.problem) {
+                        VoiceUiSendProblem.NotSent -> {
+                            SendTitle(stringResource(R.string.voice_not_sent, state.person.name))
+                            SendBody(stringResource(R.string.voice_still_here))
+                            state.helper?.let { SendBody(stringResource(R.string.voice_not_sent_again, it)) }
+                        }
+                        VoiceUiSendProblem.NoSignal -> {
+                            SendTitle(stringResource(R.string.voice_no_signal))
+                            SendBody(stringResource(R.string.voice_no_signal_body))
+                        }
+                        // No answer known after a restart (N1): neither sent nor not sent, so it says it may not be.
+                        VoiceUiSendProblem.NotConfirmed -> {
+                            SendTitle(stringResource(R.string.voice_not_confirmed))
+                            SendBody(stringResource(R.string.voice_not_confirmed_body, state.person.name))
+                        }
+                    }
+                }
             }
         }
-        if (state is VoiceUiState.ChoosePerson) return@Column
+        if (state is VoiceUiState.ChoosePerson || state is VoiceUiState.Sending) return@Column
         Spacer(Modifier.fillMaxWidth().height(PlainphoneSpace.Border).background(PlainphoneColors.Fill2))
         Column(Modifier.fillMaxWidth().padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S2),
             horizontalAlignment = Alignment.CenterHorizontally) {
@@ -125,12 +178,24 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
                     }, verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
                         SymbolMark(Symbol.Record, 20.dp, PlainphoneColors.Ink)
-                        Text(stringResource(R.string.voice_recording_practice), style = PlainphoneType.Row)
+                        Text(stringResource(if (state.practice) R.string.voice_recording_practice else R.string.voice_recording),
+                            style = PlainphoneType.Row)
                     }
                     BigButton(stringResource(R.string.voice_stop), Symbol.Stop) { onEvent(VoiceUiEvent.Stop) }
                 }
-                is VoiceUiState.Review -> {
-                    // UX V4: outline buttons stacked with 16 dp between, then 32 dp before the black button.
+                is VoiceUiState.Review -> if (state.canSend) {
+                    // UX V4 with Send: three outline buttons 16 dp apart, then 32 dp before the black Send.
+                    Spacer(Modifier.height(PlainphoneSpace.S2))
+                    if (state.playing) SmallButton(stringResource(R.string.voice_stop_listening), Symbol.Stop) { onEvent(VoiceUiEvent.Stop) }
+                    else SmallButton(stringResource(R.string.voice_listen), Symbol.Play) { onEvent(VoiceUiEvent.Play) }
+                    Spacer(Modifier.height(PlainphoneSpace.S4))
+                    SmallButton(stringResource(R.string.voice_record_again), Symbol.Record) { onEvent(VoiceUiEvent.RecordAgain) }
+                    Spacer(Modifier.height(PlainphoneSpace.S4))
+                    SmallButton(stringResource(R.string.voice_delete), Symbol.Cross) { onEvent(VoiceUiEvent.Delete) }
+                    Spacer(Modifier.height(32.dp))
+                    BigButton(stringResource(R.string.voice_send_to, state.person.name), Symbol.Send) { onEvent(VoiceUiEvent.Send) }
+                } else {
+                    // UX V13: outline buttons stacked with 16 dp between, then 32 dp before the black button.
                     Spacer(Modifier.height(PlainphoneSpace.S2))
                     SmallButton(stringResource(R.string.voice_record_again), Symbol.Record) { onEvent(VoiceUiEvent.RecordAgain) }
                     Spacer(Modifier.height(PlainphoneSpace.S4))
@@ -140,9 +205,33 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
                     else BigButton(stringResource(R.string.voice_listen), Symbol.Play) { onEvent(VoiceUiEvent.Play) }
                 }
                 is VoiceUiState.MicOff -> BigButton(stringResource(R.string.voice_try_again), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
+                is VoiceUiState.Sending -> Unit
+                is VoiceUiState.Sent -> BigButton(stringResource(R.string.voice_done), null) { onEvent(VoiceUiEvent.Done) }
+                is VoiceUiState.NotSent -> {
+                    // V7: Listen above Try again. V8 has Try again only.
+                    if (state.problem != VoiceUiSendProblem.NoSignal) {
+                        Spacer(Modifier.height(PlainphoneSpace.S2))
+                        SmallButton(stringResource(R.string.voice_listen), Symbol.Play) { onEvent(VoiceUiEvent.Play) }
+                        Spacer(Modifier.height(32.dp))
+                    }
+                    BigButton(stringResource(R.string.voice_try_again), Symbol.Send) { onEvent(VoiceUiEvent.TryAgain) }
+                }
             }
         }
     }
+}
+
+@Composable
+private fun SendTitle(text: String) {
+    Text(text, style = PlainphoneType.Title.copy(hyphens = Hyphens.Auto, lineBreak = LineBreak.Heading),
+        textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = PlainphoneSpace.S2)
+            .semantics { heading(); liveRegion = LiveRegionMode.Polite })
+}
+
+@Composable
+private fun SendBody(text: String) {
+    Text(text, style = PlainphoneType.Body.copy(hyphens = Hyphens.Auto), textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().padding(top = PlainphoneSpace.S4).semantics { liveRegion = LiveRegionMode.Polite })
 }
 
 @Composable
@@ -165,10 +254,12 @@ private fun PersonRow(person: VoicePersonUi, family: Boolean = false, onClick: (
 }
 
 @Composable
-private fun PersonHeader(person: VoicePersonUi, onEvent: (VoiceUiEvent) -> Unit, hearName: Boolean = true, showHearLink: Boolean = true) {
+private fun PersonHeader(person: VoicePersonUi, onEvent: (VoiceUiEvent) -> Unit, hearName: Boolean = true,
+    showHearLink: Boolean = true, title: Boolean = true) {
     val hear = { onEvent(VoiceUiEvent.HearName) }
     Spacer(Modifier.height(PlainphoneSpace.S4))
     PersonPicture(person, if (person.pictureInInk && hearName) 120.dp else 96.dp, onHearName = if (hearName) hear else null)
+    if (!title) return
     // Never cut or shrunk (README, screen titles): a word too long for the line breaks with a hyphen.
     Text(person.name, style = PlainphoneType.Title.copy(hyphens = Hyphens.Auto, lineBreak = LineBreak.Heading),
         textAlign = TextAlign.Center,
@@ -221,18 +312,24 @@ private fun Notice(notice: VoiceUiNotice?, person: VoicePersonUi) {
         modifier = Modifier.fillMaxWidth().padding(vertical = PlainphoneSpace.S4).semantics { liveRegion = LiveRegionMode.Polite })
 }
 
-/** At least 96 dp each way: a large symbol beside its word, inside one full-width target. */
+/**
+ * At least 96 dp each way: a large symbol beside its word, inside one full-width target. Without a symbol
+ * (Done, V6) it is a plain black button.
+ */
 @Composable
-private fun BigButton(word: String, symbol: Symbol, onClick: () -> Unit) {
+private fun BigButton(word: String, symbol: Symbol?, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(PlainphoneSpace.BoxRadius)
     Row(Modifier.fillMaxWidth().heightIn(min = 96.dp)
+        .then(if (symbol == null) Modifier.background(PlainphoneColors.Ink, shape) else Modifier)
         .plainphoneAction(shape = RoundedCornerShape(PlainphoneSpace.BoxRadius), onClick = onClick)
         .padding(horizontal = PlainphoneSpace.S3, vertical = PlainphoneSpace.S2),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4, Alignment.CenterHorizontally)) {
-        Box(Modifier.size(80.dp).background(PlainphoneColors.Ink, CircleShape), contentAlignment = Alignment.Center) {
+        if (symbol != null) Box(Modifier.size(80.dp).background(PlainphoneColors.Ink, CircleShape), contentAlignment = Alignment.Center) {
             SymbolMark(symbol, 32.dp, PlainphoneColors.Paper)
         }
-        Text(word, style = PlainphoneType.Row, modifier = Modifier.weight(1f, fill = false))
+        Text(word, style = PlainphoneType.Row.copy(hyphens = Hyphens.Auto,
+            color = if (symbol == null) PlainphoneColors.Paper else PlainphoneColors.Ink), modifier = Modifier.weight(1f, fill = false))
     }
 }
 
@@ -271,6 +368,17 @@ private fun SymbolMark(symbol: Symbol, size: Dp, color: androidx.compose.ui.grap
                     Offset(this.size.width * 0.85f, this.size.height * 0.85f), w)
                 drawLine(color, Offset(this.size.width * 0.85f, this.size.height * 0.15f),
                     Offset(this.size.width * 0.15f, this.size.height * 0.85f), w)
+            }
+            Symbol.Send -> {
+                val w = this.size.width
+                val h = this.size.height
+                drawLine(color, Offset(w * 0.08f, h / 2), Offset(w * 0.62f, h / 2), w * 0.16f)
+                drawPath(Path().apply {
+                    moveTo(w * 0.5f, h * 0.12f)
+                    lineTo(w, h / 2)
+                    lineTo(w * 0.5f, h * 0.88f)
+                    close()
+                }, color)
             }
             Symbol.Play -> drawPath(Path().apply {
                 moveTo(this@Canvas.size.width * 0.2f, 0f)
