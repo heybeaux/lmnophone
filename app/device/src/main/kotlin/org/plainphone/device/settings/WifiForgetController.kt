@@ -7,6 +7,8 @@ data class WifiForgetFacts(val connected: Boolean, val connectedId: Int?, val sa
     val validated: Boolean) {
     val forgettableId: Int? get() = connectedId?.takeIf { connected && validated && it >= 0 && it in savedIds }
 }
+/** What the last Forget did, when it is known from Android's readback or by construction. */
+enum class WifiForgetResult { Removed, NotRemoved }
 interface WifiForgetPort {
     fun read(): WifiForgetFacts
     /** Recheck the current validated connection immediately before the single removal. */
@@ -21,10 +23,13 @@ class WifiForgetController(private val port: WifiForgetPort,
     val pending get() = attempt != null || openingAt != null
     var failed = false
         private set
-    fun onOpen() { if (!pending) failed = false }
+    var result: WifiForgetResult? = null
+        private set
+    fun onOpen() { if (!pending) { failed = false; result = null } }
     fun forget() {
         if (pending) return
         failed = false
+        result = null
         if (!location.show()) { finish(false); return }
         openingAt = now()
         refresh()
@@ -51,11 +56,22 @@ class WifiForgetController(private val port: WifiForgetPort,
         if (disconnected && facts?.savedIds == current.remaining) finish(true)
         else if (facts == null || now() - current.started >= 10_000 || now() < current.started) finish(false)
     }
-    fun leave() { if (pending) finish(false) }
+    /**
+     * Before the removal, leaving ends the attempt: nothing was removed. After it, the readback keeps
+     * its own bounded window, because with Location off Android hides the saved list (PLA-488).
+     */
+    fun leave() {
+        if (openingAt == null) return
+        openingAt = null
+        failed = false
+        result = WifiForgetResult.NotRemoved
+        location.leave()
+    }
     private fun finish(success: Boolean) {
         attempt = null
         openingAt = null
         failed = !success
+        result = if (success) WifiForgetResult.Removed else null
         location.leave()
     }
 }

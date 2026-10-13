@@ -24,6 +24,9 @@ class BluetoothDiscoveryController(private val port: BluetoothDiscoveryPort,
         private set
     private var generation = 0
     private var active = false
+    /** The page is still open but the Activity paused; [resume] starts a new search. */
+    var paused = false
+        private set
     private val devices = mutableMapOf<String, NearbyBluetoothDevice>()
     private fun publish(next: BluetoothDiscoveryState) { state = next; changed(next) }
     fun open() {
@@ -42,10 +45,21 @@ class BluetoothDiscoveryController(private val port: BluetoothDiscoveryPort,
         try { if (!port.available()) fail() } catch (_: Exception) { fail() }
     }
     fun close() {
+        paused = false
+        retire()
+        publish(BluetoothDiscoveryState())
+    }
+    /** Stops like leaving, but remembers that the page is still open. */
+    fun pause() {
+        val open = active || state.failed
+        close()
+        paused = open
+    }
+    fun resume() { if (paused) open() }
+    private fun retire() {
         active = false; generation++
         try { port.stop() } catch (_: Exception) { /* State is still retired. */ }
         devices.clear()
-        publish(BluetoothDiscoveryState())
     }
     private fun fail() {
         close()

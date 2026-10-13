@@ -58,7 +58,8 @@ class AndroidBluetoothDiscovery(context: Context) : BluetoothDiscoveryPort {
             addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
             addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
         }
-        if (Build.VERSION.SDK_INT >= 33) app.registerReceiver(listener, filter, Context.RECEIVER_EXPORTED)
+        // Bluetooth sends these as protected system broadcasts; other apps can't reach this receiver.
+        if (Build.VERSION.SDK_INT >= 33) app.registerReceiver(listener, filter, Context.RECEIVER_NOT_EXPORTED)
         else { @Suppress("UnspecifiedRegisterReceiverFlag") app.registerReceiver(listener, filter) }
         receiver = listener
         return adapter?.startDiscovery() == true

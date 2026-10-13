@@ -133,7 +133,8 @@ class WifiJoinSession private constructor(context: Context) {
     }
     init { location.recover(); schedule() }
     fun schedule() { handler.removeCallbacks(cleanup); handler.post(cleanup) }
-    fun leave() { forget.leave(); join.cancel(); location.leave(); schedule() }
+    /** A Forget readback already past its removal keeps Location until its own bounded end (PLA-488). */
+    fun leave() { forget.leave(); join.cancel(); if (!forget.pending) location.leave(); schedule() }
     fun facts(): WifiFacts {
         val facts = source.read()
         if (!facts.connected || facts.connectionId != connectedHandle) { connectedName = null; connectedHandle = null }

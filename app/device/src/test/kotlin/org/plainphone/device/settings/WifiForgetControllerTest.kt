@@ -83,47 +83,44 @@ class WifiForgetControllerTest {
     @Test fun alreadyOnLocationIsPreserved() {
         val f=Fixture(); f.on=true; f.controller.forget(); assertTrue(f.on); assertFalse(f.marker)
     }
-    @Test fun leaveEndsReadbackAndCleansAndCallDefersCleanup() {
-        val f=Fixture(); f.immediate=false; f.controller.forget(); f.controller.leave()
-        // Leaving is not a failure: the outcome is read back on return (PLA-488 item 2).
-        assertFalse(f.controller.pending); assertFalse(f.controller.failed); assertNull(f.controller.result); assertFalse(f.on)
+    @Test fun leaveBeforeRemovalEndsAndCleansAndCallDefersCleanup() {
+        // Leaving before the removal ends the attempt at once and removes nothing.
+        val f=Fixture(); f.redactedReads=5; f.controller.forget(); f.controller.leave()
+        assertFalse(f.controller.pending); assertFalse(f.controller.failed); assertFalse(f.on); assertTrue(f.removed.isEmpty())
         val g=Fixture(); g.idle=false; g.controller.forget(); assertTrue(g.on); assertTrue(g.marker)
         g.idle=true; g.location.tick(); assertFalse(g.on)
     }
-    @Test fun leavingAfterRemovalShowsRemovedFromAFreshReadbackOnReturn() {
+    // PLA-488 item 2: with Location off Android returns no saved networks to the app (emulator, API 35),
+    // so a readback taken after leaving would look like a removal. The removal readback instead finishes
+    // inside its existing 10-second window and its result is shown on return.
+    @Test fun leavingAfterRemovalKeepsTheBoundedReadbackAndShowsRemoved() {
         val f=Fixture(); f.immediate=false; f.controller.forget(); f.controller.leave()
-        f.facts=f.facts.copy(connected=false, connectedId=null, savedIds=setOf(2,9))
-        f.events.clear(); f.controller.onReturn()
-        assertEquals(WifiForgetResult.Removed, f.controller.result); assertFalse(f.controller.failed)
-        // One readback with Location off; the return never turns Location on.
-        assertEquals(listOf("read:false"), f.events); assertEquals(listOf(7), f.removed)
-        f.events.clear(); f.controller.onReturn(); assertTrue(f.events.isEmpty())
-        assertEquals(WifiForgetResult.Removed, f.controller.result)
+        assertTrue(f.controller.pending); assertTrue(f.on); assertFalse(f.controller.failed); assertNull(f.controller.result)
+        f.facts=f.facts.copy(connected=false, connectedId=null, savedIds=setOf(2,9)); f.time=1_000; f.controller.refresh()
+        assertFalse(f.controller.pending); assertFalse(f.on); assertFalse(f.marker)
+        assertEquals(WifiForgetResult.Removed, f.controller.result); assertFalse(f.controller.failed); assertEquals(listOf(7), f.removed)
     }
-    @Test fun leavingWhenTheNetworkIsStillSavedShowsNotRemoved() {
-        val f=Fixture(); f.immediate=false; f.controller.forget(); f.controller.leave(); f.controller.onReturn()
-        assertEquals(WifiForgetResult.NotRemoved, f.controller.result); assertFalse(f.controller.failed)
+    @Test fun leavingTwiceStillKeepsTheReadback() {
+        val f=Fixture(); f.immediate=false; f.controller.forget(); f.controller.leave(); f.controller.leave()
+        assertTrue(f.controller.pending); assertTrue(f.on)
     }
-    @Test fun leavingBeforeTheRemovalShowsNotRemovedAndRemovesNothing() {
+    @Test fun leftReadbackThatTimesOutStillSaysStatusUnavailable() {
+        val f=Fixture(); f.immediate=false; f.controller.forget(); f.controller.leave(); f.time=10_000; f.controller.refresh()
+        assertFalse(f.controller.pending); assertFalse(f.on); assertTrue(f.controller.failed); assertNull(f.controller.result)
+    }
+    @Test fun leavingBeforeTheRemovalShowsNotRemoved() {
         val f=Fixture(); f.redactedReads=5; f.controller.forget(); assertTrue(f.controller.pending)
-        f.controller.leave(); assertFalse(f.on); f.controller.onReturn()
-        assertEquals(WifiForgetResult.NotRemoved, f.controller.result); assertTrue(f.removed.isEmpty())
+        f.controller.leave(); f.controller.refresh()
+        assertEquals(WifiForgetResult.NotRemoved, f.controller.result); assertTrue(f.removed.isEmpty()); assertFalse(f.on)
     }
-    @Test fun unreadableReturnShowsStatusUnavailableAndReadsAgainNextReturn() {
-        val f=Fixture(); f.immediate=false; f.controller.forget(); f.controller.leave()
-        f.unreadable=true; f.controller.onReturn()
-        assertNull(f.controller.result); assertTrue(f.controller.failed)
-        f.unreadable=false; f.facts=f.facts.copy(connected=false, connectedId=null, savedIds=setOf(2,9)); f.controller.onReturn()
-        assertEquals(WifiForgetResult.Removed, f.controller.result); assertFalse(f.controller.failed)
-    }
-    @Test fun returnWithoutLeavingReadsNothingAndOpenClearsTheShownResult() {
-        val f=Fixture(); f.controller.onReturn(); assertTrue(f.events.isEmpty()); assertNull(f.controller.result)
-        f.immediate=false; f.controller.forget(); f.controller.leave(); f.controller.onReturn()
-        assertNotNull(f.controller.result); f.controller.onOpen(); assertNull(f.controller.result)
+    @Test fun confirmedRemovalSaysRemovedAndOpenClearsIt() {
+        val f=Fixture(); f.controller.forget(); assertEquals(WifiForgetResult.Removed, f.controller.result)
+        f.controller.onOpen(); assertNull(f.controller.result)
     }
     @Test fun aNewForgetClearsTheEarlierResult() {
-        val f=Fixture(); f.immediate=false; f.controller.forget(); f.controller.leave(); f.controller.onReturn()
+        val f=Fixture(); f.redactedReads=5; f.controller.forget(); f.controller.leave()
         assertEquals(WifiForgetResult.NotRemoved, f.controller.result)
-        f.immediate=true; f.controller.forget(); assertNull(f.controller.result); assertFalse(f.controller.failed)
+        f.redactedReads=0; f.controller.forget(); assertEquals(WifiForgetResult.Removed, f.controller.result)
+        val g=Fixture(); g.accepted=false; g.controller.forget(); assertNull(g.controller.result); assertTrue(g.controller.failed)
     }
 }
