@@ -91,12 +91,39 @@ class VoicePracticeController(
         override fun onStartFailed() { if (live()) dispatch(VoiceEvent.CouldNotStart) }
     }
 
-    fun open() {
+    /**
+     * Shows the people list, or [place] when the screen is coming back after a configuration change.
+     * A restored screen says nothing again and never starts the recorder or playback.
+     */
+    fun open(place: VoicePlace? = null) {
         close()
         safely { store.prune() }
-        state = VoiceState.ChoosePerson
+        state = place?.let(::restore) ?: VoiceState.ChoosePerson
         onChange(state)
-        say(VoicePrompt.Intro, null)
+        if (state == VoiceState.ChoosePerson) say(VoicePrompt.Intro, null)
+    }
+
+    /** Where the practice is now, to come back to after a configuration change; null on the people list. */
+    fun place(): VoicePlace? = when (val s = state) {
+        VoiceState.ChoosePerson -> null
+        is VoiceState.Person -> VoicePlace(s.person.id, VoicePlace.Screen.Person, s.notice)
+        is VoiceState.Review -> VoicePlace(s.person.id, VoicePlace.Screen.Review, s.notice)
+        is VoiceState.MicUnavailable -> VoicePlace(s.person.id, VoicePlace.Screen.MicOff, problem = s.problem)
+        // Only if asked before onStop stopped the recorder: whatever take is kept, it was interrupted.
+        is VoiceState.Recording -> VoicePlace(s.person.id, VoicePlace.Screen.Review, VoiceNotice.Interrupted)
+        is VoiceState.Saving -> VoicePlace(s.person.id, VoicePlace.Screen.Review, s.notice ?: VoiceNotice.Interrupted)
+    }
+
+    /** The take is read again from the store: a pruned or deleted take shows the person's screen instead. */
+    private fun restore(place: VoicePlace): VoiceState? {
+        val person = VoicePeople.practice.firstOrNull { it.id == place.personId } ?: return null
+        val draft = safeDraft(person.id)
+        return when (place.screen) {
+            VoicePlace.Screen.MicOff -> VoiceState.MicUnavailable(person, place.problem ?: MicProblem.RecorderError, draft)
+            VoicePlace.Screen.Review -> draft?.let { VoiceState.Review(person, it, notice = place.notice) }
+                ?: VoiceState.Person(person)
+            VoicePlace.Screen.Person -> draft?.let { VoiceState.Review(person, it) } ?: VoiceState.Person(person, place.notice)
+        }
     }
 
     fun dispatch(event: VoiceEvent) {

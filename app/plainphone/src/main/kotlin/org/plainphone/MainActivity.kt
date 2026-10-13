@@ -124,6 +124,7 @@ import org.plainphone.ui.trusted.WaitingChangeEvent
 import org.plainphone.ui.trusted.WaitingChangeScreen
 import org.plainphone.ui.trusted.WaitingChangeUiState
 import org.plainphone.ui.trusted.WaitingStage
+import org.plainphone.device.voice.VoicePlace
 import org.plainphone.voice.VoicePracticeHost
 
 /**
@@ -376,6 +377,9 @@ class MainActivity : ComponentActivity() {
         enterLockTask()
         val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         shell.start(if (debuggable) intent.getStringExtra(EXTRA_PREVIEW_SCREEN) else null)
+        // Recreated for a configuration change (text size): the practice comes back where it was (PLA-479).
+        voice.restoreOnOpen(shell.voicePlace?.takeIf { shell.state.current == ShellRoute.VoicePractice })
+        shell.voicePlace = null
         val device = Preview2Device(applicationContext)
         val mapper = ShellUiMapper(resources.configuration.locales[0], DateFormat.is24HourFormat(this))
         setContent {
@@ -591,6 +595,8 @@ class MainActivity : ComponentActivity() {
     /** Not visible any more: a recording stops here and is kept (UX V11). */
     override fun onStop() {
         voice.onActivityStop()
+        // Before the composition goes away: on a recreation it closes the route, which forgets the place.
+        shell.voicePlace = if (isChangingConfigurations) voice.place() else null
         super.onStop()
     }
 
@@ -749,6 +755,8 @@ class ShellViewModel : ViewModel() {
     var navigator: ShellNavigator? = null
         private set
     var state by mutableStateOf(ShellState())
+    /** The practice screen's place while MainActivity is recreated; ids and enums only, never audio. */
+    var voicePlace: VoicePlace? = null
     private var started = false
     private var prepared = 0
 
