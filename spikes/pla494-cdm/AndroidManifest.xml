@@ -1,0 +1,6 @@
+<!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.plainphone.spike494">
+<uses-sdk android:minSdkVersion="33" android:targetSdkVersion="36"/>
+<application android:label="Throwaway CDM probe" android:debuggable="true" android:testOnly="true"/>
+<instrumentation android:name="org.plainphone.spike494.CdmProbe" android:targetPackage="org.plainphone"/>
+</manifest>

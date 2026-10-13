@@ -1,0 +1,23 @@
+PLA-494 CDM probe, AVD pla460-policy-a35 (API 35, read-only, DO, build 43 + temporary uses-feature companion_device_setup only), peer pla434-policy-peer-a35 on the same netsim, 2026-10-13 15:46Z
+-- run without the uses-feature line:
+error=IllegalStateException:Must declare uses-feature android.software.companion_device_setup in manifest to use this API
+-- run with it (instrumentation status):
+resumed=MainActivity
+paused=MainActivity
+lockTask=1
+location=0
+bondedBefore=0
+associationsBefore=0
+topActivity=true
+associationPending=true
+chooserStarted=true
+associationWait=false
+bondedAfter=0
+associationsAfter=0
+lockTaskAfter=1
+-- logcat:
+CDM_CompanionDeviceManagerService: associate() request=AssociationRequest { singleDevice = false, deviceFilters = [BluetoothDeviceFilter{mNamePattern=null, ...}], selfManaged = false, skipPrompt = false }, package=u0/org.plainphone
+E ActivityTaskManager: Attempted Lock Task Mode violation r=ActivityRecord{... u0 com.android.companiondevicemanager/.CompanionAssociationActivity
+I ActivityTaskManager: START u0 {cmp=com.android.companiondevicemanager/.CompanionAssociationActivity (has extras)} with LAUNCH_SINGLE_INSTANCE from uid 1000 (realCallingUid=10208) (BAL_ALLOW_ALLOWLISTED_UID) result code=101
+-- no BluetoothPairingRequest / canBondWithoutDialog lines (createBond never reached)
+-- after: cmd companiondevice list 0 -> 0 associations; DO bonded 0; peer bonded 0; build 43 sha256 709802337cdd70feb1e64d6550ee16ca726b2362656d18a67e04b6455904cab7 restored in place; LOCKED; DO kept; Location 0; calls 0; probe uninstalled; peer stopped (read-only)
