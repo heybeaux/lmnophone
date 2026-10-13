@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.*
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -57,12 +59,13 @@ sealed interface VoiceUiEvent {
     data object HearName : VoiceUiEvent
 }
 
-private enum class Symbol { Record, Stop, Play }
+private enum class Symbol { Record, Stop, Play, Cross }
 
 /**
- * The header and notices scroll; the main action (Record, Stop, Listen, Try again) is pinned below
- * them so it stays whole on screen at any text size and name length (PLA-465 finding 3). While
- * recording, the "Recording" line is pinned with Stop, so the visible recording state never scrolls away.
+ * The header and notices scroll; the actions (Record, Stop, Try again, and on review Record again, Delete
+ * and Listen) are pinned below them so they stay whole on screen at any text size and name length
+ * (PLA-465 finding 3, PLA-473). While recording, the "Recording" line is pinned with Stop, so the
+ * visible recording state never scrolls away.
  */
 @Composable
 fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
@@ -89,9 +92,6 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
                 is VoiceUiState.Review -> {
                     PersonHeader(state.person, onEvent)
                     Notice(state.notice, state.person)
-                    SmallButton(stringResource(R.string.voice_record_again), Symbol.Record) { onEvent(VoiceUiEvent.RecordAgain) }
-                    Spacer(Modifier.height(PlainphoneSpace.S4))
-                    SmallButton(stringResource(R.string.voice_delete), null) { onEvent(VoiceUiEvent.Delete) }
                 }
                 is VoiceUiState.MicOff -> {
                     PersonHeader(state.person, onEvent)
@@ -121,9 +121,16 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
                     }
                     BigButton(stringResource(R.string.voice_stop), Symbol.Stop) { onEvent(VoiceUiEvent.Stop) }
                 }
-                is VoiceUiState.Review ->
+                is VoiceUiState.Review -> {
+                    // UX V4: outline buttons stacked with 16 dp between, then 32 dp before the black button.
+                    Spacer(Modifier.height(PlainphoneSpace.S2))
+                    SmallButton(stringResource(R.string.voice_record_again), Symbol.Record) { onEvent(VoiceUiEvent.RecordAgain) }
+                    Spacer(Modifier.height(PlainphoneSpace.S4))
+                    SmallButton(stringResource(R.string.voice_delete), Symbol.Cross) { onEvent(VoiceUiEvent.Delete) }
+                    Spacer(Modifier.height(32.dp))
                     if (state.playing) BigButton(stringResource(R.string.voice_stop_listening), Symbol.Stop) { onEvent(VoiceUiEvent.Stop) }
                     else BigButton(stringResource(R.string.voice_listen), Symbol.Play) { onEvent(VoiceUiEvent.Play) }
+                }
                 is VoiceUiState.MicOff -> BigButton(stringResource(R.string.voice_try_again), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
             }
         }
@@ -137,33 +144,44 @@ private fun PersonRow(person: VoicePersonUi, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4)) {
         PersonPicture(person, 72.dp, decorative = true)
-        Text(person.name, style = PlainphoneType.App, modifier = Modifier.weight(1f))
+        Text(person.name, style = PlainphoneType.App.copy(hyphens = Hyphens.Auto), modifier = Modifier.weight(1f))
     }
 }
 
 @Composable
 private fun PersonHeader(person: VoicePersonUi, onEvent: (VoiceUiEvent) -> Unit, hearName: Boolean = true) {
+    val hear = { onEvent(VoiceUiEvent.HearName) }
     Spacer(Modifier.height(PlainphoneSpace.S4))
-    PersonPicture(person, 96.dp)
-    Text(person.name, style = PlainphoneType.Title, textAlign = TextAlign.Center,
+    PersonPicture(person, 96.dp, onHearName = if (hearName) hear else null)
+    // Never cut or shrunk (README, screen titles): a word too long for the line breaks with a hyphen.
+    Text(person.name, style = PlainphoneType.Title.copy(hyphens = Hyphens.Auto, lineBreak = LineBreak.Heading),
+        textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(top = PlainphoneSpace.S2).semantics { heading() })
-    if (hearName) ScreenLink(stringResource(R.string.voice_hear_name), { onEvent(VoiceUiEvent.HearName) })
+    // The picture carries this action for TalkBack, so the link is hidden there and not offered twice (UX V2).
+    if (hearName) Box(Modifier.clearAndSetSemantics {}) { ScreenLink(stringResource(R.string.voice_hear_name), hear) }
     else Spacer(Modifier.height(48.dp))
 }
 
-/** Placeholder picture: the person's initial in a monochrome circle. */
+/**
+ * Placeholder picture: the person's initial in a monochrome circle. With [onHearName], tapping it says
+ * the name again (UX V2 picture tap); TalkBack reads "Picture of Sam" and offers "hear the name".
+ */
 @Composable
-private fun PersonPicture(person: VoicePersonUi, size: Dp, decorative: Boolean = false) {
+private fun PersonPicture(person: VoicePersonUi, size: Dp, decorative: Boolean = false, onHearName: (() -> Unit)? = null) {
     val description = stringResource(R.string.voice_picture, person.name)
-    Box(Modifier.size(size).background(PlainphoneColors.Fill2, CircleShape)
-        .border(PlainphoneSpace.Border, PlainphoneColors.Ink, CircleShape)
-        .then(if (decorative) Modifier.clearAndSetSemantics {} else Modifier.clearAndSetSemantics {
-            contentDescription = description
-        }), contentAlignment = Alignment.Center) {
+    val actionLabel = stringResource(R.string.voice_hear_name_action)
+    // The outer box owns the semantics; it clears the inner tap target's, so TalkBack gets one labelled action.
+    Box(Modifier.size(size).then(if (decorative) Modifier.clearAndSetSemantics {} else Modifier.clearAndSetSemantics {
+        contentDescription = description
+        if (onHearName != null) onClick(label = actionLabel) { onHearName(); true }
+    })) { Box(Modifier.fillMaxSize()
+        .then(if (onHearName != null) Modifier.plainphoneAction(shape = CircleShape, onClick = onHearName) else Modifier)
+        .background(PlainphoneColors.Fill2, CircleShape)
+        .border(PlainphoneSpace.Border, PlainphoneColors.Ink, CircleShape), contentAlignment = Alignment.Center) {
         // Sized in dp, not scaled with the text size: it is a picture.
         val letter = with(LocalDensity.current) { (size * 0.5f).toSp() }
         Text(initial(person.name), style = PlainphoneType.Title.copy(fontSize = letter, lineHeight = letter), maxLines = 1)
-    }
+    } }
 }
 
 private fun initial(name: String): String {
@@ -204,7 +222,7 @@ private fun BigButton(word: String, symbol: Symbol, onClick: () -> Unit) {
 
 @Composable
 private fun SmallButton(word: String, symbol: Symbol?, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp)
+    Row(Modifier.fillMaxWidth().heightIn(min = 72.dp)
         .border(PlainphoneSpace.Border, PlainphoneColors.Ink, RoundedCornerShape(PlainphoneSpace.BoxRadius))
         .plainphoneAction(shape = RoundedCornerShape(PlainphoneSpace.BoxRadius), onClick = onClick)
         .padding(horizontal = PlainphoneSpace.S4, vertical = PlainphoneSpace.S3),
@@ -223,6 +241,13 @@ private fun SymbolMark(symbol: Symbol, size: Dp, color: androidx.compose.ui.grap
             Symbol.Record -> drawCircle(color)
             Symbol.Stop -> drawRect(color, topLeft = Offset(this.size.width * 0.1f, this.size.height * 0.1f),
                 size = Size(this.size.width * 0.8f, this.size.height * 0.8f))
+            Symbol.Cross -> {
+                val w = this.size.width * 0.14f
+                drawLine(color, Offset(this.size.width * 0.15f, this.size.height * 0.15f),
+                    Offset(this.size.width * 0.85f, this.size.height * 0.85f), w)
+                drawLine(color, Offset(this.size.width * 0.85f, this.size.height * 0.15f),
+                    Offset(this.size.width * 0.15f, this.size.height * 0.85f), w)
+            }
             Symbol.Play -> drawPath(Path().apply {
                 moveTo(this@Canvas.size.width * 0.2f, 0f)
                 lineTo(this@Canvas.size.width, this@Canvas.size.height / 2)

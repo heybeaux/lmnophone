@@ -20,7 +20,8 @@ enum class MicProblem { PermissionRefused, PrivacyToggle, RecorderError }
 enum class VoiceNotice { MaxLength, Interrupted, NothingRecorded, Deleted, CouldNotPlay, MicBusy, Unsent }
 
 /** What the phone says aloud (UX doc V1-V13, practice wording). The host maps each to a string. */
-enum class VoicePrompt { Intro, Name, Person, Review, Unsent, TooShort, MaxLength, Busy, Deleted, MicOff, MicNotAllowed }
+enum class VoicePrompt { Intro, Name, Person, Review, Unsent, TooShort, MaxLength, Busy, Deleted, MicOff, MicNotAllowed,
+    MicError, CouldNotPlay }
 
 sealed interface VoiceState {
     val person: VoicePerson? get() = null
@@ -129,7 +130,8 @@ object VoicePractice {
                 VoiceEvent.Stop -> if (s.playing) Transition(s.copy(playing = false), stop) else Transition(s)
                 is VoiceEvent.Interrupted -> Transition(s.copy(playing = false), stop)
                 VoiceEvent.PlaybackEnded -> Transition(s.copy(playing = false))
-                VoiceEvent.PlaybackFailed -> Transition(s.copy(playing = false, notice = VoiceNotice.CouldNotPlay))
+                VoiceEvent.PlaybackFailed -> Transition(s.copy(playing = false, notice = VoiceNotice.CouldNotPlay),
+                    speak(VoicePrompt.CouldNotPlay, s.person))
                 VoiceEvent.RecordAgain, VoiceEvent.Record -> record(s.person, s.draft, stop)
                 VoiceEvent.Delete -> Transition(VoiceState.Person(s.person, VoiceNotice.Deleted),
                     listOf(VoiceEffect.StopPlayback, VoiceEffect.DeleteDraft(s.person.id),
@@ -153,7 +155,7 @@ object VoicePractice {
         before + VoiceEffect.Speak(when (problem) {
             MicProblem.PermissionRefused -> VoicePrompt.MicNotAllowed
             MicProblem.PrivacyToggle -> VoicePrompt.MicOff
-            MicProblem.RecorderError -> VoicePrompt.Busy
+            MicProblem.RecorderError -> VoicePrompt.MicError
         }, person))
 
     private fun record(person: VoicePerson, previous: VoiceDraft?, before: List<VoiceEffect> = emptyList()) =

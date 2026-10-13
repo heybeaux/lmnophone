@@ -175,22 +175,28 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
     }
 
     private fun words(prompt: VoicePrompt, person: VoicePerson?): String {
-        val name = person?.name.orEmpty()
-        val id = when (prompt) {
-            VoicePrompt.Intro -> R.string.voice_say_intro
-            VoicePrompt.Name -> R.string.voice_say_name
-            VoicePrompt.Person -> R.string.voice_say_person
-            VoicePrompt.Review -> R.string.voice_say_review
-            VoicePrompt.Unsent -> R.string.voice_say_unsent
-            VoicePrompt.TooShort -> R.string.voice_say_too_short
-            VoicePrompt.MaxLength -> R.string.voice_say_max
-            VoicePrompt.Busy -> R.string.voice_say_busy
-            VoicePrompt.Deleted -> R.string.voice_say_deleted
-            VoicePrompt.MicOff -> R.string.voice_say_mic_off
-            VoicePrompt.MicNotAllowed -> R.string.voice_say_mic_not_allowed
-        }
-        return app.getString(id, name, helper())
+        val helper = helper()
+        return app.getString(VoiceWords.res(prompt, helper.isNotBlank()), person?.name.orEmpty(), helper)
     }
 
     fun shutdown() { close(); speaker.shutdown() }
+}
+
+/** Spoken words per prompt (docs/ux/flows-voice-messages.md, PLA-472). Help words name the trusted person when known. */
+internal object VoiceWords {
+    fun res(prompt: VoicePrompt, helperKnown: Boolean): Int = when (prompt) {
+        VoicePrompt.Intro -> R.string.voice_say_intro
+        VoicePrompt.Name -> R.string.voice_say_name
+        VoicePrompt.Person -> R.string.voice_say_person
+        VoicePrompt.Review -> R.string.voice_say_review
+        VoicePrompt.Unsent -> R.string.voice_say_unsent
+        VoicePrompt.TooShort -> R.string.voice_say_too_short
+        VoicePrompt.MaxLength -> R.string.voice_say_max
+        VoicePrompt.Busy -> R.string.voice_say_busy
+        VoicePrompt.Deleted -> R.string.voice_say_deleted
+        VoicePrompt.MicOff -> if (helperKnown) R.string.voice_say_mic_off else R.string.voice_say_mic_off_short
+        VoicePrompt.MicNotAllowed -> if (helperKnown) R.string.voice_say_mic_not_allowed else R.string.voice_say_mic_not_allowed_short
+        VoicePrompt.MicError -> R.string.voice_say_mic_error
+        VoicePrompt.CouldNotPlay -> R.string.voice_say_play
+    }
 }
