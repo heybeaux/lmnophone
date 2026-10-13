@@ -1,0 +1,52 @@
+AVD pla460-policy-a35 API 35
+baseline: saved=46842ff38dd3c317 ids=0, location=0 connected=0 bluetooth_on=1 calls=0
+Success
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+on 42: versionCode=42 ready=true
+install 43 start 2026-10-13T13:02:30Z
+Success
+install 43 end 2026-10-13T13:02:30Z
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+on 43:  versionCode=43 minSdk=30 targetSdk=36  versionName=0.1.0-preview-43  flags=[ DEBUGGABLE HAS_CODE ALLOW_CLEAR_USER_DATA TEST_ONLY ] 
+DO: User 0: admin=org.plainphone/.PlainphoneAdminReceiver,DeviceOwner,Affiliated
+ mLockTaskModeState=LOCKED ready=true
+== Wi-Fi page: ‹ Phone settings|Wi-Fi|Connected to Wi-Fi|Forget this network|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks
+   saved=70ae8de26e3c057d ids=0,1, location=0 connected=1
+== question: Forget this network?|The Wi-Fi this phone is connected to|You will need its password to join it again.|Keep|Forget
+   saved=70ae8de26e3c057d ids=0,1, location=0 connected=1
+== after Keep: ‹ Phone settings|Wi-Fi|Connected to Wi-Fi|Forget this network|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks
+   saved=70ae8de26e3c057d ids=0,1, location=0 connected=1
+== question then Back: ‹ Phone settings|Wi-Fi|Connected to Wi-Fi|Forget this network|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks
+   saved=70ae8de26e3c057d ids=0,1, location=0 connected=1
+   Forget t+2s saved=46842ff38dd3c317 ids=0, location=0 connected=0
+   Forget t+4s saved=46842ff38dd3c317 ids=0, location=0 connected=0
+   Forget t+6s saved=46842ff38dd3c317 ids=0, location=0 connected=0
+   Forget t+8s saved=46842ff38dd3c317 ids=0, location=0 connected=0
+   Forget t+10s saved=46842ff38dd3c317 ids=0, location=0 connected=0
+   Forget t+12s saved=46842ff38dd3c317 ids=0, location=0 connected=0
+== page after Forget: ‹ Phone settings|Wi-Fi|The network was forgotten.|Not connected|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks
+== leave run (screen off 0s after Forget); before: saved=07525ed21ee107de ids=0,2, location=0 connected=1
+   screen off: saved=46842ff38dd3c317 ids=0, location=3 connected=0
+   t+13s screen off: saved=46842ff38dd3c317 ids=0, location=0 connected=0
+   after return: saved=46842ff38dd3c317 ids=0, location=0 connected=0
+   page: ‹ Phone settings|Wi-Fi|The network was forgotten.|Not connected|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks
+== leave run (screen off 1.5s after Forget); before: saved=424882648dcb29d1 ids=0,3, location=0 connected=1
+   screen off: saved=46842ff38dd3c317 ids=0, location=0 connected=0
+   t+13s screen off: saved=46842ff38dd3c317 ids=0, location=0 connected=0
+   after return: saved=46842ff38dd3c317 ids=0, location=0 connected=0
+   page: ‹ Phone settings|Wi-Fi|The network was forgotten.|Not connected|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks
+== Bluetooth page: ‹ Phone settings|Bluetooth|Paired with:|No paired devices.|Pair a new device
+== Pair page open: ‹ Bluetooth|Pair a new device|Looking for nearby devices…
+== after 20s: ‹ Bluetooth|Pair a new device|No devices found. Make sure the other device is ready to pair, then tap Look again.|Look again
+== after screen off/on: ‹ Bluetooth|Pair a new device|Looking for nearby devices…
+== 20s later: ‹ Bluetooth|Pair a new device|No devices found. Make sure the other device is ready to pair, then tap Look again.|Look again
+== discovery sequence (this app's uid only):
+06:05:02.521 I AdapterProperties: Callback:discoveryStateChangeCallback with state:1
+06:05:15.325 I AdapterProperties: Callback:discoveryStateChangeCallback with state:0
+06:05:26.417 I PowerManagerService: Going to sleep
+06:05:26.886 I AdapterProperties: Callback:discoveryStateChangeCallback with state:0
+06:05:29.450 I PowerManagerService: Waking up from
+06:05:29.490 I AdapterProperties: Callback:discoveryStateChangeCallback with state:1
+06:05:42.295 I AdapterProperties: Callback:discoveryStateChangeCallback with state:0
+06:05:54.430 I AdapterProperties: Callback:discoveryStateChangeCallback with state:0
+final: saved=46842ff38dd3c317 ids=0, location=0 connected=0 bluetooth_on=1 calls=0
