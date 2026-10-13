@@ -55,11 +55,13 @@ class VoicePracticeInstrumentation : Instrumentation() {
                     override fun onError() { events += "error" }
                     override fun onSilenced() { events += "silenced" }
                     override fun onStartFailed() { events += "startFailed" }
+                    override fun onCaptureStarted() { events += "captureStarted" }
                 }
                 val recorder = AndroidVoiceRecorder(app)
                 runOnMainSync { recorder.start(file, format, 60_000, listener) }
                 Thread.sleep(2_500)
                 check(micOpen()) { "${format.name}: microphone not open while recording ($events)" }
+                check("captureStarted" in events) { "${format.name}: capture start not reported ($events)" }
                 var kept = false
                 runOnMainSync { kept = recorder.stop() }
                 Thread.sleep(300)

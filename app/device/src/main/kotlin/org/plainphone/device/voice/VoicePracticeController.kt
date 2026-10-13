@@ -13,6 +13,8 @@ interface VoiceRecorder {
         fun onSilenced()
         /** The recorder accepted [start] but could not open the microphone (for example it is busy). */
         fun onStartFailed()
+        /** The microphone is capturing now: after setup and the start tone. Duration counts from here. */
+        fun onCaptureStarted()
     }
     /** Starts recording into [file]. Throws if the microphone or file can't be opened. */
     fun start(file: File, format: VoiceFormat, maxMs: Long, listener: Listener)
@@ -24,6 +26,17 @@ interface VoicePlayer {
     /** Throws if playback can't start. */
     fun play(file: File, onDone: () -> Unit, onError: () -> Unit)
     fun stop()
+}
+
+/**
+ * Audio focus and the call state, owned by the host. Recording and playback both ask first, and the
+ * host's focus-loss and call listeners interrupt either one ([VoicePracticeController.close]).
+ */
+interface VoiceAudioGate {
+    /** True when this app may use audio now: no call is ringing or up, and audio focus was granted. */
+    fun acquire(): Boolean
+    /** Gives audio focus back. Safe to call when it is not held. */
+    fun release()
 }
 
 /** Null when the microphone may be used now; the host tries the Device Owner grant first. */
@@ -46,6 +59,7 @@ class VoicePracticeController(
     private val store: VoiceDraftStore,
     private val mic: MicAccess,
     private val speaker: VoiceSpeaker,
+    private val gate: VoiceAudioGate,
     private val clock: () -> Long,
     private val format: VoiceFormat = VoiceFormat.AacM4a,
     private val maxMs: Long = DEFAULT_MAX_MS,
@@ -57,9 +71,12 @@ class VoicePracticeController(
 
     private var recording: Take? = null
 
-    private inner class Take(val startedAt: Long) : VoiceRecorder.Listener {
+    private inner class Take : VoiceRecorder.Listener {
         var started = false
+        /** When the microphone really started capturing; null until then. */
+        var capturedAt: Long? = null
         private fun live() = recording === this && state is VoiceState.Recording
+        override fun onCaptureStarted() { if (live() && capturedAt == null) capturedAt = clock() }
         override fun onMaxLength() { if (live()) dispatch(VoiceEvent.MaxLengthReached) }
         override fun onError() { if (live()) dispatch(VoiceEvent.MicUnavailable(MicProblem.RecorderError)) }
         override fun onSilenced() { if (live()) dispatch(VoiceEvent.MicUnavailable(MicProblem.PrivacyToggle)) }
@@ -77,18 +94,28 @@ class VoicePracticeController(
     fun dispatch(event: VoiceEvent) {
         val e = if (event is VoiceEvent.Choose && state == VoiceState.ChoosePerson)
             event.copy(existing = safeDraft(event.person.id)) else event
+        val before = state
         val t = VoicePractice.reduce(state, e)
         state = t.state
+        // A prompt belongs to the screen it was said on: any tap or change (Listen, Back, Delete...) ends it.
+        if (t.state != before || t.effects.isNotEmpty()) safely { speaker.stop() }
+        if (!usesAudio(state)) safely { gate.release() }
         onChange(state)
         for (effect in t.effects) run(effect)
     }
 
-    /** Leaving the screen for any reason: stop recording (keeping the take), playback and speech. */
+    /**
+     * Leaving the screen or an interruption (call, screen off, focus loss): stop recording (keeping the
+     * take), playback and speech, and give audio focus back.
+     */
     fun close(cause: Interruption = Interruption.AppStopped) {
-        if (state is VoiceState.Recording) dispatch(VoiceEvent.Interrupted(cause))
+        if (usesAudio(state)) dispatch(VoiceEvent.Interrupted(cause))
         stopPlayer()
         safely { speaker.stop() }
+        safely { gate.release() }
     }
+
+    private fun usesAudio(s: VoiceState) = s is VoiceState.Recording || (s as? VoiceState.Review)?.playing == true
 
     /** "Hear name" on a person's screen. */
     fun sayName() { state.person?.let { say(VoicePrompt.Name, it) } }
@@ -100,7 +127,7 @@ class VoicePracticeController(
             is VoiceEffect.Speak -> say(effect.prompt, effect.person)
             is VoiceEffect.StartRecording -> start(effect.personId)
             is VoiceEffect.FinishRecording -> dispatch(VoiceEvent.RecordingFinished(finish(effect)))
-            is VoiceEffect.StartPlayback -> try {
+            is VoiceEffect.StartPlayback -> if (!acquire()) dispatch(VoiceEvent.PlaybackFailed) else try {
                 player.play(store.file(effect.personId),
                     onDone = { if ((state as? VoiceState.Review)?.playing == true) dispatch(VoiceEvent.PlaybackEnded) },
                     onError = { if ((state as? VoiceState.Review)?.playing == true) dispatch(VoiceEvent.PlaybackFailed) })
@@ -113,7 +140,9 @@ class VoicePracticeController(
 
     private fun start(personId: String) {
         safely { speaker.stop() }
-        val take = Take(clock()).also { recording = it }
+        val take = Take().also { recording = it }
+        // A call is ringing or up, or another app won't give up audio: don't open the microphone.
+        if (!acquire()) { dispatch(VoiceEvent.CouldNotStart); return }
         mic.problem()?.let { dispatch(VoiceEvent.MicUnavailable(it)); return }
         val file = try { store.prepareTake(personId) } catch (_: Exception) {
             dispatch(VoiceEvent.MicUnavailable(MicProblem.RecorderError)); return
@@ -130,13 +159,16 @@ class VoicePracticeController(
         val take = recording
         recording = null
         val finalised = take?.started == true && try { recorder.stop() } catch (_: Exception) { false }
-        val usable = effect.keep && finalised && take != null && clock() - take.startedAt >= MIN_USABLE_MS
+        // Measured from real capture, not from the tap: setup and the start tone don't count.
+        val capturedAt = take?.capturedAt
+        val usable = effect.keep && finalised && capturedAt != null && clock() - capturedAt >= MIN_USABLE_MS
         if (!usable) { safely { store.discardTake(effect.personId) }; return null }
         return try { store.keepTake(effect.personId) } catch (_: Exception) {
             safely { store.discardTake(effect.personId) }; null
         }
     }
 
+    private fun acquire() = try { gate.acquire() } catch (_: Exception) { false }
     private fun stopPlayer() = safely { player.stop() }
     private fun safeDraft(personId: String) = try { store.draft(personId) } catch (_: Exception) { null }
     private inline fun safely(block: () -> Unit) { try { block() } catch (_: Exception) { } }
@@ -144,7 +176,7 @@ class VoicePracticeController(
     companion object {
         /** Longest practice message (Lead, PLA-457): 2 minutes. */
         const val DEFAULT_MAX_MS = 120_000L
-        /** Shorter takes are dropped as a slip of the finger (UX V3 "Too short"). */
+        /** Shorter captured audio is dropped as a slip of the finger (UX V3 "Too short"). */
         const val MIN_USABLE_MS = 1_000L
     }
 }

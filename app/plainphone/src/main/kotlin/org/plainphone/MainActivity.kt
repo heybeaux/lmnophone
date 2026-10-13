@@ -125,7 +125,6 @@ import org.plainphone.ui.trusted.WaitingChangeScreen
 import org.plainphone.ui.trusted.WaitingChangeUiState
 import org.plainphone.ui.trusted.WaitingStage
 import org.plainphone.voice.VoicePracticeHost
-import org.plainphone.device.voice.Interruption
 
 /**
  * Plainphone Home. Keyguard first (PLA-264 finding 1): the manifest never starts lock task; Home calls
@@ -583,9 +582,15 @@ class MainActivity : ComponentActivity() {
         super.onPause()
     }
 
+    /** Visible again: a practice screen that is still showing gets its call and screen-off guards back. */
+    override fun onStart() {
+        super.onStart()
+        voice.onActivityStart()
+    }
+
     /** Not visible any more: a recording stops here and is kept (UX V11). */
     override fun onStop() {
-        voice.close(Interruption.AppStopped)
+        voice.onActivityStop()
         super.onStop()
     }
 

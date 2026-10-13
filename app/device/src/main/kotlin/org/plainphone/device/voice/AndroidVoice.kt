@@ -25,7 +25,8 @@ import java.io.File
  * 12.2 kbit/s in `.amr` as the fallback.
  *
  * Order (UX V3): the recorder is prepared, the start tone plays, and only then does the microphone
- * open, [TONE_GAP_MS] later. A failure at that point reports [VoiceRecorder.Listener.onStartFailed].
+ * open, [TONE_GAP_MS] later. A failure at that point reports [VoiceRecorder.Listener.onStartFailed];
+ * success reports [VoiceRecorder.Listener.onCaptureStarted], which is where a take's length counts from.
  * Max length is enforced twice: MediaRecorder.setMaxDuration and a main-thread timer one second later.
  * Silencing (the microphone privacy toggle) is caught two ways: this recorder's own
  * AudioRecordingConfiguration.isClientSilenced (API 29), and a peak level of exactly zero for the
@@ -81,6 +82,7 @@ class AndroidVoiceRecorder(context: Context) : VoiceRecorder {
         tone(ToneGenerator.TONE_PROP_BEEP)
         schedule(Runnable {
             try { r.start(); running = true } catch (_: Exception) { listener.onStartFailed(); return@Runnable }
+            listener.onCaptureStarted()
             watchSilence(r, listener)
             schedule(Runnable { listener.onMaxLength() }, maxMs + 1_000)
         }, TONE_GAP_MS)

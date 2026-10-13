@@ -28,6 +28,7 @@ class VoicePracticeControllerTest {
             lastFormat = format; lastMaxMs = maxMs
             file.writeBytes(format.sample())
             running = true; this.listener = listener
+            listener.onCaptureStarted()
         }
         override fun stop(): Boolean { stops++; check(running); running = false; return stopResult }
     }
@@ -46,6 +47,13 @@ class VoicePracticeControllerTest {
         var checks = 0
         override fun problem(): MicProblem? { checks++; return problem }
     }
+    private class Gate : VoiceAudioGate {
+        var allow = true
+        var held = false
+        var asks = 0
+        override fun acquire(): Boolean { asks++; if (allow) held = true; return allow }
+        override fun release() { held = false }
+    }
     private class Speaker : VoiceSpeaker {
         val spoken = mutableListOf<String>()
         var stops = 0
@@ -58,10 +66,11 @@ class VoicePracticeControllerTest {
     private val player = Player()
     private val mic = Mic()
     private val speaker = Speaker()
+    private val gate = Gate()
     private val sam = VoicePeople.practice[0]
     private fun store(dir: File = tmp.newFolder()) = VoiceDraftStore(dir) { now }
     private fun controller(store: VoiceDraftStore = store()) =
-        VoicePracticeController(recorder, player, store, mic, speaker, clock = { now }).also { it.open() }
+        VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }).also { it.open() }
 
     private fun VoicePracticeController.recordFor(ms: Long, end: VoiceEvent = Stop) {
         dispatch(Record); now += ms; dispatch(end)
@@ -83,13 +92,13 @@ class VoicePracticeControllerTest {
         assertEquals(listOf("Intro null"), speaker.spoken)
         c.dispatch(Choose(sam)); val stops = speaker.stops
         c.dispatch(Record)
-        assertEquals(stops + 1, speaker.stops)
+        assertTrue(speaker.stops > stops)
         assertEquals(listOf("Intro null", "Person Sam"), speaker.spoken)
     }
 
     @Test fun amrFallbackIsConfigurable() {
         val store = VoiceDraftStore(tmp.newFolder(), VoiceFormat.AmrNb) { now }
-        val c = VoicePracticeController(recorder, player, store, mic, speaker, clock = { now }, format = VoiceFormat.AmrNb)
+        val c = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }, format = VoiceFormat.AmrNb)
             .also { it.open() }
         c.dispatch(Choose(sam)); c.recordFor(2_000)
         assertEquals(VoiceFormat.AmrNb, recorder.lastFormat)
@@ -113,7 +122,7 @@ class VoicePracticeControllerTest {
         c.dispatch(Choose(sam)); c.recordFor(3_000); c.dispatch(Back)
         c.dispatch(Choose(sam))
         assertTrue(c.state is VoiceState.Review)
-        val again = VoicePracticeController(recorder, player, store, mic, speaker, clock = { now }).also { it.open() }
+        val again = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }).also { it.open() }
         again.dispatch(Choose(sam))
         assertTrue(again.state is VoiceState.Review)
     }
