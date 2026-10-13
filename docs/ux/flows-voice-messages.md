@@ -510,6 +510,19 @@ Placeholders: `{person}` (family person's shown name), `{person_spoken}` (spoken
 | V12a | ▶ Listen to {person} · ■ Stop listening · ▶ Play again | {person}'s message. / {person}'s next message. / Tap Play again to hear it again, or Record to talk to {person}. |
 | V13 band | Practice – not sent · ● Recording – practice | This is practice. Messages are not sent. |
 | V13 review | (V4 without Send; black button ▶ Listen) | Listen, or record again. / Your message to {person} isn't sent yet. Listen, or delete. |
+| V13 More row · `more_voice`, `more_voice_note` | Practice voice messages · Record and listen. Nothing is sent. | – (TalkBack reads the row) |
+| V2 hear name · `voice_hear_name` | Hear the name | {person_spoken}. (`voice_say_name`) |
+| V2 hear name, TalkBack · `voice_hear_name_action` (new) | – | hear the name (click label: TalkBack says "Double-tap to hear the name") |
+| V13 notice · `voice_notice_max` | That's as long as a message can be. | `voice_say_max` (V13 review row: "That's as long as a message can be. Listen, or record again.") |
+| V13 notice · `voice_notice_nothing` | That was too short. Try again. | `voice_say_too_short` (V3 too short) |
+| V13 notice · `voice_notice_deleted` | Deleted. | `voice_say_deleted` (V4a after) |
+| V13 notice · `voice_notice_busy` | The microphone is busy. Try again in a moment. | `voice_say_busy` (V3 busy) |
+| V13 notice · `voice_notice_interrupted` | Recording stopped. | – (V11: nothing is spoken; next time V9 speaks) |
+| V13 notice · `voice_notice_play` | This message could not play. | This message could not play. Record again, or delete. (`voice_say_play`, new) |
+| V13 microphone · `voice_try_again` | ● Try again | – (tapping it is the same as ● Record) |
+| V13 V10a short · `voice_mic_off` | The microphone is turned off. Ask for help to turn it on. Calls and texts still work. | The microphone is turned off. Ask {tp} for help. (`voice_say_mic_off`) / no name known: The microphone is turned off. Ask for help. (`voice_say_mic_off_short`, new) |
+| V13 V10b short · `voice_mic_not_allowed` | Voice messages aren't set up. Ask for help. Calls and texts still work. | Voice messages need {tp}. Ask {tp} for help. (`voice_say_mic_not_allowed`) / no name known: Voice messages aren't set up. Ask for help. (`voice_say_mic_not_allowed_short`, new) |
+| V13 microphone failed · `voice_mic_error` | The microphone didn't work. Try again. | The microphone didn't work. Tap Try again. (`voice_say_mic_error`, new) |
 | U8 | Voice messages · Voice messages go only to the family people {tp} added. A message you don't send is kept on this phone for 7 days, then erased. No one else can hear it. | – |
 
 The symbols (●, ■, ▶, ➤, ✕) in this table stand for the drawn symbols; they are **not** characters in the string.
@@ -517,6 +530,27 @@ The string is the word only ("Record"); the screen draws the symbol before it. `
 elsewhere.
 
 With two trusted people, `{tp}` is "Sam or Jo" (README, "Two names").
+
+**Practice-build rows (resource names, preview 39).** Rows keyed to a resource name cover strings the practice
+build needs before the full design exists:
+
+- **More row.** Only until the Home "Family" row (V0) exists; then it goes. The person using the phone can't read
+  it; the trusted person opens it for them, so it names the feature plainly.
+- **Hear the name.** The picture stays the main tap target (V2 picture tap). "Hear the name" is a small link under
+  the name for anyone who doesn't know the picture can be tapped; both do the same thing. The picture keeps its
+  description `voice_picture` ("Picture of {person}") and gets the click label `voice_hear_name_action`, so TalkBack
+  says "Picture of Sam. Double-tap to hear the name." Hide the link from TalkBack if the picture carries the action,
+  so the name isn't offered twice.
+- **Notices on screen.** Short facts, with no "Tap …" instruction, because the buttons are right below. The spoken
+  words keep the instruction. "That was too short. Try again." fits both V2 (Record) and V4 (Record again), where the
+  earlier recording stays.
+- **Microphone screen.** In practice, the black button is **● Try again** (same as Record), not V10's ‹ Back,
+  because ‹ Back is already at the top. If the microphone still can't be used, the same screen and words come back.
+- **Short V10a/V10b.** The words on screen never name the trusted person in practice, which keeps them short at
+  large text sizes. The spoken words name them (`{tp}`) when the phone knows the name, and use the short form when
+  it doesn't. V10b's on-screen words say "aren't set up" rather than "not allowed": that is what the person can act
+  on.
+- **"(new)"** marks a resource the build doesn't have yet. Until it exists, the build keeps its current behaviour.
 
 ## Questions for Beaux (batched by the Lead)
 
