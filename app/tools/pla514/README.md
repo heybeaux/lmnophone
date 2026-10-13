@@ -63,3 +63,23 @@ reboots the emulator, tries a wrong PIN and Back, removes Calculator with a fres
 PIN, reads back hidden state, then restores it with the setup command and checks
 that an app-private synthetic data marker survived. It restores the original
 visible order and app list and never sends or calls. No connectedAndroidTest.
+
+## Recorded emulator result
+
+Author candidate installed in place on private `emulator-5780`; Android readback:
+versionCode 45, versionName `0.1.0-preview-45`, TEST_ONLY,
+lastUpdateTime `2026-10-13 13:28:58` (emulator clock).
+`emulator-proof.txt` records the successful production UI route, actual guest
+reboot, wrong-PIN and Back refusal, successful hide/readback, and setup-command
+restoration with the synthetic app-private data marker intact. A second in-place install preserved an explicitly nonalphabetical order and the
+production Home mapping. Original visible order and starter list restored. No call/send and no spare installation.
+
+Lint is separate from the T5 gates: UI has 0 errors (29 warnings); device has
+2 existing MissingPermission errors (AndroidWifi:55, AndroidWifiForget:22);
+app has 6 existing errors (five VoicePracticeHost NewApi findings and the
+unchanged `runtime.waitingRead.value` composition read in PinAccessActivity).
+Those source expressions match the base. No checks were disabled.
+
+The candidate APK exceeds Paperclip's 10 MB attachment limit. Its hash and build
+path above identify the local artifact for the shared-workspace driver; source
+and screenshots are available on the pushed branch and issue work products.

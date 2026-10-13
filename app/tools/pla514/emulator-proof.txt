@@ -1,0 +1,8 @@
+PASS initial Home order; synthetic data marker saved
+PASS list move updates production Home and atomic order file
+PASS actual emulator reboot preserves production Home order
+PASS fresh wrong PIN and Back write nothing
+PASS fresh correct PIN removes only Calculator; hidden=true; Phone/Messages remain; Home updated
+PASS setup-command restoration; app data retained; original app list and Home order restored. No call or send.
+PASS in-place APK reinstall preserves explicit nonalphabetical order and production Home mapping
+PASS original Home order restored after upgrade check
