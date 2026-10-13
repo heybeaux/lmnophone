@@ -127,7 +127,7 @@ class VoiceSender(
     /** Called with the person id after a result is recorded. */
     var onUpdate: (String) -> Unit = {}
 
-    override fun send(person: VoicePerson): SendView {
+    override fun send(person: VoicePerson, number: String): SendView {
         if (!VoiceSendStore.ID.matches(person.id)) return SendView(SendStatus.NotSent(SendProblem.OtherError), false, 0)
         val previous = store.read(person.id)
         val failures = previous?.failures ?: 0
@@ -137,9 +137,9 @@ class VoiceSender(
         }
         if (current?.status == SendStatus.Sending) return current
         if (current?.status == SendStatus.Sent && drafts.draft(person.id) == null) return current
-        val number = person.phoneNumber?.let(VoiceNumber::normalize)
+        val normalized = VoiceNumber.normalize(number)
         val audio = if (drafts.draft(person.id) != null) readOrNull(drafts.file(person.id)) else null
-        if (number == null || audio == null || audio.isEmpty()) {
+        if (normalized == null || audio == null || audio.isEmpty()) {
             return SendView(SendStatus.NotSent(SendProblem.OtherError), false, failures)
         }
         val attempt = newAttemptId()
@@ -154,7 +154,7 @@ class VoiceSender(
         val carrier = port.carrier()
         if (carrier?.enabled == false) return refuse(SendProblem.MmsOff)
         if (port.hasSignal() == false) return refuse(SendProblem.NoSignal)
-        val pdu = try { VoiceMmsPdu.sendRequest(number, audio, clock() / 1000) } catch (_: RuntimeException) {
+        val pdu = try { VoiceMmsPdu.sendRequest(normalized, audio, clock() / 1000) } catch (_: RuntimeException) {
             return refuse(SendProblem.OtherError)
         }
         if (pdu.size > VoiceSendLimits.maxMessageBytes(carrier)) return refuse(SendProblem.TooBig)

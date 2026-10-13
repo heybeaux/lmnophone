@@ -12,10 +12,8 @@ import org.plainphone.device.voice.send.SendView
  * [VoiceEvent.Send] on Review or [VoiceEvent.TryAgain] on Not sent: never by itself, never again on its own.
  * The controller drops both unless real sending is on and the person has a number, so the practice still sends nothing.
  */
-/** [phoneNumber] is only for sending (PLA-499); practice people have none. Never log it. */
-data class VoicePerson(val id: String, val name: String, val phoneNumber: String? = null) {
-    override fun toString() = "VoicePerson(id=$id, name=$name, phoneNumber=${if (phoneNumber == null) "none" else "set"})"
-}
+/** Never carries a phone number: the sender looks it up by [id] when Send is tapped ([VoiceNumbers]). */
+data class VoicePerson(val id: String, val name: String)
 
 /** Synthetic people for the practice. Never real names, photos or numbers. */
 object VoicePeople {

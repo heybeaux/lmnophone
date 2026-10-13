@@ -61,10 +61,19 @@ interface VoiceSpeaker {
     fun stop()
 }
 
+/**
+ * A person's phone number, looked up by person id at the point of use (PLA-499). Null: no number, so no Send.
+ * The family list (PLA-500) supplies it from VoiceRecipientSource; numbers never enter [VoicePerson] or UI state.
+ */
+fun interface VoiceNumbers { fun number(personId: String): String? }
+
 /** The real sender (PLA-499, [org.plainphone.device.voice.send.VoiceSender]). Absent when real sending is off. */
 interface VoiceSendPort {
-    /** Hands the person's draft over once and says where that send is. Called only for an explicit Send or Try again. */
-    fun send(person: VoicePerson): SendView
+    /**
+     * Hands the person's draft over once, to [number], and says where that send is. Called only for an explicit
+     * Send or Try again, with the number looked up at that moment. Never log [number].
+     */
+    fun send(person: VoicePerson, number: String): SendView
     fun view(personId: String): SendView?
     fun seen(personId: String)
 }
@@ -88,6 +97,8 @@ class VoicePracticeController(
     private val people: List<VoicePerson> = VoicePeople.practice,
     /** The longest message the carrier takes ([org.plainphone.device.voice.send.VoiceSendLimits.maxRecordMs]). */
     private val recordCapMs: () -> Long = { maxMs },
+    /** Looked up again for every check and every send; never kept. */
+    private val numbers: VoiceNumbers = VoiceNumbers { null },
 ) {
     var state: VoiceState = VoiceState.ChoosePerson
         private set
@@ -154,7 +165,11 @@ class VoicePracticeController(
     }
 
     /** Send is offered only when real sending is on and [person] has a number that can be sent to. */
-    fun canSend(person: VoicePerson): Boolean = sender != null && person.phoneNumber?.let(VoiceNumber::normalize) != null
+    fun canSend(person: VoicePerson): Boolean = sender != null && sendableNumber(person.id) != null
+
+    /** A failing lookup (an unreadable family list) counts as no number: no Send, no crash. */
+    private fun sendableNumber(personId: String): String? =
+        try { numbers.number(personId)?.takeIf { VoiceNumber.normalize(it) != null } } catch (_: Exception) { null }
 
     /** True while no one on the list can be sent to: every screen keeps the practice band and words. */
     fun practice(person: VoicePerson? = state.person): Boolean = person?.let { !canSend(it) } ?: people.none(::canSend)
@@ -216,7 +231,8 @@ class VoicePracticeController(
             is VoiceEffect.DeleteDraft -> try { store.delete(effect.personId) } catch (_: Exception) { }
             VoiceEffect.Leave -> onLeave()
             is VoiceEffect.SendDraft -> {
-                val view = sender?.let { s -> try { s.send(effect.person) } catch (_: Exception) { null } }
+                val number = sendableNumber(effect.person.id)
+                val view = number?.let { n -> sender?.let { s -> try { s.send(effect.person, n) } catch (_: Exception) { null } } }
                     ?: SendView(SendStatus.NotSent(SendProblem.OtherError), seen = false, failures = 1)
                 dispatch(VoiceEvent.SendUpdated(effect.person.id, view))
             }

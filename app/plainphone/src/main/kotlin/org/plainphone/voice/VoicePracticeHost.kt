@@ -30,6 +30,7 @@ import org.plainphone.device.voice.VoiceDraftStore
 import org.plainphone.device.voice.VoiceEvent
 import org.plainphone.device.voice.VoiceFormat
 import org.plainphone.device.voice.VoiceNotice
+import org.plainphone.device.voice.VoiceNumbers
 import org.plainphone.device.voice.VoicePeople
 import org.plainphone.device.voice.VoicePerson
 import org.plainphone.device.voice.VoicePlace
@@ -104,8 +105,8 @@ object VoiceUiMapper {
  * focus. Each of those stops the recorder (keeping the take) or the playback (UX V11). Recording and
  * playback are refused while a call rings or is up, or when focus is refused.
  *
- * Real sending (PLA-499) is on only when [VoiceSendBuild] supplies people (release: never, until the family
- * list exists). Then a person with a number gets Send; the send happens only on that tap or Try again, never
+ * Real sending (PLA-499) is on only when [VoiceSendBuild] supplies a number lookup (release: never, until the
+ * family list exists). Then a person whose id has a number gets Send; the send happens only on that tap or Try again, never
  * by itself. Answers from the phone show only while the screen is visible; otherwise on the next start.
  *
  * Drafts live in noBackupFilesDir/voice-practice: app-private, credential-encrypted, never backed up.
@@ -143,15 +144,16 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
         }
     }
 
-    private val sendPeople: List<VoicePerson>? = VoiceSendBuild.people(app)
-    private val people: List<VoicePerson> = sendPeople ?: VoicePeople.practice
-    private val sender: VoiceSender? = sendPeople?.let { VoiceSendEngine.get(app) }
+    private val sendNumbers: VoiceNumbers? = VoiceSendBuild.numbers(app)
+    private val people: List<VoicePerson> = VoicePeople.practice
+    private val sender: VoiceSender? = sendNumbers?.let { VoiceSendEngine.get(app) }
     private val mms = AndroidMmsPort(app)
     private val main = Handler(Looper.getMainLooper())
 
     private val controller: VoicePracticeController = VoicePracticeController(AndroidVoiceRecorder(app), AndroidVoicePlayer(), store,
         AndroidMicAccess(app, admin), speaker, gate, SystemClock::elapsedRealtime, format,
-        sender = sender, people = people, recordCapMs = { VoiceSendLimits.maxRecordMs(mms.carrier(), format) })
+        sender = sender, people = people, recordCapMs = { VoiceSendLimits.maxRecordMs(mms.carrier(), format) },
+        numbers = sendNumbers ?: VoiceNumbers { null })
     private val session = VoicePracticeSession(controller, ::arm, ::disarm)
 
     var ui by mutableStateOf<VoiceUiState>(VoiceUiMapper.map(VoiceState.ChoosePerson, people, controller::canSend))

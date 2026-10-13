@@ -373,10 +373,14 @@ it with joining and shared owned Location cleanup. UI gains `canForget`,
 
 ### Voice MMS send seam (PLA-499, slice 2a)
 
-`:device/voice` exports `VoiceSendPort.send(VoicePerson): SendView`,
-`view(personId): SendView?`, and `seen(personId)`. `VoicePracticeController`
-accepts an optional sender, injected people and `recordCapMs`; `canSend` requires
-both a sender and a normalized recipient number. Only explicit Review Send or
+`:device/voice` exports `VoiceSendPort.send(VoicePerson, number): SendView`,
+`view(personId): SendView?`, `seen(personId)` and `VoiceNumbers.number(personId)`.
+`VoicePerson` never carries a number. `VoicePracticeController` accepts an
+optional sender, injected people, `recordCapMs` and a `VoiceNumbers` lookup;
+`canSend` requires both a sender and a normalized number for that person id,
+looked up again at every check and at the explicit send (a failing lookup counts
+as no number). The family list (PLA-500) plugs in as
+`VoiceNumbers { id -> source.recipient(id)?.number }`. Only explicit Review Send or
 Not sent Try again events produce `VoiceEffect.SendDraft`. Restoring, opening,
 reading outcomes and handling interruptions never send. `VoicePlace.Screen.Send`
 restores the current persisted answer, without restarting audio.
@@ -390,7 +394,7 @@ m-send-conf with OK status; unanswered attempts become `NotConfirmed` on restart
 or after the wait bound. Reading a confirmed outcome completes any interrupted
 deletion of its matching draft, never deleting a different recording.
 
-`:plainphone` supplies the build gate and recipient list, maps states to UI and
+`:plainphone` supplies the build gate, people and number lookup, maps states to UI and
 posts result updates on the main thread only while the screen is visible.
 `:ui` takes `VoiceUiState` and emits Send/TryAgain/Done; it has no transport or
 permission logic. Debug sending is opt-in through the shell-only test hook;

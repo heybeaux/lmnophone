@@ -3,10 +3,10 @@
 package org.plainphone.voice
 
 import android.content.Context
-import org.plainphone.device.voice.VoicePerson
+import org.plainphone.device.voice.VoiceNumbers
 
-/** Release: real sending is off until the family list (slice 2b) supplies people with numbers. */
+/** Release: real sending is off until the family list (slice 2b) supplies numbers. */
 object VoiceSendBuild {
     @Suppress("UNUSED_PARAMETER")
-    fun people(context: Context): List<VoicePerson>? = null
+    fun numbers(context: Context): VoiceNumbers? = null
 }

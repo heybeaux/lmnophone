@@ -4,8 +4,7 @@ package org.plainphone.voice
 
 import android.content.Context
 import java.io.File
-import org.plainphone.device.voice.VoicePeople
-import org.plainphone.device.voice.VoicePerson
+import org.plainphone.device.voice.VoiceNumbers
 import org.plainphone.device.voice.send.VoiceNumber
 
 /**
@@ -17,10 +16,10 @@ import org.plainphone.device.voice.send.VoiceNumber
 object VoiceSendBuild {
     fun marker(context: Context) = File(context.noBackupFilesDir, "test-voice-send")
 
-    /** Null: real sending is off and every screen stays practice. */
-    fun people(context: Context): List<VoicePerson>? {
+    /** Null: real sending is off and every screen stays practice. Otherwise only Sam has a number. */
+    fun numbers(context: Context): VoiceNumbers? {
         val number = try { marker(context).takeIf { it.isFile }?.readText()?.trim() } catch (_: Exception) { null }
         if (number == null || VoiceNumber.normalize(number) == null) return null
-        return VoicePeople.practice.map { if (it.id == "sam") it.copy(phoneNumber = number) else it }
+        return VoiceNumbers { personId -> number.takeIf { personId == "sam" } }
     }
 }
