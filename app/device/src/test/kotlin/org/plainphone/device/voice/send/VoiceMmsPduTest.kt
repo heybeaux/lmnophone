@@ -29,8 +29,8 @@ class VoiceMmsPduTest {
     }
 
     @Test fun anInternationalNumberKeepsItsPlusAndLosesItsFormatting() {
-        val pdu = VoiceMmsPdu.sendRequest("+1 (555) 010-0123", audio, dateSeconds = 1L)
-        assertEquals(listOf("+15550100123/TYPE=PLMN"), MmsPduReader.read(pdu).to)
+        val pdu = VoiceMmsPdu.sendRequest("+1 (604) 555-0123", audio, dateSeconds = 1L)
+        assertEquals(listOf("+16045550123/TYPE=PLMN"), MmsPduReader.read(pdu).to)
     }
 
     @Test fun anythingThatIsNotAPhoneNumberIsRefused() {
