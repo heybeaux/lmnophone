@@ -27,7 +27,8 @@ class VoiceSenderTest {
     private val store = VoiceSendStore(File(root, "send"))
     private val port = FakeMmsPort()
     private var ids = 0
-    private val sam = VoicePerson("sam", "Sam", "555-0100")
+    private val sam = VoicePerson("sam", "Sam")
+    private val samNumber = "555-0100"
 
     private fun sender(process: String = "p1") =
         VoiceSender(store, drafts, port, process, { now }) { "attempt${++ids}" }
@@ -41,7 +42,7 @@ class VoiceSenderTest {
     @Test fun sendHandsOnePduToTheSystemAndSaysSendingUntilTheResult() {
         val audio = record()
         val s = sender()
-        assertEquals(SendStatus.Sending, s.send(sam).status)
+        assertEquals(SendStatus.Sending, s.send(sam, samNumber).status)
         assertEquals("the record says Sending before the hand-off", SendStatus.Sending, port.statusAtHandOff)
         val (person, attempt, pdu) = port.sent.single()
         assertEquals("sam", person)
@@ -57,7 +58,7 @@ class VoiceSenderTest {
         val s = sender()
         val updates = mutableListOf<String>()
         s.onUpdate = { updates += it }
-        s.send(sam)
+        s.send(sam, samNumber)
         assertTrue(s.onResult("sam", "attempt1", MmsSendResult.RESULT_OK, OK_CONF))
         assertEquals(SendView(SendStatus.Sent, seen = false, failures = 0), s.view("sam"))
         assertNull(drafts.draft("sam"))
@@ -68,7 +69,7 @@ class VoiceSenderTest {
     @Test fun okWithoutAConfirmationIsNotSentAndKeepsTheDraft() {
         record()
         val s = sender()
-        s.send(sam)
+        s.send(sam, samNumber)
         s.onResult("sam", "attempt1", MmsSendResult.RESULT_OK, null)
         assertEquals(SendStatus.NotSent(SendProblem.OtherError), s.view("sam")!!.status)
         assertNotNull(drafts.draft("sam"))
@@ -77,13 +78,13 @@ class VoiceSenderTest {
     @Test fun aFailureKeepsTheDraftAndCountsTriesButNeverSendsAgainByItself() {
         record()
         val s = sender()
-        s.send(sam)
+        s.send(sam, samNumber)
         s.onResult("sam", "attempt1", 4, null)
         assertEquals(SendView(SendStatus.NotSent(SendProblem.OtherError), seen = false, failures = 1), s.view("sam"))
         assertNotNull(drafts.draft("sam"))
         repeat(3) { s.view("sam"); s.seen("sam") }
         assertEquals("no automatic resend", 1, port.sent.size)
-        s.send(sam)
+        s.send(sam, samNumber)
         s.onResult("sam", "attempt2", 8, null)
         assertEquals(SendView(SendStatus.NotSent(SendProblem.NoSignal), seen = false, failures = 2), s.view("sam"))
         assertEquals(2, port.sent.size)
@@ -92,9 +93,9 @@ class VoiceSenderTest {
     @Test fun aStaleResultNeverOverwritesANewerSendOrErasesItsDraft() {
         record()
         val s = sender()
-        s.send(sam)
+        s.send(sam, samNumber)
         s.onResult("sam", "attempt1", 4, null)
-        s.send(sam)
+        s.send(sam, samNumber)
         assertFalse(s.onResult("sam", "attempt1", MmsSendResult.RESULT_OK, OK_CONF))
         assertEquals(SendStatus.Sending, s.view("sam")!!.status)
         assertNotNull(drafts.draft("sam"))
@@ -106,7 +107,7 @@ class VoiceSenderTest {
     @Test fun aSentResultKeepsANewerRecording() {
         record()
         val s = sender()
-        s.send(sam)
+        s.send(sam, samNumber)
         now += 5_000
         val newer = record(VoiceFormat.AacM4a.sample(6_000))
         s.onResult("sam", "attempt1", MmsSendResult.RESULT_OK, OK_CONF)
@@ -118,7 +119,7 @@ class VoiceSenderTest {
         record()
         port.permitted = false
         val s = sender()
-        assertEquals(SendStatus.NotSent(SendProblem.NoPermission), s.send(sam).status)
+        assertEquals(SendStatus.NotSent(SendProblem.NoPermission), s.send(sam, samNumber).status)
         assertTrue(port.sent.isEmpty())
         assertEquals(SendStatus.NotSent(SendProblem.NoPermission), s.view("sam")!!.status)
     }
@@ -127,7 +128,7 @@ class VoiceSenderTest {
         record()
         port.permissionFailure = SecurityException("permission unavailable")
         val send = sender()
-        assertEquals(SendStatus.NotSent(SendProblem.NoPermission), send.send(sam).status)
+        assertEquals(SendStatus.NotSent(SendProblem.NoPermission), send.send(sam, samNumber).status)
         assertEquals(SendStatus.NotSent(SendProblem.NoPermission), send.view("sam")!!.status)
         assertTrue(port.sent.isEmpty())
         assertNotNull(drafts.draft("sam"))
@@ -137,14 +138,14 @@ class VoiceSenderTest {
         record()
         val send = sender()
         port.onSend = { person, attempt -> send.onResult(person, attempt, MmsSendResult.RESULT_OK, OK_CONF) }
-        assertEquals(SendStatus.Sent, send.send(sam).status)
+        assertEquals(SendStatus.Sent, send.send(sam, samNumber).status)
         assertEquals(1, port.sent.size)
         assertNull(drafts.draft("sam"))
     }
 
     @Test fun aRestartAfterSavingSentFinishesDeletingTheSentDraft() {
         val audio = record()
-        sender("p1").send(sam)
+        sender("p1").send(sam, samNumber)
         val sending = store.read("sam")!!
         store.write("sam", sending.copy(status = SendStatus.Sent))
         assertArrayEquals(audio, drafts.file("sam").readBytes())
@@ -158,7 +159,7 @@ class VoiceSenderTest {
         record()
         port.failure = SecurityException("no SEND_SMS")
         val s = sender()
-        assertEquals(SendStatus.NotSent(SendProblem.NoPermission), s.send(sam).status)
+        assertEquals(SendStatus.NotSent(SendProblem.NoPermission), s.send(sam, samNumber).status)
         assertEquals(listOf("attempt1"), port.released)
         assertEquals(SendStatus.NotSent(SendProblem.NoPermission), s.view("sam")!!.status)
     }
@@ -166,47 +167,47 @@ class VoiceSenderTest {
     @Test fun anyOtherHandOffFailureIsOtherError() {
         record()
         port.failure = IllegalStateException("binder")
-        assertEquals(SendStatus.NotSent(SendProblem.OtherError), sender().send(sam).status)
+        assertEquals(SendStatus.NotSent(SendProblem.OtherError), sender().send(sam, samNumber).status)
     }
 
     @Test fun mmsTurnedOffByTheCarrierIsNotSentBeforeAnyHandOff() {
         record()
         port.carrier = CarrierMms(enabled = false, maxMessageBytes = 1_048_576)
-        assertEquals(SendStatus.NotSent(SendProblem.MmsOff), sender().send(sam).status)
+        assertEquals(SendStatus.NotSent(SendProblem.MmsOff), sender().send(sam, samNumber).status)
         assertTrue(port.sent.isEmpty())
     }
 
     @Test fun noSignalAtTheTapIsNotSentButUnknownSignalStillTries() {
         record()
         port.signal = false
-        assertEquals(SendStatus.NotSent(SendProblem.NoSignal), sender().send(sam).status)
+        assertEquals(SendStatus.NotSent(SendProblem.NoSignal), sender().send(sam, samNumber).status)
         assertTrue(port.sent.isEmpty())
         port.signal = null
-        assertEquals(SendStatus.Sending, sender().send(sam).status)
+        assertEquals(SendStatus.Sending, sender().send(sam, samNumber).status)
     }
 
     @Test fun aMessageOverTheCarrierLimitIsTooBigAndNeverTruncated() {
         val audio = record(VoiceFormat.AacM4a.sample(9_000))
         port.carrier = CarrierMms(enabled = true, maxMessageBytes = 9_000)
-        assertEquals(SendStatus.NotSent(SendProblem.TooBig), sender().send(sam).status)
+        assertEquals(SendStatus.NotSent(SendProblem.TooBig), sender().send(sam, samNumber).status)
         assertTrue(port.sent.isEmpty())
         assertArrayEquals(audio, drafts.file("sam").readBytes())
         port.carrier = null
-        assertEquals("unknown settings use the Android default limit", SendStatus.Sending, sender().send(sam).status)
+        assertEquals("unknown settings use the Android default limit", SendStatus.Sending, sender().send(sam, samNumber).status)
     }
 
     @Test fun noNumberOrNoDraftIsOtherErrorAndNothingIsSent() {
         val s = sender()
-        assertEquals(SendStatus.NotSent(SendProblem.OtherError), s.send(sam).status)
+        assertEquals(SendStatus.NotSent(SendProblem.OtherError), s.send(sam, samNumber).status)
         record()
-        assertEquals(SendStatus.NotSent(SendProblem.OtherError), s.send(VoicePerson("sam", "Sam")).status)
-        assertEquals(SendStatus.NotSent(SendProblem.OtherError), s.send(VoicePerson("sam", "Sam", "not a number")).status)
+        assertEquals(SendStatus.NotSent(SendProblem.OtherError), s.send(sam, "").status)
+        assertEquals(SendStatus.NotSent(SendProblem.OtherError), s.send(sam, "not a number").status)
         assertTrue(port.sent.isEmpty())
     }
 
     @Test fun afterARestartAnUnansweredSendIsNotConfirmedNeverSent() {
         record()
-        sender("p1").send(sam)
+        sender("p1").send(sam, samNumber)
         val again = sender("p2")
         assertEquals(SendStatus.NotSent(SendProblem.NotConfirmed), again.view("sam")!!.status)
         assertNotNull(drafts.draft("sam"))
@@ -217,7 +218,7 @@ class VoiceSenderTest {
     @Test fun aSendWithNoAnswerForTooLongIsNotConfirmed() {
         record()
         val s = sender()
-        s.send(sam)
+        s.send(sam, samNumber)
         now += VoiceSender.UNANSWERED_MS
         assertEquals(SendStatus.Sending, s.view("sam")!!.status)
         now += 1
@@ -227,7 +228,7 @@ class VoiceSenderTest {
     @Test fun seenAndForgetChangeOnlyTheRecord() {
         record()
         val s = sender()
-        s.send(sam)
+        s.send(sam, samNumber)
         s.onResult("sam", "attempt1", 4, null)
         s.seen("sam")
         assertTrue(s.view("sam")!!.seen)
@@ -238,7 +239,7 @@ class VoiceSenderTest {
 
     @Test fun theRecordNeverHoldsTheNumber() {
         record()
-        sender().send(sam)
+        sender().send(sam, samNumber)
         val text = File(root, "send").listFiles()!!.joinToString("\n") { it.readText() }
         assertFalse(text, text.contains("5550100") || text.contains("555-0100"))
     }
@@ -254,15 +255,15 @@ class VoiceSenderTest {
     @Test fun aSecondSendWhileSendingKeepsTheOneAttempt() {
         record()
         val s = sender()
-        s.send(sam)
-        assertEquals(SendStatus.Sending, s.send(sam).status)
+        s.send(sam, samNumber)
+        assertEquals(SendStatus.Sending, s.send(sam, samNumber).status)
         assertEquals("one hand-off only", 1, port.sent.size)
     }
 
     @Test fun aRepeatedOrConflictingAnswerChangesNothing() {
         record()
         val s = sender()
-        s.send(sam)
+        s.send(sam, samNumber)
         assertTrue(s.onResult("sam", "attempt1", 4, null))
         assertFalse(s.onResult("sam", "attempt1", MmsSendResult.RESULT_OK, OK_CONF))
         assertEquals(SendView(SendStatus.NotSent(SendProblem.OtherError), seen = false, failures = 1), s.view("sam"))
@@ -272,14 +273,14 @@ class VoiceSenderTest {
     @Test fun whenTheRecordCannotBeSavedNothingIsHandedOver() {
         record()
         File(root, "send").writeText("a file where the folder should be")
-        assertEquals(SendStatus.NotSent(SendProblem.OtherError), sender().send(sam).status)
+        assertEquals(SendStatus.NotSent(SendProblem.OtherError), sender().send(sam, samNumber).status)
         assertTrue(port.sent.isEmpty())
     }
 
     @Test fun aRecordingReplacedInTheSameMillisecondIsKept() {
         record()
         val s = sender()
-        s.send(sam)
+        s.send(sam, samNumber)
         val newer = record(VoiceFormat.AacM4a.sample(4_000).also { it[it.size - 1] = 9 })
         s.onResult("sam", "attempt1", MmsSendResult.RESULT_OK, OK_CONF)
         assertEquals(SendStatus.Sent, s.view("sam")!!.status)
@@ -288,11 +289,11 @@ class VoiceSenderTest {
 
     @Test fun tryAgainAfterNotConfirmedIsANewSendOnlyWhenAsked() {
         record()
-        sender("p1").send(sam)
+        sender("p1").send(sam, samNumber)
         val again = sender("p2")
         assertEquals(SendStatus.NotSent(SendProblem.NotConfirmed), again.view("sam")!!.status)
         assertEquals(1, port.sent.size)
-        assertEquals(SendStatus.Sending, again.send(sam).status)
+        assertEquals(SendStatus.Sending, again.send(sam, samNumber).status)
         assertEquals(2, port.sent.size)
         assertFalse("the earlier attempt's late answer no longer counts",
             again.onResult("sam", "attempt1", MmsSendResult.RESULT_OK, OK_CONF))
@@ -300,7 +301,7 @@ class VoiceSenderTest {
 
     @Test fun aPersonIdThatIsNotOursIsRefused() {
         record()
-        assertEquals(SendStatus.NotSent(SendProblem.OtherError), sender().send(VoicePerson("../sam", "Sam", "555-0100")).status)
+        assertEquals(SendStatus.NotSent(SendProblem.OtherError), sender().send(VoicePerson("../sam", "Sam"), samNumber).status)
         assertTrue(port.sent.isEmpty())
     }
 

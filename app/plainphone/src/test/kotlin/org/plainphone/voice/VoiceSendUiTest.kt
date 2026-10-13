@@ -20,12 +20,12 @@ import org.plainphone.ui.user.VoiceUiState
 
 /** PLA-499: send states to screens, and their words. Fictional people and numbers only. */
 class VoiceSendUiTest {
-    private val sam = VoicePerson("sam", "Sam", "555-0100")
+    private val sam = VoicePerson("sam", "Sam")
     private val alex = VoicePerson("alex", "Alex")
     private val samUi = VoicePersonUi("sam", "Sam")
     private val draft = VoiceDraft("sam", 1L)
     private val people = listOf(sam, alex)
-    private val sendable: (VoicePerson) -> Boolean = { it.phoneNumber != null }
+    private val sendable: (VoicePerson) -> Boolean = { it.id == "sam" }
 
     private fun map(s: VoiceState, canSend: (VoicePerson) -> Boolean = sendable, helper: String = "Jo") =
         VoiceUiMapper.map(s, people, canSend, helper)

@@ -20,9 +20,12 @@ class VoiceSendFlowTest {
     @get:Rule val tmp = TemporaryFolder()
 
     /** Fictional numbers only (555-01xx). */
-    private val sam = VoicePerson("sam", "Sam", "555-0100")
-    private val jo = VoicePerson("jo", "Jo", "555-0101")
+    private val sam = VoicePerson("sam", "Sam")
+    private val jo = VoicePerson("jo", "Jo")
     private val alex = VoicePerson("alex", "Alex")
+    /** Looked up by person id at the point of use, like the family list's VoiceRecipientSource. Alex has none. */
+    private val numbers = mutableMapOf("sam" to "555-0100", "jo" to "555-0101")
+    private var numbersFail: Exception? = null
     private val draft = VoiceDraft("sam", 1L)
 
     private fun view(status: SendStatus, seen: Boolean = false, failures: Int = 0) = SendView(status, seen, failures)
@@ -204,12 +207,14 @@ class VoiceSendFlowTest {
     }
     private class Sender : VoiceSendPort {
         val sent = mutableListOf<String>()
+        val sentTo = mutableListOf<String>()
         val views = mutableMapOf<String, SendView>()
         val seen = mutableListOf<String>()
         var answer: SendView = SendView(SendStatus.Sending, false, 0)
         var fail: RuntimeException? = null
-        override fun send(person: VoicePerson): SendView {
+        override fun send(person: VoicePerson, number: String): SendView {
             sent += person.id
+            sentTo += number
             fail?.let { throw it }
             views[person.id] = answer
             return answer
@@ -226,7 +231,8 @@ class VoiceSendFlowTest {
 
     private fun controller(sender: VoiceSendPort? = this.sender, people: List<VoicePerson> = listOf(sam, jo, alex),
         cap: () -> Long = { 120_000L }) = VoicePracticeController(recorder, Player(), store, MicAccess { null }, speaker,
-        Gate(), { now }, sender = sender, people = people, recordCapMs = cap).also { it.open() }
+        Gate(), { now }, sender = sender, people = people, recordCapMs = cap,
+        numbers = { id -> numbersFail?.let { throw it }; numbers[id] }).also { it.open() }
 
     /** VoiceSender on a confirmed Sent: the record says Sent and LMNOPhone's own draft is deleted. */
     private fun sentLikeVoiceSender(personId: String) {
@@ -273,6 +279,34 @@ class VoiceSendFlowTest {
         assertEquals(VoiceState.Sent(sam), c.state)
         assertEquals(listOf("sam"), sender.seen)
         assertEquals(listOf("sam"), sender.sent)
+    }
+
+    @Test fun theNumberIsLookedUpWhenSendIsTappedNotWhenThePersonWasChosen() {
+        val c = controller()
+        c.recorded(sam)
+        numbers["sam"] = "555-0102"
+        c.dispatch(Send)
+        assertEquals(listOf("555-0102"), sender.sentTo)
+    }
+
+    @Test fun aNumberRemovedAfterChoosingIsNeverSentTo() {
+        val c = controller()
+        c.recorded(sam)
+        numbers.remove("sam")
+        c.dispatch(Send)
+        assertTrue(c.state is VoiceState.Review)
+        assertTrue(sender.sent.isEmpty())
+        assertFalse(c.canSend(sam))
+    }
+
+    @Test fun aNumberLookupThatFailsMeansNoSendAndNoCrash() {
+        val c = controller()
+        c.recorded(sam)
+        numbersFail = java.io.IOException("family list unreadable")
+        assertFalse(c.canSend(sam))
+        c.dispatch(Send)
+        assertTrue(c.state is VoiceState.Review)
+        assertTrue(sender.sent.isEmpty())
     }
 
     @Test fun anAnswerForSomeoneNotOnScreenWaitsForNextTime() {
