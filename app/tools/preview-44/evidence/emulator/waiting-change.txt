@@ -1,0 +1,12 @@
+PLA-494 emulator: Change PIN with a turn-off wait started by the old PIN (AVD pla460-policy-a35, synthetic PINs, not recorded)
+== wait started: Your settings|Waiting 24 hours|Turn LMNOPhone off: this happens after about 12:16 PM tomorrow, if the phone stays on.|Anyone holding the phone can cancel it until then, from the home screen.|OK
+== Home with the wait: 12:15|Tuesday 13 October|LMNOPhone will turn off after 12:16 PM tomorrow. Tap to cancel.|Maps|Camera|Messages|Phone|More
+== old-PIN page: Your settings|Your PIN|Enter your PIN to make changes on this phone.|Setting a new PIN cancels the change that's waiting: Turn LMNOPhone off.|PIN|Forgot PIN? Use recovery code|Continue
+== result: Your settings|Change PIN|PIN changed.|OK
+== Home after the change: 12:16|Tuesday 13 October|Maps|Camera|Messages|Phone|More
+== logcat:
+10-13 12:16:16.181  7279  7304 I PlainphoneBoot: pin change: CHANGED
+10-13 12:16:16.328  7279  7304 I PlainphoneBoot: reapply reason=pin-change control=none locked=false ready=true applied=[EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFail
+== old-PIN page after the change (no wait line expected): Your settings|Your PIN|Enter your PIN to make changes on this phone.|PIN|Forgot PIN? Use recovery code|Continue
+== changed back: Your settings|Change PIN|PIN changed.|OK
+state: version=versionCode=44 mLockTaskModeState=LOCKED DO=1 calls=0
