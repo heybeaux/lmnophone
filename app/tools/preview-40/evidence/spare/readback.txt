@@ -1,0 +1,21 @@
+build=40
+apk_sha256=93255ee163d3b2a1772207fd484735739169ba95e6300caae16eaf14ba9e5dba
+branch=release/preview-40@604af78b (release/preview-39@c0b787b6 + pla-voice/slice-1b@50ca5a12; review PLA-475 REQUEST CHANGES -> fixes -> delta check PLA-477 APPROVE)
+signer_sha256=99edd5a37e76bb3417a04744328a31d174441778697334e6c4e0c2383ac811bd (same as builds 36-39)
+installed_local=2026-10-12 23:23:52 PDT (2026-10-13 06:23:52Z, lastUpdateTime)
+upgrade=39-to-40-in-place, gate exit 0 (242 PASS incl. restart; one fewer boot-log poll than build 39)
+owner=Device Owner retained, testOnly retained, lock task LOCKED
+system_update_policy=SystemUpdatePolicy (type: 3, windowStart: 0, windowEnd: 0, freezes: []) kept
+emergency=More>Emergency and Phone both exactly 911 (gate), zero Telecom calls
+safety_diff=none vs build 39 (location 0, font 1.0, ring 5, saved-list hash d32466f0bb5f98e0, bonded 0, TalkBack off)
+exercised_on_spare (synthetic person Sam; room audio, kept only on the phone, deleted at the end; nothing sent):
+  TTS: open practice -> com.google.android.tts AudioTrack usage=USAGE_MEDIA content=SPEECH 24 kHz mono, 23:32:13.957-18.458 (4.5 s, intro)
+  TTS: choose Sam -> 2.56 s speech track (person prompt); tap picture -> 0.72 s speech track at 23:33:03.75 ("Sam.")
+  Review font 1.0: Record again [432,1602][729,1658], Delete [509,1822][651,1878], Listen [579,2106][742,2175]; nav bar y>=2280 -> all whole (voice-review-1.0.png)
+  Screen off while recording (power key at ~3 s): active MIC clients 1 -> 0, take kept (sam.m4a sha changed, 14409 B), on wake Review with "Recording stopped." (voice-screenoff-return.png)
+  Mic privacy on (cmd sensor_privacy enable 0 microphone), Record again: SystemUI "Unblock device microphone?" dialog over lock task (voice-privacy-1.png); Cancel -> practice shows "The microphone is turned off. Ask for help to turn it on. Calls and texts still work." + Try again, no Listen/Delete for the silent take, previous take byte-identical (sha unchanged), no temp file, mic released; MicOff spoken (3.7 s track) (voice-privacy-2.png)
+  Mic privacy restored (disable): dumpsys sensor_privacy state_type=2 (disabled); next take silenced:false and kept
+  Fonts 1.3 and 2.0: Review/Recording/Person actions all above y=2280 (voice-*-1.3/2.0.png); font restored 1.0, read back 1.0
+  TalkBack on: focus picture -> TalkBack speech (USAGE_ASSISTANCE_ACCESSIBILITY); double-tap -> app speech track 0.74 s USAGE_MEDIA ("Sam."), a 23 ms flushed track just before it; all controls carry text/content-desc labels in the a11y tree; TalkBack restored off (null / 0, no bound services)
+  Listen: MediaPlayer org.plainphone usage=USAGE_MEDIA content=SPEECH started, "Stop listening" shown; Delete -> "Deleted.", voice-practice folder empty; Back x3 to Home, lock task LOCKED
+not exercised on spare: incoming call (no service; host/emulator tests only); TalkBack announcement text not captured verbatim (only audio tracks); what was heard by ear not captured (driver is remote)

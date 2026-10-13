@@ -1,0 +1,12 @@
+after_exercise
+versionCode=versionCode=40
+saved_networks_sha=d32466f0bb5f98e0
+bonded=0
+location=0
+font=1.0
+ring=5
+mic_privacy=state_type=2
+talkback=null / 0
+owner=1
+locktask=mLockTaskModeState=LOCKED
+voice_files=0
