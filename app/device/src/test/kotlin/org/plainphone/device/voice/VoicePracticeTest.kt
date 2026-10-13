@@ -84,7 +84,7 @@ class VoicePracticeTest {
             val prompt = when (problem) {
                 MicProblem.PermissionRefused -> VoicePrompt.MicNotAllowed
                 MicProblem.PrivacyToggle -> VoicePrompt.MicOff
-                MicProblem.RecorderError -> VoicePrompt.Busy
+                MicProblem.RecorderError -> VoicePrompt.MicError
             }
             assertEquals(Transition(VoiceState.MicUnavailable(sam, problem, older), listOf(Speak(prompt, sam))),
                 reduce(t.state, RecordingFinished(null)))
@@ -111,6 +111,12 @@ class VoicePracticeTest {
         assertEquals(Transition(Review(sam, take), listOf(StopPlayback)), reduce(playing.state, Stop))
         assertEquals(Review(sam, take), reduce(playing.state, PlaybackEnded).state)
         assertEquals(Review(sam, take, notice = VoiceNotice.CouldNotPlay), reduce(playing.state, PlaybackFailed).state)
+    }
+
+    /** UX V13 (PLA-472): a failed playback is said aloud, not only shown. */
+    @Test fun playbackThatFailsIsSpoken() {
+        val playing = reduce(Review(sam, take), Play)
+        assertEquals(listOf(Speak(VoicePrompt.CouldNotPlay, sam)), reduce(playing.state, PlaybackFailed).effects)
     }
 
     @Test fun interruptionDuringPlaybackStopsItAndStaysInReview() {
