@@ -1,0 +1,22 @@
+exercise start 2026-10-13T14:45:49Z
+before: saved=d32466f0bb5f98e0 location=0 bonded=0 calls=0
+== Wi-Fi page: ‹ Phone settings|Wi-Fi|Connected to Wi-Fi|Forget this network|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks [other_text_nodes=0]
+== question: Forget this network?|The Wi-Fi this phone is connected to|You will need its password to join it again.|Keep|Forget [other_text_nodes=0]
+   saved=d32466f0bb5f98e0 location=0 bonded=0 calls=0
+== after Keep: ‹ Phone settings|Wi-Fi|Connected to Wi-Fi|Forget this network|Nearby networks|To see nearby networks, LMNOPhone turns on Location for a short time. It turns Location off again after you join.|Show nearby networks [other_text_nodes=0]
+   saved=d32466f0bb5f98e0 location=0 bonded=0 calls=0
+== Bluetooth page: ‹ Phone settings|Bluetooth|Paired with:|No paired devices.|Pair a new device [other_text_nodes=0]
+== Pair page open: ‹ Bluetooth|Pair a new device|Looking for nearby devices… [other_text_nodes=3]
+== after 20s: ‹ Bluetooth|Pair a new device|Looking for nearby devices… [other_text_nodes=4]
+   at Home: More [other_text_nodes=6]
+== Pair page reopened after Home: ‹ Bluetooth|Pair a new device|Looking for nearby devices… [other_text_nodes=1]
+== after screen off/on: ‹ Bluetooth|Pair a new device|Looking for nearby devices… [other_text_nodes=3]
+== 20s later: ‹ Bluetooth|Pair a new device|Looking for nearby devices… [other_text_nodes=5]
+final: saved=d32466f0bb5f98e0 location=0 bonded=0 calls=0 locktask=mLockTaskModeState=LOCKED
+exercise end 2026-10-13T14:47:52Z
+== Bluetooth discovery timeline (spare logcat; Moto does not log discovery starts; counts and times only, local PDT):
+07:46:56.841 cancel discovery (Pair page left with Home)
+07:47:20.068 screen off (sleep key); 07:47:20.125 cancel discovery (pause)
+07:47:24.163 screen on; 07:47:25.481 app resumed
+07:47:38.332-07:47:46.033 4 discovery result events (a new search after resume; none after a cancel without a restart)
+07:47:50.047 cancel discovery (left with Home at end)
