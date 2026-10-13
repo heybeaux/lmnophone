@@ -59,58 +59,72 @@ sealed interface VoiceUiEvent {
 
 private enum class Symbol { Record, Stop, Play }
 
+/**
+ * The header and notices scroll; the main action (Record, Stop, Listen, Try again) is pinned below
+ * them so it stays whole on screen at any text size and name length (PLA-465 finding 3). While
+ * recording, the "Recording" line is pinned with Stop, so the visible recording state never scrolls away.
+ */
 @Composable
 fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
-    Column(Modifier.fillMaxSize().background(PlainphoneColors.Paper)
-        .verticalScroll(rememberScrollState()).padding(horizontal = PlainphoneSpace.S6)
-        .padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S6),
-        horizontalAlignment = Alignment.CenterHorizontally) {
-        ScreenLink(stringResource(if (state is VoiceUiState.ChoosePerson) R.string.back_more else R.string.voice_back_people),
-            { onEvent(VoiceUiEvent.Back) }, centered = false)
-        Text(stringResource(R.string.voice_practice_label), style = PlainphoneType.Button.copy(color = PlainphoneColors.Ink2),
-            modifier = Modifier.fillMaxWidth().background(PlainphoneColors.Fill1, RoundedCornerShape(PlainphoneSpace.BoxRadius))
-                .padding(horizontal = PlainphoneSpace.S4, vertical = PlainphoneSpace.S2), textAlign = TextAlign.Center)
-        when (state) {
-            is VoiceUiState.ChoosePerson -> {
-                Text(stringResource(R.string.voice_choose), style = PlainphoneType.Title,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = PlainphoneSpace.S4).semantics { heading() })
-                for (p in state.people) PersonRow(p) { onEvent(VoiceUiEvent.Choose(p.id)) }
-            }
-            is VoiceUiState.Person -> {
-                PersonHeader(state.person, onEvent)
-                Notice(state.notice, state.person)
-                BigButton(stringResource(R.string.voice_record), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
-            }
-            is VoiceUiState.Recording -> {
-                PersonHeader(state.person, onEvent, hearName = false)
-                Row(Modifier.padding(vertical = PlainphoneSpace.S4).semantics(mergeDescendants = true) {
-                    liveRegion = LiveRegionMode.Polite
-                }, verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
-                    SymbolMark(Symbol.Record, 20.dp, PlainphoneColors.Ink)
-                    Text(stringResource(R.string.voice_recording_practice), style = PlainphoneType.Row)
+    Column(Modifier.fillMaxSize().background(PlainphoneColors.Paper)) {
+        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
+            .padding(horizontal = PlainphoneSpace.S6).padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S4),
+            horizontalAlignment = Alignment.CenterHorizontally) {
+            ScreenLink(stringResource(if (state is VoiceUiState.ChoosePerson) R.string.back_more else R.string.voice_back_people),
+                { onEvent(VoiceUiEvent.Back) }, centered = false)
+            Text(stringResource(R.string.voice_practice_label), style = PlainphoneType.Button.copy(color = PlainphoneColors.Ink2),
+                modifier = Modifier.fillMaxWidth().background(PlainphoneColors.Fill1, RoundedCornerShape(PlainphoneSpace.BoxRadius))
+                    .padding(horizontal = PlainphoneSpace.S4, vertical = PlainphoneSpace.S2), textAlign = TextAlign.Center)
+            when (state) {
+                is VoiceUiState.ChoosePerson -> {
+                    Text(stringResource(R.string.voice_choose), style = PlainphoneType.Title,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = PlainphoneSpace.S4).semantics { heading() })
+                    for (p in state.people) PersonRow(p) { onEvent(VoiceUiEvent.Choose(p.id)) }
                 }
-                BigButton(stringResource(R.string.voice_stop), Symbol.Stop) { onEvent(VoiceUiEvent.Stop) }
+                is VoiceUiState.Person -> {
+                    PersonHeader(state.person, onEvent)
+                    Notice(state.notice, state.person)
+                }
+                is VoiceUiState.Recording -> PersonHeader(state.person, onEvent, hearName = false)
+                is VoiceUiState.Review -> {
+                    PersonHeader(state.person, onEvent)
+                    Notice(state.notice, state.person)
+                    SmallButton(stringResource(R.string.voice_record_again), Symbol.Record) { onEvent(VoiceUiEvent.RecordAgain) }
+                    Spacer(Modifier.height(PlainphoneSpace.S4))
+                    SmallButton(stringResource(R.string.voice_delete), null) { onEvent(VoiceUiEvent.Delete) }
+                }
+                is VoiceUiState.MicOff -> {
+                    PersonHeader(state.person, onEvent)
+                    Text(stringResource(when (state.problem) {
+                        VoiceUiMicProblem.NotAllowed -> R.string.voice_mic_not_allowed
+                        VoiceUiMicProblem.TurnedOff -> R.string.voice_mic_off
+                        VoiceUiMicProblem.DidNotWork -> R.string.voice_mic_error
+                    }), style = PlainphoneType.Body, textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = PlainphoneSpace.S4).semantics { liveRegion = LiveRegionMode.Polite })
+                }
             }
-            is VoiceUiState.Review -> {
-                PersonHeader(state.person, onEvent)
-                Notice(state.notice, state.person)
-                if (state.playing) BigButton(stringResource(R.string.voice_stop_listening), Symbol.Stop) { onEvent(VoiceUiEvent.Stop) }
-                else BigButton(stringResource(R.string.voice_listen), Symbol.Play) { onEvent(VoiceUiEvent.Play) }
-                Spacer(Modifier.height(PlainphoneSpace.S6))
-                SmallButton(stringResource(R.string.voice_record_again), Symbol.Record) { onEvent(VoiceUiEvent.RecordAgain) }
-                Spacer(Modifier.height(PlainphoneSpace.S4))
-                SmallButton(stringResource(R.string.voice_delete), null) { onEvent(VoiceUiEvent.Delete) }
-            }
-            is VoiceUiState.MicOff -> {
-                PersonHeader(state.person, onEvent)
-                Text(stringResource(when (state.problem) {
-                    VoiceUiMicProblem.NotAllowed -> R.string.voice_mic_not_allowed
-                    VoiceUiMicProblem.TurnedOff -> R.string.voice_mic_off
-                    VoiceUiMicProblem.DidNotWork -> R.string.voice_mic_error
-                }), style = PlainphoneType.Body, textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = PlainphoneSpace.S4).semantics { liveRegion = LiveRegionMode.Polite })
-                BigButton(stringResource(R.string.voice_try_again), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
+        }
+        if (state is VoiceUiState.ChoosePerson) return@Column
+        Spacer(Modifier.fillMaxWidth().height(PlainphoneSpace.Border).background(PlainphoneColors.Fill2))
+        Column(Modifier.fillMaxWidth().padding(horizontal = PlainphoneSpace.S6, vertical = PlainphoneSpace.S2),
+            horizontalAlignment = Alignment.CenterHorizontally) {
+            when (state) {
+                is VoiceUiState.ChoosePerson -> Unit
+                is VoiceUiState.Person -> BigButton(stringResource(R.string.voice_record), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
+                is VoiceUiState.Recording -> {
+                    Row(Modifier.padding(bottom = PlainphoneSpace.S2).semantics(mergeDescendants = true) {
+                        liveRegion = LiveRegionMode.Polite
+                    }, verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
+                        SymbolMark(Symbol.Record, 20.dp, PlainphoneColors.Ink)
+                        Text(stringResource(R.string.voice_recording_practice), style = PlainphoneType.Row)
+                    }
+                    BigButton(stringResource(R.string.voice_stop), Symbol.Stop) { onEvent(VoiceUiEvent.Stop) }
+                }
+                is VoiceUiState.Review ->
+                    if (state.playing) BigButton(stringResource(R.string.voice_stop_listening), Symbol.Stop) { onEvent(VoiceUiEvent.Stop) }
+                    else BigButton(stringResource(R.string.voice_listen), Symbol.Play) { onEvent(VoiceUiEvent.Play) }
+                is VoiceUiState.MicOff -> BigButton(stringResource(R.string.voice_try_again), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
             }
         }
     }
@@ -173,17 +187,18 @@ private fun Notice(notice: VoiceUiNotice?, person: VoicePersonUi) {
         modifier = Modifier.fillMaxWidth().padding(vertical = PlainphoneSpace.S4).semantics { liveRegion = LiveRegionMode.Polite })
 }
 
-/** At least 96 dp each way: a large symbol with its word inside one target. */
+/** At least 96 dp each way: a large symbol beside its word, inside one full-width target. */
 @Composable
 private fun BigButton(word: String, symbol: Symbol, onClick: () -> Unit) {
-    Column(Modifier.widthIn(min = 176.dp).plainphoneAction(shape = RoundedCornerShape(PlainphoneSpace.BoxRadius), onClick = onClick)
-        .padding(PlainphoneSpace.S3),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
-        Box(Modifier.size(104.dp).background(PlainphoneColors.Ink, CircleShape), contentAlignment = Alignment.Center) {
-            SymbolMark(symbol, 40.dp, PlainphoneColors.Paper)
+    Row(Modifier.fillMaxWidth().heightIn(min = 96.dp)
+        .plainphoneAction(shape = RoundedCornerShape(PlainphoneSpace.BoxRadius), onClick = onClick)
+        .padding(horizontal = PlainphoneSpace.S3, vertical = PlainphoneSpace.S2),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4, Alignment.CenterHorizontally)) {
+        Box(Modifier.size(80.dp).background(PlainphoneColors.Ink, CircleShape), contentAlignment = Alignment.Center) {
+            SymbolMark(symbol, 32.dp, PlainphoneColors.Paper)
         }
-        Text(word, style = PlainphoneType.Row, textAlign = TextAlign.Center)
+        Text(word, style = PlainphoneType.Row, modifier = Modifier.weight(1f, fill = false))
     }
 }
 
