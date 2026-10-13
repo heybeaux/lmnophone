@@ -1,0 +1,13 @@
+version=versionName=0.1.0-preview-40
+versionCode=versionCode=40
+lastUpdate=lastUpdateTime=2026-10-1223:23:52
+saved_networks_sha=d32466f0bb5f98e0
+bonded=0
+location=0
+font=1.0
+ring=5
+mic=        android.permission.RECORD_AUDIO: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+owner=    admin=ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
+locktask=mLockTaskModeState=LOCKED
+sup=SystemUpdatePolicy (type: 3, windowStart: 0, windowEnd: 0, freezes: [])
+talkback=null / 0
