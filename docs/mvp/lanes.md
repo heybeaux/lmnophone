@@ -393,6 +393,12 @@ PDU provider grant and result receiver. `Sent` needs RESULT_OK and a complete
 m-send-conf with OK status; unanswered attempts become `NotConfirmed` on restart
 or after the wait bound. Reading a confirmed outcome completes any interrupted
 deletion of its matching draft, never deleting a different recording.
+`VoiceSendChannel` (Practice, Family) binds each sender to one draft folder and
+its own send records; `VoiceSendEngine.get(context, channel)` keeps one sender per
+channel, and the channel key rides in the sentIntent so a late or post-restart
+answer reads and erases only that channel's drafts (a missing key means Practice;
+an unknown key only releases the outgoing file). Family sending stays off until
+PLA-500 integration wires `VoiceSendChannel.Family` and is verified.
 
 `:plainphone` supplies the build gate, people and number lookup, maps states to UI and
 posts result updates on the main thread only while the screen is visible.

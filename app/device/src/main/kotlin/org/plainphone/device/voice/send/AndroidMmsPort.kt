@@ -31,7 +31,7 @@ import org.plainphone.device.voice.VoiceFormat
  * The message is written to an app-private file that only the phone service may read, for that one send.
  * Nothing here logs: no number, no audio, no address.
  */
-class AndroidMmsPort(context: Context) : MmsPort {
+class AndroidMmsPort(context: Context, private val channel: VoiceSendChannel = VoiceSendChannel.Practice) : MmsPort {
     private val app = context.applicationContext
 
     private fun subId(): Int = SubscriptionManager.getDefaultDataSubscriptionId()
@@ -94,6 +94,7 @@ class AndroidMmsPort(context: Context) : MmsPort {
         val intent = Intent(app, VoiceSendResultReceiver::class.java)
             .putExtra(EXTRA_PERSON, personId)
             .putExtra(EXTRA_ATTEMPT, attemptId)
+            .putExtra(EXTRA_CHANNEL, channel.key)
             .setIdentifier(attemptId)
         // Mutable: the MMS service adds its answer (EXTRA_MMS_DATA) to this explicit intent.
         val sent = PendingIntent.getBroadcast(app, attemptId.hashCode(), intent,
@@ -113,28 +114,28 @@ class AndroidMmsPort(context: Context) : MmsPort {
         const val PHONE_PACKAGE = "com.android.phone"
         const val EXTRA_PERSON = "org.plainphone.voice.send.PERSON"
         const val EXTRA_ATTEMPT = "org.plainphone.voice.send.ATTEMPT"
+        const val EXTRA_CHANNEL = "org.plainphone.voice.send.CHANNEL"
     }
 }
 
-/** The one [VoiceSender] in this process, so a result that arrives after the screen closed still counts. */
+/** One [VoiceSender] per draft channel in this process, so a result that arrives after the screen closed still counts. */
 object VoiceSendEngine {
-    @Volatile private var sender: VoiceSender? = null
+    private val senders = HashMap<VoiceSendChannel, VoiceSender>()
     private val random = SecureRandom()
+    private val processId by lazy { "p${Process.myPid()}-${hex(4)}" }
 
-    fun get(context: Context): VoiceSender = sender ?: synchronized(this) {
-        sender ?: build(context.applicationContext).also { sender = it }
-    }
+    fun get(context: Context, channel: VoiceSendChannel = VoiceSendChannel.Practice): VoiceSender =
+        synchronized(this) { senders.getOrPut(channel) { build(context.applicationContext, channel) } }
 
-    private fun build(app: Context): VoiceSender {
-        val drafts = VoiceDraftStore(File(app.noBackupFilesDir, DRAFT_DIR), VoiceFormat.AacM4a) { System.currentTimeMillis() }
-        return VoiceSender(VoiceSendStore(File(app.noBackupFilesDir, "voice-send")), drafts, AndroidMmsPort(app),
-            "p${Process.myPid()}-${hex(4)}", { System.currentTimeMillis() }) { hex(16) }
+    private fun build(app: Context, channel: VoiceSendChannel): VoiceSender {
+        val drafts = VoiceDraftStore(File(app.noBackupFilesDir, channel.draftDir), VoiceFormat.AacM4a) {
+            System.currentTimeMillis()
+        }
+        return VoiceSender(VoiceSendStore(File(app.noBackupFilesDir, channel.recordDir)), drafts,
+            AndroidMmsPort(app, channel), processId, { System.currentTimeMillis() }) { hex(16) }
     }
 
     private fun hex(bytes: Int) = ByteArray(bytes).also(random::nextBytes).joinToString("") { "%02x".format(it) }
-
-    /** Where the practice keeps its drafts (VoicePracticeHost). */
-    const val DRAFT_DIR = "voice-practice"
 }
 
 /** The sentIntent target. Not exported: only our own PendingIntent reaches it. */
@@ -142,8 +143,13 @@ class VoiceSendResultReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val person = intent.getStringExtra(AndroidMmsPort.EXTRA_PERSON) ?: return
         val attempt = intent.getStringExtra(AndroidMmsPort.EXTRA_ATTEMPT) ?: return
+        val channel = VoiceSendChannel.fromExtra(intent.getStringExtra(AndroidMmsPort.EXTRA_CHANNEL))
+        if (channel == null) {
+            AndroidMmsPort(context).release(attempt)
+            return
+        }
         val data = try { intent.getByteArrayExtra(MmsSendResult.EXTRA_MMS_DATA) } catch (_: Exception) { null }
-        VoiceSendEngine.get(context).onResult(person, attempt, resultCode, data)
+        VoiceSendEngine.get(context, channel).onResult(person, attempt, resultCode, data)
     }
 }
 
@@ -173,9 +179,10 @@ class VoiceSendFiles : ContentProvider() {
 
     companion object {
         private val ATTEMPT = Regex("[0-9a-f]{32}")
+        const val OUT_DIR = "voice-send-out"
         fun authority(context: Context) = "${context.packageName}.voicesend"
         fun uri(context: Context, attempt: String): Uri = Uri.parse("content://${authority(context)}/$attempt.pdu")
         fun file(context: Context, attempt: String): File? =
-            if (ATTEMPT.matches(attempt)) File(File(context.noBackupFilesDir, "voice-send-out"), "$attempt.pdu") else null
+            if (ATTEMPT.matches(attempt)) File(File(context.noBackupFilesDir, OUT_DIR), "$attempt.pdu") else null
     }
 }
