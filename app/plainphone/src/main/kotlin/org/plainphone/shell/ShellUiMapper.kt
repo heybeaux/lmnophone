@@ -66,10 +66,11 @@ class ShellUiMapper(locale: Locale, is24Hour: Boolean) {
         }
     }
 
+    /** Every build is a test build for now, so the practice voice messages row always shows (PLA-457). */
     fun more(s: PhoneSnapshot) = MoreUiState(when (s.mode) {
         Mode.TRUSTED -> MoreMode.Trusted(s.trustedPeople, s.requestRecipient)
         Mode.SELF_MANAGED -> MoreMode.SelfManaged(s.selfManagedWaitMinutes)
-    })
+    }, voicePractice = true)
 
     fun ask(s: PhoneSnapshot, draft: String) = AskForAppUiState(
         recipientName = s.requestRecipient,
