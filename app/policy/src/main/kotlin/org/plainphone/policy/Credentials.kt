@@ -105,6 +105,8 @@ sealed interface PinResult {
     data class Delayed(val remainingMillis: Long) : PinResult
     data object Unavailable : PinResult
 }
+/** Change PIN (PLA-494). Unavailable covers every refusal: nothing was changed or success could not be read back. */
+enum class PinChangeResult { Changed, Unavailable }
 sealed interface RecoveryResult {
     class Replaced(val recoveryCode: String) : RecoveryResult { override fun toString(): String = "Replaced(redacted)" }
     data class Wrong(val remainingMillis: Long, val notifyLockout: Boolean) : RecoveryResult

@@ -63,6 +63,35 @@ class PinVault(
         return consume(authority, action)
     }
 
+    /**
+     * Change PIN (PLA-494). [authority] must be an unspent grant for [action] from [authenticate] on the
+     * old PIN, so the old PIN was checked with the normal counter and lockout. One compareAndSet writes the
+     * new PIN verifier, generation + 1 and a cleared PIN counter; the recovery verifier, its counter and the
+     * contact are kept. Waiting changes that depend on the old generation are cancelled by their checkpoint.
+     * Success only after the stored verifier reads back as the new PIN; a false write never reads back.
+     */
+    @Synchronized
+    fun changePin(person: TrustedPersonId, authority: FreshAuthority, action: PrivilegedAction, newPin: CharArray): PinChangeResult = try {
+        if (newPin.size < 6 || newPin.any { it !in '0'..'9' } || grants[authority]?.person != person) PinChangeResult.Unavailable
+        else if (!consume(authority, action)) PinChangeResult.Unavailable
+        else changeAfterGrant(person, newPin)
+    } finally { newPin.fill('\u0000') }
+
+    private fun changeAfterGrant(person: TrustedPersonId, newPin: CharArray): PinChangeResult {
+        val now = clock.checkpoint() ?: return PinChangeResult.Unavailable
+        val state = store.read() ?: return PinChangeResult.Unavailable
+        val credential = state.people[person] ?: return PinChangeResult.Unavailable
+        val nextGeneration = try { Math.addExact(credential.generation, 1) } catch (_: ArithmeticException) { return PinChangeResult.Unavailable }
+        if (state.revision == Long.MAX_VALUE) return PinChangeResult.Unavailable
+        val pin = hash(newPin)
+        val replacement = credential.copy(pin = pin, pinCounter = FailureCounter(checkpoint = now.proven), generation = nextGeneration)
+        if (!store.compareAndSet(state, state.replacing(person, replacement))) return PinChangeResult.Unavailable
+        grants.entries.removeAll { it.value.person == person }
+        val saved = store.read()?.people?.get(person) ?: return PinChangeResult.Unavailable
+        return if (saved.generation == nextGeneration && saved.pin.hash.contentEquals(pin.hash) &&
+            saved.pin.salt.contentEquals(pin.salt)) PinChangeResult.Changed else PinChangeResult.Unavailable
+    }
+
     /** Resets only the selected holder. Never grants action authority and never skips a waiting change. */
     @Synchronized
     fun recover(person: TrustedPersonId, code: CharArray, newPin: CharArray): RecoveryResult =
