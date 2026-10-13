@@ -57,8 +57,8 @@ enum class AppReviewStage { Review, Unreviewed, Confirm, Added, Hidden, Remove, 
 data class AppReviewUiState(val context: AdminContext, val app: InstalledApp,
     val review: WebReview = WebReview.Unknown, val stage: AppReviewStage = AppReviewStage.Review,
     val helper: String = "", val request: String? = null, val allowed: String = "", val denied: String = "",
-    val sending: Boolean = false)
-sealed interface AppReviewEvent { data object Continue : AppReviewEvent; data object DontAdd : AppReviewEvent; data object MoreAbout : AppReviewEvent; data object Ok : AppReviewEvent }
+    val sending: Boolean = false, val previewSubset: Boolean = false)
+sealed interface AppReviewEvent { data object Back : AppReviewEvent; data object Continue : AppReviewEvent; data object DontAdd : AppReviewEvent; data object MoreAbout : AppReviewEvent; data object Ok : AppReviewEvent }
 enum class PermissionGroup { Camera, Microphone, Location, Contacts, Phone, CallHistory, Sms, Calendar, Nearby, Media, Notifications, Health }
 enum class PermissionDecision { Allow, Deny }
 data class PermissionChoice(val id: String, val group: PermissionGroup, val why: String? = null,
@@ -73,8 +73,9 @@ sealed interface PermissionsEvent {
 
 data class AppOnPhone(val app: InstalledApp, val alwaysOn: Boolean = false,
     val canMoveUp: Boolean = false, val canMoveDown: Boolean = false)
-data class AppsOnPhoneUiState(val context: AdminContext, val apps: List<AppOnPhone>, val sending: Boolean = false)
+data class AppsOnPhoneUiState(val context: AdminContext, val apps: List<AppOnPhone>, val sending: Boolean = false, val canAddHidden: Boolean = false)
 sealed interface AppsOnPhoneEvent {
+    data object AddHidden : AppsOnPhoneEvent
     data class Open(val id: String) : AppsOnPhoneEvent
     data class MoveUp(val id: String) : AppsOnPhoneEvent
     data class MoveDown(val id: String) : AppsOnPhoneEvent

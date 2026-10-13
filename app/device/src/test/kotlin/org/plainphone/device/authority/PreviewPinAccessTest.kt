@@ -53,6 +53,17 @@ class PreviewPinAccessTest {
         assertTrue(host.authenticateRemoval("camera", CharArray(6) { '2' }) is PinAccessResult.Wrong)
     }
 
+    @Test fun menuAndRemovalCannotAuthorizeAdditionAndPinIsCleared() {
+        val host = host(tmp.newFolder()); host.enroll(pin())
+        assertEquals(PinAccessResult.Open, host.authenticate(pin()))
+        assertEquals(PinAccessResult.Open, host.authenticateRemoval("calculator", pin()))
+        val wrong = CharArray(6) { '2' }
+        assertTrue(host.authenticateAddition("calculator", wrong) is PinAccessResult.Wrong)
+        assertTrue(wrong.all { it == '\u0000' })
+        assertEquals(PinAccessResult.Open, host.authenticateAddition("calculator", pin()))
+        assertTrue(host.authenticateAddition("camera", CharArray(6) { '2' }) is PinAccessResult.Wrong)
+    }
+
     @Test fun pinOnlyEnrollmentHasNoWaitOrLostRecordOrInventedProfile() {
         val dir = tmp.newFolder()
         assertEquals(PinEnrollmentResult.CREATED, host(dir).enroll(pin()))

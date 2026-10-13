@@ -396,6 +396,18 @@ class PolicyRuntime private constructor(private val context: Context) {
         done(removal.remove(id, pin, active))
     }
 
+    fun previewHiddenApps(done: (List<org.plainphone.device.PreviewHiddenApp>?) -> Unit) = dispatcher.post {
+        done(try { preview.hiddenApps() } catch (_: Exception) { null })
+    }
+    fun addPreviewApp(id: String, identity: String, pin: CharArray, active: () -> Boolean,
+        done: (org.plainphone.device.AppAdditionResult) -> Unit) = dispatcher.post {
+        val addition = org.plainphone.device.PreviewAppAddition(
+            authenticate = pins::authenticateAddition,
+            save = { preview.addApp(it, identity, active) },
+            apply = { run("app-added", packageMaySkip = false); gate.value == HomeGate.READY })
+        done(addition.add(id, pin, active))
+    }
+
     fun checkTurnOffPin(flow: String, pin: CharArray, done: (PinAccessResult) -> Unit) = dispatcher.post {
         val result = try { turnOff.authenticate(flow, pin) } catch (_: RuntimeException) { PinAccessResult.Unavailable }
         finally { pin.fill('\u0000') }

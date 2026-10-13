@@ -9,8 +9,9 @@ import org.plainphone.ui.components.withoutBidiControls
 
 /** Authorized T5 preview subset. Omitted permissions and dates are not placeholder promises. */
 @Composable
-fun PreviewAppDetailScreen(context: AdminContext, app: String, version: String, onRemove: () -> Unit) {
-    AdminFrame(context, app.withoutBidiControls(), s(R.string.app_detail_remove, context.userName.withoutBidiControls()), onRemove) {
+fun PreviewAppDetailScreen(context: AdminContext, app: String, version: String, onBack: () -> Unit = {}, onRemove: () -> Unit) {
+    AdminFrame(context, app.withoutBidiControls(), s(R.string.app_detail_remove, context.userName.withoutBidiControls()), onRemove,
+        secondary = s(R.string.admin_back), onSecondary = onBack) {
         Words(s(R.string.app_preview_version, version.withoutBidiControls()))
     }
 }

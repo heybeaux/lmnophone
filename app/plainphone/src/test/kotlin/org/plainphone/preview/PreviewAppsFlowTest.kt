@@ -9,9 +9,10 @@ import org.plainphone.ui.trusted.*
 
 class PreviewAppsFlowTest {
     private class Port : PreviewAppsPort {
+        var unreadable = false
         var adds = 0
         var addCallback: ((AppAdditionResult) -> Unit)? = null
-        override fun hidden(done: (List<PreviewHiddenApp>?) -> Unit) = done(listOf(PreviewHiddenApp("calculator", "Calculator", "1", "identity")))
+        override fun hidden(done: (List<PreviewHiddenApp>?) -> Unit) = done(if (unreadable) null else listOf(PreviewHiddenApp("calculator", "Calculator", "1", "identity")))
         override fun add(app: PreviewHiddenApp, pin: CharArray, active: () -> Boolean, done: (AppAdditionResult) -> Unit) {
             adds++; pin.fill('\u0000'); this.active = active; addCallback = done
         }
@@ -52,6 +53,26 @@ class PreviewAppsFlowTest {
         assertEquals(PreviewAppsStage.Hidden, flow.state.stage); assertEquals(0, port.adds)
         flow.open(); flow.select("calculator"); flow.askRemove(); flow.confirm(); flow.unsupported()
         assertEquals(PreviewAppsStage.Unsupported, flow.state.stage); assertEquals(0, port.removes)
+    }
+    @Test fun unreadableListAndStaleSelectionCannotStartAdd() {
+        val port = Port(); val flow = PreviewAppsFlow(port) {}
+        port.unreadable = true; flow.hidden(); flow.selectHidden("calculator"); flow.nextAdd(); flow.submit(charArrayOf('1'))
+        assertTrue(flow.state.loadFailed); assertTrue(flow.state.hidden.isEmpty()); assertEquals(0, port.adds)
+    }
+    @Test fun addBackInvalidatesQueuedSaveAndLateReadyDoesNotShowDone() {
+        val port = Port(); val flow = PreviewAppsFlow(port) {}
+        flow.hidden(); flow.selectHidden("calculator"); repeat(3) { flow.nextAdd() }
+        flow.submit(charArrayOf('1')); flow.back()
+        assertFalse(port.active!!()); port.addCallback!!(AppAdditionResult.Added)
+        assertEquals(PreviewAppsStage.List, flow.state.stage)
+    }
+    @Test fun addReadyIsTheOnlySuccessAndWrongPinStaysInPin() {
+        val port = Port(); val flow = PreviewAppsFlow(port) {}
+        flow.hidden(); flow.selectHidden("calculator"); repeat(3) { flow.nextAdd() }
+        flow.submit(charArrayOf('1')); port.addCallback!!(AppAdditionResult.PinRejected(org.plainphone.device.authority.PinAccessResult.Wrong(0)))
+        assertEquals(PreviewAppsStage.AddPin, flow.state.stage); assertTrue(flow.state.wrong)
+        flow.submit(charArrayOf('1')); port.addCallback!!(AppAdditionResult.Added)
+        assertEquals(PreviewAppsStage.Added, flow.state.stage)
     }
     @Test fun duplicateSubmissionIgnoredAndSaveErrorHonest() {
         val port = Port(); val flow = PreviewAppsFlow(port) {}

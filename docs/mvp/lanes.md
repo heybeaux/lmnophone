@@ -406,3 +406,14 @@ app-bound PIN grant through `PreviewPinAccess.authenticateRemoval`, rechecks the
 live floor and cancellation, saves the starter list, and runs normal re-apply.
 Only successful re-apply readback permits the Removed screen. Activity pause
 revokes pending UI work. These preview seams do not change the full-MVP APIs.
+
+T4 preview ([PLA-517](/PLA/issues/PLA-517)) adds `PreviewAppRules.canAdd` and
+`AndroidPreviewHiddenApps.read`: hidden, installed, enabled launcher entries only,
+with live browser/catalog, floor, Settings, Home, store and installer exclusions.
+Unreadable facts yield no list. `PolicyRuntime.previewHiddenApps` / `addPreviewApp`
+use the same dispatcher; `PreviewPinAccess.authenticateAddition` consumes a fresh
+`preview:add` grant for that app. Save re-reads eligibility and the selected
+version/signers, then `PreviewAppListStore.add` publishes appended order before
+starter membership under the common lock. Failed membership restores old order;
+a crash before membership leaves the app hidden. Only ready re-apply readback
+permits Added. This preview does not change permissions or the locked/floor plan.

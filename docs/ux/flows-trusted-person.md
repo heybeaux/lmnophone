@@ -385,3 +385,15 @@ listed").
   Calls and texts that {user} sends still work.
 - **Primary:** Try a test text
 - **Secondary:** Ask {helper} (shows the helper details)
+
+
+### T4 preview: add an installed hidden app
+
+Authorized scope: [PLA-517](/PLA/issues/PLA-517). At the end of T5, **Add a hidden app**
+opens eligible hidden apps in name order, with monochrome app icons. Empty list:
+"There are no hidden apps to add." Unreadable list: "Can't check the apps right now".
+Both have **Back**. T4a, T4b, T4d and a fresh app-bound PIN follow. T4d omits the
+Allowed/Not allowed sentence because permissions stay as Android has them now.
+App details, Remove confirmation and T4d have **Back**. T4a/T4b retain **Don't add**.
+No developer is shown unless reported; there is no More about this app route in
+this preview. Recovery code shows the existing unsupported-feature explanation.

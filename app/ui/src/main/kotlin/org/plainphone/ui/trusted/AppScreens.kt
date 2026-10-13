@@ -37,12 +37,12 @@ fun AppReviewScreen(state: AppReviewUiState, onEvent: (AppReviewEvent) -> Unit) 
     val complete = state.stage in listOf(AppReviewStage.Added, AppReviewStage.Hidden, AppReviewStage.Removed)
     AdminFrame(state.context, title, primary, { onEvent(if (complete) AppReviewEvent.Ok else AppReviewEvent.Continue) },
         enabled = !state.sending,
-        secondary = if (state.stage in listOf(AppReviewStage.Review, AppReviewStage.Unreviewed)) s(R.string.admin_dont_add) else null,
-        secondaryEnabled = !state.sending, onSecondary = { onEvent(AppReviewEvent.DontAdd) }) {
+        secondary = if (state.stage in listOf(AppReviewStage.Review, AppReviewStage.Unreviewed)) s(R.string.admin_dont_add) else if (state.previewSubset && !complete) s(R.string.admin_back) else null,
+        secondaryEnabled = !state.sending, onSecondary = { onEvent(if (state.stage in listOf(AppReviewStage.Review, AppReviewStage.Unreviewed)) AppReviewEvent.DontAdd else AppReviewEvent.Back) }) {
         when (state.stage) {
             AppReviewStage.Review -> {
                 Heading(app)
-                Words(s(R.string.admin_made_by, state.app.developer.withoutBidiControls()))
+                if (state.app.developer.isNotBlank()) Words(s(R.string.admin_made_by, state.app.developer.withoutBidiControls()))
                 state.request?.let { Words(s(R.string.admin_request_mismatch, user, it, app, state.app.developer.withoutBidiControls())) }
                 Heading(s(R.string.admin_web))
                 ScreenBox {
@@ -52,10 +52,10 @@ fun AppReviewScreen(state: AppReviewUiState, onEvent: (AppReviewEvent) -> Unit) 
                         WebReview.Unknown -> { Heading(s(R.string.admin_review_unknown)); Words(s(R.string.admin_review_team, app, helper)) }
                     }
                 }
-                ActionRow(s(R.string.app_more_about), enabled = !state.sending) { onEvent(AppReviewEvent.MoreAbout) }
+                if (!state.previewSubset) ActionRow(s(R.string.app_more_about), enabled = !state.sending) { onEvent(AppReviewEvent.MoreAbout) }
             }
             AppReviewStage.Unreviewed -> Words(s(R.string.admin_unreviewed_body, app, user, helper))
-            AppReviewStage.Confirm -> Words(s(R.string.admin_add_body, state.allowed, state.denied))
+            AppReviewStage.Confirm -> Words(if (state.previewSubset) s(R.string.app_preview_add_body) else s(R.string.admin_add_body, state.allowed, state.denied))
             AppReviewStage.Remove -> Words(if (state.context.trustedPersonName == null) s(R.string.app_self_remove_body, app) else s(R.string.admin_remove_body, app, user))
             else -> Unit
         }
@@ -125,6 +125,7 @@ fun AppsOnPhoneScreen(state: AppsOnPhoneUiState, onEvent: (AppsOnPhoneEvent) -> 
                 Choice(s(R.string.admin_move_down), false, row.canMoveDown && !state.sending, s(R.string.admin_move_down_named, name)) { onEvent(AppsOnPhoneEvent.MoveDown(row.app.id)) }
             }
         }
+        if (state.canAddHidden) ActionRow(s(R.string.admin_hidden_app), enabled = !state.sending) { onEvent(AppsOnPhoneEvent.AddHidden) }
     }
 }
 

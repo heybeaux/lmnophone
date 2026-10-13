@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright 2026 Plainphone contributors; SPDX-License-Identifier: Apache-2.0 -->
 <resources>
+    <string name="app_hidden_unavailable">Can\'t check the apps right now</string>
+    <string name="app_hidden_empty">There are no hidden apps to add.</string>
+    <string name="app_preview_add_body">It will appear on the home screen, below the other apps.</string>
     <string name="app_preview_version">Version %1$s</string>
     <string name="app_detail_meta">Version %1$s · Added %2$s · Last updated %3$s</string>
     <string name="app_detail_permissions">What %1$s can use</string>

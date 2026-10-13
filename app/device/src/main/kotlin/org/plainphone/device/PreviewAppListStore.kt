@@ -24,6 +24,23 @@ class PreviewAppListStore(private val dir: File,
         write("starter-list.txt", next.toList())
         true
     }
+    /** Publish order before membership, so a newly visible app can never appear at its old position.
+     * If membership fails, restore order. A crash before membership leaves the app hidden.
+     */
+    fun add(target: String, currentOrder: List<String>, eligible: () -> Boolean): Boolean = synchronized(lock) {
+        val oldStarter = starter()
+        if (target in oldStarter || !eligible()) return@synchronized false
+        val oldOrder = order()
+        val hadOrder = File(dir, "app-order.txt").exists()
+        write("app-order.txt", currentOrder.filter { it != target } + target)
+        try { write("starter-list.txt", oldStarter.toList() + target) }
+        catch (failure: Exception) {
+            // The injected write port may be the failure; restore through the real atomic writer.
+            if (hadOrder) PreviewAppListStore(dir).saveOrder(oldOrder) else File(dir, "app-order.txt").delete()
+            throw failure
+        }
+        true
+    }
     private fun read(name: String): List<String> = File(dir, name).let { file ->
         if (file.exists()) file.readLines().map(String::trim).filter(String::isNotEmpty).distinct() else emptyList()
     }

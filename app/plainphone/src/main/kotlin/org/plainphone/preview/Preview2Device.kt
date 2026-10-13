@@ -68,6 +68,17 @@ class Preview2Device(private val context: Context) {
 
     fun appVersion(id: String): String = pm.getPackageInfo(id, 0).versionName.orEmpty()
 
+    fun hiddenApps(): List<org.plainphone.device.PreviewHiddenApp> =
+        org.plainphone.device.AndroidPreviewHiddenApps(context,
+            android.content.ComponentName(context, org.plainphone.PlainphoneAdminReceiver::class.java))
+            .read(appList.starter(), protectedApps())
+
+    fun addApp(id: String, identity: String, active: () -> Boolean): Boolean =
+        appList.add(id, homeApps().map { it.first }) {
+            val eligible = hiddenApps().any { it.id == id && it.identity == identity }
+            eligible && active()
+        }
+
     /**
      * The plan for one re-apply ([org.plainphone.boot.PolicyRuntime]). Before the first unlock the
      * starter list can't be read, so the locked plan only restores the floor and lock task.

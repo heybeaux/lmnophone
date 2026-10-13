@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.asImageBitmap
 import org.plainphone.preview.*
 import org.plainphone.boot.PolicyRuntime
 import org.plainphone.device.authority.*
@@ -47,6 +48,10 @@ class PinAccessActivity : ComponentActivity() {
     private fun openApps() {
         if (page.page != PinPage.MENU) return
         appsFlow = PreviewAppsFlow(object : PreviewAppsPort {
+            override fun hidden(done: (List<org.plainphone.device.PreviewHiddenApp>?) -> Unit) =
+                runtime.previewHiddenApps { rows -> runOnUiThread { done(rows) } }
+            override fun add(app: org.plainphone.device.PreviewHiddenApp, pin: CharArray, active: () -> Boolean, done: (org.plainphone.device.AppAdditionResult) -> Unit) =
+                runtime.addPreviewApp(app.id, app.identity, pin, active) { result -> runOnUiThread { done(result) } }
             override fun read(done: (List<PreviewAppRow>?) -> Unit) = runtime.previewApps { rows -> runOnUiThread { done(rows) } }
             override fun move(id: String, delta: Int, active: () -> Boolean, done: (Boolean) -> Unit) =
                 runtime.movePreviewApp(id, delta, active) { result -> runOnUiThread { done(result) } }
@@ -71,25 +76,48 @@ class PinAccessActivity : ComponentActivity() {
                     canMoveDown = index < state.rows.lastIndex && !state.rows[index + 1].protected) } + listOf(
                     AppOnPhone(InstalledApp("@sms", getString(org.plainphone.ui.R.string.home_messages), ""), alwaysOn = true),
                     AppOnPhone(InstalledApp("@phone", getString(org.plainphone.ui.R.string.home_phone), ""), alwaysOn = true)),
-                sending = state.busy)) { event -> when (event) {
+                sending = state.busy, canAddHidden = true)) { event -> when (event) {
+                    AppsOnPhoneEvent.AddHidden -> editor.hidden()
                     AppsOnPhoneEvent.Back -> backApps()
                     is AppsOnPhoneEvent.Open -> editor.select(event.id)
                     is AppsOnPhoneEvent.MoveUp -> editor.move(event.id, -1)
                     is AppsOnPhoneEvent.MoveDown -> editor.move(event.id, 1)
                 } }
-            PreviewAppsStage.Details -> if (app != null) PreviewAppDetailScreen(appsContext, app.name, state.selected.version) { editor.askRemove() }
+            PreviewAppsStage.Details -> if (app != null) PreviewAppDetailScreen(appsContext, app.name, state.selected.version, onBack = ::backApps) { editor.askRemove() }
             PreviewAppsStage.Confirm, PreviewAppsStage.Removed -> if (app != null)
                 AppReviewScreen(AppReviewUiState(appsContext, app, stage = if (state.stage == PreviewAppsStage.Confirm)
-                    AppReviewStage.Remove else AppReviewStage.Removed, sending = state.busy)) {
-                    if (it == AppReviewEvent.Continue) { value = ""; editor.confirm() } else editor.open()
+                    AppReviewStage.Remove else AppReviewStage.Removed, sending = state.busy, previewSubset = true)) {
+                    if (it == AppReviewEvent.Continue) { value = ""; editor.confirm() } else if (it == AppReviewEvent.Back) backApps() else editor.open()
                 }
-            PreviewAppsStage.Pin -> PinScreen(PinUiState(appsContext,
+            PreviewAppsStage.HiddenList -> PreviewHiddenAppsScreen(appsContext,
+                state.hidden.map { HiddenAppRow(it.id, it.name, it.icon?.asImageBitmap()) },
+                state.loadFailed, state.busy, editor::selectHidden, ::backApps)
+            PreviewAppsStage.AddReview, PreviewAppsStage.AddUnreviewed, PreviewAppsStage.AddConfirm,
+            PreviewAppsStage.Added, PreviewAppsStage.Hidden -> state.selectedHidden?.let { selected ->
+                val stage = when (state.stage) {
+                    PreviewAppsStage.AddReview -> AppReviewStage.Review
+                    PreviewAppsStage.AddUnreviewed -> AppReviewStage.Unreviewed
+                    PreviewAppsStage.AddConfirm -> AppReviewStage.Confirm
+                    PreviewAppsStage.Added -> AppReviewStage.Added
+                    else -> AppReviewStage.Hidden
+                }
+                AppReviewScreen(AppReviewUiState(appsContext, InstalledApp(selected.id, selected.name, ""),
+                    stage = stage, helper = "Sam", sending = state.busy, previewSubset = true)) { event -> when (event) {
+                    AppReviewEvent.Continue -> { value = ""; editor.nextAdd() }
+                    AppReviewEvent.DontAdd -> editor.dontAdd()
+                    AppReviewEvent.Back -> backApps()
+                    else -> editor.open()
+                } }
+            }
+            PreviewAppsStage.Unsupported -> NotInBuildScreen { editor.open() }
+            PreviewAppsStage.Pin, PreviewAppsStage.AddPin -> PinScreen(PinUiState(appsContext,
                 stage = if (state.waitMillis > 0) PinStage.Locked else PinStage.Enter,
                 value = value, canContinue = value.length >= 6 && value.all { it in '0'..'9' },
                 sending = state.busy, wrongPin = state.wrong, freshExplanation = true,
                 wait = DateUtils.formatElapsedTime((state.waitMillis + 999) / 1000))) { event -> when (event) {
                     is PinEvent.ValueChanged -> value = event.value
                     PinEvent.Continue -> { val pin = value.toCharArray(); value = ""; editor.submit(pin) }
+                    PinEvent.UseRecoveryCode -> { value = ""; editor.unsupported() }
                     else -> backApps()
                 } }
             PreviewAppsStage.SaveFailed -> PreviewAppsFailureScreen(appsContext) { editor.open() }

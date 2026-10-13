@@ -38,6 +38,8 @@ class PreviewPinAccess(private val store: JointAuthorityStore, private val vault
     /** Removal consumes a fresh grant bound to the selected app, on the policy dispatcher. */
     fun authenticateRemoval(id: String, pin: CharArray): PinAccessResult = authenticateAction(pin, "preview:remove", id)
 
+    fun authenticateAddition(id: String, pin: CharArray): PinAccessResult = authenticateAction(pin, "preview:add", id)
+
     private fun authenticateAction(pin: CharArray, purpose: String, target: String): PinAccessResult = try {
         if (entry() != PinEntry.ENTER) PinAccessResult.Unavailable else {
             val action = PrivilegedAction(purpose, target)
