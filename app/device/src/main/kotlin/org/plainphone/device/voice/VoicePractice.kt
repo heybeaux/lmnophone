@@ -18,11 +18,16 @@ data class VoiceDraft(val personId: String, val savedAtMs: Long)
 /**
  * Where the practice was, kept across a configuration change such as text size (PLA-479). Ids and enums
  * only: the take itself stays in [VoiceDraftStore]. Recording and Saving are never a place: onStop has
- * already stopped the recorder, so they show as the Review or Person screen they ended on.
+ * already stopped the recorder, so they show as the Review or Person screen they ended on. The people
+ * list is [People], with no person (PLA-484).
  */
-data class VoicePlace(val personId: String, val screen: Screen, val notice: VoiceNotice? = null,
+data class VoicePlace(val personId: String?, val screen: Screen, val notice: VoiceNotice? = null,
     val problem: MicProblem? = null) {
-    enum class Screen { Person, Review, MicOff }
+    enum class Screen { People, Person, Review, MicOff }
+
+    companion object {
+        val People = VoicePlace(null, Screen.People)
+    }
 }
 
 enum class Interruption { Call, AudioFocusLost, AppStopped, ScreenOff }

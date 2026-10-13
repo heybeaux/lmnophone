@@ -98,14 +98,16 @@ class VoicePracticeController(
     fun open(place: VoicePlace? = null) {
         close()
         safely { store.prune() }
-        state = place?.let(::restore) ?: VoiceState.ChoosePerson
+        val restored = place?.let(::restore)
+        state = restored ?: VoiceState.ChoosePerson
         onChange(state)
-        if (state == VoiceState.ChoosePerson) say(VoicePrompt.Intro, null)
+        // A new visit, or a place that is gone (an unknown person): the people list is introduced.
+        if (restored == null) say(VoicePrompt.Intro, null)
     }
 
-    /** Where the practice is now, to come back to after a configuration change; null on the people list. */
-    fun place(): VoicePlace? = when (val s = state) {
-        VoiceState.ChoosePerson -> null
+    /** Where the practice is now, to come back to after a configuration change. */
+    fun place(): VoicePlace = when (val s = state) {
+        VoiceState.ChoosePerson -> VoicePlace.People
         is VoiceState.Person -> VoicePlace(s.person.id, VoicePlace.Screen.Person, s.notice)
         is VoiceState.Review -> VoicePlace(s.person.id, VoicePlace.Screen.Review, s.notice)
         is VoiceState.MicUnavailable -> VoicePlace(s.person.id, VoicePlace.Screen.MicOff, problem = s.problem)
@@ -116,6 +118,7 @@ class VoicePracticeController(
 
     /** The take is read again from the store: a pruned or deleted take shows the person's screen instead. */
     private fun restore(place: VoicePlace): VoiceState? {
+        if (place.screen == VoicePlace.Screen.People) return VoiceState.ChoosePerson
         val person = VoicePeople.practice.firstOrNull { it.id == place.personId } ?: return null
         val draft = safeDraft(person.id)
         return when (place.screen) {
@@ -123,6 +126,7 @@ class VoicePracticeController(
             VoicePlace.Screen.Review -> draft?.let { VoiceState.Review(person, it, notice = place.notice) }
                 ?: VoiceState.Person(person)
             VoicePlace.Screen.Person -> draft?.let { VoiceState.Review(person, it) } ?: VoiceState.Person(person, place.notice)
+            VoicePlace.Screen.People -> VoiceState.ChoosePerson
         }
     }
 
