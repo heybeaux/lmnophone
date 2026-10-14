@@ -52,8 +52,8 @@ class ShellNavigatorTest {
         val emergency = nav.onMore(at(ShellRoute.More), MoreEvent.OpenEmergencyDialer)
         assertEquals(ShellEffect.OpenEmergencyDialer, emergency.effect)
         assertEquals(at(ShellRoute.More), emergency.state)
-        assertEquals(at(ShellRoute.More, ShellRoute.AskForApp),
-            nav.onMore(at(ShellRoute.More), MoreEvent.AskForApp).state)
+        assertEquals(ShellEffect.OpenAppRequests,
+            nav.onMore(at(ShellRoute.More), MoreEvent.AskForApp).effect)
     }
 
     @Test fun backPopsAndFinishesAtHome() {

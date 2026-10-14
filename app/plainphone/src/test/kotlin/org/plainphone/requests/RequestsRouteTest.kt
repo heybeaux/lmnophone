@@ -23,6 +23,11 @@ class RequestsRouteTest {
         assertEquals(RequestUiStatus.NotConfirmed, ui.rows.single().status)
         assertFalse(RequestsUiMapper.map(RequestView(false, "", emptyList()), "Bus app", null, false).canSend)
     }
+    @Test fun moreMapperUsesConfiguredFlagEvenWithNoName() {
+        val mapper = ShellUiMapper(java.util.Locale.ENGLISH, true)
+        assertTrue(mapper.more(PreviewPhone.empty().copy(requestsReady = true)).requestsReady)
+        assertFalse(mapper.more(PreviewPhone.empty()).requestsReady)
+    }
     @Test fun recipientWriteRequiresFreshPinAndLiveScreen() {
         var saved = 0; var checks = 0
         val guard = RecipientChange({ pin -> checks++; pin.concatToString() == "123456" }, { saved++ })

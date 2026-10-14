@@ -29,7 +29,7 @@ class ProductionCleanupTest {
         assertFalse(mapper.ask(snapshot, "Maps").canSend)
         assertTrue(mapper.ask(snapshot, "Maps").requests.isEmpty())
         val nav = ShellNavigator(phone, phone, "LMNOPhone", testBuild = true)
-        assertEquals(ShellRoute.AskForApp, nav.onMore(ShellState(), MoreEvent.AskForApp).state.current)
+        assertEquals(ShellEffect.OpenAppRequests, nav.onMore(ShellState(), MoreEvent.AskForApp).effect)
         val ask = ShellState(listOf(ShellRoute.Home, ShellRoute.AskForApp), "Maps")
         assertEquals(ask, nav.onAsk(ask, AskForAppEvent.Send).state)
         val blocked = ShellState.forPreviewEntry("blocked_link").current as ShellRoute.BlockedLink

@@ -12,10 +12,10 @@ class AppRequestsTest {
         override fun write(value: RequestBook) { if (fail) error("disk unavailable"); book = value }
     }
     private class Port : RequestSmsPort {
-        var calls = 0; var sentNumber = ""; var permitted = true; var signal = true
+        var calls = 0; var sentNumber = ""; var permitted = true; var signal = true; var throws = false
         override fun problem() = if (!permitted) RequestStatus.NoPermission else if (!signal) RequestStatus.NoSignal else null
         override fun parts(text: String) = listOf(text, "second part")
-        override fun send(number: String, id: String, parts: List<String>) { calls++; sentNumber = number }
+        override fun send(number: String, id: String, parts: List<String>) { calls++; sentNumber = number; if (throws) error("uncertain handover") }
     }
     private val store = Memory(); private val port = Port()
     private var now = 1000L
@@ -69,6 +69,14 @@ class AppRequestsTest {
         assertEquals(0, port.calls)
         val bad = object : RequestStore { override fun read(): RequestBook = error("damaged"); override fun write(value: RequestBook) = Unit }
         assertEquals(RequestStatus.StorageError, AppRequests(bad, port, "x", { 0L }, { 10L }).submit("a", "Bus app").status)
+    }
+    @Test fun throwingHandoverStaysUnconfirmedUntilLateCallbacks() {
+        setup(); port.throws = true
+        assertEquals(RequestStatus.NotConfirmed, engine.submit("a", "Bus app").status)
+        assertEquals(RequestStatus.NotConfirmed, engine.view().requests.single().status)
+        engine.result("a", 0, RequestPart.Accepted); engine.result("a", 1, RequestPart.Accepted)
+        assertEquals(RequestStatus.Sent, engine.view().requests.single().status)
+        assertEquals(1, port.calls)
     }
     @Test fun optionalNameAndInvalidInputs() {
         engine.setRecipient(RequestRecipient("", "555-0100"))
