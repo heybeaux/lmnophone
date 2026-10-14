@@ -8,6 +8,8 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(60, 60, listOf("When no name is set, screens say \"this phone\", for example \"Add Camera to this phone?\".",
+            "Back from New recovery code returns to PIN settings.")),
         ReleaseNote(59, 59, listOf("TalkBack reads settings rows without arrows, and reads sent results without tick marks.",
             "Phone settings has a heading.")),
         ReleaseNote(58, 58, listOf("PIN settings shows only choices that work in this version.",
