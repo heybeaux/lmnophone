@@ -42,7 +42,7 @@ class ProductionCleanupTest {
         }
     }
     @Test fun familyNamesAreActualDataEvenWhenNamedSam() {
-        val data = FamilyList(true, listOf(FamilyPerson("real-entry", "Sam", "Sam", "5550100")))
+        val data = FamilyList(true, listOf(FamilyPerson("realentry", "Sam", "Sam", "5550100")))
         val sam = VoiceUiMapper.familyPeople(data).single()
         assertEquals("Sam", sam.name)
         assertTrue(VoiceUiMapper.familyPeople(data.copy(enabled = false)).isEmpty())
