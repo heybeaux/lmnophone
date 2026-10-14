@@ -41,6 +41,22 @@ class ProductionCleanupTest {
             assertEquals("", state.helper)
         }
     }
+    @Test fun productionPinWiringUsesSetupHelperForEveryHelperRole() {
+        val activity = File("src/main/kotlin/org/plainphone/PinAccessActivity.kt").readText()
+        assertFalse(activity.contains("R.string.pin_holder"))
+        assertEquals(4, Regex("R\\.string\\.setup_helper").findAll(activity).count())
+        val resources = File("../ui/src/main/res/values/production_strings.xml").readText()
+        val helper = "the person who set up LMNOPhone on this phone"
+        assertTrue(resources.contains("<string name=\"setup_helper\">$helper</string>"))
+        val state = pinUiState(PinPageState(PinPage.RECOVERY_LOCKED), AdminContext(""),
+            "", "", "", "30 seconds", "", null, helper = helper)
+        assertEquals(helper, state.helper)
+    }
+    @Test fun unusedPracticeSendHookIsNotAdvertisedOrWritable() {
+        assertFalse(File("src/debug/AndroidManifest.xml").readText().contains("org.plainphone.test.VOICE_SEND"))
+        assertFalse(File("src/debug/kotlin/org/plainphone/boot/TestHook.kt").readText().contains("VOICE_SEND"))
+        assertFalse(File("src/debug/kotlin/org/plainphone/voice/VoiceSendBuild.kt").readText().contains("fun marker("))
+    }
     @Test fun familyNamesAreActualDataEvenWhenNamedSam() {
         val data = FamilyList(true, listOf(FamilyPerson("realentry", "Sam", "Sam", "5550100")))
         val sam = VoiceUiMapper.familyPeople(data).single()
