@@ -187,6 +187,8 @@ class VoicePracticeTest {
                     is StartPlayback -> assertTrue(t.state is Review && (t.state as Review).playing)
                     is SendDraft -> fail("a send without Send or Try again: $s $e")
                     is Speak, StopPlayback, is DeleteDraft, Leave, is SendSeen -> Unit
+                    // The practice has no voice replies (PLA-527): nothing to play or mark heard.
+                    is PlayReply, is ReplyPlayed -> fail("a reply effect in the practice: $s $e")
                 }
                 if (recorderRunning) assertTrue("recorder running only while Recording is shown: $s $e -> ${t.state}", t.state is Recording)
                 val next = t.state.person

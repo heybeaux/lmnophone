@@ -4,7 +4,6 @@ package org.plainphone.device.voice
 
 import android.content.Context
 import java.io.File
-import java.io.IOException
 
 object AndroidFamilyStore {
     private fun credentialContext(context: Context): Context {
@@ -15,14 +14,7 @@ object AndroidFamilyStore {
     fun drafts(context: Context) = File(credentialContext(context).noBackupFilesDir, "voice-family-drafts")
     fun open(context: Context): FamilyStore {
         val privateContext = credentialContext(context)
-        return FamilyStore(File(privateContext.noBackupFilesDir, "voice-family")) { id ->
-            // Erase every supported format, including a partial take, without looking at message contents.
-            VoiceFormat.entries.forEach { format ->
-                val store = VoiceDraftStore(drafts(privateContext), format, System::currentTimeMillis)
-                listOf(store.file(id), store.takeFile(id)).forEach { file ->
-                    if (file.exists() && !file.delete()) throw IOException("could not erase family draft")
-                }
-            }
-        }
+        // Removal, turning off and a number change erase the drafts, send record and heard replies (PLA-527).
+        return FamilyStore(File(privateContext.noBackupFilesDir, "voice-family"), FamilyErase(privateContext.noBackupFilesDir)::erase)
     }
 }

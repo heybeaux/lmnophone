@@ -37,7 +37,10 @@ import org.plainphone.ui.theme.*
  * This flow alone may use pictures and symbols for someone who cannot read: the person's picture
  * is a monochrome initial for now, and record/stop/listen symbols always come with their word.
  */
-data class VoicePersonUi(val id: String, val name: String, val pictureInInk: Boolean = false)
+data class VoicePersonUi(val id: String, val name: String, val pictureInInk: Boolean = false,
+    val newMessage: Boolean = false)
+/** V12a: the family person's voice button. Listen before, Stop listening while playing, Play again after the last ends. */
+enum class VoiceUiListen { Listen, Stop, PlayAgain }
 enum class VoiceUiNotice { MaxLength, Interrupted, NothingRecorded, Deleted, CouldNotPlay, Busy, Unsent }
 enum class VoiceUiMicProblem { NotAllowed, TurnedOff, DidNotWork }
 /** V7 (the network or phone said no), V8 (no phone signal), or no answer known after a restart. */
@@ -50,7 +53,8 @@ sealed interface VoiceUiState {
     data class ChoosePerson(val people: List<VoicePersonUi>, val fromHome: Boolean = false,
         override val practice: Boolean = true) : VoiceUiState
     data class Person(val person: VoicePersonUi, val notice: VoiceUiNotice? = null, val openMessages: Boolean = false,
-        val messagesUnavailable: Boolean = false, override val practice: Boolean = true) : VoiceUiState
+        val messagesUnavailable: Boolean = false, override val practice: Boolean = true,
+        val listen: VoiceUiListen? = null) : VoiceUiState
     data class Recording(val person: VoicePersonUi, override val practice: Boolean = true) : VoiceUiState
     /** [canSend]: V4 with the black Send button. Without it, the practice review (V13). */
     data class Review(val person: VoicePersonUi, val playing: Boolean = false, val notice: VoiceUiNotice? = null,
@@ -82,6 +86,8 @@ sealed interface VoiceUiEvent {
     data object Send : VoiceUiEvent
     data object TryAgain : VoiceUiEvent
     data object Done : VoiceUiEvent
+    /** V12a: Listen, Stop listening or Play again on a family person's screen. */
+    data object Listen : VoiceUiEvent
 }
 
 private enum class Symbol { Record, Stop, Play, Cross, Send }
@@ -170,6 +176,16 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
             when (state) {
                 is VoiceUiState.ChoosePerson -> Unit
                 is VoiceUiState.Person -> {
+                    // UX V2 order: Messages with (scrolling, nearest the name), then Listen, Back and Record.
+                    state.listen?.let { listen ->
+                        Spacer(Modifier.height(PlainphoneSpace.S2))
+                        when (listen) {
+                            VoiceUiListen.Listen -> SmallButton(stringResource(R.string.family_listen_to, state.person.name), Symbol.Play) { onEvent(VoiceUiEvent.Listen) }
+                            VoiceUiListen.Stop -> SmallButton(stringResource(R.string.voice_stop_listening), Symbol.Stop) { onEvent(VoiceUiEvent.Listen) }
+                            VoiceUiListen.PlayAgain -> SmallButton(stringResource(R.string.family_play_again), Symbol.Play) { onEvent(VoiceUiEvent.Listen) }
+                        }
+                        Spacer(Modifier.height(PlainphoneSpace.S6))
+                    }
                     if (state.openMessages) ScreenLink(stringResource(R.string.family_back), { onEvent(VoiceUiEvent.Back) })
                     BigButton(stringResource(R.string.voice_record), Symbol.Record) { onEvent(VoiceUiEvent.Record) }
                 }
@@ -238,10 +254,20 @@ private fun SendBody(text: String) {
 @Composable
 private fun PersonRow(person: VoicePersonUi, family: Boolean = false, onClick: () -> Unit) {
     if (family) {
-        Column(Modifier.fillMaxWidth().plainphoneAction(onClick = onClick).padding(vertical = PlainphoneSpace.S4),
+        val description = if (person.newMessage) stringResource(R.string.family_new_message_desc, person.name) else person.name
+        Column(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description; role = Role.Button
+            onClick { onClick(); true } }
+            .plainphoneAction(onClick = onClick).padding(vertical = PlainphoneSpace.S4),
             horizontalAlignment = Alignment.CenterHorizontally) {
             PersonPicture(person, 120.dp, decorative = true)
             Text(person.name, style = PlainphoneType.App, textAlign = TextAlign.Center)
+            // V1: the Play symbol with its word, never the word alone and never a badge or count.
+            if (person.newMessage) Row(Modifier.padding(top = PlainphoneSpace.S2), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
+                SymbolMark(Symbol.Play, 20.dp, PlainphoneColors.Ink)
+                Text(stringResource(R.string.family_new_message), style = PlainphoneType.Row.copy(hyphens = Hyphens.Auto),
+                    textAlign = TextAlign.Center)
+            }
         }
         return
     }

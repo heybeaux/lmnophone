@@ -20,6 +20,8 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.view.accessibility.AccessibilityManager
 import java.io.File
+import org.plainphone.device.voice.replies.AndroidMmsInbox
+import org.plainphone.device.voice.replies.ReplyClip
 
 /**
  * MediaRecorder, mono. AAC-LC at 44.1 kHz / 24 kbit/s in `.m4a` by default; AMR-NB at 8 kHz /
@@ -159,19 +161,28 @@ class AndroidVoiceRecorder(context: Context) : VoiceRecorder {
 }
 
 /** Plays a draft as speech media. */
-class AndroidVoicePlayer : VoicePlayer {
+class AndroidVoicePlayer(context: Context? = null) : VoicePlayer {
+    private val app = context?.applicationContext
     private var player: MediaPlayer? = null
 
-    override fun play(file: File, onDone: () -> Unit, onError: () -> Unit) {
+    override fun play(file: File, onDone: () -> Unit, onError: () -> Unit) = start(onDone, onError) { it.setDataSource(file.path) }
+
+    /** Straight from the messaging store with READ_SMS (PLA-527): never copied into LMNOPhone's storage. */
+    override fun playReply(clip: ReplyClip, onDone: () -> Unit, onError: () -> Unit) {
+        val context = app ?: throw IllegalStateException("no context")
+        start(onDone, onError) { it.setDataSource(context, AndroidMmsInbox.partUri(clip.partId)) }
+    }
+
+    private fun start(onDone: () -> Unit, onError: () -> Unit, source: (MediaPlayer) -> Unit) {
         stop()
         val p = MediaPlayer()
         player = p
         try {
             p.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
-            p.setDataSource(file.path)
-            p.setOnCompletionListener { stop(); onDone() }
-            p.setOnErrorListener { _, _, _ -> stop(); onError(); true }
+            source(p)
+            p.setOnCompletionListener { if (player === p) { stop(); onDone() } }
+            p.setOnErrorListener { _, _, _ -> if (player === p) { stop(); onError() }; true }
             p.prepare()
             p.start()
         } catch (e: Exception) { stop(); throw e }
@@ -228,6 +239,15 @@ class AndroidVoiceSpeaker(context: Context, private val text: (VoicePrompt, Voic
     /** The picture's "hear the name": under TalkBack it is the only way to hear it in the phone's voice. */
     override fun speakOnRequest(prompt: VoicePrompt, person: VoicePerson?) = speak(prompt, person, requested = true)
 
+    /** One utterance, so the people list's intro and its new messages aren't cut off by each other (UX V1). */
+    override fun speakAll(prompts: List<Pair<VoicePrompt, VoicePerson?>>) {
+        if (prompts.isEmpty()) return
+        speakText(prompts.joinToString(" ") { text(it.first, it.second) }, requested = false)
+    }
+
+    /** Before a voice reply plays (UX V12a). Like [speakBeforeAction]: a stalled engine still plays it after 5 s. */
+    override fun speakThen(prompt: VoicePrompt, person: VoicePerson?, then: () -> Unit) = speakBeforeAction(prompt, person, then)
+
     /** Finish the spoken handoff before leaving; stop() cancels a stale navigation callback. */
     fun speakBeforeAction(prompt: VoicePrompt, person: VoicePerson?, action: () -> Unit) {
         var invoked = false
@@ -238,14 +258,16 @@ class AndroidVoiceSpeaker(context: Context, private val text: (VoicePrompt, Voic
         catch (_: Exception) { once() }
     }
 
-    private fun speak(prompt: VoicePrompt, person: VoicePerson?, requested: Boolean, action: (() -> Unit)? = null) {
+    private fun speak(prompt: VoicePrompt, person: VoicePerson?, requested: Boolean, action: (() -> Unit)? = null) =
+        speakText(text(prompt, person), requested, action)
+
+    private fun speakText(words: String, requested: Boolean, action: (() -> Unit)? = null) {
         stop()
         val touch = app.getSystemService(AccessibilityManager::class.java)?.isTouchExplorationEnabled == true
         if (!shouldSpeak(touch, audio.mode, requested)) { action?.invoke(); return }
         val id = completion.begin(action)
         // A missing/stalled TTS engine must not trap the person on this screen.
         if (action != null) main.postDelayed({ finished(id) }, 5_000)
-        val words = text(prompt, person)
         if (tts == null) tts = TextToSpeech(app) { status ->
             ready = status == TextToSpeech.SUCCESS
             tts?.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)

@@ -33,4 +33,13 @@
     <string name="family_say_opening_messages">Opening Messages.</string>
     <string name="family_say_messages_unavailable">Messages didn\'t open. Ask %2$s for help.</string>
     <string name="family_say_person">%1$s. Tap Record to talk to %1$s, or Messages to see what %1$s sent.</string>
+    <string name="family_new_message">New message</string>
+    <string name="family_new_message_desc">%1$s, new message</string>
+    <string name="family_listen_to">Listen to %1$s</string>
+    <string name="family_play_again">Play again</string>
+    <string name="family_say_new_from">%1$s sent you a message.</string>
+    <string name="family_say_person_new">%1$s. %1$s sent you a message. Tap Listen to hear it, or Record to talk to %1$s.</string>
+    <string name="family_say_reply">%1$s\'s message.</string>
+    <string name="family_say_reply_next">%1$s\'s next message.</string>
+    <string name="family_say_reply_end">Tap Play again to hear it again, or Record to talk to %1$s.</string>
 </resources>
