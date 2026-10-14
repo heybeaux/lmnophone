@@ -28,4 +28,5 @@
     <string name="requests_recipient_confirm">Send requests to this person?</string>
     <string name="requests_remove_confirm">Stop sending app requests? Saved requests will stay on this phone.</string>
     <string name="requests_save_error">The change could not be saved. Try again.</string>
+    <string name="requests_recipient_read_error">Who gets requests could not be read. Check again later.</string>
 </resources>

@@ -537,14 +537,21 @@ class MainActivity : ComponentActivity() {
                 Log.i(PolicyRuntime.TAG, "home shown lockTask=${runtime.lockTaskState()} at=${SystemClock.elapsedRealtime()}")
             }
             var snapshot by remember(phone) { mutableStateOf(phone.snapshot()) }
-            LaunchedEffect(shell.state, phone) {
-                while (true) {
-                    val family = try { familyStore.read() } catch (_: Exception) { org.plainphone.device.voice.FamilyList() }
+            var requestsReady by remember(phone) { mutableStateOf(false) }
+            // Recipient changes happen in another activity. Returning here refreshes More once,
+            // including after a change/removal, without reading the ledger on every clock tick.
+            LaunchedEffect(resumed, phone) {
+                if (resumed) {
                     val requests = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                         org.plainphone.device.requests.RequestEngine.get(this@MainActivity).view()
                     }
-                    snapshot = phone.snapshot().copy(familyEnabled = family.enabled, familyCount = family.people.size,
-                        requestsReady = requests.available && requests.isSetUp)
+                    requestsReady = requests.available && requests.isSetUp
+                }
+            }
+            LaunchedEffect(shell.state, phone) {
+                while (true) {
+                    val family = try { familyStore.read() } catch (_: Exception) { org.plainphone.device.voice.FamilyList() }
+                    snapshot = phone.snapshot().copy(familyEnabled = family.enabled, familyCount = family.people.size)
                     delay(1_000)
                 }
             }
@@ -578,7 +585,7 @@ class MainActivity : ComponentActivity() {
             }
             val waitingRead by runtime.waitingRead.collectAsState()
             val settingsWait = settingsWaitingChange(waitingRead)
-            PlainphoneShell(shell.state, snapshot, mapper, shell.navigator ?: return@setContent,
+            PlainphoneShell(shell.state, snapshot.copy(requestsReady = requestsReady), mapper, shell.navigator ?: return@setContent,
                 notice = notice, onNotice = ::openNotice,
                 counts = counts,
                 isDeviceSecure = getSystemService(KeyguardManager::class.java).isDeviceSecure,
@@ -827,7 +834,7 @@ class ShellViewModel : ViewModel() {
             val ready = PreviewPhone(sample.copy(apps = apps, notices = NoticeInput(sample.mode, needsAttention = attention)))
             Handler(Looper.getMainLooper()).post {
                 if (generation != prepared) return@post
-                navigator = ShellNavigator(ready, ready, productName, testBuild = true)
+                navigator = ShellNavigator(ready, productName, testBuild = true)
                 phone = ready
             }
         }

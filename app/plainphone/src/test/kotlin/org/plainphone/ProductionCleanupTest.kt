@@ -13,25 +13,16 @@ import org.plainphone.device.voice.*
 import org.plainphone.voice.VoiceUiMapper
 
 class ProductionCleanupTest {
-    @Test fun liveDefaultsHaveNoPeopleAppsOrHistoryAndCannotClaimSent() {
+    @Test fun liveDefaultsHaveNoPeopleOrAppsAndRequestsUseTheRealActivity() {
         val snapshot = PreviewPhone.empty()
         assertEquals("", snapshot.userName)
         assertTrue(snapshot.trustedPeople.isEmpty())
-        assertEquals("", snapshot.requestRecipient)
         assertTrue(snapshot.apps.isEmpty())
-        assertTrue(snapshot.requests.isEmpty())
         val phone = PreviewPhone(snapshot)
-        assertEquals(AppRequestResult.Failed, phone.send("Maps"))
-        assertTrue(phone.snapshot().requests.isEmpty())
         val mapper = ShellUiMapper(Locale.UK, true)
         assertTrue(mapper.more(snapshot).pinHolderOnly)
-        assertFalse(mapper.ask(snapshot, "Maps").isSetUp)
-        assertFalse(mapper.ask(snapshot, "Maps").canSend)
-        assertTrue(mapper.ask(snapshot, "Maps").requests.isEmpty())
-        val nav = ShellNavigator(phone, phone, "LMNOPhone", testBuild = true)
+        val nav = ShellNavigator(phone, "LMNOPhone", testBuild = true)
         assertEquals(ShellEffect.OpenAppRequests, nav.onMore(ShellState(), MoreEvent.AskForApp).effect)
-        val ask = ShellState(listOf(ShellRoute.Home, ShellRoute.AskForApp), "Maps")
-        assertEquals(ask, nav.onAsk(ask, AskForAppEvent.Send).state)
         val blocked = ShellState.forPreviewEntry("blocked_link").current as ShellRoute.BlockedLink
         assertNull((blocked.stage as BlockedLinkUiState.Blocked).shareWith)
     }

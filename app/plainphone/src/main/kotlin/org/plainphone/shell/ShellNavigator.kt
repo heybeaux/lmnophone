@@ -3,9 +3,6 @@
 package org.plainphone.shell
 
 import org.plainphone.ui.home.HomeEvent
-import org.plainphone.ui.user.AppRequestResult
-import org.plainphone.ui.user.AppRequestResultEvent
-import org.plainphone.ui.user.AskForAppEvent
 import org.plainphone.ui.user.BlockedLinkEvent
 import org.plainphone.ui.user.BlockedLinkUiState
 import org.plainphone.ui.user.AboutEvent
@@ -30,8 +27,6 @@ sealed interface ShellRoute {
     data object Brightness : ShellRoute
     data object Battery : ShellRoute
     data object PhoneSettings : ShellRoute
-    data object AskForApp : ShellRoute
-    data class RequestResult(val result: AppRequestResult) : ShellRoute
     /**
      * [sanitizedTarget] is `{host}{path}` with userinfo, query and fragment already removed.
      * [first] is the stage "Don't send" returns to.
@@ -46,8 +41,8 @@ sealed interface ShellRoute {
     data object NotInBuild : ShellRoute
 }
 
-/** Back stack (Home at the bottom) and the request being written. */
-data class ShellState(val stack: List<ShellRoute> = listOf(ShellRoute.Home), val draft: String = "") {
+/** Back stack (Home at the bottom). */
+data class ShellState(val stack: List<ShellRoute> = listOf(ShellRoute.Home)) {
     val current: ShellRoute get() = stack.last()
 
     companion object {
@@ -90,7 +85,6 @@ data class Step(val state: ShellState, val effect: ShellEffect? = null)
  */
 class ShellNavigator(
     private val phone: PhoneSource,
-    private val outbox: RequestOutbox,
     private val productName: String,
     private val testBuild: Boolean = false,
 ) {
@@ -142,27 +136,17 @@ class ShellNavigator(
         AboutEvent.Ok -> back(s)
     }
 
-    fun onAsk(s: ShellState, e: AskForAppEvent): Step = when (e) {
-        AskForAppEvent.Back -> back(s)
-        is AskForAppEvent.MessageChanged -> Step(if (RequestRules.accepts(e.value)) s.copy(draft = e.value) else s)
-        AskForAppEvent.Send -> send(s)
-        is AskForAppEvent.Retry -> Step(s)
-    }
-
-    fun onResult(s: ShellState, e: AppRequestResultEvent): Step = when (e) {
-        AppRequestResultEvent.Ok -> back(s)
-        AppRequestResultEvent.Retry -> send(back(s).state)
-        is AppRequestResultEvent.RetryRequest -> Step(s)
-    }
-
     fun onLink(s: ShellState, e: BlockedLinkEvent): Step {
         val link = s.current as? ShellRoute.BlockedLink ?: return Step(s)
         val snapshot = phone.snapshot()
         fun stage(next: BlockedLinkUiState) = Step(s.copy(stack = s.stack.dropLast(1) + link.copy(stage = next)))
         return when (e) {
             BlockedLinkEvent.GoBack, BlockedLinkEvent.Ok -> back(s)
-            BlockedLinkEvent.ReviewSharing -> stage(BlockedLinkUiState.Confirm(snapshot.requestRecipient,
-                ShareLinkText.format(productName, snapshot.userName, link.sanitizedTarget)))
+            BlockedLinkEvent.ReviewSharing -> {
+                val recipient = (link.stage as? BlockedLinkUiState.Blocked)?.shareWith
+                if (recipient.isNullOrBlank()) Step(s) else stage(BlockedLinkUiState.Confirm(recipient,
+                    ShareLinkText.format(productName, snapshot.userName, link.sanitizedTarget)))
+            }
             BlockedLinkEvent.DontSend -> stage(link.first)
             // Preview: nothing is sent and the link isn't kept.
             BlockedLinkEvent.Send ->
@@ -183,13 +167,6 @@ class ShellNavigator(
     private fun push(s: ShellState, route: ShellRoute) = Step(s.copy(stack = s.stack + route))
 
     private fun notInBuild(s: ShellState) = push(s, ShellRoute.NotInBuild)
-
-    private fun send(s: ShellState): Step {
-        if (s.current != ShellRoute.AskForApp || phone.snapshot().requestRecipient.isBlank() || !RequestRules.canSend(s.draft)) return Step(s)
-        val result = outbox.send(s.draft)
-        val next = if (result == AppRequestResult.Sent) s.copy(draft = "") else s
-        return push(next, ShellRoute.RequestResult(result))
-    }
 }
 
 /** The text a trusted person gets for a shared link (docs/ux/README.md, "Texts Plainphone sends"). */
