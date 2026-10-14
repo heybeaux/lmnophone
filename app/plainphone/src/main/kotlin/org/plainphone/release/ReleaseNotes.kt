@@ -8,6 +8,7 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(52, 52, listOf("Who gets requests now says so when its saved details can't be read.")),
         ReleaseNote(51, 51, listOf("When someone on your Family list sends a voice message back by picture message (MMS), their card shows New message. Tap Listen on their page to hear it.",
             "Clearer wording for adding people to Voice messages and for entering the recovery code.")),
         ReleaseNote(50, 50, listOf("Choose who gets app requests in PIN settings, using a fresh PIN.",
