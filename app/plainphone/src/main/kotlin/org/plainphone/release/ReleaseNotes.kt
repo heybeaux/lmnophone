@@ -8,6 +8,8 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(57, 57, listOf("Adding an app that uses Location now works. You choose whether it can use Location, and its page shows that choice.",
+            "If adding an app fails partway, what it can use goes back to how it was, and the app stays hidden.")),
         ReleaseNote(56, 56, listOf("In PIN settings, you can now choose Not now on a request, then Remove it or Keep it.",
             "A removed request disappears from Requests and from Ask for an app, and stays removed after a restart. Removing one doesn't change today's request limit.",
             "Needs you shows how many requests are waiting. Tap it to open Requests. The Requests row shows the same count.",
