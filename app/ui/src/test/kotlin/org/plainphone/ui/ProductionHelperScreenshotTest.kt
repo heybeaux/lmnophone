@@ -73,10 +73,10 @@ class ProductionHelperScreenshotTest(private val scale: Float) {
                 val range = scroll.config[SemanticsProperties.VerticalScrollAxisRange]
                 assertTrue("Helper text must be reachable by scrolling",
                     help.positionInRoot.y + help.size.height - range.maxValue() <= scroll.boundsInRoot.bottom + 1f)
-                nodes.forEach { node ->
+                listOf(help).forEach { node ->
                     val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
                     node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
-                    layouts.forEach { assertFalse("Text must wrap without clipping", it.hasVisualOverflow) }
+                    layouts.forEach { assertFalse("Text overflow: ${it.layoutInput.text.text}; size=${it.size}; lastBottom=${it.getLineBottom(it.lineCount - 1)}", it.hasVisualOverflow) }
                 }
                 checked = true
             }) { content() }

@@ -39,7 +39,7 @@ class PinAccessActivity : ComponentActivity() {
             { page.page == PinPage.MENU && lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) },
             { org.plainphone.device.voice.AndroidMicAccess(this, android.content.ComponentName(this, PlainphoneAdminReceiver::class.java)).selfGrant() },
             { name -> familySpeaker.speakOnRequest(org.plainphone.device.voice.VoicePrompt.Name, org.plainphone.device.voice.VoicePerson("name", name)) },
-            { family = null; familyEditor = null }, { family = it }, helperName = getString(org.plainphone.ui.R.string.pin_holder)).also { it.open() }
+            { family = null; familyEditor = null }, { family = it }, helperName = getString(org.plainphone.ui.R.string.setup_helper)).also { it.open() }
     }
     private var apps by mutableStateOf<PreviewAppsState?>(null)
     private var appsFlow: PreviewAppsFlow? = null
@@ -101,7 +101,7 @@ class PinAccessActivity : ComponentActivity() {
                     else -> AppReviewStage.Hidden
                 }
                 AppReviewScreen(AppReviewUiState(appsContext, InstalledApp(selected.id, selected.name, ""),
-                    stage = stage, helper = getString(org.plainphone.ui.R.string.pin_holder), sending = state.busy, previewSubset = true)) { event -> when (event) {
+                    stage = stage, helper = getString(org.plainphone.ui.R.string.setup_helper), sending = state.busy, previewSubset = true)) { event -> when (event) {
                     AppReviewEvent.Continue -> { value = ""; editor.nextAdd() }
                     AppReviewEvent.DontAdd -> editor.dontAdd()
                     AppReviewEvent.Back -> backApps()
@@ -181,6 +181,7 @@ class PinAccessActivity : ComponentActivity() {
                         PinPage.RECOVERY_LOCKED, PinPage.RECOVERY_ISSUED -> PinScreen(pinUiState(
                             page, AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)), value, confirmation, flow.displayedCode(),
                             waitText(page.waitMillis), waitText(page.pinWaitMillis), waitingChangeName(waitingNow),
+                            helper = getString(org.plainphone.ui.R.string.setup_helper),
                         )) { event -> when (event) {
                             is PinEvent.ValueChanged -> value = event.value
                             is PinEvent.ConfirmationChanged -> confirmation = event.value
@@ -216,7 +217,7 @@ class PinAccessActivity : ComponentActivity() {
                                 PinPage.OFF_INTRO -> TurnOffStage.Intro
                                 PinPage.OFF_FIRST -> TurnOffStage.FirstConfirmation
                                 else -> TurnOffStage.LastConfirmation
-                            }, helper = getString(org.plainphone.ui.R.string.pin_holder), sending = page.busy,
+                            }, helper = getString(org.plainphone.ui.R.string.setup_helper), sending = page.busy,
                             testBuild = applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_TEST_ONLY != 0,
                         )) { if (it == TurnOffEvent.Continue) flow.continueTurnOff() else finish() }
                         PinPage.WAIT_STARTED, PinPage.WAIT_BUSY, PinPage.WAIT_FAILED -> {

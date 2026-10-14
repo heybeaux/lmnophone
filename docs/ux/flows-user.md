@@ -789,11 +789,12 @@ Exact added copy:
 - **about_limitations**: This is a test version. Some choices still say “Not in this test build yet”. For phone settings that need a PIN, open More, then PIN settings.
 - **about_privacy_current**: LMNOPhone has no account, analytics or server of its own.
 - **about_voice_retention**: Unsent voice messages stay on this phone for up to 7 days. Sending, deleting, replacing a recording, removing its person or turning Family off erases the recording.
+- **setup_helper**: the person who set up LMNOPhone on this phone
 - **pin_holder**: this phone’s PIN holder
 - **current_phone_user**: the person using this phone
 - **more_pin_holder**: PIN settings
 - **ask_not_set_up**: Not set up on this phone yet.
-- **ask_missing_recipient**: App requests need a trusted person’s number. No request has been sent.
+- **ask_missing_recipient**: Not set up on this phone yet. Nothing has been sent. The person who set up this phone can turn it on.
 - **voice_empty_family**: No people to show yet. This phone’s PIN holder can add people in More, then PIN settings, then Family.
 
-Release changes come from `app/plainphone/src/main/kotlin/org/plainphone/release/ReleaseNotes.kt`, the single shipped release-history source. About shows latest changes, all known changes since the previous observed version, and an Older versions list. First observation has no previous-install claim. Emergency instructions remain unchanged.
+Release changes come from `app/plainphone/src/main/kotlin/org/plainphone/release/ReleaseNotes.kt`, the single shipped release-history source. About shows latest changes once, intervening known releases under New since your last version, and an Older versions list. Hide New since your last version when there are no intervening releases. Helper roles use setup_helper; pin_holder still means the person who holds the PIN. First observation has no previous-install claim. Emergency instructions remain unchanged.

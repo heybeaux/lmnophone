@@ -13,7 +13,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import org.plainphone.PlainphoneAdminReceiver
-import org.plainphone.voice.VoiceSendBuild
 
 /**
  * Test build only: sets up the PLA-190 boot scenarios from adb, which cannot change a Device Owner's
@@ -34,9 +33,6 @@ import org.plainphone.voice.VoiceSendBuild
  * - `org.plainphone.test.FEATURE_FAULT --ez on true|false`: on clears the lock-task features and makes the
  *   runtime drop every feature write until off ([FeatureFault], survives reboot), so the features never
  *   read back with KEYGUARD (PLA-344 fallback containment). Off queues a re-apply.
- * - `org.plainphone.test.VOICE_SEND --es number N` / `--ez on false`: turns real voice sending on for Sam
- *   with fictional number N, or off ([org.plainphone.voice.VoiceSendBuild], PLA-499). Takes effect when the
- *   app restarts. The number is never logged.
  */
 class TestHook : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -61,11 +57,6 @@ class TestHook : BroadcastReceiver() {
             } else {
                 FeatureFault.marker(context).delete()
                 PolicyRuntime.get(context).reapply("feature-fault-off")
-            }
-            "org.plainphone.test.VOICE_SEND" -> {
-                val marker = VoiceSendBuild.marker(context)
-                val number = intent.getStringExtra("number")
-                if (intent.getBooleanExtra("on", true) && number != null) marker.writeText(number) else marker.delete()
             }
             "org.plainphone.test.NOTIFY" -> {
                 val target = intent.getStringExtra("component")?.let(ComponentName::unflattenFromString) ?: return

@@ -52,7 +52,8 @@ class AboutScreenScreenshotTest(private val scale: Float) {
                     n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
                 val texts = nodes.map(::text)
                 assertTrue("LMNOPhone" in texts)
-                assertEquals(if (value.showOlder) 0 else 1, texts.count { it == "Version 49" })
+                assertEquals(0, texts.count { it == "Version 49" })
+                assertEquals(if (value.showOlder) 0 else 1, texts.count { it == latest.changes.first() })
                 assertTrue("Version 0.1.0-preview-49 (49)" in texts)
                 assertEquals(!value.showOlder && value.sincePrevious.isNotEmpty(), "New since your last version" in texts)
                 assertTrue("Tap Phone, type 9-1-1, and press call." in texts)
