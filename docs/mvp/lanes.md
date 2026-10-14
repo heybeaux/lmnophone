@@ -479,3 +479,19 @@ permits Added. This preview does not change permissions or the locked/floor plan
 ### Production-facing About and neutral identity (PLA-528)
 
 `:plainphone` supplies `AboutUiState(versionName, versionCode, latest, sincePrevious, older, isDeviceSecure)` from package metadata and startup observation in Home preferences. `:ui` renders `ReleaseNoteUi` entries and browses Older versions without reading storage. `MoreUiState.pinHolderOnly` exposes the PIN host when there is no configured trusted identity; `AskForAppUiState.isSetUp` renders the truthful unavailable state. Voice controllers default to an empty people list; the runtime host supplies saved Family entries.
+
+## App-request SMS slice (PLA-525)
+
+`AppRequests` in `:policy` owns the five-attempt daily quota, validation, duplicate
+attempt IDs, multipart result aggregation and interrupted-send uncertainty.
+`RequestStore` and `RequestSmsPort` are its storage/transport ports. The `:device`
+`RequestEngine` supplies one serialized controller per process, an atomic CE
+`noBackupFilesDir/app-requests` file and explicit SMS sent-intent callbacks.
+`RequestRecipient` is a separately configured app-request destination; it confers
+no PIN authority and never comes from a guessed Family entry.
+
+`:plainphone` owns `RequestsUiMapper`, More → `RequestsActivity`, the PIN-menu
+history route and `RequestRecipientActivity`. The policy dispatcher consumes a
+fresh PIN before viewing/changing the recipient. Pause invalidates the editor.
+`:ui` `RequestsScreen` and `RequestRecipientScreen` take display state and emit
+plain events; they do not send SMS, read storage or decide quota/authority.

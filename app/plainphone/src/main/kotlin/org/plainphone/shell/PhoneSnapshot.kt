@@ -29,6 +29,7 @@ data class PhoneSnapshot(
     val apps: List<ApprovedApp>,
     val notices: NoticeInput,
     val requests: List<SavedRequest>,
+    val requestsReady: Boolean = false,
     val familyEnabled: Boolean = false,
     val familyCount: Int = 0,
 )

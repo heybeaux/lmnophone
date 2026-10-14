@@ -100,6 +100,7 @@ fun PinChangeResultScreen(context: AdminContext, changed: Boolean, onOk: () -> U
 @Composable internal fun destinationTitle(destination: AdminDestination, user: String) = s(when (destination) {
     AdminDestination.VoiceMessages -> R.string.family_title
     AdminDestination.AddApp -> R.string.more_add; AdminDestination.HiddenApp -> R.string.admin_hidden_app
+    AdminDestination.RequestRecipient -> R.string.requests_recipient
     AdminDestination.Apps -> R.string.admin_apps; AdminDestination.Requests -> R.string.admin_requests
     AdminDestination.Updates -> R.string.admin_updates; AdminDestination.Settings -> R.string.admin_settings
     AdminDestination.Limits -> R.string.admin_limits; AdminDestination.People -> R.string.admin_people

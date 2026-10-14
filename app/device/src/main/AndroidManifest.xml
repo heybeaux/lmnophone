@@ -29,5 +29,6 @@
         <receiver
             android:name="org.plainphone.device.voice.send.VoiceSendResultReceiver"
             android:exported="false" />
+        <receiver android:name="org.plainphone.device.requests.RequestSmsResultReceiver" android:exported="false" />
     </application>
 </manifest>

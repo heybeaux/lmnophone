@@ -74,6 +74,7 @@ sealed interface ShellEffect {
     data object OpenDialer : ShellEffect
     data object OpenMessages : ShellEffect
     data object OpenTrustedPerson : ShellEffect
+    data object OpenAppRequests : ShellEffect
     /** The system dialer with the emergency number filled in. Never places the call. */
     data object OpenEmergencyDialer : ShellEffect
     data class OpenApp(val id: String) : ShellEffect
@@ -109,7 +110,7 @@ class ShellNavigator(
     fun onMore(s: ShellState, e: MoreEvent): Step = when (e) {
         MoreEvent.Back -> back(s)
         MoreEvent.OpenEmergencyDialer -> Step(s, ShellEffect.OpenEmergencyDialer)
-        MoreEvent.AskForApp -> push(s.copy(draft = ""), ShellRoute.AskForApp)
+        MoreEvent.AskForApp -> Step(s, ShellEffect.OpenAppRequests)
         MoreEvent.OpenPhoneSettings -> push(s, ShellRoute.PhoneSettings)
         MoreEvent.OpenTrustedPerson -> Step(s, ShellEffect.OpenTrustedPerson)
         MoreEvent.OpenAbout -> push(s, ShellRoute.About)

@@ -71,7 +71,7 @@ class ShellUiMapper(locale: Locale, is24Hour: Boolean) {
     fun more(s: PhoneSnapshot) = MoreUiState(when (s.mode) {
         Mode.TRUSTED -> MoreMode.Trusted(s.trustedPeople, s.requestRecipient)
         Mode.SELF_MANAGED -> MoreMode.SelfManaged(s.selfManagedWaitMinutes)
-    }, voicePractice = !(s.familyEnabled && s.familyCount > 0), pinHolderOnly = s.trustedPeople.isEmpty())
+    }, voicePractice = !(s.familyEnabled && s.familyCount > 0), pinHolderOnly = s.trustedPeople.isEmpty(), requestsReady = s.requestsReady)
 
     fun ask(s: PhoneSnapshot, draft: String) = AskForAppUiState(
         recipientName = s.requestRecipient,

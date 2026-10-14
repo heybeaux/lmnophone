@@ -31,4 +31,4 @@ fun pinUiState(page: PinPageState, context: AdminContext, value: String, confirm
     recoveryCode = if (page.page == PinPage.RECOVERY_ISSUED) recoveryCode else "",
 )
 
-fun pinMenuUiState(context: AdminContext) = AdminMenuUiState(context, AdminDestination.entries.map { AdminMenuItem(it) })
+fun pinMenuUiState(context: AdminContext) = AdminMenuUiState(context, AdminDestination.entries.filter { it != AdminDestination.RequestRecipient }.flatMap { if (it == AdminDestination.Requests) listOf(AdminMenuItem(it), AdminMenuItem(AdminDestination.RequestRecipient)) else listOf(AdminMenuItem(it)) })

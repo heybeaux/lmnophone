@@ -378,6 +378,19 @@ class PolicyRuntime private constructor(private val context: Context) {
         try { run("pin-recovery") } finally { done(result) }
     }
 
+    /** Number reads and writes require a fresh PIN on the common dispatcher. */
+    fun requestRecipientAction(pin: CharArray, change: Boolean, recipient: org.plainphone.policy.RequestRecipient?,
+        active: () -> Boolean, done: (PinAccessResult, Boolean, org.plainphone.policy.RequestRecipient?) -> Unit) = dispatcher.post {
+        var result: PinAccessResult = PinAccessResult.Unavailable
+        val engine = org.plainphone.device.requests.RequestEngine.get(context)
+        val guard = org.plainphone.requests.RecipientChange({ secret ->
+            pins.authenticateRequestRecipient(secret).also { result = it } == PinAccessResult.Open
+        }, { value -> if (change) engine.setRecipient(value) })
+        val saved = guard.apply(pin, recipient, active)
+        val current = if (saved) runCatching { engine.recipient() } else null
+        done(result, saved && current?.isSuccess == true, current?.getOrNull())
+    }
+
     fun checkPin(pin: CharArray, done: (PinAccessResult) -> Unit) = dispatcher.post {
         done(pins.authenticate(pin))
     }

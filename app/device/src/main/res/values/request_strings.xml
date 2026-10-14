@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<!-- TODO(copy): Product & UX review must confirm the neutral SMS template in flows-trusted-person.md. -->
+<resources>
+    <string name="request_sms_text">LMNOPhone: An app was requested: “%1$s”. To add it, you need to be with the phone. On the phone: More, then “PIN settings”, then “Requests”.</string>
+</resources>

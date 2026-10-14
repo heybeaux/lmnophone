@@ -540,7 +540,11 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(shell.state, phone) {
                 while (true) {
                     val family = try { familyStore.read() } catch (_: Exception) { org.plainphone.device.voice.FamilyList() }
-                    snapshot = phone.snapshot().copy(familyEnabled = family.enabled, familyCount = family.people.size)
+                    val requests = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        org.plainphone.device.requests.RequestEngine.get(this@MainActivity).view()
+                    }
+                    snapshot = phone.snapshot().copy(familyEnabled = family.enabled, familyCount = family.people.size,
+                        requestsReady = requests.available && requests.isSetUp)
                     delay(1_000)
                 }
             }
@@ -774,6 +778,7 @@ class MainActivity : ComponentActivity() {
             ShellEffect.OpenMessages ->
                 CommunicationEntryIntents.messages()
             ShellEffect.OpenTrustedPerson -> Intent(this, PinAccessActivity::class.java)
+            ShellEffect.OpenAppRequests -> Intent(this, org.plainphone.requests.RequestsActivity::class.java)
             is ShellEffect.OpenApp -> packageManager.getLaunchIntentForPackage(effect.id)
             ShellEffect.Finish -> null.also { finish() }
         } ?: return

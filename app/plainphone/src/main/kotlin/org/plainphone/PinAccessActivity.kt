@@ -207,6 +207,9 @@ class PinAccessActivity : ComponentActivity() {
                                 AdminDestination.NewRecoveryCode -> flow.newRecoveryCode()
                                 AdminDestination.VoiceMessages -> openFamily()
                                 AdminDestination.Apps -> openApps()
+                                AdminDestination.Requests -> startActivity(Intent(this@PinAccessActivity, org.plainphone.requests.RequestsActivity::class.java)
+                                    .putExtra(org.plainphone.requests.RequestsActivity.HISTORY, true))
+                                AdminDestination.RequestRecipient -> startActivity(Intent(this@PinAccessActivity, org.plainphone.requests.RequestRecipientActivity::class.java))
                                 else -> flow.unsupported()
                             }
                         } }

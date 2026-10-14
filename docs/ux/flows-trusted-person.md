@@ -398,3 +398,23 @@ Allowed/Not allowed sentence because permissions stay as Android has them now.
 App details, Remove confirmation and T4d have **Back**. T4a/T4b retain **Don't add**.
 No developer is shown unless reported; there is no More about this app route in
 this preview. Recovery code shows the existing unsupported-feature explanation.
+
+## T3 production request subset and recipient setup (PLA-525)
+
+Lead decision on PLA-525: PIN settings → **Who gets requests**, with a fresh PIN
+before reading the number. Optional **Name (optional)**, required **Phone number**.
+A new or changed recipient requires **Continue**, then **Send requests to this
+person?**, with the entered name (if any) and number, then **Save**, then a fresh
+PIN before the durable write. Details show the saved name/number, **Change** and
+**Remove**. Removal asks **Stop sending app requests? Saved requests will stay on
+this phone.**, then **Remove** and a fresh PIN. A failed save says **The change
+could not be saved. Try again.** Back or leaving the activity writes nothing.
+
+The Family picker is omitted from this bounded slice. No Family entry is selected
+implicitly. This setting does not alter PIN credentials or trusted-person authority.
+The Requests menu shows saved text, day and the truthful U5 send result. Empty:
+**No requests saved on this phone.** No Find, Add, Remove-request or reply action.
+
+The neutral SMS template, when the phone user's name is not configured, is:
+`LMNOPhone: An app was requested: “{request}”. To add it, you need to be with the phone. On the phone: More, then “PIN settings”, then “Requests”.`
+Copy additions are included in the same focused Product & UX review as the code.

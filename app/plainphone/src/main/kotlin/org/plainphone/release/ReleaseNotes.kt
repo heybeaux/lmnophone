@@ -8,6 +8,9 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(50, 50, listOf("Choose who gets app requests in PIN settings, using a fresh PIN.",
+            "Ask for an app sends a text and shows Sent, Not sent or Not confirmed.",
+            "Requests and their results stay on this phone after a restart or update.")),
         ReleaseNote(49, 49, listOf("About shows your installed version and release history.",
             "Menus and help no longer show sample people or made-up requests.",
             "Voice messages use your Family list. App requests explain when sending is not set up.")),

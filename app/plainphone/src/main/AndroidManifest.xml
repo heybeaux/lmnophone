@@ -61,6 +61,8 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
+        <activity android:name=".requests.RequestsActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".requests.RequestRecipientActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <!-- Home. lockTaskMode="normal": Home starts lock task itself, only once the lock-task features
              read back with KEYGUARD (Keyguard first, PLA-264 finding 1). if_whitelisted would let
              Android enter lock task before the re-apply restored KEYGUARD and drop the keyguard. -->
