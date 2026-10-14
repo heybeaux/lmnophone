@@ -75,14 +75,41 @@ class AboutScreenScreenshotTest(private val scale: Float) {
         } } }
         assertTrue(checked)
     }
-    @Test fun emptyFamilyPractice() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
-        VoicePracticeScreen(VoiceUiState.ChoosePerson(emptyList()), {})
-    } } }
-    @Test fun requestNotSetUp() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
-        assertEquals("Not set up on this phone yet. Nothing has been sent. The person who set up this phone can turn it on.",
-            androidx.compose.ui.res.stringResource(R.string.ask_missing_recipient))
-        AskForAppScreen(AskForAppUiState("", isSetUp = false), {})
-    } } }
+    @Test fun emptyFamilyPractice() = copyShot(
+        "No people to show yet. This phone’s PIN holder can add people in More, then PIN settings, then Voice messages."
+    ) { VoicePracticeScreen(VoiceUiState.ChoosePerson(emptyList()), {}) }
+
+    @Test fun requestNotSetUp() = copyShot(
+        "No one is set to get requests. This phone’s PIN holder can set it up in More, then PIN settings, then Who gets requests.",
+        uniqueSentence = "Not set up on this phone yet."
+    ) { AskForAppScreen(AskForAppUiState("", isSetUp = false), {}) }
+
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+    private fun copyShot(expected: String, uniqueSentence: String? = null,
+        content: @androidx.compose.runtime.Composable () -> Unit) {
+        var checked = false
+        paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+            val view = LocalView.current as ViewRootForTest
+            Box(Modifier.onGloballyPositioned {
+                val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
+                val texts = nodes.flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty() }.map { it.text }
+                assertTrue("Expected screen copy: $expected; got $texts", expected in texts)
+                uniqueSentence?.let { sentence ->
+                    assertEquals(1, texts.sumOf { it.windowed(sentence.length).count { part -> part == sentence } })
+                }
+                val body = nodes.single { it.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == expected } }
+                val scroll = nodes.single { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }
+                val range = scroll.config[SemanticsProperties.VerticalScrollAxisRange]
+                assertTrue("Copy must be reachable by scrolling",
+                    body.positionInRoot.y + body.size.height - range.maxValue() <= scroll.boundsInRoot.bottom + 1f)
+                val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+                body.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
+                layouts.forEach { assertTrue("Copy must not overflow", !it.hasVisualOverflow) }
+                checked = true
+            }) { content() }
+        } } }
+        assertTrue(checked)
+    }
     @Test fun neutralMore() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
         MoreScreen(MoreUiState(MoreMode.SelfManaged(10), pinHolderOnly = true), {})
     } } }
