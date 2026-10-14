@@ -58,7 +58,7 @@ class NeedsYouTest {
         assertTrue(pin.contains("runtime.notice.collectAsState()"))
         assertTrue(pin.contains("RequestEngine"))
         assertTrue(pin.contains("menuRequests"))
-        assertTrue(pin.contains("AdminDestination.Requests -> openRequests()"))
+        assertTrue(pin.contains("PinMenuTarget.Requests -> openRequests()"))
         assertTrue(pin.contains("waitingMenu, homeNotice, needsYouCopy(), menuRequests"))
         assertTrue(pin.contains("is AdminMenuEvent.OpenNotice -> openNeedsYou(it.id)"))
         assertTrue(pin.contains("flow.useRecoveryFromApps()"))

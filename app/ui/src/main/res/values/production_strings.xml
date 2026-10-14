@@ -10,7 +10,7 @@
     <string name="about_latest">Latest version</string>
     <string name="about_notes_missing">Release notes are not available for this version.</string>
     <string name="about_help">Help and privacy</string>
-    <string name="about_limitations">This is a test version. Some choices still say “Not in this test build yet”. For phone settings that need a PIN, open More, then PIN settings.</string>
+    <string name="about_limitations">This is a test version. Parts that are not ready yet are not shown. For phone settings that need a PIN, open More, then PIN settings.</string>
     <string name="about_privacy_current">LMNOPhone has no account, analytics or server of its own.</string>
     <string name="about_voice_retention">Unsent voice messages stay on this phone for up to 7 days. Sending, deleting, replacing a recording, removing its person or turning Family off erases the recording.</string>
     <string name="setup_helper">the person who set up LMNOPhone on this phone</string>

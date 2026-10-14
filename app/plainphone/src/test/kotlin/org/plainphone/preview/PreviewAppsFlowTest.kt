@@ -116,4 +116,26 @@ class PreviewAppsFlowTest {
         port.callback!!(AppRemovalResult.SaveFailed)
         assertEquals(PreviewAppsStage.SaveFailed, flow.state.stage)
     }
+    @Test fun pinSettingsHiddenAppEntryUsesTheSameAddFlowAndFreshPin() {
+        val port = Port(); val flow = PreviewAppsFlow(port) {}
+        flow.openHidden()
+        assertEquals(PreviewAppsStage.HiddenList, flow.state.stage)
+        assertTrue(flow.leavesOnBack())
+        flow.selectHidden("calculator"); assertFalse(flow.leavesOnBack())
+        flow.nextAdd(); flow.nextAdd(); flow.nextAdd(); flow.nextAdd()
+        assertEquals(PreviewAppsStage.AddPin, flow.state.stage)
+        assertEquals(0, port.adds)
+        flow.back(); assertEquals(PreviewAppsStage.AddConfirm, flow.state.stage)
+        flow.back(); assertEquals(PreviewAppsStage.HiddenList, flow.state.stage)
+        assertTrue(flow.leavesOnBack())
+        flow.selectHidden("calculator"); repeat(4) { flow.nextAdd() }
+        flow.submit(charArrayOf('1')); assertEquals(1, port.adds)
+    }
+    @Test fun appsListEntryStillReturnsToTheListFromHiddenApps() {
+        val port = Port(); val flow = PreviewAppsFlow(port) {}
+        flow.open(); assertTrue(flow.leavesOnBack())
+        flow.hidden(); assertFalse(flow.leavesOnBack())
+        flow.back(); assertEquals(PreviewAppsStage.List, flow.state.stage)
+        flow.openHidden(); flow.open(); flow.hidden(); assertFalse(flow.leavesOnBack())
+    }
 }

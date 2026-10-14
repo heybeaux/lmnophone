@@ -31,4 +31,21 @@ fun pinUiState(page: PinPageState, context: AdminContext, value: String, confirm
     recoveryCode = if (page.page == PinPage.RECOVERY_ISSUED) recoveryCode else "",
 )
 
-fun pinMenuUiState(context: AdminContext, requestCount: Int? = null) = AdminMenuUiState(context, AdminDestination.entries.filter { it != AdminDestination.RequestRecipient }.flatMap { if (it == AdminDestination.Requests) listOf(AdminMenuItem(it, requestCount?.takeIf { count -> count > 0 }?.toString().orEmpty()), AdminMenuItem(AdminDestination.RequestRecipient)) else listOf(AdminMenuItem(it)) })
+/** What a PIN settings row opens. Rows without one in this build are not shown, so no row opens the not-in-build page. */
+enum class PinMenuTarget { Family, AddHiddenApp, Apps, Requests, RequestRecipient, ChangePin, NewRecoveryCode, TurnOff }
+
+fun pinMenuTarget(destination: AdminDestination): PinMenuTarget? = when (destination) {
+    AdminDestination.VoiceMessages -> PinMenuTarget.Family
+    AdminDestination.HiddenApp -> PinMenuTarget.AddHiddenApp
+    AdminDestination.Apps -> PinMenuTarget.Apps
+    AdminDestination.Requests -> PinMenuTarget.Requests
+    AdminDestination.RequestRecipient -> PinMenuTarget.RequestRecipient
+    AdminDestination.ChangePin -> PinMenuTarget.ChangePin
+    AdminDestination.NewRecoveryCode -> PinMenuTarget.NewRecoveryCode
+    AdminDestination.TurnOff -> PinMenuTarget.TurnOff
+    AdminDestination.AddApp, AdminDestination.Updates, AdminDestination.Settings, AdminDestination.Limits,
+    AdminDestination.People, AdminDestination.History, AdminDestination.Waits, AdminDestination.UpdatePlainphone,
+    AdminDestination.SwitchMode -> null
+}
+
+fun pinMenuUiState(context: AdminContext, requestCount: Int? = null) = AdminMenuUiState(context, AdminDestination.entries.filter { it != AdminDestination.RequestRecipient && pinMenuTarget(it) != null }.flatMap { if (it == AdminDestination.Requests) listOf(AdminMenuItem(it, requestCount?.takeIf { count -> count > 0 }?.toString().orEmpty()), AdminMenuItem(AdminDestination.RequestRecipient)) else listOf(AdminMenuItem(it)) })

@@ -33,4 +33,50 @@ class PinScreenMapperTest {
     @Test fun productionMenuExposesNewCodeRow() {
         assertEquals(1, pinMenuUiState(AdminContext("Alex")).items.count { it.destination == AdminDestination.NewRecoveryCode })
     }
+    private val copy = NeedsYouCopy({ "Waiting" }, "Attention", { n, _ -> "$n" })
+    private fun menus() = listOf(pinMenuUiState(AdminContext("Alex")), pinMenuUiState(AdminContext("Alex"), 3),
+        pinMenuUiState(AdminContext(""), null, null, copy),
+        pinMenuUiState(AdminContext("Alex"), null, org.plainphone.ui.home.HomeNotice.NeedsAttention, copy,
+            org.plainphone.policy.RequestView(true, "Jo", listOf(org.plainphone.policy.RequestDisplay("a", "Maps", 1, org.plainphone.policy.RequestStatus.Sending)))))
+    @Test fun everyShownMenuRowHasAWorkingTarget() {
+        for (menu in menus()) {
+            assertTrue(menu.items.isNotEmpty())
+            for (item in menu.items) assertNotNull(item.destination.name, pinMenuTarget(item.destination))
+        }
+    }
+    @Test fun rowsWithoutAScreenInThisBuildAreNotShown() {
+        val unfinished = listOf(AdminDestination.AddApp, AdminDestination.Updates, AdminDestination.Settings,
+            AdminDestination.Limits, AdminDestination.People, AdminDestination.History, AdminDestination.Waits,
+            AdminDestination.UpdatePlainphone, AdminDestination.SwitchMode)
+        for (destination in unfinished) assertNull(destination.name, pinMenuTarget(destination))
+        for (menu in menus()) assertTrue(menu.items.none { it.destination in unfinished })
+    }
+    @Test fun workingRowsKeepTheirOrder() {
+        assertEquals(listOf(AdminDestination.VoiceMessages, AdminDestination.HiddenApp, AdminDestination.Apps,
+            AdminDestination.Requests, AdminDestination.RequestRecipient, AdminDestination.ChangePin,
+            AdminDestination.NewRecoveryCode, AdminDestination.TurnOff),
+            pinMenuUiState(AdminContext("Alex")).items.map { it.destination })
+        assertEquals(PinMenuTarget.AddHiddenApp, pinMenuTarget(AdminDestination.HiddenApp))
+        assertEquals(PinMenuTarget.Apps, pinMenuTarget(AdminDestination.Apps))
+    }
+    @Test fun activityHandlesEveryTargetAndNeverOpensTheNotInBuildPageFromTheMenu() {
+        val activity = java.io.File("src/main/kotlin/org/plainphone/PinAccessActivity.kt").readText()
+        val handler = activity.substringAfter("is AdminMenuEvent.Open -> when (pinMenuTarget(it.destination)) {")
+            .substringBefore("} }")
+        for (target in PinMenuTarget.entries) assertTrue(target.name, handler.contains("PinMenuTarget.${target.name} ->"))
+        assertTrue(handler.contains("PinMenuTarget.AddHiddenApp -> openApps(hidden = true)"))
+        assertTrue(handler.contains("PinMenuTarget.Apps -> openApps()"))
+        assertFalse(handler.contains("unsupported"))
+        assertFalse(handler.contains("else ->"))
+        assertFalse(activity.contains("flow.unsupported()"))
+        assertTrue(activity.contains("if (hidden) appsFlow?.openHidden() else appsFlow?.open()"))
+        assertTrue(activity.contains("if (appsFlow?.leavesOnBack() != false)"))
+    }
+    @Test fun aboutLimitationNamesNoScreenThatNoLongerAppears() {
+        val resources = java.io.File("../ui/src/main/res/values/production_strings.xml").readText()
+        val limitation = resources.substringAfter("<string name=\"about_limitations\">").substringBefore("</string>")
+        assertFalse(limitation.contains("Not in this test build yet"))
+        assertFalse(limitation.contains("“") || limitation.contains("”"))
+        assertTrue(limitation.contains("PIN settings"))
+    }
 }
