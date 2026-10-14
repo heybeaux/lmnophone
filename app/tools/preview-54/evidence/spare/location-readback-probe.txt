@@ -1,0 +1,22 @@
+PLA-555 build 54 exercise: why "Add a hidden app" fails at Location on the Moto (API 35). 2026-10-14 ~11:40-11:50Z.
+Probe: app/plainphone/src/androidTest/kotlin/org/plainphone/Pla555PermissionProbe.kt, in the Device Owner process
+(build with -PpreviewTestRunner=org.plainphone.Pla555PermissionProbe; installed temporarily, uninstalled after).
+policy = DevicePolicyManager.getPermissionGrantState (0 DEFAULT, 1 GRANTED, 2 DENIED); granted = PackageManager.checkPermission.
+
+1. Camera (com.motorola.camera3, visible), COARSE and FINE reset to DEFAULT, then the app's ALLOW order (COARSE then FINE):
+   ACCESS_COARSE_LOCATION before[policy=0 granted=false] set=1 accepted=true after[policy=2 granted=true]
+   ACCESS_FINE_LOCATION   before[policy=0 granted=false] set=1 accepted=true after[policy=2 granted=true]
+   3 s later: both still policy=2 granted=true
+   dumpsys: both granted=true, POLICY_FIXED.  appops: Uid mode COARSE_LOCATION foreground, FINE_LOCATION foreground.
+   => Android holds the grant, but the DPM getter reports DENIED (it applies the app-op; the location op is
+      "foreground" while the app is not in the foreground). PermissionGrants.readback(DENIED, true) = UNKNOWN,
+      so the write is NOT_DONE and the add fails closed ("Couldn't set Location").
+2. Same call for groups without a background companion read back as written:
+   POST_NOTIFICATIONS, READ_MEDIA_IMAGES, READ_MEDIA_VIDEO: set=1 accepted=true after[policy=1 granted=true]
+   (CAMERA and RECORD_AUDIO already worked in the app flow.)
+3. DENIED write: COARSE then FINE set=2 accepted=true after[policy=2 granted=false] (from a fixed state).
+   In the app flow (locdeny attempt, FINE unfixed+granted, COARSE fixed GRANTED) the FINE deny did not stick
+   (dumpsys FINE granted=true, no POLICY_FIXED). Not explained by this probe.
+4. Restore: all 8 Camera runtime permissions set DEFAULT, then `pm grant` for the denied ones.
+   Result in camera-perms-restored.txt: all 8 granted, none POLICY_FIXED (baseline). Residual: USER_SET flag
+   on ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, RECORD_AUDIO.

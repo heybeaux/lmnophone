@@ -6,16 +6,17 @@
 : "${S:?spare serial from the environment}"; [[ ${PLAINPHONE_SPARE_DRIVER:-} == 1 ]] || { echo "spare requires sole-driver opt-in"; exit 2; }
 a(){ adb -s "$S" "$@"; }
 dump(){ a shell "uiautomator dump /data/local/tmp/u.xml >/dev/null 2>&1; cat /data/local/tmp/u.xml; rm -f /data/local/tmp/u.xml"; }
-texts(){ dump | python3 -I -c "import sys,re; print('|'.join(re.findall(r' text=\"([^\"]+)\"', sys.stdin.read())))" | sed 's/•*//g'; }
+# Parse the dump as XML: texts may contain double quotes (single-quoted attributes).
+texts(){ dump | python3 -I -c "import sys,xml.etree.ElementTree as E; print('|'.join(n.get('text') for n in E.fromstring(sys.stdin.read()).iter('node') if n.get('text')))" | sed 's/•*//g'; }
 pos(){ dump | python3 -I -c "
-import sys,re
-k=sys.argv[1]; nodes=re.findall(r'<node [^>]*>',sys.stdin.read())
+import sys,re,xml.etree.ElementTree as E
+k=sys.argv[1]; nodes=list(E.fromstring(sys.stdin.read()).iter('node'))
 if k.startswith('#'):
-    nodes=[n for n in nodes if 'EditText' in n]; i=int(k[1:]); nodes=nodes[i:i+1]
+    nodes=[n for n in nodes if 'EditText' in n.get('class','')]; i=int(k[1:]); nodes=nodes[i:i+1]
 else:
-    nodes=[n for n in nodes if re.search(r' text=\"([^\"]*)\"',n).group(1)==k]
+    nodes=[n for n in nodes if n.get('text')==k]
 for n in nodes[:1]:
-    b=list(map(int,re.findall(r'\d+',re.search(r'bounds=\"([^\"]*)\"',n).group(1)))); print((b[0]+b[2])//2,(b[1]+b[3])//2)" "$1"; }
+    b=list(map(int,re.findall(r'\\d+',n.get('bounds')))); print((b[0]+b[2])//2,(b[1]+b[3])//2)" "$1"; }
 tap(){ local p; p=$(pos "$1"); [ -n "$p" ] || { echo "FAIL: '$1' not found"; return 1; }; a shell input tap $p; sleep 1.5; }
 type_in(){ tap "#$1" && a shell input text "$2" && sleep 0.5; }
 home(){ a shell am start -a android.intent.action.MAIN -c android.intent.category.HOME >/dev/null 2>&1; sleep 2; }
