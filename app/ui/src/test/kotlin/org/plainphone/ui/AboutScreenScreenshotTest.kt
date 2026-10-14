@@ -19,7 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.plainphone.ui.theme.PlainphoneTheme
-import org.plainphone.ui.user.AboutScreen
+import org.plainphone.ui.user.*
 import org.plainphone.ui.user.AboutUiState
 
 @RunWith(Parameterized::class)
@@ -30,43 +30,27 @@ class AboutScreenScreenshotTest(private val scale: Float) {
         showSystemUi = false, maxPercentDifference = 0.0,
     )
 
-    @Test fun oneTrustedPerson() = shot(listOf("Sam"))
-    @Test fun threeTrustedPeople() = shot(listOf("Sam", "Jo", "Alex"))
-    @Test fun twoTrustedPeople() = shot(listOf("Sam", "Jo"))
-    @Test fun longTrustedNames() = shot(listOf("Sam ".repeat(8).trim(), "Jo ".repeat(8).trim()))
-
-    @Test fun onePersonWithoutSecureLock() = shot(listOf("Sam"), false)
-    @Test fun twoPeopleWithoutSecureLock() = shot(listOf("Sam", "Jo"), false)
-    @Test fun longNamesWithoutSecureLock() = shot(listOf("Sam ".repeat(8).trim(), "Jo ".repeat(8).trim()), false)
-
-    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-    private fun shot(people: List<String>, secure: Boolean = true) = paparazzi.snapshot {
-        PlainphoneTheme {
-            val view = LocalView.current as ViewRootForTest
-            Box(Modifier.onGloballyPositioned {
-                val texts = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = false)
-                    .flatMap { it.config.getOrElse(SemanticsProperties.Text) { emptyList() } }.map { it.text }
-                val everyone = people.joinToString(" and ")
-                val choices = if (people.size == 1)
-                    "$everyone helps choose which apps are on it, together with you, with the phone in $everyone's hands. \"For $everyone\" needs $everyone's PIN so that nobody else can change your phone."
-                else "$everyone help choose which apps are on it, together with you, with the phone in their hands. \"For $everyone\" needs a PIN from one of them so that nobody else can change your phone."
-                assertTrue("Exact choices copy: $texts", choices in texts)
-                val pinUsed = if (people.size == 1) "$everyone's PIN is used" else "one of their PINs is used"
-                val pinWrong = if (people.size == 1) "$everyone's PIN is typed" else "one of their PINs is typed"
-                val knows = if (people.size == 1) "$everyone knows" else "they know"
-                assertTrue(texts.any { it == "LMNOPhone sends $everyone a text only when you choose to ask for an app or share a link, when the monthly check is due, when LMNOPhone needs a check or a phone update is coming, when $pinUsed to change something on this phone, when a big change (like turning LMNOPhone off) starts, is cancelled or finishes, or if $pinWrong wrongly many times (so $knows if someone is guessing it)." })
-                assertEquals(people.size > 1, "$everyone are equals: either can add apps with you." in texts)
-                assertTrue(texts.any { it == "$everyone can't read your messages, see where you are, or see what you do in your apps. LMNOPhone has no server of its own, no analytics and no account. It connects to Sam's computer over home Wi-Fi only to update itself." })
-                assertEquals(secure, "From the lock screen, tap Emergency call." in texts)
-                assertTrue("Tap Phone, type 9-1-1, and press call." in texts)
-                assertTrue("Or tap More, then Emergency 9-1-1." in texts)
-            }) {
-                // Keep the original version fixture so one-person goldens must stay byte-identical.
-                HomeTestFrame { AboutScreen(AboutUiState("0.1.0-preview-18", people, "Sam", "LMNOPhone", isDeviceSecure = secure), {}) }
-            }
-        }
-    }
-
+    private val latest = ReleaseNoteUi("49", listOf("About shows the installed version and release history.",
+        "App requests explain when sending is not set up."))
+    private val older = listOf(ReleaseNoteUi("48", listOf("Recover your PIN with a recovery code.")),
+        ReleaseNoteUi("47", listOf("Send voice messages to people in Family.")))
+    private val state = AboutUiState("0.1.0-preview-49", 49, latest, emptyList(), older)
+    @Test fun latestOnly() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame { AboutScreen(state, {}) } } }
+    @Test fun skippedBuilds() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+        AboutScreen(state.copy(sincePrevious = listOf(latest) + older), {})
+    } } }
+    @Test fun olderVersions() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+        AboutScreen(state.copy(showOlder = true), {})
+    } } }
+    @Test fun emptyFamilyPractice() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+        VoicePracticeScreen(VoiceUiState.ChoosePerson(emptyList()), {})
+    } } }
+    @Test fun requestNotSetUp() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+        AskForAppScreen(AskForAppUiState("", isSetUp = false), {})
+    } } }
+    @Test fun neutralMore() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+        MoreScreen(MoreUiState(MoreMode.SelfManaged(10), pinHolderOnly = true), {})
+    } } }
     companion object {
         @JvmStatic @Parameterized.Parameters(name = "fontScale={0}")
         fun scales() = listOf(arrayOf(1f), arrayOf(1.3f), arrayOf(1.5f), arrayOf(1.8f), arrayOf(2f))
