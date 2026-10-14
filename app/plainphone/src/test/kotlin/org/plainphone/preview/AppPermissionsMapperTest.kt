@@ -43,6 +43,15 @@ class AppPermissionsMapperTest {
         assertTrue(activity.contains("runtime.previewAppPermissions"))
         assertTrue(activity.contains("permissions = appPermissionsUi(state.permissions)"))
         assertTrue(runtime.contains("appPermissions.read(id)"))
-        assertFalse(activity.contains("app_self_permissions_later"))
+        assertTrue(activity.contains("PermissionsScreen(appPermissionChoicesUi(state, appsContext))"))
+        assertTrue(activity.contains("runtime.addPreviewApp(app.id, app.identity, selection, choices, pin, active)"))
+        assertTrue(runtime.contains("authenticate = pins::authenticateAddition"))
+        assertTrue(runtime.contains("open = effects::openPermissionWindow"))
+        assertTrue(runtime.contains("write = attempts::write"))
+        assertTrue(runtime.contains("preview.hiddenApps().none { it.id == id && it.identity == identity }"))
+        assertTrue(runtime.contains("id in preview.protectedApps()"))
+        assertTrue(runtime.contains("target.identity.packageName.value !in preview.protectedApps()"))
+        val device = File("src/main/kotlin/org/plainphone/preview/Preview2Device.kt").readText()
+        assertTrue(device.contains("setOfNotNull(dialer(), sms(), context.packageName, SAFETY_HUB)"))
     }
 }

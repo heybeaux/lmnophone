@@ -27,7 +27,9 @@ class PreviewAppsFlowTest {
         var callback: ((AppRemovalResult) -> Unit)? = null
         var active: (() -> Boolean)? = null
         override fun read(done: (List<PreviewAppRow>?) -> Unit) = done(listOf(
-            PreviewAppRow("calculator", "Calculator", "1", false), PreviewAppRow("phone", "Phone", "1", true)))
+            PreviewAppRow("calculator", "Calculator", "1", false), PreviewAppRow("phone", "Phone", "1", true),
+            PreviewAppRow("sms", "Messages", "1", true), PreviewAppRow("self", "LMNOPhone", "1", true),
+            PreviewAppRow("role-dialer", "Dialer", "1", true), PreviewAppRow("role-sms", "Texts", "1", true)))
         override fun move(id: String, delta: Int, active: () -> Boolean, done: (Boolean) -> Unit) = done(true)
         override fun remove(id: String, pin: CharArray, active: () -> Boolean, done: (AppRemovalResult) -> Unit) {
             removes++; pin.fill('\u0000'); this.active = active; callback = done
@@ -51,7 +53,11 @@ class PreviewAppsFlowTest {
     }
     @Test fun protectedPageDoesNotReadOrOfferChoices() {
         val port = Port(); val flow = PreviewAppsFlow(port) {}
-        flow.open(); flow.select("phone"); flow.choosePermission("mic", PermissionDecision.Allow)
+        flow.open()
+        listOf("phone", "sms", "self", "role-dialer", "role-sms").forEach { id ->
+            flow.select(id); flow.choosePermission("mic", PermissionDecision.Allow)
+            assertEquals(PreviewAppsStage.List, flow.state.stage)
+        }
         assertEquals(0, port.permissionReads); assertTrue(flow.state.choices.isEmpty())
     }
     @Test fun requiresConfirmationAndFreshPinAndBackRevokesPendingWork() {

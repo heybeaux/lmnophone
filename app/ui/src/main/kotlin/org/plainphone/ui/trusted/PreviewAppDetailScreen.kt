@@ -13,11 +13,12 @@ data class AppPermissionsUiState(val rows: List<AppPermissionRow> = emptyList(),
 
 /** Display only: no permission edit action in self-managed mode. */
 @Composable
-fun PreviewAppDetailScreen(context: AdminContext, app: String, version: String, onBack: () -> Unit = {}, permissions: AppPermissionsUiState? = null, onRemove: () -> Unit) {
+fun PreviewAppDetailScreen(context: AdminContext, app: String, version: String, onBack: () -> Unit = {}, permissions: AppPermissionsUiState? = null, canChooseOnAdd: Boolean = false, onRemove: () -> Unit) {
     AdminFrame(context, app.withoutBidiControls(), s(R.string.app_detail_remove, context.userName.withoutBidiControls()), onRemove,
         secondary = s(R.string.admin_back), onSecondary = onBack) {
         Words(s(R.string.app_preview_version, version.withoutBidiControls()))
         permissions?.let { AppPermissionLines(app, it) }
+        if (canChooseOnAdd) Words(s(R.string.app_self_permissions_later, app.withoutBidiControls()))
     }
 }
 
@@ -59,4 +60,14 @@ fun permissionLabel(id: String, fallback: String): String = when (id) {
     "android.permission-group.NEARBY_DEVICES" -> s(R.string.permission_nearby)
     "android.permission-group.NOTIFICATIONS" -> s(R.string.permission_notifications)
     else -> fallback.withoutBidiControls()
+}
+
+@Composable
+fun AppPermissionFailureScreen(context: AdminContext, app: String, groups: List<AppPermissionRow>,
+    readback: AppPermissionsUiState, retry: () -> Unit) {
+    AdminFrame(context, s(R.string.app_permissions_failed_title, app.withoutBidiControls()), s(R.string.app_permissions_retry), retry) {
+        if (groups.isEmpty()) Words(s(R.string.app_permissions_failed))
+        groups.forEach { Words(s(R.string.app_permissions_failed_group, permissionLabel(it.id, it.label))) }
+        AppPermissionLines(app, readback)
+    }
 }

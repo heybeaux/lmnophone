@@ -526,3 +526,24 @@ history route and `RequestRecipientActivity`. The policy dispatcher consumes a
 fresh PIN before viewing/changing the recipient. Pause invalidates the editor.
 `:ui` `RequestsScreen` and `RequestRecipientScreen` take display state and emit
 plain events; they do not send SMS, read storage or decide quota/authority.
+
+### Preview permission page and add choices (PLA-552)
+
+The self-managed preview uses `AndroidAppPermissions` / `AppPermissionReader`
+(`:device`) to supply an exact-signer, version-fenced requested runtime inventory
+and `PermissionGrants` readback to `PreviewAppsFlow` (`:plainphone`).
+`appPermissionsUi` supplies `AppPermissionsUiState` to the read-only app page;
+`appPermissionChoicesUi` supplies `PermissionsUiState` to T4c. The UI accepts
+platform group labels for unknown groups, explicit read failures, and the
+`previewAdd` copy variant (the preview does not implement timed openings).
+`PermissionChoice.group` may be null when Android supplies an unfamiliar group;
+its `label` remains display data, never grant capability.
+
+The add port carries the selected snapshot and a complete group-choice map.
+`PolicyRuntime` keeps fresh PIN, live protected-app/hidden-app eligibility,
+`DeviceApprovalEffects`' permission window, `PermissionGrants` writes, hidden
+readback, and final preview membership/apply on its existing serial dispatcher.
+Only DONE plus matching readback can reach Added. A failed write retains its
+requested group label even if the subsequent inventory is unreadable. No
+supervised identity, credential migration, one-step self-managed edit, or
+floor/role-holder permission action is introduced.

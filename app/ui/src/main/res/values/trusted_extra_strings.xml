@@ -138,4 +138,9 @@
     <string name="app_permissions_mixed">Different choices</string>
     <string name="app_permissions_none">%1$s doesn\'t ask to use anything here.</string>
     <string name="app_permissions_line">%1$s: %2$s</string>
+    <string name="app_permissions_generic_why">Choose whether %1$s can use this.</string>
+    <string name="app_permissions_failed_title">%1$s was not added</string>
+    <string name="app_permissions_failed_group">Couldn\'t set %1$s.</string>
+    <string name="app_permissions_failed">Couldn\'t set what this app can use.</string>
+    <string name="app_permissions_retry">Choose again</string>
 </resources>

@@ -5,6 +5,8 @@ package org.plainphone.device
 import org.plainphone.device.authority.PinAccessResult
 
 sealed interface AppAdditionResult {
+    data class PermissionFailed(val groups: List<String>, val readback: org.plainphone.device.approval.AppPermissionRead?,
+        val unavailable: Set<String> = emptySet()) : AppAdditionResult
     data object Added : AppAdditionResult
     data object Cancelled : AppAdditionResult
     data object SaveFailed : AppAdditionResult

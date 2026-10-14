@@ -83,13 +83,15 @@ fun PermissionsScreen(state: PermissionsUiState, onEvent: (PermissionsEvent) -> 
         { onEvent(PermissionsEvent.Continue) }, enabled = state.canContinue && !state.sending) {
         if (state.context.trustedPersonName == null) {
             Words(s(R.string.admin_self_permissions, app))
-            Words(s(R.string.admin_self_permissions_later, app, state.waitMinutes))
+            Words(if (state.previewAdd) s(R.string.app_self_permissions_later, app) else s(R.string.admin_self_permissions_later, app, state.waitMinutes))
         } else Words(s(R.string.admin_permissions_body, state.context.userName.withoutBidiControls(), app))
+        if (state.checkFailed) Words(s(R.string.app_permissions_unknown))
+        else if (state.permissions.isEmpty()) Words(s(R.string.app_permissions_none, app))
         state.permissions.forEach { permission ->
-            val (title, why) = permissionResources.getValue(permission.group)
-            val label = s(title)
+            val resources = permissionResources[permission.group]
+            val label = permission.label?.let { permissionLabel(permission.id, it) } ?: resources?.first?.let { s(it) }.orEmpty()
             Heading(label)
-            Words(permission.why ?: s(why, app))
+            Words(permission.why ?: resources?.second?.let { s(it, app) } ?: s(R.string.app_permissions_generic_why, app))
             if (permission.unavailable) Words(s(R.string.admin_permission_unavailable, app))
             else {
                 @Composable fun options() {

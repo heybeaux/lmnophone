@@ -340,6 +340,10 @@ is hard at large text sizes) and opens its own page when tapped:
 - No requested runtime permissions: "{app} doesn't ask to use anything here."
 - If the inventory cannot be read: "Couldn't check". This never stands in for an empty list.
 - The remove-and-add explanation is withheld until choosing at add time is in the installed build.
+- The preview add flow does not implement a timed opening. Its second T4c self-managed block uses the existing truthful page sentence ("To change these, remove {app}, then add it again with \"Add a hidden app\" and choose again.") rather than claiming a wait that is not enforced.
+- An unfamiliar Android group uses its Android label and "Choose whether {app} can use this."
+- If a grant does not read back, title: "{app} was not added". Body per affected group: "Couldn't set {group}." If the group is unknown: "Couldn't set what this app can use." Show current choices below. Primary: "Choose again". Back returns to the hidden-app list.
+- A group is marked unavailable only after Android refused an Allow and a denied permission in that group read back for the same app. It has no buttons on retry; the remaining groups still require choices.
 
 **Remove confirm**
 - **Title:** Remove {app}?

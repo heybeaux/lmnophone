@@ -6,24 +6,29 @@ import org.plainphone.device.AppRemovalResult
 import org.plainphone.device.AppAdditionResult
 import org.plainphone.device.PreviewHiddenApp
 import org.plainphone.device.authority.PinAccessResult
+import org.plainphone.device.approval.AppPermissionSnapshot
+import org.plainphone.policy.PermissionChoice
+import org.plainphone.ui.trusted.PermissionDecision
 
 /** Facts and navigation only. Runtime owns fresh authority, the floor guard and every write. */
 data class PreviewAppRow(val id: String, val name: String, val version: String, val protected: Boolean)
 interface PreviewAppsPort {
-    fun permissions(id: String, done: (org.plainphone.device.approval.AppPermissionRead?) -> Unit) = done(null)
+    fun permissions(id: String, hidden: Boolean = false, done: (org.plainphone.device.approval.AppPermissionRead?) -> Unit) = done(null)
     fun hidden(done: (List<PreviewHiddenApp>?) -> Unit)
-    fun add(app: PreviewHiddenApp, pin: CharArray, active: () -> Boolean, done: (AppAdditionResult) -> Unit)
+    fun add(app: PreviewHiddenApp, selection: AppPermissionSnapshot, choices: Map<String, PermissionChoice>, pin: CharArray, active: () -> Boolean, done: (AppAdditionResult) -> Unit)
     fun read(done: (List<PreviewAppRow>?) -> Unit)
     fun move(id: String, delta: Int, active: () -> Boolean, done: (Boolean) -> Unit)
     fun remove(id: String, pin: CharArray, active: () -> Boolean, done: (AppRemovalResult) -> Unit)
 }
-enum class PreviewAppsStage { List, Details, Confirm, Pin, Removed, SaveFailed, CheckFailed, HiddenList, AddReview, AddUnreviewed, AddConfirm, AddPin, Added, Hidden, Unsupported }
+enum class PreviewAppsStage { List, Details, Confirm, Pin, Removed, SaveFailed, CheckFailed, HiddenList, AddReview, AddUnreviewed, AddPermissions, PermissionFailed, AddConfirm, AddPin, Added, Hidden, Unsupported }
 data class PreviewAppsState(val stage: PreviewAppsStage = PreviewAppsStage.List,
     val rows: List<PreviewAppRow> = emptyList(), val selected: PreviewAppRow? = null,
     val busy: Boolean = false, val wrong: Boolean = false, val waitMillis: Long = 0,
     val loadFailed: Boolean = false, val hidden: List<PreviewHiddenApp> = emptyList(),
     val selectedHidden: PreviewHiddenApp? = null,
-    val permissions: org.plainphone.device.approval.AppPermissionRead? = null)
+    val permissions: org.plainphone.device.approval.AppPermissionRead? = null,
+    val choices: Map<String, PermissionChoice> = emptyMap(), val failedGroups: List<String> = emptyList(),
+    val unavailable: Set<String> = emptySet(), val failedRows: List<org.plainphone.ui.trusted.AppPermissionRow> = emptyList())
 
 class PreviewAppsFlow(private val port: PreviewAppsPort, private val changed: (PreviewAppsState) -> Unit) {
     var state = PreviewAppsState()
@@ -67,13 +72,34 @@ class PreviewAppsFlow(private val port: PreviewAppsPort, private val changed: (P
     }
     fun nextAdd() {
         if (state.busy) return
+        if (state.stage == PreviewAppsStage.AddUnreviewed) { loadChoices(); return }
+        if (state.stage == PreviewAppsStage.PermissionFailed) { loadChoices(retainRefusals = true); return }
         val stage = when (state.stage) {
             PreviewAppsStage.AddReview -> PreviewAppsStage.AddUnreviewed
-            PreviewAppsStage.AddUnreviewed -> PreviewAppsStage.AddConfirm
+            PreviewAppsStage.AddPermissions -> if (canContinuePermissions()) PreviewAppsStage.AddConfirm else return
             PreviewAppsStage.AddConfirm -> PreviewAppsStage.AddPin
             else -> return
         }
         show(state.copy(stage = stage, wrong = false, waitMillis = 0))
+    }
+    private fun loadChoices(retainRefusals: Boolean = false) {
+        val app = state.selectedHidden ?: return
+        val previous = state.permissions?.snapshot
+        val refused = if (retainRefusals) state.unavailable else emptySet()
+        val request = ++generation
+        show(state.copy(stage = PreviewAppsStage.AddPermissions, busy = true, choices = emptyMap(), permissions = null))
+        port.permissions(app.id, true) { read -> if (request == generation) {
+            val current = read?.takeIf { it.snapshot.selectionIdentity == app.identity }
+            val unavailable = if (current?.snapshot == previous) refused else emptySet()
+            show(state.copy(permissions = current, busy = false, unavailable = unavailable,
+                choices = unavailable.associateWith { PermissionChoice.DENY }))
+        } }
+    }
+    fun canContinuePermissions(): Boolean = !state.busy && state.permissions?.snapshot?.groups?.all { it.id in state.choices } == true
+    fun choosePermission(id: String, decision: PermissionDecision) {
+        if (state.busy || state.stage != PreviewAppsStage.AddPermissions || id in state.unavailable ||
+            state.permissions?.snapshot?.groups?.none { it.id == id } != false) return
+        show(state.copy(choices = state.choices + (id to if (decision == PermissionDecision.Allow) PermissionChoice.ALLOW else PermissionChoice.DENY)))
     }
     fun dontAdd() {
         if (!state.busy && state.stage in setOf(PreviewAppsStage.AddReview, PreviewAppsStage.AddUnreviewed))
@@ -82,11 +108,16 @@ class PreviewAppsFlow(private val port: PreviewAppsPort, private val changed: (P
     fun unsupported() { generation++; show(state.copy(stage = PreviewAppsStage.Unsupported, busy = false)) }
     private fun submitAdd(pin: CharArray) {
         val app = state.selectedHidden ?: run { pin.fill('\u0000'); return }
+        val selection = state.permissions?.snapshot ?: run { pin.fill('\u0000'); return }
+        if (!canContinuePermissions()) { pin.fill('\u0000'); return }
         val request = ++generation
         show(state.copy(busy = true, wrong = false))
-        port.add(app, pin, { request == generation }) { result -> if (request == generation) {
+        port.add(app, selection, state.choices.toMap(), pin, { request == generation }) { result -> if (request == generation) {
             val next = state.copy(busy = false)
             show(when (result) {
+                is AppAdditionResult.PermissionFailed -> next.copy(stage = PreviewAppsStage.PermissionFailed,
+                    permissions = result.readback, failedGroups = result.groups, unavailable = result.unavailable,
+                    failedRows = appPermissionsUi(state.permissions).rows.filter { it.id in result.groups })
                 AppAdditionResult.Added -> next.copy(stage = PreviewAppsStage.Added)
                 AppAdditionResult.Cancelled -> next.copy(stage = PreviewAppsStage.AddConfirm)
                 AppAdditionResult.SaveFailed -> next.copy(stage = PreviewAppsStage.SaveFailed)
@@ -125,7 +156,7 @@ class PreviewAppsFlow(private val port: PreviewAppsPort, private val changed: (P
         generation++
         if (state.busy) { open(); return }
         if (state.stage == PreviewAppsStage.AddPin) { show(state.copy(stage = PreviewAppsStage.AddConfirm, wrong = false, waitMillis = 0)); return }
-        if (state.stage in setOf(PreviewAppsStage.AddReview, PreviewAppsStage.AddUnreviewed, PreviewAppsStage.AddConfirm, PreviewAppsStage.Hidden)) { hidden(); return }
+        if (state.stage in setOf(PreviewAppsStage.AddReview, PreviewAppsStage.AddUnreviewed, PreviewAppsStage.AddPermissions, PreviewAppsStage.PermissionFailed, PreviewAppsStage.AddConfirm, PreviewAppsStage.Hidden)) { hidden(); return }
         if (state.stage in setOf(PreviewAppsStage.Confirm, PreviewAppsStage.Pin))
             show(state.copy(stage = PreviewAppsStage.Details, busy = false, wrong = false, waitMillis = 0))
         else open()
