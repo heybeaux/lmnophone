@@ -55,7 +55,7 @@ class UserScreensTest {
         show { AskForAppScreen(AskForAppUiState("Sam", requests = listOf(
             AppRequestRow("delivered", "Bus times", "Thu", AppRequestStatus.Delivered("Sam")),
             AppRequestRow("retry", "Recipe app", "Wed", AppRequestStatus.Failed))), events::add) }
-        compose.onNodeWithText("Sam's phone got it ✓").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Sam's phone got it").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Didn't send – Try again").performScrollTo().performClick()
         compose.onNodeWithText("Send to Sam").assertIsDisplayed()
         assertEquals(listOf(AskForAppEvent.Retry("retry")), events)
@@ -75,7 +75,7 @@ class UserScreensTest {
     @Test fun sentResultIncludesThePromisedHistory() {
         show { AppRequestResultScreen(AppRequestResultUiState("Sam", AppRequestResult.Sent,
             requests = listOf(AppRequestRow("one", "Bus times", "Thu", AppRequestStatus.Delivered("Sam")))), {}) }
-        compose.onNodeWithText("Sam's phone got it ✓").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Sam's phone got it").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("OK").assertIsDisplayed()
     }
     @Test fun unusualWarningIsFullyVisibleWithoutScrolling() {
@@ -146,7 +146,7 @@ class UserScreensTest {
         compose.runOnIdle { result.value = true }
         compose.onNodeWithText("Sent to Sam").assertIsDisplayed()
         compose.onNodeWithText("Next time you're together, Sam can add it", substring = true).assertIsDisplayed()
-        compose.onNodeWithText("Sam's phone got it ✓").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Sam's phone got it").performScrollTo().assertIsDisplayed()
     }
     @Test fun blockedAndSentStripBidiControlsFromNames() {
         val state = mutableStateOf<BlockedLinkUiState>(BlockedLinkUiState.Blocked("example.invalid", shareWith = "Sam\u202E and Jo"))

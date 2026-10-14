@@ -138,7 +138,7 @@ class CommunicationCountsTest {
         } } }
         compose.onNodeWithText("Phone settings").performClick()
         val switch = compose.onNodeWithText("Show missed calls and unread texts on Home")
-        switch.assertIsOff().performClick().assertIsOff()
+        switch.performScrollTo().assertIsDisplayed().assertIsOff().performClick().assertIsOff()
         assertEquals(listOf(PhoneSettingsEvent.ShowCommunicationCountsChanged(true)), events)
         compose.runOnIdle { state.value = PhoneSettingsUiState(true, true, true) }
         switch.assertIsOn().performClick()
@@ -147,7 +147,7 @@ class CommunicationCountsTest {
         compose.onNodeWithText("LMNOPhone can't read unread texts right now").assertExists()
         compose.runOnIdle { state.value = PhoneSettingsUiState(false, true, true) }
         compose.onNodeWithText("LMNOPhone can't read", substring = true).assertDoesNotExist()
-        compose.onNodeWithText("More").performClick()
+        compose.onNodeWithText("More").performScrollTo().performClick()
         assertEquals(PhoneSettingsEvent.Back, events.last())
     }
 }

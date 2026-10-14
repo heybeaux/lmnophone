@@ -129,7 +129,7 @@ class PersonTalkBackTest {
         for (font in listOf(1.3f, 1.5f, 2f)) for (next in pages) {
             compose.runOnIdle { scale.value = font; page.value = next }
             compose.onNode(hasText(next.title) and heading).assertExists()
-            val last = compose.onNode(hasText(next.last) and hasClickAction())
+            val last = compose.onNode((hasText(next.last) or hasContentDescription(next.last)) and hasClickAction())
             val before = last.getUnclippedBoundsInRoot()
             if (before.top < 0.dp || before.bottom > 560.dp) last.performScrollTo()
             last.assertIsDisplayed()
