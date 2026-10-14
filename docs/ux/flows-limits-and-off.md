@@ -153,6 +153,7 @@ wipe); design C6. The wait itself, its texts and the skip are in
 - **Primary:** Continue
 - **Secondary:** Keep LMNOPhone on
 
+- **No name set:** "This makes this phone an ordinary Android phone again…" (the rest is unchanged).
 - **Self-managed version:** "This makes your phone an ordinary Android phone again…", and the wait line reads
   "It happens after at least 24 hours of the phone being on. Until then, you can cancel it. Nothing can make it
   shorter."
@@ -171,6 +172,7 @@ its existing turn-off behavior. All other L4 copy is unchanged.
 
 - **Title:** Are you sure?
 - **Body:** LMNOPhone will be turned off on {user}'s phone.
+- **Body, no name set:** LMNOPhone will be turned off on this phone.
 - **Self-managed and test-build body:** LMNOPhone will be turned off on your phone.
   This uses the same self-managed/test-build selection as the introduction's wait line ([PLA-417](/PLA/issues/PLA-417)).
 - **Primary:** Yes, turn it off (black like every primary button; it stands out by its words and the extra confirmations, not by colour)

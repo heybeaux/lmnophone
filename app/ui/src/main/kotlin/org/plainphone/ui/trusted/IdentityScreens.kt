@@ -48,7 +48,7 @@ fun PinScreen(state: PinUiState, onEvent: (PinEvent) -> Unit) {
         onSecondary = { onEvent(if (state.stage == PinStage.Enter) PinEvent.UseRecoveryCode else if (other != null) PinEvent.ChooseSomeoneElse else PinEvent.Ok) }) {
         when (state.stage) {
             PinStage.Enter -> {
-                Words(if (self) s(R.string.admin_self_pin_body) else s(R.string.admin_pin_body, state.context.userName.withoutBidiControls()))
+                Words(if (self) s(R.string.admin_self_pin_body) else phoneNameText(PhoneNameCopy.PinBody, state.context.userName))
                 if (state.freshExplanation) Words(s(R.string.admin_pin_fresh))
                 state.pendingChange?.let { Words(s(if (self) R.string.admin_recovery_pending_self else R.string.admin_recovery_pending, it.withoutBidiControls())) }
                 if (state.wrongPin) Words(s(R.string.admin_pin_wrong))
@@ -114,7 +114,7 @@ fun PinChangeResultScreen(context: AdminContext, changed: Boolean, onOk: () -> U
 fun AdminMenuScreen(state: AdminMenuUiState, onEvent: (AdminMenuEvent) -> Unit) {
     val self = state.context.trustedPersonName == null
     val user = state.context.userName.withoutBidiControls()
-    AdminFrame(state.context, if (self) s(R.string.more_your_settings) else s(R.string.admin_menu_title, user),
+    AdminFrame(state.context, if (self) s(R.string.more_your_settings) else phoneNameText(PhoneNameCopy.MenuTitle, state.context.userName),
         if (self) s(R.string.admin_done_self) else s(R.string.admin_done_home, user), { onEvent(AdminMenuEvent.Done) }) {
         Words(if (self) s(R.string.admin_menu_self) else s(R.string.admin_menu_body, user))
         state.openings?.let { Words(it.withoutBidiControls()) }

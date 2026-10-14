@@ -21,7 +21,7 @@ fun AppReviewScreen(state: AppReviewUiState, onEvent: (AppReviewEvent) -> Unit) 
     val title = when (state.stage) {
         AppReviewStage.Review -> s(R.string.admin_add_title, app)
         AppReviewStage.Unreviewed -> s(R.string.admin_unreviewed_title)
-        AppReviewStage.Confirm -> s(R.string.admin_add_confirm, app, user)
+        AppReviewStage.Confirm -> phoneNameText(PhoneNameCopy.AddConfirm, state.context.userName, app)
         AppReviewStage.Added -> s(R.string.admin_added, app)
         AppReviewStage.Hidden -> s(R.string.admin_hidden, app)
         AppReviewStage.Remove -> s(R.string.admin_remove_title, app)

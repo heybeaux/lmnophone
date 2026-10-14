@@ -11,7 +11,6 @@ import org.plainphone.ui.components.*
 /** The host sequences both confirmations, fresh authority and the shared waiting-change screen. */
 @Composable
 fun TurnOffScreen(state: TurnOffUiState, onEvent: (TurnOffEvent) -> Unit) {
-    val user = state.context.userName.withoutBidiControls()
     val helper = state.helper.withoutBidiControls()
     val self = state.context.trustedPersonName == null
     val title = s(when (state.stage) {
@@ -38,14 +37,14 @@ fun TurnOffScreen(state: TurnOffUiState, onEvent: (TurnOffEvent) -> Unit) {
         onSecondary = { onEvent(if (state.stage == TurnOffStage.Failed) TurnOffEvent.Details else TurnOffEvent.KeepOn) }) {
         when (state.stage) {
             TurnOffStage.Intro -> {
-                Words(if (self) s(R.string.off_intro_self) else s(R.string.off_intro, user))
+                Words(if (self) s(R.string.off_intro_self) else phoneNameText(PhoneNameCopy.TurnOffIntro, state.context.userName))
                 Words(s(R.string.off_kept))
                 Words(if (state.testBuild || self) s(R.string.off_wait_self) else s(R.string.off_wait, trustedPeopleText(state.everyone, everyone = true).orEmpty()))
                 if (state.testBuild) Words(s(R.string.preview_no_texts))
                 Words(s(R.string.off_setup, helper)); Words(s(R.string.off_battery))
             }
             TurnOffStage.FirstConfirmation -> Words(
-                if (state.testBuild || self) s(R.string.off_sure_body_self) else s(R.string.off_sure_body, user)
+                if (state.testBuild || self) s(R.string.off_sure_body_self) else phoneNameText(PhoneNameCopy.TurnOffSure, state.context.userName)
             )
             TurnOffStage.LastConfirmation -> Words(s(R.string.off_last_body, helper))
             TurnOffStage.TurningOff -> { Words(s(R.string.off_steps, state.step, state.total)); if (state.resumed) Words(s(R.string.off_resumed)) }
