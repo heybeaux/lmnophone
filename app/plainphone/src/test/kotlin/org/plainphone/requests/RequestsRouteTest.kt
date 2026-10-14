@@ -10,6 +10,26 @@ import org.plainphone.policy.*
 import org.plainphone.ui.requests.*
 
 class RequestsRouteTest {
+    @Test fun recipientReadFailureIsDistinctFromSaveFailure() {
+        val read = recipientFailure(RequestRecipientUiState(), changing = false)
+        assertTrue(read.readFailed)
+        assertFalse(read.failed)
+        val save = recipientFailure(RequestRecipientUiState(confirming = true), changing = true)
+        assertFalse(save.readFailed)
+        assertTrue(save.failed)
+        assertTrue(save.confirming)
+    }
+    @Test fun requestReadRunsOnResumeOutsideTheClockLoop() {
+        val source = java.io.File("src/main/kotlin/org/plainphone/MainActivity.kt").readText()
+        val refresh = source.substringAfter("LaunchedEffect(resumed, phone) {").substringBefore("LaunchedEffect(shell.state, phone)")
+        assertTrue(refresh.contains("if (resumed)"))
+        assertTrue(refresh.contains("RequestEngine.get(this@MainActivity).view()"))
+        assertFalse(refresh.contains("while (true)"))
+        val clock = source.substringAfter("LaunchedEffect(shell.state, phone)").substringBefore("val cancel = cancelScreen")
+        assertFalse(clock.contains("RequestEngine"))
+        assertTrue(source.contains("ShellEffect.OpenAppRequests -> Intent(this, org.plainphone.requests.RequestsActivity::class.java)"))
+    }
+
     @Test fun productionMoreUsesRealRequestActivity() {
         val phone = PreviewPhone(PreviewPhone.empty())
         val nav = ShellNavigator(phone, phone, "LMNOPhone", testBuild = true)
