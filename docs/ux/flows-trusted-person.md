@@ -147,6 +147,7 @@ A menu page. At the top, a short **"Needs you"** list, only when something is wa
 | **History** | Changes on this phone, last 90 days | [M8](flows-people-modes-and-waits.md#m8-history) |
 | **Install an LMNOPhone update** | Only with {helper}, when {helper} asks | [P6](flows-sessions.md#p6-install-an-lmnophone-update) |
 | **Change PIN** | (none) | T1-style: old PIN, new PIN twice |
+| **New recovery code** | (none) | Fresh PIN, then T1c/S3b code shown once; the old code stops working |
 | **Turn LMNOPhone off** | Makes this an ordinary phone, after 24 hours | [L4](flows-limits-and-off.md#l4-turning-lmnophone-off) |
 
 Under the title, one line, always shown: "This is for adding apps and keeping the phone working. You can't see

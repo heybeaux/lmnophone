@@ -172,6 +172,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val vault by lazy { PinVault(authorityStore.credentials, Pbkdf2KeyDerivation, SecureEntropy, runningClock) }
     private val pins by lazy { PreviewPinAccess(authorityStore, vault) }
     private val turnOff by lazy { PreviewTurnOff(authorityStore, vault, runningClock) }
+    private val pinRecovery by lazy { org.plainphone.device.authority.PreviewRecovery(authorityStore, vault) }
     private val pinChange by lazy { PreviewChangePin(authorityStore, vault) }
     private val waiting: WaitingCheckpoints by lazy {
         WaitingCheckpoints(
@@ -365,6 +366,16 @@ class PolicyRuntime private constructor(private val context: Context) {
     fun enrollPin(pin: CharArray, done: (PinEnrollmentResult) -> Unit) = dispatcher.post {
         val result = pins.enroll(pin)
         try { run("pin-enrollment") } finally { done(result) }
+    }
+
+    fun recoveryWaits(done: (org.plainphone.policy.CredentialWaits?) -> Unit) = dispatcher.post { done(pinRecovery.waits()) }
+    fun rotateRecovery(pin: CharArray, done: (org.plainphone.device.authority.RecoveryAccessResult) -> Unit) = dispatcher.post {
+        done(pinRecovery.rotate(pin))
+    }
+    fun recoverPin(code: CharArray, newPin: CharArray, done: (org.plainphone.device.authority.RecoveryAccessResult) -> Unit) = dispatcher.post {
+        val result = pinRecovery.recover(code, newPin)
+        // As for Change PIN, resolve any wait bound to the replaced credential generation.
+        try { run("pin-recovery") } finally { done(result) }
     }
 
     fun checkPin(pin: CharArray, done: (PinAccessResult) -> Unit) = dispatcher.post {

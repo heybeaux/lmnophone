@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone
 
+import android.text.format.DateUtils
 import android.os.Bundle
 import android.content.Intent
-import android.text.format.DateUtils
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -143,6 +143,12 @@ class PinAccessActivity : ComponentActivity() {
                 runtime.checkChangePin(flow, pin) { runOnUiThread { done(it) } }
             override fun changePin(flow: String, newPin: CharArray, done: (PinChangeOutcome) -> Unit) =
                 runtime.changePin(flow, newPin) { runOnUiThread { done(it) } }
+            override fun recoveryWaits(done: (org.plainphone.policy.CredentialWaits?) -> Unit) =
+                runtime.recoveryWaits { runOnUiThread { done(it) } }
+            override fun rotateRecovery(pin: CharArray, done: (RecoveryAccessResult) -> Unit) =
+                runtime.rotateRecovery(pin) { runOnUiThread { done(it) } }
+            override fun recover(code: CharArray, newPin: CharArray, done: (RecoveryAccessResult) -> Unit) =
+                runtime.recoverPin(code, newPin) { runOnUiThread { done(it) } }
             override fun closeChange(flow: String) = runtime.closeChangePin(flow)
         }) { page = it }
     }
@@ -153,6 +159,12 @@ class PinAccessActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         setContent {
+            LaunchedEffect(page.page) {
+                while (page.page in setOf(PinPage.LOCKED, PinPage.RECOVERY_LOCKED)) {
+                    kotlinx.coroutines.delay(1_000)
+                    flow.refreshWaits()
+                }
+            }
             BackHandler { if (apps != null) backApps() else if (family != null) familyEditor?.event(FamilyEvent.Back) else when (page.page) {
                 PinPage.NOT_IN_BUILD -> flow.backFromUnsupported()
                 PinPage.CHANGE_OLD, PinPage.CHANGE_NEW, PinPage.CHANGE_DONE, PinPage.CHANGE_FAILED -> {
@@ -165,39 +177,35 @@ class PinAccessActivity : ComponentActivity() {
                 Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).systemBarsPadding().displayCutoutPadding()) {
                     when (page.page) {
                         PinPage.LOADING -> Unit
-                        PinPage.SETUP, PinPage.ENTER, PinPage.LOCKED, PinPage.OFF_PIN, PinPage.CHANGE_OLD -> PinScreen(PinUiState(
-                            context = AdminContext(PreviewPhone.sample().userName),
-                            stage = when (page.page) {
-                                PinPage.SETUP -> PinStage.NewPin
-                                PinPage.LOCKED -> PinStage.Locked
-                                else -> PinStage.Enter
-                            },
-                            value = value, confirmation = confirmation,
-                            canContinue = value.length >= 6 && value.all { it in '0'..'9' } &&
-                                (page.page != PinPage.SETUP || value == confirmation),
-                            sending = page.busy, wrongPin = page.wrong,
-                            wait = DateUtils.formatElapsedTime((page.waitMillis + 999) / 1000),
-                            // Change PIN: a new PIN cancels the wait the old one started (PLA-494).
-                            pendingChange = if (page.page == PinPage.CHANGE_OLD) waitingChangeName(waitingNow) else null,
+                        PinPage.SETUP, PinPage.ENTER, PinPage.LOCKED, PinPage.OFF_PIN, PinPage.CHANGE_OLD,
+                        PinPage.CHANGE_NEW, PinPage.RECOVERY_PIN, PinPage.RECOVERY, PinPage.RECOVERY_NEW,
+                        PinPage.RECOVERY_LOCKED, PinPage.RECOVERY_ISSUED -> PinScreen(pinUiState(
+                            page, AdminContext(PreviewPhone.sample().userName), value, confirmation, flow.displayedCode(),
+                            waitText(page.waitMillis), waitText(page.pinWaitMillis), waitingChangeName(waitingNow),
                         )) { event -> when (event) {
                             is PinEvent.ValueChanged -> value = event.value
                             is PinEvent.ConfirmationChanged -> confirmation = event.value
                             PinEvent.Continue -> {
-                                val pin = value.toCharArray()
+                                val secret = value.toCharArray(); val again = confirmation.toCharArray()
                                 value = ""; confirmation = ""
-                                flow.submit(pin)
+                                when (page.page) {
+                                    PinPage.RECOVERY -> { again.fill('\u0000'); flow.submitRecovery(secret) }
+                                    PinPage.CHANGE_NEW, PinPage.RECOVERY_NEW -> flow.submitNewPin(secret, again)
+                                    else -> { again.fill('\u0000'); flow.submit(secret) }
+                                }
                             }
-                            PinEvent.UseRecoveryCode -> { value = ""; confirmation = ""; flow.unsupported() }
+                            PinEvent.UseRecoveryCode -> { value = ""; confirmation = ""; flow.useRecovery() }
+                            PinEvent.EnterPin -> { value = ""; confirmation = ""; flow.enterPin() }
+                            PinEvent.Ok -> if (page.page == PinPage.RECOVERY_ISSUED) flow.codeWritten() else finish()
                             else -> finish()
                         } }
-                        PinPage.MENU -> if (apps != null) AppsContent(apps!!) else if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(AdminMenuUiState(
-                            AdminContext(PreviewPhone.sample().userName), AdminDestination.entries.map { AdminMenuItem(it) },
-                        )) { when (it) {
+                        PinPage.MENU -> if (apps != null) AppsContent(apps!!) else if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(pinMenuUiState(AdminContext(PreviewPhone.sample().userName))) { when (it) {
                             AdminMenuEvent.Done -> finish()
                             is AdminMenuEvent.OpenNotice -> flow.unsupported()
                             is AdminMenuEvent.Open -> when (it.destination) {
                                 AdminDestination.TurnOff -> flow.turnOff()
                                 AdminDestination.ChangePin -> flow.changePin()
+                                AdminDestination.NewRecoveryCode -> flow.newRecoveryCode()
                                 AdminDestination.VoiceMessages -> openFamily()
                                 AdminDestination.Apps -> openApps()
                                 else -> flow.unsupported()
@@ -232,22 +240,6 @@ class PinAccessActivity : ComponentActivity() {
                                 finish()
                             }
                         }
-                        PinPage.CHANGE_NEW -> PinScreen(PinUiState(
-                            context = AdminContext(PreviewPhone.sample().userName), stage = PinStage.NewPin,
-                            value = value, confirmation = confirmation,
-                            // A different second entry may be submitted; the flow says so and writes nothing.
-                            canContinue = value.length >= 6 && value.all { it in '0'..'9' } && confirmation.isNotEmpty(),
-                            sending = page.busy, mismatch = page.mismatch,
-                        )) { event -> when (event) {
-                            is PinEvent.ValueChanged -> value = event.value
-                            is PinEvent.ConfirmationChanged -> confirmation = event.value
-                            PinEvent.Continue -> {
-                                val pin = value.toCharArray(); val again = confirmation.toCharArray()
-                                value = ""; confirmation = ""
-                                flow.submitNewPin(pin, again)
-                            }
-                            else -> Unit
-                        } }
                         PinPage.CHANGE_DONE, PinPage.CHANGE_FAILED -> PinChangeResultScreen(
                             AdminContext(PreviewPhone.sample().userName), page.page == PinPage.CHANGE_DONE) { flow.back() }
                         PinPage.NOT_IN_BUILD -> NotInBuildScreen(flow::backFromUnsupported)
@@ -256,6 +248,13 @@ class PinAccessActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun waitText(millis: Long): String {
+        val seconds = ((millis + 999) / 1000).coerceAtLeast(1).toInt()
+        return if (seconds < 60) resources.getQuantityString(org.plainphone.ui.R.plurals.recovery_wait_seconds, seconds, seconds)
+        else if (seconds < 3600) ((seconds + 59) / 60).let { resources.getQuantityString(org.plainphone.ui.R.plurals.recovery_wait_minutes, it, it) }
+        else getString(org.plainphone.ui.R.string.recovery_wait_hour)
     }
 
     private fun waitingChangeName(read: org.plainphone.boot.WaitingRead?): String? {

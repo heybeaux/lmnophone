@@ -19,7 +19,9 @@ class PinVault(
         val random = entropy.bytes(16).also { require(it.size == 16) }
         val code = random.joinToString("") { "%02x".format(it.toInt() and 255) }
         random.fill(0)
-        return PreparedCredential(PersonCredential(hash(pin), hash(code.toCharArray())), code)
+        val chars = code.toCharArray()
+        return try { PreparedCredential(PersonCredential(hash(pin), hash(chars)), code) }
+        finally { chars.fill('\u0000') }
     }
 
     @Synchronized
@@ -90,6 +92,35 @@ class PinVault(
         val saved = store.read()?.people?.get(person) ?: return PinChangeResult.Unavailable
         return if (saved.generation == nextGeneration && saved.pin.hash.contentEquals(pin.hash) &&
             saved.pin.salt.contentEquals(pin.salt)) PinChangeResult.Changed else PinChangeResult.Unavailable
+    }
+
+    /** A fresh PIN grant replaces only the recovery verifier and its counter in one CAS. */
+    @Synchronized
+    fun replaceRecoveryCode(person: TrustedPersonId, authority: FreshAuthority, action: PrivilegedAction): RecoveryResult {
+        if (!consumeFor(authority, action, person)) return RecoveryResult.Unavailable
+        val now = clock.checkpoint() ?: return RecoveryResult.Unavailable
+        val state = store.read() ?: return RecoveryResult.Unavailable
+        val credential = state.people[person] ?: return RecoveryResult.Unavailable
+        if (state.revision == Long.MAX_VALUE) return RecoveryResult.Unavailable
+        val random = entropy.bytes(16).also { require(it.size == 16) }
+        val code = try { random.joinToString("") { "%02x".format(it.toInt() and 255) } }
+            finally { random.fill(0) }
+        val chars = code.toCharArray()
+        val verifier = try { hash(chars) } finally { chars.fill('\u0000') }
+        val replacement = credential.copy(recovery = verifier, recoveryCounter = FailureCounter(checkpoint = now.proven))
+        if (!store.compareAndSet(state, state.replacing(person, replacement))) return RecoveryResult.Unavailable
+        val saved = store.read()?.people?.get(person) ?: return RecoveryResult.Unavailable
+        return if (saved.recovery.hash.contentEquals(verifier.hash) && saved.recovery.salt.contentEquals(verifier.salt))
+            RecoveryResult.Replaced(code) else RecoveryResult.Unavailable
+    }
+
+    /** Read remaining waits without attempting either credential or changing either counter. */
+    @Synchronized
+    fun credentialWaits(person: TrustedPersonId): CredentialWaits? {
+        val now = clock.checkpoint() ?: return null
+        val credential = store.read()?.people?.get(person) ?: return null
+        return CredentialWaits(credential.pinCounter.at(now.proven).remainingMillis,
+            credential.recoveryCounter.at(now.proven).remainingMillis)
     }
 
     /** Resets only the selected holder. Never grants action authority and never skips a waiting change. */

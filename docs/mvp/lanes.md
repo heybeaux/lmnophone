@@ -71,6 +71,15 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
   - Separate counters and the exact lockout schedule.
   - Hashing goes through a `KeyDerivation` interface (PBKDF2 is implemented by D).
   - Supports one or two trusted people.
+  - `replaceRecoveryCode(person, authority, action)` consumes a fresh person/action-bound
+    PIN grant and atomically replaces only the recovery verifier and its counter. PIN,
+    PIN counter and credential generation are preserved. `credentialWaits(person)`
+    reads both remaining waits without making an attempt.
+  - Preview enrollment now returns `PinEnrollmentResult.Created(OneTimeRecoveryCode)`;
+    its code can be taken once and is cleared on an abandoned callback. The host shows
+    enrollment, rotation and recovery codes under FLAG_SECURE, then clears its buffer.
+    Recovery resets the credential but grants no subsequent action authority; preview
+    add/remove and turn-off still ask for a fresh PIN.
 - `WaitingChangeController`: the 24-hour waits (turning off, trusted-people changes, mode switches) and cancel.
   `tick` keeps its default forward behavior. Preview hosts pass `turnOffAvailable = false`
   only from Android's test-build flag: a mature pending turn-off closes as CANCELLED

@@ -1,0 +1,2 @@
+INSTRUMENTATION_RESULT: outcome=PASS: enrollment, fresh PIN rotation, old code refused, uppercase recovery, old PIN refused, new PIN works, change-PIN recovery route, FLAG_SECURE, acknowledged code removed, unchanged lock task list, zero code hits in logcat. No calls.
+INSTRUMENTATION_CODE: -1
