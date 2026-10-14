@@ -7,9 +7,10 @@ import org.plainphone.policy.*
 
 /** Private CE store. Atomic replacement + fsync before SMS handover. Corruption never means empty. */
 class RequestFileStore(private val file: File) : RequestStore {
+    private companion object { const val MAX_BYTES = 8_000_000L }
     override fun read(): RequestBook {
         if (!file.exists()) return RequestBook()
-        require(file.length() <= 8_000_000) { "request record too large" }
+        require(file.length() <= MAX_BYTES) { "request record too large" }
         return DataInputStream(FileInputStream(file).buffered()).use { input ->
             require(input.readInt() == 1) { "unknown request record" }
             val recipient = if (input.readBoolean()) RequestRecipient(input.readUTF(), input.readUTF()) else null
@@ -44,6 +45,7 @@ class RequestFileStore(private val file: File) : RequestStore {
                 }
                 out.flush(); stream.fd.sync()
             }
+            require(temp.length() <= MAX_BYTES) { "request record too large" }
             if (!temp.renameTo(file)) throw IOException("request save failed")
         } finally { temp.delete() }
     }

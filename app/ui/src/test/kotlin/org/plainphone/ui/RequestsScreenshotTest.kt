@@ -74,6 +74,24 @@ class RequestsScreenshotTest(private val scale: Float) {
         } } }
         assertTrue(checked)
     }
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+    @Test fun recipientReadFailure() {
+        var checked = false
+        paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+            val view = LocalView.current as ViewRootForTest
+            Box(Modifier.onGloballyPositioned {
+                val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
+                val texts = nodes.flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty() }.map { it.text }
+                assertTrue(texts.contains("Who gets requests could not be read. Check again later."))
+                assertFalse(texts.any { it.contains("could not be saved") || it == "Set up" || it == "Change" })
+                val ok = nodes.single { n -> n.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == "OK" } }
+                assertTrue(ok.config.contains(SemanticsActions.OnClick))
+                assertTrue(ok.boundsInRoot.height >= ok.size.height - 1f)
+                checked = true
+            }) { RequestRecipientScreen(RequestRecipientUiState(readFailed = true), {}) }
+        } } }
+        assertTrue(checked)
+    }
     @Test fun recipientDetails() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
         RequestRecipientScreen(RequestRecipientUiState(name = "Sam", number = "555-0100"), {})
     } } }

@@ -42,7 +42,7 @@ fun MoreScreen(state: MoreUiState, onEvent: (MoreEvent) -> Unit) {
             MenuRow(stringResource(R.string.more_pin_holder), stringResource(R.string.more_your_settings_note)) { onEvent(MoreEvent.OpenTrustedPerson) }
         } else when (val mode = state.mode) {
             is MoreMode.Trusted -> {
-                MenuRow(stringResource(R.string.more_ask), stringResource(R.string.more_ask_note, mode.requestRecipient.withoutBidiControls())) {
+                MenuRow(stringResource(R.string.more_ask), if (mode.requestRecipient.isBlank()) stringResource(if (state.requestsReady) R.string.requests_body else R.string.ask_not_set_up) else stringResource(R.string.more_ask_note, mode.requestRecipient.withoutBidiControls())) {
                     onEvent(MoreEvent.AskForApp)
                 }
                 val everyone = trustedPeopleText(mode.people, everyone = true)

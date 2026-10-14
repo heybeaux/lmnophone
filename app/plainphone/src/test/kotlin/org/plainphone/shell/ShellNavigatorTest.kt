@@ -6,9 +6,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.plainphone.ui.home.HomeEvent
-import org.plainphone.ui.user.AppRequestResult
-import org.plainphone.ui.user.AppRequestResultEvent
-import org.plainphone.ui.user.AskForAppEvent
 import org.plainphone.ui.user.BlockedLinkEvent
 import org.plainphone.ui.user.BlockedLinkUiState
 import org.plainphone.ui.user.MoreEvent
@@ -17,7 +14,7 @@ import org.plainphone.ui.user.WifiProblem
 
 class ShellNavigatorTest {
     private val phone = PreviewPhone(PreviewPhone.empty())
-    private val nav = ShellNavigator(phone, phone, "LMNOPhone")
+    private val nav = ShellNavigator(phone, "LMNOPhone")
 
     private fun at(vararg routes: ShellRoute) = ShellState(listOf(ShellRoute.Home, *routes))
 
@@ -57,27 +54,8 @@ class ShellNavigatorTest {
     }
 
     @Test fun backPopsAndFinishesAtHome() {
-        assertEquals(Step(at(ShellRoute.More)), nav.back(at(ShellRoute.More, ShellRoute.AskForApp)))
+        assertEquals(Step(at(ShellRoute.More)), nav.back(at(ShellRoute.More, ShellRoute.About)))
         assertEquals(Step(ShellState(), ShellEffect.Finish), nav.back(ShellState()))
-    }
-
-    @Test fun draftAcceptsUpTo280Characters() {
-        val ask = at(ShellRoute.More, ShellRoute.AskForApp)
-        val full = nav.onAsk(ask, AskForAppEvent.MessageChanged("a".repeat(280))).state
-        assertEquals(280, full.draft.length)
-        assertEquals(full, nav.onAsk(full, AskForAppEvent.MessageChanged("a".repeat(281))).state)
-    }
-
-    @Test fun sendWithoutALetterDoesNothing() {
-        val ask = at(ShellRoute.More, ShellRoute.AskForApp).copy(draft = "123 !")
-        assertEquals(Step(ask), nav.onAsk(ask, AskForAppEvent.Send))
-        assertEquals(0, phone.snapshot().requests.size)
-    }
-
-    @Test fun unconfiguredRequestCannotSaveOrClaimSent() {
-        val ask = at(ShellRoute.More, ShellRoute.AskForApp).copy(draft = "The bus times app")
-        repeat(6) { assertEquals(ask, nav.onAsk(ask, AskForAppEvent.Send).state) }
-        assertEquals(0, phone.requestsOn(phone.snapshot().now.toLocalDate()))
     }
 
     @Test fun blockedLinkNeverClaimsASendWithoutTransport() {

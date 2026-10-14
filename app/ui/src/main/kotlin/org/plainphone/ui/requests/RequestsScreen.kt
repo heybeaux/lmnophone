@@ -85,7 +85,8 @@ sealed interface RequestEvent {
 
 /** The host owns eligibility, validation, confirmation, PIN checks and saving. */
 data class RequestRecipientUiState(val name: String = "", val number: String = "", val editing: Boolean = false,
-    val confirming: Boolean = false, val removing: Boolean = false, val canSave: Boolean = false, val failed: Boolean = false)
+    val confirming: Boolean = false, val removing: Boolean = false, val canSave: Boolean = false, val failed: Boolean = false,
+    val readFailed: Boolean = false)
 sealed interface RecipientEvent {
     data class Name(val text: String) : RecipientEvent
     data class Number(val text: String) : RecipientEvent
@@ -96,11 +97,12 @@ sealed interface RecipientEvent {
 }
 @Composable fun RequestRecipientScreen(state: RequestRecipientUiState, event: (RecipientEvent) -> Unit) {
     TaskScreen(s(R.string.requests_recipient),
-        s(if (state.removing) R.string.requests_remove else if (state.confirming) R.string.waits_save else if (state.editing) R.string.admin_continue else if (state.number.isEmpty()) R.string.requests_set_up else R.string.requests_change),
-        { event(if (state.editing || state.confirming || state.removing) RecipientEvent.Continue else RecipientEvent.Change) },
+        s(if (state.readFailed) R.string.user_ok else if (state.removing) R.string.requests_remove else if (state.confirming) R.string.waits_save else if (state.editing) R.string.admin_continue else if (state.number.isEmpty()) R.string.requests_set_up else R.string.requests_change),
+        { event(if (state.readFailed) RecipientEvent.Back else if (state.editing || state.confirming || state.removing) RecipientEvent.Continue else RecipientEvent.Change) },
         primaryEnabled = !state.editing || state.canSave, back = s(R.string.admin_back), onBack = { event(RecipientEvent.Back) }) {
         if (state.failed) Text(s(R.string.requests_save_error), style = PlainphoneType.Body)
         when {
+            state.readFailed -> Text(s(R.string.requests_recipient_read_error), style = PlainphoneType.Body)
             state.removing -> Text(s(R.string.requests_remove_confirm), style = PlainphoneType.Body)
             state.confirming -> {
                 Text(s(R.string.requests_recipient_confirm), style = PlainphoneType.Body)

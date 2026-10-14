@@ -409,7 +409,7 @@ PIN before the durable write. With no saved recipient, the primary button is **S
 Details show the saved name/number, **Change** and
 **Remove**. Removal asks **Stop sending app requests? Saved requests will stay on
 this phone.**, then **Remove** and a fresh PIN. A failed save says **The change
-could not be saved. Try again.** Back or leaving the activity writes nothing.
+could not be saved. Try again.** If the initial read fails: **Who gets requests could not be read. Check again later.** Show **OK** and Back, without Set up, Change or Remove. This distinguishes unknown saved data from an empty recipient (PLA-538). Back or leaving the activity writes nothing.
 
 The Family picker is omitted from this bounded slice. No Family entry is selected
 implicitly. This setting does not alter PIN credentials or trusted-person authority.
