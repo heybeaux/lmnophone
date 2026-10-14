@@ -165,6 +165,22 @@ the host reads the same waiting store as Home and rechecks the request on tap.
 - **Names are cleaned when saved.** Trusted-person names reject or strip bidi controls (U+202A–202E, U+2066–2069, U+200E, U+200F, U+061C), zero-width characters and line separators when saved. `:ui` also strips bidi controls when it shows a name, but that only backs this up.
 - **Hosts that aren't plain ASCII show as punycode, with the unusual-letters warning.** `pay​pal.com` (with a zero-width space) must not reach the screen as "paypal.com".
 
+### Preview permission addition (Location correction)
+
+`PreviewPermissionAddition` takes two required device callbacks in addition to write/read:
+`checkpoint(AppPermissionSnapshot): Boolean` and `rollback(AppPermissionSnapshot): Boolean`.
+The runtime binds both to the same `PermissionGrantAttempts` instance. The checkpoint reads
+fixed and actual runtime grants before writes. An unsuccessful addition restores those values
+while excluded from Home and lock task, then re-hides; a refused restore returns CheckFailed.
+A post-hide failure reopens only through the existing guarded permission-window effect.
+Returned failure readback is refreshed after restoration. This does not journal a rollback across
+process death; startup still hides unapproved apps as before.
+
+`DpmPermissionGrantPort.policyState` corrects Android 15's foreground-only COARSE/FINE
+readback using the actual runtime grant, only when DPM reports a fixed state and the package
+is not suspended. DEFAULT remains DEFAULT. See `app/tools/pla564/README.md` for the source
+and repeatable emulator check.
+
 ## Branches, worktrees, merges
 
 | Lane | Engineer | Worktree | Branch |
