@@ -38,6 +38,28 @@ class PreviewPermissionAdditionTest {
         apply = { events += "apply"; true })
     private fun add() = subject().add(snapshot, choices, charArrayOf('1')) { active }
 
+    @Test fun changingManifestDuringTheWindowClosesWithoutCommit() {
+        var reads = 0
+        val subject = PreviewPermissionAddition({ _, _ -> PinAccessResult.Open }, { true },
+            { if (++reads == 1) snapshot else snapshot.copy(versionCode = 2) },
+            { events += "unhide"; true }, { events += "rehide"; true },
+            { _, _ -> error("stale version must not get a grant") },
+            { AppPermissionRead(snapshot.copy(versionCode = 2), emptyMap()) },
+            { error("must not commit") }, { error("must not apply") })
+        assertTrue(subject.add(snapshot, choices, charArrayOf('1')) { true } is AppAdditionResult.PermissionFailed)
+        assertTrue("rehide" in events)
+    }
+    @Test fun roleChangeAfterSnapshotBlocksTheNextGrant() {
+        var reads = 0
+        var writes = 0
+        val subject = PreviewPermissionAddition({ _, _ -> PinAccessResult.Open }, { eligible },
+            { reads++; if (reads > 1) eligible = false; snapshot },
+            { true }, { true }, { _, _ -> writes++; PermissionAttempt(GrantWrite.DONE) },
+            { AppPermissionRead(snapshot, emptyMap()) }, { error("must not commit") }, { error("must not apply") })
+        val result = subject.add(snapshot, choices, charArrayOf('1')) { true }
+        assertTrue(result is AppAdditionResult.PermissionFailed)
+        assertEquals(0, writes)
+    }
     @Test fun freshPinThenVisibleThenDenyBeforeAllowThenRehideBeforeMembership() {
         assertEquals(AppAdditionResult.Added, add())
         assertTrue(events.indexOf("pin") < events.indexOf("unhide"))
