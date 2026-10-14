@@ -82,4 +82,7 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.compose.foundation)
     testImplementation(libs.junit4)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation(libs.android.test.runner)
 }
