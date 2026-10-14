@@ -34,6 +34,8 @@ def add(mic):
     wait_label('What can Permission test app use?')
     tap('Next');assert 'What can Permission test app use?' in labels()
     tap('Camera: Allow',scroll=True);tap('Microphone: '+('Allow' if mic else "Don't allow"),scroll=True)
+    # Next can proceed with exactly these two choices despite the undefined permission.
+    print('Camera and Microphone chosen; checking undefined permission does not block Next.',flush=True)
     tap('Next');tap('Add Permission test app');pin();wait_label('Done. Permission test app is on the home screen.')
     tap('OK');check_states(mic)
     print('Remove/add with explicit choices and fresh PIN passed; saved fixture data retained.',flush=True)

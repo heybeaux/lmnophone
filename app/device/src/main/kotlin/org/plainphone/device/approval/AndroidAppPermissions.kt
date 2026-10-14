@@ -31,7 +31,12 @@ class AndroidAppPermissions(context: Context, admin: ComponentName) {
             PackageManager.MATCH_UNINSTALLED_PACKAGES or PackageManager.MATCH_DISABLED_COMPONENTS)
         check((info.applicationInfo?.flags ?: 0) and ApplicationInfo.FLAG_INSTALLED != 0)
         val signers = checkNotNull(info.signingInfo).apkContentsSigners.map { CertDigests.sha256(it.toByteArray()) }.toSet()
-        val permissions = info.requestedPermissions.orEmpty().map { pm.getPermissionInfo(it, 0) }
+        val permissions = info.requestedPermissions.orEmpty().mapNotNull {
+            // Apps can request vendor permissions whose defining app is absent. Only that
+            // missing entry is omitted; other lookup failures still invalidate the snapshot.
+            try { pm.getPermissionInfo(it, 0) }
+            catch (_: PackageManager.NameNotFoundException) { null }
+        }
             .filter { it.protection == PermissionInfo.PROTECTION_DANGEROUS }
         val groupQueries = permissions.associateWith { permission ->
             CompletableFuture<String?>().also { result ->
