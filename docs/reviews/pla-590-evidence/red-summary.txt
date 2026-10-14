@@ -1,0 +1,4 @@
+Baseline test run on emulator-5940, before implementation, 11 tests.
+Eight reproduced product gaps: app position, issued-code spelling, request removal failure, recipient failures, recovery errors, selected-choice duplicate/tick, wrong PIN/wait, app-check failure.
+Three corrected test assumptions: Requests from label, pinned primary button has no scroll ancestor, internal InputText is distinct from accessible masked EditableText.
+Tests committed first at fd96c2f1.

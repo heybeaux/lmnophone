@@ -152,6 +152,16 @@ class PinSettingsTalkBackTest {
             noGlyphs()
         }
     }
+    @Test fun completedAppChangesAnnounceTheirResultOnce() {
+        val stage = mutableStateOf(AppReviewStage.Confirm)
+        show { AppReviewScreen(AppReviewUiState(context, camera, stage = stage.value, previewSubset = true), {}) }
+        compose.onAllNodes(polite).assertCountEquals(0)
+        listOf(AppReviewStage.Added, AppReviewStage.Removed).forEach { result ->
+            compose.runOnIdle { stage.value = result }
+            compose.onAllNodes(polite and heading).assertCountEquals(1)
+            action("OK")
+        }
+    }
     @Test fun savedRequestRemovalAnnouncesFailureAndKeepsBothActions() {
         val state = mutableStateOf(RequestsUiState(historyOnly = true, rows = listOf(RequestUiRow("Bus times", "Thursday", RequestUiStatus.NotConfirmed, "one"))))
         val events = mutableListOf<RequestEvent>()
@@ -214,6 +224,9 @@ class PinSettingsTalkBackTest {
             Page("review", "Next") { AppReviewScreen(AppReviewUiState(context, camera, previewSubset = true), {}) },
             Page("warning", "Add anyway") { AppReviewScreen(AppReviewUiState(context, camera, stage = AppReviewStage.Unreviewed, previewSubset = true), {}) },
             Page("confirm", "Add Camera") { AppReviewScreen(AppReviewUiState(context, camera, stage = AppReviewStage.Confirm, previewSubset = true), {}) },
+            Page("added", "OK") { AppReviewScreen(AppReviewUiState(context, camera, stage = AppReviewStage.Added, previewSubset = true), {}) },
+            Page("removed", "OK") { AppReviewScreen(AppReviewUiState(context, camera, stage = AppReviewStage.Removed, previewSubset = true), {}) },
+            Page("hidden-result", "OK") { AppReviewScreen(AppReviewUiState(context, camera, stage = AppReviewStage.Hidden, previewSubset = true), {}) },
             Page("remove", "Remove") { AppReviewScreen(AppReviewUiState(context, camera, stage = AppReviewStage.Remove, previewSubset = true), {}) },
             Page("permissions", "Next") { PermissionsScreen(PermissionsUiState(context, "Camera", listOf(PermissionChoice("camera", PermissionGroup.Camera, decision = PermissionDecision.Allow)), previewAdd = true), {}) },
             Page("permission-failed", "Choose again") { AppPermissionFailureScreen(context, "Camera", emptyList(), AppPermissionsUiState(), {}) },

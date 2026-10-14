@@ -37,7 +37,7 @@ fun AppReviewScreen(state: AppReviewUiState, onEvent: (AppReviewEvent) -> Unit) 
     }
     val complete = state.stage in listOf(AppReviewStage.Added, AppReviewStage.Hidden, AppReviewStage.Removed)
     AdminFrame(state.context, title, primary, { onEvent(if (complete) AppReviewEvent.Ok else AppReviewEvent.Continue) },
-        enabled = !state.sending,
+        enabled = !state.sending, announceTitle = state.stage in listOf(AppReviewStage.Added, AppReviewStage.Removed),
         secondary = if (state.stage in listOf(AppReviewStage.Review, AppReviewStage.Unreviewed)) s(R.string.admin_dont_add) else if (state.previewSubset && !complete) s(R.string.admin_back) else null,
         secondaryEnabled = !state.sending, onSecondary = { onEvent(if (state.stage in listOf(AppReviewStage.Review, AppReviewStage.Unreviewed)) AppReviewEvent.DontAdd else AppReviewEvent.Back) }) {
         when (state.stage) {

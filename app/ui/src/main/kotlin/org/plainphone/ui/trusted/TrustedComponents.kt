@@ -30,13 +30,13 @@ import org.plainphone.ui.theme.*
 @Composable
 internal fun AdminFrame(context: AdminContext?, title: String, primary: String? = null,
     onPrimary: () -> Unit = {}, enabled: Boolean = true, secondary: String? = null,
-    secondaryEnabled: Boolean = true, onSecondary: () -> Unit = {}, content: @Composable ColumnScope.() -> Unit) {
+    secondaryEnabled: Boolean = true, onSecondary: () -> Unit = {}, announceTitle: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     val band = context?.let {
         it.trustedPersonName?.let { name -> stringResource(R.string.more_for, name.withoutBidiControls()) }
             ?: stringResource(R.string.more_your_settings)
     }
     TaskScreen(title, primary, onPrimary, primaryEnabled = enabled, secondary = secondary,
-        secondaryEnabled = secondaryEnabled, onSecondary = onSecondary, band = band, content = content)
+        secondaryEnabled = secondaryEnabled, onSecondary = onSecondary, band = band, announceTitle = announceTitle, content = content)
 }
 @Composable internal fun Words(text: String) = Text(text, style = PlainphoneType.Body)
 @Composable internal fun StatusWords(text: String) = Text(text, style = PlainphoneType.Body,

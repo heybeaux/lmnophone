@@ -1,0 +1,8 @@
+
+org.plainphone.ui.PinSettingsTalkBackTest:.............
+
+Time: 58.36
+
+OK (13 tests)
+
+

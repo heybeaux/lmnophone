@@ -1,0 +1,23 @@
+
+org.plainphone.ui.PinSettingsTalkBackTest:
+Error in completedAppChangesAnnounceTheirResultOnce(org.plainphone.ui.PinSettingsTalkBackTest):
+java.lang.AssertionError: Failed to assert count of nodes.
+Reason: Expected exactly '1' node but could not find any node that satisfies: ((LiveRegion = 'Polite') && (Heading is defined))
+
+	at androidx.compose.ui.test.AssertionsKt.assertCountEquals(Assertions.kt:278)
+	at org.plainphone.ui.PinSettingsTalkBackTest.completedAppChangesAnnounceTheirResultOnce(PinSettingsTalkBackTest.kt:161)
+
+
+Time: 3.013
+There was 1 failure:
+1) completedAppChangesAnnounceTheirResultOnce(org.plainphone.ui.PinSettingsTalkBackTest)
+java.lang.AssertionError: Failed to assert count of nodes.
+Reason: Expected exactly '1' node but could not find any node that satisfies: ((LiveRegion = 'Polite') && (Heading is defined))
+
+	at androidx.compose.ui.test.AssertionsKt.assertCountEquals(Assertions.kt:278)
+	at org.plainphone.ui.PinSettingsTalkBackTest.completedAppChangesAnnounceTheirResultOnce(PinSettingsTalkBackTest.kt:161)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
