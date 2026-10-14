@@ -8,6 +8,8 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(58, 58, listOf("PIN settings shows only choices that work in this version.",
+            "Add a hidden app opens the same steps as Apps on this phone, and asks for your PIN again before adding.")),
         ReleaseNote(57, 57, listOf("Adding an app that uses Location now works. You choose whether it can use Location, and its page shows that choice.",
             "If adding an app fails partway, what it can use goes back to how it was, and the app stays hidden.")),
         ReleaseNote(56, 56, listOf("In PIN settings, you can now choose Not now on a request, then Remove it or Keep it.",
