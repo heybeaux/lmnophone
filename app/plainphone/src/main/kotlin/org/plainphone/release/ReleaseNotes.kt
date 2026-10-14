@@ -45,7 +45,8 @@ object ReleaseNotes {
 /** Pure production mapping shared by startup state and host tests. */
 fun releaseAbout(name: String, version: ObservedVersions, secure: Boolean = false): org.plainphone.ui.user.AboutUiState {
     fun ReleaseNote.ui() = org.plainphone.ui.user.ReleaseNoteUi(label, changes)
-    return org.plainphone.ui.user.AboutUiState(name, version.current, ReleaseNotes.current(version.current)?.ui(),
-        ReleaseNotes.since(version.current, version.previous).map { it.ui() },
+    val current = ReleaseNotes.current(version.current)
+    return org.plainphone.ui.user.AboutUiState(name, version.current, current?.ui(),
+        ReleaseNotes.since(version.current, version.previous).filter { it != current }.map { it.ui() },
         ReleaseNotes.all.filter { it.lastCode < version.current }.map { it.ui() }, secure)
 }

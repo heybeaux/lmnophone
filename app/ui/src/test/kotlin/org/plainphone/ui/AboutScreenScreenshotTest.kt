@@ -38,7 +38,7 @@ class AboutScreenScreenshotTest(private val scale: Float) {
         ReleaseNoteUi("47", listOf("Send voice messages to people in Family.")))
     private val state = AboutUiState("0.1.0-preview-49", 49, latest, emptyList(), older)
     @Test fun latestOnly() = aboutShot(state)
-    @Test fun skippedBuilds() = aboutShot(state.copy(sincePrevious = listOf(latest) + older))
+    @Test fun skippedBuilds() = aboutShot(state.copy(sincePrevious = older))
     @Test fun olderVersions() = aboutShot(state.copy(showOlder = true))
 
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
@@ -52,6 +52,8 @@ class AboutScreenScreenshotTest(private val scale: Float) {
                     n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
                 val texts = nodes.map(::text)
                 assertTrue("LMNOPhone" in texts)
+                assertEquals(0, texts.count { it == "Version 49" })
+                assertEquals(if (value.showOlder) 0 else 1, texts.count { it == latest.changes.first() })
                 assertTrue("Version 0.1.0-preview-49 (49)" in texts)
                 assertEquals(!value.showOlder && value.sincePrevious.isNotEmpty(), "New since your last version" in texts)
                 assertTrue("Tap Phone, type 9-1-1, and press call." in texts)
@@ -77,6 +79,8 @@ class AboutScreenScreenshotTest(private val scale: Float) {
         VoicePracticeScreen(VoiceUiState.ChoosePerson(emptyList()), {})
     } } }
     @Test fun requestNotSetUp() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+        assertEquals("Not set up on this phone yet. Nothing has been sent. The person who set up this phone can turn it on.",
+            androidx.compose.ui.res.stringResource(R.string.ask_missing_recipient))
         AskForAppScreen(AskForAppUiState("", isSetUp = false), {})
     } } }
     @Test fun neutralMore() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {

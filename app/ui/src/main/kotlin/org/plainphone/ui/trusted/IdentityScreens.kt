@@ -72,7 +72,7 @@ fun PinScreen(state: PinUiState, onEvent: (PinEvent) -> Unit) {
                     RecoveryLockoutKind.Skip -> s(R.string.admin_code_skip_waiting)
                 })
                 other?.let { Words(s(R.string.admin_code_other_available, it)) }
-                Words(s(R.string.admin_code_help, state.helper.withoutBidiControls().ifBlank { s(R.string.pin_holder) }))
+                Words(s(R.string.admin_code_help, state.helper.withoutBidiControls().ifBlank { s(R.string.setup_helper) }))
             }
             PinStage.NewPin -> {
                 if (state.mismatch) Words(s(R.string.admin_pin_mismatch))

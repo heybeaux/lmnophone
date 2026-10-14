@@ -16,8 +16,8 @@ import org.plainphone.ui.user.VoiceUiEvent
 import org.plainphone.ui.user.VoiceUiState
 
 /**
- * Emulator only, Device Owner set by adb first and real sending turned on for Sam with TestHook VOICE_SEND and a
- * fictional 555-01xx number (PLA-499). Runs in the app process: records a take for Sam, then calls the same
+ * Historical emulator harness for the retired practice-send route (PLA-499). The VOICE_SEND hook
+ * no longer exists; this harness cannot enable sending. It records a fixture take, then calls the same
  * handler the Review screen's Send button calls, exactly once, and waits for the answer. Nothing else sends.
  * The `outcome` line names the screen and the stored reason; it never holds the number.
  */
