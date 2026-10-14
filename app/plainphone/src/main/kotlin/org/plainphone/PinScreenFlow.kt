@@ -44,11 +44,20 @@ class PinScreenFlow(private val port: PinScreenPort, private val changed: (PinPa
         clearCodes()
         val request = ++generation
         show(PinPageState())
-        port.entry { entry -> if (generation == request) show(PinPageState(when (entry) {
-            PinEntry.SETUP -> PinPage.SETUP
-            PinEntry.ENTER -> PinPage.ENTER
-            PinEntry.UNAVAILABLE -> PinPage.UNAVAILABLE
-        })) }
+        port.entry { entry -> if (generation == request) {
+            when (entry) {
+                PinEntry.SETUP -> show(PinPageState(PinPage.SETUP))
+                PinEntry.UNAVAILABLE -> show(PinPageState(PinPage.UNAVAILABLE))
+                // Re-read the durable wait after recreation/resume. Never save a UI timer or PIN.
+                PinEntry.ENTER -> port.recoveryWaits { waits -> if (generation == request) {
+                    show(when {
+                        waits == null -> PinPageState(PinPage.UNAVAILABLE)
+                        waits.pinMillis > 0 -> PinPageState(PinPage.LOCKED, waitMillis = waits.pinMillis)
+                        else -> PinPageState(PinPage.ENTER)
+                    })
+                } }
+            }
+        } }
     }
     fun close() { clearCodes(); dropChange(); port.closeTurnOff(turnOffId); turnOffId = UUID.randomUUID().toString(); firstConfirmed = false; generation++; returnPage = PinPage.ENTER; show(PinPageState()) }
     fun submit(pin: CharArray) {

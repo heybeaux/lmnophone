@@ -14,8 +14,10 @@ class PinScreenFlowTest {
         lateinit var recovered: (RecoveryAccessResult) -> Unit
         var recoveries = 0
         var rotations = 0
-        var waits = org.plainphone.policy.CredentialWaits(0, 0)
-        override fun recoveryWaits(done: (org.plainphone.policy.CredentialWaits?) -> Unit) { done(waits) }
+        var waits: org.plainphone.policy.CredentialWaits? = org.plainphone.policy.CredentialWaits(0, 0)
+        var pendingWait: ((org.plainphone.policy.CredentialWaits?) -> Unit)? = null
+        var deferWait = false
+        override fun recoveryWaits(done: (org.plainphone.policy.CredentialWaits?) -> Unit) { if (deferWait) pendingWait = done else done(waits) }
         override fun rotateRecovery(pin: CharArray, done: (RecoveryAccessResult) -> Unit) { rotations++; pin.fill('\u0000'); recovered = done }
         override fun recover(code: CharArray, newPin: CharArray, done: (RecoveryAccessResult) -> Unit) {
             recoveries++; code.fill('\u0000'); newPin.fill('\u0000'); recovered = done
@@ -41,6 +43,54 @@ class PinScreenFlowTest {
         override fun entry(done: (PinEntry) -> Unit) { entry = done }
         override fun enroll(pin: CharArray, done: (PinEnrollmentResult) -> Unit) { pin.fill('\u0000'); enrolled = done }
         override fun authenticate(pin: CharArray, done: (PinAccessResult) -> Unit) { checks++; pin.fill('\u0000'); checked = done }
+    }
+    @Test fun recreationRestoresRemainingPinWaitWithoutAnotherAttemptOrTimer() {
+        val p = Port(); val original = PinScreenFlow(p) {}
+        original.open(); p.entry(PinEntry.ENTER)
+        repeat(5) { attempt ->
+            original.submit(CharArray(6) { '2' })
+            p.checked(PinAccessResult.Wrong(if (attempt == 4) 30_000 else 0))
+        }
+        assertEquals(PinPage.LOCKED, original.state.page)
+        original.close()
+        p.waits = org.plainphone.policy.CredentialWaits(21_000, 0)
+        val pages = mutableListOf<PinPage>()
+        val recreated = PinScreenFlow(p) { pages += it.page }
+        recreated.open(); p.entry(PinEntry.ENTER)
+        assertEquals(PinPage.LOCKED, recreated.state.page)
+        assertEquals(21_000L, recreated.state.waitMillis)
+        assertFalse(pages.contains(PinPage.ENTER))
+        val pin = CharArray(6) { '2' }; recreated.submit(pin)
+        assertTrue(pin.all { it == '\u0000' }); assertEquals(5, p.checks)
+        p.waits = org.plainphone.policy.CredentialWaits(8_000, 0)
+        recreated.refreshWaits(); assertEquals(8_000L, recreated.state.waitMillis)
+        p.waits = org.plainphone.policy.CredentialWaits(0, 0)
+        recreated.refreshWaits(); assertEquals(PinPage.ENTER, recreated.state.page)
+        assertEquals(5, p.checks)
+    }
+    @Test fun openingWithUnreadableWaitDoesNotOfferPinEntry() {
+        val p = Port(); p.waits = null
+        val f = PinScreenFlow(p) {}
+        f.open(); p.entry(PinEntry.ENTER)
+        assertEquals(PinPage.UNAVAILABLE, f.state.page)
+        assertEquals(0, p.checks)
+    }
+    @Test fun delayedWaitReadCannotReopenClosedOrNewerFlow() {
+        val p = Port(); p.deferWait = true
+        val f = PinScreenFlow(p) {}
+        f.open(); p.entry(PinEntry.ENTER)
+        assertEquals(PinPage.LOADING, f.state.page)
+        val oldWait = requireNotNull(p.pendingWait)
+        f.close(); f.open(); p.entry(PinEntry.SETUP)
+        oldWait(org.plainphone.policy.CredentialWaits(15_000, 0))
+        assertEquals(PinPage.SETUP, f.state.page)
+    }
+    @Test fun recoveryWaitAloneDoesNotPreventPinEntry() {
+        val p = Port(); p.waits = org.plainphone.policy.CredentialWaits(0, 30_000)
+        val f = PinScreenFlow(p) {}
+        f.open(); p.entry(PinEntry.ENTER)
+        assertEquals(PinPage.ENTER, f.state.page)
+        assertEquals(0, p.checks)
     }
     @Test fun appsRecoveryLeavesMenuAndUsesExistingRecovery() {
         val p = Port(); val f = PinScreenFlow(p) {}
