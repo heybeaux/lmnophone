@@ -1,0 +1,5 @@
+Your settings|Your PIN|Enter your PIN to make changes on this phone.|LMNOPhone asks for your PIN for each change, so nobody else can make one if the phone is put down.|PIN|Forgot PIN? Use recovery code|Continue
+
+      topResumedActivity=ActivityRecord{2a6eb57 u0 org.plainphone/.requests.RequestRecipientActivity t5}
+Go back|Who gets requests|Asking for an app isn't set up on this phone yet.|Set up
+      topResumedActivity=ActivityRecord{2a6eb57 u0 org.plainphone/.requests.RequestRecipientActivity t5}

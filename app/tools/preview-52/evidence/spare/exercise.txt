@@ -1,0 +1,24 @@
+# Build 52 on the spare: Requests follow-ups (PLA-538) exercised (PLA-545)
+# 2026-10-14 08:24Z-08:36Z. Test PIN from the secrets file; no PIN in this record. No calls, no SMS/MMS.
+# PIN screens are FLAG_SECURE: layouts/ hold uiautomator text.
+0. One install, in place: 5c963a48 (08:24:51Z, gate.log exit 0, 242 PASS; More > Emergency and Phone = 911,
+   zero calls). versionCode 52, DO kept, LOCKED, ceDataInode 32221, release_current=52 / release_previous=51.
+1. About (layouts/01-03, 10-about.png): "Version 0.1.0-preview-52 (52)"; "What's new in this version" =
+   "Who gets requests now says so when its saved details can't be read." No "New since your last version"
+   section is on screen: previous=51 was observed, so no build was skipped (same as builds 50 and 51).
+   Older versions starts with Version 51 (its 2 notes), then 50, 49 ...
+2. Ask for an app / Requests (layouts/04, 04-ask.png): More > Ask for an app opens RequestsActivity:
+   "Asking for an app isn't set up on this phone yet." / "This phone's PIN holder can set it up in More, then
+   PIN settings, then Who gets requests." plus the saved build 50 Not sent row (unchanged from build 51).
+   PIN settings (layouts/05): test PIN -> menu incl. Who gets requests. Who gets requests (layouts/06) asked
+   for a fresh PIN ("LMNOPhone asks for your PIN for each change...") then opened RequestRecipientActivity
+   with the setup state: "Asking for an app isn't set up on this phone yet." / Set up. No "could not be
+   read". No recipient saved (removed in the build 50 exercise). Go back without changes -> PIN entry; Home.
+   A read failure was not faked on the spare (host RequestsRouteTest + recipientReadFailure goldens cover D2).
+3. Saved data (before.txt -> after-install.txt -> after.txt): versionCode 51->52, release keys 51/50 -> 52/51
+   at install. After the exercise only the authority record hash changed (both copies equal, still 9 files),
+   after two correct PIN entries; no wrong PIN was entered. Family store, app order, starter list, counts
+   toggle, drafts, send records, request store (124 bytes, same sha), played state (0), Wi-Fi hash, bonded 0,
+   location 0, font 1.0, ring 5, ceDataInode 32221 all identical.
+Nonblocking: the build 52 note uses a straight apostrophe in "can't"; the other notes and the About heading
+use curly ones (’).

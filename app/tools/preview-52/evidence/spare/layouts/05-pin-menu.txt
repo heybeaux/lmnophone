@@ -1,0 +1,3 @@
+Your settings|Your PIN|Enter your PIN to make changes on this phone.|PIN|Forgot PIN? Use recovery code|Continue
+
+Your settings|Your settings|You hold the PIN. LMNOPhone adds waits so that distraction takes effort. It's friction, not a lock.|Voice messages|Add an app|Add a hidden app|Apps on this phone|Requests from the person using this phone|Who gets requests|Check for updates|Done – back to the home screen

@@ -1,0 +1,2 @@
+Go back|Ask for an app|Asking for an app isn't set up on this phone yet.|This phone’s PIN holder can set it up in More, then PIN settings, then Who gets requests.|Your requests|Bus times app|13 Oct 2026|Not sent|The phone has no signal or is in airplane mode. Your request is saved here.|OK
+      topResumedActivity=ActivityRecord{8f14749 u0 org.plainphone/.requests.RequestsActivity t5}
