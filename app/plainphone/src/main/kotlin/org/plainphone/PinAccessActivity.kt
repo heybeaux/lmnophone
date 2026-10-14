@@ -47,7 +47,7 @@ class PinAccessActivity : ComponentActivity() {
     private var apps by mutableStateOf<PreviewAppsState?>(null)
     private var appsFlow: PreviewAppsFlow? = null
     private val appsContext get() = AdminContext(getString(org.plainphone.ui.R.string.current_phone_user), null)
-    private fun openApps() {
+    private fun openApps(hidden: Boolean = false) {
         if (page.page != PinPage.MENU) return
         appsFlow = PreviewAppsFlow(object : PreviewAppsPort {
             override fun permissions(id: String, hidden: Boolean, done: (org.plainphone.device.approval.AppPermissionRead?) -> Unit) =
@@ -62,11 +62,11 @@ class PinAccessActivity : ComponentActivity() {
             override fun remove(id: String, pin: CharArray, active: () -> Boolean, done: (org.plainphone.device.AppRemovalResult) -> Unit) =
                 runtime.removePreviewApp(id, pin, active) { result -> runOnUiThread { done(result) } }
         }) { apps = it }
-        appsFlow?.open()
+        if (hidden) appsFlow?.openHidden() else appsFlow?.open()
     }
     private fun backApps() {
         value = ""
-        if (apps?.stage == PreviewAppsStage.List) { appsFlow?.close(); appsFlow = null; apps = null }
+        if (appsFlow?.leavesOnBack() != false) { appsFlow?.close(); appsFlow = null; apps = null }
         else appsFlow?.back()
     }
     @Composable private fun AppsContent(state: PreviewAppsState) {
@@ -220,15 +220,16 @@ class PinAccessActivity : ComponentActivity() {
                             waitingMenu, homeNotice, needsYouCopy(), menuRequests)) { when (it) {
                             AdminMenuEvent.Done -> finish()
                             is AdminMenuEvent.OpenNotice -> openNeedsYou(it.id)
-                            is AdminMenuEvent.Open -> when (it.destination) {
-                                AdminDestination.TurnOff -> flow.turnOff()
-                                AdminDestination.ChangePin -> flow.changePin()
-                                AdminDestination.NewRecoveryCode -> flow.newRecoveryCode()
-                                AdminDestination.VoiceMessages -> openFamily()
-                                AdminDestination.Apps -> openApps()
-                                AdminDestination.Requests -> openRequests()
-                                AdminDestination.RequestRecipient -> startActivity(Intent(this@PinAccessActivity, org.plainphone.requests.RequestRecipientActivity::class.java))
-                                else -> flow.unsupported()
+                            is AdminMenuEvent.Open -> when (pinMenuTarget(it.destination)) {
+                                PinMenuTarget.TurnOff -> flow.turnOff()
+                                PinMenuTarget.ChangePin -> flow.changePin()
+                                PinMenuTarget.NewRecoveryCode -> flow.newRecoveryCode()
+                                PinMenuTarget.Family -> openFamily()
+                                PinMenuTarget.AddHiddenApp -> openApps(hidden = true)
+                                PinMenuTarget.Apps -> openApps()
+                                PinMenuTarget.Requests -> openRequests()
+                                PinMenuTarget.RequestRecipient -> startActivity(Intent(this@PinAccessActivity, org.plainphone.requests.RequestRecipientActivity::class.java))
+                                null -> Unit
                             }
                         } }
                         PinPage.OFF_INTRO, PinPage.OFF_FIRST, PinPage.OFF_LAST -> TurnOffScreen(TurnOffUiState(

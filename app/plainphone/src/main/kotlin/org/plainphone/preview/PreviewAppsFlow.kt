@@ -35,8 +35,10 @@ class PreviewAppsFlow(private val port: PreviewAppsPort, private val changed: (P
         private set
     @Volatile private var generation = 0L
     private fun show(next: PreviewAppsState) { state = next; changed(next) }
+    private var fromPinSettings = false
     fun close() { generation++ }
     fun open() {
+        fromPinSettings = false
         val request = ++generation
         show(PreviewAppsState(busy = true))
         port.read { rows -> if (request == generation) show(PreviewAppsState(rows = rows.orEmpty(), loadFailed = rows == null)) }
@@ -65,6 +67,9 @@ class PreviewAppsFlow(private val port: PreviewAppsPort, private val changed: (P
         show(PreviewAppsState(stage = PreviewAppsStage.HiddenList, busy = true))
         port.hidden { rows -> if (request == generation) show(state.copy(hidden = rows.orEmpty(), busy = false, loadFailed = rows == null)) }
     }
+    /** PIN settings › Add a hidden app: the same add flow and fresh PIN; Back from the list returns to PIN settings. */
+    fun openHidden() { fromPinSettings = true; hidden() }
+    fun leavesOnBack(): Boolean = state.stage == PreviewAppsStage.List || (fromPinSettings && state.stage == PreviewAppsStage.HiddenList)
     fun selectHidden(id: String) {
         if (state.busy || state.stage != PreviewAppsStage.HiddenList) return
         val app = state.hidden.firstOrNull { it.id == id } ?: return
