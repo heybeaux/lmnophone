@@ -1,0 +1,26 @@
+PLA-513 build 47 voice Send exercise on the spare, 2026-10-14 01:19-01:29Z (2026-10-13 18:19-18:29 local).
+Fictional data only: person Sam, number 555-0100. No calls. Nothing typed or sent in Google Messages.
+
+1 Nothing can leave the phone (01:19Z): SIM slot 1 ABSENT, slot 2 LOADED; every ServiceState entry voice/data
+  OUT_OF_SERVICE or POWER_OFF; no cellular network agent (only Wi-Fi). Then shell airplane mode on: airplane_mode_on=1,
+  Active default network: none, still no in-service entry. Re-checked right before Send (in_service_entries=0).
+  Baseline: sms=1 mms=0 conversations=2.
+2 Add Sam: menu (test PIN) > Voice messages > Turn on voice messages > Add a person > Name Sam, spoken Sam > Continue >
+  5550100 > Continue > Use a letter > "Add Sam to Alex's family list?" > Add. List shows Sam.
+3 Home > Family > Sam: "Sam | Messages with Sam | Back | Record", no practice words. Record ~3 s > Stop.
+  Review: "Listen | Record again | Delete | Send to Sam", no practice label: 02-review-1.0.png, 03-review-2.0.png
+  (font 2.0 fits; restored 1.0, read back 1.0). Draft voice-family-drafts/<id>.m4a 29928 bytes.
+4 Tap "Send to Sam" once (01:25:57.07Z): within the first UI dump (~1.5 s) the screen is "No phone signal |
+  Your message is kept on this phone. Try again when there is signal. | Try again" (05-not-sent.png).
+  No "Sending" frame: the engine refuses before any hand-over when there is no signal (VoiceSender.kt:156,
+  port.hasSignal() == false -> NoSignal), so nothing went to SmsManager. Spoken: TTS player started 01:26:00.98Z.
+  Draft kept (29928 bytes). sms=1 mms=0 (unchanged).
+5 Try again once (01:26:25.30Z): same screen (06-try-again.png), spoken again 01:26:27.51Z. Draft kept.
+  sms=1 mms=0 conversations=2, unchanged: no failed message persisted, so nothing to delete in Messages.
+  Telecom calls 0.
+6 Cleanup: menu > Voice messages > Sam > Remove from the list > "Remove Sam? A message Alex hasn't sent to Sam
+  will be erased." (07) > Remove: family drafts 0, store 9 bytes (header only). Turn off voice messages > Turn off.
+  Airplane off (airplane_mode_on=0, Wi-Fi default network back). Font 1.0. Home: Maps, Camera, Messages, Phone,
+  More (no Family row). Final gate readback: gate-final.log; snapshot after.txt.
+  NOTE: no_backup/voice-send-family keeps one 202-byte send record for Sam's id after removal
+  (status=notsent:NoSignal, failures=2, seen=true; attempt/draft hashes only, no number, no audio).
