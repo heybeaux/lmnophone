@@ -26,9 +26,10 @@ class NeedsYouScreenshotTest(private val scale: Float) {
         density = Density.MEDIUM, fontScale = scale, locale = "en"), showSystemUi = false)
 
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-    private fun shot(count: Int, user: String = "Alex", requestOnly: Boolean = false) {
+    private fun shot(count: Int, user: String = "Alex", fixtureOnly: Boolean = false) {
+        // Third row is a layout stress fixture only; production has two supported notice types.
         val notices = listOf(AdminNotice("waiting:a", "Waiting: turn LMNOPhone off"),
-            AdminNotice("attention", "LMNOPhone needs attention"), AdminNotice("requests", "3 requests from $user")).let { if (requestOnly) it.takeLast(1) else it.take(count) }
+            AdminNotice("attention", "LMNOPhone needs attention"), AdminNotice("fixture", "Layout test: $user")).let { if (fixtureOnly) it.takeLast(1) else it.take(count) }
         val state = AdminMenuUiState(AdminContext(user), AdminDestination.entries.map { AdminMenuItem(it) }, notices)
         var checked = false
         var scrolled = false
@@ -64,7 +65,7 @@ class NeedsYouScreenshotTest(private val scale: Float) {
                     }
                 }
                 checked = true
-                if (requestOnly && !scrolled) {
+                if (fixtureOnly && !scrolled) {
                     val row = nodes.single { text(it) == notices.single().text }
                     val offset = row.positionInRoot.y - scroll.positionInRoot.y
                     scrolled = true
@@ -75,17 +76,17 @@ class NeedsYouScreenshotTest(private val scale: Float) {
                             return onFrame(frame)
                         }
                     }) { scroll.config[SemanticsActions.ScrollByOffset].invoke(androidx.compose.ui.geometry.Offset(0f, offset)) }
-                    assertTrue("Long request is scrolled into view", range.value() > 0f)
+                    assertTrue("Long fixture is scrolled into view", range.value() > 0f)
                 }
             }) { AdminMenuScreen(state, {}) }
         } } } }
         paparazzi.snapshot(compose, offsetMillis = 1_000)
         assertTrue(checked)
-        if (requestOnly) assertTrue(scrolled)
+        if (fixtureOnly) assertTrue(scrolled)
     }
     @Test fun empty() = shot(0)
     @Test fun one() = shot(1)
     @Test fun three() = shot(3)
-    @Test fun longConfiguredName() = shot(1, "Alex Jo Sam Alex Jo Sam Alex Jo Sam", requestOnly = true)
+    @Test fun longConfiguredName() = shot(1, "Alex Jo Sam Alex Jo Sam Alex Jo Sam", fixtureOnly = true)
     companion object { @JvmStatic @Parameterized.Parameters(name = "scale={0}") fun cases() = listOf(1f, 1.5f, 2f) }
 }

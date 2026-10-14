@@ -10,28 +10,25 @@ import org.plainphone.ui.trusted.*
 
 class NeedsYouTest {
     private val waiting = WaitingNotice("change-1", WaitingChangeKind.TURN_OFF, WaitingPhase.PENDING, 60000)
-    private val requests = RequestView(true, "Jo", listOf(RequestDisplay("request-1", "Bus app", 1, RequestStatus.Sent)))
-    private val copy = NeedsYouCopy({ "Waiting: $it" }, "LMNOPhone needs attention", { n, user -> "$n requests from $user" })
-    private fun map(wait: WaitingNotice? = null, notice: HomeNotice? = null, view: RequestView? = null, user: String = "Alex") =
-        pinMenuUiState(AdminContext(user), wait, notice, view, copy)
+    private val copy = NeedsYouCopy({ "Waiting: $it" }, "LMNOPhone needs attention")
+    private fun map(wait: WaitingNotice? = null, notice: HomeNotice? = null, user: String = "Alex") =
+        pinMenuUiState(AdminContext(user), wait, notice, copy)
 
     @Test fun productionMapperEmptyAndEachRealSourceInOrder() {
         assertTrue(map().needsYou.isEmpty())
         assertEquals(listOf("waiting:change-1"), map(waiting).needsYou.map { it.id })
         assertEquals(listOf("attention"), map(notice = HomeNotice.NeedsAttention).needsYou.map { it.id })
-        assertEquals(listOf("requests"), map(view = requests).needsYou.map { it.id })
-        assertEquals(listOf("waiting:change-1", "attention", "requests"), map(waiting, HomeNotice.NeedsAttention, requests).needsYou.map { it.id })
+        assertEquals(listOf("waiting:change-1", "attention"), map(waiting, HomeNotice.NeedsAttention).needsYou.map { it.id })
         assertTrue(map(waiting.copy(phase = WaitingPhase.COMPLETED)).needsYou.isEmpty())
-        assertTrue(map(view = requests.copy(available = false)).needsYou.isEmpty())
-        assertTrue(map(view = requests.copy(requests = emptyList())).needsYou.isEmpty())
     }
-    @Test fun requestCountUsesStoreAndPhoneUserNotRecipient() {
-        val entries = RequestStatus.entries.mapIndexed { i, status -> RequestDisplay("r$i", "Bus app", 1, status) }
-        assertEquals("${entries.size} requests from Alex", map(view = requests.copy(requests = entries)).needsYou.single().text)
-        assertEquals("1 requests from the person using this phone", map(view = requests, user = "the person using this phone").needsYou.single().text)
-        assertEquals("1 requests from Sam", map(view = requests, user = "Sam").needsYou.single().text)
+    @Test fun configuredNamesArePreservedWithoutInventingRequestNotices() {
+        for (user in listOf("Alex", "Sam", "the person using this phone")) {
+            assertEquals(user, map(user = user).context.userName)
+            assertTrue(map(user = user).needsYou.isEmpty())
+            assertTrue(map(user = user).items.any { it.destination == AdminDestination.Requests })
+        }
     }
-    @Test fun persistedRequestsAreReadWithoutSendingOrChangingSavedData() {
+    @Test fun savedRequestHistoryDoesNotPopulateNeedsYou() {
         val book = RequestBook(RequestRecipient("Jo", "555-0100"), listOf(
             RequestEntry("saved-1", "Bus app", 1, 0, "old", listOf(RequestPart.Accepted)),
             RequestEntry("saved-2", "Maps", 1, 0, "old", listOf(RequestPart.NoSignal))))
@@ -46,14 +43,19 @@ class NeedsYouTest {
             override fun send(number: String, id: String, parts: List<String>) = error("Never send from menu")
         }
         val engine = AppRequests(store, sms, "current", { 10L }, { 1L })
-        repeat(2) { assertEquals("2 requests from Alex", map(view = engine.view()).needsYou.single().text) }
+        assertEquals(2, engine.view().requests.size)
+        // Menu mapping has no request-store input or access. Saved history is not a to-do list.
+        repeat(2) {
+            assertTrue(map().needsYou.isEmpty())
+            assertEquals(listOf("waiting:change-1", "attention"), map(waiting, HomeNotice.NeedsAttention).needsYou.map { it.id })
+        }
         assertEquals(book, store.read())
         assertEquals(0, writes)
     }
     @Test fun itemsHaveRealDestinationsAndStaleWaitCannotOpenReplacement() {
         assertEquals(NeedsYouTarget.Waiting("change-1"), needsYouTarget("waiting:change-1", waiting))
         assertEquals(NeedsYouTarget.Attention, needsYouTarget("attention", waiting))
-        assertEquals(NeedsYouTarget.Requests, needsYouTarget("requests", waiting))
+        assertNull(needsYouTarget("requests", waiting))
         assertNull(needsYouTarget("waiting:change-1", waiting.copy(requestId = "replacement")))
         assertNull(needsYouTarget("waiting:change-1", waiting.copy(phase = WaitingPhase.CANCELLED)))
         assertNull(needsYouTarget("unknown", waiting))
@@ -63,8 +65,10 @@ class NeedsYouTest {
         val pin = java.io.File("src/main/kotlin/org/plainphone/PinAccessActivity.kt").readText()
         assertTrue(pin.contains("runtime.waitingNotice.collectAsState()"))
         assertTrue(pin.contains("runtime.notice.collectAsState()"))
-        assertTrue(pin.contains("RequestEngine.get(this@PinAccessActivity).view()"))
-        assertTrue(pin.contains("waitingMenu, homeNotice, menuRequests, needsYouCopy()"))
+        assertFalse(pin.contains("RequestEngine"))
+        assertFalse(pin.contains("menuRequests"))
+        assertTrue(pin.contains("AdminDestination.Requests -> openRequests()"))
+        assertTrue(pin.contains("waitingMenu, homeNotice, needsYouCopy()"))
         assertTrue(pin.contains("is AdminMenuEvent.OpenNotice -> openNeedsYou(it.id)"))
         assertTrue(pin.contains("flow.useRecoveryFromApps()"))
         val main = java.io.File("src/main/kotlin/org/plainphone/MainActivity.kt").readText()

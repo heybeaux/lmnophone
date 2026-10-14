@@ -248,8 +248,4 @@
     <string name="recovery_wait_hour">1 hour</string>
     <string name="admin_needs_waiting">Waiting: %1$s</string>
     <string name="admin_needs_attention">LMNOPhone needs attention</string>
-    <plurals name="admin_needs_requests">
-        <item quantity="one">%1$d request from %2$s</item>
-        <item quantity="other">%1$d requests from %2$s</item>
-    </plurals>
 </resources>
