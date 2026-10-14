@@ -8,6 +8,10 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(55, 55, listOf("On an app's page, the button now says Remove and the app's name.",
+            "Ask for an app now says plainly when no one is set to get requests, and where the PIN holder can set it up.",
+            "Changing text size during a PIN wait keeps the waiting page visible, with the time still left.",
+            "Known problem: Add a hidden app can't add an app that asks for Location yet. The app stays hidden.")),
         ReleaseNote(54, 54, listOf("Apps on this phone now shows what each app can use.",
             "When you add an app with Add a hidden app, you choose what it can use. To choose again, remove the app and add it again; your things in the app stay.")),
         ReleaseNote(53, 53, listOf("PIN settings now shows a waiting change, or “LMNOPhone needs attention”, under Needs you. Tap it to open that screen.",
