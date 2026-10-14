@@ -24,6 +24,12 @@ class PinScreenMapperTest {
         assertEquals(PinStage.RecoveryIssued, issued.stage); assertEquals("synthetic", issued.recoveryCode)
         assertFalse(issued.toString().contains("synthetic"))
     }
+    @Test fun productionMenuRequestDetailHasPositiveCountOnly() {
+        for (count in listOf(null, 0, 1, 12)) {
+            val row = pinMenuUiState(AdminContext("Alex"), count).items.single { it.destination == AdminDestination.Requests }
+            assertEquals(if (count != null && count > 0) count.toString() else "", row.detail)
+        }
+    }
     @Test fun productionMenuExposesNewCodeRow() {
         assertEquals(1, pinMenuUiState(AdminContext("Alex")).items.count { it.destination == AdminDestination.NewRecoveryCode })
     }

@@ -21,6 +21,42 @@ class AppRequestsTest {
     private var now = 1000L
     private val engine = AppRequests(store, port, "process", { now }, { 10L })
     private fun setup() { engine.setRecipient(RequestRecipient("Sam", "555-0100")) }
+    @Test fun removalKeepsQuotaAcrossRestartAndCannotBeResubmitted() {
+        setup(); repeat(5) { engine.submit("r$it", "Bus app") }
+        assertTrue(engine.remove("r0"))
+        assertEquals(4, engine.view().requests.size)
+        val restarted = AppRequests(store, port, "next", { now }, { 10L })
+        assertEquals(RequestStatus.DailyLimit, restarted.submit("six", "Maps app").status)
+        restarted.submit("r0", "Bus app")
+        assertEquals(5, port.calls)
+        assertFalse(restarted.view().requests.any { it.id == "r0" })
+    }
+    @Test fun removeWhileSendingIgnoresLateCallbacksAndPreservesOthers() {
+        setup(); engine.submit("a", "Bus app"); engine.submit("b", "Maps app")
+        assertTrue(engine.remove("a"))
+        val removed = store.book
+        assertFalse(engine.result("a", 0, RequestPart.Accepted))
+        assertFalse(engine.result("a", 1, RequestPart.Failed))
+        assertEquals(removed, store.book)
+        assertEquals("b", engine.view().requests.single().id)
+        assertTrue(engine.remove("a"))
+    }
+    @Test fun failedOrUnconfirmedRemovalDoesNotReportSuccess() {
+        setup(); engine.submit("a", "Bus app"); store.fail = true
+        assertFalse(engine.remove("a"))
+        assertEquals("a", engine.view().requests.single().id)
+        val ignored = object : RequestStore {
+            override fun read() = store.book
+            override fun write(value: RequestBook) = Unit
+        }
+        assertFalse(AppRequests(ignored, port, "next", { now }, { 10L }).remove("a"))
+        var reads = 0
+        val unreadable = object : RequestStore {
+            override fun read(): RequestBook { if (reads++ > 0) error("read failed"); return store.book }
+            override fun write(value: RequestBook) = Unit
+        }
+        assertFalse(AppRequests(unreadable, port, "next", { now }, { 10L }).remove("a"))
+    }
     @Test fun noRecipientDoesNotSaveOrSend() {
         assertEquals(RequestStatus.NotSetUp, engine.submit("a", "Bus app").status)
         assertEquals(0, port.calls); assertTrue(store.book.requests.isEmpty())
