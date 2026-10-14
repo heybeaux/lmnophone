@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
 <resources>
-    <string name="requests_setup">Asking for an app isn\'t set up on this phone yet.</string>
-    <string name="requests_setup_help">This phone’s PIN holder can set it up in More, then PIN settings, then Who gets requests.</string>
+    <string name="requests_setup">Not set up on this phone yet.</string>
+    <string name="requests_setup_help">No one is set to get requests. This phone’s PIN holder can set it up in More, then PIN settings, then Who gets requests.</string>
     <string name="requests_title">Requests</string>
     <string name="requests_empty">No requests saved on this phone.</string>
     <string name="requests_send">Send</string>

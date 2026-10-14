@@ -809,7 +809,7 @@ The whole request is visible in history. Results are **Sent**, **Not sent**, or
 accepted, never arrival or reading. Interrupted, missing or partial confirmations
 are Not confirmed. Requests remain saved through restarts and updates.
 
-With no configured recipient: **Asking for an app isn't set up on this phone yet.** Then **This phone’s PIN holder can set it up in More, then PIN settings, then Who gets requests.** This remains true after an earlier recipient is removed. With an
+With no configured recipient: **Not set up on this phone yet.** Then **No one is set to get requests. This phone’s PIN holder can set it up in More, then PIN settings, then Who gets requests.** This remains true after an earlier recipient is removed. With an
 unnamed recipient: **This sends your request as a text message. It is also saved on this phone.** With a saved name, use U5's existing named body.
 Button: **Send**. Results use **OK**, returning to a new draft; failed/uncertain
 attempts are never resent by that action. History title: **Your requests**.

@@ -14,7 +14,10 @@ data class AppPermissionsUiState(val rows: List<AppPermissionRow> = emptyList(),
 /** Display only: no permission edit action in self-managed mode. */
 @Composable
 fun PreviewAppDetailScreen(context: AdminContext, app: String, version: String, onBack: () -> Unit = {}, permissions: AppPermissionsUiState? = null, canChooseOnAdd: Boolean = false, onRemove: () -> Unit) {
-    AdminFrame(context, app.withoutBidiControls(), s(R.string.app_detail_remove, context.userName.withoutBidiControls()), onRemove,
+    val name = app.withoutBidiControls()
+    val remove = if (context.trustedPersonName == null) s(R.string.app_self_remove, name)
+        else s(R.string.app_detail_remove, context.userName.withoutBidiControls())
+    AdminFrame(context, name, remove, onRemove,
         secondary = s(R.string.admin_back), onSecondary = onBack) {
         Words(s(R.string.app_preview_version, version.withoutBidiControls()))
         permissions?.let { AppPermissionLines(app, it) }
