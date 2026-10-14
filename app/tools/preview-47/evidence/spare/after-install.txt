@@ -1,0 +1,17 @@
+taken=2026-10-14T01:18:22Z (build 47 installed, after gate)
+version=versionName=0.1.0-preview-47
+versionCode=versionCode=47
+lastUpdate=lastUpdateTime=2026-10-1316:05:50
+saved_networks_sha=d32466f0bb5f98e0
+bonded=0
+location=0
+font=1.0
+ring=5
+mic=        android.permission.RECORD_AUDIO: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+owner=    admin=ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
+locktask=mLockTaskModeState=LOCKED
+sup=  System Update Policy: SystemUpdatePolicy (type: 3, windowStart: 0, windowEnd: 0, freezes: [])
+talkback=null / 0
+calls_dumpsys=0
+wifi_location_marker=name="owned" value="false"
+version=versionCode=47 mLockTaskModeState=LOCKED DO=1 calls=0
