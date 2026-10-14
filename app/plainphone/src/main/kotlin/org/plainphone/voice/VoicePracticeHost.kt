@@ -37,6 +37,12 @@ import org.plainphone.device.voice.VoicePlace
 import org.plainphone.device.voice.VoicePracticeController
 import org.plainphone.device.voice.VoicePracticeSession
 import org.plainphone.device.voice.VoicePrompt
+import org.plainphone.device.voice.VoiceReplies
+import org.plainphone.device.voice.ReplyListen
+import org.plainphone.device.voice.replies.AndroidMmsInbox
+import org.plainphone.device.voice.replies.ReplyClip
+import org.plainphone.device.voice.replies.ReplyPlayedStore
+import org.plainphone.device.voice.replies.VoiceReplyBook
 import org.plainphone.device.voice.VoiceState
 import org.plainphone.device.voice.send.AndroidMmsPort
 import org.plainphone.device.voice.send.SendProblem
@@ -47,6 +53,7 @@ import org.plainphone.device.voice.send.VoiceSender
 import org.plainphone.ui.R
 import org.plainphone.ui.user.VoicePersonUi
 import org.plainphone.ui.user.VoiceUiEvent
+import org.plainphone.ui.user.VoiceUiListen
 import org.plainphone.ui.user.VoiceUiMicProblem
 import org.plainphone.ui.user.VoiceUiNotice
 import org.plainphone.ui.user.VoiceUiSendProblem
@@ -56,6 +63,7 @@ import org.plainphone.ui.user.VoiceUiState
  * Voice states to screens. Saving still shows Recording: the recorder is being stopped. A screen keeps the
  * practice band unless its person [canSend]; the people list keeps it while nobody on [people] can be sent to.
  * [helper] (the trusted person) is named only after a second real failure (UX V7 again). Numbers never reach a screen.
+ * [newMessage] marks a family card with New message (UX V1); a person's unplayed replies give Listen (V2, V12a).
  */
 object VoiceUiMapper {
     fun map(
@@ -64,11 +72,13 @@ object VoiceUiMapper {
         family: Boolean = false,
         canSend: (VoicePerson) -> Boolean = { false },
         helper: String = "",
+        newMessage: (String) -> Boolean = { false },
     ): VoiceUiState = when (s) {
-        VoiceState.ChoosePerson -> VoiceUiState.ChoosePerson(people.map { person(it, family) }, fromHome = family,
+        VoiceState.ChoosePerson -> VoiceUiState.ChoosePerson(
+            people.map { person(it, family).copy(newMessage = family && newMessage(it.id)) }, fromHome = family,
             practice = people.none(canSend))
         is VoiceState.Person -> VoiceUiState.Person(person(s.person, family), s.notice?.let(::notice), openMessages = family,
-            practice = !canSend(s.person))
+            practice = !canSend(s.person), listen = listen(s.listen))
         is VoiceState.Recording -> VoiceUiState.Recording(person(s.person, family), !canSend(s.person))
         is VoiceState.Saving -> VoiceUiState.Recording(person(s.person, family), !canSend(s.person))
         is VoiceState.Review -> canSend(s.person).let { send ->
@@ -88,6 +98,13 @@ object VoiceUiMapper {
             else -> VoiceUiState.NotSent(person(s.person, family), VoiceUiSendProblem.NotSent,
                 helper.takeIf { s.failures >= 2 && it.isNotBlank() })
         }
+    }
+
+    private fun listen(l: ReplyListen?): VoiceUiListen? = when {
+        l == null || l.queue.isEmpty() -> null
+        l.playing -> VoiceUiListen.Stop
+        l.completed >= l.queue.size -> VoiceUiListen.PlayAgain
+        else -> VoiceUiListen.Listen
     }
 
     private fun person(p: VoicePerson, family: Boolean) = VoicePersonUi(p.id, p.name, pictureInInk = family)
@@ -164,16 +181,27 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
     private val route = VoiceSendRoute({ family }, familySender, familyStore, practiceSender, practiceNumbers)
     private val mms = AndroidMmsPort(app)
     private val main = Handler(Looper.getMainLooper())
+    private val inbox = AndroidMmsInbox(app)
+    private val replyBook = VoiceReplyBook(inbox::read, { familyStore.read() },
+        ReplyPlayedStore(File(app.noBackupFilesDir, ReplyPlayedStore.DIR)), inbox::e164)
+    /** Family replies only (PLA-527): the practice never reads the message store. */
+    private val replies = object : VoiceReplies {
+        override fun unplayed(): Map<String, List<ReplyClip>> = if (family) replyBook.unplayed() else emptyMap()
+        override fun canPlay(personId: String): Boolean = family && replyBook.canPlay(personId)
+        override fun played(personId: String, clip: ReplyClip) { if (family) replyBook.played(personId, clip) }
+    }
 
-    private val controller: VoicePracticeController = VoicePracticeController(AndroidVoiceRecorder(app), AndroidVoicePlayer(), store,
+    private val controller: VoicePracticeController = VoicePracticeController(AndroidVoiceRecorder(app), AndroidVoicePlayer(app), store,
         org.plainphone.device.voice.MicAccess {
             val access = AndroidMicAccess(app, admin)
             if (family) { if (access.granted()) null else MicProblem.PermissionRefused } else access.problem()
         }, speaker, gate, SystemClock::elapsedRealtime, format, people = { people }, draftStore = { store },
-        sender = route.port, recordCapMs = { VoiceSendLimits.maxRecordMs(mms.carrier(), format) }, numbers = route.numbers)
+        sender = route.port, recordCapMs = { VoiceSendLimits.maxRecordMs(mms.carrier(), format) }, numbers = route.numbers,
+        replies = replies)
     private val session = VoicePracticeSession(controller, ::arm, ::disarm)
 
-    var ui by mutableStateOf<VoiceUiState>(VoiceUiMapper.map(VoiceState.ChoosePerson, people, family, controller::canSend))
+    var ui by mutableStateOf<VoiceUiState>(VoiceUiMapper.map(VoiceState.ChoosePerson, people, family, controller::canSend,
+        newMessage = controller::hasNewMessage))
         private set
     var onLeave: () -> Unit = {}
 
@@ -193,7 +221,7 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
 
     init {
         controller.onChange = { state ->
-            ui = VoiceUiMapper.map(state, people, family, controller::canSend, helper())
+            ui = VoiceUiMapper.map(state, people, family, controller::canSend, helper(), controller::hasNewMessage)
             main.removeCallbacks(sentReturn)
             if (state is VoiceState.Sent) main.postDelayed(sentReturn, SENT_RETURN_MS)
         }
@@ -256,6 +284,8 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
     fun onActivityStart() {
         session.activityStarted()
         if (session.armed) controller.state.person?.let { controller.sendChanged(it.id) }
+        // A reply may have come while Messages or Home was in front: reads only, never plays or speaks.
+        if (session.armed && family) controller.refreshReplies()
         if (session.armed && controller.state is VoiceState.Sent) {
             main.removeCallbacks(sentReturn)
             main.postDelayed(sentReturn, SENT_RETURN_MS)
@@ -291,6 +321,7 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
             VoiceUiEvent.Send -> controller.dispatch(VoiceEvent.Send)
             VoiceUiEvent.TryAgain -> controller.dispatch(VoiceEvent.TryAgain)
             VoiceUiEvent.Done -> controller.dispatch(VoiceEvent.Done)
+            VoiceUiEvent.Listen -> controller.dispatch(VoiceEvent.Listen)
         }
     }
 
@@ -340,5 +371,10 @@ internal object VoiceWords {
         VoicePrompt.NotSentAgain -> if (helperKnown) R.string.voice_say_not_sent_again else R.string.voice_say_not_sent
         VoicePrompt.NoSignal -> R.string.voice_say_no_signal
         VoicePrompt.NotConfirmed -> R.string.voice_say_not_confirmed
+        VoicePrompt.NewFrom -> R.string.family_say_new_from
+        VoicePrompt.PersonNew -> R.string.family_say_person_new
+        VoicePrompt.Reply -> R.string.family_say_reply
+        VoicePrompt.ReplyNext -> R.string.family_say_reply_next
+        VoicePrompt.ReplyEnd -> R.string.family_say_reply_end
     }
 }

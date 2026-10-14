@@ -88,7 +88,13 @@ class FamilyScreenshotTest(private val scale: Float, private val name: String) {
                 val listen = nodes.single { text(it) == "Listen to $name" && it.config.contains(SemanticsActions.OnClick) }
                 val back = nodes.single { text(it).startsWith("‹") }
                 val record = nodes.single { text(it) == "Record" && it.config.contains(SemanticsActions.OnClick) }
-                assertTrue(messages.positionInRoot.y < listen.positionInRoot.y)
+                // Messages with scrolls above the pinned Listen: it fits the viewport and can be scrolled into it.
+                val scroll = nodes.single { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }
+                val range = scroll.config[SemanticsProperties.VerticalScrollAxisRange]
+                assertTrue("Messages fits in scroll viewport", messages.size.height <= scroll.boundsInRoot.height)
+                assertTrue("Messages can scroll into view", messages.positionInRoot.y + messages.size.height - range.maxValue() <= scroll.boundsInRoot.bottom + 1f)
+                assertTrue(scroll.boundsInRoot.bottom <= listen.boundsInRoot.top)
+                assertTrue(listen.boundsInRoot.height >= listen.size.height - 1f)
                 assertTrue(listen.positionInRoot.y < back.positionInRoot.y)
                 assertTrue(back.positionInRoot.y < record.positionInRoot.y)
                 assertTrue(listen.size.height >= 72f - 1f)
