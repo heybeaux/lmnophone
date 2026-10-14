@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import org.plainphone.boot.PolicyRuntime
 import org.plainphone.device.authority.PinAccessResult
-import org.plainphone.device.requests.RequestEngine
 import org.plainphone.policy.*
 import org.plainphone.ui.requests.*
 import org.plainphone.ui.trusted.*
@@ -62,6 +61,7 @@ class RequestRecipientActivity : ComponentActivity() {
     }
     private fun event(event: RecipientEvent) {
         if (!active || needsPin || busy) return
+        if (ui.readFailed && event != RecipientEvent.Back) return
         when(event) {
             RecipientEvent.Back -> finish()
             RecipientEvent.Change -> ui = ui.copy(editing = true, canSave = valid())
@@ -89,7 +89,7 @@ class RequestRecipientActivity : ComponentActivity() {
                     PinAccessResult.Open -> if (saved) {
                         changing = false; needsPin = false; wrong = false; wait = 0
                         ui = RequestRecipientUiState(recipient?.name.orEmpty(), recipient?.number.orEmpty())
-                    } else { needsPin = false; ui = ui.copy(failed = true) }
+                    } else { needsPin = false; ui = recipientFailure(ui, changing) }
                     is PinAccessResult.Wrong -> { wrong = true; wait = result.remainingMillis }
                     is PinAccessResult.Delayed -> wait = result.remainingMillis
                     PinAccessResult.Unavailable -> finish()
@@ -104,3 +104,7 @@ class RequestRecipientActivity : ComponentActivity() {
         super.onPause()
     }
 }
+
+/** A failed initial read must not offer an edit based on unknown saved data. */
+internal fun recipientFailure(state: RequestRecipientUiState, changing: Boolean): RequestRecipientUiState =
+    if (changing) state.copy(failed = true) else RequestRecipientUiState(readFailed = true)

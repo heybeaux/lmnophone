@@ -25,8 +25,6 @@ import org.plainphone.ui.home.HomeEvent
 import org.plainphone.ui.home.HomeScreen
 import org.plainphone.ui.theme.PlainphoneColors
 import org.plainphone.ui.theme.PlainphoneTheme
-import org.plainphone.ui.user.AppRequestResultScreen
-import org.plainphone.ui.user.AskForAppScreen
 import org.plainphone.ui.user.BlockedLinkScreen
 import org.plainphone.ui.user.MoreScreen
 import org.plainphone.ui.user.WifiMessageScreen
@@ -107,10 +105,6 @@ fun PlainphoneShell(
                 ShellRoute.Battery -> BatteryScreen(battery) { onStep(navigator.back(state)) }
                 ShellRoute.PhoneSettings -> PhoneSettingsScreen(settings, onSettings)
                 ShellRoute.More -> MoreScreen(mapper.more(snapshot)) { onStep(navigator.onMore(state, it)) }
-                ShellRoute.AskForApp ->
-                    AskForAppScreen(mapper.ask(snapshot, state.draft)) { onStep(navigator.onAsk(state, it)) }
-                is ShellRoute.RequestResult ->
-                    AppRequestResultScreen(mapper.result(snapshot, route.result)) { onStep(navigator.onResult(state, it)) }
                 is ShellRoute.BlockedLink -> BlockedLinkScreen(route.stage) { onStep(navigator.onLink(state, it)) }
                 ShellRoute.NotInBuild -> NotInBuildScreen { onStep(navigator.back(state)) }
                 is ShellRoute.Wifi ->

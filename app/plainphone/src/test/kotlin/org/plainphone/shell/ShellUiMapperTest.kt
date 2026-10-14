@@ -22,17 +22,14 @@ import org.plainphone.policy.WaitingPhase
 import org.plainphone.ui.home.HomeApp
 import org.plainphone.ui.home.HomeNotice
 import org.plainphone.ui.home.HomeNoticeDay
-import org.plainphone.ui.user.AppRequestResult
-import org.plainphone.ui.user.AppRequestRow
-import org.plainphone.ui.user.AppRequestStatus
 import org.plainphone.ui.user.MoreMode
 
 class ShellUiMapperTest {
     private val now = ZonedDateTime.of(2026, 10, 8, 10, 42, 0, 0, ZoneId.of("Europe/London"))
     private val base = PhoneSnapshot(
-        now = now, userName = "Alex", mode = Mode.TRUSTED, trustedPeople = listOf("Sam", "Jo"), requestRecipient = "Sam",
+        now = now, userName = "Alex", mode = Mode.TRUSTED, trustedPeople = listOf("Sam", "Jo"),
         selfManagedWaitMinutes = 10, apps = listOf(ApprovedApp("a.clock", "Clock"), ApprovedApp("a.maps", "Maps")),
-        notices = NoticeInput(Mode.TRUSTED), requests = emptyList(),
+        notices = NoticeInput(Mode.TRUSTED),
     )
     private val map = ShellUiMapper(Locale.UK, is24Hour = true)
 
@@ -96,32 +93,8 @@ class ShellUiMapperTest {
     }
 
     @Test fun moreFollowsMode() {
-        assertEquals(MoreMode.Trusted(listOf("Sam", "Jo"), "Sam"), map.more(base).mode)
+        assertEquals(MoreMode.Trusted(listOf("Sam", "Jo"), ""), map.more(base).mode)
         assertEquals(MoreMode.SelfManaged(10), map.more(base.copy(mode = Mode.SELF_MANAGED)).mode)
     }
 
-    @Test fun askShowsCounterOnlyAfter200AndNeedsALetter() {
-        assertNull(map.ask(base, "a".repeat(200)).charactersRemaining)
-        assertEquals(79, map.ask(base, "a".repeat(200) + "b").charactersRemaining)
-        assertTrue(map.ask(base, "Maps").canSend)
-        assertFalse(map.ask(base, "  42 ").canSend)
-        assertFalse(map.ask(base, "").canSend)
-        assertEquals("Sam", map.ask(base, "").recipientName)
-    }
-
-    @Test fun requestHistoryIsNewestFirstCappedAtTenWithDays() {
-        val rows = (0 until 12).map { SavedRequest("r$it", "App $it\nmore detail", now.toLocalDate().minusDays(it.toLong()), AppRequestStatus.Sent) }
-        val ask = map.ask(base.copy(requests = rows), "")
-        assertEquals(10, ask.requests.size)
-        assertEquals(AppRequestRow("r0", "App 0", "Thu", AppRequestStatus.Sent), ask.requests[0])
-        assertEquals("Wed", ask.requests[1].day)
-        assertEquals("2 Oct", ask.requests[6].day)
-    }
-
-    @Test fun resultCarriesRecipientAndHistory() {
-        val rows = listOf(SavedRequest("r0", "Maps", now.toLocalDate(), AppRequestStatus.Sent))
-        val result = map.result(base.copy(requests = rows), AppRequestResult.Sent)
-        assertEquals("Sam", result.recipientName)
-        assertEquals(1, result.requests.size)
-    }
 }

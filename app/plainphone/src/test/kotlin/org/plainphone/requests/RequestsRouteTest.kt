@@ -32,7 +32,7 @@ class RequestsRouteTest {
 
     @Test fun productionMoreUsesRealRequestActivity() {
         val phone = PreviewPhone(PreviewPhone.empty())
-        val nav = ShellNavigator(phone, phone, "LMNOPhone", testBuild = true)
+        val nav = ShellNavigator(phone, "LMNOPhone", testBuild = true)
         assertEquals(ShellEffect.OpenAppRequests, nav.onMore(ShellState(), MoreEvent.AskForApp).effect)
     }
     @Test fun productionMapperUsesSetupFlagNotOptionalNameAndKeepsWholeText() {
