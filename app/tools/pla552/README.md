@@ -51,3 +51,15 @@ Tests were committed before implementation; failing-test checkpoints are in bran
 This is the authorized self-managed route. There is no supervised entry or one-step permission change. The add flow uses the existing visible permission window, closes it before adding Home membership, and requires every write to return DONE plus an exact-identity readback. Partial/refused/replaced writes never show success. Protected apps and current dialer/SMS role holders are excluded at reads, navigation and write boundaries.
 
 The current preview has no timed-opening stage. T4c therefore uses the existing remove-and-add explanation for its second self-managed block instead of promising the full MVP's ten-minute wait. This limitation is also recorded in the UX flow. Credentials and mode are unchanged. Permission state remains Android's fixed state; no invented state or recipient is stored.
+
+## Review F1 correction — 2026-10-14
+
+The reviewer found that an undefined vendor permission made the entire manifest snapshot unreadable. Regression fixture commit `62296154` adds `org.plainphone.undefined.permission.BADGE` alongside Camera and Microphone. The previous APK reproduced **Couldn't check** on the real app page.
+
+Correction `357e0f9a` catches only `PackageManager.NameNotFoundException` around each permission lookup and omits that entry. Other exceptions still fail the complete snapshot closed. There is no new lookup seam or policy change. The unchanged snapshot equality checks still fence a newly defined permission.
+
+The corrected debug APK SHA-256 is `5852da310209b27d296f6383d5149296813b5c62ae87fa8573a6c499ac14f004`. Its in-place private-emulator install read back at 2026-10-14 10:07:55 UTC (03:07:55 PDT), versionCode 53 / `0.1.0-preview-53`. The focused AppPermissionReaderTest passed (3 tests); `:plainphone:assembleDebug` passed. Previous screenshot and transaction evidence is unchanged.
+
+The revised fixture completed remove/add with exactly Camera Allow and Microphone Don't allow choices, fresh PIN, and fixed Android readback. The production page showed the same states and saved fixture data remained intact. The undefined permission no longer prevents adding the app. Spare installed: no; spare exercised: no.
+
+The corrected fixture's page/grants and private marker also survived an app force-stop/restart.
