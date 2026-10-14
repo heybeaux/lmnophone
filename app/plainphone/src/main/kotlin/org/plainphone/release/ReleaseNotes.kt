@@ -8,6 +8,8 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(53, 53, listOf("PIN settings now shows a waiting change, or “LMNOPhone needs attention”, under Needs you. Tap it to open that screen.",
+            "On the Apps PIN screen, Use recovery code now opens PIN recovery.")),
         ReleaseNote(52, 52, listOf("Who gets requests now says so when its saved details can't be read.")),
         ReleaseNote(51, 51, listOf("When someone on your Family list sends a voice message back by picture message (MMS), their card shows New message. Tap Listen on their page to hear it.",
             "Clearer wording for adding people to Voice messages and for entering the recovery code.")),
