@@ -58,6 +58,22 @@ class RequestsScreenshotTest(private val scale: Float) {
     @Test fun recipient() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
         RequestRecipientScreen(RequestRecipientUiState(name = "Sam Jo Alex Sam Jo Alex", number = "555-0100", editing = true, canSave = true), {})
     } } }
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+    @Test fun recipientEmpty() {
+        var checked = false
+        paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+            val view = LocalView.current as ViewRootForTest
+            Box(Modifier.onGloballyPositioned {
+                val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
+                assertTrue("An empty recipient offers Set up", nodes.any { node ->
+                    node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text == "Set up" } &&
+                        node.config.contains(SemanticsActions.OnClick)
+                })
+                checked = true
+            }) { RequestRecipientScreen(RequestRecipientUiState(), {}) }
+        } } }
+        assertTrue(checked)
+    }
     @Test fun recipientDetails() = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
         RequestRecipientScreen(RequestRecipientUiState(name = "Sam", number = "555-0100"), {})
     } } }
