@@ -8,10 +8,12 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
-        ReleaseNote(60, 60, listOf("When no name is set, screens say \"this phone\", for example \"Add Camera to this phone?\".",
+        ReleaseNote(61, 61, listOf("PIN settings has clearer TalkBack labels for app choices and app order, and announces errors.",
+            "The new recovery code is read one character at a time when you focus it.")),
+        ReleaseNote(60, 60, listOf("When no name is set, screens say \"this phone\", for example \"Add Calculator to this phone?\".",
             "Back from New recovery code returns to PIN settings.")),
         ReleaseNote(59, 59, listOf("TalkBack reads settings rows without arrows, and reads sent results without tick marks.",
-            "Phone settings has a heading.")),
+            "Phone settings has a heading.", "TalkBack announces progress as it appears.")),
         ReleaseNote(58, 58, listOf("PIN settings shows only choices that work in this version.",
             "Add a hidden app opens the same steps as Apps on this phone, and asks for your PIN again before adding.")),
         ReleaseNote(57, 57, listOf("Adding an app that uses Location now works. You choose whether it can use Location, and its page shows that choice.",
