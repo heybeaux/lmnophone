@@ -8,6 +8,10 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(56, 56, listOf("In PIN settings, you can now choose Not now on a request, then Remove it or Keep it.",
+            "A removed request disappears from Requests and from Ask for an app, and stays removed after a restart. Removing one doesn't change today's request limit.",
+            "Needs you shows how many requests are waiting. Tap it to open Requests. The Requests row shows the same count.",
+            "Known problem: Add a hidden app can't add an app that asks for Location yet. The app stays hidden.")),
         ReleaseNote(55, 55, listOf("On an app's page, the button now says Remove and the app's name.",
             "Ask for an app now says plainly when no one is set to get requests, and where the PIN holder can set it up.",
             "Changing text size during a PIN wait keeps the waiting page visible, with the time still left.",
