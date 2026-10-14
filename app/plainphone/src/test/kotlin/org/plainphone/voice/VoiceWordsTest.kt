@@ -30,6 +30,14 @@ class VoiceWordsTest {
         assertEquals(R.string.family_say_messages_unavailable, VoiceWords.res(VoicePrompt.MessagesUnavailable, true))
     }
 
+    @Test fun replyPromptsHaveTheirOwnWords() {
+        assertEquals(R.string.family_say_new_from, VoiceWords.res(VoicePrompt.NewFrom, true, family = true))
+        assertEquals(R.string.family_say_person_new, VoiceWords.res(VoicePrompt.PersonNew, true, family = true))
+        assertEquals(R.string.family_say_reply, VoiceWords.res(VoicePrompt.Reply, true, family = true))
+        assertEquals(R.string.family_say_reply_next, VoiceWords.res(VoicePrompt.ReplyNext, true, family = true))
+        assertEquals(R.string.family_say_reply_end, VoiceWords.res(VoicePrompt.ReplyEnd, true, family = true))
+    }
+
     @Test fun everyPromptHasWords() {
         val ids = VoicePrompt.entries.map { VoiceWords.res(it, helperKnown = true) }
         assertEquals(ids.size, ids.toSet().size)

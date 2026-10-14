@@ -14,6 +14,7 @@ import org.plainphone.ui.user.VoicePersonUi
 import org.plainphone.ui.user.VoiceUiMicProblem
 import org.plainphone.ui.user.VoiceUiNotice
 import org.plainphone.ui.user.VoiceUiState
+import org.plainphone.ui.user.VoiceUiListen
 
 class VoiceUiMapperTest {
     private val sam = VoicePerson("sam", "Sam")
@@ -55,5 +56,44 @@ class VoiceUiMapperTest {
             VoiceUiMapper.map(VoiceState.MicUnavailable(sam, MicProblem.PrivacyToggle, draft)))
         assertEquals(VoiceUiState.MicOff(samUi, VoiceUiMicProblem.DidNotWork),
             VoiceUiMapper.map(VoiceState.MicUnavailable(sam, MicProblem.RecorderError, null)))
+    }
+}
+
+/** PLA-527: the production mapper sets New message (V1) and Listen / Stop listening / Play again (V2, V12a). */
+class VoiceReplyMappingTest {
+    private val sam = VoicePerson("sam", "Sam")
+    private val jo = VoicePerson("jo", "Jo")
+    private fun clip(id: Long) = org.plainphone.device.voice.replies.ReplyClip(
+        org.plainphone.device.voice.replies.ReplyKey.of(id, id), "sam", id, id, "audio/mp4")
+
+    @Test fun peopleListCardShowsNewMessageOnlyForThoseWithOne() {
+        val ui = VoiceUiMapper.map(VoiceState.ChoosePerson, listOf(sam, jo), family = true, newMessage = { it == "sam" })
+        assertEquals(VoiceUiState.ChoosePerson(listOf(VoicePersonUi("sam", "Sam", pictureInInk = true, newMessage = true),
+            VoicePersonUi("jo", "Jo", pictureInInk = true)), fromHome = true), ui)
+    }
+
+    @Test fun personScreenOffersListenThenStopThenPlayAgain() {
+        val queue = listOf(clip(1), clip(2))
+        fun map(listen: org.plainphone.device.voice.ReplyListen?) =
+            (VoiceUiMapper.map(VoiceState.Person(sam, listen = listen), listOf(sam), family = true) as VoiceUiState.Person).listen
+        assertEquals(null, map(null))
+        assertEquals(null, map(org.plainphone.device.voice.ReplyListen(emptyList())))
+        assertEquals(VoiceUiListen.Listen, map(org.plainphone.device.voice.ReplyListen(queue)))
+        assertEquals(VoiceUiListen.Stop, map(org.plainphone.device.voice.ReplyListen(queue, index = 0, playing = true)))
+        assertEquals(VoiceUiListen.Stop, map(org.plainphone.device.voice.ReplyListen(queue, index = 1, playing = true, completed = 1)))
+        assertEquals(VoiceUiListen.PlayAgain, map(org.plainphone.device.voice.ReplyListen(queue, index = 1, completed = 2)))
+    }
+
+    @Test fun personScreenKeepsMessagesWithListen() {
+        val ui = VoiceUiMapper.map(VoiceState.Person(sam, listen = org.plainphone.device.voice.ReplyListen(listOf(clip(1)))),
+            listOf(sam), family = true) as VoiceUiState.Person
+        assertEquals(true, ui.openMessages)
+        assertEquals(VoicePersonUi("sam", "Sam", pictureInInk = true), ui.person)
+    }
+
+    @Test fun mapperStateNeverCarriesNumbersOrMessageIds() {
+        val ui = VoiceUiMapper.map(VoiceState.Person(sam, listen = org.plainphone.device.voice.ReplyListen(listOf(clip(5550100)))),
+            listOf(sam), family = true)
+        assertEquals(false, ui.toString().contains("5550100"))
     }
 }

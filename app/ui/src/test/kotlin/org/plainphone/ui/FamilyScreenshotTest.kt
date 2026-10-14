@@ -57,6 +57,51 @@ class FamilyScreenshotTest(private val scale: Float, private val name: String) {
         }
         assertTrue(checked)
     }
+    /** V1 (PLA-527): New message with the Play symbol on the card that has one, and its accessibility name. */
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+    @Test fun peopleNewMessage() {
+        var checked = false
+        shot {
+            val view = LocalView.current as ViewRootForTest
+            Box(Modifier.onGloballyPositioned {
+                val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
+                val sam = nodes.single { it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("$name, new message") }
+                assertTrue(sam.config.contains(SemanticsActions.OnClick))
+                val jo = nodes.single { it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("Jo") }
+                assertTrue(jo.config.contains(SemanticsActions.OnClick))
+                checked = true
+            }) { VoicePracticeScreen(VoiceUiState.ChoosePerson(listOf(VoicePersonUi("sam", name, pictureInInk = true, newMessage = true),
+                VoicePersonUi("jo", "Jo", pictureInInk = true)), fromHome = true), {}) }
+        }
+        assertTrue(checked)
+    }
+    /** V2 order with a new message: picture, name, Messages with, Listen to, Back, Record (PLA-501, PLA-527). */
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+    @Test fun listenAction() {
+        var checked = false
+        shot {
+            val view = LocalView.current as ViewRootForTest
+            Box(Modifier.onGloballyPositioned {
+                val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
+                fun text(n: SemanticsNode) = n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
+                val messages = nodes.single { text(it) == "Messages with $name" && it.config.contains(SemanticsActions.OnClick) }
+                val listen = nodes.single { text(it) == "Listen to $name" && it.config.contains(SemanticsActions.OnClick) }
+                val back = nodes.single { text(it).startsWith("‹") }
+                val record = nodes.single { text(it) == "Record" && it.config.contains(SemanticsActions.OnClick) }
+                assertTrue(messages.positionInRoot.y < listen.positionInRoot.y)
+                assertTrue(listen.positionInRoot.y < back.positionInRoot.y)
+                assertTrue(back.positionInRoot.y < record.positionInRoot.y)
+                assertTrue(listen.size.height >= 72f - 1f)
+                checked = true
+            }) { VoicePracticeScreen(VoiceUiState.Person(VoicePersonUi("sam", name, pictureInInk = true), openMessages = true,
+                listen = VoiceUiListen.Listen), {}) }
+        }
+        assertTrue(checked)
+    }
+    @Test fun listening() = shot { VoicePracticeScreen(VoiceUiState.Person(VoicePersonUi("sam", name, pictureInInk = true),
+        openMessages = true, listen = VoiceUiListen.Stop), {}) }
+    @Test fun playAgain() = shot { VoicePracticeScreen(VoiceUiState.Person(VoicePersonUi("sam", name, pictureInInk = true),
+        openMessages = true, listen = VoiceUiListen.PlayAgain), {}) }
     @Test fun familyMenu() = family(FamilyStage.List)
     @Test fun nameEntry() = family(FamilyStage.Name)
     @Test fun numberEntry() = family(FamilyStage.Number)
