@@ -10,6 +10,16 @@ import org.plainphone.policy.*
 import org.plainphone.ui.requests.*
 
 class RequestsRouteTest {
+    @Test fun historyMapsEverySavedRequestWithStableIdsAndUserSideCannotRemove() {
+        val view = RequestView(false, "", (1..12).map { RequestDisplay("r$it", "Bus app $it", 10, RequestStatus.NoSignal) })
+        val history = RequestsUiMapper.map(view, "", null, false, historyOnly = true)
+        assertEquals(12, history.rows.size)
+        assertEquals("r12", history.rows.last().id)
+        assertTrue(history.historyOnly)
+        assertFalse(RequestsUiMapper.map(view, "", null, false).historyOnly)
+        val failed = RequestsUiMapper.map(view.copy(available = false), "", null, false, true)
+        assertEquals(RequestUiStatus.StorageError, failed.result)
+    }
     @Test fun recipientReadFailureIsDistinctFromSaveFailure() {
         val read = recipientFailure(RequestRecipientUiState(), changing = false)
         assertTrue(read.readFailed)

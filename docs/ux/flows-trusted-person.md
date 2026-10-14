@@ -177,8 +177,16 @@ Thursday 8 Oct, 10:40 · Text sent to you ✓      (or: "Text didn't send")
 - **Find it in the Play Store** starts a Play session (P1). The request is attached to the session, but the
   approval is for whatever app actually gets installed (T4b).
 - **Not now** asks: "Remove this request? {user} won't be told." → **Remove** / **Keep it**.
+  Without a configured user name: "Remove this request? The person using this phone won't be told."
   (The user is not notified by LMNOPhone; `{tp}` tells them in person. This keeps LMNOPhone from being a
   messenger of "no".)
+
+For the request-removal increment, a save or read-back failure keeps the request card and says:
+“The change could not be saved. Try again.” Keep it changes nothing. Removal keeps the daily send
+count but deletes the saved request text; it disappears from the user's list without a removal notice.
+The daily-limit body is “You can ask again tomorrow.” A readable positive saved-request count appears
+in Needs you and under Requests; zero or an unreadable store shows no count. Play Store lookup remains
+outside this increment.
 
 ## T4. Adding an app (after it is installed in a Play session)
 

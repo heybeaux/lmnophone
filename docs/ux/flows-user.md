@@ -262,7 +262,7 @@ Beaux asked: "I don't know if he got it or not." So each saved request shows its
 ### U5d. Five requests today
 
 - **Title:** That's 5 requests today
-- **Body:** You can ask again tomorrow. Your requests from today are saved for {tp}.
+- **Body:** You can ask again tomorrow.
 - **Primary:** OK
 
 ## U6. Blocked link
@@ -803,7 +803,7 @@ Release changes come from `app/plainphone/src/main/kotlin/org/plainphone/release
 
 This bounded implementation supersedes the older Delivered/history/retry copy
 for the production request route. Send is explicit; every attempt counts toward
-five per day. No automatic retry and no acting on requests in this increment.
+five per day. No automatic retry. The PIN holder can now remove a saved request using T3’s Not now step; removal does not give back a send.
 The whole request is visible in history. Results are **Sent**, **Not sent**, or
 **Not confirmed**. **Sending…** is temporary. Sent means all SMS parts were
 accepted, never arrival or reading. Interrupted, missing or partial confirmations

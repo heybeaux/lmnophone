@@ -89,6 +89,12 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
 - `ElevationController` (self-managed mode), `PlaySessionMachine`, `MonthlyCheck`, `EmergencyFloor` and baseline rules, `NoticeLine` priority.
 - `TimeWindowQuota`: the generic "open for a few minutes" quota. The **web window** (5×/day × 5 min, extendable) and **Wi-Fi sign-in** (3 per 24 h) are built behind a flag that stays off. Their OpenSpec change isn't approved yet; Wi-Fi sign-in comes after the MVP core.
 
+`AppRequests.remove(id): Boolean` deletes the saved request text and retains only its ID/day for
+quota and replay protection. True requires an exact store read-back. `RequestBook.removed` holds
+these content-free entries; schema 2 reads schema 1 without changing existing requests/recipients.
+Late SMS results for removed IDs do nothing. UI mapping consumes `RequestView.available` before
+publishing a request count; an unreadable store has no count.
+
 **`:links` (lane C) exports:**
 - `BrowserClassifier(self: PlainphoneIdentity).classify(facts: List<PackageFacts>, catalog: BrowserCatalog, neverHide: NeverHideList, inventoryKnown: Boolean): Classification`.
   - `PlainphoneIdentity` is the exact package name plus the exact set of signing-certificate digests (`CertDigest`).

@@ -28,34 +28,25 @@ class NeedsYouTest {
             assertTrue(map(user = user).items.any { it.destination == AdminDestination.Requests })
         }
     }
-    @Test fun savedRequestHistoryDoesNotPopulateNeedsYou() {
-        val book = RequestBook(RequestRecipient("Jo", "555-0100"), listOf(
-            RequestEntry("saved-1", "Bus app", 1, 0, "old", listOf(RequestPart.Accepted)),
-            RequestEntry("saved-2", "Maps", 1, 0, "old", listOf(RequestPart.NoSignal))))
-        var writes = 0
-        val store = object : RequestStore {
-            override fun read() = book
-            override fun write(value: RequestBook) { writes++ }
+    @Test fun productionMapperCountsSavedRequestsAfterWaitingAndAttention() {
+        val view = RequestView(true, "Jo", listOf(
+            RequestDisplay("a", "Bus app", 1, RequestStatus.Sending),
+            RequestDisplay("b", "Maps", 1, RequestStatus.NoSignal)))
+        val copy = NeedsYouCopy({ "Waiting: $it" }, "Attention", { n, user -> "$n requests from $user" })
+        val menu = pinMenuUiState(AdminContext("Alex"), waiting, HomeNotice.NeedsAttention, copy, view)
+        assertEquals(listOf("waiting:change-1", "attention", "requests"), menu.needsYou.map { it.id })
+        assertEquals("2 requests from Alex", menu.needsYou.last().text)
+        assertEquals("2", menu.items.single { it.destination == AdminDestination.Requests }.detail)
+        for (empty in listOf(view.copy(requests = emptyList()), view.copy(available = false))) {
+            val hidden = pinMenuUiState(AdminContext("Alex"), null, null, copy, empty)
+            assertTrue(hidden.needsYou.isEmpty())
+            assertEquals("", hidden.items.single { it.destination == AdminDestination.Requests }.detail)
         }
-        val sms = object : RequestSmsPort {
-            override fun problem(): RequestStatus? = error("No SMS access for menu")
-            override fun parts(text: String): List<String> = error("No SMS access for menu")
-            override fun send(number: String, id: String, parts: List<String>) = error("Never send from menu")
-        }
-        val engine = AppRequests(store, sms, "current", { 10L }, { 1L })
-        assertEquals(2, engine.view().requests.size)
-        // Menu mapping has no request-store input or access. Saved history is not a to-do list.
-        repeat(2) {
-            assertTrue(map().needsYou.isEmpty())
-            assertEquals(listOf("waiting:change-1", "attention"), map(waiting, HomeNotice.NeedsAttention).needsYou.map { it.id })
-        }
-        assertEquals(book, store.read())
-        assertEquals(0, writes)
     }
     @Test fun itemsHaveRealDestinationsAndStaleWaitCannotOpenReplacement() {
         assertEquals(NeedsYouTarget.Waiting("change-1"), needsYouTarget("waiting:change-1", waiting))
         assertEquals(NeedsYouTarget.Attention, needsYouTarget("attention", waiting))
-        assertNull(needsYouTarget("requests", waiting))
+        assertEquals(NeedsYouTarget.Requests, needsYouTarget("requests", waiting))
         assertNull(needsYouTarget("waiting:change-1", waiting.copy(requestId = "replacement")))
         assertNull(needsYouTarget("waiting:change-1", waiting.copy(phase = WaitingPhase.CANCELLED)))
         assertNull(needsYouTarget("unknown", waiting))
@@ -65,10 +56,10 @@ class NeedsYouTest {
         val pin = java.io.File("src/main/kotlin/org/plainphone/PinAccessActivity.kt").readText()
         assertTrue(pin.contains("runtime.waitingNotice.collectAsState()"))
         assertTrue(pin.contains("runtime.notice.collectAsState()"))
-        assertFalse(pin.contains("RequestEngine"))
-        assertFalse(pin.contains("menuRequests"))
+        assertTrue(pin.contains("RequestEngine"))
+        assertTrue(pin.contains("menuRequests"))
         assertTrue(pin.contains("AdminDestination.Requests -> openRequests()"))
-        assertTrue(pin.contains("waitingMenu, homeNotice, needsYouCopy()"))
+        assertTrue(pin.contains("waitingMenu, homeNotice, needsYouCopy(), menuRequests"))
         assertTrue(pin.contains("is AdminMenuEvent.OpenNotice -> openNeedsYou(it.id)"))
         assertTrue(pin.contains("flow.useRecoveryFromApps()"))
         val main = java.io.File("src/main/kotlin/org/plainphone/MainActivity.kt").readText()
