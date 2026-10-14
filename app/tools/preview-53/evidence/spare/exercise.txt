@@ -1,0 +1,33 @@
+# Build 53 on the spare: trusted-person Needs you (PLA-546) exercised (PLA-550)
+# 2026-10-14 09:07Z-09:32Z. Test PIN from the secrets file; no PIN in this record. No calls, no SMS/MMS.
+# PIN screens are FLAG_SECURE: layouts/ hold uiautomator text.
+0. One install, in place: dc0c9f64 (09:07:32Z, gate.log exit 0, 242 PASS; More > Emergency and Phone = 911,
+   zero calls). versionCode 53, DO kept, LOCKED, ceDataInode 32221, release_current=53 / release_previous=52.
+1. Nothing waiting (layouts/01): More > PIN settings > PIN > "Your settings" has no Needs you heading or rows.
+   The saved build 50 request ("Not sent") is present and still gives no request row. Menu > "Requests from the
+   person using this phone" (layouts/02) opens RequestsActivity history with that Not sent row.
+2. Waiting change (layouts/03-07, 05-home-waiting.png, 06-waiting-opened.png): menu > Turn LMNOPhone off >
+   Continue > Yes, turn it off > PIN > Start the 24-hour wait ("Waiting 24 hours ... after about 2:20 a.m.
+   tomorrow"). Home shows "LMNOPhone will turn off after 2:20 a.m. tomorrow. Tap to cancel." Reopened menu:
+   "Needs you" / "Waiting: turn LMNOPhone (preview) off" (debug app name). Tap > MainActivity "Cancel this
+   change?" with "No, keep it waiting" / "Yes, cancel it". Yes > "Cancelled" > OK > Home without the notice.
+   Reopened menu: no Needs you. The wait never committed.
+3. Attention row: not exercised: no attention state (Home showed no attention notice; none forced).
+4. Apps PIN > Use recovery code (layouts/08-09): Apps on this phone > Maps > Remove from ... > Remove > Apps
+   PIN screen > "Forgot PIN? Use recovery code" > "Enter recovery code" (PIN recovery). Stopped there; no code
+   entered. Back to More. Maps still installed and on Home; app order unchanged at the end.
+   Side effect, restored: tapping Move down on Camera first saved a reorder at once (no PIN, existing
+   behaviour); Move up restored it (app-order sha back to 2e1b634fe0cb2873).
+5. 2.0 text (layouts/10-12): font_scale 2.0, started the wait again, menu: "Needs you" [100,991][555,1100],
+   row [100,1150][935,1483]; "Done – back to the home screen" pinned at [120,2046][960,2240] at top and after
+   scrolling (nav bar from y2280). Row > Cancel this change? > Yes, cancel it > Cancelled > OK > Home.
+   font_scale back to 1.0.
+6. About (layouts/13-14, 10-about.png): "Version 0.1.0-preview-53 (53)"; What's new = the two build 53 lines.
+   No "New since your last version" section: previous=52, nothing skipped (as builds 50-52). Older versions
+   starts at Version 52.
+7. Saved data (after.txt vs after-install.txt): only the authority records changed: 9 -> 13 files (two new
+   intent-requested/intent-clear pairs from the two cancelled waits, the same shape as the 10-12 pairs) and the
+   a/b record hash (both copies equal). Family store, app order, starter list, counts toggle, drafts, send
+   records, request store (124 bytes, same hash), played state, Wi-Fi, Bluetooth, location, font and ring
+   identical. Final: Home, LOCKED, Device Owner, versionCode 53, zero calls.
+Copy note (not this range): Maps details reads "Remove from the person using this phone's phone".
