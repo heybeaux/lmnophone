@@ -52,7 +52,8 @@ sealed interface RequestEvent {
         if (compose) s(if (state.busy) R.string.ask_sending else R.string.requests_send) else s(R.string.user_ok),
         { event(if (compose) RequestEvent.Send else if (result != null) RequestEvent.Compose else RequestEvent.Back) },
         primaryEnabled = !compose || state.canSend && !state.busy,
-        back = s(R.string.admin_back), onBack = { event(RequestEvent.Back) }) {
+        back = s(R.string.admin_back), onBack = { event(RequestEvent.Back) },
+        announceTitle = result != null, announcePrimary = compose && state.busy) {
         when {
             result == RequestUiStatus.StorageError -> Text(statusBody(result), style = PlainphoneType.Body)
             state.historyOnly -> if (state.rows.isEmpty()) Text(s(R.string.requests_empty), style = PlainphoneType.Body)

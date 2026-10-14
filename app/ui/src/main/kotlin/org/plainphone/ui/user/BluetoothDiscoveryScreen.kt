@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.ui.user
 
+import org.plainphone.ui.components.statusAnnouncement
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,10 +32,10 @@ fun BluetoothDiscoveryScreen(state: BluetoothDiscoveryUiState, onEvent: (Bluetoo
         { onEvent(BluetoothDiscoveryEvent.LookAgain) },
         back = stringResource(R.string.bluetooth_back), onBack = { onEvent(BluetoothDiscoveryEvent.Back) }) {
         when {
-            state.failed -> Text(stringResource(R.string.bluetooth_nearby_error), style = PlainphoneType.Body)
+            state.failed -> Text(stringResource(R.string.bluetooth_nearby_error), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
             else -> {
-                if (state.looking) Text(stringResource(R.string.bluetooth_looking), style = PlainphoneType.Body)
-                else if (state.devices.isEmpty()) Text(stringResource(R.string.bluetooth_nearby_none), style = PlainphoneType.Body)
+                if (state.looking) Text(stringResource(R.string.bluetooth_looking), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
+                else if (state.devices.isEmpty()) Text(stringResource(R.string.bluetooth_nearby_none), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
                 state.devices.forEach { option ->
                     BluetoothChoiceRow(option.name) { onEvent(BluetoothDiscoveryEvent.Select(option.id)) }
                 }

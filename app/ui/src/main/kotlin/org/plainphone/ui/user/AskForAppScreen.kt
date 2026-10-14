@@ -3,6 +3,9 @@
  */
 package org.plainphone.ui.user
 
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -38,7 +41,8 @@ fun AskForAppScreen(state: AskForAppUiState, onEvent: (AskForAppEvent) -> Unit) 
     }
     TaskScreen(stringResource(R.string.more_ask), if (state.sending) stringResource(R.string.ask_sending) else stringResource(R.string.ask_send, state.recipientName.withoutBidiControls()),
         { onEvent(AskForAppEvent.Send) }, primaryEnabled = state.canSend && !state.sending,
-        back = stringResource(R.string.back_more), onBack = { onEvent(AskForAppEvent.Back) }) {
+        back = stringResource(R.string.back_more), onBack = { onEvent(AskForAppEvent.Back) },
+        announcePrimary = state.sending) {
         Text(stringResource(R.string.ask_body, state.recipientName.withoutBidiControls()), style = PlainphoneType.Body)
         val label = stringResource(R.string.ask_label)
         Column(verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
@@ -81,7 +85,12 @@ private fun RequestHistory(requests: List<AppRequestRow>, onRetry: (String) -> U
             Text(request.day, style = PlainphoneType.Small)
             if (request.status == AppRequestStatus.Failed) {
                 ScreenLink(stringResource(R.string.ask_failed), { onRetry(request.id) }, centered = false)
-            } else Text(requestStatusText(request.status), style = PlainphoneType.Small)
+            } else {
+                val status = requestStatusText(request.status)
+                Text(status, style = PlainphoneType.Small, modifier = Modifier.clearAndSetSemantics {
+                    text = AnnotatedString(status.removeSuffix(" ✓"))
+                })
+            }
         }
     }
 }
@@ -108,7 +117,8 @@ fun AppRequestResultScreen(state: AppRequestResultUiState, onEvent: (AppRequestR
         { onEvent(if (failed) AppRequestResultEvent.Retry else AppRequestResultEvent.Ok) },
         primaryEnabled = !failed || !state.sending,
         secondary = if (failed) stringResource(R.string.ask_leave_saved) else null,
-        onSecondary = { onEvent(AppRequestResultEvent.Ok) }) {
+        onSecondary = { onEvent(AppRequestResultEvent.Ok) },
+        announceTitle = true, announcePrimary = state.sending) {
         Text(stringResource(when (state.result) {
             AppRequestResult.Sent -> R.string.ask_sent_body
             AppRequestResult.Failed -> R.string.ask_failed_body

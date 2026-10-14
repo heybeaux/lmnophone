@@ -3,6 +3,10 @@
  */
 package org.plainphone.ui.components
 
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +45,8 @@ internal fun TaskScreen(
     back: String? = null,
     onBack: () -> Unit = {},
     band: String? = null,
+    announceTitle: Boolean = false,
+    announcePrimary: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val density = LocalDensity.current
@@ -89,7 +95,10 @@ internal fun TaskScreen(
                 verticalArrangement = Arrangement.spacedBy(spacing)) {
                 if (back != null) ScreenLink(back, onBack, centered = false)
                 else if (!largeText) Spacer(Modifier.height(PlainphoneSpace.S6))
-                Text(title, style = PlainphoneType.Title, modifier = Modifier.semantics { heading() })
+                Text(title, style = PlainphoneType.Title, modifier = Modifier.semantics {
+                    heading()
+                    if (announceTitle) liveRegion = LiveRegionMode.Polite
+                })
                 content()
             }
         }
@@ -106,7 +115,9 @@ internal fun TaskScreen(
                         .heightIn(min = 56.dp).padding(horizontal = PlainphoneSpace.S6,
                             vertical = if (largeText) PlainphoneSpace.S2 else PlainphoneSpace.S4),
                         contentAlignment = Alignment.Center) {
-                        Text(primary, style = PlainphoneType.Button.copy(
+                        Text(primary, modifier = Modifier.semantics {
+                            if (announcePrimary) liveRegion = LiveRegionMode.Polite
+                        }, style = PlainphoneType.Button.copy(
                             color = if (primaryEnabled) PlainphoneColors.Paper else PlainphoneColors.Line),
                             textAlign = TextAlign.Center)
                     }
@@ -130,7 +141,9 @@ internal fun ScreenLink(text: String, onClick: () -> Unit, centered: Boolean = t
     Box(Modifier.fillMaxWidth().plainphoneAction(enabled = enabled, onClick = onClick).heightIn(min = 48.dp)
         .padding(vertical = PlainphoneSpace.S2),
         contentAlignment = if (centered) Alignment.Center else Alignment.CenterStart) {
-        Text(text, style = PlainphoneType.Button.copy(textDecoration = TextDecoration.Underline,
+        Text(text, modifier = if (text.startsWith("‹ ")) Modifier.clearAndSetSemantics {
+            this.text = AnnotatedString(text.removePrefix("‹ "))
+        } else Modifier, style = PlainphoneType.Button.copy(textDecoration = TextDecoration.Underline,
             color = if (enabled) PlainphoneColors.Ink else PlainphoneColors.Line),
             textAlign = if (centered) TextAlign.Center else TextAlign.Start)
     }

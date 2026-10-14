@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.ui.user
 
+import org.plainphone.ui.components.statusAnnouncement
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Slider
@@ -76,7 +77,7 @@ fun BrightnessScreen(state: BrightnessUiState, onEvent: (BrightnessEvent) -> Uni
             Text(stringResource(R.string.brightness_automatic), style = PlainphoneType.Body, modifier = Modifier.weight(1f))
             Switch(state.automatic, onCheckedChange = null, enabled = state.percent != null)
         }
-        if (state.failed) Text(stringResource(R.string.brightness_failed), style = PlainphoneType.Body)
+        if (state.failed) Text(stringResource(R.string.brightness_failed), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
     }
 }
 

@@ -78,7 +78,7 @@ class RingtoneScreenshotTest(private val scale: Float) {
                 fun text(node: androidx.compose.ui.semantics.SemanticsNode) =
                     node.config.getOrElse(SemanticsProperties.Text) { emptyList() }.map { it.text }
                 val texts = nodes.flatMap(::text)
-                assertTrue("Ringtone" in texts); assertTrue("‹ Sound" in texts)
+                assertTrue("Ringtone" in texts); assertTrue("Sound" in texts)
                 assertEquals(state.currentUnlisted, "Your current ringtone stays until you choose another." in texts)
                 assertEquals(state.failed, "Ringtone couldn't be changed." in texts)
                 val done = nodes.single { "Done" in text(it) }

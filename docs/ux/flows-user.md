@@ -353,6 +353,7 @@ Opens when the user taps a web link that doesn't belong to an added app, from Me
 
 **Spec:** calm-home-screen ("Built-in basic settings without Android Settings"); web-containment (Wi-Fi sign-in).
 
+The page title is **Phone settings**, marked as a screen-reader heading.
 Menu page: **Wi-Fi**, **Bluetooth**, **Sound**, **Brightness**, **Text size**, **Battery**.
 Each opens one simple screen. Android Settings never appears.
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.ui.user
 
+import org.plainphone.ui.components.statusAnnouncement
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -28,7 +29,7 @@ fun BluetoothSettingsScreen(state: BluetoothSettingsUiState, onBack: () -> Unit,
         Text(stringResource(R.string.settings_bluetooth), style = PlainphoneType.Title,
             modifier = Modifier.semantics { heading() })
         when {
-            state.readFailed -> Text(stringResource(R.string.bluetooth_unavailable), style = PlainphoneType.Body)
+            state.readFailed -> Text(stringResource(R.string.bluetooth_unavailable), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
             !state.enabled -> Text(stringResource(R.string.bluetooth_off), style = PlainphoneType.Body)
             else -> {
                 Text(stringResource(R.string.bluetooth_paired), style = PlainphoneType.Row,

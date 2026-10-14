@@ -221,7 +221,7 @@ class UserScreensTest {
     @Test fun selfManagedMoreAndBackEvents() {
         val events = mutableListOf<MoreEvent>()
         show { MoreScreen(MoreUiState(MoreMode.SelfManaged(10)), events::add) }
-        compose.onNodeWithText("‹ Home").performClick()
+        compose.onNodeWithText("Home").performClick()
         compose.onNodeWithText("Phone settings").performScrollTo().performClick()
         compose.onNodeWithText("Add an app").performScrollTo().performClick()
         compose.onNodeWithText("Your settings").performScrollTo().performClick()
@@ -234,7 +234,7 @@ class UserScreensTest {
     @Test fun requestBackEvent() {
         val events = mutableListOf<AskForAppEvent>()
         show { AskForAppScreen(AskForAppUiState("Sam"), events::add) }
-        compose.onNodeWithText("‹ More").performClick()
+        compose.onNodeWithText("More").performClick()
         assertEquals(listOf(AskForAppEvent.Back), events)
     }
     @Test fun overlongLinkOffersNoSend() {

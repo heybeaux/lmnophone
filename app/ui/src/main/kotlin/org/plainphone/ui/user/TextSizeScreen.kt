@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.ui.user
 
+import org.plainphone.ui.components.statusAnnouncement
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +36,7 @@ fun TextSizeScreen(state: TextSizeUiState, onEvent: (TextSizeEvent) -> Unit) {
             SizeButton(stringResource(R.string.brightness_minus), stringResource(R.string.text_size_smaller), state.canDecrease) { onEvent(TextSizeEvent.Smaller) }
             SizeButton(stringResource(R.string.brightness_plus), stringResource(R.string.text_size_bigger), state.canIncrease) { onEvent(TextSizeEvent.Bigger) }
         }
-        if (state.failed) Text(stringResource(R.string.text_size_failed), style = PlainphoneType.Body)
+        if (state.failed) Text(stringResource(R.string.text_size_failed), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
         Text(stringResource(R.string.text_size_note), style = PlainphoneType.Body)
     }
 }

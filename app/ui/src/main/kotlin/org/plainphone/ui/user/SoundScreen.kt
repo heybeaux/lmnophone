@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.ui.user
 
+import org.plainphone.ui.components.statusAnnouncement
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -49,7 +50,8 @@ fun SoundScreen(state: SoundUiState, onEvent: (SoundEvent) -> Unit) {
                 Text(stringResource(R.string.ringtone_title), style = PlainphoneType.Row)
                 Text(state.ringtoneTitle ?: stringResource(R.string.ringtone_not_set), style = PlainphoneType.Body)
             }
-            Text("›", style = PlainphoneType.Row.copy(color = PlainphoneColors.Ink3))
+            Text("›", style = PlainphoneType.Row.copy(color = PlainphoneColors.Ink3),
+                modifier = Modifier.clearAndSetSemantics {})
         }
     }
 }
@@ -75,7 +77,7 @@ private fun VolumeControl(label: String, state: VolumeUiState?, stream: SoundStr
         VolumeButton(stringResource(R.string.brightness_plus), stringResource(if (stream == SoundStream.Ring) R.string.sound_raise_ring else R.string.sound_raise_media), enabled && state!!.level < max) { onEvent(SoundEvent.Adjust(stream, 1)) }
     }
     if (!adjustable) Text(stringResource(R.string.sound_silent), style = PlainphoneType.Body)
-    if (failed) Text(stringResource(R.string.volume_failed), style = PlainphoneType.Body)
+    if (failed) Text(stringResource(R.string.volume_failed), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
     }
 }
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.ui.user
 
+import org.plainphone.ui.components.statusAnnouncement
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +30,7 @@ fun RingtoneScreen(state: RingtoneUiState, onEvent: (RingtoneEvent) -> Unit) {
     TaskScreen(stringResource(R.string.ringtone_title), stringResource(R.string.admin_done),
         { onEvent(RingtoneEvent.Done) }, primaryEnabled = state.canSave,
         back = stringResource(R.string.ringtone_back), onBack = { onEvent(RingtoneEvent.Back) }) {
-        if (state.failed) Text(stringResource(R.string.ringtone_failed), style = PlainphoneType.Body)
+        if (state.failed) Text(stringResource(R.string.ringtone_failed), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
         if (state.currentUnlisted) Text(stringResource(R.string.ringtone_current_stays), style = PlainphoneType.Body)
         for (choice in state.choices) {
             val isSelected = choice.id == state.selectedId

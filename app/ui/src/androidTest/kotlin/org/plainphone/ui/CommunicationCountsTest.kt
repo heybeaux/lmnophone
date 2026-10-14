@@ -147,7 +147,7 @@ class CommunicationCountsTest {
         compose.onNodeWithText("LMNOPhone can't read unread texts right now").assertExists()
         compose.runOnIdle { state.value = PhoneSettingsUiState(false, true, true) }
         compose.onNodeWithText("LMNOPhone can't read", substring = true).assertDoesNotExist()
-        compose.onNodeWithText("‹ More").performClick()
+        compose.onNodeWithText("More").performClick()
         assertEquals(PhoneSettingsEvent.Back, events.last())
     }
 }
