@@ -20,7 +20,7 @@ data class HiddenAppRow(val id: String, val name: String, val icon: ImageBitmap?
 fun PreviewHiddenAppsScreen(context: AdminContext, apps: List<HiddenAppRow>, unavailable: Boolean,
     busy: Boolean, onOpen: (String) -> Unit, onBack: () -> Unit) {
     AdminFrame(context, s(R.string.admin_hidden_app), secondary = s(R.string.admin_back), onSecondary = onBack) {
-        if (unavailable) Words(s(R.string.app_hidden_unavailable))
+        if (unavailable) StatusWords(s(R.string.app_hidden_unavailable))
         else if (!busy && apps.isEmpty()) Words(s(R.string.app_hidden_empty))
         else apps.forEach { app ->
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {

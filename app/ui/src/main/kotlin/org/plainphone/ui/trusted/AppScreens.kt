@@ -6,6 +6,7 @@ package org.plainphone.ui.trusted
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource as s
@@ -85,7 +86,7 @@ fun PermissionsScreen(state: PermissionsUiState, onEvent: (PermissionsEvent) -> 
             Words(s(R.string.admin_self_permissions, app))
             Words(if (state.previewAdd) s(R.string.app_self_permissions_later, app) else s(R.string.admin_self_permissions_later, app, state.waitMinutes))
         } else Words(s(R.string.admin_permissions_body, state.context.userName.withoutBidiControls(), app))
-        if (state.checkFailed) Words(s(R.string.app_permissions_unknown))
+        if (state.checkFailed) StatusWords(s(R.string.app_permissions_unknown))
         else if (state.permissions.isEmpty()) Words(s(R.string.app_permissions_none, app))
         state.permissions.forEach { permission ->
             val resources = permissionResources[permission.group]
@@ -118,13 +119,18 @@ fun PermissionsScreen(state: PermissionsUiState, onEvent: (PermissionsEvent) -> 
 @Composable
 fun AppsOnPhoneScreen(state: AppsOnPhoneUiState, onEvent: (AppsOnPhoneEvent) -> Unit) {
     AdminFrame(state.context, s(R.string.admin_apps), secondary = s(R.string.admin_back), onSecondary = { onEvent(AppsOnPhoneEvent.Back) }) {
-        state.apps.forEach { row ->
-            val name = row.app.name.withoutBidiControls()
-            if (row.alwaysOn) { Heading(name); Words(s(R.string.admin_always)) }
-            else {
-                ActionRow(name) { onEvent(AppsOnPhoneEvent.Open(row.app.id)) }
-                Choice(s(R.string.admin_move_up), false, row.canMoveUp && !state.sending, s(R.string.admin_move_up_named, name)) { onEvent(AppsOnPhoneEvent.MoveUp(row.app.id)) }
-                Choice(s(R.string.admin_move_down), false, row.canMoveDown && !state.sending, s(R.string.admin_move_down_named, name)) { onEvent(AppsOnPhoneEvent.MoveDown(row.app.id)) }
+        state.apps.forEachIndexed { index, row ->
+            key(row.app.id) {
+                val name = row.app.name.withoutBidiControls()
+                val position = s(R.string.admin_app_position, index + 1, state.apps.size)
+                if (row.alwaysOn) { Heading(name); Words(s(R.string.admin_always)) }
+                else {
+                    ActionRow(name, position = position) { onEvent(AppsOnPhoneEvent.Open(row.app.id)) }
+                    Choice(s(R.string.admin_move_up), false, row.canMoveUp && !state.sending,
+                        s(R.string.admin_move_up_named, name), position) { onEvent(AppsOnPhoneEvent.MoveUp(row.app.id)) }
+                    Choice(s(R.string.admin_move_down), false, row.canMoveDown && !state.sending,
+                        s(R.string.admin_move_down_named, name), position) { onEvent(AppsOnPhoneEvent.MoveDown(row.app.id)) }
+                }
             }
         }
         if (state.canAddHidden) ActionRow(s(R.string.admin_hidden_app), enabled = !state.sending) { onEvent(AppsOnPhoneEvent.AddHidden) }

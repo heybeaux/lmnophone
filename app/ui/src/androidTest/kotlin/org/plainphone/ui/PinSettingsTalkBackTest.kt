@@ -106,6 +106,7 @@ class PinSettingsTalkBackTest {
         compose.onNodeWithContentDescription("Move Camera down").assert(button).performScrollTo().performClick()
         action("Camera").assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "2 of 2"))
         compose.onNodeWithContentDescription("Move Camera up").assert(button)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, "2 of 2"))
         action("Add a hidden app").performScrollTo().assertIsDisplayed()
         noGlyphs()
     }
@@ -176,6 +177,11 @@ class PinSettingsTalkBackTest {
         compose.runOnIdle { state.value = RequestRecipientUiState(readFailed = true) }
         compose.onNodeWithText("Who gets requests could not be read. Check again later.").assert(polite)
         action("OK")
+        compose.runOnIdle { state.value = RequestRecipientUiState(name = "Sam", number = "555-0100") }
+        compose.onNodeWithText("Sam").assertExists()
+        action("Change")
+        action("Remove")
+        noGlyphs()
     }
     @Test fun issuedCodeIsSpelledOnceAndNotAutomaticallyAnnounced() {
         show { PinScreen(PinUiState(context, PinStage.RecoveryIssued, recoveryCode = "1234-ABCD"), {}) }
@@ -184,4 +190,90 @@ class PinSettingsTalkBackTest {
         compose.onAllNodes(polite).assertCountEquals(0)
         action("I've written it down")
     }
+    @Test fun allChangedPathsFitAtLargeTextAndLastActionClearsNavigation() {
+        data class Page(val name: String, val last: String, val content: @Composable () -> Unit)
+        val pages = listOf(
+            Page("enter", "Continue") { PinScreen(PinUiState(context), {}) },
+            Page("wrong", "Continue") { PinScreen(PinUiState(context, wrongPin = true), {}) },
+            Page("wait", "Use recovery code") { PinScreen(PinUiState(context, PinStage.Locked, wait = "1 minute"), {}) },
+            Page("recovery", "Continue") { PinScreen(PinUiState(context, PinStage.Recovery, wrongRecoveryCode = true), {}) },
+            Page("recovery-wait", "Enter PIN instead") { PinScreen(PinUiState(context, PinStage.RecoveryLocked, wait = "1 minute"), {}) },
+            Page("new-pin", "Continue") { PinScreen(PinUiState(context, PinStage.NewPin, mismatch = true), {}) },
+            Page("code", "I've written it down") { PinScreen(PinUiState(context, PinStage.RecoveryIssued, recoveryCode = "1234-ABCD-5678-EFGH-9012-IJKL-3456-MNOP"), {}) },
+            Page("change-result", "OK") { PinChangeResultScreen(context, false) {} },
+            Page("menu", "Done – back to the home screen") { AdminMenuScreen(AdminMenuUiState(context,
+                listOf(AdminMenuItem(AdminDestination.Apps), AdminMenuItem(AdminDestination.Requests),
+                    AdminMenuItem(AdminDestination.RequestRecipient), AdminMenuItem(AdminDestination.ChangePin),
+                    AdminMenuItem(AdminDestination.NewRecoveryCode)), listOf(AdminNotice("request", "2 requests"))), {}) },
+            Page("apps", "Go back") { AppsOnPhoneScreen(AppsOnPhoneUiState(context,
+                listOf(AppOnPhone(camera), AppOnPhone(InstalledApp("phone", "Phone", ""), alwaysOn = true)), canAddHidden = true), {}) },
+            Page("details", "Remove Camera") { PreviewAppDetailScreen(context, "Camera", "1", permissions = AppPermissionsUiState(checkFailed = true), onRemove = {}) },
+            Page("hidden", "Go back") { PreviewHiddenAppsScreen(context, listOf(HiddenAppRow("camera", "Camera")), false, false, {}, {}) },
+            Page("hidden-error", "Go back") { PreviewHiddenAppsScreen(context, emptyList(), true, false, {}, {}) },
+            Page("remove-failed", "Go back") { PreviewAppsFailureScreen(context) {} },
+            Page("review", "Next") { AppReviewScreen(AppReviewUiState(context, camera, previewSubset = true), {}) },
+            Page("warning", "Add anyway") { AppReviewScreen(AppReviewUiState(context, camera, stage = AppReviewStage.Unreviewed, previewSubset = true), {}) },
+            Page("confirm", "Add Camera") { AppReviewScreen(AppReviewUiState(context, camera, stage = AppReviewStage.Confirm, previewSubset = true), {}) },
+            Page("remove", "Remove") { AppReviewScreen(AppReviewUiState(context, camera, stage = AppReviewStage.Remove, previewSubset = true), {}) },
+            Page("permissions", "Next") { PermissionsScreen(PermissionsUiState(context, "Camera", listOf(PermissionChoice("camera", PermissionGroup.Camera, decision = PermissionDecision.Allow)), previewAdd = true), {}) },
+            Page("permission-failed", "Choose again") { AppPermissionFailureScreen(context, "Camera", emptyList(), AppPermissionsUiState(), {}) },
+            Page("requests", "OK") { RequestsScreen(RequestsUiState(historyOnly = true, rows = listOf(RequestUiRow("Bus times", "Thursday", RequestUiStatus.NotConfirmed, "one"))), {}) },
+            Page("request-remove", "Remove") { RequestsScreen(RequestsUiState(historyOnly = true, removingId = "one", removeFailed = true), {}) },
+            Page("recipient", "Set up") { RequestRecipientScreen(RequestRecipientUiState(), {}) },
+            Page("recipient-saved", "Change") { RequestRecipientScreen(RequestRecipientUiState(name = "Sam", number = "555-0100"), {}) },
+            Page("recipient-edit", "Continue") { RequestRecipientScreen(RequestRecipientUiState(editing = true), {}) },
+            Page("recipient-confirm", "Save") { RequestRecipientScreen(RequestRecipientUiState(confirming = true, name = "Sam", number = "555-0100"), {}) },
+            Page("recipient-remove", "Remove") { RequestRecipientScreen(RequestRecipientUiState(removing = true), {}) },
+            Page("recipient-error", "OK") { RequestRecipientScreen(RequestRecipientUiState(readFailed = true), {}) }
+        )
+        val current = mutableIntStateOf(0)
+        val scale = mutableFloatStateOf(1.3f)
+        compose.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(scale.floatValue)) {
+                PlainphoneTheme { Box(Modifier.size(360.dp, 560.dp)) {
+                    key(current.intValue, scale.floatValue) { pages[current.intValue].content() }
+                } }
+            }
+        }
+        listOf(1.3f, 1.5f, 2f).forEach { fontScale -> pages.forEachIndexed { index, page ->
+            compose.runOnIdle { scale.floatValue = fontScale; current.intValue = index }
+            compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
+                .fetchSemanticsNodes().forEach { node ->
+                    val results = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+                    node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(results)
+                    results.forEach { result ->
+                        // Paragraph alignment uses the available width; compare the line span with the
+                        // wrap-content box, allowing its integer-pixel rounding.
+                        assertFalse("${page.name} at $fontScale: height overflow", result.didOverflowHeight)
+                        (0 until result.lineCount).forEach { line ->
+                            assertFalse("${page.name}: ellipsis", result.isLineEllipsized(line))
+                            assertTrue("${page.name} at $fontScale: ${result.layoutInput.text} right=${result.getLineRight(line)} width=${result.size.width}",
+                                result.getLineRight(line) - result.getLineLeft(line) <= result.size.width + 1f)
+                        }
+                    }
+                }
+            assertTrue("${page.name}: heading", compose.onAllNodes(heading).fetchSemanticsNodes().isNotEmpty())
+            noGlyphs()
+            val lastBody = when (page.name) {
+                "menu" -> action("New recovery code")
+                "apps" -> action("Add a hidden app")
+                "hidden" -> action("Camera")
+                "permissions" -> compose.onNodeWithContentDescription("Camera: Don't allow")
+                "recipient-edit" -> compose.onNode(hasContentDescription("Phone number") and hasSetTextAction())
+                else -> null
+            }
+            lastBody?.performScrollTo()?.assertIsDisplayed()
+            val last = action(page.last)
+            if (!last.isDisplayed()) last.performScrollTo()
+            last.assertIsDisplayed()
+            val bounds = last.fetchSemanticsNode().boundsInRoot
+            val root = compose.onRoot().fetchSemanticsNode().boundsInRoot
+            assertTrue("${page.name}: action fits safe viewport", bounds.bottom <= root.bottom)
+            // Test host reserves the same 80 dp for system bars as the 360 x 640 goldens.
+            val density = compose.density.density
+            assertTrue("${page.name}: footer below spare navigation boundary", last.fetchSemanticsNode().boundsInWindow.bottom < 2280)
+            println("PIN_LAYOUT ${page.name} scale=$fontScale bottomDp=${bounds.bottom / density} safeBottomDp=${root.bottom / density} bottomWindowPx=${last.fetchSemanticsNode().boundsInWindow.bottom}")
+        } }
+    }
+
 }
