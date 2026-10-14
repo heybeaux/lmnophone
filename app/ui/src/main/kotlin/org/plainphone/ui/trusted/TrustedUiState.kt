@@ -61,11 +61,11 @@ data class AppReviewUiState(val context: AdminContext, val app: InstalledApp,
 sealed interface AppReviewEvent { data object Back : AppReviewEvent; data object Continue : AppReviewEvent; data object DontAdd : AppReviewEvent; data object MoreAbout : AppReviewEvent; data object Ok : AppReviewEvent }
 enum class PermissionGroup { Camera, Microphone, Location, Contacts, Phone, CallHistory, Sms, Calendar, Nearby, Media, Notifications, Health }
 enum class PermissionDecision { Allow, Deny }
-data class PermissionChoice(val id: String, val group: PermissionGroup, val why: String? = null,
-    val decision: PermissionDecision? = null, val unavailable: Boolean = false)
+data class PermissionChoice(val id: String, val group: PermissionGroup? = null, val why: String? = null,
+    val decision: PermissionDecision? = null, val unavailable: Boolean = false, val label: String? = null)
 data class PermissionsUiState(val context: AdminContext, val appName: String,
     val permissions: List<PermissionChoice>, val canContinue: Boolean = false, val sending: Boolean = false,
-    val waitMinutes: Int = 10)
+    val waitMinutes: Int = 10, val checkFailed: Boolean = false, val previewAdd: Boolean = false)
 sealed interface PermissionsEvent {
     data class Choose(val id: String, val decision: PermissionDecision) : PermissionsEvent
     data object Continue : PermissionsEvent

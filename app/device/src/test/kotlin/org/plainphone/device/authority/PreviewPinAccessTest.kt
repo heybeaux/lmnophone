@@ -16,12 +16,37 @@ class PreviewPinAccessTest {
     private var sequence = 0
     private val clock = RunningClock { ClockReading(RunningTime("epoch", 0), BootTime("boot", 0)) }
     private fun pin() = CharArray(6) { '1' }
-    private fun host(dir: File): PreviewPinAccess {
-        val store = JointAuthorityStore(dir)
-        val vault = PinVault(store.credentials, KeyDerivation { chars, salt, _ ->
+    private fun vault(store: JointAuthorityStore): PinVault = PinVault(store.credentials, KeyDerivation { chars, salt, _ ->
             MessageDigest.getInstance("SHA-256").digest(chars.concatToString().toByteArray() + salt)
         }, SecretEntropy { n -> ByteArray(n) { (++sequence).toByte() } }, clock)
-        return PreviewPinAccess(store, vault)
+    private fun host(dir: File): PreviewPinAccess {
+        val store = JointAuthorityStore(dir)
+        return PreviewPinAccess(store, vault(store))
+    }
+
+    /** Slot 7a cannot use the preview entry for supervised permission edits without a new route. */
+    @Test fun validSupervisedCredentialCannotEnterPreviewOrUseItsFreshRemovalRoute() {
+        val store = JointAuthorityStore(tmp.newFolder())
+        val vault = vault(store)
+        val person = TrustedPersonId("trusted-person")
+        val credential = vault.prepareCredential(pin()).credential
+        assertTrue(store.initialize(CredentialState(Mode.TRUSTED, mapOf(person to credential)),
+            WaitingState(storageGeneration = "supervised-test"), ElevationRecord()))
+        val action = PrivilegedAction("test:supervised", "app")
+        val authorized = vault.authenticate(person, pin(), action)
+        assertTrue("The credential is valid; this is an entry-route limitation", authorized is PinResult.Authorized)
+        assertTrue(vault.consumeFor((authorized as PinResult.Authorized).authority, action, person))
+
+        val preview = PreviewPinAccess(store, vault)
+        assertEquals(PinEntry.UNAVAILABLE, preview.entry())
+        val menuPin = pin()
+        assertEquals(PinAccessResult.Unavailable, preview.authenticate(menuPin))
+        assertTrue(menuPin.all { it == '\u0000' })
+        val removalPin = pin()
+        assertEquals(PinAccessResult.Unavailable, preview.authenticateRemoval("camera", removalPin))
+        assertTrue(removalPin.all { it == '\u0000' })
+        assertEquals(Mode.TRUSTED, store.credentials.read()!!.mode)
+        assertEquals(setOf(person), store.credentials.read()!!.people.keys)
     }
 
     @Test fun enrollWrongRightAndNewProcessKeepsPinButNotAccess() {

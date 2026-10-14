@@ -395,6 +395,14 @@ class PolicyRuntime private constructor(private val context: Context) {
         done(pins.authenticate(pin))
     }
 
+    private val appPermissions by lazy { org.plainphone.device.approval.AndroidAppPermissions(context, admin) }
+    fun previewAppPermissions(id: String, hidden: Boolean = false, done: (org.plainphone.device.approval.AppPermissionRead?) -> Unit) = dispatcher.post {
+        done(try {
+            if (id in preview.protectedApps() || (if (hidden) preview.hiddenApps().none { it.id == id } else preview.homeApps().none { it.first == id })) null
+            else appPermissions.read(id)
+        } catch (_: Exception) { null })
+    }
+
     /** T5 preview: all app-list reads/writes share the policy pass dispatcher. */
     fun previewApps(done: (List<org.plainphone.preview.PreviewAppRow>?) -> Unit) = dispatcher.post {
         val rows = try {
@@ -423,13 +431,38 @@ class PolicyRuntime private constructor(private val context: Context) {
     fun previewHiddenApps(done: (List<org.plainphone.device.PreviewHiddenApp>?) -> Unit) = dispatcher.post {
         done(try { preview.hiddenApps() } catch (_: Exception) { null })
     }
-    fun addPreviewApp(id: String, identity: String, pin: CharArray, active: () -> Boolean,
+    fun addPreviewApp(id: String, identity: String, selection: org.plainphone.device.approval.AppPermissionSnapshot,
+        choices: Map<String, org.plainphone.policy.PermissionChoice>, pin: CharArray, active: () -> Boolean,
         done: (org.plainphone.device.AppAdditionResult) -> Unit) = dispatcher.post {
-        val addition = org.plainphone.device.PreviewAppAddition(
-            authenticate = pins::authenticateAddition,
-            save = { preview.addApp(it, identity, active) },
-            apply = { run("app-added", packageMaySkip = false); gate.value == HomeGate.READY })
-        done(addition.add(id, pin, active))
+        val result = try {
+            // The hidden-app eligibility gate remains live and version/signer-bound before any unhide.
+            if (!active() || id != selection.identity.packageName.value || selection.selectionIdentity != identity ||
+                preview.hiddenApps().none { it.id == id && it.identity == identity }) org.plainphone.device.AppAdditionResult.SaveFailed
+            else {
+                val grantPort = org.plainphone.device.approval.DpmPermissionGrantPort(context, admin)
+                val attempts = org.plainphone.device.approval.PermissionGrantAttempts(grantPort)
+                val effects = org.plainphone.device.approval.DeviceApprovalEffects(dispatcher, port, grantPort,
+                    object : org.plainphone.device.approval.HomeAppList {
+                        override fun lists(name: PackageName): Boolean = name in preview.starter()
+                        override fun remove(name: PackageName): Unit = error("unexpected approved candidate")
+                        override fun publish(names: Set<PackageName>): Unit = error("activation belongs to runtime")
+                    }, { preview.protectedApps().mapTo(mutableSetOf(), ::PackageName) }, { null })
+                org.plainphone.device.approval.PreviewPermissionAddition(
+                    authenticate = pins::authenticateAddition,
+                    eligible = { target -> target.identity.packageName.value !in preview.protectedApps() &&
+                        target.identity.packageName !in preview.starter() },
+                    snapshot = appPermissions::snapshot,
+                    open = effects::openPermissionWindow,
+                    close = { target -> effects.closePermissionWindow(target) && port.packageState(target.packageName)?.hidden == true },
+                    write = attempts::write,
+                    read = appPermissions::read,
+                    save = { target -> preview.addApp(id, target.selectionIdentity, active) },
+                    apply = { run("app-added", packageMaySkip = false); gate.value == HomeGate.READY },
+                ).add(selection, choices, pin, active)
+            }
+        } catch (_: Exception) { org.plainphone.device.AppAdditionResult.SaveFailed }
+        finally { pin.fill('\u0000') }
+        done(result)
     }
 
     fun checkTurnOffPin(flow: String, pin: CharArray, done: (PinAccessResult) -> Unit) = dispatcher.post {

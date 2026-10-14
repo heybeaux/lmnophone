@@ -9,22 +9,56 @@ import org.plainphone.ui.trusted.*
 
 class PreviewAppsFlowTest {
     private class Port : PreviewAppsPort {
+        var permissionReads = 0
+        var manifest = org.plainphone.device.approval.AppPermissionSnapshot(
+            org.plainphone.policy.ApprovalBinding(org.plainphone.core.PackageName("calculator"), setOf(org.plainphone.core.CertDigest("a".repeat(64)))), 1, emptyList())
+        override fun permissions(id: String, hidden: Boolean, done: (org.plainphone.device.approval.AppPermissionRead?) -> Unit) {
+            permissionReads++
+            done(if (unreadable) null else org.plainphone.device.approval.AppPermissionRead(manifest, emptyMap()))
+        }
         var unreadable = false
         var adds = 0
         var addCallback: ((AppAdditionResult) -> Unit)? = null
-        override fun hidden(done: (List<PreviewHiddenApp>?) -> Unit) = done(if (unreadable) null else listOf(PreviewHiddenApp("calculator", "Calculator", "1", "identity")))
-        override fun add(app: PreviewHiddenApp, pin: CharArray, active: () -> Boolean, done: (AppAdditionResult) -> Unit) {
+        override fun hidden(done: (List<PreviewHiddenApp>?) -> Unit) = done(if (unreadable) null else listOf(PreviewHiddenApp("calculator", "Calculator", "1", manifest.selectionIdentity)))
+        override fun add(app: PreviewHiddenApp, selection: org.plainphone.device.approval.AppPermissionSnapshot, choices: Map<String, org.plainphone.policy.PermissionChoice>, pin: CharArray, active: () -> Boolean, done: (AppAdditionResult) -> Unit) {
             adds++; pin.fill('\u0000'); this.active = active; addCallback = done
         }
         var removes = 0
         var callback: ((AppRemovalResult) -> Unit)? = null
         var active: (() -> Boolean)? = null
         override fun read(done: (List<PreviewAppRow>?) -> Unit) = done(listOf(
-            PreviewAppRow("calculator", "Calculator", "1", false), PreviewAppRow("phone", "Phone", "1", true)))
+            PreviewAppRow("calculator", "Calculator", "1", false), PreviewAppRow("phone", "Phone", "1", true),
+            PreviewAppRow("sms", "Messages", "1", true), PreviewAppRow("self", "LMNOPhone", "1", true),
+            PreviewAppRow("role-dialer", "Dialer", "1", true), PreviewAppRow("role-sms", "Texts", "1", true)))
         override fun move(id: String, delta: Int, active: () -> Boolean, done: (Boolean) -> Unit) = done(true)
         override fun remove(id: String, pin: CharArray, active: () -> Boolean, done: (AppRemovalResult) -> Unit) {
             removes++; pin.fill('\u0000'); this.active = active; callback = done
         }
+    }
+    @Test fun realChoicesAreUnselectedAndRequiredBeforeFreshPinAndFailureNeverAdds() {
+        val port = Port()
+        port.manifest = port.manifest.copy(groups = listOf(
+            org.plainphone.device.approval.RequestedPermissionGroup("mic", "Microphone", listOf(org.plainphone.policy.PermissionName("android.permission.RECORD_AUDIO")))))
+        val flow = PreviewAppsFlow(port) {}
+        flow.hidden(); flow.selectHidden("calculator"); repeat(2) { flow.nextAdd() }
+        assertEquals(PreviewAppsStage.AddPermissions, flow.state.stage)
+        assertTrue(flow.state.choices.isEmpty()); assertFalse(flow.canContinuePermissions())
+        flow.nextAdd(); flow.submit(charArrayOf('1')); assertEquals(0, port.adds)
+        flow.choosePermission("unknown", PermissionDecision.Allow); assertTrue(flow.state.choices.isEmpty())
+        flow.choosePermission("mic", PermissionDecision.Deny); assertTrue(flow.canContinuePermissions())
+        flow.nextAdd(); flow.nextAdd(); flow.submit(charArrayOf('1')); assertEquals(1, port.adds)
+        port.addCallback!!(AppAdditionResult.PermissionFailed(listOf("mic"), org.plainphone.device.approval.AppPermissionRead(port.manifest, emptyMap())))
+        assertEquals(PreviewAppsStage.PermissionFailed, flow.state.stage)
+        assertEquals(listOf("mic"), flow.state.failedGroups)
+    }
+    @Test fun protectedPageDoesNotReadOrOfferChoices() {
+        val port = Port(); val flow = PreviewAppsFlow(port) {}
+        flow.open()
+        listOf("phone", "sms", "self", "role-dialer", "role-sms").forEach { id ->
+            flow.select(id); flow.choosePermission("mic", PermissionDecision.Allow)
+            assertEquals(PreviewAppsStage.List, flow.state.stage)
+        }
+        assertEquals(0, port.permissionReads); assertTrue(flow.state.choices.isEmpty())
     }
     @Test fun requiresConfirmationAndFreshPinAndBackRevokesPendingWork() {
         val port = Port(); val flow = PreviewAppsFlow(port) {}
@@ -41,6 +75,7 @@ class PreviewAppsFlowTest {
         flow.open(); flow.hidden(); flow.selectHidden("calculator")
         flow.submit(charArrayOf('1')); assertEquals(0, port.adds)
         flow.nextAdd(); assertEquals(PreviewAppsStage.AddUnreviewed, flow.state.stage)
+        flow.nextAdd(); assertEquals(PreviewAppsStage.AddPermissions, flow.state.stage)
         flow.nextAdd(); assertEquals(PreviewAppsStage.AddConfirm, flow.state.stage)
         flow.nextAdd(); flow.submit(charArrayOf('1')); assertEquals(1, port.adds)
         assertEquals(PreviewAppsStage.AddPin, flow.state.stage)
@@ -61,14 +96,14 @@ class PreviewAppsFlowTest {
     }
     @Test fun addBackInvalidatesQueuedSaveAndLateReadyDoesNotShowDone() {
         val port = Port(); val flow = PreviewAppsFlow(port) {}
-        flow.hidden(); flow.selectHidden("calculator"); repeat(3) { flow.nextAdd() }
+        flow.hidden(); flow.selectHidden("calculator"); repeat(4) { flow.nextAdd() }
         flow.submit(charArrayOf('1')); flow.back()
         assertFalse(port.active!!()); port.addCallback!!(AppAdditionResult.Added)
         assertEquals(PreviewAppsStage.List, flow.state.stage)
     }
     @Test fun addReadyIsTheOnlySuccessAndWrongPinStaysInPin() {
         val port = Port(); val flow = PreviewAppsFlow(port) {}
-        flow.hidden(); flow.selectHidden("calculator"); repeat(3) { flow.nextAdd() }
+        flow.hidden(); flow.selectHidden("calculator"); repeat(4) { flow.nextAdd() }
         flow.submit(charArrayOf('1')); port.addCallback!!(AppAdditionResult.PinRejected(org.plainphone.device.authority.PinAccessResult.Wrong(0)))
         assertEquals(PreviewAppsStage.AddPin, flow.state.stage); assertTrue(flow.state.wrong)
         flow.submit(charArrayOf('1')); port.addCallback!!(AppAdditionResult.Added)
