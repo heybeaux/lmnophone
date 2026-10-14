@@ -1,0 +1,1 @@
+LMNOPhone|Version 0.1.0-preview-49 (49)|Older versions|What’s new in this version|About shows your installed version and release history.|Menus and help no longer show sample people or made-up requests.|Voice messages use your Family list. App requests explain when sending is not set up.|Help and privacy|OK

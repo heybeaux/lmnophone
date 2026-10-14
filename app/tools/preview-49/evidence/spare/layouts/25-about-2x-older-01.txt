@@ -1,0 +1,1 @@
+LMNOPhone|Version 0.1.0-preview-49 (49)|Latest version|Older versions|Version 48|Recover a forgotten PIN with a recovery code. Get a new recovery code from the PIN menu.|PIN setup shows your recovery code once, so you can keep it away from the phone.|Version 47|Send voice messages to people in Family in the test build. Failed messages stay on the phone to try again.|OK

@@ -1,0 +1,1 @@
+Your settings|Enter recovery code|This is the long code you wrote down when LMNOPhone was set up. Upper and lower case don't matter.|This code only resets your PIN. It doesn't skip any wait.|Recovery code|This code can't get past Google's reset protection if the phone is ever wiped. Only your Google account can do that.|Continue
