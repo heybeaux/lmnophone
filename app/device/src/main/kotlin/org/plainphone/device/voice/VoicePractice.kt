@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.device.voice
 
+import org.plainphone.device.voice.replies.ReplyClip
 import org.plainphone.device.voice.send.SendProblem
 import org.plainphone.device.voice.send.SendStatus
 import org.plainphone.device.voice.send.SendView
@@ -46,13 +47,26 @@ enum class VoicePrompt { Intro, Name, Person, Review, Unsent, TooShort, MaxLengt
     MicError, CouldNotPlay, OpeningMessages, MessagesUnavailable,
     /** With Send shown (PLA-499): the controller picks these instead of Intro, Review, MaxLength and Unsent. */
     ChooseSend, ReviewSend, MaxLengthSend, UnsentSend,
-    Sending, Sent, NotSent, NotSentAgain, NoSignal, NotConfirmed }
+    Sending, Sent, NotSent, NotSentAgain, NoSignal, NotConfirmed,
+    /** A family person's voice reply (PLA-527, UX V1, V2, V12a): "{person} sent you a message." on the people list. */
+    NewFrom, PersonNew, Reply, ReplyNext, ReplyEnd }
+
+/**
+ * A family person's unplayed voice replies on their page (PLA-527, UX V12a), oldest first. [index] is the clip
+ * playing or next; [completed] counts clips heard to the end in this visit. When every clip is heard the button
+ * is Play again, which replays the last one. Never starts by itself.
+ */
+data class ReplyListen(val queue: List<ReplyClip>, val index: Int = 0, val playing: Boolean = false, val completed: Int = 0) {
+    val finished get() = queue.isNotEmpty() && completed >= queue.size
+}
 
 sealed interface VoiceState {
     val person: VoicePerson? get() = null
 
     data object ChoosePerson : VoiceState
-    data class Person(override val person: VoicePerson, val notice: VoiceNotice? = null) : VoiceState
+    /** [listen]: the person has voice replies to hear (PLA-527); null when there are none. */
+    data class Person(override val person: VoicePerson, val notice: VoiceNotice? = null,
+        val listen: ReplyListen? = null) : VoiceState
     /** Shown before the recorder starts and for as long as it runs. */
     data class Recording(override val person: VoicePerson, val previous: VoiceDraft?) : VoiceState
     /** The recorder has been told to stop; waits for [VoiceEvent.RecordingFinished]. */
@@ -73,10 +87,14 @@ sealed interface VoiceState {
 
 sealed interface VoiceEvent {
     /** [existing] is the person's kept draft; the controller fills it in. */
-    data class Choose(val person: VoicePerson, val existing: VoiceDraft? = null, val send: SendView? = null) : VoiceEvent
+    data class Choose(val person: VoicePerson, val existing: VoiceDraft? = null, val send: SendView? = null,
+        /** The person's unplayed voice replies, oldest first; the controller fills them in (PLA-527). */
+        val replies: List<ReplyClip> = emptyList()) : VoiceEvent
     data object Record : VoiceEvent
     data object Stop : VoiceEvent
     data object Play : VoiceEvent
+    /** Listen / Stop listening / Play again on a person's page (PLA-527, UX V12a). The only way a reply plays. */
+    data object Listen : VoiceEvent
     data object PlaybackEnded : VoiceEvent
     data object PlaybackFailed : VoiceEvent
     data object RecordAgain : VoiceEvent
@@ -116,6 +134,10 @@ sealed interface VoiceEffect {
     data class SendDraft(val person: VoicePerson) : VoiceEffect
     /** The send's outcome was shown. */
     data class SendSeen(val personId: String) : VoiceEffect
+    /** Say [prompt], then play [clip] from the messaging store (PLA-527). Only after [VoiceEvent.Listen]. */
+    data class PlayReply(val person: VoicePerson, val clip: ReplyClip, val prompt: VoicePrompt) : VoiceEffect
+    /** [clip] was heard to the end: no longer new. */
+    data class ReplyPlayed(val personId: String, val clip: ReplyClip) : VoiceEffect
 }
 
 data class Transition(val state: VoiceState, val effects: List<VoiceEffect> = emptyList())
@@ -125,16 +147,13 @@ object VoicePractice {
         VoiceState.ChoosePerson -> when (e) {
             is VoiceEvent.Choose -> chosen(e.person, e.existing, e.send) ?: e.existing?.let {
                 Transition(VoiceState.Review(e.person, it, notice = VoiceNotice.Unsent), speak(VoicePrompt.Unsent, e.person))
-            } ?: Transition(VoiceState.Person(e.person), speak(VoicePrompt.Person, e.person))
+            } ?: if (e.replies.isNotEmpty()) Transition(VoiceState.Person(e.person, listen = ReplyListen(e.replies)),
+                speak(VoicePrompt.PersonNew, e.person))
+            else Transition(VoiceState.Person(e.person), speak(VoicePrompt.Person, e.person))
             VoiceEvent.Back -> Transition(s, listOf(VoiceEffect.Leave))
             else -> Transition(s)
         }
-        is VoiceState.Person -> when (e) {
-            VoiceEvent.Record -> record(s.person, null)
-            VoiceEvent.Back -> Transition(VoiceState.ChoosePerson)
-            is VoiceEvent.MicUnavailable -> micUnavailable(s.person, e.problem, null)
-            else -> Transition(s)
-        }
+        is VoiceState.Person -> person(s, e)
         is VoiceState.Recording -> {
             fun finish(notice: VoiceNotice?) = Transition(VoiceState.Saving(s.person, s.previous, notice),
                 listOf(VoiceEffect.FinishRecording(s.person.id, keep = true)))
@@ -226,6 +245,42 @@ object VoicePractice {
     }
 
     private fun speak(prompt: VoicePrompt, person: VoicePerson) = listOf(VoiceEffect.Speak(prompt, person))
+
+    /** A person's page. Leaving, recording or any interruption stops a reply at once; it stays new (UX V12a). */
+    private fun person(s: VoiceState.Person, e: VoiceEvent): Transition {
+        val listen = s.listen
+        val playing = listen?.playing == true
+        val stop = if (playing) listOf(VoiceEffect.StopPlayback) else emptyList()
+        val quiet = s.copy(listen = listen?.copy(playing = false))
+        return when (e) {
+            VoiceEvent.Record -> record(s.person, null, stop)
+            VoiceEvent.Back -> Transition(VoiceState.ChoosePerson, stop)
+            is VoiceEvent.MicUnavailable -> micUnavailable(s.person, e.problem, null, stop)
+            VoiceEvent.Listen -> when {
+                listen == null || listen.queue.isEmpty() -> Transition(s)
+                playing -> Transition(quiet, stop)
+                else -> {
+                    // Play again replays the last one heard; otherwise the first not yet heard.
+                    val index = if (listen.finished) listen.queue.lastIndex else listen.index.coerceIn(0, listen.queue.lastIndex)
+                    Transition(s.copy(listen = listen.copy(index = index, playing = true)),
+                        listOf(VoiceEffect.PlayReply(s.person, listen.queue[index], VoicePrompt.Reply)))
+                }
+            }
+            VoiceEvent.Stop, is VoiceEvent.Interrupted -> if (playing) Transition(quiet, stop) else Transition(s)
+            // Unreadable or gone: stop quietly. The person can still open Messages (UX V12).
+            VoiceEvent.PlaybackFailed -> if (playing) Transition(quiet) else Transition(s)
+            VoiceEvent.PlaybackEnded -> if (!playing || listen == null) Transition(s) else {
+                val heard = VoiceEffect.ReplyPlayed(s.person.id, listen.queue[listen.index])
+                val next = listen.index + 1
+                if (!listen.finished && next < listen.queue.size) Transition(
+                    s.copy(listen = listen.copy(index = next, completed = maxOf(listen.completed, next))),
+                    listOf(heard, VoiceEffect.PlayReply(s.person, listen.queue[next], VoicePrompt.ReplyNext)))
+                else Transition(s.copy(listen = listen.copy(playing = false, completed = listen.queue.size)),
+                    listOf(heard, VoiceEffect.Speak(VoicePrompt.ReplyEnd, s.person)))
+            }
+            else -> Transition(s)
+        }
+    }
 
     /**
      * Opening a person whose send is in progress, or whose outcome hasn't been shown yet. Null: the usual

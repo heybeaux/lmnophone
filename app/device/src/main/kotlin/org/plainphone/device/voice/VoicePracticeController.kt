@@ -3,6 +3,7 @@
 package org.plainphone.device.voice
 
 import java.io.File
+import org.plainphone.device.voice.replies.ReplyClip
 import org.plainphone.device.voice.send.SendProblem
 import org.plainphone.device.voice.send.SendStatus
 import org.plainphone.device.voice.send.SendView
@@ -35,6 +36,11 @@ interface VoiceRecorder {
 interface VoicePlayer {
     /** Throws if playback can't start. */
     fun play(file: File, onDone: () -> Unit, onError: () -> Unit)
+    /**
+     * Plays a family person's voice reply straight from the messaging store (PLA-527); never copies it and never
+     * opens the microphone. Throws if playback can't start, for example a part that isn't downloaded or readable.
+     */
+    fun playReply(clip: ReplyClip, onDone: () -> Unit, onError: () -> Unit): Unit = throw UnsupportedOperationException()
     fun stop()
 }
 
@@ -57,8 +63,25 @@ interface VoiceSpeaker {
     fun speak(prompt: VoicePrompt, person: VoicePerson?)
     /** The person asked for these words (the picture's "hear the name"): said even when TalkBack is on. */
     fun speakOnRequest(prompt: VoicePrompt, person: VoicePerson?) = speak(prompt, person)
+    /** Several prompts as one utterance (the people list's intro and its "{person} sent you a message."). */
+    fun speakAll(prompts: List<Pair<VoicePrompt, VoicePerson?>>) = prompts.forEach { speak(it.first, it.second) }
+    /** Says [prompt], then calls [then] once it has been said. [stop] may drop [then]. */
+    fun speakThen(prompt: VoicePrompt, person: VoicePerson?, then: () -> Unit) { speak(prompt, person); then() }
     /** Silences speech at once, before the microphone opens or when the person taps. */
     fun stop()
+}
+
+/**
+ * Family people's voice replies from the phone's MMS inbox (PLA-527), read-only. Only people on the current
+ * list while voice messages are on. Implementations never throw, but the controller guards each call anyway.
+ */
+interface VoiceReplies {
+    /** Person id to unplayed clips, oldest first. */
+    fun unplayed(): Map<String, List<ReplyClip>>
+    /** Asked again right before a clip plays: the person may have been removed meanwhile. */
+    fun canPlay(personId: String): Boolean
+    /** [clip] was heard to the end. */
+    fun played(personId: String, clip: ReplyClip)
 }
 
 /**
@@ -101,6 +124,8 @@ class VoicePracticeController(
     private val recordCapMs: () -> Long = { maxMs },
     /** Looked up again for every check and every send; never kept. */
     private val numbers: VoiceNumbers = VoiceNumbers { null },
+    /** Null: no voice replies (the practice). Read again on open, on [refreshReplies] and on the people list. */
+    private val replies: VoiceReplies? = null,
 ) {
     private val store: VoiceDraftStore get() = draftStore()
     var state: VoiceState = VoiceState.ChoosePerson
@@ -109,6 +134,10 @@ class VoicePracticeController(
     var onLeave: () -> Unit = {}
 
     private var recording: Take? = null
+    /** People with a new voice reply, read on the people list. Ids only. */
+    private var newFrom: Set<String> = emptySet()
+    /** Bumped whenever playback stops or another reply starts: a late speech or player callback then does nothing. */
+    private var replyToken = 0
 
     private inner class Take : VoiceRecorder.Listener {
         var started = false
@@ -131,10 +160,36 @@ class VoicePracticeController(
         safely { store.prune() }
         val restored = place?.let(::restore)
         state = restored ?: VoiceState.ChoosePerson
+        cacheReplies()
         onChange(state)
-        // A new visit, or a place that is gone (an unknown person): the people list is introduced.
-        if (restored == null) say(if (practice(null)) VoicePrompt.Intro else VoicePrompt.ChooseSend, null)
+        // A new visit, or a place that is gone (an unknown person): the people list is introduced, then once
+        // for each person with a new voice reply, in card order (UX V1).
+        if (restored == null) {
+            val intro = (if (practice(null)) VoicePrompt.Intro else VoicePrompt.ChooseSend) to null
+            val news = people().filter { hasNewMessage(it.id) }.map { VoicePrompt.NewFrom to it }
+            if (news.isEmpty()) say(intro.first, null) else safely { speaker.speakAll(listOf(intro) + news) }
+        }
     }
+
+    /** The people list shows "New message" on [personId]'s card (UX V1). */
+    fun hasNewMessage(personId: String): Boolean = personId in newFrom
+
+    /**
+     * Reads the voice replies again (the app came back, or a message arrived). Updates the people list's marks
+     * and an idle person page; never plays or speaks.
+     */
+    fun refreshReplies() {
+        cacheReplies()
+        val s = state
+        if (s is VoiceState.Person && s.listen?.playing != true && (s.listen == null || s.listen.finished)) {
+            replyQueue(s.person.id).takeIf { it.isNotEmpty() }?.let { state = s.copy(listen = ReplyListen(it)) }
+        }
+        onChange(state)
+    }
+
+    private fun unplayed(): Map<String, List<ReplyClip>> = try { replies?.unplayed() ?: emptyMap() } catch (_: Exception) { emptyMap() }
+    private fun replyQueue(personId: String): List<ReplyClip> = unplayed()[personId].orEmpty()
+    private fun cacheReplies() { newFrom = unplayed().filterValues { it.isNotEmpty() }.keys.toSet() }
 
     /** Where the practice is now, to come back to after a configuration change. */
     fun place(): VoicePlace = when (val s = state) {
@@ -159,7 +214,8 @@ class VoicePracticeController(
             VoicePlace.Screen.MicOff -> VoiceState.MicUnavailable(person, place.problem ?: MicProblem.RecorderError, draft)
             VoicePlace.Screen.Review -> draft?.let { VoiceState.Review(person, it, notice = place.notice) }
                 ?: VoiceState.Person(person)
-            VoicePlace.Screen.Person -> draft?.let { VoiceState.Review(person, it) } ?: VoiceState.Person(person, place.notice)
+            VoicePlace.Screen.Person -> draft?.let { VoiceState.Review(person, it) }
+                ?: VoiceState.Person(person, place.notice, replyQueue(person.id).takeIf { it.isNotEmpty() }?.let(::ReplyListen))
             VoicePlace.Screen.People -> VoiceState.ChoosePerson
             // Read again from the sender, the outcome shown as it was: never a new send.
             VoicePlace.Screen.Send -> VoicePractice.reduce(VoiceState.ChoosePerson, VoiceEvent.Choose(person, draft,
@@ -185,12 +241,15 @@ class VoicePracticeController(
 
     fun dispatch(event: VoiceEvent) {
         if ((event == VoiceEvent.Send || event == VoiceEvent.TryAgain) && state.person?.let(::canSend) != true) return
+        if (event == VoiceEvent.Listen && !mayListen()) return
         val e = if (event is VoiceEvent.Choose && state == VoiceState.ChoosePerson)
             event.copy(existing = safeDraft(event.person.id),
-                send = if (canSend(event.person)) safeView(event.person.id) else null) else event
+                send = if (canSend(event.person)) safeView(event.person.id) else null,
+                replies = replyQueue(event.person.id)) else event
         val before = state
         val t = VoicePractice.reduce(state, e)
-        state = t.state
+        state = withReplies(before, t.state)
+        if (state == VoiceState.ChoosePerson && before != VoiceState.ChoosePerson) cacheReplies()
         // A prompt belongs to the screen it was said on: any tap or change (Listen, Back, Delete...) ends it.
         if (t.state != before || t.effects.isNotEmpty()) safely { speaker.stop() }
         if (!usesAudio(state)) safely { gate.release() }
@@ -209,10 +268,34 @@ class VoicePracticeController(
         safely { gate.release() }
     }
 
-    private fun usesAudio(s: VoiceState) = s is VoiceState.Recording || (s as? VoiceState.Review)?.playing == true
+    private fun usesAudio(s: VoiceState) = s is VoiceState.Recording || (s as? VoiceState.Review)?.playing == true ||
+        (s as? VoiceState.Person)?.listen?.playing == true
 
-    /** "Hear name" on a person's screen. */
-    fun sayName() { state.person?.let { safely { speaker.speakOnRequest(VoicePrompt.Name, it) } } }
+    /**
+     * Listen asks again whether the person is still on the list (UX V12a): if not, the button goes and nothing
+     * plays. Stop listening always goes through.
+     */
+    private fun mayListen(): Boolean {
+        val s = state as? VoiceState.Person ?: return true
+        val listen = s.listen ?: return true
+        if (listen.playing) return true
+        if (replies?.let { r -> try { r.canPlay(s.person.id) } catch (_: Exception) { false } } == true) return true
+        state = s.copy(listen = null)
+        onChange(state)
+        return false
+    }
+
+    /** Coming back to a person's page from elsewhere (Review after Delete, a too-short take...) offers their replies. */
+    private fun withReplies(before: VoiceState, after: VoiceState): VoiceState =
+        if (after is VoiceState.Person && after.listen == null && before !is VoiceState.Person && before != VoiceState.ChoosePerson)
+            replyQueue(after.person.id).takeIf { it.isNotEmpty() }?.let { after.copy(listen = ReplyListen(it)) } ?: after
+        else after
+
+    /** "Hear name" on a person's screen. Not while a reply plays: it would talk over it. */
+    fun sayName() {
+        if ((state as? VoiceState.Person)?.listen?.playing == true) return
+        state.person?.let { safely { speaker.speakOnRequest(VoicePrompt.Name, it) } }
+    }
 
     private fun say(prompt: VoicePrompt, person: VoicePerson?) = safely { speaker.speak(prompt, person) }
 
@@ -240,7 +323,30 @@ class VoicePracticeController(
                 dispatch(VoiceEvent.SendUpdated(effect.person.id, view))
             }
             is VoiceEffect.SendSeen -> safely { sender?.seen(effect.personId) }
+            is VoiceEffect.PlayReply -> playReply(effect)
+            is VoiceEffect.ReplyPlayed -> safely { replies?.played(effect.personId, effect.clip) }
         }
+    }
+
+    /**
+     * Says who the reply is from, then plays it. Audio focus first, so nothing is said or played during a call.
+     * A failure stops quietly and the reply stays new. Callbacks from an earlier clip, or after leaving, do nothing.
+     */
+    private fun playReply(effect: VoiceEffect.PlayReply) {
+        val token = ++replyToken
+        fun live() = token == replyToken && (state as? VoiceState.Person)?.let { s ->
+            val listen = s.listen
+            s.person.id == effect.person.id && listen != null && listen.playing &&
+                listen.queue.getOrNull(listen.index)?.key == effect.clip.key
+        } == true
+        fun failed() { if (live()) dispatch(VoiceEvent.PlaybackFailed) }
+        if (!acquire()) { failed(); return }
+        val start = {
+            if (live()) try {
+                player.playReply(effect.clip, onDone = { if (live()) dispatch(VoiceEvent.PlaybackEnded) }, onError = ::failed)
+            } catch (_: Exception) { failed() }
+        }
+        try { speaker.speakThen(effect.prompt, effect.person, start) } catch (_: Exception) { start() }
     }
 
     /** With Send on screen, the words offer it (UX V4, V9). */
@@ -292,7 +398,7 @@ class VoicePracticeController(
     }
 
     private fun acquire() = try { gate.acquire() } catch (_: Exception) { false }
-    private fun stopPlayer() = safely { player.stop() }
+    private fun stopPlayer() { replyToken++; safely { player.stop() } }
     private fun safeDraft(personId: String) = try { store.draft(personId) } catch (_: Exception) { null }
     private fun safeView(personId: String) = try { sender?.view(personId) } catch (_: Exception) { null }
     private inline fun safely(block: () -> Unit) { try { block() } catch (_: Exception) { } }
