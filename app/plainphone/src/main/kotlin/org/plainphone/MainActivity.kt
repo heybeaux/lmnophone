@@ -444,6 +444,7 @@ class MainActivity : ComponentActivity() {
                     when (target) {
                         is NeedsYouTarget.Waiting -> openWaitingChange(target.requestId)
                         NeedsYouTarget.Attention -> attentionOpen = true
+                        NeedsYouTarget.Requests -> Unit // Requests opens directly inside the PIN menu.
                         else -> Unit
                     }
                 }

@@ -3,6 +3,8 @@
 package org.plainphone
 
 import android.text.format.DateUtils
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import android.os.Bundle
 import android.content.Intent
 import android.view.WindowManager
@@ -27,6 +29,7 @@ import org.plainphone.ui.trusted.*
 
 /** Private preview controls. This activity grants no access to Android settings or other apps. */
 class PinAccessActivity : ComponentActivity() {
+    private var menuRequests by mutableStateOf<org.plainphone.policy.RequestView?>(null)
     private var page by mutableStateOf(PinPageState())
     private var value by mutableStateOf("")
     private var family by mutableStateOf<FamilyUiState?>(null)
@@ -214,7 +217,7 @@ class PinAccessActivity : ComponentActivity() {
                             else -> finish()
                         } }
                         PinPage.MENU -> if (apps != null) AppsContent(apps!!) else if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(pinMenuUiState(AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)),
-                            waitingMenu, homeNotice, needsYouCopy())) { when (it) {
+                            waitingMenu, homeNotice, needsYouCopy(), menuRequests)) { when (it) {
                             AdminMenuEvent.Done -> finish()
                             is AdminMenuEvent.OpenNotice -> openNeedsYou(it.id)
                             is AdminMenuEvent.Open -> when (it.destination) {
@@ -271,6 +274,7 @@ class PinAccessActivity : ComponentActivity() {
         waiting = { kind -> getString(org.plainphone.ui.R.string.admin_needs_waiting,
             getString(org.plainphone.boot.waitingChangeTextResource(kind), getString(R.string.app_name))) },
         attention = getString(org.plainphone.ui.R.string.admin_needs_attention),
+        requests = { count, user -> resources.getQuantityString(org.plainphone.ui.R.plurals.requests_needs_you, count, count, user) },
     )
 
     private fun openRequests() = startActivity(Intent(this, org.plainphone.requests.RequestsActivity::class.java)
@@ -283,6 +287,7 @@ class PinAccessActivity : ComponentActivity() {
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         when (target) {
             is NeedsYouTarget.Waiting -> home.putExtra(EXTRA_NEEDS_YOU_WAITING, target.requestId)
+            NeedsYouTarget.Requests -> { openRequests(); return }
             NeedsYouTarget.Attention -> home.putExtra(EXTRA_NEEDS_YOU_ATTENTION, true)
         }
         startActivity(home)
@@ -304,7 +309,15 @@ class PinAccessActivity : ComponentActivity() {
 
     override fun onDestroy() { familySpeaker.shutdown(); super.onDestroy() }
 
-    override fun onResume() { super.onResume(); flow.open() }
+    override fun onResume() {
+        super.onResume(); flow.open()
+        menuRequests = null
+        lifecycleScope.launch {
+            menuRequests = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                org.plainphone.device.requests.RequestEngine.get(this@PinAccessActivity).view()
+            }
+        }
+    }
     override fun onPause() {
         value = ""; confirmation = ""
         appsFlow?.close(); appsFlow = null; apps = null

@@ -19,17 +19,31 @@ import org.plainphone.ui.components.*
 import org.plainphone.ui.theme.*
 
 enum class RequestUiStatus { Sending, Sent, NoSignal, NoPermission, Failed, NotConfirmed, NotSetUp, Invalid, DailyLimit, StorageError }
-data class RequestUiRow(val text: String, val day: String, val status: RequestUiStatus)
+data class RequestUiRow(val text: String, val day: String, val status: RequestUiStatus, val id: String = "")
 data class RequestsUiState(val isSetUp: Boolean = false, val recipientName: String = "", val message: String = "",
     val canSend: Boolean = false, val busy: Boolean = false, val result: RequestUiStatus? = null,
-    val rows: List<RequestUiRow> = emptyList(), val historyOnly: Boolean = false)
+    val rows: List<RequestUiRow> = emptyList(), val historyOnly: Boolean = false,
+    val userName: String = "", val removingId: String? = null, val removeFailed: Boolean = false)
 sealed interface RequestEvent {
     data class Message(val text: String) : RequestEvent
     data object Send : RequestEvent
     data object Back : RequestEvent
     data object Compose : RequestEvent
+    data class NotNow(val id: String) : RequestEvent
+    data object Remove : RequestEvent
+    data object Keep : RequestEvent
 }
 @Composable fun RequestsScreen(state: RequestsUiState, event: (RequestEvent) -> Unit) {
+    if (state.historyOnly && state.removingId != null) {
+        TaskScreen(s(R.string.requests_title), s(R.string.requests_remove), { event(RequestEvent.Remove) },
+            primaryEnabled = !state.busy, secondary = s(R.string.admin_keep), secondaryEnabled = !state.busy,
+            onSecondary = { event(RequestEvent.Keep) }) {
+            Text(s(R.string.admin_request_remove, state.userName.withoutBidiControls().ifBlank { s(R.string.current_phone_user) }), style = PlainphoneType.Body)
+            if (state.removeFailed) Text(s(R.string.requests_save_error), style = PlainphoneType.Body)
+            state.rows.firstOrNull { it.id == state.removingId }?.let { Text(it.text, style = PlainphoneType.Body) }
+        }
+        return
+    }
     val result = state.result
     val compose = !state.historyOnly && state.isSetUp && result == null
     TaskScreen(if (state.historyOnly) s(R.string.requests_title) else result?.let { statusTitle(it) } ?: s(R.string.more_ask),
@@ -58,6 +72,8 @@ sealed interface RequestEvent {
                 Text(statusTitle(row.status), style = PlainphoneType.Small)
                 if (row.status in setOf(RequestUiStatus.NoSignal, RequestUiStatus.NoPermission, RequestUiStatus.Failed, RequestUiStatus.NotConfirmed))
                     Text(statusBody(row.status), style = PlainphoneType.Small)
+                if (state.historyOnly) ScreenLink(s(R.string.admin_not_now), { event(RequestEvent.NotNow(row.id)) },
+                    centered = false, enabled = !state.busy && result != RequestUiStatus.StorageError)
             } }
         }
     }

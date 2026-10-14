@@ -12,7 +12,7 @@ class RequestFileStore(private val file: File) : RequestStore {
         if (!file.exists()) return RequestBook()
         require(file.length() <= MAX_BYTES) { "request record too large" }
         return DataInputStream(FileInputStream(file).buffered()).use { input ->
-            require(input.readInt() == 1) { "unknown request record" }
+            val version = input.readInt(); require(version in 1..2) { "unknown request record" }
             val recipient = if (input.readBoolean()) RequestRecipient(input.readUTF(), input.readUTF()) else null
             val count = input.readInt(); require(count in 0..10_000)
             val entries = List(count) {
@@ -24,25 +24,35 @@ class RequestFileStore(private val file: File) : RequestStore {
                     else -> RequestPart.entries.getOrNull(code) ?: throw IOException("invalid part")
                 } })
             }
-            require(entries.map { it.id }.distinct().size == entries.size && input.read() == -1)
-            RequestBook(recipient, entries)
+            val removed = if (version == 1) emptyList() else {
+                val size = input.readInt(); require(size in 0..10_000)
+                List(size) {
+                    val id = input.readUTF(); require(id.matches(Regex("[A-Za-z0-9-]{1,64}")))
+                    RemovedRequest(id, input.readLong())
+                }
+            }
+            val ids = entries.map { it.id } + removed.map { it.id }
+            require(ids.size <= 10_000 && ids.distinct().size == ids.size && input.read() == -1)
+            RequestBook(recipient, entries, removed)
         }
     }
     override fun write(value: RequestBook) {
-        require(value.requests.size <= 10_000)
+        require(value.requests.size + value.removed.size <= 10_000)
         val parent = requireNotNull(file.parentFile)
         if (!parent.isDirectory && !parent.mkdirs()) throw IOException("request folder unavailable")
         val temp = File(parent, file.name + ".tmp")
         try {
             FileOutputStream(temp).use { stream ->
                 val out = DataOutputStream(stream)
-                out.writeInt(1); out.writeBoolean(value.recipient != null)
+                out.writeInt(2); out.writeBoolean(value.recipient != null)
                 value.recipient?.let { out.writeUTF(it.name); out.writeUTF(it.number) }
                 out.writeInt(value.requests.size)
                 value.requests.forEach { r ->
                     out.writeUTF(r.id); out.writeUTF(r.text); out.writeLong(r.day); out.writeLong(r.started); out.writeUTF(r.process)
                     out.writeInt(r.parts.size); r.parts.forEach { out.writeInt(it?.ordinal ?: -1) }
                 }
+                out.writeInt(value.removed.size)
+                value.removed.forEach { out.writeUTF(it.id); out.writeLong(it.day) }
                 out.flush(); stream.fd.sync()
             }
             require(temp.length() <= MAX_BYTES) { "request record too large" }

@@ -180,6 +180,13 @@ Thursday 8 Oct, 10:40 · Text sent to you ✓      (or: "Text didn't send")
   (The user is not notified by LMNOPhone; `{tp}` tells them in person. This keeps LMNOPhone from being a
   messenger of "no".)
 
+For the request-removal increment, a save or read-back failure keeps the request card and says:
+“The change could not be saved. Try again.” Keep it changes nothing. Removal keeps the daily send
+count but deletes the saved request text; it disappears from the user's list without a removal notice.
+The daily-limit body is “You can ask again tomorrow.” A readable positive saved-request count appears
+in Needs you and under Requests; zero or an unreadable store shows no count. Play Store lookup remains
+outside this increment.
+
 ## T4. Adding an app (after it is installed in a Play session)
 
 **Spec:** approved-apps (Play sessions; permissions at approval); web-containment (web-leak notes);

@@ -13,7 +13,10 @@ data class RequestEntry(val id: String, val text: String, val day: Long, val sta
     val parts: List<RequestPart?>) {
     override fun toString() = "RequestEntry(redacted)"
 }
-data class RequestBook(val recipient: RequestRecipient? = null, val requests: List<RequestEntry> = emptyList())
+/** Content-free quota/idempotency record; never displayed as a request. */
+data class RemovedRequest(val id: String, val day: Long)
+data class RequestBook(val recipient: RequestRecipient? = null, val requests: List<RequestEntry> = emptyList(),
+    val removed: List<RemovedRequest> = emptyList())
 interface RequestStore { fun read(): RequestBook; fun write(value: RequestBook) }
 interface RequestSmsPort {
     fun problem(): RequestStatus?
@@ -42,8 +45,9 @@ class AppRequests(private val store: RequestStore, private val sms: RequestSmsPo
         if (!id.matches(Regex("[A-Za-z0-9-]{1,64}")) || !validText(text)) return RequestSubmission(RequestStatus.Invalid)
         val book = try { store.read() } catch (_: Exception) { return RequestSubmission(RequestStatus.StorageError) }
         book.requests.firstOrNull { it.id == id }?.let { return RequestSubmission(status(it), id) }
+        if (book.removed.any { it.id == id }) return RequestSubmission(RequestStatus.Invalid)
         val recipient = book.recipient ?: return RequestSubmission(RequestStatus.NotSetUp)
-        if (book.requests.count { it.day == day() } >= DAILY_LIMIT) return RequestSubmission(RequestStatus.DailyLimit)
+        if (book.requests.count { it.day == day() } + book.removed.count { it.day == day() } >= DAILY_LIMIT) return RequestSubmission(RequestStatus.DailyLimit)
         val problem = try { sms.problem() } catch (_: Exception) { RequestStatus.Failed }
         val parts = if (problem != null) listOf(text) else try { sms.parts(text) } catch (_: Exception) { return RequestSubmission(RequestStatus.StorageError) }
         if (parts.isEmpty() || parts.size > 16) return RequestSubmission(RequestStatus.Invalid)
@@ -62,6 +66,18 @@ class AppRequests(private val store: RequestStore, private val sms: RequestSmsPo
         catch (_: Exception) { reject(id, RequestPart.Unconfirmed); return RequestSubmission(RequestStatus.NotConfirmed, id) }
         return RequestSubmission(view().requests.firstOrNull { it.id == id }?.status ?: RequestStatus.NotConfirmed, id)
     }
+    /** Delete content, retain quota, and acknowledge only an exact durable read-back. */
+    @Synchronized fun remove(id: String): Boolean = try {
+        val book = store.read()
+        val entry = book.requests.firstOrNull { it.id == id }
+        if (entry == null) book.removed.any { it.id == id } else {
+            val next = book.copy(requests = book.requests.filterNot { it.id == id },
+                removed = book.removed + RemovedRequest(entry.id, entry.day))
+            store.write(next)
+            store.read() == next
+        }
+    } catch (_: Exception) { false }
+
     private fun reject(id: String, part: RequestPart) {
         val count = try { store.read().requests.first { it.id == id }.parts.size } catch (_: Exception) { return }
         repeat(count) { result(id, it, part) }

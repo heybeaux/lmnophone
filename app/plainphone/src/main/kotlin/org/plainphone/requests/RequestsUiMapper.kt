@@ -11,7 +11,7 @@ object RequestsUiMapper {
     fun map(view: RequestView, draft: String, result: RequestStatus?, busy: Boolean, historyOnly: Boolean = false): RequestsUiState =
         RequestsUiState(view.isSetUp, view.recipientName, draft, view.available && view.isSetUp && AppRequests.validText(draft) && !busy,
             busy, (if (!view.available) RequestStatus.StorageError else result)?.let(::status),
-            view.requests.take(10).map { RequestUiRow(it.text, LocalDate.ofEpochDay(it.day).format(DateTimeFormatter.ofPattern("d MMM uuuu")), status(it.status)) }, historyOnly)
+            view.requests.map { RequestUiRow(it.text, LocalDate.ofEpochDay(it.day).format(DateTimeFormatter.ofPattern("d MMM uuuu")), status(it.status), it.id) }, historyOnly)
     private fun status(value: RequestStatus) = RequestUiStatus.valueOf(value.name)
 }
 
