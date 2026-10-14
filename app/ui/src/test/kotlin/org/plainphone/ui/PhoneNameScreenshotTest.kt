@@ -36,13 +36,13 @@ class PhoneNameScreenshotTest(private val scale: Float) {
     /** The activity's apps context: the fallback words as the user name, no trusted person name. */
     @Composable private fun productionContext() = AdminContext(stringResource(R.string.current_phone_user), null)
     @Composable private fun unnamedHelped() = AdminContext(stringResource(R.string.current_phone_user), "Jo")
-    @Composable private fun addConfirm(context: AdminContext) = AppReviewScreen(AppReviewUiState(context, clock,
+    @Composable private fun AddConfirm(context: AdminContext) = AppReviewScreen(AppReviewUiState(context, clock,
         stage = AppReviewStage.Confirm, helper = stringResource(R.string.setup_helper), previewSubset = true)) {}
     private val menuItems = listOf(AdminMenuItem(AdminDestination.ChangePin), AdminMenuItem(AdminDestination.NewRecoveryCode))
 
-    @Test fun addConfirmUnnamed() = shot("Add Clock to this phone?") { addConfirm(productionContext()) }
-    @Test fun addConfirmBlankName() = shot("Add Clock to this phone?") { addConfirm(AdminContext("")) }
-    @Test fun addConfirmNamed() = shot("Add Clock to Sam's phone?") { addConfirm(AdminContext("Sam")) }
+    @Test fun addConfirmUnnamed() = shot("Add Clock to this phone?") { AddConfirm(productionContext()) }
+    @Test fun addConfirmBlankName() = shot("Add Clock to this phone?") { AddConfirm(AdminContext("")) }
+    @Test fun addConfirmNamed() = shot("Add Clock to Sam's phone?") { AddConfirm(AdminContext("Sam")) }
     /** Title only: this menu's body and Done button (trusted-person mode, not in this build) need their own copy. */
     @Test fun menuTitleUnnamed() = shot("Looking after this phone", wholeScreen = false) {
         AdminMenuScreen(AdminMenuUiState(unnamedHelped(), menuItems)) {}
