@@ -1,0 +1,21 @@
+PermissionName(value=android.permission.CAMERA) ALLOW fixed=GRANTED granted=true
+PermissionName(value=android.permission.ACCESS_COARSE_LOCATION) ALLOW fixed=GRANTED granted=true
+PermissionName(value=android.permission.RECORD_AUDIO) ALLOW fixed=GRANTED granted=true
+PermissionName(value=android.permission.POST_NOTIFICATIONS) ALLOW fixed=GRANTED granted=true
+PermissionName(value=android.permission.READ_MEDIA_IMAGES) ALLOW fixed=GRANTED granted=true
+PermissionName(value=android.permission.READ_MEDIA_VIDEO) ALLOW fixed=GRANTED granted=true
+PermissionName(value=android.permission.READ_MEDIA_VISUAL_USER_SELECTED) ALLOW fixed=GRANTED granted=true
+PermissionName(value=android.permission.ACCESS_FINE_LOCATION) ALLOW fixed=GRANTED granted=true
+PASS all five groups ALLOW, read back again hidden
+PermissionName(value=android.permission.ACCESS_FINE_LOCATION) DENY fixed=DENIED granted=false
+PermissionName(value=android.permission.CAMERA) DENY fixed=DENIED granted=false
+PermissionName(value=android.permission.ACCESS_COARSE_LOCATION) DENY fixed=DENIED granted=false
+PermissionName(value=android.permission.RECORD_AUDIO) DENY fixed=DENIED granted=false
+PermissionName(value=android.permission.POST_NOTIFICATIONS) DENY fixed=DENIED granted=false
+PermissionName(value=android.permission.READ_MEDIA_IMAGES) DENY fixed=DENIED granted=false
+PermissionName(value=android.permission.READ_MEDIA_VIDEO) DENY fixed=DENIED granted=false
+PermissionName(value=android.permission.READ_MEDIA_VISUAL_USER_SELECTED) DENY fixed=DENIED granted=false
+PASS all five groups DENY, read back again hidden
+rollback baseline={PermissionName(value=android.permission.CAMERA)=(DEFAULT, true), PermissionName(value=android.permission.ACCESS_COARSE_LOCATION)=(DEFAULT, false), PermissionName(value=android.permission.ACCESS_FINE_LOCATION)=(DEFAULT, false), PermissionName(value=android.permission.RECORD_AUDIO)=(DEFAULT, false), PermissionName(value=android.permission.POST_NOTIFICATIONS)=(DEFAULT, true), PermissionName(value=android.permission.READ_MEDIA_IMAGES)=(DEFAULT, false), PermissionName(value=android.permission.READ_MEDIA_VIDEO)=(DEFAULT, true), PermissionName(value=android.permission.READ_MEDIA_VISUAL_USER_SELECTED)=(DEFAULT, false)}
+PASS injected FINE refusal restored actual and fixed states; fixture hidden, outside lock task
+RESULT PASS phase=location

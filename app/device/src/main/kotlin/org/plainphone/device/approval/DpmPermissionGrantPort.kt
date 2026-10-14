@@ -35,12 +35,16 @@ class DpmPermissionGrantPort(context: Context, private val admin: ComponentName)
     }
 
     override fun policyState(name: PackageName, permission: PermissionName): PolicyGrant? = try {
-        when (dpm.getPermissionGrantState(admin, name.value, permission.value)) {
+        val state = when (dpm.getPermissionGrantState(admin, name.value, permission.value)) {
             DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT -> PolicyGrant.DEFAULT
             DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED -> PolicyGrant.GRANTED
             DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED -> PolicyGrant.DENIED
             else -> null
         }
+        val info = pm.getApplicationInfo(name.value, PackageManager.MATCH_UNINSTALLED_PACKAGES)
+        locationGrantState(permission.value, state, granted(name, permission), info.flags and ApplicationInfo.FLAG_SUSPENDED != 0)
+    } catch (_: PackageManager.NameNotFoundException) {
+        null
     } catch (_: RuntimeException) {
         null
     }

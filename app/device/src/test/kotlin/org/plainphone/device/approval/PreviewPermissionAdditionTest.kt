@@ -35,8 +35,73 @@ class PreviewPermissionAdditionTest {
         write = { _, write -> events += write.permission.value; if (writeThrows) error("port"); PermissionAttempt(result, refused) },
         read = { AppPermissionRead(snapshot, postRead) },
         save = { events += "save"; true },
-        apply = { events += "apply"; true })
+        apply = { events += "apply"; true }, checkpoint = { true }, rollback = { true })
     private fun add() = subject().add(snapshot, choices, charArrayOf('1')) { active }
+
+    @Test fun fineRefusalRestoresEarlierCoarseWriteBeforeRehiding() {
+        val coarse = PermissionName("android.permission.ACCESS_COARSE_LOCATION")
+        val fine = PermissionName("android.permission.ACCESS_FINE_LOCATION")
+        val selected = AppPermissionSnapshot(identity, 1, listOf(
+            RequestedPermissionGroup("location", "Location", listOf(coarse, fine))))
+        val states = mutableMapOf(coarse to PolicyGrant.DEFAULT, fine to PolicyGrant.DEFAULT)
+        val port = object : PermissionGrantPort {
+            var blocked = false
+            override fun signers(name: PackageName) = identity.signingCerts
+            override fun policyState(name: PackageName, permission: PermissionName) = states[permission]
+            override fun granted(name: PackageName, permission: PermissionName) = states[permission] == PolicyGrant.GRANTED
+            override fun uninstallBlocked(name: PackageName) = blocked
+            override fun setUninstallBlocked(name: PackageName, blocked: Boolean): Boolean { this.blocked = blocked; return true }
+            override fun setPolicyState(name: PackageName, permission: PermissionName, state: PolicyGrant): Boolean {
+                if (permission == fine && state != PolicyGrant.DEFAULT) return false
+                states[permission] = state
+                return true
+            }
+        }
+        val attempts = PermissionGrantAttempts(port)
+        val transaction = PreviewPermissionAddition({ _, _ -> PinAccessResult.Open }, { true }, { selected },
+            { true }, { events += "rehide"; true }, attempts::write,
+            { AppPermissionRead(selected, PermissionGrants(port).read(identity, selected.permissions)) },
+            { error("must not approve") }, { error("must not apply") }, attempts::checkpoint, attempts::rollback)
+        assertTrue(transaction.add(selected, mapOf("location" to PermissionChoice.ALLOW), charArrayOf('1')) { true }
+            is AppAdditionResult.PermissionFailed)
+        assertTrue("rehide" in events)
+        assertEquals("failed approval must restore the accepted COARSE write", PolicyGrant.DEFAULT, states[coarse])
+        assertEquals(PolicyGrant.DEFAULT, states[fine])
+    }
+
+    @Test fun cancellationAndSaveFailureRestoreBeforeReturningAndCloseEvenIfRestoreFails() {
+        for (cancel in listOf(false, true)) for (restore in listOf(false, true)) {
+            var active = true
+            val events = mutableListOf<String>()
+            val subject = PreviewPermissionAddition({ _, _ -> PinAccessResult.Open }, { true }, { snapshot },
+                { events += "open"; true }, { events += "close"; true },
+                { _, _ -> if (cancel) active = false; PermissionAttempt(GrantWrite.DONE) },
+                { AppPermissionRead(snapshot, postRead) }, { false }, { error("no apply") }, { true },
+                { events += "restore"; restore })
+            val outcome = subject.add(snapshot, choices, charArrayOf('1')) { active }
+            assertEquals(if (!restore) AppAdditionResult.CheckFailed else if (cancel) AppAdditionResult.Cancelled
+                else AppAdditionResult.SaveFailed, outcome)
+            assertTrue("restore" in events)
+            assertEquals("close", events.last())
+            if (!cancel) assertEquals(listOf("open", "close", "open", "restore", "close"), events)
+        }
+    }
+
+    @Test fun locationDenialRevokesFineBeforeCoarseButAllowGrantsCoarseBeforeFine() {
+        val coarse = PermissionName("android.permission.ACCESS_COARSE_LOCATION")
+        val fine = PermissionName("android.permission.ACCESS_FINE_LOCATION")
+        val selected = AppPermissionSnapshot(identity, 1, listOf(RequestedPermissionGroup("location", "Location", listOf(coarse, fine))))
+        for (choice in PermissionChoice.entries) {
+            val writes = mutableListOf<PermissionName>()
+            val subject = PreviewPermissionAddition({ _, _ -> PinAccessResult.Open }, { true }, { selected },
+                { true }, { true }, { _, item -> writes += item.permission; PermissionAttempt(GrantWrite.DONE) },
+                { AppPermissionRead(selected, selected.permissions.associateWith {
+                    if (choice == PermissionChoice.ALLOW) PermissionReadback.GRANTED else PermissionReadback.DENIED }) },
+                { true }, { true }, { true }, { true })
+            assertEquals(AppAdditionResult.Added, subject.add(selected, mapOf("location" to choice), charArrayOf('1')) { true })
+            assertEquals(if (choice == PermissionChoice.DENY) listOf(fine, coarse) else listOf(coarse, fine), writes)
+        }
+    }
 
     @Test fun changingManifestDuringTheWindowClosesWithoutCommit() {
         var reads = 0
@@ -45,7 +110,7 @@ class PreviewPermissionAdditionTest {
             { events += "unhide"; true }, { events += "rehide"; true },
             { _, _ -> error("stale version must not get a grant") },
             { AppPermissionRead(snapshot.copy(versionCode = 2), emptyMap()) },
-            { error("must not commit") }, { error("must not apply") })
+            { error("must not commit") }, { error("must not apply") }, { true }, { true })
         assertTrue(subject.add(snapshot, choices, charArrayOf('1')) { true } is AppAdditionResult.PermissionFailed)
         assertTrue("rehide" in events)
     }
@@ -55,7 +120,7 @@ class PreviewPermissionAdditionTest {
         val subject = PreviewPermissionAddition({ _, _ -> PinAccessResult.Open }, { true },
             { reads++; if (reads > 1) active = false; snapshot },
             { true }, { true }, { _, _ -> writes++; PermissionAttempt(GrantWrite.DONE) },
-            { AppPermissionRead(snapshot, emptyMap()) }, { error("must not commit") }, { error("must not apply") })
+            { AppPermissionRead(snapshot, emptyMap()) }, { error("must not commit") }, { error("must not apply") }, { true }, { true })
         assertEquals(AppAdditionResult.Cancelled, subject.add(snapshot, choices, charArrayOf('1')) { active })
         assertEquals(0, writes)
     }
@@ -65,7 +130,7 @@ class PreviewPermissionAdditionTest {
         val subject = PreviewPermissionAddition({ _, _ -> PinAccessResult.Open }, { eligible },
             { reads++; if (reads > 1) eligible = false; snapshot },
             { true }, { true }, { _, _ -> writes++; PermissionAttempt(GrantWrite.DONE) },
-            { AppPermissionRead(snapshot, emptyMap()) }, { error("must not commit") }, { error("must not apply") })
+            { AppPermissionRead(snapshot, emptyMap()) }, { error("must not commit") }, { error("must not apply") }, { true }, { true })
         val result = subject.add(snapshot, choices, charArrayOf('1')) { true }
         assertTrue(result is AppAdditionResult.PermissionFailed)
         assertEquals(0, writes)
@@ -100,7 +165,7 @@ class PreviewPermissionAdditionTest {
     @Test fun refusalIsOnlyUnavailableAfterActualAllowRefusalAndDeniedReadback() {
         val subject = PreviewPermissionAddition({ _, _ -> PinAccessResult.Open }, { true }, { snapshot },
             { true }, { true }, { _, write -> PermissionAttempt(if (write.permission == camera) GrantWrite.NOT_DONE else GrantWrite.DONE, write.permission == camera) },
-            { AppPermissionRead(snapshot, mapOf(camera to PermissionReadback.DENIED, mic to PermissionReadback.DENIED)) }, { error("no save") }, { error("no apply") })
+            { AppPermissionRead(snapshot, mapOf(camera to PermissionReadback.DENIED, mic to PermissionReadback.DENIED)) }, { error("no save") }, { error("no apply") }, { true }, { true })
         val failure = subject.add(snapshot, choices, charArrayOf('1')) { true } as AppAdditionResult.PermissionFailed
         assertEquals(setOf("camera"), failure.unavailable)
     }

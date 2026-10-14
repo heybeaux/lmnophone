@@ -72,6 +72,7 @@ class DirectBootJournalCheck : Instrumentation() {
                 "vault" -> org.plainphone.device.authority.VaultRuntimeCheck(targetContext, ::note).check()
                 "facts" -> org.plainphone.device.facts.PackageFactsCheck(targetContext, args, ::note).facts()
                 "rotated" -> org.plainphone.device.facts.PackageFactsCheck(targetContext, args, ::note).rotated()
+                "location" -> org.plainphone.device.apply.LocationPermissionCheck(targetContext, ::note).check()
                 "permissions" -> org.plainphone.device.apply.HiddenPermissionCheck(targetContext, args, ::note).check()
                 "window" -> org.plainphone.device.apply.PermissionWindowCheck(targetContext, args, ::note).check()
                 "uid" -> org.plainphone.device.apply.WindowContainmentCheck(this, args, ::note).uid()

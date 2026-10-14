@@ -455,6 +455,8 @@ class PolicyRuntime private constructor(private val context: Context) {
                     open = effects::openPermissionWindow,
                     close = { target -> effects.closePermissionWindow(target) && port.packageState(target.packageName)?.hidden == true },
                     write = attempts::write,
+                    checkpoint = attempts::checkpoint,
+                    rollback = attempts::rollback,
                     read = appPermissions::read,
                     save = { target -> preview.addApp(id, target.selectionIdentity, active) },
                     apply = { run("app-added", packageMaySkip = false); gate.value == HomeGate.READY },
