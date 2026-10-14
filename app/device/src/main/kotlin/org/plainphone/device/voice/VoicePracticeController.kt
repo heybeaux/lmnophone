@@ -93,7 +93,7 @@ class VoicePracticeController(
     private val format: VoiceFormat = VoiceFormat.AacM4a,
     private val maxMs: Long = DEFAULT_MAX_MS,
     /** Read again on every use: the family list (PLA-500) can change while the host lives. */
-    private val people: () -> List<VoicePerson> = { VoicePeople.practice },
+    private val people: () -> List<VoicePerson> = { emptyList() },
     private val draftStore: () -> VoiceDraftStore = { store },
     /** Null: real sending is off. Send and Try again are then ignored, and nothing is ever handed over. */
     private val sender: VoiceSendPort? = null,

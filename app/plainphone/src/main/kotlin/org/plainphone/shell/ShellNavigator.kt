@@ -59,7 +59,7 @@ data class ShellState(val stack: List<ShellRoute> = listOf(ShellRoute.Home), val
             val route = when (name) {
                 "more" -> ShellRoute.More
                 "blocked_link" -> ShellRoute.BlockedLink(
-                    BlockedLinkUiState.Blocked("example.invalid", shareWith = "Sam"), "example.invalid/bus")
+                    BlockedLinkUiState.Blocked("example.invalid", shareWith = null), "example.invalid/bus")
                 "wifi_sign_in" -> ShellRoute.Wifi(WifiProblem.SignInRequired)
                 "wifi_no_internet" -> ShellRoute.Wifi(WifiProblem.NoInternet)
                 else -> return ShellState()
@@ -109,7 +109,7 @@ class ShellNavigator(
     fun onMore(s: ShellState, e: MoreEvent): Step = when (e) {
         MoreEvent.Back -> back(s)
         MoreEvent.OpenEmergencyDialer -> Step(s, ShellEffect.OpenEmergencyDialer)
-        MoreEvent.AskForApp -> if (testBuild) notInBuild(s) else push(s.copy(draft = ""), ShellRoute.AskForApp)
+        MoreEvent.AskForApp -> push(s.copy(draft = ""), ShellRoute.AskForApp)
         MoreEvent.OpenPhoneSettings -> push(s, ShellRoute.PhoneSettings)
         MoreEvent.OpenTrustedPerson -> Step(s, ShellEffect.OpenTrustedPerson)
         MoreEvent.OpenAbout -> push(s, ShellRoute.About)
@@ -165,7 +165,7 @@ class ShellNavigator(
             BlockedLinkEvent.DontSend -> stage(link.first)
             // Preview: nothing is sent and the link isn't kept.
             BlockedLinkEvent.Send ->
-                if (testBuild) notInBuild(s) else stage(BlockedLinkUiState.Sent(snapshot.requestRecipient))
+                notInBuild(s)
         }
     }
 
@@ -184,7 +184,7 @@ class ShellNavigator(
     private fun notInBuild(s: ShellState) = push(s, ShellRoute.NotInBuild)
 
     private fun send(s: ShellState): Step {
-        if (s.current != ShellRoute.AskForApp || !RequestRules.canSend(s.draft)) return Step(s)
+        if (s.current != ShellRoute.AskForApp || phone.snapshot().requestRecipient.isBlank() || !RequestRules.canSend(s.draft)) return Step(s)
         val result = outbox.send(s.draft)
         val next = if (result == AppRequestResult.Sent) s.copy(draft = "") else s
         return push(next, ShellRoute.RequestResult(result))

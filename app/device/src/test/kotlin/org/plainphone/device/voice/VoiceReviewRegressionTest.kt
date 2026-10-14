@@ -56,7 +56,7 @@ class VoiceReviewRegressionTest {
 
     private fun setup(): Pair<VoicePracticeController, VoiceDraftStore> {
         val store = VoiceDraftStore(tmp.newFolder()) { now }
-        val c = VoicePracticeController(recorder, player, store, MicAccess { null }, speaker, gate, { now })
+        val c = VoicePracticeController(recorder, player, store, MicAccess { null }, speaker, gate, { now }, people = { VoicePeople.practice })
         c.open(); c.dispatch(VoiceEvent.Choose(VoicePeople.practice.first()))
         c.startTake(VoiceEvent.Record); now += 3000; c.dispatch(VoiceEvent.Stop)
         return c to store
@@ -149,7 +149,7 @@ class VoiceReviewRegressionTest {
 
     @Test fun activityRestartRearmsTheGuardsWithoutLosingTheScreenOrDraft() {
         val store = VoiceDraftStore(tmp.newFolder()) { now }
-        val c = VoicePracticeController(recorder, player, store, MicAccess { null }, speaker, gate, { now })
+        val c = VoicePracticeController(recorder, player, store, MicAccess { null }, speaker, gate, { now }, people = { VoicePeople.practice })
         var arms = 0; var disarms = 0
         val session = VoicePracticeSession(c, { arms++ }, { disarms++ })
         session.show(); assertEquals(1, arms); assertTrue(session.armed)
@@ -177,7 +177,7 @@ class VoiceReviewRegressionTest {
 
     @Test fun showingWhileTheActivityIsStoppedArmsOnlyOnStart() {
         val c = VoicePracticeController(recorder, player, VoiceDraftStore(tmp.newFolder()) { now },
-            MicAccess { null }, speaker, gate, { now })
+            MicAccess { null }, speaker, gate, { now }, people = { VoicePeople.practice })
         var arms = 0
         val session = VoicePracticeSession(c, { arms++ }, { })
         session.activityStopped(); session.show()

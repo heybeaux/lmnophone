@@ -38,11 +38,15 @@ class ProductionCleanupTest {
     @Test fun pinMapperHasNoInventedHelper() {
         for (page in PinPage.entries) {
             val state = pinUiState(PinPageState(page), AdminContext(""), "", "", "", "", "", null)
-            assertEquals("this phone’s PIN holder", state.helper)
+            assertEquals("", state.helper)
         }
     }
     @Test fun familyNamesAreActualDataEvenWhenNamedSam() {
-        val sam = VoicePerson("real-entry", "Sam")
+        val data = FamilyList(true, listOf(FamilyPerson("real-entry", "Sam", "Sam", "5550100")))
+        val sam = VoiceUiMapper.familyPeople(data).single()
+        assertEquals("Sam", sam.name)
+        assertTrue(VoiceUiMapper.familyPeople(data.copy(enabled = false)).isEmpty())
+        assertEquals("Sam", data.people.single().name)
         val mapped = VoiceUiMapper.map(VoiceState.ChoosePerson, listOf(sam), family = true) as VoiceUiState.ChoosePerson
         assertEquals(listOf("Sam"), mapped.people.map { it.name })
         assertTrue((VoiceUiMapper.map(VoiceState.ChoosePerson) as VoiceUiState.ChoosePerson).people.isEmpty())

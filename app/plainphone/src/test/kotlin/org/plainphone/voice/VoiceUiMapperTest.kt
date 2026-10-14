@@ -21,7 +21,7 @@ class VoiceUiMapperTest {
     private val draft = VoiceDraft("sam", 1L)
 
     @Test fun choosePersonListsOnlyThePracticePeople() {
-        assertEquals(VoiceUiState.ChoosePerson(VoicePeople.practice.map { VoicePersonUi(it.id, it.name) }),
+        assertEquals(VoiceUiState.ChoosePerson(emptyList()),
             VoiceUiMapper.map(VoiceState.ChoosePerson))
     }
 

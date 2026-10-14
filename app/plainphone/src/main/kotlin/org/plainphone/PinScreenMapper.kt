@@ -6,7 +6,7 @@ import org.plainphone.ui.trusted.*
 
 /** Production presentation mapping; no credential or Android state is read here. */
 fun pinUiState(page: PinPageState, context: AdminContext, value: String, confirmation: String,
-    recoveryCode: String, wait: String, pinWait: String, pendingChange: String?): PinUiState = PinUiState(
+    recoveryCode: String, wait: String, pinWait: String, pendingChange: String?, helper: String = ""): PinUiState = PinUiState(
     context = context,
     stage = when (page.page) {
         PinPage.SETUP, PinPage.CHANGE_NEW, PinPage.RECOVERY_NEW -> PinStage.NewPin
@@ -25,7 +25,7 @@ fun pinUiState(page: PinPageState, context: AdminContext, value: String, confirm
         },
     sending = page.busy, wrongPin = page.wrong && page.page != PinPage.RECOVERY,
     wrongRecoveryCode = page.wrong && page.page == PinPage.RECOVERY,
-    mismatch = page.mismatch, wait = wait, pinWait = pinWait, helper = "Sam",
+    mismatch = page.mismatch, wait = wait, pinWait = pinWait, helper = helper,
     pendingChange = if (page.page in setOf(PinPage.CHANGE_OLD, PinPage.RECOVERY)) pendingChange else null,
     recoveryLockout = if (page.pinWaitMillis > 0) RecoveryLockoutKind.PinWaiting else RecoveryLockoutKind.PinAvailable,
     recoveryCode = if (page.page == PinPage.RECOVERY_ISSUED) recoveryCode else "",

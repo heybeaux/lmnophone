@@ -40,7 +40,7 @@ fun PlainphoneShell(
     mapper: ShellUiMapper,
     navigator: ShellNavigator,
     counts: CommunicationCounts,
-    versionName: String,
+    about: AboutUiState,
     isDeviceSecure: Boolean,
     notice: HomeNotice?,
     onNotice: () -> Unit,
@@ -87,8 +87,7 @@ fun PlainphoneShell(
                 ShellRoute.Home -> HomeScreen(mapper.home(snapshot).copy(notice = notice, missedCalls = counts.missedCalls, unreadTexts = counts.unreadTexts)) {
                     if (it == HomeEvent.OpenNotice) onNotice() else onStep(navigator.onHome(state, it))
                 }
-                ShellRoute.About -> AboutScreen(AboutUiState(versionName, snapshot.trustedPeople,
-                    snapshot.requestRecipient, stringResource(R.string.product_name), isDeviceSecure)) { onStep(navigator.onAbout(state, it)) }
+                ShellRoute.About -> AboutScreen(about) { onStep(navigator.onAbout(state, it)) }
                 ShellRoute.TextSize -> TextSizeScreen(textSize, onTextSize)
                 ShellRoute.VoicePractice -> {
                     // Leaving this route by any way (Back, Home key) stops the recorder and keeps the take.

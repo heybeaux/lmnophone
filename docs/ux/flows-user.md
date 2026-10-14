@@ -771,3 +771,29 @@ failure and restart, including **Location is still on. LMNOPhone couldn't turn i
 If identity cannot be read, remove nothing and show **Wi-Fi status can't be read right now.**
 The calls-first problem screen remains reachable from the sign-in/no-internet message.
 When Forget is unavailable, its only action is **OK**, returning to Wi-Fi.
+
+## Production-facing preview (Telegram3664)
+
+This authorized increment replaces the sample identities and About narrative. Family names are saved data, never trusted-person defaults. Without configured identity, More offers **PIN settings** with **With your PIN** and Ask for an app opens the unavailable state.
+
+Exact added copy:
+
+- **about_version**: Version %1$s (%2$d)
+- **about_release**: Version %1$s
+- **about_new**: What’s new in this version
+- **about_since**: New since your last version
+- **about_older**: Older versions
+- **about_latest**: Latest version
+- **about_notes_missing**: Release notes are not available for this version.
+- **about_help**: Help and privacy
+- **about_limitations**: This is a test version. Some choices still say “Not in this test build yet”. For phone settings that need a PIN, open More, then PIN settings.
+- **about_privacy_current**: LMNOPhone has no account, analytics or server of its own.
+- **about_voice_retention**: Unsent voice messages stay on this phone for up to 7 days. Sending, deleting, replacing a recording, removing its person or turning Family off erases the recording.
+- **pin_holder**: this phone’s PIN holder
+- **current_phone_user**: the person using this phone
+- **more_pin_holder**: PIN settings
+- **ask_not_set_up**: Not set up on this phone yet.
+- **ask_missing_recipient**: App requests need a trusted person’s number. No request has been sent.
+- **voice_empty_family**: No people to show yet. This phone’s PIN holder can add people in More, then PIN settings, then Family.
+
+Release changes come from `app/plainphone/src/main/kotlin/org/plainphone/release/ReleaseNotes.kt`, the single shipped release-history source. About shows latest changes, all known changes since the previous observed version, and an Older versions list. First observation has no previous-install claim. Emergency instructions remain unchanged.

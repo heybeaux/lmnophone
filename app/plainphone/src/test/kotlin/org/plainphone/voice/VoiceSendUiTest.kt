@@ -54,7 +54,7 @@ class VoiceSendUiTest {
     @Test fun thePeopleListComesFromTheHost() {
         assertEquals(listOf(samUi, VoicePersonUi("alex", "Alex")),
             (map(VoiceState.ChoosePerson) as VoiceUiState.ChoosePerson).people)
-        assertEquals(VoicePeople.practice.map { VoicePersonUi(it.id, it.name) },
+        assertEquals(emptyList<VoicePersonUi>(),
             (VoiceUiMapper.map(VoiceState.ChoosePerson) as VoiceUiState.ChoosePerson).people)
     }
 

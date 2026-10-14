@@ -475,3 +475,7 @@ version/signers, then `PreviewAppListStore.add` publishes appended order before
 starter membership under the common lock. Failed membership restores old order;
 a crash before membership leaves the app hidden. Only ready re-apply readback
 permits Added. This preview does not change permissions or the locked/floor plan.
+
+### Production-facing About and neutral identity (PLA-528)
+
+`:plainphone` supplies `AboutUiState(versionName, versionCode, latest, sincePrevious, older, isDeviceSecure)` from package metadata and startup observation in Home preferences. `:ui` renders `ReleaseNoteUi` entries and browses Older versions without reading storage. `MoreUiState.pinHolderOnly` exposes the PIN host when there is no configured trusted identity; `AskForAppUiState.isSetUp` renders the truthful unavailable state. Voice controllers default to an empty people list; the runtime host supplies saved Family entries.

@@ -107,6 +107,7 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
                 is VoiceUiState.ChoosePerson -> {
                     Text(stringResource(R.string.voice_choose), style = PlainphoneType.Title,
                         modifier = Modifier.fillMaxWidth().padding(vertical = PlainphoneSpace.S4).semantics { heading() })
+                    if (state.people.isEmpty()) Text(stringResource(R.string.voice_empty_family), style = PlainphoneType.Body)
                     for (p in state.people) PersonRow(p, state.fromHome) { onEvent(VoiceUiEvent.Choose(p.id)) }
                 }
                 is VoiceUiState.Person -> {

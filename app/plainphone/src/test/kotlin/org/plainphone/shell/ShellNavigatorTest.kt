@@ -16,7 +16,7 @@ import org.plainphone.ui.user.WifiMessageEvent
 import org.plainphone.ui.user.WifiProblem
 
 class ShellNavigatorTest {
-    private val phone = PreviewPhone(PreviewPhone.sample())
+    private val phone = PreviewPhone(PreviewPhone.empty())
     private val nav = ShellNavigator(phone, phone, "LMNOPhone")
 
     private fun at(vararg routes: ShellRoute) = ShellState(listOf(ShellRoute.Home, *routes))
@@ -71,39 +71,18 @@ class ShellNavigatorTest {
     @Test fun sendWithoutALetterDoesNothing() {
         val ask = at(ShellRoute.More, ShellRoute.AskForApp).copy(draft = "123 !")
         assertEquals(Step(ask), nav.onAsk(ask, AskForAppEvent.Send))
-        assertEquals(1, phone.snapshot().requests.size)
+        assertEquals(0, phone.snapshot().requests.size)
     }
 
-    @Test fun sendSavesRequestShowsSentAndOkReturnsToTheRequestScreen() {
+    @Test fun unconfiguredRequestCannotSaveOrClaimSent() {
         val ask = at(ShellRoute.More, ShellRoute.AskForApp).copy(draft = "The bus times app")
-        val sent = nav.onAsk(ask, AskForAppEvent.Send).state
-        assertEquals(at(ShellRoute.More, ShellRoute.AskForApp, ShellRoute.RequestResult(AppRequestResult.Sent)), sent)
-        assertEquals("The bus times app", phone.snapshot().requests.first().message)
-        assertEquals(at(ShellRoute.More, ShellRoute.AskForApp), nav.onResult(sent, AppRequestResultEvent.Ok).state)
+        repeat(6) { assertEquals(ask, nav.onAsk(ask, AskForAppEvent.Send).state) }
+        assertEquals(0, phone.requestsOn(phone.snapshot().now.toLocalDate()))
     }
 
-    @Test fun sixthRequestTodayHitsTheDailyLimit() {
-        var state = at(ShellRoute.More, ShellRoute.AskForApp)
-        repeat(4) { // the sample already holds one request from today
-            state = nav.onAsk(state.copy(draft = "app $it"), AskForAppEvent.Send).state
-            state = nav.onResult(state, AppRequestResultEvent.Ok).state
-        }
-        assertEquals(5, phone.requestsOn(phone.snapshot().now.toLocalDate()))
-        val limited = nav.onAsk(state.copy(draft = "one more"), AskForAppEvent.Send).state
-        assertEquals(ShellRoute.RequestResult(AppRequestResult.DailyLimit), limited.current)
-        assertEquals(5, phone.requestsOn(phone.snapshot().now.toLocalDate()))
-    }
-
-    @Test fun blockedLinkReviewConfirmSendAndOk() {
-        val blocked = BlockedLinkUiState.Blocked("example.invalid", shareWith = "Sam")
-        val start = at(ShellRoute.BlockedLink(blocked, "example.invalid/bus"))
-        val confirm = nav.onLink(start, BlockedLinkEvent.ReviewSharing).state
-        assertEquals(BlockedLinkUiState.Confirm("Sam", "LMNOPhone: Alex would like to look at this link with you: example.invalid/bus"),
-            (confirm.current as ShellRoute.BlockedLink).stage)
-        assertEquals(start, nav.onLink(confirm, BlockedLinkEvent.DontSend).state)
-        val sent = nav.onLink(confirm, BlockedLinkEvent.Send).state
-        assertEquals(BlockedLinkUiState.Sent("Sam"), (sent.current as ShellRoute.BlockedLink).stage)
-        assertEquals(ShellState(), nav.onLink(sent, BlockedLinkEvent.Ok).state)
+    @Test fun blockedLinkNeverClaimsASendWithoutTransport() {
+        val start = at(ShellRoute.BlockedLink(BlockedLinkUiState.Blocked("example.invalid", shareWith = null), "example.invalid/bus"))
+        assertEquals(ShellRoute.NotInBuild, nav.onLink(start, BlockedLinkEvent.Send).state.current)
         assertEquals(ShellState(), nav.onLink(start, BlockedLinkEvent.GoBack).state)
     }
 
@@ -120,7 +99,7 @@ class ShellNavigatorTest {
         assertEquals(at(ShellRoute.Wifi(WifiProblem.NoInternet)), ShellState.forPreviewEntry("wifi_no_internet"))
         assertEquals(at(ShellRoute.More), ShellState.forPreviewEntry("more"))
         val link = ShellState.forPreviewEntry("blocked_link").current as ShellRoute.BlockedLink
-        assertEquals(BlockedLinkUiState.Blocked("example.invalid", shareWith = "Sam"), link.stage)
+        assertEquals(BlockedLinkUiState.Blocked("example.invalid", shareWith = null), link.stage)
         assertNull(Step(ShellState()).effect)
     }
 }

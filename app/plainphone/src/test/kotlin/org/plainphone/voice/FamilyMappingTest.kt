@@ -10,7 +10,7 @@ import java.util.Locale
 
 class FamilyMappingTest {
     private val mapper = ShellUiMapper(Locale.US, true)
-    private val snapshot = PreviewPhone.sample()
+    private val snapshot = PreviewPhone.empty()
     @Test fun productionHomeMapperShowsFamilyOnlyWhenEnabledAndPopulated() {
         assertFalse(mapper.home(snapshot).showFamily)
         assertFalse(mapper.home(snapshot.copy(familyEnabled = true)).showFamily)

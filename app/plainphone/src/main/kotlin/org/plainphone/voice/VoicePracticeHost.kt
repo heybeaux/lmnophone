@@ -31,7 +31,6 @@ import org.plainphone.device.voice.VoiceEvent
 import org.plainphone.device.voice.VoiceFormat
 import org.plainphone.device.voice.VoiceNotice
 import org.plainphone.device.voice.VoiceNumbers
-import org.plainphone.device.voice.VoicePeople
 import org.plainphone.device.voice.VoicePerson
 import org.plainphone.device.voice.VoicePlace
 import org.plainphone.device.voice.VoicePracticeController
@@ -58,9 +57,12 @@ import org.plainphone.ui.user.VoiceUiState
  * [helper] (the trusted person) is named only after a second real failure (UX V7 again). Numbers never reach a screen.
  */
 object VoiceUiMapper {
+    fun familyPeople(list: org.plainphone.device.voice.FamilyList): List<VoicePerson> =
+        if (list.enabled) list.people.map { VoicePerson(it.id, it.name, it.spokenName) } else emptyList()
+
     fun map(
         s: VoiceState,
-        people: List<VoicePerson> = VoicePeople.practice,
+        people: List<VoicePerson> = emptyList<VoicePerson>(),
         family: Boolean = false,
         canSend: (VoicePerson) -> Boolean = { false },
         helper: String = "",
@@ -123,7 +125,7 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
     private val app = context.applicationContext
     private val familyStore = org.plainphone.device.voice.AndroidFamilyStore.open(app)
     private var family = false
-    private var people = VoicePeople.practice
+    private var people = emptyList<VoicePerson>()
     var openMessages: (String) -> Boolean = { false }
     private val audio = app.getSystemService(AudioManager::class.java)
     private val telephony = app.getSystemService(TelephonyManager::class.java)
@@ -233,7 +235,7 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
     fun open() {
         val list = try { familyStore.read() } catch (_: Exception) { org.plainphone.device.voice.FamilyList() }
         family = list.visible
-        people = if (family) list.people.map { VoicePerson(it.id, it.name, it.spokenName) } else VoicePeople.practice
+        people = VoiceUiMapper.familyPeople(list)
         session.show(restoring.also { restoring = null })
     }
 

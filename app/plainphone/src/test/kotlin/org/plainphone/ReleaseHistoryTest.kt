@@ -47,6 +47,17 @@ class ReleaseHistoryTest {
         store.fail = false
         assertEquals(48L, VersionTracker(store).observe(49).previous)
     }
+    @Test fun productionAboutUsesInstalledMetadataAndDoesNotInventHistory() {
+        val latest = releaseAbout("installed-name", ObservedVersions(49,null), true)
+        assertEquals("installed-name", latest.versionName)
+        assertEquals(49L, latest.versionCode)
+        assertTrue(latest.sincePrevious.isEmpty())
+        assertTrue(latest.isDeviceSecure)
+        assertEquals(listOf("49", "48", "47"), releaseAbout("actual", ObservedVersions(49,46)).sincePrevious.map { it.version })
+        assertTrue(releaseAbout("actual", ObservedVersions(48,49)).sincePrevious.isEmpty())
+        assertNull(releaseAbout("unknown", ObservedVersions(100,null)).latest)
+        assertEquals("48", latest.older.first().version)
+    }
     @Test fun everyBuildNeedsItsOwnReleaseNote() {
         val code = Regex("versionCode = (\\d+)").find(File("build.gradle.kts").readText())!!.groupValues[1].toLong()
         assertNotNull("Missing release notes for versionCode $code", ReleaseNotes.current(code))

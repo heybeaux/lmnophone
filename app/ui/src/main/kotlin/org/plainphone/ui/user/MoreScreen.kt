@@ -37,7 +37,10 @@ fun MoreScreen(state: MoreUiState, onEvent: (MoreEvent) -> Unit) {
         MenuRow(stringResource(R.string.more_phone_settings), stringResource(R.string.more_phone_settings_note)) {
             onEvent(MoreEvent.OpenPhoneSettings)
         }
-        when (val mode = state.mode) {
+        if (state.pinHolderOnly) {
+            MenuRow(stringResource(R.string.more_ask), stringResource(R.string.ask_not_set_up)) { onEvent(MoreEvent.AskForApp) }
+            MenuRow(stringResource(R.string.more_pin_holder), stringResource(R.string.more_your_settings_note)) { onEvent(MoreEvent.OpenTrustedPerson) }
+        } else when (val mode = state.mode) {
             is MoreMode.Trusted -> {
                 MenuRow(stringResource(R.string.more_ask), stringResource(R.string.more_ask_note, mode.requestRecipient.withoutBidiControls())) {
                     onEvent(MoreEvent.AskForApp)

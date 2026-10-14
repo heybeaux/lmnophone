@@ -76,7 +76,7 @@ class VoicePracticeControllerTest {
     private val sam = VoicePeople.practice[0]
     private fun store(dir: File = tmp.newFolder()) = VoiceDraftStore(dir) { now }
     private fun controller(store: VoiceDraftStore = store()) =
-        VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }).also { it.open() }
+        VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }, people = { VoicePeople.practice }).also { it.open() }
 
     private fun VoicePracticeController.recordFor(ms: Long, end: VoiceEvent = Stop) {
         dispatch(Record); now += ms; dispatch(end)
@@ -119,7 +119,7 @@ class VoicePracticeControllerTest {
 
     @Test fun amrFallbackIsConfigurable() {
         val store = VoiceDraftStore(tmp.newFolder(), VoiceFormat.AmrNb) { now }
-        val c = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }, format = VoiceFormat.AmrNb)
+        val c = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }, format = VoiceFormat.AmrNb, people = { VoicePeople.practice })
             .also { it.open() }
         c.dispatch(Choose(sam)); c.recordFor(2_000)
         assertEquals(VoiceFormat.AmrNb, recorder.lastFormat)
@@ -143,7 +143,7 @@ class VoicePracticeControllerTest {
         c.dispatch(Choose(sam)); c.recordFor(3_000); c.dispatch(Back)
         c.dispatch(Choose(sam))
         assertTrue(c.state is VoiceState.Review)
-        val again = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }).also { it.open() }
+        val again = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }, people = { VoicePeople.practice }).also { it.open() }
         again.dispatch(Choose(sam))
         assertTrue(again.state is VoiceState.Review)
     }
@@ -337,7 +337,7 @@ class VoicePracticeControllerTest {
     // screen and person; a recording is stopped by onStop first and its take kept ("Recording stopped.").
 
     private fun session(store: VoiceDraftStore): VoicePracticeSession =
-        VoicePracticeSession(VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }), {}, {})
+        VoicePracticeSession(VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }, people = { VoicePeople.practice }), {}, {})
             .also { it.activityStarted(); it.show() }
 
     /** MainActivity's order on a recreation: onStop, keep the place, the route goes away, a new host opens it. */
@@ -349,7 +349,7 @@ class VoicePracticeControllerTest {
         val place = old.place()
         old.hide()
         speaker.spoken.clear()
-        val c = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now })
+        val c = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }, people = { VoicePeople.practice })
         return VoicePracticeSession(c, {}, {}).apply { activityStarted(); show(place) }
     }
 
@@ -441,7 +441,7 @@ class VoicePracticeControllerTest {
 
     @Test fun unknownPlacesOpenAsUsual() {
         val store = store()
-        val c = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now })
+        val c = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }, people = { VoicePeople.practice })
         c.open(VoicePlace("nobody", VoicePlace.Screen.Review))
         assertEquals(VoiceState.ChoosePerson, c.state)
         assertEquals("not the screen it was on, so it is introduced", listOf("Intro null"), speaker.spoken)
@@ -452,7 +452,7 @@ class VoicePracticeControllerTest {
         c.dispatch(Choose(sam)); c.recordFor(3_000)
         s.activityStopped(); val place = s.place(); s.hide()
         store.delete("sam")
-        val after = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now })
+        val after = VoicePracticeController(recorder, player, store, mic, speaker, gate, clock = { now }, people = { VoicePeople.practice })
         after.open(place)
         assertEquals(VoiceState.Person(sam), after.state)
     }

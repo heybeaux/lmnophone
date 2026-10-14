@@ -71,12 +71,13 @@ class ShellUiMapper(locale: Locale, is24Hour: Boolean) {
     fun more(s: PhoneSnapshot) = MoreUiState(when (s.mode) {
         Mode.TRUSTED -> MoreMode.Trusted(s.trustedPeople, s.requestRecipient)
         Mode.SELF_MANAGED -> MoreMode.SelfManaged(s.selfManagedWaitMinutes)
-    }, voicePractice = !(s.familyEnabled && s.familyCount > 0))
+    }, voicePractice = !(s.familyEnabled && s.familyCount > 0), pinHolderOnly = s.trustedPeople.isEmpty())
 
     fun ask(s: PhoneSnapshot, draft: String) = AskForAppUiState(
         recipientName = s.requestRecipient,
         message = draft,
-        canSend = RequestRules.canSend(draft),
+        canSend = s.requestRecipient.isNotBlank() && RequestRules.canSend(draft),
+        isSetUp = s.requestRecipient.isNotBlank(),
         charactersRemaining = if (draft.length > RequestRules.COUNTER_FROM) RequestRules.MAX_LENGTH - draft.length else null,
         requests = rows(s),
     )

@@ -5,7 +5,7 @@ package org.plainphone.ui.user
 
 /** Display facts only. The host selects mode, recipients, eligibility and navigation. */
 /** [voicePractice] shows the practice voice messages row (preview builds only, PLA-457). */
-data class MoreUiState(val mode: MoreMode, val voicePractice: Boolean = false)
+data class MoreUiState(val mode: MoreMode, val voicePractice: Boolean = false, val pinHolderOnly: Boolean = false)
 sealed interface MoreMode {
     data class Trusted(val people: List<String>, val requestRecipient: String) : MoreMode
     data class SelfManaged(val waitMinutes: Int) : MoreMode
@@ -33,6 +33,7 @@ data class AskForAppUiState(
     val charactersRemaining: Int? = null,
     val requests: List<AppRequestRow> = emptyList(),
     val sending: Boolean = false,
+    val isSetUp: Boolean = true,
 )
 data class AppRequestRow(val id: String, val message: String, val day: String, val status: AppRequestStatus)
 sealed interface AppRequestStatus {

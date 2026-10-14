@@ -578,7 +578,7 @@ class MainActivity : ComponentActivity() {
                 notice = notice, onNotice = ::openNotice,
                 counts = counts,
                 isDeviceSecure = getSystemService(KeyguardManager::class.java).isDeviceSecure,
-                versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() },
+                about = org.plainphone.release.InstalledRelease.about(getSystemService(KeyguardManager::class.java).isDeviceSecure),
                 textSize = textSize, onTextSize = ::onTextSize,
                 wifi = wifi, wifiJoin = wifiJoin, onWifiJoin = ::onWifiJoin,
                 onWifiShow = ::showNearbyWifi, onWifiSelect = ::selectWifi,
@@ -818,7 +818,7 @@ class ShellViewModel : ViewModel() {
         val generation = ++prepared
         thread(name = "preview2-home") {
             val apps = runCatching { device.homeApps() }.getOrDefault(emptyList()).map { (id, label) -> ApprovedApp(id, label) }
-            val sample = PreviewPhone.sample()
+            val sample = PreviewPhone.empty()
             val ready = PreviewPhone(sample.copy(apps = apps, notices = NoticeInput(sample.mode, needsAttention = attention)))
             Handler(Looper.getMainLooper()).post {
                 if (generation != prepared) return@post

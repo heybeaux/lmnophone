@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <string name="about_product_name">LMNOPhone</string>
+    <string name="about_version">Version %1$s (%2$d)</string>
+    <string name="about_release">Version %1$s</string>
+    <string name="about_new">What’s new in this version</string>
+    <string name="about_since">New since your last version</string>
+    <string name="about_older">Older versions</string>
+    <string name="about_latest">Latest version</string>
+    <string name="about_notes_missing">Release notes are not available for this version.</string>
+    <string name="about_help">Help and privacy</string>
+    <string name="about_limitations">This is a test version. Some choices still say “Not in this test build yet”. For phone settings that need a PIN, open More, then PIN settings.</string>
+    <string name="about_privacy_current">LMNOPhone has no account, analytics or server of its own.</string>
+    <string name="about_voice_retention">Unsent voice messages stay on this phone for up to 7 days. Sending, deleting, replacing a recording, removing its person or turning Family off erases the recording.</string>
+    <string name="pin_holder">this phone’s PIN holder</string>
+    <string name="current_phone_user">the person using this phone</string>
+    <string name="more_pin_holder">PIN settings</string>
+    <string name="ask_not_set_up">Not set up on this phone yet.</string>
+    <string name="ask_missing_recipient">App requests need a trusted person’s number. No request has been sent.</string>
+    <string name="voice_empty_family">No people to show yet. This phone’s PIN holder can add people in More, then PIN settings, then Family.</string>
+</resources>

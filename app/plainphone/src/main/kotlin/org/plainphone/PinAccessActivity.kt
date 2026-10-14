@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import org.plainphone.preview.*
 import org.plainphone.boot.PolicyRuntime
 import org.plainphone.device.authority.*
-import org.plainphone.shell.PreviewPhone
 import org.plainphone.shell.NotInBuildScreen
 import org.plainphone.ui.home.*
 import org.plainphone.ui.theme.*
@@ -36,15 +35,15 @@ class PinAccessActivity : ComponentActivity() {
     private val familySpeaker by lazy { org.plainphone.device.voice.AndroidVoiceSpeaker(this) { _, person -> person?.spokenName.orEmpty() } }
     private fun openFamily() {
         if (page.page != PinPage.MENU) return
-        familyEditor = org.plainphone.voice.FamilyEditor(familyStore, AdminContext(PreviewPhone.sample().userName),
+        familyEditor = org.plainphone.voice.FamilyEditor(familyStore, AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)),
             { page.page == PinPage.MENU && lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) },
             { org.plainphone.device.voice.AndroidMicAccess(this, android.content.ComponentName(this, PlainphoneAdminReceiver::class.java)).selfGrant() },
             { name -> familySpeaker.speakOnRequest(org.plainphone.device.voice.VoicePrompt.Name, org.plainphone.device.voice.VoicePerson("name", name)) },
-            { family = null; familyEditor = null }, { family = it }, helperName = "Sam").also { it.open() }
+            { family = null; familyEditor = null }, { family = it }, helperName = getString(org.plainphone.ui.R.string.pin_holder)).also { it.open() }
     }
     private var apps by mutableStateOf<PreviewAppsState?>(null)
     private var appsFlow: PreviewAppsFlow? = null
-    private val appsContext get() = AdminContext(PreviewPhone.sample().userName, PreviewPhone.sample().requestRecipient)
+    private val appsContext get() = AdminContext(getString(org.plainphone.ui.R.string.current_phone_user), null)
     private fun openApps() {
         if (page.page != PinPage.MENU) return
         appsFlow = PreviewAppsFlow(object : PreviewAppsPort {
@@ -102,7 +101,7 @@ class PinAccessActivity : ComponentActivity() {
                     else -> AppReviewStage.Hidden
                 }
                 AppReviewScreen(AppReviewUiState(appsContext, InstalledApp(selected.id, selected.name, ""),
-                    stage = stage, helper = "Sam", sending = state.busy, previewSubset = true)) { event -> when (event) {
+                    stage = stage, helper = getString(org.plainphone.ui.R.string.pin_holder), sending = state.busy, previewSubset = true)) { event -> when (event) {
                     AppReviewEvent.Continue -> { value = ""; editor.nextAdd() }
                     AppReviewEvent.DontAdd -> editor.dontAdd()
                     AppReviewEvent.Back -> backApps()
@@ -180,7 +179,7 @@ class PinAccessActivity : ComponentActivity() {
                         PinPage.SETUP, PinPage.ENTER, PinPage.LOCKED, PinPage.OFF_PIN, PinPage.CHANGE_OLD,
                         PinPage.CHANGE_NEW, PinPage.RECOVERY_PIN, PinPage.RECOVERY, PinPage.RECOVERY_NEW,
                         PinPage.RECOVERY_LOCKED, PinPage.RECOVERY_ISSUED -> PinScreen(pinUiState(
-                            page, AdminContext(PreviewPhone.sample().userName), value, confirmation, flow.displayedCode(),
+                            page, AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)), value, confirmation, flow.displayedCode(),
                             waitText(page.waitMillis), waitText(page.pinWaitMillis), waitingChangeName(waitingNow),
                         )) { event -> when (event) {
                             is PinEvent.ValueChanged -> value = event.value
@@ -199,7 +198,7 @@ class PinAccessActivity : ComponentActivity() {
                             PinEvent.Ok -> if (page.page == PinPage.RECOVERY_ISSUED) flow.codeWritten() else finish()
                             else -> finish()
                         } }
-                        PinPage.MENU -> if (apps != null) AppsContent(apps!!) else if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(pinMenuUiState(AdminContext(PreviewPhone.sample().userName))) { when (it) {
+                        PinPage.MENU -> if (apps != null) AppsContent(apps!!) else if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(pinMenuUiState(AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)))) { when (it) {
                             AdminMenuEvent.Done -> finish()
                             is AdminMenuEvent.OpenNotice -> flow.unsupported()
                             is AdminMenuEvent.Open -> when (it.destination) {
@@ -212,12 +211,12 @@ class PinAccessActivity : ComponentActivity() {
                             }
                         } }
                         PinPage.OFF_INTRO, PinPage.OFF_FIRST, PinPage.OFF_LAST -> TurnOffScreen(TurnOffUiState(
-                            context = AdminContext(PreviewPhone.sample().userName),
+                            context = AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)),
                             stage = when (page.page) {
                                 PinPage.OFF_INTRO -> TurnOffStage.Intro
                                 PinPage.OFF_FIRST -> TurnOffStage.FirstConfirmation
                                 else -> TurnOffStage.LastConfirmation
-                            }, helper = "Sam", sending = page.busy,
+                            }, helper = getString(org.plainphone.ui.R.string.pin_holder), sending = page.busy,
                             testBuild = applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_TEST_ONLY != 0,
                         )) { if (it == TurnOffEvent.Continue) flow.continueTurnOff() else finish() }
                         PinPage.WAIT_STARTED, PinPage.WAIT_BUSY, PinPage.WAIT_FAILED -> {
@@ -225,7 +224,7 @@ class PinAccessActivity : ComponentActivity() {
                                 java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT))
                             val off = waiting?.kind as? PendingChangeKind.TurnOff
                             WaitingChangeScreen(WaitingChangeUiState(
-                            context = AdminContext(PreviewPhone.sample().userName),
+                            context = AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)),
                             stage = when (page.page) {
                                 PinPage.WAIT_STARTED -> WaitingStage.Started
                                 PinPage.WAIT_BUSY -> WaitingStage.Another
@@ -241,7 +240,7 @@ class PinAccessActivity : ComponentActivity() {
                             }
                         }
                         PinPage.CHANGE_DONE, PinPage.CHANGE_FAILED -> PinChangeResultScreen(
-                            AdminContext(PreviewPhone.sample().userName), page.page == PinPage.CHANGE_DONE) { flow.back() }
+                            AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)), page.page == PinPage.CHANGE_DONE) { flow.back() }
                         PinPage.NOT_IN_BUILD -> NotInBuildScreen(flow::backFromUnsupported)
                         PinPage.UNAVAILABLE -> NeedsAttentionScreen(NeedsAttentionUiState(null)) { finish() }
                     }

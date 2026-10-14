@@ -15,7 +15,7 @@ import org.plainphone.device.voice.send.SendView
  * - Family: [familySender] is present only where the build turns family sending on ([VoiceSendBuild.familySend];
  *   release never). The number is looked up by id in [recipients] at every check and every send, so a removed
  *   person or a turned-off list has none.
- * - Practice: only the test build's adb marker gives practice Sam a number ([VoiceSendBuild.numbers]).
+ * - Practice: no recipients are configured; only the saved Family route can send.
  *
  * A side without a sender has no numbers, so nobody there gets Send and nothing is handed over.
  */

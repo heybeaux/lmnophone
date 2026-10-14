@@ -14,13 +14,13 @@ import org.plainphone.ui.user.WifiProblem
 
 /** preview-2 (PLA-144): nothing unwired may look as if it worked. */
 class TestBuildNavigatorTest {
-    private val phone = PreviewPhone(PreviewPhone.sample())
+    private val phone = PreviewPhone(PreviewPhone.empty())
     private val nav = ShellNavigator(phone, phone, "LMNOPhone", testBuild = true)
 
     private fun at(vararg routes: ShellRoute) = ShellState(listOf(ShellRoute.Home, *routes))
 
     @Test fun everyUnwiredMoreRowSaysNotInThisTestBuild() {
-        for (e in listOf(MoreEvent.AskForApp, MoreEvent.AddApp,
+        for (e in listOf(MoreEvent.AddApp,
             MoreEvent.OpenSelfManagedSettings)) {
             val step = nav.onMore(at(ShellRoute.More), e)
             assertEquals(e.toString(), at(ShellRoute.More, ShellRoute.NotInBuild), step.state)

@@ -28,6 +28,14 @@ import org.plainphone.ui.theme.*
 
 @Composable
 fun AskForAppScreen(state: AskForAppUiState, onEvent: (AskForAppEvent) -> Unit) {
+    if (!state.isSetUp) {
+        TaskScreen(stringResource(R.string.more_ask), stringResource(R.string.user_ok), { onEvent(AskForAppEvent.Back) },
+            back = stringResource(R.string.back_more), onBack = { onEvent(AskForAppEvent.Back) }) {
+            Text(stringResource(R.string.ask_not_set_up), style = PlainphoneType.Body)
+            Text(stringResource(R.string.ask_missing_recipient), style = PlainphoneType.Body)
+        }
+        return
+    }
     TaskScreen(stringResource(R.string.more_ask), if (state.sending) stringResource(R.string.ask_sending) else stringResource(R.string.ask_send, state.recipientName.withoutBidiControls()),
         { onEvent(AskForAppEvent.Send) }, primaryEnabled = state.canSend && !state.sending,
         back = stringResource(R.string.back_more), onBack = { onEvent(AskForAppEvent.Back) }) {

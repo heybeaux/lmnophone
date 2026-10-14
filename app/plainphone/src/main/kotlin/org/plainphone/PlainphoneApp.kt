@@ -12,6 +12,7 @@ import org.plainphone.boot.UserUnlockEvents
 class PlainphoneApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        org.plainphone.release.InstalledRelease.observe(this)
         org.plainphone.device.settings.WifiJoinSession.get(this)
         UserUnlockEvents.register(this)
         PackageEvents.register(this)

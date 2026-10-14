@@ -15,10 +15,7 @@ import org.plainphone.device.voice.send.SendView
 /** Never carries a phone number: the sender looks it up by [id] when Send is tapped ([VoiceNumbers]). */
 data class VoicePerson(val id: String, val name: String, val spokenName: String = name)
 
-/** Synthetic people for the practice. Never real names, photos or numbers. */
-object VoicePeople {
-    val practice = listOf(VoicePerson("sam", "Sam"), VoicePerson("jo", "Jo"), VoicePerson("alex", "Alex"))
-}
+
 
 data class VoiceDraft(val personId: String, val savedAtMs: Long)
 
