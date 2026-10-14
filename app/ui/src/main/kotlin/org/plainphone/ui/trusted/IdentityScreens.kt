@@ -49,6 +49,8 @@ fun PinScreen(state: PinUiState, onEvent: (PinEvent) -> Unit) {
             PinStage.RecoveryLocked -> if (other != null) s(R.string.admin_choose_other) else if (state.recoveryLockout == RecoveryLockoutKind.PinAvailable) s(R.string.user_ok) else null
             else -> null
         }, secondaryEnabled = !state.sending,
+        // Announce the stable wait title; the body countdown changes every second.
+        announceTitle = state.stage == PinStage.Locked || state.stage == PinStage.RecoveryLocked,
         onSecondary = { onEvent(if (state.stage == PinStage.Enter) PinEvent.UseRecoveryCode else if (other != null) PinEvent.ChooseSomeoneElse else PinEvent.Ok) }) {
         when (state.stage) {
             PinStage.Enter -> {
@@ -58,7 +60,7 @@ fun PinScreen(state: PinUiState, onEvent: (PinEvent) -> Unit) {
                 if (state.wrongPin) StatusWords(s(R.string.admin_pin_wrong))
                 SecretField(s(R.string.admin_pin_label), state.value, "pin-input", true, !state.sending) { onEvent(PinEvent.ValueChanged(it)) }
             }
-            PinStage.Locked -> StatusWords(if (other == null) s(R.string.admin_pin_wait, state.wait)
+            PinStage.Locked -> Words(if (other == null) s(R.string.admin_pin_wait, state.wait)
                 else s(R.string.admin_pin_wait_two, state.wait, name, other))
             PinStage.Recovery -> {
                 Words(s(R.string.admin_recovery_body))
@@ -69,7 +71,7 @@ fun PinScreen(state: PinUiState, onEvent: (PinEvent) -> Unit) {
                 Words(s(R.string.admin_recovery_google))
             }
             PinStage.RecoveryLocked -> {
-                StatusWords(s(R.string.admin_code_wait, state.wait))
+                Words(s(R.string.admin_code_wait, state.wait))
                 Words(when (state.recoveryLockout) {
                     RecoveryLockoutKind.PinAvailable -> if (other == null) s(R.string.admin_code_pin_available) else s(R.string.admin_code_named_pin_available, name)
                     RecoveryLockoutKind.PinWaiting -> if (other == null) s(R.string.admin_code_pin_waiting, state.pinWait) else s(R.string.admin_code_named_pin_waiting, name, state.pinWait)

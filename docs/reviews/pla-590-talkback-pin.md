@@ -9,7 +9,8 @@ recovery issuance, permissions, policy, send, emergency or saved-data changes.
 | Reachable screen / control | Disposition |
 |---|---|
 | Enter PIN, fresh PIN (including New recovery code), Change PIN, recovery entry | Already named from visible labels: PIN, Type it again, Recovery code. Existing password transformation supplies Password and masked EditableText. Tests preserve these; no raw secret copied into a spoken description. The new-PIN page visibly labels its first field PIN, so its accessible name stays PIN. |
-| Wrong PIN, PIN wait, wrong recovery code, recovery wait, mismatched new PIN | Added one polite region on the existing message. No imperative announcement or recomposition timer. |
+| Wrong PIN, wrong recovery code, mismatched new PIN | One polite region on the existing message. |
+| PIN wait, recovery wait | Corrected by [PLA-595](/PLA/issues/PLA-595): only the stable page title is polite; ticking countdown sentences use plain text. |
 | Change PIN result | Added polite status, success and failure. |
 | Menu / Needs you | Already one merged Button per row; headings already present. Decorative shared chevron already cleared. Tested supplied Needs you and production menu. |
 | Apps on this phone | Each app remains one named Button. Move buttons already named the app; cleared their duplicate child text. Stable app keys retain focus through reordering; row and move buttons expose updated position. Messages/Phone remain without move/remove controls. |
@@ -99,3 +100,47 @@ numbered release. Semantics evidence establishes the accessibility tree and
 masked values, not acoustic TalkBack behavior on the spare.
 
 Evidence: [test logs and bounds](pla-590-evidence/). The added/removed result assertion was also observed failing before its fix (`result-red.txt`).
+
+## Countdown correction (PLA-595)
+
+Focused review [PLA-591](/PLA/issues/PLA-591), finding F1, found that the wait
+sentence changes every second in the final minute (and throughout the recipient
+PIN wait). The earlier fixed-time test did not cover that update.
+
+Regression commit `89ebdf19` was run against the reviewed implementation and
+failed because the countdown node had `LiveRegion`. The correction uses plain
+`Words` for both wait sentences and enables the existing `announceTitle` only
+for `Locked` and `RecoveryLocked`. Wrong-PIN, wrong-code and mismatch messages
+keep their polite regions. No copy, layout, policy or host timer changes.
+
+The regression updates `45 seconds` to `44 seconds` and `0:45` to `0:44`, across
+both wait stages and neutral/named title variants. Recovery's concurrent PIN
+wait also ticks. It checks that countdown nodes have no live-region property,
+only one polite node remains (the heading), and that heading keeps the same
+node ID and text across ticks.
+
+Correction verification uses a private API 35 emulator launched with
+`-avd pla525-ui-a35 -port 5942 -read-only -no-snapshot`. Both ports were free
+before launch and `emu avd name` returned `pla525-ui-a35`. Test-only display:
+1080×2400, density 480. The prior large-text bounds dump and goldens remain
+unchanged; the correction changes semantics only. Acoustic TalkBack behavior
+on the spare remains the sole driver's check. Nonblocking N1/N2 remain outside
+this correction.
+
+Commands from `app/` (JDK 17):
+
+```sh
+./gradlew :ui:assembleDebugAndroidTest
+adb -s emulator-5942 install -r -t ui/build/outputs/apk/androidTest/debug/ui-debug-androidTest.apk
+adb -s emulator-5942 shell am instrument -w -r \
+  -e class org.plainphone.ui.PinSettingsTalkBackTest,org.plainphone.ui.TrustedScreensTest,org.plainphone.ui.RecoveryCodeTest \
+  org.plainphone.ui.test/androidx.test.runner.AndroidJUnitRunner
+./gradlew :ui:verifyPaparazziDebug --tests '*TrustedScreensScreenshotTest*'
+```
+
+Results: UI test APK built; 28/28 emulator tests passed (14 focused PIN tests
+plus 14 existing trusted/recovery tests), including the 93 large-text layout
+cases. Trusted-screen Paparazzi passed both parameterized tests with all
+fixtures unchanged. Red/green instrumentation logs are attached to
+[QA case PLA-C144](/PLA/cases/PLA-C144). No physical-device install or acoustic
+TalkBack result is claimed by this lane.
