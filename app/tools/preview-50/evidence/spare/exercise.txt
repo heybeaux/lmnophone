@@ -1,0 +1,42 @@
+# Build 50 on the spare: real app requests (PLA-525) exercised (PLA-537)
+# 2026-10-14 03:57Z-06:46Z (paused 04:13Z-06:00Z: run hit a provider session limit). Test PIN from the
+# secrets file; no PIN in this record. No calls. No SMS left the phone (airplane mode read back on).
+# Request and PinAccess screens are FLAG_SECURE (screencaps black, not kept): layouts/ hold uiautomator
+# text/bounds readbacks, digit runs of 5+ redacted. 555-0100 is the fixed fictional test number.
+1. Readback (after-install.txt vs before.txt): versionCode 50 / 0.1.0-preview-50, lastUpdateTime 20:53:37
+   local = 03:53:37Z. ceDataInode 32221 unchanged. Family store (format 1, off, 0 people), app order,
+   starter list, authority records, counts toggle, drafts all identical. Request store absent before and
+   after. release_current 49 -> 50, release_previous=49.
+2. About (02, 03, 04): "Version 0.1.0-preview-50 (50)", "What's new in this version" with the 3 build 50
+   notes. No "New since your last version": previous=49 was observed, so no build was skipped (since()
+   lists releases after 49 up to 50, minus the current one). Older versions: 49 (its 3 notes), 48 ... 17-22,
+   2-16, then help and privacy, Lexend licence, 9-1-1 help. Nothing invented.
+3. Ask for an app, no recipient (05): "Asking for an app isn't set up on this phone yet." / "This phone's
+   PIN holder can set it up in More, then PIN settings, then Who gets requests." Only Go back and OK; no
+   field, no Send. No request file created. More subtitle "Not set up on this phone yet." (01).
+4. PIN settings (07: menu rows "Requests from the person using this phone", "Who gets requests"). Who gets
+   requests asks for a fresh PIN after the menu PIN (08), then empty state with "Set up" (09). Requests
+   opens the history list: "No requests saved on this phone." (10).
+5. Airplane-mode send (06:16Z-06:24Z): `cmd connectivity airplane-mode enable`; read back
+   airplane_mode_on=1, cmd=enabled, voice reg POWER_OFF. Set up: name left empty, number 555-0100 (11),
+   "Send requests to this person?" > Save > fresh PIN (12-14). More subtitle changed to "This sends your
+   request as a text message. It is also saved on this phone." (15). A first attempt was abandoned before
+   Send (my keyboard-back closed the screen; nothing saved). Second attempt: typed "Bus times app",
+   airplane read back 1 at 06:21:28Z (17), tapped Send: "Not sent" / "The phone has no signal or is in
+   airplane mode. Your request is saved here." with the saved row (18). No SMS provider rows in the last
+   15 min, no RequestSmsResultReceiver broadcasts, calls 0. PIN settings > Requests shows the row (19).
+   One attempt used of the 5 per day.
+6. Text size 2.0 (20-26, bounds): More, Ask (with history), Requests, Who gets requests (configured),
+   Remove confirmation, empty Who, and Ask not set up all fit within 1080 px and above the 3-button bar
+   (y<2280); Send/OK/Change/Remove/Set up pinned at y 2143-2237. Removed the recipient at 2.0: Remove >
+   "Stop sending app requests? Saved requests will stay on this phone." > Remove > fresh PIN > empty state
+   with Set up (25). Ask back to not set up, saved Not sent row still listed (26).
+   Restored: font_scale 1.0, airplane off (read back 0/disabled), radio back to OUT_OF_SERVICE (spare SIM
+   baseline), Wi-Fi reconnected.
+7. after.txt vs after-install.txt: authority A/B hash changed (fresh-PIN use rewrites it, as on build 49;
+   test PIN still opens the menu); request store now 124 bytes (one Not sent row, no recipient). All else
+   identical, incl. saved Wi-Fi hash, bonded 0, location 0, ring 5, font 1.0, ceDataInode.
+gate.log: in-place install, exit 0, 243 PASS. gate-final.log: SKIP_INSTALL rerun after the exercise, exit 0,
+241 PASS (911 by both routes, zero calls, lock task LOCKED).
+Not exercised: carrier delivery / Sent / Not confirmed on a real network (no live SMS authorised).
+Nits (nonblocking): "isn't" uses a straight apostrophe next to curly "phone's" on the not-set-up screen.

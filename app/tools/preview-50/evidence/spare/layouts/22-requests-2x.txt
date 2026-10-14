@@ -1,0 +1,7 @@
+'Go back' [60, 157, 367, 251]
+'Requests' [60, 291, 478, 407]
+'Bus times app' [100, 467, 614, 561]
+'13 Oct 2026' [100, 581, 488, 669]
+'Not sent' [100, 689, 390, 777]
+'The phone has no signal or is in airplane mode. Your request' [100, 797, 980, 1176]
+'OK' [483, 2143, 597, 2237]

@@ -1,0 +1,4 @@
+'Go back' [60, 157, 367, 251]
+'Who gets requests' [60, 291, 913, 407]
+"Asking for an app isn't set up on this phone yet." [60, 427, 1020, 630]
+'Set up' [422, 2143, 658, 2237]
