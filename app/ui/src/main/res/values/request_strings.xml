@@ -25,6 +25,7 @@
     <string name="requests_set_up">Set up</string>
     <string name="requests_change">Change</string>
     <string name="requests_remove">Remove</string>
+    <string name="requests_remove_unnamed">Remove this request? The person using this phone won\'t be told.</string>
     <string name="requests_recipient_confirm">Send requests to this person?</string>
     <string name="requests_remove_confirm">Stop sending app requests? Saved requests will stay on this phone.</string>
     <string name="requests_save_error">The change could not be saved. Try again.</string>

@@ -31,7 +31,8 @@ class RequestRemovalScreenshotTest(private val scale: Float) {
         rows = listOf(RequestUiRow(request, "14 Oct 2026", RequestUiStatus.Sending, "r1")))
 
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-    private fun shot(state: RequestsUiState, action: String, expected: RequestEvent) {
+    private fun shot(state: RequestsUiState, action: String, expected: RequestEvent,
+        confirmation: String = "Remove this request? ${state.userName} won't be told.") {
         var checked = false
         var event: RequestEvent? = null
         var scrolled = false
@@ -51,7 +52,7 @@ class RequestRemovalScreenshotTest(private val scale: Float) {
                     val keep = nodes.single { text(it) == "Keep it" && it.config.contains(SemanticsActions.OnClick) }
                     assertTrue(keep.config[SemanticsActions.OnClick].action!!.invoke())
                     assertEquals(RequestEvent.Keep, event)
-                    assertTrue(nodes.any { text(it) == "Remove this request? $user won't be told." })
+                    assertTrue(nodes.any { text(it) == confirmation })
                 }
                 view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = false).forEach { node ->
                     val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
@@ -78,6 +79,9 @@ class RequestRemovalScreenshotTest(private val scale: Float) {
     }
     @Test fun longRequest() = shot(state, "Not now", RequestEvent.NotNow("r1"))
     @Test fun confirm() = shot(state.copy(removingId = "r1"), "Remove", RequestEvent.Remove)
+    @Test fun productionFallbackConfirmation() = shot(state.copy(
+        userName = paparazzi.context.getString(R.string.current_phone_user), removingId = "r1"),
+        "Remove", RequestEvent.Remove, "Remove this request? The person using this phone won't be told.")
     @Test fun failedRemoval() = shot(state.copy(removingId = "r1", removeFailed = true), "Remove", RequestEvent.Remove)
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
     @Test fun menuCount() {

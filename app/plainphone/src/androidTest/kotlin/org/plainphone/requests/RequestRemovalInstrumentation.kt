@@ -74,7 +74,7 @@ class RequestRemovalInstrumentation : Instrumentation() {
                 step = "not-now"
                 click("Not now")
                 step = "keep"
-                waitText("Remove this request? the person using this phone won't be told.")
+                waitText("Remove this request? The person using this phone won't be told.")
                 click("Keep it")
                 check(engine.view().requests.single().id == "r0")
                 step = "remove"

@@ -38,7 +38,9 @@ sealed interface RequestEvent {
         TaskScreen(s(R.string.requests_title), s(R.string.requests_remove), { event(RequestEvent.Remove) },
             primaryEnabled = !state.busy, secondary = s(R.string.admin_keep), secondaryEnabled = !state.busy,
             onSecondary = { event(RequestEvent.Keep) }) {
-            Text(s(R.string.admin_request_remove, state.userName.withoutBidiControls().ifBlank { s(R.string.current_phone_user) }), style = PlainphoneType.Body)
+            val user = state.userName.withoutBidiControls()
+            Text(if (user.isBlank() || user == s(R.string.current_phone_user)) s(R.string.requests_remove_unnamed)
+                else s(R.string.admin_request_remove, user), style = PlainphoneType.Body)
             if (state.removeFailed) Text(s(R.string.requests_save_error), style = PlainphoneType.Body)
             state.rows.firstOrNull { it.id == state.removingId }?.let { Text(it.text, style = PlainphoneType.Body) }
         }

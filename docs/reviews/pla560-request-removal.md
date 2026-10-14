@@ -45,3 +45,20 @@ Final debug APK SHA-256: `b62e7b329c324882902dfbd3c6a98529596f0f511b86fd5e20f075
 Built: yes. Installed/exercised: private emulator only. Spare installation, production menu taps and the usual emergency gate remain the sole driver's acceptance after focused review. No new emergency-access claim is made by these request tests.
 
 Release note: `docs/releases/pending-requests-not-now.md`; driver incorporates it into `ReleaseNotes.kt` when numbering the build.
+
+## Review correction R1
+
+The focused review on PLA-561 accepted the implementation and requested only sentence-start
+capitalization for the real neutral phone-user fallback. Added a dedicated resource:
+“Remove this request? The person using this phone won't be told.” Configured names remain unchanged.
+The flow copy and instrumentation expectation now match it.
+
+The new Paparazzi assertion reads `current_phone_user` from production resources. It failed at
+all four scales before the fix. After the fix, all 20 `RequestRemovalScreenshotTest` cases pass
+verification; the four new fallback goldens were visually inspected. `:plainphone:assembleDebug`
+and `git diff --check` also pass. Earlier policy/store/app and emulator evidence is retained;
+no new device run is claimed for this copy-only delta.
+
+Corrected APK SHA-256: `bc7a158fefc3430cb2096473365b769bb2cc0e213e11f36c56c4a029856e0377`.
+The existing pending release-note file is unchanged. Return to PLA-561 for a delta check only;
+PLA-562 is the Lead's existing build-56 delivery route after approval.

@@ -177,6 +177,7 @@ Thursday 8 Oct, 10:40 · Text sent to you ✓      (or: "Text didn't send")
 - **Find it in the Play Store** starts a Play session (P1). The request is attached to the session, but the
   approval is for whatever app actually gets installed (T4b).
 - **Not now** asks: "Remove this request? {user} won't be told." → **Remove** / **Keep it**.
+  Without a configured user name: "Remove this request? The person using this phone won't be told."
   (The user is not notified by LMNOPhone; `{tp}` tells them in person. This keeps LMNOPhone from being a
   messenger of "no".)
 
