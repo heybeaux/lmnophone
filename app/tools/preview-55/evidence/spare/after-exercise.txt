@@ -1,4 +1,4 @@
-taken=2026-10-14T15:49:59Z (after-exercise)
+taken=2026-10-14T16:49:33Z (after build 55 exercise)
 version=versionName=0.1.0-preview-55
 versionCode=versionCode=55
 lastUpdate=lastUpdateTime=2026-10-1405:48:06
@@ -17,7 +17,7 @@ wifi_location_marker=name="owned" value="false"
 family_store_sha=c58614458c2397d9 bytes=9 decoded=format=1 enabled=False people=0
 app_order_lines=2 sha=2e1b634fe0cb2873
 starter_list_sha=037b82eaecee9a3b
-authority_files=13 authority_ab_sha=a2aab91f7b0c9843/a2aab91f7b0c9843
+authority_files=13 authority_ab_sha=896fc0cbfb57c5ed/896fc0cbfb57c5ed
 counts_toggle=show_communication_counts" value="true"
 release_keys=name="release_current" value="55" name="release_previous" value="54" 
 drafts: family=0 practice=1 send_records=1
