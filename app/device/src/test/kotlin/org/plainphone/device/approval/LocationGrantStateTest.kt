@@ -10,6 +10,7 @@ class LocationGrantStateTest {
         for (name in listOf("ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION")) {
             assertEquals(PolicyGrant.GRANTED, locationGrantState("android.permission.$name", PolicyGrant.DENIED, true, false))
             assertEquals(PolicyGrant.DENIED, locationGrantState("android.permission.$name", PolicyGrant.DENIED, false, false))
+            assertEquals(PolicyGrant.DENIED, locationGrantState("android.permission.$name", PolicyGrant.GRANTED, false, false))
             assertEquals(PolicyGrant.DEFAULT, locationGrantState("android.permission.$name", PolicyGrant.DEFAULT, true, false))
             assertEquals(PolicyGrant.DENIED, locationGrantState("android.permission.$name", PolicyGrant.DENIED, true, true))
         }
