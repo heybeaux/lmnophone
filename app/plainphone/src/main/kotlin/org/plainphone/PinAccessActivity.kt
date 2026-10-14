@@ -47,6 +47,8 @@ class PinAccessActivity : ComponentActivity() {
     private fun openApps() {
         if (page.page != PinPage.MENU) return
         appsFlow = PreviewAppsFlow(object : PreviewAppsPort {
+            override fun permissions(id: String, done: (org.plainphone.device.approval.AppPermissionRead?) -> Unit) =
+                runtime.previewAppPermissions(id) { read -> runOnUiThread { done(read) } }
             override fun hidden(done: (List<org.plainphone.device.PreviewHiddenApp>?) -> Unit) =
                 runtime.previewHiddenApps { rows -> runOnUiThread { done(rows) } }
             override fun add(app: org.plainphone.device.PreviewHiddenApp, pin: CharArray, active: () -> Boolean, done: (org.plainphone.device.AppAdditionResult) -> Unit) =
@@ -82,7 +84,7 @@ class PinAccessActivity : ComponentActivity() {
                     is AppsOnPhoneEvent.MoveUp -> editor.move(event.id, -1)
                     is AppsOnPhoneEvent.MoveDown -> editor.move(event.id, 1)
                 } }
-            PreviewAppsStage.Details -> if (app != null) PreviewAppDetailScreen(appsContext, app.name, state.selected.version, onBack = ::backApps) { editor.askRemove() }
+            PreviewAppsStage.Details -> if (app != null) PreviewAppDetailScreen(appsContext, app.name, state.selected.version, onBack = ::backApps, permissions = appPermissionsUi(state.permissions)) { editor.askRemove() }
             PreviewAppsStage.Confirm, PreviewAppsStage.Removed -> if (app != null)
                 AppReviewScreen(AppReviewUiState(appsContext, app, stage = if (state.stage == PreviewAppsStage.Confirm)
                     AppReviewStage.Remove else AppReviewStage.Removed, sending = state.busy, previewSubset = true)) {

@@ -131,4 +131,11 @@
     <string name="app_more_about">More about this app</string>
     <string name="session_unfinished">The update check isn\'t finished. You can start it again from the front page.</string>
     <string name="session_services_unchanged">Google Play services hasn\'t updated in 30 days. This is often fine. If it\'s still the same next month, mention it to %1$s.</string>
+    <string name="app_permissions_allowed">Allowed</string>
+    <string name="app_permissions_denied">Not allowed</string>
+    <string name="app_permissions_default">Not chosen yet</string>
+    <string name="app_permissions_unknown">Couldn\'t check</string>
+    <string name="app_permissions_mixed">Different choices</string>
+    <string name="app_permissions_none">%1$s doesn\'t ask to use anything here.</string>
+    <string name="app_permissions_line">%1$s: %2$s</string>
 </resources>

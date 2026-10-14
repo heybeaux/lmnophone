@@ -334,6 +334,13 @@ is hard at large text sizes) and opens its own page when tapped:
   "To change these, remove {app}, then add it again with "Add a hidden app" and choose again."
 - **Primary:** Remove from {user}'s phone (self-managed: **Remove {app}**)
 
+**Current choices (preview self-managed page)**
+- Each group: "{group}: Allowed", "{group}: Not allowed", "{group}: Not chosen yet", or "{group}: Couldn't check".
+- If a group has more than one checked state: "{group}: Different choices". A missing or unreadable member always says "Couldn't check".
+- No requested runtime permissions: "{app} doesn't ask to use anything here."
+- If the inventory cannot be read: "Couldn't check". This never stands in for an empty list.
+- The remove-and-add explanation is withheld until choosing at add time is in the installed build.
+
 **Remove confirm**
 - **Title:** Remove {app}?
 - **Body:** {app} will disappear from the home screen straight away. Nothing is deleted: if you add it again

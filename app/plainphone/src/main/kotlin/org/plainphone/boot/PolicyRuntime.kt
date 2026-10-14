@@ -395,6 +395,14 @@ class PolicyRuntime private constructor(private val context: Context) {
         done(pins.authenticate(pin))
     }
 
+    private val appPermissions by lazy { org.plainphone.device.approval.AndroidAppPermissions(context, admin) }
+    fun previewAppPermissions(id: String, done: (org.plainphone.device.approval.AppPermissionRead?) -> Unit) = dispatcher.post {
+        done(try {
+            if (id in preview.protectedApps() || preview.homeApps().none { it.first == id }) null
+            else appPermissions.read(id)
+        } catch (_: Exception) { null })
+    }
+
     /** T5 preview: all app-list reads/writes share the policy pass dispatcher. */
     fun previewApps(done: (List<org.plainphone.preview.PreviewAppRow>?) -> Unit) = dispatcher.post {
         val rows = try {

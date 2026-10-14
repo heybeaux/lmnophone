@@ -10,6 +10,7 @@ import org.plainphone.device.authority.PinAccessResult
 /** Facts and navigation only. Runtime owns fresh authority, the floor guard and every write. */
 data class PreviewAppRow(val id: String, val name: String, val version: String, val protected: Boolean)
 interface PreviewAppsPort {
+    fun permissions(id: String, done: (org.plainphone.device.approval.AppPermissionRead?) -> Unit) = done(null)
     fun hidden(done: (List<PreviewHiddenApp>?) -> Unit)
     fun add(app: PreviewHiddenApp, pin: CharArray, active: () -> Boolean, done: (AppAdditionResult) -> Unit)
     fun read(done: (List<PreviewAppRow>?) -> Unit)
@@ -21,7 +22,8 @@ data class PreviewAppsState(val stage: PreviewAppsStage = PreviewAppsStage.List,
     val rows: List<PreviewAppRow> = emptyList(), val selected: PreviewAppRow? = null,
     val busy: Boolean = false, val wrong: Boolean = false, val waitMillis: Long = 0,
     val loadFailed: Boolean = false, val hidden: List<PreviewHiddenApp> = emptyList(),
-    val selectedHidden: PreviewHiddenApp? = null)
+    val selectedHidden: PreviewHiddenApp? = null,
+    val permissions: org.plainphone.device.approval.AppPermissionRead? = null)
 
 class PreviewAppsFlow(private val port: PreviewAppsPort, private val changed: (PreviewAppsState) -> Unit) {
     var state = PreviewAppsState()
@@ -37,7 +39,11 @@ class PreviewAppsFlow(private val port: PreviewAppsPort, private val changed: (P
     fun select(id: String) {
         if (state.busy || state.stage != PreviewAppsStage.List) return
         val row = state.rows.firstOrNull { it.id == id && !it.protected } ?: return
-        show(state.copy(stage = PreviewAppsStage.Details, selected = row))
+        val request = ++generation
+        show(state.copy(stage = PreviewAppsStage.Details, selected = row, permissions = null, busy = true))
+        port.permissions(row.id) { read -> if (request == generation)
+            show(state.copy(permissions = read, busy = false)) }
+
     }
     fun move(id: String, delta: Int) {
         if (state.busy || state.stage != PreviewAppsStage.List || state.rows.none { it.id == id && !it.protected }) return
