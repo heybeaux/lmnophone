@@ -3,6 +3,8 @@
  */
 package org.plainphone.ui.home
 
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -143,7 +145,7 @@ private fun HomeTop(state: HomeUiState, noticeLines: Int, inlineClock: Boolean,
         state.notice?.let { noticeText(it) }?.let { text ->
             Spacer(Modifier.height(PlainphoneSpace.S6))
             val shape = RoundedCornerShape(PlainphoneSpace.BoxRadius)
-            Row(Modifier.fillMaxWidth().testTag("home-notice")
+            Row(Modifier.fillMaxWidth().testTag("home-notice").semantics { liveRegion = LiveRegionMode.Polite }
                 .background(PlainphoneColors.Fill1, shape)
                 .plainphoneAction(shape) { onEvent(HomeEvent.OpenNotice) }
                 .heightIn(min = 48.dp).padding(PlainphoneSpace.S4),

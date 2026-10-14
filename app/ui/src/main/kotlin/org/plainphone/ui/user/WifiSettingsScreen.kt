@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.ui.user
 
+import org.plainphone.ui.components.statusAnnouncement
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -41,11 +42,11 @@ fun WifiSettingsScreen(state: WifiSettingsUiState, onBack: () -> Unit,
         TaskScreen(title = stringResource(R.string.settings_wifi),
             back = stringResource(R.string.settings_back), onBack = onBack,
             primary = stringResource(R.string.wifi_show_nearby), onPrimary = onShow) {
-            if (state.locationOffFailed) Text(stringResource(R.string.wifi_location_off_failed), style = PlainphoneType.Body)
+            if (state.locationOffFailed) Text(stringResource(R.string.wifi_location_off_failed), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
             WifiConnection(state, onForget, onMessage)
             Text(stringResource(R.string.wifi_nearby), style = PlainphoneType.Row, modifier = Modifier.semantics { heading() })
             Text(stringResource(R.string.wifi_location_explanation), style = PlainphoneType.Body)
-            if (state.locationEnableFailed) Text(stringResource(R.string.wifi_nearby_unavailable), style = PlainphoneType.Body)
+            if (state.locationEnableFailed) Text(stringResource(R.string.wifi_nearby_unavailable), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
         }
         return
     }
@@ -54,9 +55,9 @@ fun WifiSettingsScreen(state: WifiSettingsUiState, onBack: () -> Unit,
         verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4)) {
         ScreenLink(stringResource(R.string.settings_back), onBack, centered = false)
         Text(stringResource(R.string.settings_wifi), style = PlainphoneType.Title, modifier = Modifier.semantics { heading() })
-        if (state.locationOffFailed) Text(stringResource(R.string.wifi_location_off_failed), style = PlainphoneType.Body)
+        if (state.locationOffFailed) Text(stringResource(R.string.wifi_location_off_failed), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
         if (state.readFailed) {
-            Text(stringResource(R.string.wifi_status_unavailable), style = PlainphoneType.Body)
+            Text(stringResource(R.string.wifi_status_unavailable), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
         } else if (!state.enabled) {
             Text(stringResource(R.string.wifi_off), style = PlainphoneType.Body)
         } else {
@@ -67,7 +68,7 @@ fun WifiSettingsScreen(state: WifiSettingsUiState, onBack: () -> Unit,
                 ScreenLink(stringResource(R.string.wifi_show_nearby), onShow, centered = false)
             }
             if (state.locationEnableFailed || (!state.locationOff && state.nearby == null))
-                Text(stringResource(R.string.wifi_nearby_unavailable), style = PlainphoneType.Body)
+                Text(stringResource(R.string.wifi_nearby_unavailable), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
             if (!state.locationOff) {
                 if (state.choices.isNotEmpty()) state.choices.forEach { choice ->
                     if (choice.connected) Text(choice.name, style = PlainphoneType.Body)
@@ -83,12 +84,12 @@ fun WifiSettingsScreen(state: WifiSettingsUiState, onBack: () -> Unit,
 
 @Composable
 private fun WifiConnection(state: WifiSettingsUiState, onForget: () -> Unit, onMessage: () -> Unit) {
-    if (state.forgetFailed) Text(stringResource(R.string.wifi_status_unavailable), style = PlainphoneType.Body)
+    if (state.forgetFailed) Text(stringResource(R.string.wifi_status_unavailable), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
     state.forgetResult?.let {
         Text(stringResource(when (it) {
             WifiForgetUiResult.Removed -> R.string.wifi_forget_removed
             WifiForgetUiResult.NotRemoved -> R.string.wifi_forget_not_removed
-        }), style = PlainphoneType.Body)
+        }), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
     }
     Text(when {
                 !state.connected -> stringResource(R.string.wifi_not_connected)

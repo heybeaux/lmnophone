@@ -38,10 +38,10 @@ class FamilyScreenshotTest(private val scale: Float, private val name: String) {
                 fun text(n: SemanticsNode) = n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
                 val picture = nodes.single { it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("Picture of $name") }
                 val title = nodes.single { text(it) == name }
-                val back = nodes.single { text(it).startsWith("‹") }
+                val back = nodes.single { text(it) == "Back" }
                 val record = nodes.single { text(it) == "Record" && it.config.contains(SemanticsActions.OnClick) }
                 assertTrue("Picture and name must precede Back", picture.positionInRoot.y < title.positionInRoot.y && title.positionInRoot.y < back.positionInRoot.y)
-                val messages = nodes.single { text(it) == "Messages with $name" && it.config.contains(SemanticsActions.OnClick) }
+                val messages = nodes.single { it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("Messages with $name, opens Messages") && it.config.contains(SemanticsActions.OnClick) }
                 assertEquals(listOf("Messages with $name, opens Messages"), messages.config[SemanticsProperties.ContentDescription])
                 assertTrue(title.positionInRoot.y < messages.positionInRoot.y)
                 assertTrue(messages.positionInRoot.y < back.positionInRoot.y)
@@ -84,9 +84,9 @@ class FamilyScreenshotTest(private val scale: Float, private val name: String) {
             Box(Modifier.onGloballyPositioned {
                 val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
                 fun text(n: SemanticsNode) = n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
-                val messages = nodes.single { text(it) == "Messages with $name" && it.config.contains(SemanticsActions.OnClick) }
+                val messages = nodes.single { it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("Messages with $name, opens Messages") && it.config.contains(SemanticsActions.OnClick) }
                 val listen = nodes.single { text(it) == "Listen to $name" && it.config.contains(SemanticsActions.OnClick) }
-                val back = nodes.single { text(it).startsWith("‹") }
+                val back = nodes.single { text(it) == "Back" }
                 val record = nodes.single { text(it) == "Record" && it.config.contains(SemanticsActions.OnClick) }
                 // Messages with scrolls above the pinned Listen: it fits the viewport and can be scrolled into it.
                 val scroll = nodes.single { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }

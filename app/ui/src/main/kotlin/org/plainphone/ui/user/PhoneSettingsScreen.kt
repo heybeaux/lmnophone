@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.ui.user
 
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -19,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.plainphone.ui.R
+import org.plainphone.ui.components.statusAnnouncement
 import org.plainphone.ui.components.ScreenLink
 import org.plainphone.ui.components.plainphoneAction
 import org.plainphone.ui.theme.*
@@ -52,6 +55,8 @@ fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEven
         .padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S6),
         verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S4)) {
         ScreenLink(stringResource(R.string.back_more), { onEvent(PhoneSettingsEvent.Back) }, centered = false)
+        Text(stringResource(R.string.more_phone_settings), style = PlainphoneType.Title,
+            modifier = Modifier.semantics { heading() })
         state.pendingChange?.let { change ->
             val spoken = stringResource(R.string.settings_waiting_spoken, change)
             val shape = RoundedCornerShape(PlainphoneSpace.BoxRadius)
@@ -90,9 +95,9 @@ fun PhoneSettingsScreen(state: PhoneSettingsUiState, onEvent: (PhoneSettingsEven
         if (state.showCommunicationCounts) {
             if (state.unsupportedApps) Text(stringResource(R.string.settings_counts_supported_apps), style = PlainphoneType.Small)
             if (state.missedCallsUnavailable) Text(stringResource(R.string.settings_calls_unavailable,
-                stringResource(R.string.app_name)), style = PlainphoneType.Small)
+                stringResource(R.string.app_name)), style = PlainphoneType.Small, modifier = Modifier.statusAnnouncement())
             if (state.unreadTextsUnavailable) Text(stringResource(R.string.settings_texts_unavailable,
-                stringResource(R.string.app_name)), style = PlainphoneType.Small)
+                stringResource(R.string.app_name)), style = PlainphoneType.Small, modifier = Modifier.statusAnnouncement())
         }
     }
 }
@@ -102,6 +107,7 @@ private fun SettingsRow(title: String, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).plainphoneAction(onClick = onClick)
         .padding(vertical = PlainphoneSpace.S2), verticalAlignment = Alignment.CenterVertically) {
         Text(title, style = PlainphoneType.Row, modifier = Modifier.weight(1f))
-        Text("›", style = PlainphoneType.Row.copy(color = PlainphoneColors.Ink3))
+        Text("›", style = PlainphoneType.Row.copy(color = PlainphoneColors.Ink3),
+            modifier = Modifier.clearAndSetSemantics {})
     }
 }

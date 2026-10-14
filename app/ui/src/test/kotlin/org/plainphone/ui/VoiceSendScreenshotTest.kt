@@ -56,12 +56,12 @@ class VoiceSendScreenshotTest(private val scale: Float, private val name: String
     /** V5: nothing to tap but Back. */
     @Test fun sending() = shot(VoiceUiState.Sending(person)) { texts, nodes ->
         assertTrue("Sending to $name" in texts)
-        assertEquals(listOf("‹ Back"), nodes.filter { it.clickable() && !label(it).startsWith("Picture of") }.map(::label))
+        assertEquals(listOf("Back"), nodes.filter { it.clickable() && !label(it).startsWith("Picture of") }.map(::label))
     }
     @Test fun sent() {
         val events = mutableListOf<VoiceUiEvent>()
         shot(VoiceUiState.Sent(person), { events += it }) { texts, nodes ->
-            assertTrue("Sent to $name ✓" in texts)
+            assertTrue("Sent to $name" in texts)
             val done = button(nodes, "Done", 96)
             events.clear(); done.config[SemanticsActions.OnClick].action!!.invoke()
             assertEquals(listOf<VoiceUiEvent>(VoiceUiEvent.Done), events.toList())
@@ -133,7 +133,7 @@ class VoiceSendScreenshotTest(private val scale: Float, private val name: String
                     // "Sent" means only that the network accepted it (UX V6).
                     for (word in listOf("deliver", "receiv", "heard")) assertFalse(word, texts.any { word in it.lowercase() })
                     assertFalse(texts.any { '!' in it })
-                    assertTrue(nodes.any { label(it).startsWith("‹ ") && it.clickable() })
+                    assertTrue(nodes.any { label(it) == "Back" && it.clickable() })
                     check(texts, nodes)
                     checked = true
                 }) { HomeTestFrame { VoicePracticeScreen(state, onEvent) } }

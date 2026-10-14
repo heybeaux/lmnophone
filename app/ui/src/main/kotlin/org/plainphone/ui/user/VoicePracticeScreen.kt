@@ -3,6 +3,7 @@
  */
 package org.plainphone.ui.user
 
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -119,14 +120,14 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
                 is VoiceUiState.Person -> {
                     PersonHeader(state.person, onEvent, showHearLink = !state.openMessages)
                     Notice(state.notice, state.person)
-                    if (state.messagesUnavailable) Text(stringResource(R.string.family_messages_unavailable), style = PlainphoneType.Body)
+                    if (state.messagesUnavailable) Text(stringResource(R.string.family_messages_unavailable), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
                     if (state.openMessages) MessagesButton(state.person, onEvent)
                 }
                 is VoiceUiState.Recording -> PersonHeader(state.person, onEvent, hearName = false)
                 is VoiceUiState.Review -> {
                     PersonHeader(state.person, onEvent)
                     Notice(state.notice, state.person)
-                    if (state.messagesUnavailable) Text(stringResource(R.string.family_messages_unavailable), style = PlainphoneType.Body)
+                    if (state.messagesUnavailable) Text(stringResource(R.string.family_messages_unavailable), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
                     if (state.openMessages) MessagesButton(state.person, onEvent)
                 }
                 is VoiceUiState.MicOff -> {
@@ -146,7 +147,7 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
                 }
                 is VoiceUiState.Sent -> {
                     PersonHeader(state.person, onEvent, title = false)
-                    SendTitle(stringResource(R.string.voice_sent, state.person.name))
+                    SendTitle(stringResource(R.string.voice_sent, state.person.name), hideTick = true)
                 }
                 is VoiceUiState.NotSent -> {
                     PersonHeader(state.person, onEvent, title = state.problem != VoiceUiSendProblem.NotSent)
@@ -239,10 +240,13 @@ fun VoicePracticeScreen(state: VoiceUiState, onEvent: (VoiceUiEvent) -> Unit) {
 }
 
 @Composable
-private fun SendTitle(text: String) {
+private fun SendTitle(text: String, hideTick: Boolean = false) {
     Text(text, style = PlainphoneType.Title.copy(hyphens = Hyphens.Auto, lineBreak = LineBreak.Heading),
         textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = PlainphoneSpace.S2)
-            .semantics { heading(); liveRegion = LiveRegionMode.Polite })
+            .clearAndSetSemantics {
+                this.text = AnnotatedString(if (hideTick) text.removeSuffix(" ✓") else text)
+                heading(); liveRegion = LiveRegionMode.Polite
+            })
 }
 
 @Composable
@@ -307,7 +311,10 @@ private fun PersonPicture(person: VoicePersonUi, size: Dp, decorative: Boolean =
     // The outer box owns the semantics; it clears the inner tap target's, so TalkBack gets one labelled action.
     Box(Modifier.size(size).then(if (decorative) Modifier.clearAndSetSemantics {} else Modifier.clearAndSetSemantics {
         contentDescription = description
-        if (onHearName != null) onClick(label = actionLabel) { onHearName(); true }
+        if (onHearName != null) {
+            role = Role.Button
+            onClick(label = actionLabel) { onHearName(); true }
+        }
     })) { Box(Modifier.fillMaxSize()
         .then(if (onHearName != null) Modifier.plainphoneAction(shape = CircleShape, onClick = onHearName) else Modifier)
         .background(if (person.pictureInInk) PlainphoneColors.Ink else PlainphoneColors.Fill2, CircleShape)
@@ -370,7 +377,8 @@ private fun SmallButton(word: String, symbol: Symbol?, description: String? = nu
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S3, Alignment.CenterHorizontally)) {
         if (symbol != null) SymbolMark(symbol, 20.dp, PlainphoneColors.Ink)
-        Text(word, style = PlainphoneType.Button, textAlign = TextAlign.Center)
+        Text(word, modifier = if (description != null) Modifier.clearAndSetSemantics {} else Modifier,
+            style = PlainphoneType.Button, textAlign = TextAlign.Center)
     }
 }
 

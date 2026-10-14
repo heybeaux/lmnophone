@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.ui.user
 
+import org.plainphone.ui.components.statusAnnouncement
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
@@ -41,7 +42,7 @@ fun WifiJoinScreen(state: WifiJoinUiState, onEvent: (WifiJoinEvent) -> Unit) {
         onPrimary = { onEvent(if (unsupported) WifiJoinEvent.Cancel else WifiJoinEvent.Connect) },
         primaryEnabled = !state.joining,
         secondary = if (unsupported) null else stringResource(R.string.wifi_cancel),
-        onSecondary = { onEvent(WifiJoinEvent.Cancel) }) {
+        onSecondary = { onEvent(WifiJoinEvent.Cancel) }, announcePrimary = state.joining) {
         when (state.kind) {
             WifiJoinKind.Unsupported -> Text(stringResource(R.string.wifi_unsupported), style = PlainphoneType.Body)
             WifiJoinKind.Open -> Text(stringResource(R.string.wifi_open), style = PlainphoneType.Body)
@@ -65,6 +66,6 @@ fun WifiJoinScreen(state: WifiJoinUiState, onEvent: (WifiJoinEvent) -> Unit) {
                 }
             }
         }
-        if (state.failed) Text(stringResource(R.string.wifi_join_failed), style = PlainphoneType.Body)
+        if (state.failed) Text(stringResource(R.string.wifi_join_failed), style = PlainphoneType.Body, modifier = Modifier.statusAnnouncement())
     }
 }

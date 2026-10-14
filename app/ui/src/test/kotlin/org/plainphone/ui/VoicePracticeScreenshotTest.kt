@@ -167,7 +167,7 @@ class VoicePracticeScreenshotTest(private val scale: Float, private val name: St
                     assertTrue("Practice – not sent" in texts)
                     assertFalse(nodes.any { label(it).contains("Send", ignoreCase = true) })
                     assertFalse(texts.any { '!' in it })
-                    assertTrue(nodes.any { label(it).startsWith("‹ ") && it.clickable() })
+                    assertTrue(nodes.any { label(it) in listOf("Back", "More") && it.clickable() })
                     check(texts, nodes)
                     checked = true
                 }) { HomeTestFrame { VoicePracticeScreen(state, onEvent) } }

@@ -17,7 +17,7 @@ fun WifiMessageScreen(state: WifiMessageUiState, onEvent: (WifiMessageEvent) -> 
         stringResource(if (state.canForget) R.string.wifi_forget else R.string.user_ok),
         { onEvent(if (state.canForget) WifiMessageEvent.ForgetNetwork else WifiMessageEvent.Ok) },
         secondary = if (state.canForget) stringResource(R.string.user_ok) else null,
-        onSecondary = { onEvent(WifiMessageEvent.Ok) }) {
+        onSecondary = { onEvent(WifiMessageEvent.Ok) }, announceTitle = true) {
         Text(stringResource(R.string.wifi_signal), style = PlainphoneType.Body)
         Text(stringResource(when (state.problem) {
             WifiProblem.SignInRequired -> R.string.wifi_signin
