@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource as s
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.plainphone.ui.R
@@ -41,7 +43,8 @@ sealed interface RequestEvent {
             val user = state.userName.withoutBidiControls()
             Text(if (user.isBlank() || user == s(R.string.current_phone_user)) s(R.string.requests_remove_unnamed)
                 else s(R.string.admin_request_remove, user), style = PlainphoneType.Body)
-            if (state.removeFailed) Text(s(R.string.requests_save_error), style = PlainphoneType.Body)
+            if (state.removeFailed) Text(s(R.string.requests_save_error), style = PlainphoneType.Body,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             state.rows.firstOrNull { it.id == state.removingId }?.let { Text(it.text, style = PlainphoneType.Body) }
         }
         return
@@ -119,9 +122,11 @@ sealed interface RecipientEvent {
         s(if (state.readFailed) R.string.user_ok else if (state.removing) R.string.requests_remove else if (state.confirming) R.string.waits_save else if (state.editing) R.string.admin_continue else if (state.number.isEmpty()) R.string.requests_set_up else R.string.requests_change),
         { event(if (state.readFailed) RecipientEvent.Back else if (state.editing || state.confirming || state.removing) RecipientEvent.Continue else RecipientEvent.Change) },
         primaryEnabled = !state.editing || state.canSave, back = s(R.string.admin_back), onBack = { event(RecipientEvent.Back) }) {
-        if (state.failed) Text(s(R.string.requests_save_error), style = PlainphoneType.Body)
+        if (state.failed) Text(s(R.string.requests_save_error), style = PlainphoneType.Body,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
         when {
-            state.readFailed -> Text(s(R.string.requests_recipient_read_error), style = PlainphoneType.Body)
+            state.readFailed -> Text(s(R.string.requests_recipient_read_error), style = PlainphoneType.Body,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             state.removing -> Text(s(R.string.requests_remove_confirm), style = PlainphoneType.Body)
             state.confirming -> {
                 Text(s(R.string.requests_recipient_confirm), style = PlainphoneType.Body)

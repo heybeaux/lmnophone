@@ -1,0 +1,10 @@
+
+org.plainphone.ui.PinSettingsTalkBackTest:............
+org.plainphone.ui.TrustedScreensTest:............
+org.plainphone.ui.RecoveryCodeTest:..
+
+Time: 89.137
+
+OK (26 tests)
+
+

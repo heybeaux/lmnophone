@@ -56,8 +56,8 @@ class TrustedScreensTest {
         show { PermissionsScreen(PermissionsUiState(context, "Bus times",
             listOf(PermissionChoice("mic", PermissionGroup.Microphone))), events::add) }
         compose.onNodeWithText("Next").assertIsNotEnabled()
-        compose.onNodeWithText("Allow").performScrollTo().performClick()
-        compose.onNodeWithText("Don't allow").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Microphone: Allow").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Microphone: Don't allow").performScrollTo().performClick()
         assertEquals(listOf(PermissionsEvent.Choose("mic", PermissionDecision.Allow), PermissionsEvent.Choose("mic", PermissionDecision.Deny)), events)
     }
     @Test fun waitingPhasesNeverImplySavedCancellation() {

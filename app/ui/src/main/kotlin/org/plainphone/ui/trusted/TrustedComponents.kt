@@ -30,18 +30,20 @@ import org.plainphone.ui.theme.*
 @Composable
 internal fun AdminFrame(context: AdminContext?, title: String, primary: String? = null,
     onPrimary: () -> Unit = {}, enabled: Boolean = true, secondary: String? = null,
-    secondaryEnabled: Boolean = true, onSecondary: () -> Unit = {}, content: @Composable ColumnScope.() -> Unit) {
+    secondaryEnabled: Boolean = true, onSecondary: () -> Unit = {}, announceTitle: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     val band = context?.let {
         it.trustedPersonName?.let { name -> stringResource(R.string.more_for, name.withoutBidiControls()) }
             ?: stringResource(R.string.more_your_settings)
     }
     TaskScreen(title, primary, onPrimary, primaryEnabled = enabled, secondary = secondary,
-        secondaryEnabled = secondaryEnabled, onSecondary = onSecondary, band = band, content = content)
+        secondaryEnabled = secondaryEnabled, onSecondary = onSecondary, band = band, announceTitle = announceTitle, content = content)
 }
 @Composable internal fun Words(text: String) = Text(text, style = PlainphoneType.Body)
+@Composable internal fun StatusWords(text: String) = Text(text, style = PlainphoneType.Body,
+    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
 @Composable internal fun Heading(text: String) = Text(text, style = PlainphoneType.Row, modifier = Modifier.semantics { heading() })
-@Composable internal fun ActionRow(text: String, detail: String? = null, enabled: Boolean = true, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().plainphoneAction(enabled = enabled, onClick = onClick)
+@Composable internal fun ActionRow(text: String, detail: String? = null, enabled: Boolean = true, position: String? = null, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().semantics { position?.let { stateDescription = it } }.plainphoneAction(enabled = enabled, onClick = onClick)
         .heightIn(min = 64.dp).padding(vertical = PlainphoneSpace.S3),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
@@ -53,14 +55,20 @@ internal fun AdminFrame(context: AdminContext?, title: String, primary: String? 
     }
 }
 @Composable internal fun Choice(text: String, selected: Boolean, enabled: Boolean = true,
-    spoken: String = text, onClick: () -> Unit) {
+    spoken: String = text, position: String? = null, onClick: () -> Unit) {
     val shape = RoundedCornerShape(percent = 50)
     Box(Modifier.fillMaxWidth().background(if (selected) PlainphoneColors.Ink else PlainphoneColors.Paper, shape)
         .border(PlainphoneSpace.Border, PlainphoneColors.Ink3, shape)
-        .semantics { this.selected = selected; contentDescription = spoken }
+        .semantics {
+            this.selected = selected
+            position?.let { stateDescription = it }
+            if (spoken == text) this.text = androidx.compose.ui.text.AnnotatedString(text)
+            else contentDescription = spoken
+        }
         .plainphoneAction(shape, enabled = enabled, filled = selected, onClick = onClick)
         .heightIn(min = 56.dp).padding(PlainphoneSpace.S4)) {
         Text(if (selected) stringResource(R.string.admin_choice_selected, text) else text,
+            modifier = Modifier.clearAndSetSemantics {},
             style = PlainphoneType.Button.copy(color = if (!enabled) PlainphoneColors.Line else if (selected) PlainphoneColors.Paper else PlainphoneColors.Ink))
     }
 }

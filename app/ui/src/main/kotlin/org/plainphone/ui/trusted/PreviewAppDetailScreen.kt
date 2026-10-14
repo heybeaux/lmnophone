@@ -28,14 +28,14 @@ fun PreviewAppDetailScreen(context: AdminContext, app: String, version: String, 
 @Composable
 fun PreviewAppsFailureScreen(context: AdminContext, onBack: () -> Unit) {
     AdminFrame(context, s(R.string.admin_apps), s(R.string.admin_back), onBack) {
-        Words(s(R.string.family_error))
+        StatusWords(s(R.string.family_error))
     }
 }
 
 @Composable
 fun AppPermissionLines(app: String, state: AppPermissionsUiState) {
     Heading(s(R.string.app_detail_permissions, app.withoutBidiControls()))
-    if (state.checkFailed) Words(s(R.string.app_permissions_unknown))
+    if (state.checkFailed) StatusWords(s(R.string.app_permissions_unknown))
     else if (state.rows.isEmpty()) Words(s(R.string.app_permissions_none, app.withoutBidiControls()))
     else state.rows.forEach { row ->
         val label = permissionLabel(row.id, row.label)
@@ -46,7 +46,8 @@ fun AppPermissionLines(app: String, state: AppPermissionsUiState) {
             PermissionStatus.Unknown -> R.string.app_permissions_unknown
             PermissionStatus.Mixed -> R.string.app_permissions_mixed
         })
-        Words(s(R.string.app_permissions_line, label, status))
+        if (row.status == PermissionStatus.Unknown) StatusWords(s(R.string.app_permissions_line, label, status))
+        else Words(s(R.string.app_permissions_line, label, status))
     }
 }
 
@@ -69,8 +70,8 @@ fun permissionLabel(id: String, fallback: String): String = when (id) {
 fun AppPermissionFailureScreen(context: AdminContext, app: String, groups: List<AppPermissionRow>,
     readback: AppPermissionsUiState, retry: () -> Unit) {
     AdminFrame(context, s(R.string.app_permissions_failed_title, app.withoutBidiControls()), s(R.string.app_permissions_retry), retry) {
-        if (groups.isEmpty()) Words(s(R.string.app_permissions_failed))
-        groups.forEach { Words(s(R.string.app_permissions_failed_group, permissionLabel(it.id, it.label))) }
+        if (groups.isEmpty()) StatusWords(s(R.string.app_permissions_failed))
+        groups.forEach { StatusWords(s(R.string.app_permissions_failed_group, permissionLabel(it.id, it.label))) }
         AppPermissionLines(app, readback)
     }
 }

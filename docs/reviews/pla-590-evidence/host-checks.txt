@@ -1,0 +1,7 @@
+:plainphone:testDebugUnitTest: 338 tests, 0 failures
+:plainphone:assembleDebug: BUILD SUCCESSFUL
+:plainphone:assembleDebugAndroidTest -PpreviewTestRunner=androidx.test.runner.AndroidJUnitRunner: BUILD SUCCESSFUL
+:ui:assembleDebugAndroidTest: BUILD SUCCESSFUL
+Focused Paparazzi (8 changed-path classes): 212 tests, 0 failures
+Full Paparazzi: see full-paparazzi.txt (11 established failures)
+APK SHA-256: 6270e50da5c5b50e63db7601ff72f931c250e7c912402a483ddcd34a3821f2c0
