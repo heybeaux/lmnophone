@@ -246,4 +246,6 @@
     <plurals name="recovery_wait_seconds"><item quantity="one">%d second</item><item quantity="other">%d seconds</item></plurals>
     <plurals name="recovery_wait_minutes"><item quantity="one">%d minute</item><item quantity="other">%d minutes</item></plurals>
     <string name="recovery_wait_hour">1 hour</string>
+    <string name="admin_needs_waiting">Waiting: %1$s</string>
+    <string name="admin_needs_attention">LMNOPhone needs attention</string>
 </resources>

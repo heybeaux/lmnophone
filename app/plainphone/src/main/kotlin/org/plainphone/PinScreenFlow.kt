@@ -149,6 +149,12 @@ class PinScreenFlow(private val port: PinScreenPort, private val changed: (PinPa
     fun newRecoveryCode() {
         if (state.page == PinPage.MENU && !state.busy) show(PinPageState(PinPage.RECOVERY_PIN))
     }
+    /** Apps abandons its own operation before this transition; recovery grants no app action. */
+    fun useRecoveryFromApps() {
+        if (state.busy || state.page != PinPage.MENU) return
+        enterPin()
+        useRecovery()
+    }
     fun useRecovery() {
         if (state.busy || state.page !in setOf(PinPage.ENTER, PinPage.LOCKED, PinPage.CHANGE_OLD, PinPage.OFF_PIN, PinPage.RECOVERY_PIN)) return
         clearCodes(); dropChange(); port.closeTurnOff(turnOffId); firstConfirmed = false
