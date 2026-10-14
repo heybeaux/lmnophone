@@ -1,0 +1,24 @@
+== wait 2x
+Your settings [60,137][1020,225]
+Your PIN [60,265][477,381]
+Enter your PIN to make changes on this phone. [60,401][1020,604]
+PIN [60,624][193,712]
+Forgot PIN? Use recovery code [60,1886][1020,2080]
+Continue [375,2143][706,2237]
+FAIL: 'OK' not found
+== after wait
+Your settings|Your PIN|Enter your PIN to make changes on this phone.|PIN|Forgot PIN? Use recovery code|Continue
+== after correct PIN: Your settings|Your settings|You hold the PIN. LMNOPhone adds waits so that distraction takes effort. It's friction, not a lock.|Voice messages|Add an app|Add a hidden app|Apps on this phone|Requests f
+== voice 2x
+‹ More [60,157][291,251]
+Practice – not sent [100,291][980,385]
+Who do you want to talk to? [60,445][1020,682]
+No people to show yet. This phone’s PIN holder can add people in More, then PIN settings, then Voice messages. [60,722][1020,1252]
+== recovery 2x
+Your settings [60,137][1020,225]
+Enter recovery code [60,265][982,381]
+Enter the recovery code you wrote down. Upper and lower case don't matter. [60,401][1020,822]
+This code only resets your PIN. It doesn't skip any wait. [60,842][1020,1154]
+Recovery code [60,1174][562,1262]
+This code can't get past Google's reset protection if the phone is ever wiped. Only your Google account can do that. [60,1476][1020,2006]
+Continue [375,2143][706,2237]

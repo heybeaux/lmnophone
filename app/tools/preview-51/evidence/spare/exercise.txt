@@ -1,0 +1,39 @@
+# Build 51 on the spare: family voice replies (PLA-527) + copy pass 2 (PLA-541) exercised (PLA-543)
+# 2026-10-14 07:24Z-07:46Z. Test PIN from the secrets file; no PIN in this record. No calls, no SMS/MMS.
+# PIN screens are FLAG_SECURE: layouts/ hold uiautomator text (and bounds at 2.0).
+0. Two installs, both in place: 937160fe (07:20:29Z, gate.log exit 0, 243 PASS) carried a release note
+   claiming Ask for an app wording that the device does not show (More > Ask opens RequestsScreen via
+   ShellEffect.OpenAppRequests; copy-2's ask_missing_recipient is only in AskForAppScreen, which no route
+   shows). Corrected note in c2181c02, rebuilt 399ab6b9, reinstalled 07:34:18Z (gate2.log exit 0, 242 PASS;
+   one fewer boot-log poll). Final build on the spare: 399ab6b9.
+1. About (layouts/02-04, 10): "Version 0.1.0-preview-51 (51)"; What's new = the two build 51 notes. No
+   "New since your last version": previous=50 was observed, so no build was skipped; ReleaseNotes.since(51,50)
+   minus the current note is empty (same as build 50). Older versions starts with Version 50 (its 3 notes),
+   then 49, 48 ... Read back release_current=51, release_previous=50 after the gate reboot, after the
+   reinstall and its reboot, and in after.txt. About text after the second reboot unchanged (10).
+2. Copy at 1.0 (06-09, 11) and 2.0 (12, bounds):
+   - Ask for an app, not set up (06): "Asking for an app isn't set up on this phone yet." / "This phone's PIN
+     holder can set it up in More, then PIN settings, then Who gets requests." plus the saved build 50 Not
+     sent row. Unchanged from build 50 (see 0); no recipient set (removed in the build 50 exercise).
+   - Voice messages empty state (07, 12): "No people to show yet. This phone's PIN holder can add people in
+     More, then PIN settings, then Voice messages." Fits at 2.0 (y 722-1252).
+   - Recovery entry (09, 12): "Enter the recovery code you wrote down. Upper and lower case don't matter."
+     No "when LMNOPhone was set up". Fits at 2.0, Continue at y 2143-2237.
+   - PIN wait (11): 5 wrong PINs -> "Too many tries" / "Wait 27 seconds before trying again. You can use the
+     recovery code you wrote down instead. Calls, texts and Emergency still work." At 1.0 only: switching to
+     2.0 recreated the PIN screen as the Enter page while the wait was still running, so the wait text was
+     not seen at 2.0 (the host golden covers it). After the wait, the correct PIN opened the PIN menu
+     (counter reset).
+3. Voice replies: no SIM service; Family is off with 0 people, so Home has no Family card (05: Maps, Camera,
+   Messages, Phone, More) and no screen shows "New message" (it appears only in the About note text).
+   Practice voice messages shows the empty state, as in build 50. Remove-erases-send-record not exercised:
+   no Family entry exists and I did not add one (host FamilyEraseTest.removingAPersonErasesDraftsSendRecord
+   AndPlayedState passes). One orphan family send record (from an earlier build) is still on the phone.
+   READ_SMS reads back granted (POLICY_FIXED). A real reply still needs a working SIM (H1).
+4. Saved data (before.txt -> after-install.txt -> after.txt): versionCode 50->51, release keys 50/49 ->
+   51/50, authority hash changed by the wrong-PIN counter and the correct-PIN reset (expected). Family store,
+   app order, starter list, counts toggle, drafts, send records, request store (124 bytes), played-state
+   (0 files), Wi-Fi hash, bonded 0, location 0, font 1.0, ring 5, ceDataInode 32221 all identical.
+Nonblocking: AskForAppScreen/ShellRoute.AskForApp is unreachable at runtime; the PIN wait page does not
+survive a text-size change (shows Enter; a PIN entered there still gets Delayed); "isn't" straight
+apostrophe beside curly "phone's" on the Ask not-set-up screen (from build 50).

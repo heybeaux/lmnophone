@@ -1,0 +1,5 @@
+after 1: Your settings|Your PIN|Enter your PIN to make changes on this phone.|That PIN isn't right. Try again.|PIN|Forgot PIN? Use recovery code|Continue
+after 2: Your settings|Your PIN|Enter your PIN to make changes on this phone.|That PIN isn't right. Try again.|PIN|Forgot PIN? Use recovery code|Continue
+after 3: Your settings|Your PIN|Enter your PIN to make changes on this phone.|That PIN isn't right. Try again.|PIN|Forgot PIN? Use recovery code|Continue
+after 4: Your settings|Your PIN|Enter your PIN to make changes on this phone.|That PIN isn't right. Try again.|PIN|Forgot PIN? Use recovery code|Continue
+after 5: Your settings|Too many tries|Wait 27 seconds before trying again. You can use the recovery code you wrote down instead. Calls, texts and Emergency still work.|OK|Use recovery code
