@@ -6,7 +6,7 @@
     <string name="family_back">‹ Back</string>
     <string name="family_title">Voice messages</string>
     <string name="family_for">Voice messages for %1$s</string>
-    <string name="family_off_body">%1$s can send and hear short voice messages, using pictures, without reading. Only people you add here can get them. You don\'t approve each message.</string>
+    <string name="family_off_body">With voice messages, %1$s can send and hear short messages, using pictures, without reading. Only people you add here can get them. You don\'t approve each message.</string>
     <string name="family_enable">Turn on voice messages</string>
     <string name="family_disable">Turn off voice messages</string>
     <string name="family_disable_confirm">Turn off voice messages? Messages %1$s hasn\'t sent will be erased.</string>

@@ -15,13 +15,13 @@
     <string name="admin_pin_fresh">LMNOPhone asks for your PIN for each change, so nobody else can make one if the phone is put down.</string>
     <string name="admin_pin_locked">Too many tries</string>
     <string name="admin_pin_locked_named">Too many tries for %1$s\'s PIN</string>
-    <string name="admin_pin_wait">Wait %1$s before trying again. You can use the recovery code now instead (the long code you wrote down when LMNOPhone was set up). Calls, texts and Emergency still work.</string>
+    <string name="admin_pin_wait">Wait %1$s before trying again. You can use the recovery code you wrote down instead. Calls, texts and Emergency still work.</string>
     <string name="admin_pin_wait_two">Wait %1$s before trying again. You can use %2$s\'s recovery code now instead. %3$s\'s PIN still works. Calls, texts and Emergency still work.</string>
     <string name="admin_recovery">Use recovery code</string>
     <string name="admin_choose_other">Choose someone else</string>
     <string name="admin_recovery_title">Enter recovery code</string>
     <string name="admin_recovery_named">%1$s\'s recovery code</string>
-    <string name="admin_recovery_body">This is the long code you wrote down when LMNOPhone was set up. Upper and lower case don\'t matter.</string>
+    <string name="admin_recovery_body">Enter the recovery code you wrote down. Upper and lower case don\'t matter.</string>
     <string name="admin_recovery_label">Recovery code</string>
     <string name="admin_recovery_google">This code can\'t get past Google\'s reset protection if the phone is ever wiped. Only your Google account can do that.</string>
     <string name="admin_recovery_self">This code only resets your PIN. It doesn\'t skip any wait.</string>

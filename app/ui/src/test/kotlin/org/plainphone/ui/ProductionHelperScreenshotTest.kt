@@ -33,12 +33,12 @@ class ProductionHelperScreenshotTest(private val scale: Float) {
     private val helper = "the person who set up LMNOPhone on this phone"
 
     @Test fun familyIntroNeutral() = shot("With voice messages, the person using this phone can send and hear short messages, using pictures, without reading.") {
-        FamilyScreen(FamilyUiState(context)) {}
+        FamilyScreen(FamilyUiState(AdminContext(androidx.compose.ui.res.stringResource(R.string.current_phone_user)))) {}
     }
     @Test fun familyIntroConfigured() = shot("With voice messages, Alex can send and hear short messages, using pictures, without reading.") {
         FamilyScreen(FamilyUiState(AdminContext("Alex"))) {}
     }
-    @Test fun pinWaitCode() = shot("You can use the recovery code you wrote down now instead.") {
+    @Test fun pinWaitCode() = shot("You can use the recovery code you wrote down instead.") {
         PinScreen(PinUiState(context, PinStage.Locked, wait = "30 seconds")) {}
     }
     @Test fun recoveryEntryCode() = shot("Enter the recovery code you wrote down. Upper and lower case don't matter.") {

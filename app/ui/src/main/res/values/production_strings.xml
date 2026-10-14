@@ -18,6 +18,6 @@
     <string name="current_phone_user">the person using this phone</string>
     <string name="more_pin_holder">PIN settings</string>
     <string name="ask_not_set_up">Not set up on this phone yet.</string>
-    <string name="ask_missing_recipient">Not set up on this phone yet. Nothing has been sent. The person who set up this phone can turn it on.</string>
-    <string name="voice_empty_family">No people to show yet. This phone’s PIN holder can add people in More, then PIN settings, then Family.</string>
+    <string name="ask_missing_recipient">No one is set to get requests. This phone’s PIN holder can set it up in More, then PIN settings, then Who gets requests.</string>
+    <string name="voice_empty_family">No people to show yet. This phone’s PIN holder can add people in More, then PIN settings, then Voice messages.</string>
 </resources>
