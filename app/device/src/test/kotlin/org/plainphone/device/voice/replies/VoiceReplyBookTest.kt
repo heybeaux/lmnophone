@@ -57,4 +57,32 @@ class VoiceReplyBookTest {
         assertTrue(VoiceReplyBook({ inbox }, { throw java.io.IOException("bad") }, store).unplayed().isEmpty())
         assertFalse(VoiceReplyBook({ inbox }, { throw java.io.IOException("bad") }, store).canPlay("sam"))
     }
+
+    @Test fun anUndownloadedPartIsNeitherOfferedNorAuthorized() {
+        val clip = book().unplayed().getValue("sam").single()
+        val unreadable = VoiceReplyBook({ inbox }, { family }, store, readable = { false })
+        assertTrue(unreadable.unplayed().isEmpty())
+        assertFalse(unreadable.canPlay("sam", clip))
+    }
+
+    @Test fun aNumberChangeOrDeletedPartInvalidatesTheCachedClip() {
+        val book = book()
+        val clip = book.unplayed().getValue("sam").single()
+        family = family.copy(people = listOf(FamilyPerson("sam", "Sam", "Sam", "555-0111")))
+        assertFalse(book.canPlay("sam", clip))
+        book.played("sam", clip)
+        assertTrue(store.played("sam").isEmpty())
+        family = family.copy(people = listOf(sam))
+        assertTrue(book.canPlay("sam", clip))
+        inbox = emptyList()
+        assertFalse(book.canPlay("sam", clip))
+    }
+
+    @Test fun aHeardClipMayBeReplayedWithoutBeingOfferedAsNew() {
+        val book = book()
+        val clip = book.unplayed().getValue("sam").single()
+        book.played("sam", clip)
+        assertTrue(book.unplayed().isEmpty())
+        assertTrue(book.canPlay("sam", clip))
+    }
 }

@@ -80,6 +80,7 @@ interface VoiceReplies {
     fun unplayed(): Map<String, List<ReplyClip>>
     /** Asked again right before a clip plays: the person may have been removed meanwhile. */
     fun canPlay(personId: String): Boolean
+    fun canPlay(personId: String, clip: ReplyClip): Boolean = clip.personId == personId && canPlay(personId)
     /** [clip] was heard to the end. */
     fun played(personId: String, clip: ReplyClip)
 }
@@ -138,6 +139,7 @@ class VoicePracticeController(
     private var newFrom: Set<String> = emptySet()
     /** Bumped whenever playback stops or another reply starts: a late speech or player callback then does nothing. */
     private var replyToken = 0
+    private val unavailableReplies = mutableSetOf<String>()
 
     private inner class Take : VoiceRecorder.Listener {
         var started = false
@@ -157,6 +159,7 @@ class VoicePracticeController(
      */
     fun open(place: VoicePlace? = null) {
         close()
+        unavailableReplies.clear()
         safely { store.prune() }
         val restored = place?.let(::restore)
         state = restored ?: VoiceState.ChoosePerson
@@ -179,15 +182,36 @@ class VoicePracticeController(
      * and an idle person page; never plays or speaks.
      */
     fun refreshReplies() {
+        unavailableReplies.clear()
         cacheReplies()
         val s = state
-        if (s is VoiceState.Person && s.listen?.playing != true && (s.listen == null || s.listen.finished)) {
-            replyQueue(s.person.id).takeIf { it.isNotEmpty() }?.let { state = s.copy(listen = ReplyListen(it)) }
+        if (s is VoiceState.Person) {
+            val listen = s.listen
+            val clip = listen?.queue?.getOrNull(listen.index)
+            if (listen != null && !mayPlayPerson(s.person.id)) {
+                clearReplies(s)
+                return
+            }
+            if (listen?.playing != true) {
+                val queue = replyQueue(s.person.id)
+                state = when {
+                    queue.isNotEmpty() -> s.copy(listen = ReplyListen(queue))
+                    listen != null && (!listen.finished || clip == null || !mayPlay(s.person.id, clip)) -> s.copy(listen = null)
+                    else -> s
+                }
+            } else if (clip != null && !mayPlay(s.person.id, clip)) {
+                unavailableReplies += clip.key
+                cacheReplies()
+                dispatch(VoiceEvent.ReplyUnavailable)
+                return
+            }
         }
         onChange(state)
     }
 
-    private fun unplayed(): Map<String, List<ReplyClip>> = try { replies?.unplayed() ?: emptyMap() } catch (_: Exception) { emptyMap() }
+    private fun unplayed(): Map<String, List<ReplyClip>> = try {
+        replies?.unplayed().orEmpty().mapValues { (_, clips) -> clips.filterNot { it.key in unavailableReplies } }
+    } catch (_: Exception) { emptyMap() }
     private fun replyQueue(personId: String): List<ReplyClip> = unplayed()[personId].orEmpty()
     private fun cacheReplies() { newFrom = unplayed().filterValues { it.isNotEmpty() }.keys.toSet() }
 
@@ -279,10 +303,27 @@ class VoicePracticeController(
         val s = state as? VoiceState.Person ?: return true
         val listen = s.listen ?: return true
         if (listen.playing) return true
-        if (replies?.let { r -> try { r.canPlay(s.person.id) } catch (_: Exception) { false } } == true) return true
-        state = s.copy(listen = null)
-        onChange(state)
+        val clip = listen.queue.getOrNull(listen.index)
+        if (clip != null && mayPlay(s.person.id, clip)) return true
+        clearReplies(s)
         return false
+    }
+
+    private fun mayPlay(personId: String, clip: ReplyClip): Boolean = try {
+        replies?.canPlay(personId, clip) == true
+    } catch (_: Exception) { false }
+
+    private fun mayPlayPerson(personId: String): Boolean = try {
+        replies?.canPlay(personId) == true
+    } catch (_: Exception) { false }
+
+    private fun clearReplies(person: VoiceState.Person) {
+        stopPlayer()
+        safely { speaker.stop() }
+        safely { gate.release() }
+        state = person.copy(listen = null)
+        cacheReplies()
+        onChange(state)
     }
 
     /** Coming back to a person's page from elsewhere (Review after Delete, a too-short take...) offers their replies. */
@@ -330,7 +371,8 @@ class VoicePracticeController(
 
     /**
      * Says who the reply is from, then plays it. Audio focus first, so nothing is said or played during a call.
-     * A failure stops quietly and the reply stays new. Callbacks from an earlier clip, or after leaving, do nothing.
+     * An unreadable reply is skipped quietly, without marking it heard. Membership is checked before each clip
+     * and again after speech. Callbacks from an earlier clip, or after leaving, do nothing.
      */
     private fun playReply(effect: VoiceEffect.PlayReply) {
         val token = ++replyToken
@@ -339,12 +381,28 @@ class VoicePracticeController(
             s.person.id == effect.person.id && listen != null && listen.playing &&
                 listen.queue.getOrNull(listen.index)?.key == effect.clip.key
         } == true
-        fun failed() { if (live()) dispatch(VoiceEvent.PlaybackFailed) }
-        if (!acquire()) { failed(); return }
+        fun unavailable() {
+            if (live()) {
+                unavailableReplies += effect.clip.key
+                cacheReplies()
+                dispatch(VoiceEvent.ReplyUnavailable)
+            }
+        }
+        fun authorized(): Boolean {
+            if (!mayPlayPerson(effect.person.id)) {
+                (state as? VoiceState.Person)?.let(::clearReplies)
+                return false
+            }
+            if (!mayPlay(effect.person.id, effect.clip)) { unavailable(); return false }
+            return true
+        }
+        if (!authorized()) return
+        if (!acquire()) { if (live()) dispatch(VoiceEvent.PlaybackFailed); return }
         val start = {
-            if (live()) try {
-                player.playReply(effect.clip, onDone = { if (live()) dispatch(VoiceEvent.PlaybackEnded) }, onError = ::failed)
-            } catch (_: Exception) { failed() }
+            if (live() && authorized()) try {
+                player.playReply(effect.clip,
+                    onDone = { if (live() && authorized()) dispatch(VoiceEvent.PlaybackEnded) }, onError = ::unavailable)
+            } catch (_: Exception) { unavailable() }
         }
         try { speaker.speakThen(effect.prompt, effect.person, start) } catch (_: Exception) { start() }
     }

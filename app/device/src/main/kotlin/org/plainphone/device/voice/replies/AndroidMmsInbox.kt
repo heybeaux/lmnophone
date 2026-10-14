@@ -13,7 +13,7 @@ import android.telephony.TelephonyManager
 /**
  * The phone's MMS inbox, read with READ_SMS only (PLA-458 spike, PLA-527). LMNOPhone isn't the SMS app and never
  * writes here. Only downloaded received messages (m-retrieve-conf, m_type 132) that have an audio part: one query
- * for the newest inbox rows, one for every audio part, and one sender lookup per message with audio. Never throws
+ * for inbox rows, one for every audio part, and one sender lookup per message with audio. Never throws
  * and never logs: an unreadable store reads as empty. Without READ_SMS, the Device Owner grants it to itself first
  * (as the send path does for SEND_SMS); readback decides.
  */
@@ -21,6 +21,10 @@ class AndroidMmsInbox(context: Context) {
     private val app = context.applicationContext
 
     fun read(): List<MmsInboxMessage> = try { query() } catch (_: Exception) { emptyList() }
+
+    fun readable(partId: Long): Boolean = try {
+        app.contentResolver.openInputStream(partUri(partId))?.use { it.read() != -1 } == true
+    } catch (_: Exception) { false }
 
     /** The phone's own country rules for comparing a national number with an international one. Null: unknown. */
     fun e164(number: String): String? = try {
@@ -37,7 +41,7 @@ class AndroidMmsInbox(context: Context) {
             val id = c.getColumnIndexOrThrow("_id")
             val date = c.getColumnIndexOrThrow("date")
             // The provider stores seconds.
-            while (c.moveToNext() && inbox.size < MAX_MESSAGES) inbox[c.getLong(id)] = c.getLong(date) * 1_000
+            while (c.moveToNext()) inbox[c.getLong(id)] = c.getLong(date) * 1_000
         }
         if (inbox.isEmpty()) return emptyList()
         val parts = HashMap<Long, MutableList<MmsPart>>()
@@ -78,7 +82,7 @@ class AndroidMmsInbox(context: Context) {
     companion object {
         private val MMS: Uri = Uri.parse("content://mms")
         private val PARTS: Uri = Uri.parse("content://mms/part")
-        /** Enough for the latest five from each of the family list's people. */
+        /** Legacy scan size; no global cutoff may discard the family's latest five. */
         const val MAX_MESSAGES = 100
         fun partUri(partId: Long): Uri = Uri.parse("content://mms/part/$partId")
     }

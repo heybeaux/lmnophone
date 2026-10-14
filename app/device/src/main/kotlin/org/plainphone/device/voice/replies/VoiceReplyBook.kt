@@ -15,17 +15,23 @@ class VoiceReplyBook(
     private val family: () -> FamilyList,
     private val store: ReplyPlayedStore,
     private val e164: (String) -> String? = { null },
+    private val readable: (Long) -> Boolean = { true },
 ) : VoiceReplies {
     override fun unplayed(): Map<String, List<ReplyClip>> = try {
-        ReplySelector.select(inbox(), family(), store::played, e164)
+        ReplySelector.select(inbox(), family(), store::played, e164, readable)
     } catch (_: Exception) { ReplyClips(emptyMap()) }
 
     override fun canPlay(personId: String): Boolean = try {
         family().let { list -> list.enabled && list.people.any { it.id == personId } }
     } catch (_: Exception) { false }
 
+    override fun canPlay(personId: String, clip: ReplyClip): Boolean = try {
+        clip.personId == personId && ReplySelector.select(inbox(), family(), { emptySet() }, e164, readable)
+            .get(personId).orEmpty().any { it.key == clip.key && it.partId == clip.partId }
+    } catch (_: Exception) { false }
+
     override fun played(personId: String, clip: ReplyClip) {
-        if (clip.personId != personId || !canPlay(personId)) return
+        if (!canPlay(personId, clip)) return
         try { store.markPlayed(personId, clip.key) } catch (_: Exception) { }
     }
 }

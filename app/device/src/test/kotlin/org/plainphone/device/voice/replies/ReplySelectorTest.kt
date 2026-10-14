@@ -9,6 +9,22 @@ import org.plainphone.device.voice.FamilyPerson
 import org.plainphone.device.voice.send.VoiceNumber
 
 class ReplySelectorTest {
+    @Test fun unreadableAudioPartsAreSkippedWithoutHidingOtherReadableParts() {
+        val messages = listOf(
+            msg(1, "5550100", 10L to "audio/mp4"),
+            msg(2, "5550100", 20L to "audio/amr", 21L to "audio/mp4"),
+            msg(3, "5550199", 30L to "audio/mp4"),
+        )
+        val checked = mutableListOf<Long>()
+        val out = ReplySelector.select(messages, family, { emptySet() }, nanp) { partId ->
+            checked += partId
+            if (partId == 10L) throw java.io.IOException("unreadable")
+            partId == 21L
+        }
+        assertEquals(listOf(21L), out.getValue("sam").map { it.partId })
+        assertEquals(listOf(10L, 20L, 21L), checked)
+    }
+
     private val sam = FamilyPerson("sam", "Sam", "Sam", "555-0100")
     private val jo = FamilyPerson("jo", "Jo", "Jo", "(604) 555-0111")
     private val family = FamilyList(enabled = true, people = listOf(sam, jo))

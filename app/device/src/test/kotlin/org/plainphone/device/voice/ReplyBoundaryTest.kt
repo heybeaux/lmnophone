@@ -18,9 +18,10 @@ class ReplyBoundaryTest {
     private var holdSpeech = false
     private var pendingSpeech: (() -> Unit)? = null
     private var finish: (() -> Unit)? = null
-    private var failFirst = false
+    private val unreadable = mutableSetOf<Long>()
     private val attempted = mutableListOf<Long>()
     private val heard = mutableListOf<Long>()
+    private val prompts = mutableListOf<VoicePrompt>()
     private val replies = object : VoiceReplies {
         override fun unplayed() = if (allowed) mapOf("sam" to queue) else emptyMap()
         override fun canPlay(personId: String) = allowed
@@ -36,13 +37,13 @@ class ReplyBoundaryTest {
             override fun play(file: File, onDone: () -> Unit, onError: () -> Unit) = error("not a draft")
             override fun playReply(clip: ReplyClip, onDone: () -> Unit, onError: () -> Unit) {
                 attempted += clip.partId
-                if (failFirst && clip.partId == 1L) throw IllegalStateException("unreadable")
+                if (clip.partId in unreadable) throw IllegalStateException("unreadable")
                 finish = onDone
             }
             override fun stop() { finish = null }
         }
         val speaker = object : VoiceSpeaker {
-            override fun speak(prompt: VoicePrompt, person: VoicePerson?) { }
+            override fun speak(prompt: VoicePrompt, person: VoicePerson?) { prompts += prompt }
             override fun speakThen(prompt: VoicePrompt, person: VoicePerson?, then: () -> Unit) {
                 if (holdSpeech) pendingSpeech = then else then()
             }
@@ -60,11 +61,14 @@ class ReplyBoundaryTest {
     }
 
     @Test fun unreadableFirstClipDoesNotPreventTheNextReadableClip() {
-        failFirst = true
+        unreadable += 1L
         val controller = controller()
         controller.dispatch(VoiceEvent.Listen)
         assertEquals(listOf(1L, 2L), attempted)
         assertTrue(heard.isEmpty())
+        finish!!()
+        assertEquals(listOf(2L), heard)
+        assertTrue((controller.state as VoiceState.Person).listen!!.finished)
     }
 
     @Test fun removalWhileTheSpokenIntroIsPendingPreventsPlayback() {
@@ -91,5 +95,31 @@ class ReplyBoundaryTest {
         controller.refreshReplies()
         assertNull((controller.state as VoiceState.Person).listen)
         assertFalse(controller.hasNewMessage("sam"))
+    }
+
+    @Test fun refreshDuringPlaybackAfterRemovalStopsAndDropsTheQueue() {
+        val controller = controller()
+        controller.dispatch(VoiceEvent.Listen)
+        allowed = false
+        controller.refreshReplies()
+        assertNull(finish)
+        assertNull((controller.state as VoiceState.Person).listen)
+    }
+
+    @Test fun unreadableLastClipPreservesReplayOfTheLastActuallyHeard() {
+        unreadable += 2L
+        val controller = controller()
+        controller.dispatch(VoiceEvent.Listen)
+        finish!!()
+        assertEquals(listOf(1L), heard)
+        assertTrue((controller.state as VoiceState.Person).listen!!.finished)
+        assertEquals(VoicePrompt.ReplyEnd, prompts.last())
+        controller.dispatch(VoiceEvent.Listen)
+        assertEquals(listOf(1L, 2L, 1L), attempted)
+    }
+
+    @Test fun voiceStateDiagnosticsNeverIncludeTheConfiguredName() {
+        assertFalse(person.toString().contains("Sam"))
+        assertFalse(VoiceState.Person(person, listen = ReplyListen(queue)).toString().contains("Sam"))
     }
 }

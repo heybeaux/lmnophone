@@ -12,7 +12,7 @@ import org.plainphone.device.voice.send.VoiceNumber
  *   both numbers reduce to the same digits ([VoiceNumber.normalize], the rule Send uses), or when the phone's
  *   own country rules ([e164]) turn both into the same international number. A shared ending never matches;
  * - only audio parts (`audio/...`, any codec). A message without one shows nothing here; with several, the
- *   lowest part id (the first) is the message;
+ *   lowest readable part id (the first) is the message;
  * - per person, the latest [LATEST] messages, played or not; the unplayed ones of those, oldest first.
  */
 object ReplySelector {
@@ -20,7 +20,7 @@ object ReplySelector {
     private const val ADDRESS_TYPE = "/TYPE="
 
     fun select(messages: List<MmsInboxMessage>, family: FamilyList, played: (String) -> Set<String>,
-        e164: (String) -> String?): ReplyClips {
+        e164: (String) -> String?, readable: (Long) -> Boolean = { true }): ReplyClips {
         if (!family.enabled || family.people.isEmpty()) return ReplyClips(emptyMap())
         val international = { raw: String -> try { e164(raw) } catch (_: Exception) { null } }
         val people = family.people.mapNotNull { person -> address(person.number, international)?.let { person to it } }
@@ -29,7 +29,7 @@ object ReplySelector {
             val sender = address(message.from?.substringBefore(ADDRESS_TYPE), international) ?: continue
             val person = people.firstOrNull { it.second.matches(sender) }?.first ?: continue
             val part = message.parts.filter { it.contentType?.trim()?.lowercase()?.startsWith("audio/") == true }
-                .minByOrNull { it.id } ?: continue
+                .sortedBy { it.id }.firstOrNull { try { readable(it.id) } catch (_: Exception) { false } } ?: continue
             byPerson.getOrPut(person.id) { mutableListOf() } += ReplyClip(ReplyKey.of(message.id, message.dateMs),
                 person.id, message.dateMs, part.id, part.contentType!!.trim().lowercase())
         }

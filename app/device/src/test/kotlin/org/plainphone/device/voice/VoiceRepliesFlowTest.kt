@@ -225,23 +225,24 @@ class VoiceRepliesFlowTest {
         assertEquals(1, recorder.starts)
     }
 
-    @Test fun anUnreadableClipStopsQuietlyAndStaysNew() {
+    @Test fun unreadableClipsAreSkippedQuietlyWithoutBeingMarkedHeard() {
         player.fail = true
         val c = controller()
         c.dispatch(Choose(sam)); speaker.said.clear()
         c.dispatch(Listen)
-        val listen = (c.state as VoiceState.Person).listen!!
-        assertFalse(listen.playing)
+        assertNull((c.state as VoiceState.Person).listen)
         assertTrue(replies.playedLog.isEmpty())
+        assertFalse(c.hasNewMessage("sam"))
         assertFalse(speaker.said.any { it.startsWith("CouldNotPlay") })
         assertFalse(gate.held)
     }
 
     @Test fun playerErrorMidClipStopsQuietly() {
+        replies.clips = mapOf("sam" to listOf(clip(1)))
         val c = controller()
         c.dispatch(Choose(sam)); c.dispatch(Listen); speaker.said.clear()
         player.error!!.invoke()
-        assertFalse((c.state as VoiceState.Person).listen!!.playing)
+        assertNull((c.state as VoiceState.Person).listen)
         assertTrue(speaker.said.isEmpty())
         assertTrue(replies.playedLog.isEmpty())
     }

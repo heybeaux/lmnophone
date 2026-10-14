@@ -183,11 +183,12 @@ class VoicePracticeHost(context: Context, admin: ComponentName, private val help
     private val main = Handler(Looper.getMainLooper())
     private val inbox = AndroidMmsInbox(app)
     private val replyBook = VoiceReplyBook(inbox::read, { familyStore.read() },
-        ReplyPlayedStore(File(app.noBackupFilesDir, ReplyPlayedStore.DIR)), inbox::e164)
+        ReplyPlayedStore(File(app.noBackupFilesDir, ReplyPlayedStore.DIR)), inbox::e164, inbox::readable)
     /** Family replies only (PLA-527): the practice never reads the message store. */
     private val replies = object : VoiceReplies {
         override fun unplayed(): Map<String, List<ReplyClip>> = if (family) replyBook.unplayed() else emptyMap()
         override fun canPlay(personId: String): Boolean = family && replyBook.canPlay(personId)
+        override fun canPlay(personId: String, clip: ReplyClip): Boolean = family && replyBook.canPlay(personId, clip)
         override fun played(personId: String, clip: ReplyClip) { if (family) replyBook.played(personId, clip) }
     }
 

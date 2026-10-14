@@ -463,6 +463,16 @@ defaults; `AndroidVoicePlayer(context)` plays the part URI directly, without a c
 `VoiceUiEvent.Listen`. The practice never reads the message store. RCS replies stay in
 Messages. No policy-engine, emergency-floor or lock-task interface changes.
 
+`VoiceReplies.canPlay(personId, clip)` supplements the existing membership-only
+overload with a default for existing adapters. `VoiceReplyBook` verifies the current
+sender, part and latest-five membership, including replayed clips, before each start
+and after narration. Its optional `readable(partId)` filter comes from
+`AndroidMmsInbox.readable`, which opens the part read-only and rejects missing or
+empty audio. The inbox scan has no unrelated-message cutoff. `ReplyUnavailable`
+skips an unavailable clip without marking it heard; refused audio focus does not
+discard valid clips. A live refresh drops removed/off queues and revalidates idle
+Listen/Play again without starting playback.
+
 ## T5 preview app-list seam (PLA-514)
 
 `PreviewAppListStore` in `:device` preserves the existing credential-encrypted

@@ -14,7 +14,9 @@ import org.plainphone.device.voice.send.SendView
  * The controller drops both unless real sending is on and the person has a number, so the practice still sends nothing.
  */
 /** Never carries a phone number: the sender looks it up by [id] when Send is tapped ([VoiceNumbers]). */
-data class VoicePerson(val id: String, val name: String, val spokenName: String = name)
+data class VoicePerson(val id: String, val name: String, val spokenName: String = name) {
+    override fun toString() = "VoicePerson(redacted)"
+}
 
 /** Synthetic people for the practice. Never real names, photos or numbers. */
 object VoicePeople {
@@ -97,6 +99,7 @@ sealed interface VoiceEvent {
     data object Listen : VoiceEvent
     data object PlaybackEnded : VoiceEvent
     data object PlaybackFailed : VoiceEvent
+    data object ReplyUnavailable : VoiceEvent
     data object RecordAgain : VoiceEvent
     data object Delete : VoiceEvent
     data object Back : VoiceEvent
@@ -269,6 +272,15 @@ object VoicePractice {
             VoiceEvent.Stop, is VoiceEvent.Interrupted -> if (playing) Transition(quiet, stop) else Transition(s)
             // Unreadable or gone: stop quietly. The person can still open Messages (UX V12).
             VoiceEvent.PlaybackFailed -> if (playing) Transition(quiet) else Transition(s)
+            VoiceEvent.ReplyUnavailable -> if (!playing || listen == null) Transition(s) else {
+                val remaining = listen.queue.filterIndexed { index, _ -> index != listen.index }
+                if (!listen.finished && listen.index < remaining.size) Transition(
+                    s.copy(listen = listen.copy(queue = remaining)),
+                    listOf(VoiceEffect.StopPlayback, VoiceEffect.PlayReply(s.person, remaining[listen.index], VoicePrompt.ReplyNext)))
+                else Transition(s.copy(listen = remaining.takeIf { it.isNotEmpty() }?.let {
+                    listen.copy(queue = it, index = it.lastIndex, playing = false, completed = it.size)
+                }), listOf(VoiceEffect.StopPlayback) + if (remaining.isNotEmpty()) speak(VoicePrompt.ReplyEnd, s.person) else emptyList())
+            }
             VoiceEvent.PlaybackEnded -> if (!playing || listen == null) Transition(s) else {
                 val heard = VoiceEffect.ReplyPlayed(s.person.id, listen.queue[listen.index])
                 val next = listen.index + 1
