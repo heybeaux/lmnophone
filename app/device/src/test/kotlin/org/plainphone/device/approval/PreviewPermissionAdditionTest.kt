@@ -49,6 +49,16 @@ class PreviewPermissionAdditionTest {
         assertTrue(subject.add(snapshot, choices, charArrayOf('1')) { true } is AppAdditionResult.PermissionFailed)
         assertTrue("rehide" in events)
     }
+    @Test fun pauseDuringSlowSnapshotDoesNotWrite() {
+        var reads = 0
+        var writes = 0
+        val subject = PreviewPermissionAddition({ _, _ -> PinAccessResult.Open }, { true },
+            { reads++; if (reads > 1) active = false; snapshot },
+            { true }, { true }, { _, _ -> writes++; PermissionAttempt(GrantWrite.DONE) },
+            { AppPermissionRead(snapshot, emptyMap()) }, { error("must not commit") }, { error("must not apply") })
+        assertEquals(AppAdditionResult.Cancelled, subject.add(snapshot, choices, charArrayOf('1')) { active })
+        assertEquals(0, writes)
+    }
     @Test fun roleChangeAfterSnapshotBlocksTheNextGrant() {
         var reads = 0
         var writes = 0
