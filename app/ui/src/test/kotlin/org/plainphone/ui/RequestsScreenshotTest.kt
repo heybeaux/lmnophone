@@ -11,12 +11,41 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.plainphone.ui.requests.*
 import org.plainphone.ui.theme.PlainphoneTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.ViewRootForTest
+import androidx.compose.ui.semantics.*
+import org.junit.Assert.*
 
 @RunWith(Parameterized::class)
 class RequestsScreenshotTest(private val scale: Float) {
     @get:Rule val paparazzi = Paparazzi(deviceConfig = DeviceConfig.PIXEL_5.copy(screenWidth = 360, screenHeight = 640,
         xdpi = 160, ydpi = 160, density = Density.MEDIUM, fontScale = scale, locale = "en"), showSystemUi = false)
-    private fun shot(state: RequestsUiState) = paparazzi.snapshot { PlainphoneTheme { HomeTestFrame { RequestsScreen(state, {}) } } }
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+    private fun shot(state: RequestsUiState) {
+        var checked = false
+        paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+            val view = LocalView.current as ViewRootForTest
+            Box(Modifier.onGloballyPositioned {
+                val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
+                fun text(n: SemanticsNode) = n.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
+                val button = nodes.single { text(it) == (if (state.isSetUp && state.result == null && !state.historyOnly) "Send" else "OK") && it.config.contains(SemanticsActions.OnClick) }
+                val scroll = nodes.single { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }
+                val range = scroll.config[SemanticsProperties.VerticalScrollAxisRange]
+                assertTrue("Scroll must end above the button", scroll.boundsInRoot.bottom <= button.boundsInRoot.top)
+                assertTrue("The whole action must fit", button.boundsInRoot.height >= button.size.height - 1f)
+                state.rows.lastOrNull()?.let { last ->
+                    val row = nodes.single { text(it) == last.text }
+                    assertTrue("Whole request reachable by scrolling", row.positionInRoot.y + row.size.height - range.maxValue() <= scroll.boundsInRoot.bottom + 1f)
+                }
+                assertTrue(nodes.map(::text).none { it.contains("Delivered") })
+                checked = true
+            }) { RequestsScreen(state, {}) }
+        } } }
+        assertTrue(checked)
+    }
     @Test fun unavailableHistory() = shot(RequestsUiState(historyOnly = true, result = RequestUiStatus.StorageError))
     @Test fun notSetUp() = shot(RequestsUiState())
     @Test fun composeLongText() = shot(RequestsUiState(isSetUp = true, recipientName = "Sam Jo Alex Sam Jo Alex", message = "The bus times app, to check the ferry bus. ".repeat(5), canSend = true))

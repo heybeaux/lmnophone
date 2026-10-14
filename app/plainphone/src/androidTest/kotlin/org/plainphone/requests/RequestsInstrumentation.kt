@@ -28,9 +28,11 @@ class RequestsInstrumentation : Instrumentation() {
     }
     override fun onStart() {
         val output = Bundle()
+        var step = "emulator"
         try {
             check(Build.HARDWARE in setOf("ranchu", "goldfish"))
             check(Settings.Global.getInt(targetContext.contentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) == 1)
+            step = "engine"
             val engine = RequestEngine.get(targetContext)
             if (!readOnly) {
                 check(engine.view().requests.isEmpty() && engine.recipient() == null)
@@ -38,33 +40,41 @@ class RequestsInstrumentation : Instrumentation() {
                 val outcome = engine.submit("airplane-test", "The bus times app")
                 check(outcome.status == RequestStatus.NoSignal)
             }
+            step = "readback"
             check(engine.recipient() == RequestRecipient("Sam", "555-0100"))
             val row = engine.view().requests.first { it.id == "airplane-test" }
             check(row.text == "The bus times app" && row.status == RequestStatus.NoSignal)
+            step = "activity"
             val activity = startActivitySync(Intent(targetContext, RequestsActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra(RequestsActivity.HISTORY, !uiSend))
             waitForIdleSync()
             if (uiSend) {
                 val before = engine.view().requests.size
+                step = "field"
                 val field = waitNode { it.contentDescription?.toString() == "Your message" && it.isEditable }
                 check(field.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT,
                     Bundle().apply { putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "Maps for walking") }))
-                val send = waitNode { it.text?.toString() == "Send" && it.isClickable && it.isEnabled }
-                check(send.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+                step = "send"
+                val label = waitNode { it.text?.toString() == "Send" }
+                val bounds = android.graphics.Rect(); label.getBoundsInScreen(bounds)
+                check(!bounds.isEmpty)
+                waitForIdleSync(); Thread.sleep(250)
+                val time = android.os.SystemClock.uptimeMillis()
+                sendPointerSync(android.view.MotionEvent.obtain(time, time, android.view.MotionEvent.ACTION_DOWN,
+                    bounds.exactCenterX(), bounds.exactCenterY(), 0))
+                sendPointerSync(android.view.MotionEvent.obtain(time, time + 50, android.view.MotionEvent.ACTION_UP,
+                    bounds.exactCenterX(), bounds.exactCenterY(), 0))
+                step = "result"
+                repeat(40) { if (engine.view().requests.size == before) Thread.sleep(250) }
                 waitNode { it.text?.toString() == "Not sent" }
                 check(engine.view().requests.size == before + 1)
                 check(engine.view().requests.first().status == RequestStatus.NoSignal)
             } else waitNode { it.text?.toString() == "Not sent" }
             Thread.sleep(500)
-            uiAutomation.takeScreenshot().let { bitmap ->
-                java.io.FileOutputStream(java.io.File(targetContext.cacheDir, "requests-proof.png")).use {
-                    bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
-                }
-            }
             output.putString("outcome", "PASS airplane mode; Not sent/NoSignal; saved requests and recipient read back; readOnly=$readOnly; uiSend=$uiSend")
             finish(Activity.RESULT_OK, output)
         } catch (e: Throwable) {
-            output.putString("outcome", "FAIL " + e.javaClass.simpleName)
+            output.putString("outcome", "FAIL " + e.javaClass.simpleName + " step=" + step)
             finish(Activity.RESULT_CANCELED, output)
         }
     }
