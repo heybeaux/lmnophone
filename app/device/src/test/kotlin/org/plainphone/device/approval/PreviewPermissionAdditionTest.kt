@@ -38,6 +38,37 @@ class PreviewPermissionAdditionTest {
         apply = { events += "apply"; true })
     private fun add() = subject().add(snapshot, choices, charArrayOf('1')) { active }
 
+    @Test fun fineRefusalRestoresEarlierCoarseWriteBeforeRehiding() {
+        val coarse = PermissionName("android.permission.ACCESS_COARSE_LOCATION")
+        val fine = PermissionName("android.permission.ACCESS_FINE_LOCATION")
+        val selected = AppPermissionSnapshot(identity, 1, listOf(
+            RequestedPermissionGroup("location", "Location", listOf(coarse, fine))))
+        val states = mutableMapOf(coarse to PolicyGrant.DEFAULT, fine to PolicyGrant.DEFAULT)
+        val port = object : PermissionGrantPort {
+            var blocked = false
+            override fun signers(name: PackageName) = identity.signingCerts
+            override fun policyState(name: PackageName, permission: PermissionName) = states[permission]
+            override fun granted(name: PackageName, permission: PermissionName) = states[permission] == PolicyGrant.GRANTED
+            override fun uninstallBlocked(name: PackageName) = blocked
+            override fun setUninstallBlocked(name: PackageName, blocked: Boolean): Boolean { this.blocked = blocked; return true }
+            override fun setPolicyState(name: PackageName, permission: PermissionName, state: PolicyGrant): Boolean {
+                if (permission == fine && state != PolicyGrant.DEFAULT) return false
+                states[permission] = state
+                return true
+            }
+        }
+        val attempts = PermissionGrantAttempts(port)
+        val transaction = PreviewPermissionAddition({ _, _ -> PinAccessResult.Open }, { true }, { selected },
+            { true }, { events += "rehide"; true }, attempts::write,
+            { AppPermissionRead(selected, PermissionGrants(port).read(identity, selected.permissions)) },
+            { error("must not approve") }, { error("must not apply") })
+        assertTrue(transaction.add(selected, mapOf("location" to PermissionChoice.ALLOW), charArrayOf('1')) { true }
+            is AppAdditionResult.PermissionFailed)
+        assertTrue("rehide" in events)
+        assertEquals("failed approval must restore the accepted COARSE write", PolicyGrant.DEFAULT, states[coarse])
+        assertEquals(PolicyGrant.DEFAULT, states[fine])
+    }
+
     @Test fun changingManifestDuringTheWindowClosesWithoutCommit() {
         var reads = 0
         val subject = PreviewPermissionAddition({ _, _ -> PinAccessResult.Open }, { true },
