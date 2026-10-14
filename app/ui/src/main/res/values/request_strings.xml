@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
-<!-- TODO(copy): Product & UX review must confirm the neutral result/setup copy documented in flows-user.md. -->
 <resources>
     <string name="requests_setup">Asking for an app isn\'t set up on this phone yet.</string>
-    <string name="requests_setup_help">The trusted person can set it up in their menu.</string>
+    <string name="requests_setup_help">This phone’s PIN holder can set it up in More, then PIN settings, then Who gets requests.</string>
     <string name="requests_title">Requests</string>
     <string name="requests_empty">No requests saved on this phone.</string>
     <string name="requests_send">Send</string>
-    <string name="requests_body">This sends a text to the trusted person. Your request is also saved on this phone.</string>
+    <string name="requests_body">This sends your request as a text message. It is also saved on this phone.</string>
     <string name="requests_sent">Sent</string>
     <string name="requests_not_sent">Not sent</string>
     <string name="requests_unconfirmed">Not confirmed</string>
     <string name="requests_sending_body">Waiting for the phone to confirm sending. Your request is saved here.</string>
-    <string name="requests_sent_body">The phone sent your text. This does not tell us whether it arrived or was read.</string>
+    <string name="requests_sent_body">The phone sent your text. It can’t show whether the text arrived or was read.</string>
     <string name="requests_no_signal">The phone has no signal or is in airplane mode. Your request is saved here.</string>
     <string name="requests_no_permission">LMNOPhone cannot send texts right now. Your request is saved here.</string>
-    <string name="requests_unconfirmed_body">The phone did not confirm the whole text was sent. It may have arrived. Your request is saved here.</string>
+    <string name="requests_unconfirmed_body">The phone could not confirm that all of the text was sent. Some or all of it may have arrived. Your request is saved here.</string>
     <string name="requests_limit_body">You can ask again tomorrow. Your requests from today are saved here.</string>
     <string name="requests_storage_error">Requests could not be read or saved. Check again later.</string>
     <string name="requests_invalid">Write a request with at least one letter and no more than 280 characters.</string>
@@ -23,6 +22,7 @@
     <string name="requests_recipient">Who gets requests</string>
     <string name="requests_name">Name (optional)</string>
     <string name="requests_number">Phone number</string>
+    <string name="requests_set_up">Set up</string>
     <string name="requests_change">Change</string>
     <string name="requests_remove">Remove</string>
     <string name="requests_recipient_confirm">Send requests to this person?</string>

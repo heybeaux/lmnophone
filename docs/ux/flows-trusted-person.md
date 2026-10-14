@@ -405,7 +405,8 @@ Lead decision on PLA-525: PIN settings → **Who gets requests**, with a fresh P
 before reading the number. Optional **Name (optional)**, required **Phone number**.
 A new or changed recipient requires **Continue**, then **Send requests to this
 person?**, with the entered name (if any) and number, then **Save**, then a fresh
-PIN before the durable write. Details show the saved name/number, **Change** and
+PIN before the durable write. With no saved recipient, the primary button is **Set up**.
+Details show the saved name/number, **Change** and
 **Remove**. Removal asks **Stop sending app requests? Saved requests will stay on
 this phone.**, then **Remove** and a fresh PIN. A failed save says **The change
 could not be saved. Try again.** Back or leaving the activity writes nothing.
@@ -415,6 +416,6 @@ implicitly. This setting does not alter PIN credentials or trusted-person author
 The Requests menu shows saved text, day and the truthful U5 send result. Empty:
 **No requests saved on this phone.** No Find, Add, Remove-request or reply action.
 
-The neutral SMS template, when the phone user's name is not configured, is:
-`LMNOPhone: An app was requested: “{request}”. To add it, you need to be with the phone. On the phone: More, then “PIN settings”, then “Requests”.`
-Copy additions are included in the same focused Product & UX review as the code.
+The SMS template is:
+`LMNOPhone app request: "{request}". To add an app, use the phone itself: More, then PIN settings, then Apps on this phone.`
+Copy approved in the same focused Product & UX review as the code.

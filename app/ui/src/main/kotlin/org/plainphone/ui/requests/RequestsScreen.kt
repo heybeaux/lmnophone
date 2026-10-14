@@ -96,7 +96,7 @@ sealed interface RecipientEvent {
 }
 @Composable fun RequestRecipientScreen(state: RequestRecipientUiState, event: (RecipientEvent) -> Unit) {
     TaskScreen(s(R.string.requests_recipient),
-        s(if (state.removing) R.string.requests_remove else if (state.confirming) R.string.waits_save else if (state.editing) R.string.admin_continue else R.string.requests_change),
+        s(if (state.removing) R.string.requests_remove else if (state.confirming) R.string.waits_save else if (state.editing) R.string.admin_continue else if (state.number.isEmpty()) R.string.requests_set_up else R.string.requests_change),
         { event(if (state.editing || state.confirming || state.removing) RecipientEvent.Continue else RecipientEvent.Change) },
         primaryEnabled = !state.editing || state.canSave, back = s(R.string.admin_back), onBack = { event(RecipientEvent.Back) }) {
         if (state.failed) Text(s(R.string.requests_save_error), style = PlainphoneType.Body)

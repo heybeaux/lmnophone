@@ -809,26 +809,25 @@ The whole request is visible in history. Results are **Sent**, **Not sent**, or
 accepted, never arrival or reading. Interrupted, missing or partial confirmations
 are Not confirmed. Requests remain saved through restarts and updates.
 
-With no configured recipient: **Asking for an app isn't set up on this phone yet.** Then **The trusted person can set it up in their menu.** This remains true after an earlier recipient is removed. With an
-unnamed recipient: **This sends a text to the trusted person. Your request is
-also saved on this phone.** With a saved name, use U5's existing named body.
+With no configured recipient: **Asking for an app isn't set up on this phone yet.** Then **This phone’s PIN holder can set it up in More, then PIN settings, then Who gets requests.** This remains true after an earlier recipient is removed. With an
+unnamed recipient: **This sends your request as a text message. It is also saved on this phone.** With a saved name, use U5's existing named body.
 Button: **Send**. Results use **OK**, returning to a new draft; failed/uncertain
 attempts are never resent by that action. History title: **Your requests**.
 
-Copy additions for the single Product & UX review:
+Copy approved in the single Product & UX review:
 
 - `requests_title`: Requests
 - `requests_empty`: No requests saved on this phone.
 - `requests_send`: Send
-- `requests_body`: This sends a text to the trusted person. Your request is also saved on this phone.
+- `requests_body`: This sends your request as a text message. It is also saved on this phone.
 - `requests_sent`: Sent
 - `requests_not_sent`: Not sent
 - `requests_unconfirmed`: Not confirmed
 - `requests_sending_body`: Waiting for the phone to confirm sending. Your request is saved here.
-- `requests_sent_body`: The phone sent your text. This does not tell us whether it arrived or was read.
+- `requests_sent_body`: The phone sent your text. It can’t show whether the text arrived or was read.
 - `requests_no_signal`: The phone has no signal or is in airplane mode. Your request is saved here.
 - `requests_no_permission`: LMNOPhone cannot send texts right now. Your request is saved here.
-- `requests_unconfirmed_body`: The phone did not confirm the whole text was sent. It may have arrived. Your request is saved here.
+- `requests_unconfirmed_body`: The phone could not confirm that all of the text was sent. Some or all of it may have arrived. Your request is saved here.
 - `requests_limit_body`: You can ask again tomorrow. Your requests from today are saved here.
 - `requests_storage_error`: Requests could not be read or saved. Check again later.
 - `requests_invalid`: Write a request with at least one letter and no more than 280 characters.
