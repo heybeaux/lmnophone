@@ -32,6 +32,18 @@ class ProductionHelperScreenshotTest(private val scale: Float) {
     private val context = AdminContext("the person using this phone")
     private val helper = "the person who set up LMNOPhone on this phone"
 
+    @Test fun familyIntroNeutral() = shot("With voice messages, the person using this phone can send and hear short messages, using pictures, without reading.") {
+        FamilyScreen(FamilyUiState(AdminContext(androidx.compose.ui.res.stringResource(R.string.current_phone_user)))) {}
+    }
+    @Test fun familyIntroConfigured() = shot("With voice messages, Alex can send and hear short messages, using pictures, without reading.") {
+        FamilyScreen(FamilyUiState(AdminContext("Alex"))) {}
+    }
+    @Test fun pinWaitCode() = shot("You can use the recovery code you wrote down instead.") {
+        PinScreen(PinUiState(context, PinStage.Locked, wait = "30 seconds")) {}
+    }
+    @Test fun recoveryEntryCode() = shot("Enter the recovery code you wrote down. Upper and lower case don't matter.") {
+        PinScreen(PinUiState(context, PinStage.Recovery)) {}
+    }
     @Test fun recoveryFallback() = shot("If the code is lost, call $helper.") {
         PinScreen(PinUiState(context, PinStage.RecoveryLocked, wait = "30 seconds")) {}
     }
@@ -67,8 +79,10 @@ class ProductionHelperScreenshotTest(private val scale: Float) {
             val view = LocalView.current as ViewRootForTest
             Box(Modifier.onGloballyPositioned {
                 val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
-                val help = nodes.single { node -> node.config.getOrNull(SemanticsProperties.Text)
+                val matching = nodes.filter { node -> node.config.getOrNull(SemanticsProperties.Text)
                     .orEmpty().any { expected in it.text } }
+                assertEquals("Expected screen copy: $expected", 1, matching.size)
+                val help = matching.single()
                 val scroll = nodes.single { it.config.contains(SemanticsProperties.VerticalScrollAxisRange) }
                 val range = scroll.config[SemanticsProperties.VerticalScrollAxisRange]
                 assertTrue("Helper text must be reachable by scrolling",
