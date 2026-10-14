@@ -52,7 +52,7 @@ class PinSettingsTalkBackTest {
         compose.onNodeWithTag("recovery-input").assert(SemanticsMatcher.expectValue(
             SemanticsProperties.EditableText, androidx.compose.ui.text.AnnotatedString("••••••••")))
     }
-    @Test fun wrongPinAndWaitHaveOnePoliteMessage() {
+    @Test fun wrongPinHasOnePoliteMessage() {
         val state = mutableStateOf(PinUiState(context))
         show { PinScreen(state.value, {}) }
         compose.onAllNodes(polite).assertCountEquals(0)
@@ -61,10 +61,40 @@ class PinSettingsTalkBackTest {
         compose.onAllNodes(polite).assertCountEquals(1)
         compose.runOnIdle { state.value = state.value.copy(sending = true) }
         compose.onAllNodes(polite).assertCountEquals(1)
-        compose.runOnIdle { state.value = state.value.copy(stage = PinStage.Locked, wait = "1 minute") }
-        compose.onNode(hasText("Wait 1 minute", substring = true)).assert(polite)
-        compose.onAllNodes(polite).assertCountEquals(1)
-        compose.onNodeWithTag("pin-input").assertDoesNotExist()
+    }
+    @Test fun tickingWaitsKeepOnlyTheStableTitlePolite() {
+        val state = mutableStateOf(PinUiState(context))
+        show { PinScreen(state.value, {}) }
+        val liveRegion = SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion)
+        val contexts = listOf(context to null, AdminContext("Alex", "Sam") to "Jo")
+        contexts.forEach { (admin, other) ->
+            listOf(PinStage.Locked, PinStage.RecoveryLocked).forEach { stage ->
+                listOf("45 seconds" to "44 seconds", "0:45" to "0:44").forEach { (before, after) ->
+                    compose.runOnIdle {
+                        state.value = PinUiState(admin, stage, wait = before, pinWait = before,
+                            otherName = other, recoveryLockout = RecoveryLockoutKind.PinWaiting)
+                    }
+                    fun checkCountdown(wait: String) {
+                        compose.onAllNodes(hasText(wait, substring = true), useUnmergedTree = true)
+                            .fetchSemanticsNodes().also { assertTrue(it.isNotEmpty()) }.forEach { node ->
+                                assertFalse(node.config.contains(SemanticsProperties.LiveRegion))
+                            }
+                        compose.onAllNodes(liveRegion).assertCountEquals(1)
+                        compose.onNode(polite and heading).assertExists()
+                        compose.onNodeWithTag("pin-input").assertDoesNotExist()
+                        compose.onNodeWithTag("recovery-input").assertDoesNotExist()
+                    }
+                    checkCountdown(before)
+                    val title = compose.onNode(polite and heading).fetchSemanticsNode()
+                    compose.runOnIdle { state.value = state.value.copy(wait = after, pinWait = after) }
+                    checkCountdown(after)
+                    compose.onAllNodes(hasText(before, substring = true)).assertCountEquals(0)
+                    val afterTitle = compose.onNode(polite and heading).fetchSemanticsNode()
+                    assertEquals(title.id, afterTitle.id)
+                    assertEquals(title.config[SemanticsProperties.Text], afterTitle.config[SemanticsProperties.Text])
+                }
+            }
+        }
     }
     @Test fun recoveryErrorsAndPinChangeResultsArePolite() {
         val state = mutableStateOf(PinUiState(context, PinStage.Recovery, wrongRecoveryCode = true))
