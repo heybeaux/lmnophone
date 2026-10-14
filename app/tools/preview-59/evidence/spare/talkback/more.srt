@@ -1,0 +1,8 @@
+1
+00:00:00,000 --> 00:00:29,780
+Home button double tap to activate emergency 911 opens the dialer with 911 typed in button phone settings Wi-Fi Bluetooth brightness sound text size battery ask for an app not set up on this phone yet button double pin settings with your pin button double tap to activate practice voice messages record and listen nothing is sent button about this phone button double tap to activate home
+
+2
+00:00:29,780 --> 00:00:36,780
+button. Double tap to activate.
+
