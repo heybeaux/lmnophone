@@ -39,7 +39,12 @@ class PinScreenFlow(private val port: PinScreenPort, private val changed: (PinPa
     private var changeId = UUID.randomUUID().toString()
     private var firstConfirmed = false
     private var returnPage = PinPage.ENTER
-    private fun show(next: PinPageState) { state = next; changed(next) }
+    /** True only while New recovery code runs from the PIN settings menu (its PIN step and the code it shows). */
+    private var menuRecovery = false
+    private fun show(next: PinPageState) {
+        if (next.page !in setOf(PinPage.RECOVERY_PIN, PinPage.RECOVERY_ISSUED)) menuRecovery = false
+        state = next; changed(next)
+    }
     fun open() {
         clearCodes()
         val request = ++generation
@@ -156,7 +161,20 @@ class PinScreenFlow(private val port: PinScreenPort, private val changed: (PinPa
     private fun dropChange() { port.closeChange(changeId); changeId = UUID.randomUUID().toString() }
 
     fun newRecoveryCode() {
-        if (state.page == PinPage.MENU && !state.busy) show(PinPageState(PinPage.RECOVERY_PIN))
+        if (state.page == PinPage.MENU && !state.busy) { show(PinPageState(PinPage.RECOVERY_PIN)); menuRecovery = true }
+    }
+    /**
+     * Back on New recovery code started from the menu returns to the menu and wipes any shown code.
+     * Ignored while the new code is being made, so a code that was made is still shown.
+     * Returns false for every other page, including forgot-PIN recovery: the caller closes as before.
+     */
+    fun backFromRecovery(): Boolean {
+        if (!menuRecovery || state.page !in setOf(PinPage.RECOVERY_PIN, PinPage.RECOVERY_ISSUED)) return false
+        if (state.busy) return true
+        generation++
+        clearCodes()
+        show(PinPageState(PinPage.MENU))
+        return true
     }
     /** Apps abandons its own operation before this transition; recovery grants no app action. */
     fun useRecoveryFromApps() {
@@ -204,6 +222,7 @@ class PinScreenFlow(private val port: PinScreenPort, private val changed: (PinPa
     }
     fun codeWritten() { if (state.page == PinPage.RECOVERY_ISSUED) enterPin() }
     private fun issued(code: OneTimeRecoveryCode) {
+        if (state.page != PinPage.RECOVERY_PIN) menuRecovery = false
         clearCodes(); issuedCode = code.take()
         show(PinPageState(if (issuedCode == null) PinPage.UNAVAILABLE else PinPage.RECOVERY_ISSUED))
     }

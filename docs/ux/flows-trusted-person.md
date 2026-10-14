@@ -6,6 +6,9 @@ Words, rules and placeholders are in [README.md](README.md). The trusted person 
 **Tone.** `{tp}` is looking after a phone for someone they care about. The words are about helping `{user}`,
 never about watching them. The mode's own name on screen is **"Looking after {user}'s phone"**.
 
+**No name set ([PLA-583](/PLA/issues/PLA-583)).** When no name is set for `{user}`, the screens never put the
+fallback words into "{user}'s phone". They say "this phone" instead, as listed with each screen below.
+
 **Two trusted people, and self-managed mode.** A phone can have one or two trusted people, who are equals, or be
 self-managed. The screens for that (Who are you?, trusted people, 24-hour waits, the stuck-change and recovered
 screens, self-managed settings and History) are in [flows-people-modes-and-waits.md](flows-people-modes-and-waits.md).
@@ -47,6 +50,7 @@ With two trusted people, every PIN entry starts with **Who are you?**
 
 - **Title:** {tp}'s PIN
 - **Body:** Enter your PIN to look after {user}'s phone.
+- **Body, no name set:** Enter your PIN to look after this phone.
 - **Keypad:** large digits, 6 or more. Dots, not digits, as they are typed.
 - **Primary:** Continue
 - **Secondary:** Forgot PIN? Use recovery code
@@ -110,6 +114,8 @@ The recovery code's own lockout ([PLA-130](/PLA/issues/PLA-130)). Same tone as T
   the home screen. No text is sent for wrong recovery codes (the 10-wrong-entries text is for PINs only).
 
 ## T2. Looking after {user}'s phone (front page)
+
+No name set: the title is "Looking after this phone".
 
 **Spec:** trusted-person-controls; approved-apps; device-lockdown (software changed); calm-home-screen
 (always-present apps).
@@ -319,6 +325,7 @@ Plain names for permission groups:
 ### T4d. Confirm
 
 - **Title:** Add {app} to {user}'s phone?
+- **Title, no name set:** Add {app} to this phone?
 - **Body:** It will appear on the home screen, below the other apps. Allowed: {list}. Not allowed: {list}.
 - **Primary:** Add {app}
 - **Then:** PIN (T1a, fresh). Then "Done. {app} is on the home screen." with **OK**.

@@ -106,6 +106,7 @@
     <string name="history_failed">%1$s – didn\'t send</string>
     <string name="off_title">Turn LMNOPhone off?</string>
     <string name="off_intro">This makes %1$s\'s phone an ordinary Android phone again. Every app will open, including web browsers and the Play Store, and the home screen will look different.</string>
+    <string name="off_intro_unnamed">This makes this phone an ordinary Android phone again. Every app will open, including web browsers and the Play Store, and the home screen will look different.</string>
     <string name="off_intro_self">This makes your phone an ordinary Android phone again. Every app will open, including web browsers and the Play Store, and the home screen will look different.</string>
     <string name="off_kept">Photos, messages and contacts are kept. Nothing is erased.</string>
     <string name="off_wait">It happens after at least 24 hours of the phone being on. Until then, anyone holding the phone can cancel, and %1$s will get a text now.</string>
@@ -115,6 +116,7 @@
     <string name="off_keep">Keep LMNOPhone on</string>
     <string name="off_sure">Are you sure?</string>
     <string name="off_sure_body">LMNOPhone will be turned off on %1$s\'s phone.</string>
+    <string name="off_sure_body_unnamed">LMNOPhone will be turned off on this phone.</string>
     <string name="off_sure_body_self">LMNOPhone will be turned off on your phone.</string>
     <string name="off_yes">Yes, turn it off</string>
     <string name="off_no">No, keep it on</string>

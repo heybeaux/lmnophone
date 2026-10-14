@@ -184,6 +184,9 @@ class PinAccessActivity : ComponentActivity() {
                 PinPage.CHANGE_OLD, PinPage.CHANGE_NEW, PinPage.CHANGE_DONE, PinPage.CHANGE_FAILED -> {
                     value = ""; confirmation = ""; flow.back()
                 }
+                PinPage.RECOVERY_PIN, PinPage.RECOVERY_ISSUED -> if (flow.backFromRecovery()) {
+                    value = ""; confirmation = ""
+                } else finish()
                 else -> finish()
             } }
             val waitingNow by runtime.waitingRead.collectAsState()

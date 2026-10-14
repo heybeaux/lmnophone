@@ -274,6 +274,79 @@ class PinScreenFlowTest {
         assertEquals(PinPage.LOADING, f.state.page)
     }
 
+    @Test fun backFromMenuNewRecoveryCodePinStepReturnsToMenu() {
+        val (p, f) = menu()
+        f.newRecoveryCode(); assertEquals(PinPage.RECOVERY_PIN, f.state.page)
+        assertTrue(f.backFromRecovery())
+        assertEquals(PinPage.MENU, f.state.page)
+        assertEquals(0, p.rotations)
+        f.newRecoveryCode(); f.submit(pin('1')); p.recovered(RecoveryAccessResult.WrongPin(0))
+        assertEquals(PinPage.RECOVERY_PIN, f.state.page)
+        assertTrue(f.backFromRecovery()); assertEquals(PinPage.MENU, f.state.page)
+    }
+    @Test fun backFromMenuCodeShownPageReturnsToMenuAndWipesTheCode() {
+        val (p, f) = menu()
+        f.newRecoveryCode(); f.submit(pin('1'))
+        val raw = CharArray(32) { 'b' }
+        p.recovered(RecoveryAccessResult.Issued(OneTimeRecoveryCode(raw)))
+        assertEquals(PinPage.RECOVERY_ISSUED, f.state.page)
+        assertTrue(f.displayedCode().isNotEmpty())
+        assertTrue(f.backFromRecovery())
+        assertEquals(PinPage.MENU, f.state.page)
+        assertEquals("", f.displayedCode())
+        assertTrue(raw.all { it == '\u0000' })
+        f.newRecoveryCode(); assertEquals(PinPage.RECOVERY_PIN, f.state.page)
+    }
+    @Test fun backWhileNewRecoveryCodeIsBeingMadeIsIgnoredSoTheCodeIsStillShown() {
+        val (p, f) = menu()
+        f.newRecoveryCode(); f.submit(pin('1')); assertTrue(f.state.busy)
+        assertTrue(f.backFromRecovery())
+        assertEquals(PinPage.RECOVERY_PIN, f.state.page)
+        p.recovered(RecoveryAccessResult.Issued(OneTimeRecoveryCode(CharArray(32) { 'b' })))
+        assertEquals(PinPage.RECOVERY_ISSUED, f.state.page)
+        assertTrue(f.displayedCode().isNotEmpty())
+    }
+    @Test fun backFromForgotPinRecoveryPagesNeverReachesMenu() {
+        val p = Port(); val f = PinScreenFlow(p) {}
+        f.open(); p.entry(PinEntry.ENTER)
+        f.useRecovery(); assertEquals(PinPage.RECOVERY, f.state.page)
+        assertFalse(f.backFromRecovery()); assertEquals(PinPage.RECOVERY, f.state.page)
+        f.submitRecovery(CharArray(32) { 'a' }); assertEquals(PinPage.RECOVERY_NEW, f.state.page)
+        assertFalse(f.backFromRecovery()); assertEquals(PinPage.RECOVERY_NEW, f.state.page)
+        f.submitNewPin(pin('2'), pin('2'))
+        assertFalse(f.backFromRecovery()); assertNotEquals(PinPage.MENU, f.state.page)
+        p.recovered(RecoveryAccessResult.Issued(OneTimeRecoveryCode(CharArray(32) { 'b' })))
+        assertEquals(PinPage.RECOVERY_ISSUED, f.state.page)
+        assertFalse(f.backFromRecovery()); assertEquals(PinPage.RECOVERY_ISSUED, f.state.page)
+        f.enterPin(); p.waits = org.plainphone.policy.CredentialWaits(0, 30_000)
+        f.useRecovery(); assertEquals(PinPage.RECOVERY_LOCKED, f.state.page)
+        assertFalse(f.backFromRecovery()); assertEquals(PinPage.RECOVERY_LOCKED, f.state.page)
+    }
+    @Test fun backFromForgotPinStartedOnTheMenuRecoveryPinStepNeverReachesMenu() {
+        val (p, f) = menu()
+        f.newRecoveryCode(); f.useRecovery(); assertEquals(PinPage.RECOVERY, f.state.page)
+        assertFalse(f.backFromRecovery())
+        f.submitRecovery(CharArray(32) { 'a' }); f.submitNewPin(pin('2'), pin('2'))
+        p.recovered(RecoveryAccessResult.Issued(OneTimeRecoveryCode(CharArray(32) { 'b' })))
+        assertEquals(PinPage.RECOVERY_ISSUED, f.state.page)
+        assertFalse(f.backFromRecovery()); assertEquals(PinPage.RECOVERY_ISSUED, f.state.page)
+        assertTrue(f.displayedCode().isNotEmpty())
+    }
+    @Test fun backFromLockAfterWrongMenuPinOrFromSetupCodeNeverReachesMenu() {
+        val (p, f) = menu()
+        f.newRecoveryCode(); f.submit(pin('1')); p.recovered(RecoveryAccessResult.WrongPin(30_000))
+        assertEquals(PinPage.LOCKED, f.state.page)
+        assertFalse(f.backFromRecovery()); assertEquals(PinPage.LOCKED, f.state.page)
+        p.waits = org.plainphone.policy.CredentialWaits(0, 0); f.refreshWaits()
+        assertEquals(PinPage.ENTER, f.state.page)
+        assertFalse(f.backFromRecovery()); assertEquals(PinPage.ENTER, f.state.page)
+        val setup = Port(); val first = PinScreenFlow(setup) {}
+        first.open(); setup.entry(PinEntry.SETUP); first.submit(pin('1'))
+        setup.enrolled(PinEnrollmentResult.Created(OneTimeRecoveryCode(CharArray(32) { 'a' })))
+        assertEquals(PinPage.RECOVERY_ISSUED, first.state.page)
+        assertFalse(first.backFromRecovery()); assertEquals(PinPage.RECOVERY_ISSUED, first.state.page)
+    }
+
     @Test fun recoveryWaitRefreshDoesNotSubmitAndReopensEntryWhenProvenTimeExpires() {
         val p = Port(); val f = PinScreenFlow(p) {}
         f.open(); p.entry(PinEntry.ENTER)

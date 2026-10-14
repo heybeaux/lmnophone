@@ -9,6 +9,7 @@
     <string name="admin_who">Who are you?</string>
     <string name="admin_pin_title">%1$s\'s PIN</string>
     <string name="admin_pin_body">Enter your PIN to look after %1$s\'s phone.</string>
+    <string name="admin_pin_body_unnamed">Enter your PIN to look after this phone.</string>
     <string name="admin_pin_label">PIN</string>
     <string name="admin_pin_wrong">That PIN isn\'t right. Try again.</string>
     <string name="admin_pin_forgot">Forgot PIN? Use recovery code</string>
@@ -38,6 +39,7 @@
     <string name="admin_code_written">I\'ve written it down</string>
     <string name="admin_code_other">Only your PIN and code changed. %1$s\'s PIN and code are the same as before.</string>
     <string name="admin_menu_title">Looking after %1$s\'s phone</string>
+    <string name="admin_menu_title_unnamed">Looking after this phone</string>
     <string name="admin_menu_body">This is for adding apps and keeping the phone working. You can\'t see %1$s\'s messages, photos, or what %1$s does in apps.</string>
     <string name="admin_menu_self">You hold the PIN. LMNOPhone adds waits so that distraction takes effort. It\'s friction, not a lock.</string>
     <string name="admin_needs">Needs you</string>
@@ -70,6 +72,7 @@
     <string name="admin_unreviewed_body">The LMNOPhone team hasn\'t checked whether %1$s can show web pages inside it. Some apps can show any website, which would let %2$s reach websites this phone normally keeps out. If you\'re not sure, wait: ask %3$s to get it checked first. You can also add it now and remove it later.</string>
     <string name="admin_add_anyway">Add anyway</string>
     <string name="admin_add_confirm">Add %1$s to %2$s\'s phone?</string>
+    <string name="admin_add_confirm_unnamed">Add %1$s to this phone?</string>
     <string name="admin_add_body">It will appear on the home screen, below the other apps. Allowed: %1$s. Not allowed: %2$s.</string>
     <string name="admin_add">Add %1$s</string>
     <string name="admin_added">Done. %1$s is on the home screen.</string>
