@@ -1,7 +1,7 @@
 #!/bin/bash
 # Copyright 2026 LMNOPhone contributors
 # SPDX-License-Identifier: Apache-2.0
-# PLA-537 spare helpers (copied from preview-49) (sole driver only). PINs come from
+# PLA-543 spare helpers (copied from preview-50) (sole driver only). PINs come from
 # the environment (synthetic, emulator only) and are never printed.
 : "${S:?spare serial from the environment}"; [[ ${PLAINPHONE_SPARE_DRIVER:-} == 1 ]] || { echo "spare requires sole-driver opt-in"; exit 2; }
 a(){ adb -s "$S" "$@"; }
@@ -50,4 +50,5 @@ saved(){ r(){ a shell run-as org.plainphone "$@" 2>/dev/null; }
   echo "release_keys=$(r cat /data/user_de/0/org.plainphone/shared_prefs/home_preferences.xml | grep -o 'name="release_[a-z]*" value="[0-9]*"' | tr '\n' ' ')"
   echo "drafts: family=$(r ls /data/data/org.plainphone/no_backup/voice-family-drafts | wc -l | tr -d ' ') practice=$(r ls /data/data/org.plainphone/no_backup/voice-practice | wc -l | tr -d ' ') send_records=$(r ls /data/data/org.plainphone/no_backup/voice-send-family | wc -l | tr -d ' ')"
   echo "app_requests_bytes=$(r cat /data/data/org.plainphone/no_backup/app-requests 2>/dev/null | wc -c | tr -d ' ') sha=$(r cat /data/data/org.plainphone/no_backup/app-requests 2>/dev/null | shasum -a 256 | cut -c1-16)"
+  echo "replies_played_files=$(r ls /data/data/org.plainphone/no_backup/voice-replies-played | wc -l | tr -d ' ')"
   echo "ce_data_inode=$(a shell dumpsys package org.plainphone | grep -m1 -o 'ceDataInode=[0-9]*')"; }
