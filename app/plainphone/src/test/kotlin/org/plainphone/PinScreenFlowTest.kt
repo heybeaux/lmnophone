@@ -42,6 +42,16 @@ class PinScreenFlowTest {
         override fun enroll(pin: CharArray, done: (PinEnrollmentResult) -> Unit) { pin.fill('\u0000'); enrolled = done }
         override fun authenticate(pin: CharArray, done: (PinAccessResult) -> Unit) { checks++; pin.fill('\u0000'); checked = done }
     }
+    @Test fun appsRecoveryLeavesMenuAndUsesExistingRecovery() {
+        val p = Port(); val f = PinScreenFlow(p) {}
+        f.open(); p.entry(PinEntry.ENTER)
+        f.useRecoveryFromApps(); assertEquals(PinPage.ENTER, f.state.page)
+        f.submit("123456".toCharArray()); p.checked(PinAccessResult.Open)
+        f.useRecoveryFromApps(); assertEquals(PinPage.RECOVERY, f.state.page)
+        assertEquals(0, p.recoveries)
+        f.close(); assertEquals(PinPage.LOADING, f.state.page)
+        f.useRecoveryFromApps(); assertEquals(PinPage.LOADING, f.state.page)
+    }
     @Test fun turnOffUsesFreshPinAndBothConfirmationsAndBusyHasItsOwnPage() {
         val p = Port(); val f = PinScreenFlow(p) {}
         f.open(); p.entry(PinEntry.ENTER)

@@ -116,6 +116,8 @@ The recovery code's own lockout ([PLA-130](/PLA/issues/PLA-130)). Same tone as T
 
 A menu page. At the top, a short **"Needs you"** list, only when something is waiting. Below it, the menu.
 
+Preview subset ([PLA-546](/PLA/issues/PLA-546)): only waiting changes and attention appear in Needs you. The request row is deferred until requests have an answered/resolved state; saved history alone must not create an item that permanently asks for attention. Requests remains available from the existing menu row. No other Needs you item is shown. Apps → PIN → Use recovery code abandons that app action and opens the existing PIN recovery flow; the app action must be started again afterwards.
+
 ### "Needs you" items (in this order; each opens its own screen)
 
 | Item text | When | Opens |
