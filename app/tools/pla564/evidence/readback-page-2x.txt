@@ -1,0 +1,13 @@
+Camera: Not allowed
+Go back
+Location (where the phone is): Not allowed
+Permission test app
+Remove from the person using this phone's phone
+Version 1.0
+What Permission test app can use
+Your settings
+Microphone: Not allowed
+Notifications: Not allowed
+Photos and videos: Not allowed
+To change these, remove Permission test app, then add it again with "Add a hidden app" and choose again.
+PASS all five production page states read Not allowed at font 2.0
