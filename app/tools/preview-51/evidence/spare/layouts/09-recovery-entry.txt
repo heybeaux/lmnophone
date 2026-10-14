@@ -1,0 +1,1 @@
+Your settings|Enter recovery code|Enter the recovery code you wrote down. Upper and lower case don't matter.|This code only resets your PIN. It doesn't skip any wait.|Recovery code|This code can't get past Google's reset protection if the phone is ever wiped. Only your Google account can do that.|Continue
