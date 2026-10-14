@@ -16,3 +16,17 @@ Driver: Android Platform Engineer (sole spare driver). No sends, no calls.
 - after-exercise.txt vs after-install.txt: only the authority A/B hash changed, because the record stores PIN
   failures and the remaining wait. Everything else is the same (font 1.0, Location 0, app requests,
   family, order, ceDataInode).
+
+## Second pass, 16:25–16:49Z (resumed run; same results)
+
+The run that did the first pass hit a quota limit before it reported, so the resumed run did the exercise again.
+Its layouts are 00–16 in `layouts/` and its About screenshot is `14-about.png`. `after-exercise.txt` is this pass, and
+`after-exercise-pass1.txt` is the first.
+
+- Camera page: "Remove Camera" (03). Build 54 said "Remove from the person using this phone's phone". Confirm: "Remove Camera?" (04). Not removed (05).
+- Ask for an app: the not-set-up sentence appears once, and the saved row is still there (07, 08).
+- PIN wait: the wait came after the 5th wrong PIN at 16:46:06Z ("Wait 27 seconds"; 10 shows 25). Font went 1.0 → 2.0 at 16:46:24Z, and the
+  wait page stayed with "Wait 7 seconds" (11; PinAccessActivity still resumed). By the font-1.0 dump (12), the wait had already run out,
+  so it showed Enter PIN. The right PIN then opened PIN settings.
+- About: 55 with its notes (14, 15). Older versions: 54, 53, 52… (16).
+- Snapshot: as in the first pass, only the authority hash changed (PIN failure counter); font is 1.0.
