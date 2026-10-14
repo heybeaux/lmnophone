@@ -1,0 +1,9 @@
+Build 48 in-place install on the spare (PLA-524)
+installed: 2026-10-14 02:01:12Z (lastUpdateTime 2026-10-13 19:01:12 Pacific), from versionCode 47
+APK sha256 7bfc89cf34dfcb14d81f019fc5b456dd7e8f94cf19210d39165a19a6ba92f224, signer cert 99edd5a3...11bd, testOnly
+branch release/preview-48 @ acdffedb (merge 36632a19 of pla-recovery/code b938e445 into release/preview-47 b9642d3c)
+gate.log: full in-place gate, exit 0, 242 PASS: preview-48, testOnly, Device Owner, LOCKED, restart,
+  More > Emergency prefill exactly 911 and Phone typed field exactly 911, Telecom zero calls each time.
+gate-final.log: SKIP_INSTALL rerun after the recovery exercise, exit 0, 240 PASS.
+host: :device 1081, :plainphone 291, :policy 665, :ui 1220 tests, 0 failures. :ui:verifyPaparazziDebug:
+  Recovery and VoiceSend goldens pass; 11 Branding/PreviewTurnOff golden failures also fail on preview-47 (baseline).

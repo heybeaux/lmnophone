@@ -1,0 +1,7 @@
+# replacement code shown once (redacted)
+'Your settings' '' enabled=true [60,137][1020,197]
+'Here is your new recovery code' '' enabled=true [60,337][1020,515]
+'If you ever forget your PIN, this code lets you choose a new one. It's shown once only. Write it on paper and keep it away from this phone. It only resets your PIN: it doesn't skip any wait.' '' enabled=true [60,555][1020,871]
+'<code>' '' enabled=true [100,951][980,1072]
+'This code can't get past Google's reset protection if the phone is ever wiped. Only your Google account can do that.' '' enabled=true [60,1152][1020,1338]
+'I've written it down' '' enabled=true [324,2162][757,2218]

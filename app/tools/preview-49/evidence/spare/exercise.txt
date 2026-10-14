@@ -1,0 +1,26 @@
+# Build 49 on the spare: production cleanup + About release history (PLA-526) exercised (PLA-533)
+# 2026-10-14 03:01Z-03:23Z. Test PIN from the secrets file; no PIN or code in this record. No calls, no sends.
+# PinAccess screens are FLAG_SECURE: layouts/ hold uiautomator text readbacks, digit runs redacted.
+0. Saved data before (before.txt): Family store empty and off (format 1, enabled=false, 0 people). The test
+   "Sam" entry was already removed in the build 47 exercise, so there was no Sam to keep or remove.
+1. About, first introduction (02): LMNOPhone, "Version 0.1.0-preview-49 (49)", "What's new in this version"
+   with the 3 build 49 notes. No "New since your last version". Older versions (03): 48, 47 ... 17-22, 2-16;
+   then Help and privacy, Lexend licence, "To call 9-1-1" help.
+2. Restart (03:04:16Z reboot, boot 03:04:53Z): About text identical to step 1 (diff empty, 04). DE
+   home_preferences: release_current=49, no release_previous, before and after opening About.
+3. No made-up people/results: More (01), Ask for an app (07: "Not set up on this phone yet." / "No request
+   has been sent."), PIN entry and Forgot PIN > Enter recovery code (08, 09; PIN not changed), PIN menu (11),
+   Requests / Trusted people / History ("Not in this test build yet ... Nothing was changed or sent.", 18-20),
+   Voice messages (13), turned on briefly: empty list shows only "Add a person" (14); practice empty state
+   "No people to show yet ..." (17); Home shows no Family tile with 0 people (15). Turned off again (23-24);
+   Family store hash back to the before value. No fictional name and no Sent/Delivered seen. Source check:
+   Sam/Jo/Pat only in @Preview fixtures (TrustedPreviews.kt) and one code comment.
+   Copy nits (nonblocking): Voice messages intro starts lower-case "the person using this phone can send...";
+   practice empty state says "PIN settings, then Family" but the menu row is "Voice messages"; Enter recovery
+   code still says the code was written down at setup.
+4. Text size 2.0 (25, 26): About wraps without clipping, OK above the 3-button bar; all 17 older entries and
+   the 9-1-1 help reachable by scrolling. Ask not-set-up screen readable. Restored to 1.0.
+5. after.txt vs before.txt: version, lastUpdateTime, release_current=49, and the authority A/B record hash
+   (rewritten by this driver's PIN-authorised voice-messages on/off; test PIN still opens the menu). App order,
+   starter list, Family store, counts toggle (on), drafts (family 0, practice 1, send 1), ceDataInode unchanged.
+gate.log: install in place, exit 0, 243 PASS. gate-final.log: SKIP_INSTALL rerun, exit 0, 240 PASS.

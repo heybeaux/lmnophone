@@ -1,0 +1,6 @@
+Build 49 in-place install on the spare (PLA-533)
+installed: 2026-10-14 02:59:56Z (lastUpdateTime 2026-10-13 19:59:56 Pacific), from versionCode 48
+APK sha256 e86c443f04cc5d2e211afaef0a9e1a787df0c372425e65ff1dd2a174d9a4be9b, signer cert 99edd5a3...11bd, testOnly
+branch release/preview-49: pla-prod/cleanup 711fc4f0 + preview-48 evidence c4d933d4 (merge 181e5350, remerge-diff empty) + gate 7760a312
+host: :device 1081, :plainphone 300 (debug) pass; :ui 1215 with the 11 Branding/PreviewTurnOff baseline goldens failing;
+  :plainphone:testReleaseUnitTest 300 with only the baseline VoiceSendRouteTest.theDebugBuildTypeTurnsFamilySendingOn failing.
