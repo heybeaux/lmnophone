@@ -8,6 +8,8 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(59, 59, listOf("TalkBack reads settings rows without arrows, and reads sent results without tick marks.",
+            "Phone settings has a heading.")),
         ReleaseNote(58, 58, listOf("PIN settings shows only choices that work in this version.",
             "Add a hidden app opens the same steps as Apps on this phone, and asks for your PIN again before adding.")),
         ReleaseNote(57, 57, listOf("Adding an app that uses Location now works. You choose whether it can use Location, and its page shows that choice.",
