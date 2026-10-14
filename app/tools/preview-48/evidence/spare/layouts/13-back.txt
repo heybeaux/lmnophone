@@ -1,0 +1,13 @@
+# Back from recovery entry
+'‹ Home' '' enabled=true [60,169][217,225]
+'More' '' enabled=true [60,297][234,385]
+'' 'Emergency 9-1-1. Opens the dialer with 9-1-1 typed in.' enabled=true [60,465][984,594]
+'Phone settings' '' enabled=true [60,674][459,743]
+'Wi-Fi, Bluetooth, brightness, sound, text size, battery' '' enabled=true [60,753][984,858]
+'Ask for an app' '' enabled=true [60,938][457,1007]
+'Sam adds apps with you' '' enabled=true [60,1017][533,1067]
+'For Sam and Jo' '' enabled=true [60,1147][489,1216]
+'Where Sam or Jo add apps, with a PIN' '' enabled=true [60,1226][814,1276]
+'Practice voice messages' '' enabled=true [60,1356][723,1425]
+'Record and listen. Nothing is sent.' '' enabled=true [60,1435][714,1485]
+'About this phone' '' enabled=true [352,1637][729,1693]

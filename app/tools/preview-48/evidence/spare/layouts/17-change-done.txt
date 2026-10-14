@@ -1,0 +1,5 @@
+# after Change PIN to the original test PIN
+'Your settings' '' enabled=true [60,137][1020,197]
+'Change PIN' '' enabled=true [60,337][483,425]
+'PIN changed.' '' enabled=true [60,465][360,521]
+'OK' '' enabled=true [506,2162][575,2218]

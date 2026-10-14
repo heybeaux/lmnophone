@@ -1,0 +1,8 @@
+# old code entered
+'Your settings' '' enabled=true [60,137][1020,197]
+'Choose a new PIN' '' enabled=true [60,337][699,425]
+'PIN' '' enabled=true [60,465][136,515]
+'' 'PIN' enabled=true EditText [100,565][980,685]
+'Type it again' '' enabled=true [60,735][311,785]
+'' 'Type it again' enabled=true EditText [100,835][980,955]
+'Continue' '' enabled=true [441,2162][639,2218]

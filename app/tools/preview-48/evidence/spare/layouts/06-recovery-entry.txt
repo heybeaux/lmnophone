@@ -1,0 +1,9 @@
+# Forgot PIN: recovery entry
+'Your settings' '' enabled=true [60,137][1020,197]
+'Enter recovery code' '' enabled=true [60,337][756,425]
+'This is the long code you wrote down when LMNOPhone was set up. Upper and lower case don't matter.' '' enabled=true [60,465][1020,651]
+'This code only resets your PIN. It doesn't skip any wait.' '' enabled=true [60,691][1020,812]
+'Recovery code' '' enabled=true [60,852][345,902]
+'' 'Recovery code' enabled=true EditText [100,952][980,1072]
+'This code can't get past Google's reset protection if the phone is ever wiped. Only your Google account can do that.' '' enabled=true [60,1122][1020,1308]
+'Continue' '' enabled=true [441,2162][639,2218]

@@ -1,0 +1,9 @@
+# old test PIN after recovery
+'Your settings' '' enabled=true [60,137][1020,197]
+'Your PIN' '' enabled=true [60,337][375,425]
+'Enter your PIN to make changes on this phone.' '' enabled=true [60,465][1020,586]
+'That PIN isn't right. Try again.' '' enabled=true [60,626][715,682]
+'PIN' '' enabled=true [60,722][136,772]
+'' 'PIN' enabled=true EditText [100,822][980,942]
+'Forgot PIN? Use recovery code' '' enabled=true [193,2012][887,2068]
+'Continue' '' enabled=true [441,2162][639,2218]
