@@ -41,6 +41,13 @@ class RequestsScreenshotTest(private val scale: Float) {
                     assertTrue("Whole request reachable by scrolling", row.positionInRoot.y + row.size.height - range.maxValue() <= scroll.boundsInRoot.bottom + 1f)
                 }
                 assertTrue(nodes.map(::text).none { it.contains("Delivered") })
+                if (!state.isSetUp && !state.historyOnly && state.result == null) {
+                    val texts = nodes.map(::text)
+                    assertEquals(1, texts.count { it == "Not set up on this phone yet." })
+                    assertEquals(1, texts.count { it == "No one is set to get requests. This phone’s PIN holder can set it up in More, then PIN settings, then Who gets requests." })
+                    assertEquals(1, texts.count { it.contains("set up on this phone yet") })
+                }
+
                 checked = true
             }) { RequestsScreen(state, {}) }
         } } }
@@ -48,6 +55,8 @@ class RequestsScreenshotTest(private val scale: Float) {
     }
     @Test fun unavailableHistory() = shot(RequestsUiState(historyOnly = true, result = RequestUiStatus.StorageError))
     @Test fun notSetUp() = shot(RequestsUiState())
+    @Test fun notSetUpWithSavedRequest() = shot(RequestsUiState(rows = listOf(
+        RequestUiRow("Bus times app", "14 Oct", RequestUiStatus.Sent))))
     @Test fun composeLongText() = shot(RequestsUiState(isSetUp = true, recipientName = "Sam Jo Alex Sam Jo Alex", message = "The bus times app, to check the ferry bus. ".repeat(5), canSend = true))
     @Test fun notSent() = shot(RequestsUiState(isSetUp = true, result = RequestUiStatus.NoSignal))
     @Test fun notConfirmed() = shot(RequestsUiState(isSetUp = true, result = RequestUiStatus.NotConfirmed))

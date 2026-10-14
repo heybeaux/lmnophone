@@ -34,7 +34,7 @@ class AppPermissionsScreenshotTest(private val scale: Float) {
         AppPermissionRow("android.permission-group.CONTACTS", "Contacts", PermissionStatus.Unknown))
     private val choices = listOf(PermissionGroup.Camera, PermissionGroup.Microphone, PermissionGroup.Location, PermissionGroup.Contacts)
         .mapIndexed { index, group -> PermissionChoice(rows[index].id, group) }
-    @Test fun page() = shot("Remove from this person's phone") {
+    @Test fun page() = shot("Remove $name") {
         PreviewAppDetailScreen(context, name, "123.456.789", permissions = AppPermissionsUiState(rows), canChooseOnAdd = true) {}
     }
     @Test fun choices() = shot("Next", disabled = true) {
@@ -46,10 +46,10 @@ class AppPermissionsScreenshotTest(private val scale: Float) {
     @Test fun refused() = shot("Next", disabled = true, refused = true) {
         PermissionsScreen(PermissionsUiState(context, name, choices.mapIndexed { index, choice -> choice.copy(unavailable = index == 1) }, previewAdd = true)) {}
     }
-    @Test fun empty() = shot("Remove from this person's phone") {
+    @Test fun empty() = shot("Remove $name") {
         PreviewAppDetailScreen(context, name, "1", permissions = AppPermissionsUiState(), canChooseOnAdd = true) {}
     }
-    @Test fun unreadable() = shot("Remove from this person's phone") {
+    @Test fun unreadable() = shot("Remove $name") {
         PreviewAppDetailScreen(context, name, "1", permissions = AppPermissionsUiState(checkFailed = true), canChooseOnAdd = true) {}
     }
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
