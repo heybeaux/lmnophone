@@ -1,6 +1,8 @@
 <!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.plainphone.permissionfixture">
     <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="35" />
+    <!-- Deliberately undefined on this emulator: must not hide real runtime groups. -->
+    <uses-permission android:name="org.plainphone.undefined.permission.BADGE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <application android:hasCode="false" android:label="Permission test app" android:debuggable="true" android:theme="@android:style/Theme.Material.Light">
