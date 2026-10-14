@@ -8,6 +8,8 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(54, 54, listOf("Apps on this phone now shows what each app can use.",
+            "When you add an app with Add a hidden app, you choose what it can use. To choose again, remove the app and add it again; your things in the app stay.")),
         ReleaseNote(53, 53, listOf("PIN settings now shows a waiting change, or “LMNOPhone needs attention”, under Needs you. Tap it to open that screen.",
             "On the Apps PIN screen, Use recovery code now opens PIN recovery.")),
         ReleaseNote(52, 52, listOf("Who gets requests now says so when its saved details can't be read.")),
