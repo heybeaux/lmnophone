@@ -1,0 +1,6 @@
+# Add confirm at font 2.0 (2026-10-14T23:17:52Z); text|bounds from uiautomator (screens are FLAG_SECURE)
+Your settings | [60,137][1020,225]
+Add Calculator to this phone? | [60,265][1020,502]
+It will appear on the home screen, below the other apps. | [60,522][1020,834]
+Go back | [387,1986][694,2080]
+Add Calculator | [266,2143][814,2237]
