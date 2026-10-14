@@ -1,0 +1,12 @@
+# original test PIN after Change PIN
+'Your settings' '' enabled=true [60,137][1020,197]
+'Your settings' '' enabled=true [60,337][511,425]
+'You hold the PIN. LMNOPhone adds waits so that distraction takes effort. It's friction, not a lock.' '' enabled=true [60,465][1020,651]
+'Voice messages' '' enabled=true [60,737][491,806]
+'Add an app' '' enabled=true [60,937][373,1006]
+'Add a hidden app' '' enabled=true [60,1137][541,1206]
+'Apps on this phone' '' enabled=true [60,1337][578,1406]
+'Requests from Alex' '' enabled=true [60,1537][584,1606]
+'Check for updates' '' enabled=true [60,1737][555,1806]
+'Open full phone settings' '' enabled=true [60,1937][722,2006]
+'Done – back to the home screen' '' enabled=true [186,2162][895,2218]

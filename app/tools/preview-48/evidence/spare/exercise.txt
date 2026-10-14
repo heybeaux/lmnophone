@@ -1,0 +1,29 @@
+# Build 48 on the spare: recovery code (PLA-521) exercised (PLA-524)
+# 2026-10-14 02:08Z-02:24Z (2026-10-13 19:08-19:24 Pacific). Test PIN from the secrets file; a random
+# 8-digit temporary PIN and both codes lived only in mode-600 files in the run scratch dir. No code or PIN
+# is in this record. Trusted-person screens are FLAG_SECURE (PinAccessActivity), so each screen is a
+# uiautomator layout readback in layouts/ with codes and digit runs redacted. No calls, no sends.
+
+1. More > For Sam and Jo > test PIN > Your settings menu (01, 02).
+2. New recovery code > Your PIN (03) > test PIN > "Here is your new recovery code", one code of 8 groups
+   of 4, "I've written it down" at y 2162-2218, above the 3-button bar (04). Acknowledge: back on Your PIN,
+   zero code-shaped strings left on screen (05).
+3. Forgot PIN? Use recovery code > Enter recovery code (06) > code 1 (masked, 39 dots) > Continue >
+   Choose a new PIN (07, 08) > temporary PIN twice > a replacement code shown once (09), different from
+   code 1. Acknowledge: zero code-shaped strings left.
+4. Old test PIN on Your PIN: "That PIN isn't right. Try again." (10).
+5. Forgot PIN? > code 1 again > Choose a new PIN (11) > temporary PIN twice > "That code isn't right.
+   Check it against what you wrote down, and try again." (12). Refused, as L3 says, only after the PIN
+   was typed twice. Back from Enter recovery code closes the PIN screens and lands on More (13).
+6. For Sam and Jo > temporary PIN > menu (14). Change PIN > Your PIN (15) > temporary PIN > Choose a new
+   PIN (16) > original test PIN twice > "PIN changed." (17) > OK > menu (18). Change PIN shows no new code.
+7. Temporary PIN now refused (19); original test PIN opens the menu (20).
+8. Secrets: logcat after the journey had 0 matches for either code (with or without hyphens). The only PIN
+   matches were 4 adbd lines logging this driver's own `input text` shell commands (not the app);
+   logcat was cleared afterwards (logcat -b all -c).
+   The code that is valid now is held by the driver in ~/.plainphone/secrets/spare-recovery-code (mode
+   600, beside spare-test-pin) so the next driver doesn't need to rotate it. Never in evidence.
+9. Readback after: versionCode 48, LOCKED, Device Owner 1, Telecom calls 0, LockTaskPolicy lines 2.
+   after.txt vs before.txt: version and lastUpdateTime only.
+Copy note (nonblocking): Enter recovery code says "the long code you wrote down when LMNOPhone was set
+up"; on the spare it was made with New recovery code, not at setup.
