@@ -9,3 +9,13 @@ Scope: PLA-500, under the parent A+B and delivery-first decisions. Six family pe
 - [x] Explicit Google Messages SENDTO route resolves the current recipient by opaque id; no message content or automatic send.
 - [ ] Opposite-model review and any focused delta corrections.
 - [ ] Lead integration with slice 2a and sole-driver spare installation (outside this issue's device authority).
+
+## Slice 2c — hearing family picture-message replies
+
+Scope: PLA-527, requirement "Hearing family replies". Picture-message (MMS) voice replies only; chat (RCS) replies stay in Messages.
+
+- [x] Read the MMS inbox with READ_SMS only; family senders only (normalized number match); audio parts only; latest 5, oldest first.
+- [x] New message with the Play symbol on the family card (V1) and spoken "{person} sent you a message."; Listen / Stop listening / Play again on the person page (V2, V12a).
+- [x] Played-state in private no-backup storage keyed by a hashed message id; erased with the send record and drafts on remove, turn-off or a number change.
+- [ ] Opposite-model review and any focused delta corrections.
+- [ ] Lead-routed spare installation (outside this issue's device authority).

@@ -443,6 +443,26 @@ the family flags (`fromHome`, `openMessages`, `pictureInInk`) with the send flag
 through `FamilyStore` before the list changes; the host reads the list again on
 each `open()`.
 
+### Voice family replies (PLA-527, slice 2c)
+
+`:device/voice/replies` exports `AndroidMmsInbox` (reads `content://mms` inbox,
+`/part` and `/addr` with READ_SMS only; never writes the provider), `ReplySelector`
+(family-list sender match by normalized digits or equal E.164, `audio/*` parts only,
+latest 5 per person, unplayed, oldest first), `ReplyPlayedStore` (played-state in
+`noBackupFilesDir/voice-replies-played`, keyed by a salted hash of the message id,
+never a number) and `VoiceReplyBook : VoiceReplies`. `FamilyErase` is the
+`AndroidFamilyStore` erase step: removal, turn-off and a number change erase the
+person's drafts, `voice-send-family/<id>.send` record and played-state, failing closed.
+`VoicePracticeController` takes an optional `replies: VoiceReplies`, exposes
+`hasNewMessage(id)` and `refreshReplies()`, and adds `VoiceEvent.Listen`,
+`ReplyListen` on `VoiceState.Person`, and the effects `PlayReply` / `ReplyPlayed`.
+`VoicePlayer.playReply` and `VoiceSpeaker.speakAll` / `speakThen` are new with
+defaults; `AndroidVoicePlayer(context)` plays the part URI directly, without a copy.
+`VoiceUiMapper.map(..., newMessage)` sets `VoicePersonUi.newMessage` (V1) and maps
+`ReplyListen` to `VoiceUiListen` (Listen, Stop, PlayAgain; V12a). `:ui` emits
+`VoiceUiEvent.Listen`. The practice never reads the message store. RCS replies stay in
+Messages. No policy-engine, emergency-floor or lock-task interface changes.
+
 ## T5 preview app-list seam (PLA-514)
 
 `PreviewAppListStore` in `:device` preserves the existing credential-encrypted
