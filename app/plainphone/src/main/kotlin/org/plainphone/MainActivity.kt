@@ -420,6 +420,7 @@ class MainActivity : ComponentActivity() {
         val paper = PlainphoneColors.Paper.toArgb()
         enableEdgeToEdge(SystemBarStyle.light(paper, paper), SystemBarStyle.light(paper, paper))
         super.onCreate(savedInstanceState)
+        queueNeedsYou(intent)
         communication = AndroidCommunicationCounts(this, ::syncCounts)
         syncCounts()
         enterLockTask()
@@ -436,6 +437,17 @@ class MainActivity : ComponentActivity() {
             val runs by runtime.runs.collectAsState()
             val notice by runtime.notice.collectAsState()
             LaunchedEffect(runs) { enterLockTask() }
+            LaunchedEffect(gate, pendingNeedsYou) {
+                if (gate == HomeGate.READY) {
+                    val target = pendingNeedsYou
+                    pendingNeedsYou = null
+                    when (target) {
+                        is NeedsYouTarget.Waiting -> openWaitingChange(target.requestId)
+                        NeedsYouTarget.Attention -> attentionOpen = true
+                        else -> Unit
+                    }
+                }
+            }
             val homeVisible = resumed && gate == HomeGate.READY && shell.phone != null && shell.state.current == ShellRoute.Home && cancelScreen == null && !attentionOpen
             val settingsVisible = resumed && gate == HomeGate.READY && shell.phone != null && shell.state.current == ShellRoute.PhoneSettings
             val basicSettingsVisible = resumed && gate == HomeGate.READY && cancelScreen == null && !attentionOpen
@@ -623,6 +635,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.hasCategory(Intent.CATEGORY_HOME)) { leaveWifi(); shell.state = ShellState() }
+        queueNeedsYou(intent)
         // This opens only the existing PIN-free view; its controller rechecks the current request.
         if (intent.getBooleanExtra("open_waiting_change", false)) openNotice()
         enterLockTask()
@@ -712,12 +725,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private var pendingNeedsYou by mutableStateOf<NeedsYouTarget?>(null)
+
+    private fun queueNeedsYou(intent: Intent) {
+        pendingNeedsYou = intent.getStringExtra(EXTRA_NEEDS_YOU_WAITING)?.let { NeedsYouTarget.Waiting(it) }
+            ?: if (intent.getBooleanExtra(EXTRA_NEEDS_YOU_ATTENTION, false)) NeedsYouTarget.Attention else null
+        intent.removeExtra(EXTRA_NEEDS_YOU_WAITING)
+        intent.removeExtra(EXTRA_NEEDS_YOU_ATTENTION)
+    }
+
+    /** Same U9 view and controller as Home; a committing operation has no cancel action. */
+    private fun openWaitingChange(requestId: String) {
+        val wait = runtime.waitingNotice.value ?: return
+        val stage = confirmStage(requestId, wait) ?: return
+        val change = getString(waitingChangeTextResource(wait.kind), getString(R.string.app_name))
+        cancelScreen = CancelScreen(requestId, WaitingChangeUiState(stage = stage, change = change,
+            turningOff = wait.kind == WaitingChangeKind.TURN_OFF))
+    }
+
     /** Anyone holding the phone may cancel the pending change [requestId], without a PIN, if it is still pending. */
     private fun openCancel(requestId: String) {
-        val wait = runtime.waitingNotice.value?.takeIf { confirmStage(requestId, it) == WaitingStage.ConfirmCancel } ?: return
-        val change = getString(waitingChangeTextResource(wait.kind), getString(R.string.app_name))
-        cancelScreen = CancelScreen(requestId, WaitingChangeUiState(stage = WaitingStage.ConfirmCancel, change = change,
-            turningOff = wait.kind == WaitingChangeKind.TURN_OFF))
+        if (confirmStage(requestId, runtime.waitingNotice.value) != WaitingStage.ConfirmCancel) return
+        openWaitingChange(requestId)
     }
 
     /**

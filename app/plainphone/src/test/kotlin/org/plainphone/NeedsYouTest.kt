@@ -31,6 +31,25 @@ class NeedsYouTest {
         assertEquals("1 requests from the person using this phone", map(view = requests, user = "the person using this phone").needsYou.single().text)
         assertEquals("1 requests from Sam", map(view = requests, user = "Sam").needsYou.single().text)
     }
+    @Test fun persistedRequestsAreReadWithoutSendingOrChangingSavedData() {
+        val book = RequestBook(RequestRecipient("Jo", "555-0100"), listOf(
+            RequestEntry("saved-1", "Bus app", 1, 0, "old", listOf(RequestPart.Accepted)),
+            RequestEntry("saved-2", "Maps", 1, 0, "old", listOf(RequestPart.NoSignal))))
+        var writes = 0
+        val store = object : RequestStore {
+            override fun read() = book
+            override fun write(value: RequestBook) { writes++ }
+        }
+        val sms = object : RequestSmsPort {
+            override fun problem(): RequestStatus? = error("No SMS access for menu")
+            override fun parts(text: String): List<String> = error("No SMS access for menu")
+            override fun send(number: String, id: String, parts: List<String>) = error("Never send from menu")
+        }
+        val engine = AppRequests(store, sms, "current", { 10L }, { 1L })
+        repeat(2) { assertEquals("2 requests from Alex", map(view = engine.view()).needsYou.single().text) }
+        assertEquals(book, store.read())
+        assertEquals(0, writes)
+    }
     @Test fun itemsHaveRealDestinationsAndStaleWaitCannotOpenReplacement() {
         assertEquals(NeedsYouTarget.Waiting("change-1"), needsYouTarget("waiting:change-1", waiting))
         assertEquals(NeedsYouTarget.Attention, needsYouTarget("attention", waiting))

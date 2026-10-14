@@ -31,7 +31,9 @@ class NeedsYouScreenshotTest(private val scale: Float) {
             AdminNotice("attention", "LMNOPhone needs attention"), AdminNotice("requests", "3 requests from $user")).let { if (requestOnly) it.takeLast(1) else it.take(count) }
         val state = AdminMenuUiState(AdminContext(user), AdminDestination.entries.map { AdminMenuItem(it) }, notices)
         var checked = false
-        paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+        var scrolled = false
+        val compose = androidx.compose.ui.platform.ComposeView(paparazzi.context).apply { setContent {
+        PlainphoneTheme { HomeTestFrame {
             val view = LocalView.current as ViewRootForTest
             Box(Modifier.onGloballyPositioned {
                 val nodes = view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = true)
@@ -52,12 +54,34 @@ class NeedsYouScreenshotTest(private val scale: Float) {
                 view.semanticsOwner.getAllSemanticsNodes(mergingEnabled = false).forEach { node ->
                     val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
                     node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
-                    layouts.forEach { assertFalse("Text must wrap without clipping", it.hasVisualOverflow) }
+                    layouts.forEach { layout ->
+                        // Compose rounds integer layout bounds; allow the final fractional pixel.
+                        for (line in 0 until layout.lineCount) {
+                            assertFalse("Text must not ellipsize", layout.isLineEllipsized(line))
+                            assertTrue("Text fits horizontally", layout.getLineRight(line) <= layout.size.width + 1f)
+                            assertTrue("Text fits vertically", layout.getLineBottom(line) <= layout.size.height + 1f)
+                        }
+                    }
                 }
                 checked = true
+                if (requestOnly && !scrolled) {
+                    val row = nodes.single { text(it) == notices.single().text }
+                    val offset = row.positionInRoot.y - scroll.positionInRoot.y
+                    scrolled = true
+                    kotlinx.coroutines.runBlocking(object : androidx.compose.runtime.MonotonicFrameClock {
+                        private var frame = 0L
+                        override suspend fun <R> withFrameNanos(onFrame: (Long) -> R): R {
+                            frame += 16_000_000L
+                            return onFrame(frame)
+                        }
+                    }) { scroll.config[SemanticsActions.ScrollByOffset].invoke(androidx.compose.ui.geometry.Offset(0f, offset)) }
+                    assertTrue("Long request is scrolled into view", range.value() > 0f)
+                }
             }) { AdminMenuScreen(state, {}) }
-        } } }
+        } } } }
+        paparazzi.snapshot(compose, offsetMillis = 1_000)
         assertTrue(checked)
+        if (requestOnly) assertTrue(scrolled)
     }
     @Test fun empty() = shot(0)
     @Test fun one() = shot(1)

@@ -116,7 +116,11 @@ class PinAccessActivity : ComponentActivity() {
                 wait = DateUtils.formatElapsedTime((state.waitMillis + 999) / 1000))) { event -> when (event) {
                     is PinEvent.ValueChanged -> value = event.value
                     PinEvent.Continue -> { val pin = value.toCharArray(); value = ""; editor.submit(pin) }
-                    PinEvent.UseRecoveryCode -> { value = ""; editor.unsupported() }
+                    PinEvent.UseRecoveryCode -> {
+                        value = ""; confirmation = ""
+                        editor.close(); appsFlow = null; apps = null
+                        flow.useRecoveryFromApps()
+                    }
                     else -> backApps()
                 } }
             PreviewAppsStage.SaveFailed -> PreviewAppsFailureScreen(appsContext) { editor.open() }
@@ -172,6 +176,15 @@ class PinAccessActivity : ComponentActivity() {
                 else -> finish()
             } }
             val waitingNow by runtime.waitingRead.collectAsState()
+            val waitingMenu by runtime.waitingNotice.collectAsState()
+            val homeNotice by runtime.notice.collectAsState()
+            var menuRequests by remember { mutableStateOf<org.plainphone.policy.RequestView?>(null) }
+            LaunchedEffect(page.page) {
+                menuRequests = null
+                if (page.page == PinPage.MENU) menuRequests = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    org.plainphone.device.requests.RequestEngine.get(this@PinAccessActivity).view()
+                }
+            }
             PlainphoneTheme {
                 Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).systemBarsPadding().displayCutoutPadding()) {
                     when (page.page) {
@@ -199,17 +212,17 @@ class PinAccessActivity : ComponentActivity() {
                             PinEvent.Ok -> if (page.page == PinPage.RECOVERY_ISSUED) flow.codeWritten() else finish()
                             else -> finish()
                         } }
-                        PinPage.MENU -> if (apps != null) AppsContent(apps!!) else if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(pinMenuUiState(AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)))) { when (it) {
+                        PinPage.MENU -> if (apps != null) AppsContent(apps!!) else if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(pinMenuUiState(AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)),
+                            waitingMenu, homeNotice, menuRequests, needsYouCopy())) { when (it) {
                             AdminMenuEvent.Done -> finish()
-                            is AdminMenuEvent.OpenNotice -> flow.unsupported()
+                            is AdminMenuEvent.OpenNotice -> openNeedsYou(it.id)
                             is AdminMenuEvent.Open -> when (it.destination) {
                                 AdminDestination.TurnOff -> flow.turnOff()
                                 AdminDestination.ChangePin -> flow.changePin()
                                 AdminDestination.NewRecoveryCode -> flow.newRecoveryCode()
                                 AdminDestination.VoiceMessages -> openFamily()
                                 AdminDestination.Apps -> openApps()
-                                AdminDestination.Requests -> startActivity(Intent(this@PinAccessActivity, org.plainphone.requests.RequestsActivity::class.java)
-                                    .putExtra(org.plainphone.requests.RequestsActivity.HISTORY, true))
+                                AdminDestination.Requests -> openRequests()
                                 AdminDestination.RequestRecipient -> startActivity(Intent(this@PinAccessActivity, org.plainphone.requests.RequestRecipientActivity::class.java))
                                 else -> flow.unsupported()
                             }
@@ -251,6 +264,31 @@ class PinAccessActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun needsYouCopy() = NeedsYouCopy(
+        waiting = { kind -> getString(org.plainphone.ui.R.string.admin_needs_waiting,
+            getString(org.plainphone.boot.waitingChangeTextResource(kind), getString(R.string.app_name))) },
+        attention = getString(org.plainphone.ui.R.string.admin_needs_attention),
+        requests = { count, user -> resources.getQuantityString(org.plainphone.ui.R.plurals.admin_needs_requests, count, count, user) },
+    )
+
+    private fun openRequests() = startActivity(Intent(this, org.plainphone.requests.RequestsActivity::class.java)
+        .putExtra(org.plainphone.requests.RequestsActivity.HISTORY, true))
+
+    private fun openNeedsYou(id: String) {
+        if (page.page != PinPage.MENU) return
+        val target = needsYouTarget(id, runtime.waitingNotice.value) ?: return
+        if (target == NeedsYouTarget.Requests) { openRequests(); return }
+        val home = Intent(this, MainActivity::class.java).addCategory(Intent.CATEGORY_HOME)
+            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        when (target) {
+            is NeedsYouTarget.Waiting -> home.putExtra(EXTRA_NEEDS_YOU_WAITING, target.requestId)
+            NeedsYouTarget.Attention -> home.putExtra(EXTRA_NEEDS_YOU_ATTENTION, true)
+            NeedsYouTarget.Requests -> return
+        }
+        startActivity(home)
+        finish()
     }
 
     private fun waitText(millis: Long): String {
