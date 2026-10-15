@@ -443,4 +443,18 @@ class BootReapplyTest {
         assertTrue(outcome.ready)
         assertFalse(outcome.needsAttention)
     }
+    @Test fun suppliedSessionFactoryOwnsStartupAndItsJournal() {
+        seedEmptyJournal()
+        var calls = 0
+        val boot = BootReapply(journal, port, names(play), { PolicyEngine.decide(input(it)) },
+            RestrictionFilter.TEST_BUILD, sessionFactory = { effects ->
+                calls++
+                org.plainphone.policy.SessionController(journal, effects, { null }, null, { _, _ -> false })
+            })
+        assertEquals(1, calls)
+        assertTrue(boot.run(false).ready)
+        assertEquals(1, calls)
+        assertEquals(SessionJournal.Empty, journal.read())
+    }
+
 }
