@@ -10,6 +10,7 @@ fun playOpeningUi(view: PlaySessionView, context: AdminContext, stage: OpeningSt
     stage ?: when {
         view.countdownMillis != null -> OpeningStage.Countdown
         view.readyMillis != null -> OpeningStage.Ready
+        view.left <= 0 -> OpeningStage.NoOpenings
         else -> OpeningStage.Before
     }, OpeningKind.Play, waitMinutes = minutes(view.waitMillis), durationMinutes = 10,
     minutes = minutes(view.countdownMillis ?: view.readyMillis ?: 0), left = view.left, limit = view.limit,
@@ -37,3 +38,13 @@ fun playNeedsClosure(view: PlaySessionView): Boolean = view.id != null && !view.
 fun playApprovalListUi(context: AdminContext, apps: List<HiddenAppRow>, expired: Boolean = false,
     unavailable: Boolean = false, busy: Boolean = false) =
     PlayApprovalListUiState(context, apps, expired, unavailable, busy, showGrantNotice = true)
+
+/** A refusal is not failed readback. Keep Checking until launch-failure cleanup completes. */
+fun playSessionStage(view: PlaySessionView, failed: Boolean = false, returned: Boolean = false,
+    busy: Boolean = false): SessionStage? = when {
+    busy && (failed || returned || playNeedsClosure(view)) -> SessionStage.Checking
+    !view.handbackReady && !view.active -> SessionStage.NotReady
+    failed -> null
+    returned || playNeedsClosure(view) -> SessionStage.Restored
+    else -> null
+}

@@ -192,6 +192,7 @@ class PinAccessActivity : ComponentActivity() {
             val waitingNow by runtime.waitingRead.collectAsState()
             val waitingMenu by runtime.waitingNotice.collectAsState()
             val homeNotice by runtime.notice.collectAsState()
+            val playView by runtime.playView.collectAsState()
             PlainphoneTheme {
                 Box(Modifier.fillMaxSize().background(PlainphoneColors.Paper).systemBarsPadding().displayCutoutPadding()) {
                     when (page.page) {
@@ -220,7 +221,8 @@ class PinAccessActivity : ComponentActivity() {
                             else -> finish()
                         } }
                         PinPage.MENU -> if (apps != null) AppsContent(apps!!) else if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(pinMenuUiState(AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)),
-                            waitingMenu, homeNotice, needsYouCopy(), menuRequests)) { when (it) {
+                            waitingMenu, homeNotice, needsYouCopy(), menuRequests,
+                            getString(org.plainphone.ui.R.string.play_menu_detail, ((playView.waitMillis + 59999) / 60000).coerceAtLeast(1).toInt()))) { when (it) {
                             AdminMenuEvent.Done -> finish()
                             is AdminMenuEvent.OpenNotice -> openNeedsYou(it.id)
                             is AdminMenuEvent.Open -> when (pinMenuTarget(it.destination)) {

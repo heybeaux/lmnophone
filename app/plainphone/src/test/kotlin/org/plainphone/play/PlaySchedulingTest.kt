@@ -47,7 +47,7 @@ class PlaySchedulingTest {
         pulse.update(PlaySessionView(handbackReady = true))
         assertTrue(delayed.isEmpty())
         for (view in listOf(PlaySessionView(countdownMillis = 1000), PlaySessionView(readyMillis = 1000),
-            PlaySessionView(active = true, accessMillis = 1000), PlaySessionView(approvalAvailable = true))) {
+            PlaySessionView(active = true, accessMillis = 1000), PlaySessionView(approvalAvailable = true), PlaySessionView(id = "closing-grant", handbackReady = false))) {
             pulse.update(view); pulse.update(view)
             assertEquals(1, delayed.size)
             delayed.removeAt(0).run()

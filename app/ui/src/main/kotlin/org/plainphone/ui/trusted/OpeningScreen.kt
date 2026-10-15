@@ -6,6 +6,7 @@ package org.plainphone.ui.trusted
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource as s
 import org.plainphone.ui.R
 import org.plainphone.ui.components.*
@@ -36,6 +37,7 @@ fun OpeningScreen(state: OpeningUiState, onEvent: (OpeningEvent) -> Unit) {
         OpeningStage.NoOpenings -> s(R.string.opening_none)
         OpeningStage.AlreadyOpening -> s(R.string.opening_already)
         OpeningStage.SaveFailed -> s(R.string.opening_failed)
+        OpeningStage.OpenFailed -> s(R.string.opening_refused)
         OpeningStage.AddInstalled -> s(R.string.opening_installed)
         OpeningStage.TooLate -> s(R.string.opening_late, app)
         OpeningStage.UsedUp -> s(R.string.opening_used)
@@ -60,7 +62,7 @@ fun OpeningScreen(state: OpeningUiState, onEvent: (OpeningEvent) -> Unit) {
         }) }) {
         when (state.stage) {
             OpeningStage.Before -> {
-                Words(s(R.string.opening_before_body, state.waitMinutes, kind, state.durationMinutes, state.left))
+                Words(pluralStringResource(R.plurals.opening_before_body, state.left, state.waitMinutes, kind, state.durationMinutes, state.left))
                 if (state.playDisclosure) Words(s(R.string.play_preview_disclosure))
             }
             OpeningStage.Countdown -> {
@@ -71,14 +73,14 @@ fun OpeningScreen(state: OpeningUiState, onEvent: (OpeningEvent) -> Unit) {
                 })
                 Words(s(R.string.opening_countdown_rest))
             }
-            OpeningStage.Ready -> Words(if (state.minutes == 1) s(R.string.opening_ready_body_one, state.left) else s(R.string.opening_ready_body, state.minutes, state.left))
+            OpeningStage.Ready -> Words(if (state.minutes == 1) pluralStringResource(R.plurals.opening_ready_body_one, state.left, state.left) else pluralStringResource(R.plurals.opening_ready_body, state.left, state.minutes, state.left))
             OpeningStage.NoOpenings -> Words(if (state.limit == 0) s(R.string.opening_zero) else s(R.string.opening_none_body, state.limit, state.time))
             OpeningStage.AlreadyOpening -> Words(if (state.alreadyOpen) s(R.string.opening_already_open, kind, state.time) else s(R.string.opening_already_countdown, kind))
             OpeningStage.AddInstalled -> Words(s(R.string.opening_installed_body, state.time))
             OpeningStage.TooLate -> Words(s(R.string.opening_late_body, app))
             OpeningStage.UsedUp -> Words(s(R.string.opening_used_body, app))
             OpeningStage.UpdateExpired -> Words(s(R.string.opening_update_expired_body, state.time))
-            OpeningStage.SaveFailed -> Unit
+            OpeningStage.SaveFailed, OpeningStage.OpenFailed -> Unit
         }
     }
 }

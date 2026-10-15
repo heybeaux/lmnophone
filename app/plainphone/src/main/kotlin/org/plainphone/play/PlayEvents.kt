@@ -12,6 +12,9 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.os.PowerManager
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collectLatest
 import android.telephony.TelephonyManager
 import org.plainphone.boot.PolicyRuntime
 import org.plainphone.policy.SessionEnd
@@ -29,19 +32,26 @@ object PlayEvents {
                     else -> return
                 }
                 val pending = goAsync()
-                runtime.endPlay(reason) { pending.finish() }
+                // goAsync keeps the broadcast pending; a bounded partial lock keeps the CPU
+                // running through serialized revoke/readback without turning the display on.
+                val wake = context.getSystemService(PowerManager::class.java)
+                    .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LMNOPhone:PlayClose")
+                wake.acquire(10_000)
+                runtime.endPlay(reason) {
+                    try { if (wake.isHeld) wake.release() } finally { pending.finish() }
+                }
             }
         }, IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_OFF)
             addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
         }, Context.RECEIVER_EXPORTED)
         val handler = Handler(Looper.getMainLooper())
-        val pulse = object : Runnable {
-            override fun run() {
-                runtime.tickPlay { handler.postDelayed(this, 1000) }
-            }
+        val pulse = PlayPulse({ handler.postDelayed(it, 1000) }, handler::removeCallbacks) { done ->
+            runtime.tickPlay { handler.post { done() } }
         }
-        handler.post(pulse)
+        CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).launch {
+            runtime.playView.collectLatest(pulse::update)
+        }
     }
 }
 

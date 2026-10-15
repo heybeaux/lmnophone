@@ -341,23 +341,29 @@ class PolicyRuntime private constructor(private val context: Context) {
         done(started)
     }
     fun cancelPlay(id: String) = dispatcher.post { play.cancel(id); publishPlay() }
-    fun endPlay(reason: SessionEnd, done: () -> Unit = {}) = dispatcher.post {
+    private val playWork = org.plainphone.play.PlayWorkQueue(dispatcher::post, ::tickPlayNow, ::endPlayNow)
+    fun endPlay(reason: SessionEnd, done: () -> Unit = {}) = playWork.end(reason, done)
+    fun tickPlay(done: () -> Unit = {}) = playWork.tick(done)
+    private fun endPlayNow(reason: SessionEnd) {
+        if (!playInitialized) return
         try {
             play.endCurrent(reason)
             publishPlay()
-        } finally { done() }
+        } catch (_: Exception) {
+            playState.value = playState.value.copy(handbackReady = false, active = false)
+        }
     }
-    fun tickPlay(done: () -> Unit = {}) = dispatcher.post {
+    private fun tickPlayNow() {
         try {
             if (playInitialized) {
-                if (inCall()) play.endCurrent(SessionEnd.INCOMING_CALL)
+                if (playState.value.active && inCall()) play.endCurrent(SessionEnd.INCOMING_CALL)
                 play.tick()
                 publishPlay()
             }
         } catch (_: Exception) {
-            play.endCurrent(SessionEnd.DONE)
+            if (playInitialized) play.endCurrent(SessionEnd.DONE)
             playState.value = playState.value.copy(handbackReady = false, active = false)
-        } finally { done() }
+        }
     }
     private fun publishPlay() {
         if (!playInitialized) return

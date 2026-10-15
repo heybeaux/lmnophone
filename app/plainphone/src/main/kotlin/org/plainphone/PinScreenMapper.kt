@@ -49,4 +49,4 @@ fun pinMenuTarget(destination: AdminDestination): PinMenuTarget? = when (destina
     AdminDestination.SwitchMode -> null
 }
 
-fun pinMenuUiState(context: AdminContext, requestCount: Int? = null) = AdminMenuUiState(context, AdminDestination.entries.filter { it != AdminDestination.RequestRecipient && pinMenuTarget(it) != null }.flatMap { if (it == AdminDestination.Requests) listOf(AdminMenuItem(it, requestCount?.takeIf { count -> count > 0 }?.toString().orEmpty()), AdminMenuItem(AdminDestination.RequestRecipient)) else listOf(AdminMenuItem(it)) })
+fun pinMenuUiState(context: AdminContext, requestCount: Int? = null, playDetail: String = "") = AdminMenuUiState(context, AdminDestination.entries.filter { it != AdminDestination.RequestRecipient && pinMenuTarget(it) != null }.flatMap { if (it == AdminDestination.Requests) listOf(AdminMenuItem(it, requestCount?.takeIf { count -> count > 0 }?.toString().orEmpty()), AdminMenuItem(AdminDestination.RequestRecipient)) else listOf(AdminMenuItem(it, if (it == AdminDestination.AddApp) playDetail else "")) })

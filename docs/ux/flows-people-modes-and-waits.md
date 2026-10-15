@@ -509,6 +509,7 @@ app" (TPC "App requests": no request flow). Both ask for the user's PIN.
 - **Body:**
   First there's a {wait}-minute wait. Then you tap Start, and {kind} is open for {deadline} minutes.
   This uses 1 of your {left} openings left today. Restarting the phone stops the wait, and nothing is used up.
+- With 1 left: "This uses 1 of your 1 opening left today." With 0 left, show M7c instead.
 - **Primary:** Start the wait → PIN → U10a
 - **Secondary:** Not now
 - **Add a hidden app** first shows the list of hidden apps to pick one (name and developer as Android reports them).
@@ -534,7 +535,9 @@ until {time}). Finish or stop that first." **OK** · **See it** → U10a.
 ### M7e. Countdown and Start
 
 U10a and U10b in [flows-user.md](flows-user.md#u10-opening-up-self-managed-mode-only). Start confirms the kind again
-(TPC step 2). If Start can't save: "This didn't open. Nothing was used up. Try again." **OK**.
+(TPC step 2). If Start is refused or launching fails: “This didn't open. Try again.” **OK**.
+Do not claim that nothing was used up after a debit. If readback fails, show M7f Not ready instead.
+If Start can't save: "This didn't open. Nothing was used up. Try again." **OK**.
 
 ### M7f. While it is open
 
