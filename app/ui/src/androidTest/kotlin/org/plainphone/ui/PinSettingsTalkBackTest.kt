@@ -314,7 +314,7 @@ class PinSettingsTalkBackTest {
             val bounds = last.fetchSemanticsNode().boundsInRoot
             val root = compose.onRoot().fetchSemanticsNode().boundsInRoot
             val fullBounds = last.getUnclippedBoundsInRoot()
-            assertTrue("${page.name}: whole action fits safe viewport", fullBounds.top >= 0.dp && fullBounds.bottom <= 560.dp)
+            assertTrue("${page.name}: whole action fits safe viewport", fullBounds.top >= 0.dp && fullBounds.bottom.value <= root.bottom / compose.density.density)
             // Test host reserves the same 80 dp for system bars as the 360 x 640 goldens.
             val density = compose.density.density
             println("PIN_LAYOUT ${page.name} scale=$fontScale bottomDp=${bounds.bottom / density} safeBottomDp=${root.bottom / density} bottomWindowPx=${last.fetchSemanticsNode().boundsInWindow.bottom}")

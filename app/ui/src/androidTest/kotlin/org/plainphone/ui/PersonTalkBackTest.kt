@@ -135,11 +135,12 @@ class PersonTalkBackTest {
             compose.runOnIdle { scale.value = font; page.value = next }
             if (next.title != "Home") compose.onNode(hasText(next.title) and heading).assertExists()
             val last = compose.onNode((hasText(next.last) or hasContentDescription(next.last)) and hasClickAction())
+            val safeBottom = compose.onRoot().getUnclippedBoundsInRoot().bottom
             val before = last.getUnclippedBoundsInRoot()
-            if (before.top < 0.dp || before.bottom > 560.dp) last.performScrollTo()
+            if (before.top < 0.dp || before.bottom > safeBottom) last.performScrollTo()
             last.assertIsDisplayed()
             val bounds = last.getUnclippedBoundsInRoot()
-            assertTrue("${next.title} at $font: last action below safe area", bounds.bottom <= 560.dp && bounds.top >= 0.dp)
+            assertTrue("${next.title} at $font: last action below safe area", bounds.bottom <= safeBottom && bounds.top >= 0.dp)
             noGlyphs()
             val actions = compose.onAllNodes(hasClickAction() and SemanticsMatcher.keyNotDefined(SemanticsProperties.EditableText)).fetchSemanticsNodes()
             actions.forEach { node ->
