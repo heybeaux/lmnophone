@@ -26,6 +26,23 @@ class HandoverReaderTest {
     private fun read(owner: () -> Boolean = { true }, decide: () -> PolicyPlan? = { plan },
         route: (PolicyPlan) -> Boolean? = { true }, debugging: (DebuggingKind) -> Int? = { 0 },
         device: DevicePolicyPort = port) = HandoverReader(DeviceOwnerReader(owner), decide, device, route, debugging).read()
+    @Test fun emergencyUsesOsFloorRatherThanPreviewExemptions() {
+        val exempt = PackageName("test.factory.disabled.home")
+        port.state[exempt] = visible().copy(enabled = false)
+        val preview = plan.copy(neverHide = plan.neverHide + exempt)
+        val report = HandoverReader(DeviceOwnerReader { true }, { preview }, port, { true }, { 0 },
+            emergencyFloor = { setOf(phone) }).read()
+        assertEquals(HandoverState.OK, report.items[HandoverItem.EMERGENCY])
+        port.state[phone] = visible().copy(enabled = false)
+        assertEquals(HandoverState.NEEDS_HELPER, HandoverReader(DeviceOwnerReader { true }, { preview }, port,
+            { true }, { 0 }, emergencyFloor = { setOf(phone) }).read().items[HandoverItem.EMERGENCY])
+        assertTrue(port.ops.isEmpty())
+    }
+    @Test fun unreadableOsFloorDoesNotUseTheCachedPlanFloor() {
+        val report = HandoverReader(DeviceOwnerReader { true }, { plan }, port, { true }, { 0 },
+            emergencyFloor = { null }).read()
+        assertEquals(HandoverState.COULD_NOT_CHECK, report.items[HandoverItem.EMERGENCY])
+    }
     @Test fun allReadsPassWithoutAnyWrites() {
         assertEquals(0, read().needsHelper); assertTrue(port.ops.isEmpty())
     }
