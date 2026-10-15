@@ -37,6 +37,13 @@ class PinScreenMapperTest {
         assertEquals(PinMenuTarget.Play, pinMenuTarget(AdminDestination.AddApp))
         assertTrue(pinMenuUiState(AdminContext("Alex")).items.any { it.destination == AdminDestination.AddApp })
     }
+    @Test fun productionPlayRowHasLocalizedDetailFromTheCurrentWait() {
+        val detail = "Opens the Play Store, after a 15-minute wait"
+        val menu = pinMenuUiState(AdminContext("Alex"), playDetail = detail)
+        assertEquals(detail, menu.items.single { it.destination == AdminDestination.AddApp }.detail)
+        assertEquals(detail, pinMenuUiState(AdminContext("Alex"), null, null, copy,
+            playDetail = detail).items.single { it.destination == AdminDestination.AddApp }.detail)
+    }
     private val copy = NeedsYouCopy({ "Waiting" }, "Attention", { n, _ -> "$n" })
     private fun menus() = listOf(pinMenuUiState(AdminContext("Alex")), pinMenuUiState(AdminContext("Alex"), 3),
         pinMenuUiState(AdminContext(""), null, null, copy),
