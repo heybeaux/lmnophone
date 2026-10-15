@@ -29,5 +29,5 @@ visible = set(shell('pm', 'list', 'packages').splitlines())
 lines += ['Hidden or uninstalled package query difference:'] + sorted(all_packages - visible)
 lines += ['Home resolver:', shell('cmd', 'package', 'resolve-activity', '--brief', '-a', 'android.intent.action.MAIN', '-c', 'android.intent.category.HOME').strip()]
 lines += ['Dialer resolver:', shell('cmd', 'package', 'resolve-activity', '--brief', '-a', 'android.intent.action.DIAL').strip()]
-Path(__file__).parent.joinpath('evidence/emulator', label + '.txt').write_text('\n'.join(lines).replace(serial, 'private-emulator') + '\n')
+Path(__file__).parent.joinpath('evidence/emulator', label + '.txt').write_text('\n'.join(line.rstrip() for line in lines).replace(serial, 'private-emulator') + '\n')
 print('captured', label)

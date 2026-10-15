@@ -1,6 +1,6 @@
 # normal-before
 Device policy (relevant fields only):
-  Device Owner: 
+  Device Owner:
     admin=ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
     User ID: 0
   System Update Policy: SystemUpdatePolicy (type: 3, windowStart: 0, windowEnd: 0, freezes: [])
