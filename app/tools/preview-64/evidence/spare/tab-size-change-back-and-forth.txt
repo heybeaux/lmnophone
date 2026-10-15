@@ -1,0 +1,23 @@
+== font 1.0
+Maps                                     [60, 1450, 271, 1550] clk=false
+Camera                                   [60, 1620, 372, 1720] clk=false
+Messages                                 [60, 1790, 444, 1890] clk=false
+Phone                                    [60, 1960, 307, 2060] clk=false
+More                                     [472, 2146, 608, 2215] clk=false
+TAB 1: FOCUS: Maps View [0,1430][1080,1570]
+TAB 2: FOCUS: Camera View [0,1600][1080,1740]
+TAB 3: FOCUS: Messages View [0,1770][1080,1910]
+TAB 4: FOCUS: Phone View [0,1940][1080,2080]
+TAB 5: FOCUS: More View [60,2100][1020,2260]
+== font 2.0
+Maps                                     [60, 1424, 321, 1548] clk=false
+Camera                                   [60, 1598, 447, 1722] clk=false
+Messages                                 [60, 1772, 535, 1896] clk=false
+Phone                                    [60, 1946, 364, 2070] clk=false
+More                                     [432, 2126, 649, 2235] clk=false
+TAB 1: FOCUS: Maps View [0,1414][1080,1558]
+TAB 2: FOCUS: Camera View [0,1588][1080,1732]
+TAB 3: FOCUS: Messages View [0,1762][1080,1906]
+TAB 4: FOCUS: Phone View [0,1936][1080,2080]
+TAB 5: FOCUS: More View [60,2100][1020,2260]
+restored font=1.0
