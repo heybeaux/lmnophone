@@ -24,6 +24,10 @@ class ReadbackGiveBackPort(private val packages: DevicePolicyPort, private val p
                 check(packages.packageHidden(name) != true) { "permission target still hidden" }
                 platform.restore(action)
             }
+            GiveBackKind.PREFERRED_HOME -> {
+                check(platform.anotherHomeResolves()) { "no successor Home" }
+                platform.restore(action)
+            }
             else -> platform.restore(action)
         }
     }
