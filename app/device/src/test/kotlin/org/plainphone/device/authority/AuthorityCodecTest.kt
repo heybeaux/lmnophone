@@ -33,6 +33,22 @@ import org.plainphone.policy.WaitingState
 import org.plainphone.policy.WaitingText
 
 class AuthorityCodecTest {
+    @Test fun giveBackJournalRoundTripAndLegacyWaitingRemainReadable() {
+        val old = WaitingState(storageGeneration = "live")
+        val bytes = AuthorityCodec.encodeWaiting(old)!!
+        assertNull(AuthorityCodec.decodeWaiting(bytes)!!.giveBack)
+        val entries = org.plainphone.policy.GiveBackKind.entries.map {
+            org.plainphone.policy.GiveBackEntry(org.plainphone.policy.GiveBackAction(it, "test.app", "test.permission"),
+                org.plainphone.policy.GiveBackStatus.FAILED)
+        }
+        val state = WaitingState(storageGeneration = "live", giveBack = org.plainphone.policy.GiveBackJournal("off", entries))
+        val encoded = AuthorityCodec.encodeWaiting(state)!!
+        val restored = AuthorityCodec.decodeWaiting(encoded)!!
+        assertEquals(entries, restored.giveBack!!.entries)
+        assertEquals("off", restored.giveBack!!.requestId)
+        assertArrayEquals(encoded, AuthorityCodec.encodeWaiting(restored))
+    }
+
     private val self = TrustedPersonId("self")
     private val other = TrustedPersonId("other")
     private fun verifier(seed: Int) = SecretVerifier(ByteArray(16) { (seed + it).toByte() }, ByteArray(32) { (seed * 3 + it).toByte() }, 600_000)

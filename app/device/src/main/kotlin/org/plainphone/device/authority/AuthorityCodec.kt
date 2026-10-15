@@ -69,6 +69,11 @@ import org.plainphone.policy.WaitingOperation
 import org.plainphone.policy.WaitingPhase
 import org.plainphone.policy.WaitingState
 import org.plainphone.policy.WaitingText
+import org.plainphone.policy.GiveBackJournal
+import org.plainphone.policy.GiveBackEntry
+import org.plainphone.policy.GiveBackAction
+import org.plainphone.policy.GiveBackKind
+import org.plainphone.policy.GiveBackStatus
 
 /** A routine friction receipt as stored in the outbox. Recipients and addresses are fixed at commit. */
 class StoredFrictionReceipt(
@@ -188,6 +193,13 @@ internal object AuthorityCodec {
             list(r.recipientGenerations.entries.sortedBy { it.key.value }) { (id, g) -> writeUTF(id.value); writeLong(g) }
             friction(r.friction); writeUTF(r.state.name)
         }
+        // Optional versioned tail: old waiting bytes remain byte-for-byte stable for CAS and migration.
+        s.giveBack?.let { journal ->
+            writeInt(0x47425631); writeUTF(journal.requestId)
+            list(journal.entries) { e ->
+                writeUTF(e.action.kind.name); writeUTF(e.action.target); writeUTF(e.action.detail); writeUTF(e.status.name)
+            }
+        }
     }
 
     /** [peoplePatches] false reads the schema 1-2 operation layout, which ends before the people patch. */
@@ -203,7 +215,13 @@ internal object AuthorityCodec {
             RecoveryReceipt(readUTF(), Mode.valueOf(readUTF()), map { TrustedPersonId(readUTF()) to readLong() },
                 friction(), RecoveredState.valueOf(readUTF()))
         }
-        WaitingState(revision, operation, texts, generation, receipts)
+        val giveBack = if (available() == 0) null else {
+            require(readInt() == 0x47425631)
+            GiveBackJournal(readUTF(), list {
+                GiveBackEntry(GiveBackAction(GiveBackKind.valueOf(readUTF()), readUTF(), readUTF()), GiveBackStatus.valueOf(readUTF()))
+            })
+        }
+        WaitingState(revision, operation, texts, generation, receipts, giveBack)
     }
 
     /** For exact comparisons of one operation; null when it holds an unsupported patch. */

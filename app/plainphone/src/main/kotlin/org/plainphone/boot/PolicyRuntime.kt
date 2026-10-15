@@ -117,7 +117,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val admin = ComponentName(context, PlainphoneAdminReceiver::class.java)
     /** Test builds can drop feature writes ([FeatureFault]); release always writes them. */
     private val port: DevicePolicyPort =
-        FeatureFaultPort(DpmPort(context, admin, ComponentName(context, FlushMarker::class.java))) { FeatureFault.on(context) }
+        FeatureFaultPort(DpmPort(context, admin, ComponentName(context, FlushMarker::class.java), ComponentName(context.packageName, "org.plainphone.HomeEntry"))) { FeatureFault.on(context) }
     private val protectedDir = context.createDeviceProtectedStorageContext().filesDir
     private val packagesPort = AndroidPackageSystemPort(context)
     // Preserve the preview starter list and restriction-free plan during this in-place upgrade.
@@ -292,6 +292,7 @@ class PolicyRuntime private constructor(private val context: Context) {
      * task, and queues a fresh pass once a pin that made the last pass not ready has ended.
      */
     fun onHomeLockTaskState(state: LockTaskState): CallingScreen? {
+        if (authority.turnOffCommitting()) return null
         val followUp = recovery.onHomeLockTaskState(state)
         if (followUp.reapply) reapply("pin-ended")
         // Lock task just started with KEYGUARD: lift the fallback suspension, then refresh the gate.
@@ -314,7 +315,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     }
 
     /** Keyguard first: true only while the features read back with KEYGUARD and Home is on the list. */
-    fun mayEnterLockTask(): Boolean = KeyguardFirst.mayEnterLockTask(port, home)
+    fun mayEnterLockTask(): Boolean = !authority.turnOffCommitting() && KeyguardFirst.mayEnterLockTask(port, home)
 
     /** Queues one re-apply; [done] runs on the dispatcher after it. */
     fun reapply(reason: String, done: () -> Unit = {}) = dispatcher.post {
@@ -509,7 +510,56 @@ class PolicyRuntime private constructor(private val context: Context) {
         }
     }
 
+    private val giveBackPlatform by lazy { org.plainphone.device.giveback.DpmGiveBackPort(context, admin) }
+    private val giveBack by lazy {
+        org.plainphone.policy.GiveBackController(authorityStore.waitingStore,
+            org.plainphone.device.giveback.ReadbackGiveBackPort(port, giveBackPlatform))
+    }
+    @Volatile var giveBackFailureCount: Int = 0
+        private set
+
+    @Volatile var giveBackRetryAvailable: Boolean = false
+        private set
+
+    fun retryGiveBack(requestId: String, done: () -> Unit) = dispatcher.post {
+        if (authority.waitingOperation()?.identity?.requestId == requestId) driveGiveBack(retry = true)
+        done()
+    }
+
+    /** Before every other policy writer, including update postponement and fallback containment. */
+    private fun driveGiveBack(retry: Boolean = false): Boolean {
+        val operation = authority.waitingOperation()
+        if (operation == null || operation.kind != org.plainphone.policy.WaitingChangeKind.TURN_OFF ||
+            operation.phase != org.plainphone.policy.WaitingPhase.COMMITTING) {
+            giveBackFailureCount = 0
+            giveBackRetryAvailable = false
+            return false
+        }
+        bootCoverage.invalidate()
+        packageReadback.invalidate()
+        // Normal launcher activities and some permission state are unavailable during Direct Boot.
+        // Keep the durable forward record and existing emergency access; never run lockdown here.
+        // USER_UNLOCKED/start resumes the same journal once successor checks can be truthful.
+        if (!users.isUserUnlocked) return true
+        val result = giveBack.run(operation.identity.requestId, facts.battery() ?: org.plainphone.policy.BatteryState(0, false), retry)
+        giveBackFailureCount = result.remaining
+        giveBackRetryAvailable = result.outcome in setOf(org.plainphone.policy.GiveBackOutcome.FAILED,
+            org.plainphone.policy.GiveBackOutcome.NOT_READY)
+        waitingNoticeState.value = waiting.notice()
+        waitingReadState.value = WaitingRead(waitingNoticeState.value, ZonedDateTime.now())
+        noticeTapState.value = NoticeTap.ConfirmCancel(operation.identity.requestId)
+        noticeState.value = HomeNotice.NeedsAttention
+        // Keep the existing waiting screen and emergency route usable during a recoverable failure.
+        lastGate = HomeGate.READY
+        if (!checkingHeld) gateState.value = lastGate
+        runsState.value++
+        Log.i(TAG, "give-back outcome=${result.outcome} remaining=${result.remaining}")
+        if (result.outcome == org.plainphone.policy.GiveBackOutcome.OFF) giveBackPlatform.openSuccessor()
+        return true
+    }
+
     private fun run(reason: String, packageMaySkip: Boolean = true, packageReasons: List<String> = listOf(reason)) {
+        if (driveGiveBack()) return
         val loggedReason = reason + if (reason == "package-burst") " groupedReasons=$packageReasons" else ""
         if (!dpm.isDeviceOwnerApp(context.packageName)) {
             bootCoverage.invalidate()
@@ -530,6 +580,7 @@ class PolicyRuntime private constructor(private val context: Context) {
             Log.e(TAG, "waiting checkpoint threw", e)
             null
         }
+        if (driveGiveBack()) return
         val activeWait = try {
             authority.needsAttention() || authority.waitingOperation()?.phase in setOf(
                 org.plainphone.policy.WaitingPhase.PENDING,

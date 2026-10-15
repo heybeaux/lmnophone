@@ -1,0 +1,7 @@
+Starting: Intent { act=android.intent.action.DIAL }
+Status: ok
+LaunchState: WARM
+Activity: com.google.android.dialer/com.android.dialer.main.impl.MainActivity
+TotalTime: 573
+WaitTime: 575
+Complete

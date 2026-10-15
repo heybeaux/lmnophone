@@ -77,12 +77,19 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <!-- Give-back withdraws only this Home entry; MainActivity remains available for Retry. -->
+        <activity-alias
+            android:name=".HomeEntry"
+            android:targetActivity=".MainActivity"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <activity
             android:name=".PinAccessActivity"

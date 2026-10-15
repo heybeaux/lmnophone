@@ -63,6 +63,7 @@ Test IDs and gates are listed in `docs/verification-matrix.md`.
 - [ ] 4.6 AE: Browser classifier, hiding, link matrix, and the isolated blocked-link screen (web-containment).
 - [ ] 4.7 AE: Play session state machine, catching unapproved installs, staleness tracking (approved-apps).
 - [ ] 4.8 AE: PIN and recovery code (separate counters), fresh authority, requests, supervised session contract and journal, LMNOPhone update over local Wi-Fi, turning off with the full restore list (trusted-person-controls).
+  - [x] PLA-607 bounded give-back executor: per-item journal/readbacks, counted retry, Home withdrawal and owner removal last; host-tested and API 35 emulator-proven including restart. Test builds still refuse to commit a turn-off. Full 4.8 integration and spare-device removal remain open.
   - [x] PLA-521 bounded preview: first-use recovery-code display, fresh-PIN code replacement, and recovery from PIN/Change PIN screens. Separate counters and atomic writes checked; add/remove and turn-off remain fresh-PIN routes. Full 4.8 integration remains open.
 - [ ] 4.9 AE: LMNOPhone's own settings screens (Wi-Fi, Bluetooth, volume, brightness, text size, battery).
   - [x] Build 30: read-only Bluetooth state and paired devices (approved PLA-428); pairing remains deferred.

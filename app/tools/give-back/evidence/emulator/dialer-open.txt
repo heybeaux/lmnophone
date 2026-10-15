@@ -1,0 +1,8 @@
+Starting: Intent { act=android.intent.action.DIAL }
+Warning: Activity not started, its current task has been brought to the front
+Status: ok
+LaunchState: HOT
+Activity: com.google.android.dialer/com.android.dialer.main.impl.MainActivity
+TotalTime: 133
+WaitTime: 142
+Complete

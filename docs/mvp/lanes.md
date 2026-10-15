@@ -569,3 +569,15 @@ Only DONE plus matching readback can reach Added. A failed write retains its
 requested group label even if the subsequent inventory is unreadable. No
 supervised identity, credential migration, one-step self-managed edit, or
 floor/role-holder permission action is introduced.
+
+## Give-back executor
+
+`GiveBackController.run(requestId, battery, retry)` consumes only an existing
+TURN_OFF/COMMITTING operation. `GiveBackPort` inventories the actual preview DPM
+writes and supplies idempotent restore/readback effects and successor checks.
+`WaitingState.giveBack` stores the request-bound per-item results in the existing
+device-protected authority record. `ReadbackGiveBackPort` applies the mandatory
+unhide flush and refuses permission resets while hidden; `DpmGiveBackPort` owns
+all new Android writes. `PolicyRuntime` routes committing turn-off before normal
+boot, containment and update-policy writers. The test-build maturity refusal is
+unchanged. See `app/tools/give-back/inventory.md` for the full write inventory.

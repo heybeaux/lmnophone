@@ -25,6 +25,8 @@ class DpmPort(
     context: Context,
     private val admin: ComponentName,
     private val flushComponent: ComponentName,
+    /** Own HOME alias, restored only by a normal policy pass (including lost turn-off record). */
+    private val homeEntry: ComponentName? = null,
 ) : DevicePolicyPort {
     private val dpm = context.getSystemService(DevicePolicyManager::class.java)
     private val pm = context.packageManager
@@ -121,6 +123,13 @@ class DpmPort(
         pm.resolveActivity(homeIntent(), PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName?.let(::PackageName)
 
     override fun setHome(name: PackageName) {
+        homeEntry?.takeIf { it.packageName == name.value }?.let { entry ->
+            if (pm.getComponentEnabledSetting(entry) == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
+                pm.setComponentEnabledSetting(entry, PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP or PackageManager.SYNCHRONOUS)
+                check(pm.getComponentEnabledSetting(entry) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED)
+            }
+        }
         val activity = pm.queryIntentActivities(homeIntent().setPackage(name.value), 0).firstOrNull()?.activityInfo
             ?: throw IllegalStateException("${name.value} has no Home activity")
         val filter = IntentFilter(Intent.ACTION_MAIN).apply {
