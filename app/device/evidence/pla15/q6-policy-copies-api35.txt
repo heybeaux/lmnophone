@@ -1,0 +1,97 @@
+PLA-15 Q6: policy copies on the merged main (VALID / LAST_KNOWN_GOOD / BOTH_INVALID), API 35.
+Copyright 2026 LMNOPhone contributors. SPDX-License-Identifier: Apache-2.0
+
+Tree: main @ 9eaef7ed (no app change since 0c727408). Build: :plainphone debug (testOnly),
+  APK SHA-256 409faadbb97e491a70d6f1620263ad0f8c4d61da29da615bba1a66b7eb68e536.
+Emulator: private AVD pla15-a35, google_apis arm64 userdebug, API 35, -read-only, port 5964.
+  2026-10-15 13:22-13:52 UTC. No spare contact. No call placed (Phone checks stop at the dialer).
+Setup: adb install a code-free stand-in user app (org.plainphone.test344, spikes/pla344-fallback),
+  adb install -t -r plainphone-debug.apk, dpm set-device-owner org.plainphone/.PlainphoneAdminReceiver.
+  No build inventory for this model, so the engine runs the unknown-build rules.
+Records: written with Python from RecordCodec's format (PPR1, schema 1, length, payload, SHA-256).
+  valid.rec 8a541ddb... payload "org.plainphone.test344\n" (67 bytes)
+  bad1.rec  509e8709... valid.rec with the last checksum byte flipped
+  bad2.rec  3179103f... valid.rec with payload byte 20 flipped
+  Placed in /data/user_de/0/org.plainphone/files/policy/ with run-as, then adb reboot.
+
+== Fresh provisioning (no policy file) ==
+  reapply reason=locked-boot ... ready=true lockTask=LOCKED attention=true
+  test344 stays visible (pm list packages shows it): baseline on an unknown build sweeps nothing.
+  /data/user_de/0/org.plainphone/files/policy/ does not exist. Nothing on main writes it:
+  FilePolicyStore.write has no production caller (grep of app/*/src/main and src/debug).
+  So on main, a missing file reads as BOTH_INVALID and every re-apply runs the corrupt-policy baseline.
+
+== A-valid-primary ==
+files before reboot:
+10-15 06:35:01.263   988   988 I PlainphoneBoot: home shown lockTask=LOCKED at=16805
+10-15 06:35:02.291   988  1120 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:android control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED attention=false disabledFloor=[] ms=1017
+10-15 06:35:08.300   988  1120 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.google.android.apps.messaging control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED attention=false disabledFloor=[] ms=221
+10-15 06:35:08.455   988  1120 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.google.android.apps.wellbeing control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED attention=false disabledFloor=[] ms=154
+topResumedActivity=ActivityRecord{da26447 u0 org.plainphone/.MainActivity t5}
+mLockTaskModeState=LOCKED
+LockTaskPolicy {mPackages= com.google.android.dialer, com.android.server.telecom, com.google.android.apps.safetyhub, org.plainphone, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 119 }
+test344 visible:  / installed(-u): package:org.plainphone.test344
+files after:
+text="6:35 AM" text="Thursday, October 15, 2026" text="Messages" text="Phone" text="More" text="Ask for an app, settings, help" 
+
+== B-bad-primary-valid-backup ==
+files before reboot:
+policy.lkg 8a541ddb1bd4a398 67
+policy.rec 509e8709ee3a589f 67
+10-15 06:48:16.252   955   955 I PlainphoneBoot: home shown lockTask=LOCKED at=15796
+10-15 06:48:16.695   955  1110 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:android control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED attention=false disabledFloor=[] ms=438
+10-15 06:48:23.692   955  1110 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.google.android.apps.wellbeing control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED attention=false disabledFloor=[] ms=211
+10-15 06:48:23.830   955  1110 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.google.android.gms control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED attention=false disabledFloor=[] ms=137
+topResumedActivity=ActivityRecord{6a32126 u0 org.plainphone/.MainActivity t2}
+mLockTaskModeState=LOCKED
+LockTaskPolicy {mPackages= com.google.android.dialer, com.android.server.telecom, com.google.android.apps.safetyhub, org.plainphone, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 119 }
+test344 visible:  / installed(-u): package:org.plainphone.test344
+files after:
+policy.lkg 8a541ddb1bd4a398 67
+policy.rec 509e8709ee3a589f 67
+text="6:48 AM" text="Thursday, October 15, 2026" text="Messages" text="Phone" text="More" text="Ask for an app, settings, help" 
+
+== C-both-corrupt ==
+files before reboot:
+policy.lkg 3179103fd4fc5888 67
+policy.rec 509e8709ee3a589f 67
+10-15 06:49:57.351   913  1060 I PlainphoneBoot: reapply reason=boot control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED attention=true disabledFloor=[] ms=727
+10-15 06:49:59.227   913   913 I PlainphoneBoot: home shown lockTask=LOCKED at=15766
+10-15 06:49:59.503   913  1060 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:android control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED attention=true disabledFloor=[] ms=362
+10-15 06:50:07.268   913  1060 I PlainphoneBoot: reapply reason=package:PACKAGE_CHANGED:com.google.android.apps.wellbeing control=none locked=false ready=true applied=[RESTRICTIONS, EMERGENCY_FLOOR, NEVER_HIDE_GUARD, HIDES, LOCK_TASK, HOME] failed=null flipFailures=0 lockTask=LOCKED attention=true disabledFloor=[] ms=209
+topResumedActivity=ActivityRecord{6240dfd u0 org.plainphone/.MainActivity t2}
+mLockTaskModeState=LOCKED
+LockTaskPolicy {mPackages= com.google.android.dialer, com.google.android.apps.safetyhub, com.android.server.telecom, org.plainphone, com.google.android.apps.messaging, com.google.android.cellbroadcastreceiver, com.android.phone; mFlags= 119 }
+test344 visible:  / installed(-u): package:org.plainphone.test344
+files after:
+policy.lkg 3179103fd4fc5888 67
+policy.rec 509e8709ee3a589f 67
+text="6:49 AM" text="Thursday, October 15, 2026" text="LMNOPhone needs attention" text="Messages" text="Phone" text="More" text="Ask for an app, settings, help" 
+START u0 {act=android.intent.action.DIAL flg=0x10000000 cmp=com.google.android.dialer/com.android.dialer.main.impl.MainActivity} with LAUNCH_SINGLE_TASK from uid 10208 (BAL_ALLOW_VISIBLE_WINDOW) result code=0
+topResumedActivity=ActivityRecord{e9e6515 u0 com.google.android.dialer/com.android.dialer.main.impl.MainActivity t10}
+mLockTaskModeState=LOCKED
+0
+
+Messages tap on Home (scenario A): no START logged. Expected on main: MainActivity line 166,
+  "The wiring slice adds apps, Messages and More." Phone tap: START DIAL to the system dialer, result 0.
+
+== Summary ==
+  A valid primary            : attention=false, sweep on (test344 hidden), LOCKED, Home shown.
+  B corrupt primary, good LKG: same as A (LAST_KNOWN_GOOD). The corrupt primary is not repaired.
+  C both corrupt             : attention=true, Home shows "LMNOPhone needs attention", LOCKED,
+                               lock task = baseline (LMNOPhone, Messages, emergency UI),
+                               test344 stays hidden, Phone opens the dialer, 0 calls. PASS for
+                               "both copies corrupt -> safe policy" on this tree.
+
+Findings for the integration (not fixed here):
+  F1 main has no policy writer, so the D1 runtime always runs the baseline (attention on Home
+     after a fresh setup). The preview line uses its own starter-list path and is not affected.
+  F2 previousLockTask is never filled by the input assembler (PolicyModel default emptySet()).
+     On an unknown build with a VALID or LKG policy, the engine's unknown branch gives lock task
+     = emergency UI + LMNOPhone only: Messages is unhidden but not lock-task permitted (A and B).
+     The baseline branch adds Messages; the unknown branch does not. No engine test covers it.
+  F3 LAST_KNOWN_GOOD shows no attention and the bad primary stays on disk.
+     Whether LKG should notify is not settled here; recorded as observed.
+
+Clean-up: policy dir removed, dpm remove-active-admin, stand-in uninstalled, emulator killed
+  (-read-only, nothing kept). Not run: API 36; crash-on-start build; OTA/unknown-build inventory.
