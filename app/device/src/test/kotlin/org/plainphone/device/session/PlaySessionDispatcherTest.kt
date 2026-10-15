@@ -231,4 +231,14 @@ class PlaySessionDispatcherTest {
         assertEquals(1, r.dispatcher.view().left)
     }
 
+    @Test fun closingUsesStoredGrantEvenIfLiveEligibilityBecameUnreadable() {
+        val r = Rig(); r.start(); r.policy = null
+        assertNull(r.dispatcher.access())
+        assertEquals(ElevationOutcome.ACCESS_CLOSED, r.dispatcher.endCurrent(SessionEnd.SCREEN_OFF))
+        assertFalse(r.open)
+        assertEquals(SessionJournal.Empty, r.store.elevationStore.read()!!.journal)
+        assertEquals(ElevationOutcome.ENDED, r.dispatcher.endCurrent(SessionEnd.DONE))
+        assertNull(r.store.elevationStore.read()!!.state.grant)
+    }
+
 }
