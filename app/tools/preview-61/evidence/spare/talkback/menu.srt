@@ -1,0 +1,36 @@
+1
+00:00:00,000 --> 00:00:01,400
+Talk back on.
+
+2
+00:00:01,400 --> 00:00:04,600
+LmnaPhone Preview, Home, Button.
+
+3
+00:00:04,600 --> 00:00:07,440
+Double Tap to Activate Emergency 911.
+
+4
+00:00:07,440 --> 00:00:12,240
+Opens the Dialer with Phone Settings, Wi-Fi, Bluetooth Brightness, Ask for an App.
+
+5
+00:00:12,240 --> 00:00:16,520
+Not set up on this phone yet, Pin Settings, With Your Pin, Button.
+
+6
+00:00:16,520 --> 00:00:19,280
+Practice Voice Messages, Record and Listen.
+
+7
+00:00:19,280 --> 00:00:25,880
+About this Phone, Button, Double Tap to Activate Emergency 911.
+
+8
+00:00:25,880 --> 00:00:29,960
+Opens the Dialer with Phone Settings, Wi-Fi, Bluetooth Brightness, Ask for an App.
+
+9
+00:00:29,960 --> 00:00:36,960
+tap, not set up on this phone yet. Pin settings, with your pin, button. Double tap to activate.
+
