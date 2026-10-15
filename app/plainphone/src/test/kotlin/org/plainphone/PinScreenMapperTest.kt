@@ -65,7 +65,7 @@ class PinScreenMapperTest {
     @Test fun workingRowsKeepTheirOrder() {
         assertEquals(listOf(AdminDestination.VoiceMessages, AdminDestination.AddApp, AdminDestination.HiddenApp, AdminDestination.Apps,
             AdminDestination.Requests, AdminDestination.RequestRecipient, AdminDestination.ChangePin,
-            AdminDestination.NewRecoveryCode, AdminDestination.TurnOff),
+            AdminDestination.NewRecoveryCode, AdminDestination.CheckPhone, AdminDestination.TurnOff),
             pinMenuUiState(AdminContext("Alex")).items.map { it.destination })
         assertEquals(PinMenuTarget.AddHiddenApp, pinMenuTarget(AdminDestination.HiddenApp))
         assertEquals(PinMenuTarget.Apps, pinMenuTarget(AdminDestination.Apps))
