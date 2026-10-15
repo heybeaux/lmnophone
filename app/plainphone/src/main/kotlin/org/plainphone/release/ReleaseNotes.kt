@@ -8,6 +8,10 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(65, 65, listOf("PIN settings has Add an app. After a 10-minute wait, the Play Store opens for 10 minutes. New apps stay hidden until you add them under Add a hidden app. Up to 2 openings a day; these limits can't be changed yet.",
+            "The Play Store needs a Google account before it can download apps. This phone isn't signed in to one yet.",
+            "While the Play Store is open, nothing on screen shows the time left. Going back to LMNOPhone ends it.",
+            "If an app from the Play Store is removed and installed again, LMNOPhone may say it isn't ready to hand back. Restarting the phone may clear this.")),
         ReleaseNote(64, 64, listOf("On Home, a keyboard or TalkBack now goes through the apps in the order you see them.")),
         ReleaseNote(63, 63, listOf("Behind the scenes: the steps that give the phone back in full after a turn-off are now built in. On this test phone a turn-off is still cancelled, so nothing changes yet.")),
         ReleaseNote(62, 62, listOf("With a keyboard, Enter confirms your PIN and Tab moves between fields and buttons.")),
