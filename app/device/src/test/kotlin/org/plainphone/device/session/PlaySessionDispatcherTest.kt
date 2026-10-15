@@ -242,4 +242,43 @@ class PlaySessionDispatcherTest {
         assertNull(r.store.elevationStore.read()!!.state.grant)
     }
 
+    @Test fun retainedGrantApprovesWithoutAnotherPinAndNeverExtendsDeadline() {
+        val r = Rig(); val id = r.start()
+        assertTrue(r.dispatcher.installed(id, candidate))
+        val deadline = r.store.elevationStore.read()!!.state.grant!!.deadline
+        assertEquals(ElevationOutcome.ACCESS_CLOSED, r.dispatcher.endCurrent(SessionEnd.LEFT_PACKAGES))
+        var writes = 0
+        assertTrue(r.dispatcher.commitApproval(identity) { check -> if (check()) { writes++; true } else false })
+        assertEquals(1, writes)
+        assertEquals(deadline, r.store.elevationStore.read()!!.state.grant!!.deadline)
+        assertFalse(r.dispatcher.commitApproval(identity) { check -> if (check()) { writes++; true } else false })
+        assertEquals(1, writes)
+    }
+    @Test fun finalCheckRefusesExpiryDoneRestartForeignPackageAndSignerChanges() {
+        for (fault in listOf("expiry", "done", "restart", "signer", "foreign")) {
+            val r = Rig(); val id = r.start()
+            if (fault != "foreign") assertTrue(r.dispatcher.installed(id, candidate))
+            r.dispatcher.endCurrent(SessionEnd.LEFT_PACKAGES)
+            var writes = 0; var hooks = 0
+            val result = r.dispatcher.commitApproval(identity) { check ->
+                hooks++
+                when (fault) {
+                    "expiry" -> r.now += 600_000
+                    "done" -> r.dispatcher.done(id)
+                    "restart" -> r.dispatcher.onStart()
+                    "signer" -> r.policy = r.policy!!.copy(installedIdentities = listOf(
+                        ApprovalBinding(candidate, setOf(CertDigest("b".repeat(64))))))
+                }
+                if (check()) { writes++; true } else false
+            }
+            assertFalse(fault, result); assertEquals(fault, 0, writes)
+            assertEquals(fault, if (fault == "foreign") 0 else 1, hooks)
+        }
+    }
+    @Test fun ignoredFinalCheckCannotReportSuccess() {
+        val r = Rig(); val id = r.start(); r.dispatcher.installed(id, candidate)
+        r.dispatcher.endCurrent(SessionEnd.LEFT_PACKAGES)
+        assertFalse(r.dispatcher.commitApproval(identity) { true })
+    }
+
 }

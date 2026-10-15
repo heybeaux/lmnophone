@@ -124,4 +124,14 @@ class PlaySessionMachineTest {
         assertEquals(PlayEndReason.RESTART, ended.endedBecause)
         assertFalse(PlaySessionMachine.installed(ended, "session", identity, start, access).accepted)
     }
+    @Test fun `signer replacement invalidates the candidate for the entire grant`() {
+        val first = PlaySessionMachine.installed(begun(), "session", identity, start, access).state
+        val changed = PlaySessionMachine.installed(first, "session", ApprovalBinding(app, setOf(foreign)), start, access)
+        assertFalse(changed.accepted)
+        assertNull(PlaySessionMachine.candidate(changed.state, app))
+        val restored = PlaySessionMachine.installed(changed.state, "session", identity, start, access)
+        assertFalse(restored.accepted)
+        assertNull(PlaySessionMachine.candidate(restored.state, app))
+    }
+
 }

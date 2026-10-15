@@ -48,4 +48,20 @@ class PreviewAppListStoreTest {
         assertThrows(java.io.IOException::class.java) { failing.saveOrder(listOf("calculator", "camera")) }
         assertEquals(listOf("camera", "calculator"), store.order())
     }
+    @Test fun lastCheckRunsAfterOrderWriteAndBeforeMembershipReplace() {
+        val dir = tmp.newFolder(); val store = PreviewAppListStore(dir)
+        store.saveStarter(listOf("camera")); store.saveOrder(listOf("camera"))
+        var hits = 0
+        assertFalse(store.add("newapp", listOf("camera"), { true }, finalCheck = {
+            hits++
+            assertEquals(listOf("camera", "newapp"), store.order())
+            assertEquals(setOf("camera"), store.starter())
+            false
+        }))
+        assertEquals(1, hits); assertEquals(setOf("camera"), store.starter())
+        assertEquals(listOf("camera"), store.order())
+        assertTrue(store.add("newapp", listOf("camera"), { true }, finalCheck = { hits++; true }))
+        assertEquals(2, hits); assertEquals(setOf("camera", "newapp"), store.starter())
+    }
+
 }
