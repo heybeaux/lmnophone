@@ -1,0 +1,10 @@
+taken=2026-10-15T11:51Z (build 67, before any Play opening: limit carried over the upgrade)
+S1: Your settings|Your PIN|Enter your PIN to make changes on this phone.|PIN|Continue|Forgot PIN? Use recovery code
+S2: Your settings|Your settings|You hold the PIN. LMNOPhone adds waits so that distraction takes effort. It's friction, not a lock.|Voice messages|Add an app|Add a hidden app|Apps on this phone|Requests from the person using this phone|Who gets requests|Change PIN|Done – back to the home screen
+S3: Your settings|Open the Play Store?|First there's a 10-minute wait. Then you tap Start, and the Play Store is open for 10 minutes. This uses 1 of your 0 openings left today. Restarting the phone stops the wait, and nothing is used up.|When you open the Play Store or full phone settings, the phone is open for those minutes, and their help pages can show the web. That's why you stay with the phone until you tap Done.|Start the wait|Not now
+S4: Your settings|Your PIN|Enter your PIN to make changes on this phone.|LMNOPhone asks for your PIN for each change, so nobody else can make one if the phone is put down.|PIN|Continue|Forgot PIN? Use recovery code
+S5: Your settings|No openings left for now|You've used your 2 openings. The next one is available after about 2:06 a.m., if the phone stays on. Restarting the phone doesn't change this.|OK
+home: 4:52|Thursday 15 October|Maps|Camera|Messages|Phone|More
+locktask_packages=com.android.phone,com.android.server.telecom,com.google.android.apps.maps,com.google.android.apps.messaging,com.google.android.apps.safetyhub,com.google.android.cellbroadcastreceiver,com.google.android.dialer,com.motorola.camera3,org.plainphone
+play_user0=installed=true hidden=true suspended=false stopped=false enabled=1
+version=versionCode=67 mLockTaskModeState=LOCKED DO=1 calls=0
