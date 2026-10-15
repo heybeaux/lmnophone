@@ -9,6 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -32,10 +35,12 @@ class HomeTraversalTest(private val scale: Float) {
     private val apps = listOf("Calendar", "Music", "Maps", "Camera")
     private val actions = apps + listOf("Messages", "Phone", "More")
     private lateinit var focus: FocusManager
+    private lateinit var inputMode: InputModeManager
 
     private fun home() {
         compose.setContent {
             focus = LocalFocusManager.current
+            inputMode = LocalInputModeManager.current
             DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(scale)) {
                 PlainphoneTheme {
                     Box(Modifier.size(360.dp, 560.dp)) {
@@ -57,7 +62,8 @@ class HomeTraversalTest(private val scale: Float) {
     @Test fun keyboardNextFollowsDrawnOrderIncludingOffscreenApps() {
         home()
         compose.onNodeWithTag("home-apps").performScrollToNode(hasText(apps.first()))
-        compose.onNodeWithText(apps.first()).performSemanticsAction(SemanticsActions.RequestFocus) { it() }
+        compose.runOnIdle { assertTrue(inputMode.requestInputMode(InputMode.Keyboard)) }
+        compose.onNodeWithText(apps.first()).performSemanticsAction(SemanticsActions.RequestFocus) { assertTrue("Request initial focus", it()) }
         actions.forEachIndexed { index, label ->
             compose.onNodeWithText(label).assertIsFocused().assertIsDisplayed()
             if (index < actions.lastIndex) compose.runOnIdle {
