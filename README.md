@@ -55,11 +55,11 @@ Nobody outside the team has tested any build yet, and no build is release-signed
 | Phone settings | Wi-Fi (join and forget; Location turns on only while joining), Bluetooth status and search, brightness, sound, ringtone, text size, battery, and postponing a phone software update. Optional missed-call and unread-text counts on Home: they count texts and picture messages (SMS and MMS), not chat (RCS) messages or other apps. |
 | PIN | Set and change the PIN. Recover a forgotten PIN with a recovery code; get a new recovery code from PIN settings. |
 | Apps on this phone (with the PIN) | Change the order of apps on Home, remove an app from Home (its data is kept), and add a hidden app that is already installed back to Home. When adding an app, choose what it can use (for example camera, microphone, Location). Browsers, app stores and Settings are never offered. |
-| Ask for an app | The person types a request, and LMNOPhone sends it by text message to the person chosen under PIN settings › Who gets requests. The result says Sent, Not sent or Not confirmed, never "delivered". Requests are listed in PIN settings, where they can be removed. |
-| Voice messages | Record a voice message to someone on the Family list, review it and send it as a picture message (MMS), with a truthful Sending, Sent, Not sent or Not confirmed. Practice voice messages records and plays back without sending anything. |
+| Ask for an app | The person types a request, and LMNOPhone sends it by text message to the person chosen under PIN settings › Who gets requests. The result says Sent, Not sent or Not confirmed, never "delivered" (on the test phone only Not sent has been seen; see "Installed, not seen working yet" below). Requests are listed in PIN settings, where they can be removed. |
+| Voice messages | Record a voice message to someone on the Family list, review it and send it as a picture message (MMS), with a truthful Sending, Sent, Not sent or Not confirmed (on the test phone only Not sent has been seen). Practice voice messages records and plays back without sending anything. |
 | Waits and Needs you | Start and cancel a waiting change (such as the wait to turn LMNOPhone off). PIN settings shows what is waiting under Needs you, with the number of saved requests. |
-| About | The real installed version, what's new in it, what changed since the version installed before it (skipped builds included), and older release notes. |
-| Accessibility | Each new or changed screen is checked at 1.0 and 2.0 text size. Since build 59, TalkBack reads the person's screens (Home, More, Phone settings, About, Ask for an app, Family, voice practice) as one stop per row; since build 61, the PIN settings screens too (the PIN itself is never read out). |
+| About | The real installed version, what's new in it, and older release notes. When builds are skipped, About also lists what changed in the builds in between; that part is covered by automated tests only, because every upgrade on the test phone so far has been one build at a time. |
+| Accessibility | Each new or changed screen is checked at 1.0 and 2.0 text size. TalkBack was tried on the test phone on Home, More, Phone settings, About and Ask for an app (build 59), and on Enter PIN, the PIN settings menu and Apps on this phone (build 61): one stop per row, and the PIN is never read out. The other TalkBack changes (Family, voice practice, Requests, Who gets requests, choosing what an app can use, the recovery code read one character at a time, wrong-PIN and wait announcements) are covered by automated tests only. |
 | Updates in place | Every test build is installed over the last one. The saved PIN, Family list, app order and drafts have been kept each time. |
 
 **Installed, not seen working yet**
@@ -73,6 +73,7 @@ Nobody outside the team has tested any build yet, and no build is release-signed
 - **Installing a new app** through a short, supervised Play Store session. Today only apps that are already installed can be added. ([Roadmap slot 8](docs/ROADMAP.md#next-ten-builds).)
 - **Turning LMNOPhone off and getting an ordinary phone back in full.** The wait to turn it off works; restoring every app, permission and setting afterwards isn't proven on the test phone. (Slot 9.)
 - **The final app ID** (`dev.heybeaux.lmnophone`) and a release-signed build. (Slot 10.)
+- **Keyboard and switch access to Enter PIN** (on build 61, Tab never reaches Continue), and checks at the text sizes between 1.0 and 2.0. Next in line ([slot 7h](docs/ROADMAP.md#next-ten-builds)).
 - **Guided first-time set-up**, the **blocked-link screen** ("This link can't open here"), and **Bluetooth pairing inside LMNOPhone** (Android refuses its pairing dialog while the phone is locked down; left out for now).
 - **Reset protection** after someone erases the phone from its recovery menu: not proven (see [what LMNOPhone can't do](#what-lmnophone-cant-do)).
 
@@ -153,7 +154,7 @@ The design is written and approved. The MVP is being built in small, reviewed sl
 
 Parts that aren't ready yet aren't shown on the phone, and nothing pretends to work: no made-up people, no sample requests and no fake "Sent".
 
-**Branches.** Each test build is cut from its own `release/preview-<build>` branch (build 61 is [`release/preview-61`](https://github.com/heybeaux/lmnophone/tree/release/preview-61)), which carries the full app and its release notes. `main` holds the reviewed engine and earlier Android wiring and is behind the test builds; its app isn't a test build (it isn't `testOnly`, so only a wipe removes it). To see the current app, build the latest `release/preview-*` branch.
+**Branches.** Each test build is cut from its own `release/preview-<build>` branch (build 61 is [`release/preview-61`](https://github.com/heybeaux/lmnophone/tree/release/preview-61)), which carries the full app and its release notes. `main` holds the reviewed engine and earlier Android wiring and is behind the test builds. To see the current app, build the latest `release/preview-*` branch.
 
 ## What's in this repo
 
@@ -250,19 +251,19 @@ app/tools/preview-2/setup.sh emulator-5554 app/plainphone/build/outputs/apk/debu
 
 It should end with `DeviceOwner`, `home: org.plainphone/.MainActivity`, `mLockTaskModeState=LOCKED`, a list of hidden apps and `testOnly: TEST_ONLY`. If the camera doesn't resolve to one app, set `PREVIEW2_CAMERA` to the camera's package name. The PIN, Family list and Who gets requests start empty; set them up under More › PIN settings.
 
-**The build from `main`** is behind the test builds and isn't `testOnly`, so only a wipe removes it. It is only useful for trying the plumbing:
+**The build from `main`** is behind the test builds and is only useful for trying the plumbing. Its debug build is `testOnly` too, so install it with `-t`:
 
 ```sh
-adb -s emulator-5554 install -r app/plainphone/build/outputs/apk/debug/plainphone-debug.apk
+adb -s emulator-5554 install -r -t app/plainphone/build/outputs/apk/debug/plainphone-debug.apk
 adb -s emulator-5554 shell dpm set-device-owner org.plainphone/.PlainphoneAdminReceiver
 ```
 
 ### 4. Undo it
 
-- **Test builds** are marked `testOnly`, so one command removes them:
+- **Debug builds** (the test builds and the debug build from `main`) are marked `testOnly`, so one command takes LMNOPhone's management off the phone:
   `adb -s emulator-5554 shell dpm remove-active-admin org.plainphone/.PlainphoneAdminReceiver`
-  On Android 15, removing LMNOPhone brings every hidden app back.
-- **The `main` build, or anything else:** wipe the emulator (Android Studio → Device Manager → Wipe Data, or `emulator -avd lmnophone -wipe-data`).
+  On Android 15, this brings every hidden app back. The app itself stays installed; remove it afterwards with `adb -s emulator-5554 uninstall org.plainphone`.
+- **Anything that isn't `testOnly`:** wipe the emulator (Android Studio → Device Manager → Wipe Data, or `emulator -avd lmnophone -wipe-data`).
 
 ## Contributing
 
