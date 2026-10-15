@@ -22,11 +22,16 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
@@ -109,11 +114,11 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
                 HomeBottom(state, onEvent = onEvent)
             }.single().measure(natural)
             val apps = subcompose("apps") {
-                LazyColumn(Modifier.fillMaxSize().testTag("home-apps"), reverseLayout = true,
+                val listState = rememberHomeAppListState(state.apps, available)
+                LazyColumn(Modifier.fillMaxSize().testTag("home-apps"), state = listState,
                     verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S3, Alignment.Bottom)) {
-                    // Reversing both keeps the supplied visual order, with the last app at the bottom.
                     // Positional keys tolerate duplicate IDs; host insertions may move focus/press state.
-                    items(state.apps.asReversed()) { app ->
+                    items(state.apps) { app ->
                         HomeAppRow(app.name) { onEvent(HomeEvent.OpenApp(app.id)) }
                     }
                 }
@@ -125,6 +130,37 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
             }
         }
     }
+}
+
+/** Keep bottom anchoring without reversing composition, keyboard or accessibility order. */
+@Composable
+private fun rememberHomeAppListState(apps: List<HomeApp>, availableHeight: Int): LazyListState {
+    val lastIndex = apps.lastIndex.coerceAtLeast(0)
+    // Clamp even a row taller than the viewport, with headroom for measurement arithmetic.
+    val endOffset = Int.MAX_VALUE / 2
+    val listState = rememberSaveable(saver = listSaver<LazyListState, Int>(
+        save = {
+            // A fitted list saves index 0 too: retain whether it was at the bottom so a
+            // recreated activity with larger text does not restore that as a top anchor.
+            if (!it.canScrollForward) listOf(-1, 0)
+            else listOf(it.firstVisibleItemIndex, it.firstVisibleItemScrollOffset)
+        },
+        restore = {
+            if (it[0] == -1) LazyListState(lastIndex, endOffset)
+            else LazyListState(it[0], it[1])
+        }
+    )) { LazyListState(lastIndex, endOffset) }
+
+    val density = LocalDensity.current
+    // Capture the OLD measured position before LazyColumn receives new items or bounds.
+    // Keep this decision across the resulting remeasure; never re-pin just for scrolling.
+    val wasAtEnd = remember(apps, availableHeight, density) {
+        listState.layoutInfo.viewportSize.height > 0 && !listState.canScrollForward
+    }
+    LaunchedEffect(apps, availableHeight, density) {
+        if (wasAtEnd) listState.scrollToItem(lastIndex, endOffset)
+    }
+    return listState
 }
 
 @Composable
