@@ -24,7 +24,7 @@
   <div class="hero-text">
     <h1 id="hero-title">Take your attention back.</h1>
     <p class="lede">LMNOPhone (say it like the alphabet song: “elemeno-phone”) turns an ordinary Android phone into one that only opens the apps you chose. You decide what gets your attention, and someone you trust helps you keep it that way.</p>
-    <p class="notice">LMNOPhone is early and still being built. There’s nothing to download yet.</p>
+    <p class="notice">LMNOPhone is early and still being built. Test builds run on one spare test phone, in the self-managed set-up only. Nobody uses it as their everyday phone yet, and there’s nothing to download.</p>
     <nav class="apps" aria-label="On this page">
       <a href="#who">Who it’s for</a>
       <a href="#screens">What it looks like</a>
@@ -33,7 +33,7 @@
     </nav>
   </div>
   <figure class="hero-shot">
-    <img src="screens/home.png" width="436" height="939" alt="LMNOPhone’s home screen: the time and date at the top, then five app names in large black text near the bottom — Spotify, Slack, Camera, Messages, Phone — and a More button. No icons.">
+    <img src="screens/home.png" width="540" height="1200" alt="LMNOPhone’s Home screen on the spare test phone: the time and the date (Wednesday 14 October) at the top, then four app names in large black text (Maps, Camera, Messages, Phone), and a plain More link at the bottom. No icons.">
   </figure>
 </section>
 
@@ -59,28 +59,36 @@
 <section id="screens" class="section" aria-labelledby="screens-title">
   <div class="wrap">
     <h2 id="screens-title">What it looks like</h2>
-    <p class="intro">Black, white and grey. Big words, no icons, nothing that asks for your attention.</p>
+    <p class="intro">Black, white and grey. Big words, no icons, nothing that asks for your attention. These are pictures of the current test build.</p>
   </div>
   <ul class="shots wrap">
     <li>
-      <img src="screens/ask-for-an-app.png" width="436" height="939" loading="lazy" alt="The Ask for an app screen: a message box, a list of earlier requests with their status, and a Send to Sam button.">
-      <p><b>Ask for an app.</b> Say which app you’d like and what it’s for. Your trusted person gets a text.</p>
+      <img src="screens/more.png" width="540" height="1200" loading="lazy" alt="The More page: Emergency 9-1-1 (opens the dialer with 9-1-1 typed in), Phone settings, Ask for an app (not set up on this phone yet), PIN settings (with your PIN), Practice voice messages (record and listen, nothing is sent), and an About this phone link.">
+      <p><b>More.</b> Emergency 9-1-1 opens the dialer with 9-1-1 typed in. In PIN settings, the PIN holder changes the order of apps on Home, removes them, or adds back an app that is already installed. Ask for an app sends a request by text to the person chosen in PIN settings.</p>
     </li>
     <li>
-      <img src="screens/link-cant-open.png" width="436" height="939" loading="lazy" alt="A screen titled This link can’t open here, showing where the link goes, with a Go back button and a Look at it with Sam link.">
-      <p><b>A link that can’t open.</b> General browsing is blocked. Some links can open approved apps, and some approved apps have web pages inside them. You can look at blocked links together later.</p>
+      <img src="screens/phone-settings.png" width="540" height="1200" loading="lazy" alt="Phone settings: rows for Wi-Fi, Bluetooth, Brightness, Sound, Text size and Battery, then a switch, turned off, labelled ‘Show missed calls and unread texts on Home’, with a note that chat (RCS) messages and other apps aren’t counted.">
+      <p><b>Phone settings.</b> The everyday settings, without the rest of Android. Missed-call and unread-text counts on Home are optional and off to start with. They count texts and picture messages, not chat (RCS) messages or other apps.</p>
     </li>
     <li>
-      <img src="screens/for-sam.png" width="436" height="939" loading="lazy" alt="The trusted person’s screen, titled Looking after Margaret’s phone, with requests, adding apps and checking for updates.">
-      <p><b>For the trusted person.</b> Adding apps and keeping the phone working, behind a PIN. LMNOPhone doesn’t show them your messages or photos.</p>
+      <img src="screens/voice-practice.png" width="540" height="1200" loading="lazy" alt="Practice voice messages, marked ‘Practice – not sent’: ‘Who do you want to talk to?’ and, because no one has been added yet, ‘No people to show yet. This phone’s PIN holder can add people in More, then PIN settings, then Voice messages.’">
+      <p><b>Voice messages.</b> Record a voice message to someone on the Family list and send it as a picture message. Practice records and plays back without sending anything. With no one added yet, it says so. The test phone has no working SIM, so a real send hasn’t been seen there yet.</p>
+    </li>
+    <li>
+      <img src="screens/about.png" width="540" height="1200" loading="lazy" alt="About this phone on the spare test phone: LMNOPhone, Version 0.1.0-preview-61 (61), an Older versions link, What’s new in this version (clearer TalkBack labels in PIN settings, and the recovery code read one character at a time), and Help and privacy text saying this is a test version and that LMNOPhone has no account, analytics or server of its own.">
+      <p><b>About this phone.</b> The real installed version and what’s new in it, in plain words.</p>
+    </li>
+    <li>
+      <img src="screens/about-history.png" width="540" height="1200" loading="lazy" alt="About this phone, Older versions: LMNOPhone, Version 0.1.0-preview-61 (61), a Latest version link, then the release notes for versions 60, 59 and 58 in plain words.">
+      <p><b>Older versions.</b> Release notes for earlier builds. If builds were skipped, About also lists what changed in between.</p>
     </li>
   </ul>
-  <p class="wrap fine">Design mockups using the app’s real wording. Margaret and Sam are example names.</p>
+  <p class="wrap fine">Pictures of test build 61, taken on 14 October 2026. Home and About are the spare test phone (a Motorola on stock Android 15). The others are a freshly set-up Android 15 emulator running the same build, with no saved people or requests. The status bar clock reads 12:00 because Android’s demo mode was used. PIN settings, everything behind the PIN, and Ask for an app block screenshots on purpose, so they aren’t shown. <a href="https://github.com/heybeaux/lmnophone#what-works-today">What works today, and what doesn’t yet</a>.</p>
 </section>
 
 <section id="promise" class="wrap section narrow" aria-labelledby="promise-title">
   <h2 id="promise-title">The promise</h2>
-  <p class="intro">Who holds the keys, and what they can and can’t do, in plain words.</p>
+  <p class="intro">Who holds the keys, and what they can and can’t do, in plain words. This is the design the test builds are working toward. Not all of it is built yet: the two-person set-up, the timed Play Store and settings sessions, and turning LMNOPhone off in full are still to come.</p>
   <ol class="promise">
     <li>
       <h3>A person you trust holds the keys. Not a company.</h3>
@@ -119,7 +127,7 @@
 
 <section id="help" class="wrap section narrow" aria-labelledby="help-title">
   <h2 id="help-title">Help build it</h2>
-  <p>LMNOPhone is open source. When the code is public, anyone can read it, check what it does, and run it on their own phone. If you write Android code, design for people who find technology hard, test on older phones, or just have good ideas about phones that respect people’s attention, we’d love your help.</p>
+  <p>LMNOPhone is open source. Anyone can read the code and check what it does. If you write Android code, design for people who find technology hard, test on older phones, or just have good ideas about phones that respect people’s attention, we’d love your help.</p>
   <div class="buttons">
     <a class="btn primary" href="https://github.com/heybeaux/lmnophone">See the code on GitHub</a>
     <a class="btn outline" href="https://github.com/heybeaux/lmnophone/issues">Contribute<span class="sub">Open issues, ideas, questions</span></a>

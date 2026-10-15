@@ -88,6 +88,8 @@ h1 { font-size: 72px; line-height: 80px; font-weight: 400; letter-spacing: -1px;
 
 .hero-shot { margin: 0; }
 .hero-shot img, .shots img { display: block; width: 100%; height: auto; }
+/* Real screenshots are white to the edge, so a hairline frame keeps them apart from the page. */
+.hero-shot img, .shots img { border: var(--hairline); border-radius: var(--radius-box); }
 
 /* Sections */
 .section { padding-top: 96px; padding-bottom: 32px; }
