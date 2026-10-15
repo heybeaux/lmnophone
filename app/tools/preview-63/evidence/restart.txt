@@ -1,0 +1,5 @@
+== explicit restart 2026-10-15T04:49:54Z
+version=versionCode=63 mLockTaskModeState=LOCKED DO=1 calls=0
+home_resolve=org.plainphone/.HomeEntry
+hidden_count=484/442
+after_settings_attempt_and_home_key_top=org.plainphone/.HomeEntry

@@ -1,0 +1,29 @@
+taken=2026-10-15T04:39:41Z (before-install)
+version=versionName=0.1.0-preview-62
+versionCode=versionCode=62
+lastUpdate=lastUpdateTime=2026-10-1420:05:16
+saved_networks_sha=d32466f0bb5f98e0
+bonded=0
+location=0
+font=1.0
+ring=5
+mic=        android.permission.RECORD_AUDIO: granted=true, flags=[ POLICY_FIXED|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+owner=    admin=ComponentInfo{org.plainphone/org.plainphone.PlainphoneAdminReceiver}
+locktask=mLockTaskModeState=LOCKED
+sup=  System Update Policy: SystemUpdatePolicy (type: 3, windowStart: 0, windowEnd: 0, freezes: [])
+talkback=null / 0
+calls_dumpsys=0
+wifi_location_marker=name="owned" value="false"
+family_store_sha=c58614458c2397d9 bytes=9 decoded=format=1 enabled=False people=0
+app_order_lines=2 sha=4b5f723aa42637f2
+starter_list_sha=037b82eaecee9a3b
+authority_files=13 authority_ab_sha=23c6f951a1e121ec/23c6f951a1e121ec
+counts_toggle=show_communication_counts" value="true"
+release_keys=name="release_current" value="62" name="release_previous" value="61" 
+drafts: family=0 practice=1 send_records=1
+app_requests_bytes=59 sha=8110778b19b9ece1
+replies_played_files=0
+ce_data_inode=ceDataInode=32221
+version=versionCode=62 mLockTaskModeState=LOCKED DO=1 calls=0
+home_resolve=org.plainphone/.MainActivity
+hidden_count=484/442

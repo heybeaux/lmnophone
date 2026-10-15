@@ -1,0 +1,5 @@
+Your settings
+Last check
+Once it's off, only the person who set up LMNOPhone on this phone can turn it back on, using a computer. LMNOPhone turns off after at least 24 hours of the phone being on. Time while the phone is off doesn't count.
+Start the 24-hour wait
+Cancel

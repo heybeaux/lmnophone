@@ -1,0 +1,27 @@
+LMNOPhone
+Version 0.1.0-preview-63 (63)
+Older versions
+What’s new in this version
+Behind the scenes: the steps that give the phone back in full after a turn-off are now built in. On this test phone a turn-off is still cancelled, so nothing changes yet.
+Help and privacy
+This is a test version. Parts that are not ready yet are not shown. For phone settings that need a PIN, open More, then PIN settings.
+Unsent voice messages stay on this phone for up to 7 days. Sending, deleting, replacing a recording, removing its person or turning Family off erases the recording.
+LMNOPhone has no account, analytics or server of its own.
+Lexend – SIL Open Font License 1.1
+To call 9-1-1
+Tap Phone, type 9-1-1, and press call.
+OK
+LMNOPhone
+Version 0.1.0-preview-63 (63)
+Older versions
+What’s new in this version
+Behind the scenes: the steps that give the phone back in full after a turn-off are now built in. On this test phone a turn-off is still cancelled, so nothing changes yet.
+Help and privacy
+This is a test version. Parts that are not ready yet are not shown. For phone settings that need a PIN, open More, then PIN settings.
+Unsent voice messages stay on this phone for up to 7 days. Sending, deleting, replacing a recording, removing its person or turning Family off erases the recording.
+LMNOPhone has no account, analytics or server of its own.
+Lexend – SIL Open Font License 1.1
+To call 9-1-1
+Tap Phone, type 9-1-1, and press call.
+Or tap More, then Emergency 9-1-1.
+OK

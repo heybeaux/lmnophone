@@ -1,0 +1,5 @@
+Your settings
+Are you sure?
+LMNOPhone will be turned off on your phone.
+Yes, turn it off
+No, keep it on

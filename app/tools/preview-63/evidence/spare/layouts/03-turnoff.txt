@@ -1,0 +1,10 @@
+Your settings
+Turn LMNOPhone off?
+This makes your phone an ordinary Android phone again. Every app will open, including web browsers and the Play Store, and the home screen will look different.
+Photos, messages and contacts are kept. Nothing is erased.
+It happens after at least 24 hours of the phone being on. Until then, you can cancel it. Nothing can make it shorter.
+This test build doesn't send texts.
+To use LMNOPhone again later, the person who set up LMNOPhone on this phone has to set it up again with a computer.
+LMNOPhone only turns off this way, with a PIN. A flat battery doesn't turn it off: when the phone starts again, LMNOPhone is back.
+Continue
+Keep LMNOPhone on

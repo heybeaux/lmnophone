@@ -1,0 +1,5 @@
+Cancel this change?
+This won't happen: turn LMNOPhone (preview) off.
+To do it later, someone has to start it again, and the 24 hours start again.
+Yes, cancel it
+No, keep it waiting
