@@ -163,6 +163,16 @@ the host reads the same waiting store as Home and rechecks the request on tap.
   through input assembly, writes, readbacks and the post-reapply hook, resetting
   it per serialized pass. Timing does not change the plan or readback contract;
 - `PackageFactsSource`;
+- `PlaySessionDispatcher` in `device.session` owns one `ElevationController` and one
+  `SessionController` on `JointAuthorityStore.elevationStore`. `request` consumes a
+  fresh Play-specific PIN; start/tick/cancel/end and package events stay serialized
+  with other privileged work. The boot integration must use its `sessions` instance
+  on that same record. `ReadbackPlayEffects` accepts policy-produced baseline/open
+  plans, validates that only Play gains access, and uses `ReadbackPolicyApplier`.
+  These adapters are not yet wired into the preview runtime. The existing inventory
+  and active-friction prerequisites still refuse incomplete configuration; no
+  synthetic inventory or recovery identity is a runtime substitute. Suspended or
+  disabled Play refuses opening until its prior state can be restored durably;
 - the SMS sender;
 - view-models mapping engine output to `XUiState`.
 

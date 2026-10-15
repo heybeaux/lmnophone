@@ -57,12 +57,13 @@ class PlaySessionDispatcher(
 
     /** The menu PIN is consumed by the menu. This action requires its own fresh PIN. */
     fun request(pin: CharArray): PlayRequestResult = try {
-        if (!initialized || !handbackReady || pins.entry() != PinEntry.ENTER) PlayRequestResult.Unavailable
+        if (!initialized || pins.entry() != PinEntry.ENTER) PlayRequestResult.Unavailable
         else {
             val record = store.elevationStore.read()
             when {
                 record == null -> PlayRequestResult.Unavailable
                 record.state.countdown != null || record.state.grant != null || record.journal != SessionJournal.Empty -> PlayRequestResult.Busy
+                !handbackReady -> PlayRequestResult.Unavailable
                 else -> {
                     val request = elevation.prepare(SELF, ElevationTarget.Play)
                     if (request == null) PlayRequestResult.Unavailable

@@ -31,6 +31,7 @@ class PlaySessionDispatcherTest {
         }, SecretEntropy { count -> ByteArray(count) { (++sequence).toByte() } }, clock)
         val menu = PreviewPinAccess(store, vault)
         val events = mutableListOf<String>()
+        val journalAtEffect = mutableListOf<SessionJournal?>()
         var fail: String? = null
         var faultHits = 0
         var open = false
@@ -41,6 +42,7 @@ class PlaySessionDispatcherTest {
             installedIdentities = listOf(identity))
         private fun step(name: String): Boolean {
             events += name
+            journalAtEffect += store.elevationStore.read()?.journal
             if (name == fail) { faultHits++; return false }
             return true
         }
@@ -101,9 +103,10 @@ class PlaySessionDispatcherTest {
 
     @Test fun everyEndTriggerRevokesChecksReadsBackAndClearsSharedJournal() {
         for (trigger in SessionEnd.entries) {
-            val r = Rig(); val id = r.start(); r.events.clear()
+            val r = Rig(); val id = r.start(); r.events.clear(); r.journalAtEffect.clear()
             assertTrue(r.dispatcher.end(id, trigger) in setOf(ElevationOutcome.ENDED, ElevationOutcome.ACCESS_CLOSED))
             assertEquals(listOf("revoke", "protected", "readback"), r.events)
+            assertTrue(r.journalAtEffect.all { (it as? SessionJournal.Active)?.phase == SessionPhase.CLOSING })
             assertEquals(SessionJournal.Empty, r.store.elevationStore.read()!!.journal)
             assertNull(r.dispatcher.access()); assertFalse(r.open)
             assertFalse(r.dispatcher.installed(id, candidate))
