@@ -29,7 +29,7 @@ class RingtoneGate(m.Gate):
                 print('RETRY: UIAutomator dump did not complete; no assertion waived', flush=True)
                 time.sleep(1)
 
-g = RingtoneGate('ZY22KW6P9J', Path('$PAPERCLIP_RUN_SCRATCH_DIR')/'spare')
+g = RingtoneGate('[REDACTED_SPARE_SERIAL]', Path('$PAPERCLIP_RUN_SCRATCH_DIR')/'spare')
 require = m.previous.require
 baseline = Path(os.environ['PAPERCLIP_RUN_SCRATCH_DIR']) / 'preview31-baseline.json'
 
@@ -76,7 +76,7 @@ def chooser(expected_title=None):
         g.sh('scroll Sound to Ringtone', 'input', 'swipe', '500', '1500', '500', '700', '250')
     raise m.GateFailure('Ringtone row reachable')
 
-m.previous.check_target('ZY22KW6P9J', os.environ)
+m.previous.check_target('[REDACTED_SPARE_SERIAL]', os.environ)
 if sys.argv[1] == 'before':
     g.VERSION = 31
     g.readback()

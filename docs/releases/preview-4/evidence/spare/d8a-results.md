@@ -1,6 +1,6 @@
 # preview-4 D8(a) driver checks on the spare (PLA-303)
 
-Driver: Android Platform Engineer (sole spare driver). Device: ZY22KW6P9J (moto g power 5G 2024,
+Driver: Android Platform Engineer (sole spare driver). Device: [REDACTED_SPARE_SERIAL] (moto g power 5G 2024,
 Android 15). Date: 2026-10-11, 08:39–08:59 UTC (device clock PDT, UTC−7). No calls or texts were
 made, and Call was never pressed. Logs below are counts/flags only: the counts code logs
 `<source> <outcome>` and never a number, a name or content.
