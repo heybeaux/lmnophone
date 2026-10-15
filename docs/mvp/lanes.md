@@ -591,3 +591,18 @@ unhide flush and refuses permission resets while hidden; `DpmGiveBackPort` owns
 all new Android writes. `PolicyRuntime` routes committing turn-off before normal
 boot, containment and update-policy writers. The test-build maturity refusal is
 unchanged. See `app/tools/give-back/inventory.md` for the full write inventory.
+
+## Play preview eligibility (PLA-620)
+
+`ElevationController` may resolve the fixed Play package without a matching build
+inventory. Settings, Approve and Update retain their inventory gate. Play still
+requires fresh live input with VALID health, the system dialer, unlocked boot,
+no conflicting approval or committing/rolling-back wait, self-managed credentials,
+fresh PIN, countdown, explicit Start and the atomic debit/journal protocol.
+
+`JointAuthorityStore.activeLimits()` uses `ElevationLimits()` only for readable
+self-managed credentials with no recovery profile. Unreadable credentials and
+profile-free supervised credentials remain closed; every stored profile retains
+its own friction. This read does not create a profile or account identity.
+The preview currently has no full policy-store provisioning: see the Play
+emulator policy-health preflight before wiring an opening path.

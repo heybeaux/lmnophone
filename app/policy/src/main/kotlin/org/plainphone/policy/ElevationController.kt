@@ -476,8 +476,11 @@ class ElevationController(
         if (input.lockedBoot || input.health != PolicyHealth.VALID ||
             (input.approvalState?.pending != null && !ownedPreparing(input.approvalState, preparing)) ||
             input.waitingOperation?.phase in setOf(WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)) return null
-        val inventory = input.inventory?.takeIf { it.model == input.model && it.fingerprint == input.fingerprint } ?: return null
         if (!EmergencyFloor.compute(input.installed, input.identities).hasSystemDialer) return null
+        // Play has one fixed package and its journal can be revoked without an inventory.
+        // Other targets still require an exact reviewed build; never derive one from live facts.
+        if (target == ElevationTarget.Play) return sessionPackages(WindowKind.PLAY, null)
+        val inventory = input.inventory?.takeIf { it.model == input.model && it.fingerprint == input.fingerprint } ?: return null
         if (target is ElevationTarget.Update) return emptySet()
         if (target is ElevationTarget.Approve) {
             if (installedIdentity(target.identity.packageName) != target.identity) return null
