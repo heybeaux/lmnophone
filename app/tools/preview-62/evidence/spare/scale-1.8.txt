@@ -1,0 +1,13 @@
+== font 1.8
+ Home
+  last-action='More' bottom=2260  last-text='More' bottom=2230  clears-nav=True narrow=[]
+ More
+  last-action='About this phone' bottom=2220  last-text='About this phone' bottom=2200  clears-nav=True narrow=[]
+ Phone settings
+  last-action='Show missed calls and unread texts on Ho' bottom=1348  last-text='LMNOPhone keeps permission to check call' bottom=2220  clears-nav=True narrow=[]
+ About
+  last-action='OK' bottom=2260  last-text='OK' bottom=2220  clears-nav=True narrow=[]
+ PIN settings (secure, no shot): Your settings|Your settings|Yo
+  last-action='Done – back to the home screen' bottom=2260  last-text='Done – back to the home screen' bottom=2220  clears-nav=True narrow=[]
+ Apps on this phone (secure)
+  last-action='Go back' bottom=2260  last-text='Go back' bottom=2240  clears-nav=True narrow=[]
