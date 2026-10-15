@@ -1,0 +1,17 @@
+LMNOPhone
+Version 0.1.0-preview-65 (65)
+Older versions
+What’s new in this version
+PIN settings has Add an app. After a 10-minute wait, the Play Store opens for 10 minutes. New apps stay hidden until you add them under Add a hidden app. Up to 2 openings a day; these limits can't be changed yet.
+The Play Store needs a Google account before it can download apps. This phone isn't signed in to one yet.
+OK
+While the Play Store is open, nothing on screen shows the time left. Going back to LMNOPhone ends it.
+If an app from the Play Store is removed and installed again, LMNOPhone may say it isn't ready to hand back. Restarting the phone may clear this.
+Help and privacy
+This is a test version. Parts that are not ready yet are not shown. For phone settings that need a PIN, open More, then PIN settings.
+Unsent voice messages stay on this phone for up to 7 days. Sending, deleting, replacing a recording, removing its person or turning Family off erases the recording.
+LMNOPhone has no account, analytics or server of its own.
+Lexend – SIL Open Font License 1.1
+To call 9-1-1
+Tap Phone, type 9-1-1, and press call.
+Or tap More, then Emergency 9-1-1.

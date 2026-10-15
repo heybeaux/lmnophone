@@ -1,0 +1,9 @@
+2026-10-15T09:06:30Z
+    topResumedActivity=ActivityRecord{295c151 u0 com.android.vending/com.google.android.finsky.unauthenticated.activity.UnauthenticatedMainActivity t94}
+    mLockTaskModeState=LOCKED
+locktask_packages=com.android.phone,com.android.server.telecom,com.android.vending,com.google.android.apps.maps,com.google.android.apps.messaging,com.google.android.apps.safetyhub,com.google.android.cellbroadcastreceiver,com.google.android.dialer,com.motorola.camera3,org.plainphone
+play_user0=installed=true hidden=false suspended=false stopped=false enabled=1
+packages_all/visible=484/443
+home_resolve=org.plainphone/.HomeEntry
+play_market_resolve=com.android.vending/com.google.android.finsky.activities.MarketDeepLinkHandlerActivity
+calls=0
