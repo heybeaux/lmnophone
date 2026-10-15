@@ -524,7 +524,24 @@ class PolicyRuntime private constructor(private val context: Context) {
     }
     fun addPreviewApp(id: String, identity: String, selection: org.plainphone.device.approval.AppPermissionSnapshot,
         choices: Map<String, org.plainphone.policy.PermissionChoice>, pin: CharArray, active: () -> Boolean,
+        done: (org.plainphone.device.AppAdditionResult) -> Unit) = dispatcher.post { done(addApp(id, identity, selection, choices, pin, active, false)) }
+
+    fun addPlayApp(id: String, identity: String, selection: org.plainphone.device.approval.AppPermissionSnapshot,
+        choices: Map<String, org.plainphone.policy.PermissionChoice>, active: () -> Boolean,
         done: (org.plainphone.device.AppAdditionResult) -> Unit) = dispatcher.post {
+        done(addApp(id, identity, selection, choices, charArrayOf(), active, true))
+        publishPlay()
+    }
+    fun playCandidates(done: (List<org.plainphone.device.PreviewHiddenApp>?) -> Unit) = dispatcher.post {
+        done(try {
+            val names = play.candidates().mapTo(mutableSetOf()) { it.packageName.value }
+            preview.hiddenApps().filter { it.id in names }
+        } catch (_: Exception) { null })
+    }
+    private fun addApp(id: String, identity: String, selection: org.plainphone.device.approval.AppPermissionSnapshot,
+        choices: Map<String, org.plainphone.policy.PermissionChoice>, pin: CharArray, active: () -> Boolean,
+        fromPlay: Boolean): org.plainphone.device.AppAdditionResult {
+        var saved = false
         val result = try {
             // The hidden-app eligibility gate remains live and version/signer-bound before any unhide.
             if (!active() || id != selection.identity.packageName.value || selection.selectionIdentity != identity ||
@@ -539,7 +556,11 @@ class PolicyRuntime private constructor(private val context: Context) {
                         override fun publish(names: Set<PackageName>): Unit = error("activation belongs to runtime")
                     }, { preview.protectedApps().mapTo(mutableSetOf(), ::PackageName) }, { null })
                 org.plainphone.device.approval.PreviewPermissionAddition(
-                    authenticate = pins::authenticateAddition,
+                    authenticate = { target, secret ->
+                        if (!fromPlay) pins.authenticateAddition(target, secret)
+                        else if (play.candidates().any { it == selection.identity }) PinAccessResult.Open
+                        else PinAccessResult.Unavailable
+                    },
                     eligible = { target -> target.identity.packageName.value !in preview.protectedApps() &&
                         target.identity.packageName !in preview.starter() },
                     snapshot = appPermissions::snapshot,
@@ -549,13 +570,24 @@ class PolicyRuntime private constructor(private val context: Context) {
                     checkpoint = attempts::checkpoint,
                     rollback = attempts::rollback,
                     read = appPermissions::read,
-                    save = { target -> preview.addApp(id, target.selectionIdentity, active) },
+                    save = { target ->
+                        (if (fromPlay) play.commitApproval(target.identity) { lastCheck ->
+                            preview.addApp(id, target.selectionIdentity, active, lastCheck)
+                        } else preview.addApp(id, target.selectionIdentity, active)).also { saved = it }
+                    },
                     apply = { run("app-added", packageMaySkip = false); gate.value == HomeGate.READY },
                 ).add(selection, choices, pin, active)
             }
         } catch (_: Exception) { org.plainphone.device.AppAdditionResult.SaveFailed }
         finally { pin.fill('\u0000') }
-        done(result)
+        // Failed activation cannot leave an approval that appears later after we said it failed.
+        if (fromPlay && saved && result != org.plainphone.device.AppAdditionResult.Added) {
+            try {
+                preview.removeApp(id) { true }
+                run("play-add-contained", packageMaySkip = false)
+            } catch (_: Exception) { }
+        }
+        return result
     }
 
     fun checkTurnOffPin(flow: String, pin: CharArray, done: (PinAccessResult) -> Unit) = dispatcher.post {

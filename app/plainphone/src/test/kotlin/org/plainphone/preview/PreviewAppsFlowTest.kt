@@ -138,4 +138,17 @@ class PreviewAppsFlowTest {
         flow.back(); assertEquals(PreviewAppsStage.List, flow.state.stage)
         flow.openHidden(); flow.open(); flow.hidden(); assertFalse(flow.leavesOnBack())
     }
+    @Test fun playGrantReusesPermissionChoicesAndConfirmsWithoutPinPage() {
+        val port = Port(); val flow = PreviewAppsFlow(port, playApproval = true) {}
+        flow.openHidden(); flow.selectHidden("calculator")
+        repeat(3) { flow.nextAdd() }
+        assertEquals(PreviewAppsStage.AddConfirm, flow.state.stage)
+        assertEquals(0, port.adds)
+        flow.nextAdd()
+        assertEquals(1, port.adds)
+        assertNotEquals(PreviewAppsStage.AddPin, flow.state.stage)
+        port.addCallback!!(AppAdditionResult.Added)
+        assertEquals(PreviewAppsStage.Added, flow.state.stage)
+    }
+
 }

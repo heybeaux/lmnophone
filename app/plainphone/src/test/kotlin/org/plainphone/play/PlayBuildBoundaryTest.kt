@@ -8,7 +8,7 @@ import org.junit.Test
 
 class PlayBuildBoundaryTest {
     @Test fun shippedDebugHooksHaveNoOpeningOrClockAccelerationPath() {
-        val forbidden = listOf("requestPlay(", "startPlay(", "PlaySessionDispatcher(", "ElevationController(", "PlaySessionProofInstrumentation", "set(play, \"clock\"")
+        val forbidden = listOf("addPlayApp(", "commitPlayApproval(", "commitApproval(", "requestPlay(", "startPlay(", "PlaySessionDispatcher(", "ElevationController(", "PlaySessionProofInstrumentation", "set(play, \"clock\"")
         for (dir in listOf("src/debug", "src/noControl", "../device/src/debug", "../ui/src/debug")) {
             File(dir).walkTopDown().filter { it.isFile && it.extension in setOf("kt", "java", "xml") }.forEach { file ->
                 val text = file.readText()

@@ -281,4 +281,23 @@ class PlaySessionDispatcherTest {
         assertFalse(r.dispatcher.commitApproval(identity) { true })
     }
 
+    @Test fun twoCandidatesCanBeAddedWithinTheSameOriginalGrant() {
+        val r = Rig(); val id = r.start()
+        val second = ApprovalBinding(PackageName("test.second"), setOf(CertDigest("c".repeat(64))))
+        r.policy = r.policy!!.copy(installed = r.policy!!.installed + InstalledPackage(second.packageName, false, 1),
+            installedIdentities = listOf(identity, second))
+        assertTrue(r.dispatcher.installed(id, candidate))
+        assertTrue(r.dispatcher.installed(id, second.packageName))
+        val original = r.store.elevationStore.read()!!.state.grant!!.deadline
+        r.dispatcher.endCurrent(SessionEnd.LEFT_PACKAGES)
+        assertTrue(r.dispatcher.view().approvalAvailable)
+        for (binding in listOf(identity, second)) {
+            assertTrue(r.dispatcher.commitApproval(binding) { check -> check() })
+            assertEquals(original, r.store.elevationStore.read()!!.state.grant!!.deadline)
+        }
+        assertTrue(r.dispatcher.candidates().isEmpty())
+        r.now = original.elapsedMillis
+        assertFalse(r.dispatcher.view().approvalAvailable)
+    }
+
 }

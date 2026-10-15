@@ -30,7 +30,7 @@ data class PreviewAppsState(val stage: PreviewAppsStage = PreviewAppsStage.List,
     val choices: Map<String, PermissionChoice> = emptyMap(), val failedGroups: List<String> = emptyList(),
     val unavailable: Set<String> = emptySet(), val failedRows: List<org.plainphone.ui.trusted.AppPermissionRow> = emptyList())
 
-class PreviewAppsFlow(private val port: PreviewAppsPort, private val changed: (PreviewAppsState) -> Unit) {
+class PreviewAppsFlow(private val port: PreviewAppsPort, private val playApproval: Boolean = false, private val changed: (PreviewAppsState) -> Unit) {
     var state = PreviewAppsState()
         private set
     @Volatile private var generation = 0L
@@ -77,6 +77,7 @@ class PreviewAppsFlow(private val port: PreviewAppsPort, private val changed: (P
     }
     fun nextAdd() {
         if (state.busy) return
+        if (playApproval && state.stage == PreviewAppsStage.AddConfirm) { submitAdd(charArrayOf()); return }
         if (state.stage == PreviewAppsStage.AddUnreviewed) { loadChoices(); return }
         if (state.stage == PreviewAppsStage.PermissionFailed) { loadChoices(retainRefusals = true); return }
         val stage = when (state.stage) {

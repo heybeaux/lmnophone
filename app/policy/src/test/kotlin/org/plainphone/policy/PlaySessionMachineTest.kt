@@ -101,8 +101,8 @@ class PlaySessionMachineTest {
         val duplicate = PlaySessionMachine.installed(state, "session", ApprovalBinding(app, setOf(signer)), start, access)
         assertSame(state, duplicate.state)
         val changed = PlaySessionMachine.installed(state, "session", ApprovalBinding(app, setOf(foreign)), start, access).state
-        assertFalse(identity.matches(app, PlaySessionMachine.candidate(changed, app)!!.signingCerts))
-        assertEquals(setOf(foreign), changed.candidates.getValue(app).signingCerts)
+        assertNull(PlaySessionMachine.candidate(changed, app))
+        assertTrue(app in changed.invalidated)
     }
 
     @Test fun `clock cannot move backwards after an accepted event`() {
