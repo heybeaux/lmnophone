@@ -26,6 +26,11 @@ class PlayPreviewScreenshotTest(private val scale: Float) {
             } } }
         }
     }
+    @Test fun refused() {
+        paparazzi.snapshot { PlainphoneTheme { HomeTestFrame {
+            OpeningScreen(OpeningUiState(context, OpeningStage.OpenFailed, OpeningKind.Play)) {}
+        } } }
+    }
     @Test fun closure() {
         for (stage in listOf(SessionStage.Checking, SessionStage.Restored, SessionStage.NotReady)) {
             paparazzi.snapshot(stage.name) { PlainphoneTheme { HomeTestFrame {
