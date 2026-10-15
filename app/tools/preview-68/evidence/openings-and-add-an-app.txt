@@ -1,0 +1,13 @@
+taken=12:29Z (build 68, after install; no opening left today)
+ex1: S1 PIN settings 1.0: Your settings|Your settings|You hold the PIN. LMNOPhone adds waits so that distraction takes effort. It's friction, not a lock.|Voice messages|Add an app|Opens the Play Store, after a 10-minute wait|Add a hidden app|Apps on this phone|Requests from the person using this phone|Who gets requests|Change PIN|Done – back to the home screen
+ex1: S2 after Add an app 1.0: Your settings|No openings left for now|You've used your 2 openings. The next one is available after about 2:06 a.m., if the phone stays on. Restarting the phone doesn't change this.|OK
+ex2: font=2.0
+ex2: S1 PIN settings 2.0: Your settings|Your settings|You hold the PIN. LMNOPhone adds waits so that distraction takes effort. It's friction, not a lock.|Voice messages|Add an app|Opens the Play Store, after a 10-minute wait|Add a hidden app|Apps on this phone|Requests from the person using this phone|Done – back to the home screen
+ex2:   node 'Add an app' [60,1170][561,1279]
+ex2:   node 'Opens the Play Store, after a 10-minute wait' [60,1289][975,1474]
+ex2: S2 after Add an app 2.0: Your settings|No openings left for now|You've used your 2 openings. The next one is available after about 2:06 a.m., if the phone stays on. Restarting the phone doesn't change this.|OK
+ex2:   last-action='OK' bottom=2260  last-text='OK' bottom=2237  clears-nav=True narrow=[]
+ex2: font restored=1.0
+locktask_packages=com.android.phone,com.android.server.telecom,com.google.android.apps.maps,com.google.android.apps.messaging,com.google.android.apps.safetyhub,com.google.android.cellbroadcastreceiver,com.google.android.dialer,com.motorola.camera3,org.plainphone
+play_user0=installed=true hidden=true suspended=false stopped=false enabled=1
+version=versionCode=68 mLockTaskModeState=LOCKED DO=1 calls=0
