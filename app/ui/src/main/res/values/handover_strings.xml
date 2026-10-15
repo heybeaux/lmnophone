@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 LMNOPhone contributors; SPDX-License-Identifier: Apache-2.0 -->
+<resources>
+    <string name="handover_title">Check this phone</string>
+    <string name="handover_detail">See if this phone is set up safely</string>
+    <string name="handover_checking">Checking this phone…</string>
+    <string name="handover_partial_ok">Checked items are OK. Some items aren\'t checked yet, so this phone isn\'t marked Ready.</string>
+    <string name="handover_owner">LMNOPhone is in charge of this phone</string>
+    <string name="handover_apps">Only approved apps open</string>
+    <string name="handover_emergency">Emergency calling</string>
+    <string name="handover_usb">USB debugging</string>
+    <string name="handover_wireless">Wireless debugging</string>
+    <string name="handover_ok">OK</string>
+    <string name="handover_needs_helper">Needs the helper</string>
+    <string name="handover_unknown">Couldn\'t check</string>
+    <string name="handover_unknown_help">The helper needs to run this check again. If it still can\'t be checked, see the setup guide before handover.</string>
+    <string name="handover_owner_help">LMNOPhone isn\'t in charge of this phone. The helper needs to run the setup script again (setup guide, Part F).</string>
+    <string name="handover_apps_help">The apps don\'t match the approved list. The helper needs to restart the phone and run this check again. If it still fails, see the setup guide.</string>
+    <string name="handover_emergency_help">Part of the phone\'s emergency system is missing or isn\'t available. Don\'t hand the phone over. The helper needs to see the setup guide.</string>
+    <string name="handover_usb_help">USB debugging is still on. The helper needs to turn it off before handover.</string>
+    <string name="handover_wireless_help">Wireless debugging is still on. The helper needs to turn it off before handover.</string>
+    <string name="handover_spoken_needs_helper">%1$s, needs the helper: %2$s</string>
+    <string name="handover_spoken_ok">%1$s, %2$s</string>
+    <string name="handover_spoken_help">%1$s, %2$s: %3$s</string>
+    <string name="handover_not_checked">Not checked yet</string>
+    <string name="handover_boot">Locked, original phone software</string>
+    <string name="handover_reset">Google\'s reset protection</string>
+    <string name="handover_browser">Web links come to LMNOPhone</string>
+    <string name="handover_updates">Automatic app updates</string>
+    <string name="handover_sweep">Tidy-up of apps that came with the phone</string>
+    <string name="handover_text">The trusted person\'s test text</string>
+    <plurals name="handover_not_ready">
+        <item quantity="one">Not ready: %d item needs the helper</item>
+        <item quantity="other">Not ready: %d items need the helper</item>
+    </plurals>
+</resources>

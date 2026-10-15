@@ -53,3 +53,10 @@ Owners and rules are the same as in `add-plainphone-spike-and-mvp/tasks.md`:
 
 - [ ] 4.1 VE: Escape-artist pass on the new paths, on the emulator, with these named cases at least: become a trusted person without one's PIN; enrol a second identity to leave self-managed mode early; keep a pending change alive after the seen PIN is replaced; complete a cancelled or stale change; shorten or skip a wait without a recovery code; refund an elevation turn; use a grant after its deadline or after a restart; run two grants or two waiting changes at once; hide the Cancel path; start a waiting change by text or intent; complete a handover without the reset-protection update; and abuse the history list or texts.
 - [ ] 4.2 Lead: Update the "What LMNOPhone can't stop" list and the approval packet, and get Beaux's written acceptance of any new leftover risk before handover.
+
+## Read-only handover preview (guided-setup, Handover check gates Ready)
+
+- [x] Five independently fail-closed checks: owner, approved-app readback, emergency components and resolve-only routes, USB and wireless debugging.
+- [x] PIN settings entry, per-item accessible state, helper guidance and pending checks; never marks Ready.
+- [x] Tests-first policy/device/production-mapper contracts and 1.0/1.3/1.5/1.8/2.0 layouts.
+- [ ] Full handover gates, setup integration and real-device release acceptance remain outside this preview.

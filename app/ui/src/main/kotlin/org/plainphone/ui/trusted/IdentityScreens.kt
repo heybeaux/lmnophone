@@ -114,6 +114,7 @@ fun PinChangeResultScreen(context: AdminContext, changed: Boolean, onOk: () -> U
 }
 
 @Composable internal fun destinationTitle(destination: AdminDestination, user: String) = s(when (destination) {
+    AdminDestination.CheckPhone -> R.string.handover_title
     AdminDestination.VoiceMessages -> R.string.family_title
     AdminDestination.AddApp -> R.string.more_add; AdminDestination.HiddenApp -> R.string.admin_hidden_app
     AdminDestination.RequestRecipient -> R.string.requests_recipient
@@ -138,6 +139,6 @@ fun AdminMenuScreen(state: AdminMenuUiState, onEvent: (AdminMenuEvent) -> Unit) 
             Heading(s(R.string.admin_needs))
             state.needsYou.forEach { notice -> ActionRow(notice.text.withoutBidiControls()) { onEvent(AdminMenuEvent.OpenNotice(notice.id)) } }
         }
-        state.items.forEach { item -> ActionRow(destinationTitle(item.destination, user), item.detail.withoutBidiControls()) { onEvent(AdminMenuEvent.Open(item.destination)) } }
+        state.items.forEach { item -> ActionRow(destinationTitle(item.destination, user), (if (item.destination == AdminDestination.CheckPhone) s(R.string.handover_detail) else item.detail.withoutBidiControls())) { onEvent(AdminMenuEvent.Open(item.destination)) } }
     }
 }

@@ -638,3 +638,15 @@ to new package events without opening another session.
 `PlayEvents` closes on screen off and ringing and checks running-time deadlines;
 `PlayDeadline` is the alarm backstop. No debug receiver or debug source can create
 or shorten a countdown. Emulator time acceleration is in androidTest only.
+
+## Read-only handover subset
+
+`HandoverCheck.read` in `:policy` evaluates five independent nullable readers into
+`HandoverReport`: OK, NEEDS_HELPER or COULD_NOT_CHECK. Unknowns count as needing help;
+`ready` is always false while this subset leaves other handover gates unchecked.
+`:device` supplies `HandoverReader` (fresh plan, DeviceOwnerReader, DevicePolicyPort,
+resolve-only emergency route and debugging reads). `ReadbackPolicyApplier.readBackOrNull`
+is the diagnostic readback seam; its existing Boolean readback keeps its prior behavior.
+`:plainphone` serializes the snapshot on PolicyRuntime's dispatcher and maps every item
+through `handoverUiState`. `:ui` receives only `HandoverUiState`, with no device reads or
+fix actions. The PIN settings route retains its existing authentication lifetime.

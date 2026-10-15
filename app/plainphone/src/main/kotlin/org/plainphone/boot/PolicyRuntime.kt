@@ -326,6 +326,20 @@ class PolicyRuntime private constructor(private val context: Context) {
         endPlay(SessionEnd.LEFT_PACKAGES)
     }
 
+    /** Snapshot only: never invokes the boot/apply/session paths. Serialized with policy changes. */
+    fun checkPhone(done: (org.plainphone.policy.HandoverReport) -> Unit) = dispatcher.post {
+        val reads = org.plainphone.device.AndroidHandoverReads(context, port)
+        val result = org.plainphone.device.HandoverReader(DpmDeviceOwnerReader(context), {
+            if (!users.isUserUnlocked) null else {
+                // A separate fact reader keeps this check from changing the runtime's last-plan cache.
+                val snapshot = Preview2Device(context)
+                val plan = snapshot.plan(false)
+                if (snapshot.floorUnreadable?.isEmpty() == true) plan else null
+            }
+        }, port, reads::emergencyRoute, reads::debugging).read()
+        done(result)
+    }
+
     fun requestPlay(pin: CharArray, active: () -> Boolean = { true }, done: (PlayRequestResult) -> Unit) = dispatcher.post {
         val result = try { if (active()) play.request(pin) else PlayRequestResult.Unavailable } catch (_: Exception) { PlayRequestResult.Unavailable }
         finally { pin.fill('\u0000') }

@@ -32,9 +32,10 @@ fun pinUiState(page: PinPageState, context: AdminContext, value: String, confirm
 )
 
 /** What a PIN settings row opens. Rows without one in this build are not shown, so no row opens the not-in-build page. */
-enum class PinMenuTarget { Family, Play, AddHiddenApp, Apps, Requests, RequestRecipient, ChangePin, NewRecoveryCode, TurnOff }
+enum class PinMenuTarget { Family, Play, AddHiddenApp, Apps, Requests, RequestRecipient, ChangePin, NewRecoveryCode, CheckPhone, TurnOff }
 
 fun pinMenuTarget(destination: AdminDestination): PinMenuTarget? = when (destination) {
+    AdminDestination.CheckPhone -> PinMenuTarget.CheckPhone
     AdminDestination.VoiceMessages -> PinMenuTarget.Family
     AdminDestination.HiddenApp -> PinMenuTarget.AddHiddenApp
     AdminDestination.Apps -> PinMenuTarget.Apps

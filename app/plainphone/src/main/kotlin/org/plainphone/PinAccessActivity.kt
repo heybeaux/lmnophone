@@ -139,6 +139,20 @@ class PinAccessActivity : ComponentActivity() {
         }
     }
 
+    private var handoverOpen by mutableStateOf(false)
+    private var handover by mutableStateOf<HandoverUiState?>(null)
+    private var handoverRequest = 0
+    private fun closeHandover() { handoverRequest++; handoverOpen = false; handover = null }
+    private fun openHandover() {
+        if (page.page != PinPage.MENU) return
+        handoverOpen = true; handover = null
+        val request = ++handoverRequest
+        runtime.checkPhone { report -> runOnUiThread {
+            if (handoverOpen && request == handoverRequest && page.page == PinPage.MENU)
+                handover = handoverUiState(report)
+        } }
+    }
+
     private var confirmation by mutableStateOf("")
     private val runtime by lazy { PolicyRuntime.get(this) }
     private val flow by lazy {
@@ -179,7 +193,7 @@ class PinAccessActivity : ComponentActivity() {
                     flow.refreshWaits()
                 }
             }
-            BackHandler { if (apps != null) backApps() else if (family != null) familyEditor?.event(FamilyEvent.Back) else when (page.page) {
+            BackHandler { if (handoverOpen) closeHandover() else if (apps != null) backApps() else if (family != null) familyEditor?.event(FamilyEvent.Back) else when (page.page) {
                 PinPage.NOT_IN_BUILD -> flow.backFromUnsupported()
                 PinPage.CHANGE_OLD, PinPage.CHANGE_NEW, PinPage.CHANGE_DONE, PinPage.CHANGE_FAILED -> {
                     value = ""; confirmation = ""; flow.back()
@@ -220,12 +234,13 @@ class PinAccessActivity : ComponentActivity() {
                             PinEvent.Ok -> if (page.page == PinPage.RECOVERY_ISSUED) flow.codeWritten() else finish()
                             else -> finish()
                         } }
-                        PinPage.MENU -> if (apps != null) AppsContent(apps!!) else if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(pinMenuUiState(AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)),
+                        PinPage.MENU -> if (handoverOpen) HandoverScreen(handover, ::closeHandover) else if (apps != null) AppsContent(apps!!) else if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(pinMenuUiState(AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)),
                             waitingMenu, homeNotice, needsYouCopy(), menuRequests,
                             getString(org.plainphone.ui.R.string.play_menu_detail, org.plainphone.play.playWaitMinutes(playView.waitMillis)))) { when (it) {
                             AdminMenuEvent.Done -> finish()
                             is AdminMenuEvent.OpenNotice -> openNeedsYou(it.id)
                             is AdminMenuEvent.Open -> when (pinMenuTarget(it.destination)) {
+                                PinMenuTarget.CheckPhone -> openHandover()
                                 PinMenuTarget.TurnOff -> flow.turnOff()
                                 PinMenuTarget.ChangePin -> flow.changePin()
                                 PinMenuTarget.NewRecoveryCode -> flow.newRecoveryCode()
@@ -326,6 +341,7 @@ class PinAccessActivity : ComponentActivity() {
         }
     }
     override fun onPause() {
+        closeHandover()
         value = ""; confirmation = ""
         appsFlow?.close(); appsFlow = null; apps = null
         family = null; familyEditor = null; familySpeaker.stop()

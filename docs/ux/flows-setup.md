@@ -395,3 +395,49 @@ Advertising ID: done. No ✓ or ✗ here: LMNOPhone can't check them, so it only
 - **Self-managed:** the box heading is "How to call 9-1-1" and the list is for {user} to read.
 - **Notes:** "Ready" means setup only (guided-setup). Handing the phone over for daily use also needs the
   real-device checks and Beaux's OK for that phone.
+
+## S9a. Check this phone: installed read-only subset
+
+Authorized first subset: PIN settings → **Check this phone**, detail **See if this phone is set up safely**.
+No new PIN, fix actions, setup re-entry or Ready result. Done returns to PIN settings.
+This screen resolves emergency routes only; it does not open a dialer or place a call.
+USB and wireless debugging are OK only when read back as off. These helper-facing terms and
+the requested entry detail are specific to this authorized check.
+
+| String | Exact copy |
+|---|---|
+| `handover_title` | Check this phone |
+| `handover_detail` | See if this phone is set up safely |
+| `handover_checking` | Checking this phone… |
+| `handover_partial_ok` | Checked items are OK. Some items aren't checked yet, so this phone isn't marked Ready. |
+| `handover_owner` | LMNOPhone is in charge of this phone |
+| `handover_apps` | Only approved apps open |
+| `handover_emergency` | Emergency calling |
+| `handover_usb` | USB debugging |
+| `handover_wireless` | Wireless debugging |
+| `handover_ok` | OK |
+| `handover_needs_helper` | Needs the helper |
+| `handover_unknown` | Couldn't check |
+| `handover_unknown_help` | The helper needs to run this check again. If it still can't be checked, see the setup guide before handover. |
+| `handover_owner_help` | LMNOPhone isn't in charge of this phone. The helper needs to run the setup script again (setup guide, Part F). |
+| `handover_apps_help` | The apps don't match the approved list. The helper needs to restart the phone and run this check again. If it still fails, see the setup guide. |
+| `handover_emergency_help` | Part of the phone's emergency system is missing or isn't available. Don't hand the phone over. The helper needs to see the setup guide. |
+| `handover_usb_help` | USB debugging is still on. The helper needs to turn it off before handover. |
+| `handover_wireless_help` | Wireless debugging is still on. The helper needs to turn it off before handover. |
+| `handover_spoken_ok` | %1$s, %2$s |
+| `handover_spoken_help` | %1$s, %2$s: %3$s |
+| `handover_not_checked` | Not checked yet |
+| `handover_boot` | Locked, original phone software |
+| `handover_reset` | Google's reset protection |
+| `handover_browser` | Web links come to LMNOPhone |
+| `handover_updates` | Automatic app updates |
+| `handover_sweep` | Tidy-up of apps that came with the phone |
+| `handover_text` | The trusted person's test text |
+
+Result when any checked item is not OK: "Not ready: {n} items need the helper"; singular:
+"Not ready: 1 item needs the helper". An unreadable item counts as not OK.
+"Not checked yet" maps to key attestation (bootloader and verified boot), reset protection, browser role,
+Play auto-update, preinstall sweep and each trusted person's confirmed test text.
+The privacy-step record is not available in this preview; no recorded answers are invented.
+
+Spoken needs-helper row: "{title}, needs the helper: {detail}". Each item is one stop.

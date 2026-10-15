@@ -88,6 +88,16 @@ class ReadbackPolicyApplier(
         }
     }
 
+    /** Read-only diagnostics: null distinguishes an unreadable setting from a known mismatch. */
+    fun readBackOrNull(plan: PolicyPlan): Boolean? {
+        val run = Run(plan)
+        val results = plan.steps.filter { it.readbackRequired }.map { step ->
+            try { timings.measure("verify.${step.stage}") { run.readBack(step.stage, "verify") } }
+            catch (_: Exception) { null }
+        }
+        return if (results.any { it == null }) null else results.all { it == true }
+    }
+
     /**
      * Expected-visible packages that read back disabled now (PLA-241 finding 5). The readback stages
      * check hidden and suspended; this is the enabled half, read for every expected package. A package
