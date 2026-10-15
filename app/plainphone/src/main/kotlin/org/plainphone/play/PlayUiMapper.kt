@@ -16,3 +16,20 @@ fun playOpeningUi(view: PlaySessionView, context: AdminContext, stage: OpeningSt
     time = time, alreadyOpen = view.active, sending = busy, playDisclosure = true)
 
 private fun minutes(millis: Long) = ((millis + 59999) / 60000).coerceAtLeast(1).toInt()
+
+/** Attention and an existing waiting change stay ahead of an opening on the single Home line. */
+fun playHomeNotice(view: PlaySessionView, base: org.plainphone.ui.home.HomeNotice?): org.plainphone.ui.home.HomeNotice? {
+    val attention = org.plainphone.ui.home.HomeNotice.NeedsAttention
+    if (!view.handbackReady && !view.active) return attention
+    if (base != null && base != org.plainphone.ui.home.HomeNotice.SoftwareUpdateWaiting &&
+        base != org.plainphone.ui.home.HomeNotice.PreviewTurnOffClosed) return base
+    return when {
+        view.countdownMillis != null -> org.plainphone.ui.home.HomeNotice.OpeningUp(minutes(view.countdownMillis!!))
+        view.readyMillis != null -> org.plainphone.ui.home.HomeNotice.ReadyToStart
+        else -> base
+    }
+}
+
+/** A closed package window can retain its approval grant until Done; it is not counting down. */
+fun playNeedsClosure(view: PlaySessionView): Boolean = view.id != null && !view.active &&
+    view.countdownMillis == null && view.readyMillis == null

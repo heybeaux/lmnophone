@@ -1,7 +1,7 @@
 # Pending Play session
 
 Not released or installed on the spare. Runtime/UI integration is implemented;
-emulator acceptance and the existing focused review are in progress.
+emulator proof found a blocking reinstall defect. Not ready for the existing focused review or delivery.
 
 Candidate release wording:
 
@@ -14,3 +14,8 @@ No Google sign-in was attempted. Downloading apps through a signed-in Play accou
 is not verified. This build does not open Google account screens or widen access
 to Google Play services. Apps can be added afterwards through Add a hidden app;
 in-opening approval belongs to the later 8b slice.
+
+Blocking emulator finding: installing a previously hidden app again after an
+uninstall can leave that app visible on API 36. The policy readback fails and
+LMNOPhone refuses handback. A first installation passes, but that does not cover
+reinstallation. This must be corrected before this candidate is delivered.

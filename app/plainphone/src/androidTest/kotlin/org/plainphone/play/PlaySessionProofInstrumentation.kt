@@ -34,7 +34,7 @@ class PlaySessionProofInstrumentation : Instrumentation() {
     private var baseline: Set<PackageName> = emptySet()
     private fun lockPackages() = serial.run { (field(runtime, "port") as org.plainphone.device.DevicePolicyPort).lockTaskPackages() }
     override fun onCreate(arguments: Bundle) { super.onCreate(arguments); phase = arguments.getString("phase", "open"); start() }
-    private fun field(owner: Any, name: String): Any = owner.javaClass.getDeclaredField(name).apply { isAccessible = true }.get(owner)
+    private fun field(owner: Any, name: String): Any = checkNotNull(owner.javaClass.getDeclaredField(name).apply { isAccessible = true }.get(owner))
     private fun set(owner: Any, name: String, value: Any) = owner.javaClass.getDeclaredField(name).apply { isAccessible = true }.set(owner, value)
     private fun await(action: (() -> Unit) -> Unit) {
         val latch = CountDownLatch(1); action { latch.countDown() }; check(latch.await(30, TimeUnit.SECONDS)) { "dispatcher timeout" }
@@ -89,6 +89,7 @@ class PlaySessionProofInstrumentation : Instrumentation() {
         tap("Start")
         waitFor { runtime.playView.value.active }
         Thread.sleep(2000)
+        check(shell("dumpsys activity activities").contains("mLockTaskModeState=LOCKED"))
         state("during-ui")
         shell("input keyevent KEYCODE_BACK")
         waitFor { !runtime.playView.value.active }
@@ -112,6 +113,7 @@ class PlaySessionProofInstrumentation : Instrumentation() {
         }
         Thread.sleep(2000)
         check(runtime.playView.value.active) { "closed before proof" }
+        check(shell("dumpsys activity activities").contains("mLockTaskModeState=LOCKED")) { "Play is not LOCKED" }
         check(lockPackages() == baseline + PackageName("com.android.vending")) { "widened lock task" }
         state("during")
     }
@@ -121,7 +123,21 @@ class PlaySessionProofInstrumentation : Instrumentation() {
             check(Build.HARDWARE in setOf("ranchu", "goldfish")) { "emulator only" }
             runtime = PolicyRuntime.get(targetContext)
             serial = field(runtime, "dispatcher") as SerialDispatcher
-            home(); waitFor { runtime.gate.value == HomeGate.READY }
+            home()
+            if (phase == "diagnose") {
+                await { runtime.reapply("play-diagnose", it) }
+                serial.run {
+                    val preview = field(runtime, "preview") as org.plainphone.preview.Preview2Device
+                    val plan = preview.plan(false)
+                    val port = field(runtime, "port") as org.plainphone.device.DevicePolicyPort
+                    val mismatches = plan.hidden.filter { port.packageHidden(it) == false }
+                    report.appendLine("hidden mismatches=" + mismatches)
+                    report.appendLine("shown mismatches=" + plan.expected.unhiddenAndEnabled.filter { port.packageState(it)?.let { p -> p.hidden || !p.enabled || p.suspended } != false })
+                }
+                result.putString("proof", report.toString()); finish(Activity.RESULT_OK, result); return
+            }
+            waitFor { runtime.gate.value == HomeGate.READY }
+            waitFor { shell("dumpsys activity activities").contains("mLockTaskModeState=LOCKED") }
             if (phase == "restart") {
                 await { runtime.tickPlay(it) }; state("after-restart")
                 check(!runtime.playView.value.active)
@@ -150,20 +166,31 @@ class PlaySessionProofInstrumentation : Instrumentation() {
                         listOfNotNull(n.text?.toString()) + (0 until n.childCount).flatMap { n.getChild(it)?.let(::texts).orEmpty() }
                     texts(root).distinct().joinToString(" | ")
                 })
-                if (phase == "open") {
+                if (phase == "reboot") {
+                    sendStatus(0, Bundle().apply { putString("readyForReboot", "true"); putString("proof", report.toString()) })
+                    Thread.sleep(60000) // Host reboots the emulator while the real shared journal is OPEN.
+                    error("host did not reboot")
+                } else if (phase == "open") {
                     // Keep the real session journal open, then process death/reboot must revoke it.
                     state("before-process-end")
                 } else {
                     when (phase) {
                         "done" -> await { done -> runtime.endPlay(SessionEnd.DONE, done) }
+                        "call" -> {
+                            sendStatus(0, Bundle().apply { putString("readyForCall", "true") })
+                            waitFor { !runtime.playView.value.active }
+                        }
                         "home" -> { home(); waitFor { !runtime.playView.value.active } }
                         "screen" -> { shell("input keyevent KEYCODE_POWER"); waitFor { !runtime.playView.value.active } }
                         "install" -> {
                             report.appendLine("install=" + shell("pm install -r -t /data/local/tmp/play-candidate.apk"))
-                            waitFor { shell("dumpsys package org.plainphone.t5calculator").contains("hidden=true") }
+                            waitFor { shell("dumpsys package org.plainphone.playcandidate").contains("hidden=true") }
+                            val candidate = serial.run { (field(play, "elevation") as ElevationController).candidate(PackageName("org.plainphone.playcandidate")) }
+                            check(candidate != null) { "package-added candidate was not observed" }
+                            report.appendLine("candidate recorded with signer=true")
                             await { done -> runtime.endPlay(SessionEnd.DONE, done) }
                             var listed = false
-                            runtime.previewHiddenApps { apps -> listed = apps?.any { it.id == "org.plainphone.t5calculator" } == true }
+                            runtime.previewHiddenApps { apps -> listed = apps?.any { it.id == "org.plainphone.playcandidate" } == true }
                             waitFor { listed }
                             report.appendLine("candidate hidden and listed=true")
                         }
@@ -175,6 +202,7 @@ class PlaySessionProofInstrumentation : Instrumentation() {
                     check(!runtime.playView.value.active)
                     check(runtime.playView.value.handbackReady)
                     check(lockPackages() == baseline) { "baseline not restored" }
+                    shell("input keyevent KEYCODE_APP_SWITCH")
                     check(!shell("dumpsys activity activities").lineSequence().any { "topResumedActivity=" in it && "com.android.vending/" in it })
                     val store = field(runtime, "authorityStore") as org.plainphone.device.authority.JointAuthorityStore
                     check(store.elevationStore.read()?.journal == SessionJournal.Empty)

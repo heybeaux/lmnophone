@@ -64,7 +64,7 @@ class PlayActivity : ComponentActivity() {
                                 PinEvent.Continue -> request()
                                 else -> home()
                             } }
-                        failed || returned -> SessionScreen(SessionUiState(context,
+                        failed || returned || playNeedsClosure(view) -> SessionScreen(SessionUiState(context,
                             if (busy) SessionStage.Checking else if (failed || !view.handbackReady) SessionStage.NotReady else SessionStage.Restored,
                             helper = getString(org.plainphone.ui.R.string.setup_helper), canShowDetails = false)) { event ->
                             if (event == SessionEvent.Continue) {

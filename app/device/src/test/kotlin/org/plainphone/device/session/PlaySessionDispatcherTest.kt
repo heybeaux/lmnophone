@@ -234,10 +234,11 @@ class PlaySessionDispatcherTest {
     @Test fun closingUsesStoredGrantEvenIfLiveEligibilityBecameUnreadable() {
         val r = Rig(); r.start(); r.policy = null
         assertNull(r.dispatcher.access())
-        assertEquals(ElevationOutcome.ACCESS_CLOSED, r.dispatcher.endCurrent(SessionEnd.SCREEN_OFF))
+        // Unreadable eligibility also invalidates the retained grant.
+        assertEquals(ElevationOutcome.ENDED, r.dispatcher.endCurrent(SessionEnd.SCREEN_OFF))
         assertFalse(r.open)
         assertEquals(SessionJournal.Empty, r.store.elevationStore.read()!!.journal)
-        assertEquals(ElevationOutcome.ENDED, r.dispatcher.endCurrent(SessionEnd.DONE))
+        assertEquals(ElevationOutcome.IDLE, r.dispatcher.endCurrent(SessionEnd.DONE))
         assertNull(r.store.elevationStore.read()!!.state.grant)
     }
 

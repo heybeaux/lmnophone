@@ -211,15 +211,17 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val playState = MutableStateFlow(PlaySessionView())
     val playView: StateFlow<PlaySessionView> = playState
     private fun playInput(): org.plainphone.policy.PolicyInput? {
-        if (!users.isUserUnlocked) return null
-        val live = org.plainphone.device.facts.LivePolicyInputAssembler(packagesPort,
-            org.plainphone.device.PreviewStarterPolicyStore(context.filesDir, { users.isUserUnlocked }),
-            emptyList(), PackageName(context.packageName), MESSAGES).assemble()
-        if (live.unreadableFloorRoles.isNotEmpty()) return null
-        val wait = authorityStore.waitingStore.read() ?: return null
-        val approvals = authorityStore.approvals.read() ?: return null
-        return live.input.copy(lockedBoot = !users.isUserUnlocked, waitingOperation = wait.operation,
-            approvalState = approvals)
+        return try {
+            if (!users.isUserUnlocked) return null
+            val live = org.plainphone.device.facts.LivePolicyInputAssembler(packagesPort,
+                org.plainphone.device.PreviewStarterPolicyStore(context.filesDir, { users.isUserUnlocked }),
+                emptyList(), PackageName(context.packageName), MESSAGES).assemble()
+            if (live.unreadableFloorRoles.isNotEmpty()) return null
+            val wait = authorityStore.waitingStore.read() ?: return null
+            val approvals = authorityStore.approvals.read() ?: return null
+            live.input.copy(lockedBoot = !users.isUserUnlocked, waitingOperation = wait.operation,
+                approvalState = approvals)
+        } catch (_: Exception) { null }
     }
     private val boot = BootReapply(
         journal,
@@ -334,28 +336,26 @@ class PolicyRuntime private constructor(private val context: Context) {
     fun startPlay(id: String, done: (Boolean) -> Unit) = dispatcher.post {
         val started = try { play.start(id) == ElevationOutcome.STARTED } catch (_: Exception) { false }
         bootCoverage.invalidate(); packageReadback.invalidate()
-        if (!started && play.access() != null) play.end(id, SessionEnd.DONE)
+        if (!started) play.done(id)
         publishPlay()
         done(started)
     }
     fun cancelPlay(id: String) = dispatcher.post { play.cancel(id); publishPlay() }
     fun endPlay(reason: SessionEnd, done: () -> Unit = {}) = dispatcher.post {
         try {
-            val access = play.access()
-            if (access != null) play.end(access.id, reason)
-            else if (reason == SessionEnd.DONE) play.view().id?.let(play::done)
+            play.endCurrent(reason)
             publishPlay()
         } finally { done() }
     }
     fun tickPlay(done: () -> Unit = {}) = dispatcher.post {
         try {
             if (playInitialized) {
-                if (inCall()) play.access()?.let { play.end(it.id, SessionEnd.INCOMING_CALL) }
+                if (inCall()) play.endCurrent(SessionEnd.INCOMING_CALL)
                 play.tick()
                 publishPlay()
             }
         } catch (_: Exception) {
-            play.access()?.let { play.end(it.id, SessionEnd.DONE) }
+            play.endCurrent(SessionEnd.DONE)
             playState.value = playState.value.copy(handbackReady = false, active = false)
         } finally { done() }
     }
@@ -364,14 +364,8 @@ class PolicyRuntime private constructor(private val context: Context) {
         val view = play.view()
         playState.value = view
         org.plainphone.play.PlayDeadline.schedule(context, view.accessMillis)
-        val line = when {
-            !view.handbackReady && !view.active -> HomeNotice.NeedsAttention
-            view.countdownMillis != null -> HomeNotice.OpeningUp(((view.countdownMillis!! + 59999) / 60000).toInt())
-            view.readyMillis != null -> HomeNotice.ReadyToStart
-            else -> null
-        }
-        noticeState.value = if (baseNotice == HomeNotice.NeedsAttention) baseNotice else
-            line ?: withUpdateLine(baseNotice, try { pendingUpdate.pending() } catch (_: Exception) { false })
+        noticeState.value = org.plainphone.play.playHomeNotice(view,
+            withUpdateLine(baseNotice, try { pendingUpdate.pending() } catch (_: Exception) { false }))
     }
 
     /**
@@ -418,11 +412,11 @@ class PolicyRuntime private constructor(private val context: Context) {
 
     /** Package events come in bursts: at most one queued run for them. */
     fun onPackageEvent(reason: String) {
+        val eventSessionId = playState.value.takeIf { it.active }?.id
         dispatcher.post {
-            if (reason.startsWith("package:ACTION_PACKAGE_ADDED:")) {
-                play.access()?.let { access ->
-                    try { play.installed(access.id, PackageName(reason.substringAfterLast(':'))) } catch (_: Exception) { }
-                }
+            val candidate = org.plainphone.play.addedPlayPackage(reason)
+            if (candidate != null && eventSessionId != null) {
+                try { play.installed(eventSessionId, candidate) } catch (_: Exception) { }
             }
             packageEvents.add(reason)
         }

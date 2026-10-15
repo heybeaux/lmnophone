@@ -108,6 +108,12 @@ class PlaySessionDispatcher(
     fun start(id: String): ElevationOutcome = observe(elevation.start(id, ElevationTarget.Play))
     fun tick(): ElevationOutcome = observe(elevation.tick())
     fun cancel(id: String): ElevationOutcome = observe(elevation.cancel(id))
+    /** Closing never requires eligibility to open. Read the durable grant, not display state or live access. */
+    fun endCurrent(trigger: SessionEnd): ElevationOutcome {
+        val record = store.elevationStore.read() ?: return observe(ElevationOutcome.NOT_READY)
+        val id = record.state.grant?.id ?: return observe(ElevationOutcome.IDLE)
+        return observe(if (trigger == SessionEnd.DONE) elevation.done(id) else elevation.endPackageAccess(id, trigger))
+    }
     fun done(id: String): ElevationOutcome = observe(elevation.done(id))
     fun end(id: String, trigger: SessionEnd): ElevationOutcome = observe(elevation.endPackageAccess(id, trigger))
     fun access(): SessionAccess? = elevation.access()
