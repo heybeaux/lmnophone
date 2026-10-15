@@ -135,7 +135,7 @@ data class SessionUiState(val context: AdminContext, val stage: SessionStage, va
     val helperIsCurrentPerson: Boolean = false, val dueDate: String = "", val apps: List<CheckApp> = emptyList(),
     val restoredLines: List<String> = emptyList(), val details: List<String> = emptyList(),
     val showDetails: Boolean = false, val sending: Boolean = false, val closesAt: String = "",
-    val checkUnfinished: Boolean = false, val playServicesUnchanged: Boolean = false)
+    val checkUnfinished: Boolean = false, val playServicesUnchanged: Boolean = false, val canShowDetails: Boolean = true)
 sealed interface SessionEvent {
     data object Continue : SessionEvent
     data object NotNow : SessionEvent
@@ -160,7 +160,7 @@ enum class OpeningStage { Before, Countdown, Ready, NoOpenings, AlreadyOpening, 
 data class OpeningUiState(val context: AdminContext, val stage: OpeningStage, val kind: OpeningKind,
     val appName: String = "", val waitMinutes: Int = 10, val durationMinutes: Int = 5,
     val minutes: Int = 1, val left: Int = 2, val limit: Int = 2, val time: String = "",
-    val alreadyOpen: Boolean = false, val sending: Boolean = false)
+    val alreadyOpen: Boolean = false, val sending: Boolean = false, val playDisclosure: Boolean = false)
 sealed interface OpeningEvent { data object Continue : OpeningEvent; data object NotNow : OpeningEvent; data object Stop : OpeningEvent; data object See : OpeningEvent }
 data class WaitsAndLimitsUiState(val context: AdminContext, val waitLabel: String, val limit: Int,
     val canDecreaseWait: Boolean, val canIncreaseWait: Boolean, val canDecreaseLimit: Boolean, val canIncreaseLimit: Boolean,

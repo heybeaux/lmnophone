@@ -2,6 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.plainphone.boot
 
+import org.plainphone.device.session.*
+import org.plainphone.policy.ElevationSessionJournal
+import org.plainphone.policy.ElevationOutcome
+import org.plainphone.policy.SessionEnd
 import org.plainphone.update.PendingSystemUpdate
 import org.plainphone.update.PostponeStatus
 import org.plainphone.update.SystemUpdatePostpone
@@ -123,7 +127,9 @@ class PolicyRuntime private constructor(private val context: Context) {
     // Preserve the preview starter list and restriction-free plan during this in-place upgrade.
     private val preview = Preview2Device(context)
     private val timings = ReapplyTimings(SystemClock::elapsedRealtime)
-    private val journal = FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT)
+    private val legacyJournal = FileJournalStore(File(protectedDir, "journal"), null, Build.MODEL, Build.FINGERPRINT)
+    private val journal by lazy { PreviewSessionJournal(legacyJournal,
+        ElevationSessionJournal(authorityStore.elevationStore), authorityStore::recordPresent) }
     private val packageFacts = PackageChangeFacts(context)
     private val packageReadback = PackageChangeReadback(port, packageFacts::protected, packageFacts::launchable) {
         !journal.revocationPending() && journal.read() == SessionJournal.Empty
@@ -194,6 +200,29 @@ class PolicyRuntime private constructor(private val context: Context) {
     }
     /** Whether this pass's keep set rests on a completely read floor (PLA-399 finding 1). */
     private val floorCompleteness = FloorCompleteness()
+    private lateinit var play: PlaySessionDispatcher
+    private var playInitialized = false
+    private val playEffects by lazy { ReadbackPlayEffects(port) { access ->
+        check(!authority.turnOffCommitting())
+        val base = preview.plan(!users.isUserUnlocked)
+        check(preview.floorUnreadable?.isEmpty() == true)
+        if (access == null) base else org.plainphone.policy.PreviewPlayPlan.open(base, access)
+    } }
+    private val playState = MutableStateFlow(PlaySessionView())
+    val playView: StateFlow<PlaySessionView> = playState
+    private fun playInput(): org.plainphone.policy.PolicyInput? {
+        return try {
+            if (!users.isUserUnlocked) return null
+            val live = org.plainphone.device.facts.LivePolicyInputAssembler(packagesPort,
+                org.plainphone.device.PreviewStarterPolicyStore(context.filesDir, { users.isUserUnlocked }),
+                emptyList(), PackageName(context.packageName), MESSAGES).assemble()
+            if (live.unreadableFloorRoles.isNotEmpty()) return null
+            val wait = authorityStore.waitingStore.read() ?: return null
+            val approvals = authorityStore.approvals.read() ?: return null
+            live.input.copy(lockedBoot = !users.isUserUnlocked, waitingOperation = wait.operation,
+                approvalState = approvals)
+        } catch (_: Exception) { null }
+    }
     private val boot = BootReapply(
         journal,
         port, SESSION_PACKAGES,
@@ -217,6 +246,13 @@ class PolicyRuntime private constructor(private val context: Context) {
         flipFailures = FileFlipFailureStore(File(protectedDir, "flip-failures")),
         timings = timings,
         floorComplete = { floorCompleteness.complete },
+        sessionFactory = { recoveryEffects ->
+            play = PlaySessionDispatcher(authorityStore, vault, runningClock, ::playInput,
+                { facts.battery() ?: org.plainphone.policy.BatteryState(0, false) }, playEffects,
+                org.plainphone.policy.AppApprovalIdSource { java.util.UUID.randomUUID().toString() },
+                recoveryEffects, journal)
+            play.sessions
+        },
     )
     /**
      * Fallback containment (PLA-344): suspends what it can while lock task cannot start with KEYGUARD,
@@ -285,7 +321,52 @@ class PolicyRuntime private constructor(private val context: Context) {
     fun opened(screen: CallingScreen) = recovery.opened(screen)
 
     /** Home is resumed: nothing it opened is in front any more. */
-    fun homeResumed() = recovery.homeResumed()
+    fun homeResumed() {
+        recovery.homeResumed()
+        endPlay(SessionEnd.LEFT_PACKAGES)
+    }
+
+    fun requestPlay(pin: CharArray, active: () -> Boolean = { true }, done: (PlayRequestResult) -> Unit) = dispatcher.post {
+        val result = try { if (active()) play.request(pin) else PlayRequestResult.Unavailable } catch (_: Exception) { PlayRequestResult.Unavailable }
+        finally { pin.fill('\u0000') }
+        if (result == PlayRequestResult.Counting && !active()) play.view().id?.let(play::cancel)
+        publishPlay()
+        done(result)
+    }
+    fun startPlay(id: String, done: (Boolean) -> Unit) = dispatcher.post {
+        val started = try { play.start(id) == ElevationOutcome.STARTED } catch (_: Exception) { false }
+        bootCoverage.invalidate(); packageReadback.invalidate()
+        if (!started) play.done(id)
+        publishPlay()
+        done(started)
+    }
+    fun cancelPlay(id: String) = dispatcher.post { play.cancel(id); publishPlay() }
+    fun endPlay(reason: SessionEnd, done: () -> Unit = {}) = dispatcher.post {
+        try {
+            play.endCurrent(reason)
+            publishPlay()
+        } finally { done() }
+    }
+    fun tickPlay(done: () -> Unit = {}) = dispatcher.post {
+        try {
+            if (playInitialized) {
+                if (inCall()) play.endCurrent(SessionEnd.INCOMING_CALL)
+                play.tick()
+                publishPlay()
+            }
+        } catch (_: Exception) {
+            play.endCurrent(SessionEnd.DONE)
+            playState.value = playState.value.copy(handbackReady = false, active = false)
+        } finally { done() }
+    }
+    private fun publishPlay() {
+        if (!playInitialized) return
+        val view = play.view()
+        playState.value = view
+        org.plainphone.play.PlayDeadline.schedule(context, view.accessMillis)
+        noticeState.value = org.plainphone.play.playHomeNotice(view,
+            withUpdateLine(baseNotice, try { pendingUpdate.pending() } catch (_: Exception) { false }))
+    }
 
     /**
      * Home read its own lock-task [state]: returns the displaced calling screen to reopen inside lock
@@ -330,7 +411,16 @@ class PolicyRuntime private constructor(private val context: Context) {
     fun onUserUnlocked(done: () -> Unit = {}) = userUnlocked.request(done)
 
     /** Package events come in bursts: at most one queued run for them. */
-    fun onPackageEvent(reason: String) = packageEvents.add(reason)
+    fun onPackageEvent(reason: String) {
+        val eventSessionId = playState.value.takeIf { it.active }?.id
+        dispatcher.post {
+            val candidate = org.plainphone.play.addedPlayPackage(reason)
+            if (candidate != null && eventSessionId != null) {
+                try { play.installed(eventSessionId, candidate) } catch (_: Exception) { }
+            }
+            packageEvents.add(reason)
+        }
+    }
 
     /** The setup command's undo of the postpone policy ([SystemUpdatePostpone.release]), on the pass thread. */
     fun releaseUpdatePolicy(done: (PostponeStatus) -> Unit) = dispatcher.post { done(updatePostpone.release()) }
@@ -560,6 +650,15 @@ class PolicyRuntime private constructor(private val context: Context) {
 
     private fun run(reason: String, packageMaySkip: Boolean = true, packageReasons: List<String> = listOf(reason)) {
         if (driveGiveBack()) return
+        if (playInitialized) {
+            val access = play.access()
+            if (access != null && (reason.startsWith("package:") || reason == "package-burst")) {
+                if (!playEffects.refresh(access)) play.end(access.id, SessionEnd.DONE)
+                play.tick(); publishPlay()
+                return
+            }
+            if (access != null) play.end(access.id, SessionEnd.DONE)
+        }
         val loggedReason = reason + if (reason == "package-burst") " groupedReasons=$packageReasons" else ""
         if (!dpm.isDeviceOwnerApp(context.packageName)) {
             bootCoverage.invalidate()
@@ -605,6 +704,10 @@ class PolicyRuntime private constructor(private val context: Context) {
                     Log.e(TAG, "reapply $loggedReason threw", e)
                     null
                 }
+                if (!locked && authorityStore.recordPresent() && !playInitialized) {
+                    playInitialized = play.onStart()
+                    publishPlay()
+                }
                 userUnlocked.recordPass(locked)
                 bootMillis = SystemClock.elapsedRealtime() - started
                 outcome
@@ -649,6 +752,7 @@ class PolicyRuntime private constructor(private val context: Context) {
                     null
                 }
                 publishPass(reason, locked, outcome, drove = drove)
+                publishPlay()
                 lastGate == HomeGate.READY
             },
         )

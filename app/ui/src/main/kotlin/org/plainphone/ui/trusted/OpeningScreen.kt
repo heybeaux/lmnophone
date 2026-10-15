@@ -59,7 +59,10 @@ fun OpeningScreen(state: OpeningUiState, onEvent: (OpeningEvent) -> Unit) {
             else -> OpeningEvent.NotNow
         }) }) {
         when (state.stage) {
-            OpeningStage.Before -> Words(s(R.string.opening_before_body, state.waitMinutes, kind, state.durationMinutes, state.left))
+            OpeningStage.Before -> {
+                Words(s(R.string.opening_before_body, state.waitMinutes, kind, state.durationMinutes, state.left))
+                if (state.playDisclosure) Words(s(R.string.play_preview_disclosure))
+            }
             OpeningStage.Countdown -> {
                 Words(when (state.kind) {
                     OpeningKind.App -> s(R.string.opening_countdown_app_body, app)

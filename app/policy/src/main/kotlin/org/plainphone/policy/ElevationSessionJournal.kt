@@ -6,7 +6,7 @@ package org.plainphone.policy
  * combined elevation record: restrictive writes close its access flag in the very same durable CAS.
  * One shared ElevationStore instance also fences failed revocation across both live controllers.
  */
-internal class ElevationSessionJournal(private val store: ElevationStore) : JournalStore {
+class ElevationSessionJournal(private val store: ElevationStore) : JournalStore {
     // A foreign session is visible for restrictive cleanup, never as supervised OPEN authority.
     private fun projected(record: ElevationRecord): SessionJournal {
         val active = record.journal as? SessionJournal.Active

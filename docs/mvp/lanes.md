@@ -163,6 +163,16 @@ the host reads the same waiting store as Home and rechecks the request on tap.
   through input assembly, writes, readbacks and the post-reapply hook, resetting
   it per serialized pass. Timing does not change the plan or readback contract;
 - `PackageFactsSource`;
+- `PlaySessionDispatcher` in `device.session` owns one `ElevationController` and one
+  `SessionController` on `JointAuthorityStore.elevationStore`. `request` consumes a
+  fresh Play-specific PIN; start/tick/cancel/end and package events stay serialized
+  with other privileged work. The boot integration must use its `sessions` instance
+  on that same record. `ReadbackPlayEffects` accepts policy-produced baseline/open
+  plans, validates that only Play gains access, and uses `ReadbackPolicyApplier`.
+  These adapters are not yet wired into the preview runtime. The existing inventory
+  and active-friction prerequisites still refuse incomplete configuration; no
+  synthetic inventory or recovery identity is a runtime substitute. Suspended or
+  disabled Play refuses opening until its prior state can be restored durably;
 - the SMS sender;
 - view-models mapping engine output to `XUiState`.
 
@@ -581,3 +591,40 @@ unhide flush and refuses permission resets while hidden; `DpmGiveBackPort` owns
 all new Android writes. `PolicyRuntime` routes committing turn-off before normal
 boot, containment and update-policy writers. The test-build maturity refusal is
 unchanged. See `app/tools/give-back/inventory.md` for the full write inventory.
+
+## Play preview eligibility (PLA-620)
+
+`ElevationController` may resolve the fixed Play package without a matching build
+inventory. Settings, Approve and Update retain their inventory gate. Play still
+requires fresh live input with VALID health, the system dialer, unlocked boot,
+no conflicting approval or committing/rolling-back wait, self-managed credentials,
+fresh PIN, countdown, explicit Start and the atomic debit/journal protocol.
+
+`JointAuthorityStore.activeLimits()` uses `ElevationLimits()` only for readable
+self-managed credentials with no recovery profile. Unreadable credentials and
+profile-free supervised credentials remain closed; every stored profile retains
+its own friction. This read does not create a profile or account identity.
+The preview currently has no full policy-store provisioning: see the Play
+emulator policy-health preflight before wiring an opening path.
+
+The preview uses `PreviewStarterPolicyStore` only in Play's fresh
+`LivePolicyInputAssembler` eligibility read. It strictly validates the existing
+CE starter file under the writer's lock, is read-only, and returns either VALID
+or BOTH_INVALID. Home's lenient reads and every preview policy application stay
+unchanged. No full-engine policy is provisioned or applied.
+
+`BootReapply.sessionFactory` lets the app provide the one shared session
+controller. `PreviewSessionJournal` uses the legacy boot journal before PIN
+enrollment and the policy-owned `ElevationSessionJournal` projection after any
+combined authority record exists; damage never falls back to the legacy record.
+`PolicyRuntime` constructs `PlaySessionDispatcher` once, uses its session controller
+for boot revocation, and serializes PIN requests, Start, end events and package
+intake. `PreviewPlayPlan.open` changes only Play visibility and lock-task membership
+in the existing preview plan. `ReadbackPlayEffects.refresh` applies that same plan
+to new package events without opening another session.
+
+`PlaySessionView` supplies live countdown, Start-window and quota values to
+`playOpeningUi`; `PlayActivity` owns the fresh PIN, ephemeral UI and navigation.
+`PlayEvents` closes on screen off and ringing and checks running-time deadlines;
+`PlayDeadline` is the alarm backstop. No debug receiver or debug source can create
+or shorten a countdown. Emulator time acceleration is in androidTest only.

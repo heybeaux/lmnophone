@@ -61,6 +61,8 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
+        <receiver android:name=".play.PlayDeadline" android:exported="false" />
+        <activity android:name=".play.PlayActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".requests.RequestsActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".requests.RequestRecipientActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <!-- Home. lockTaskMode="normal": Home starts lock task itself, only once the lock-task features

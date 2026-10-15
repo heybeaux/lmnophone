@@ -41,7 +41,7 @@ fun SessionScreen(state: SessionUiState, onEvent: (SessionEvent) -> Unit) {
         secondary = when (state.stage) {
             SessionStage.CheckIntro -> s(R.string.admin_not_now)
             SessionStage.CheckResult -> s(R.string.session_some_failed)
-            SessionStage.NotReady -> s(R.string.session_details, helper)
+            SessionStage.NotReady -> if (state.canShowDetails) s(R.string.session_details, helper) else null
             else -> null
         }, secondaryEnabled = !state.sending, onSecondary = { onEvent(when (state.stage) {
             SessionStage.CheckResult -> SessionEvent.SomeDidNotUpdate

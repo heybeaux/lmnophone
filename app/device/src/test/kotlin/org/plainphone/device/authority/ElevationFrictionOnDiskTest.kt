@@ -143,6 +143,35 @@ class ElevationFrictionOnDiskTest {
         assertEquals(ElevationLimits(86_400_000L, 0), rig.disk().activeLimits())
     }
 
+    @Test fun missingCredentialsStillHaveNoOpenings() {
+        assertEquals(ElevationLimits(86_400_000L, 0), JointAuthorityStore(tmp.newFolder()).activeLimits())
+    }
+
+    @Test fun pinOnlySelfManagedCredentialsUseDefaultsWithoutWritingAProfile() {
+        val rig = Rig()
+        val before = rig.store.credentials.read()!!
+        assertTrue(rig.store.credentials.compareAndSet(before,
+            CredentialState(Mode.SELF_MANAGED, before.people)))
+        assertEquals(ElevationLimits(), rig.disk().activeLimits())
+        assertNull(rig.disk().credentials.read()!!.recoveryProfile)
+    }
+
+    @Test fun supervisedCredentialsWithoutProfileKeepFailClosedLimits() {
+        val rig = Rig()
+        val before = rig.store.credentials.read()!!
+        assertTrue(rig.store.credentials.compareAndSet(before,
+            CredentialState(Mode.TRUSTED, before.people)))
+        assertEquals(ElevationLimits(86_400_000L, 0), rig.disk().activeLimits())
+    }
+
+    @Test fun defaultsNeverLoosenStoredStricterProfile() {
+        val rig = Rig()
+        repeat(3) {
+            assertEquals(ElevationLimits(20 * minute, 1), rig.disk().activeLimits())
+            assertEquals(base, rig.disk().credentials.read()!!.recoveryProfile!!.friction)
+        }
+    }
+
     @Test fun stricterEditExtendsALiveCountdownInTheSameDurableTransaction() {
         val rig = Rig(); val id = rig.request()
         rig.at(10 * minute)

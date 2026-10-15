@@ -16,6 +16,7 @@ class PlainphoneApp : Application() {
         org.plainphone.device.settings.WifiJoinSession.get(this)
         UserUnlockEvents.register(this)
         PackageEvents.register(this)
+        org.plainphone.play.PlayEvents.register(this)
         ReapplyAlarm.schedule(this)
         PolicyRuntime.get(this).reapply("start")
     }

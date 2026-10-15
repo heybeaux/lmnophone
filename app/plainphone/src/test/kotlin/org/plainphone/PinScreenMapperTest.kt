@@ -33,6 +33,10 @@ class PinScreenMapperTest {
     @Test fun productionMenuExposesNewCodeRow() {
         assertEquals(1, pinMenuUiState(AdminContext("Alex")).items.count { it.destination == AdminDestination.NewRecoveryCode })
     }
+    @Test fun productionMenuExposesGetNewApp() {
+        assertEquals(PinMenuTarget.Play, pinMenuTarget(AdminDestination.AddApp))
+        assertTrue(pinMenuUiState(AdminContext("Alex")).items.any { it.destination == AdminDestination.AddApp })
+    }
     private val copy = NeedsYouCopy({ "Waiting" }, "Attention", { n, _ -> "$n" })
     private fun menus() = listOf(pinMenuUiState(AdminContext("Alex")), pinMenuUiState(AdminContext("Alex"), 3),
         pinMenuUiState(AdminContext(""), null, null, copy),
@@ -45,14 +49,14 @@ class PinScreenMapperTest {
         }
     }
     @Test fun rowsWithoutAScreenInThisBuildAreNotShown() {
-        val unfinished = listOf(AdminDestination.AddApp, AdminDestination.Updates, AdminDestination.Settings,
+        val unfinished = listOf(AdminDestination.Updates, AdminDestination.Settings,
             AdminDestination.Limits, AdminDestination.People, AdminDestination.History, AdminDestination.Waits,
             AdminDestination.UpdatePlainphone, AdminDestination.SwitchMode)
         for (destination in unfinished) assertNull(destination.name, pinMenuTarget(destination))
         for (menu in menus()) assertTrue(menu.items.none { it.destination in unfinished })
     }
     @Test fun workingRowsKeepTheirOrder() {
-        assertEquals(listOf(AdminDestination.VoiceMessages, AdminDestination.HiddenApp, AdminDestination.Apps,
+        assertEquals(listOf(AdminDestination.VoiceMessages, AdminDestination.AddApp, AdminDestination.HiddenApp, AdminDestination.Apps,
             AdminDestination.Requests, AdminDestination.RequestRecipient, AdminDestination.ChangePin,
             AdminDestination.NewRecoveryCode, AdminDestination.TurnOff),
             pinMenuUiState(AdminContext("Alex")).items.map { it.destination })

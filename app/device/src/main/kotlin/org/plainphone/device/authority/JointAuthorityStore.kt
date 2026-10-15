@@ -764,11 +764,14 @@ class JointAuthorityStore internal constructor(
     /**
      * The elevation limits every consumer must use: the ACTIVE friction in the credential section,
      * read on this store's coordinator. Pending looser targets and UI caches never count. When the
-     * credentials or their recovery profile cannot be read, no turn is available and the countdown
-     * is the longest allowed.
+     * credentials cannot be read, no turn is available and the countdown is the longest allowed.
+     * Readable PIN-only self-managed enrollment uses the spec defaults without creating a profile.
+     * Profile-bearing credentials always use their stored values; supervised defaults remain closed.
      */
     fun activeLimits(): ElevationLimits {
-        val friction = credentials.read()?.recoveryProfile?.friction ?: return FAIL_CLOSED_LIMITS
+        val current = credentials.read() ?: return FAIL_CLOSED_LIMITS
+        val friction = current.recoveryProfile?.friction
+            ?: return if (current.mode == Mode.SELF_MANAGED) ElevationLimits() else FAIL_CLOSED_LIMITS
         return ElevationLimits(friction.countdownMillis, friction.dailyLimit)
     }
 
