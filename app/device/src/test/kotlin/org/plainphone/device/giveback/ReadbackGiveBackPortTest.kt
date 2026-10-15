@@ -26,7 +26,7 @@ class ReadbackGiveBackPortTest {
         try { effects.restore(permission); fail("hidden grant must refuse") } catch (_: IllegalStateException) { }
         assertEquals(0, platform.permissionWrites)
         effects.restore(visible)
-        assertEquals(listOf("unhide test.app", "flush true", "flush false"), port.ops)
+        assertEquals(listOf("unhide test.app", "flip true", "flip false"), port.ops)
         assertTrue(effects.readBack(visible))
         effects.restore(permission)
         assertEquals(1, platform.permissionWrites)

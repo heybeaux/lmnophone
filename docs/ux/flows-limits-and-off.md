@@ -221,6 +221,12 @@ LMNOPhone off now?"
 
 ### L4f. Couldn't finish
 
+The installed waiting/turn-off screen uses the approved per-item failure count:
+“Turning off couldn't finish. {n} things are still changed.” For one: “Turning off
+couldn't finish. 1 thing is still changed.” Its primary action is “Try again”.
+The record stays committing; Retry repeats failed items and rechecks earlier successes.
+
+
 - **Title:** LMNOPhone couldn't finish turning off
 - **Body:** Nothing has been erased, and calls and Emergency still work. LMNOPhone stopped at: {step in plain
   words}. Call {helper} and show this screen.

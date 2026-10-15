@@ -34,7 +34,7 @@ fun WaitingChangeScreen(state: WaitingChangeUiState, onEvent: (WaitingChangeEven
         WaitingStage.Recovered -> s(R.string.wait_recovered)
         WaitingStage.Repair -> s(R.string.wait_repair)
     }
-    val primary = when (state.stage) {
+    val primary = if (state.giveBackFailureCount > 0) s(R.string.give_back_retry) else when (state.stage) {
         WaitingStage.Details -> s(R.string.wait_cancel)
         WaitingStage.ConfirmCancel -> s(if (state.sending) R.string.wait_cancelling else R.string.wait_yes_cancel)
         WaitingStage.SkipIntro -> s(R.string.admin_recovery_title)
@@ -93,7 +93,10 @@ fun WaitingChangeScreen(state: WaitingChangeUiState, onEvent: (WaitingChangeEven
             }
             WaitingStage.StillCancelling -> Words(s(R.string.wait_still_body))
             WaitingStage.Cancelled -> { Words(s(R.string.wait_cancel_body, change)); everyone?.let { Words(s(R.string.wait_cancelled_text, it)) } }
-            WaitingStage.Committing -> Words(s(if (state.turningOff) R.string.wait_off_progress else R.string.wait_progress_body))
+            WaitingStage.Committing -> if (state.giveBackFailureCount > 0) {
+                Words(androidx.compose.ui.res.pluralStringResource(R.plurals.give_back_failed,
+                    state.giveBackFailureCount, state.giveBackFailureCount))
+            } else Words(s(if (state.turningOff) R.string.wait_off_progress else R.string.wait_progress_body))
             WaitingStage.Started -> {
                 Words(s(R.string.wait_started_body, change, state.happensAtDay?.let { waitingTimeText(state.happensAt, it) } ?: state.happensAt))
                 everyone?.let { Words(s(R.string.wait_started_text, it)) }

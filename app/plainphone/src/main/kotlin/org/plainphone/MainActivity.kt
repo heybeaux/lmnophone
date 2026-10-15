@@ -420,6 +420,7 @@ class MainActivity : ComponentActivity() {
         val paper = PlainphoneColors.Paper.toArgb()
         enableEdgeToEdge(SystemBarStyle.light(paper, paper), SystemBarStyle.light(paper, paper))
         super.onCreate(savedInstanceState)
+        org.plainphone.device.giveback.GiveBackLockTask.attach(this)
         queueNeedsYou(intent)
         communication = AndroidCommunicationCounts(this, ::syncCounts)
         syncCounts()
@@ -721,7 +722,7 @@ class MainActivity : ComponentActivity() {
     private fun openNotice() {
         when (val tap = runtime.noticeTap.value) {
             NoticeTap.OPEN_ATTENTION -> attentionOpen = true
-            is NoticeTap.ConfirmCancel -> openCancel(tap.requestId)
+            is NoticeTap.ConfirmCancel -> if (runtime.giveBackFailureCount > 0) openWaitingChange(tap.requestId) else openCancel(tap.requestId)
             else -> {}
         }
     }
@@ -741,7 +742,7 @@ class MainActivity : ComponentActivity() {
         val stage = confirmStage(requestId, wait) ?: return
         val change = getString(waitingChangeTextResource(wait.kind), getString(R.string.app_name))
         cancelScreen = CancelScreen(requestId, WaitingChangeUiState(stage = stage, change = change,
-            turningOff = wait.kind == WaitingChangeKind.TURN_OFF))
+            turningOff = wait.kind == WaitingChangeKind.TURN_OFF, giveBackFailureCount = runtime.giveBackFailureCount))
     }
 
     /** Anyone holding the phone may cancel the pending change [requestId], without a PIN, if it is still pending. */
@@ -755,6 +756,12 @@ class MainActivity : ComponentActivity() {
      * is saved. Any other choice, or OK afterwards, goes back to Home.
      */
     private fun onCancelEvent(screen: CancelScreen, event: WaitingChangeEvent) {
+        if (screen.state.giveBackFailureCount > 0 && event == WaitingChangeEvent.Ok) {
+            if (screen.state.sending) return
+            cancelScreen = screen.copy(state = screen.state.copy(sending = true))
+            runtime.retryGiveBack { runOnUiThread { openWaitingChange(screen.requestId) } }
+            return
+        }
         if (event != WaitingChangeEvent.ConfirmCancel || screen.state.stage != WaitingStage.ConfirmCancel) {
             cancelScreen = null
             return

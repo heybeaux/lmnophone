@@ -92,13 +92,15 @@ class WaitingOperation(
         skipper, skipperGeneration, peoplePatch, recipientContacts, person, generation, modePatch, frictionPatch)
 }
 class WaitingState(val revision: Long = 0, val operation: WaitingOperation? = null, texts: List<WaitingText> = emptyList(),
-    val storageGeneration: String = "initial", recoveryReceipts: List<RecoveryReceipt> = emptyList()) {
+    val storageGeneration: String = "initial", recoveryReceipts: List<RecoveryReceipt> = emptyList(),
+    val giveBack: GiveBackJournal? = null) {
     init { require(revision >= 0 && storageGeneration.isNotBlank()) }
     val texts = immutableList(texts)
     val recoveryReceipts = immutableList(recoveryReceipts)
     internal fun replacing(revision: Long, operation: WaitingOperation? = this.operation,
-        texts: List<WaitingText> = this.texts, recoveryReceipts: List<RecoveryReceipt> = this.recoveryReceipts) =
-        WaitingState(revision, operation, texts, storageGeneration, recoveryReceipts)
+        texts: List<WaitingText> = this.texts, recoveryReceipts: List<RecoveryReceipt> = this.recoveryReceipts,
+        giveBack: GiveBackJournal? = this.giveBack) =
+        WaitingState(revision, operation, texts, storageGeneration, recoveryReceipts, giveBack)
 }
 interface WaitingChangeStore {
     /**

@@ -42,4 +42,9 @@
     <string name="bluetooth_nearby_none">No devices found. Make sure the other device is ready to pair, then tap Look again.</string>
     <string name="bluetooth_nearby_error">Nearby devices can\'t be shown right now.</string>
     <string name="bluetooth_pair_not_ready">Pairing from LMNOPhone isn\'t ready yet.</string>
+    <string name="give_back_retry">Try again</string>
+    <plurals name="give_back_failed">
+        <item quantity="one">Turning off couldn\'t finish. %d thing is still changed.</item>
+        <item quantity="other">Turning off couldn\'t finish. %d things are still changed.</item>
+    </plurals>
 </resources>
