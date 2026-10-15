@@ -63,7 +63,11 @@ class PlaySessionDispatcherTest {
             { BatteryState(50, false) }, effects, AppApprovalIdSource { "play-${++sequence}" })
         var dispatcher = dispatcher()
         init {
-            assertTrue(menu.enroll(pin()) is PinEnrollmentResult.Created)
+            val self = TrustedPersonId("self")
+            assertTrue(store.initialize(CredentialState(Mode.SELF_MANAGED,
+                mapOf(self to vault.prepareCredential(pin()).credential),
+                recoveryProfile = RecoveryProfile(mapOf(self to "synthetic-account"), null,
+                    FrictionSettings(600_000, 2))), WaitingState(), ElevationRecord()))
             assertTrue(dispatcher.onStart())
             events.clear()
         }
