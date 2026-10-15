@@ -31,7 +31,9 @@ class PlaySessionState internal constructor(
     internal val lastReading: BootTime,
     candidates: Map<PackageName, ApprovalBinding> = emptyMap(),
     val endedBecause: PlayEndReason? = null,
+    invalidated: Set<PackageName> = emptySet(),
 ) {
+    val invalidated: Set<PackageName> = immutableSet(invalidated)
     val candidates: Map<PackageName, ApprovalBinding> = Collections.unmodifiableMap(LinkedHashMap(candidates))
 }
 
@@ -64,11 +66,16 @@ object PlaySessionMachine {
         if (currentAccess != state.access) {
             return PlayInstallResult(close(state, PlayEndReason.ACCESS_REVOKED), false)
         }
+        if (identity.packageName in state.invalidated) return PlayInstallResult(state, false)
+        val recorded = state.candidates[identity.packageName]
+        if (recorded != null && recorded != identity) return PlayInstallResult(
+            PlaySessionState(state.access, now, state.candidates - identity.packageName,
+                invalidated = state.invalidated + identity.packageName), false)
         if (state.candidates[identity.packageName] == identity && now == state.lastReading) {
             return PlayInstallResult(state, true)
         }
         return PlayInstallResult(PlaySessionState(state.access, now,
-            state.candidates + (identity.packageName to identity)), true)
+            state.candidates + (identity.packageName to identity), invalidated = state.invalidated), true)
     }
 
     /** Retained candidates are unapproved data even after the session ends. */
@@ -81,5 +88,5 @@ object PlaySessionMachine {
 
     private fun close(state: PlaySessionState, reason: PlayEndReason): PlaySessionState =
         if (state.endedBecause != null) state
-        else PlaySessionState(state.access, state.lastReading, state.candidates, reason)
+        else PlaySessionState(state.access, state.lastReading, state.candidates, reason, state.invalidated)
 }

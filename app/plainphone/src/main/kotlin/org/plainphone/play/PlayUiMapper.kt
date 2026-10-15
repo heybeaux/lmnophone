@@ -33,3 +33,7 @@ fun playHomeNotice(view: PlaySessionView, base: org.plainphone.ui.home.HomeNotic
 /** A closed package window can retain its approval grant until Done; it is not counting down. */
 fun playNeedsClosure(view: PlaySessionView): Boolean = view.id != null && !view.active &&
     view.countdownMillis == null && view.readyMillis == null
+
+fun playApprovalListUi(context: AdminContext, apps: List<HiddenAppRow>, expired: Boolean = false,
+    unavailable: Boolean = false, busy: Boolean = false) =
+    PlayApprovalListUiState(context, apps, expired, unavailable, busy, showGrantNotice = true)

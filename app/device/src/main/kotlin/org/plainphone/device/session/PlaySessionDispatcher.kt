@@ -11,7 +11,8 @@ import org.plainphone.policy.*
 data class PlaySessionView(val id: String? = null, val countdownMillis: Long? = null,
     val readyMillis: Long? = null, val active: Boolean = false, val accessMillis: Long? = null,
     val handbackReady: Boolean = false, val left: Int = 0, val limit: Int = 0,
-    val nextTurnMillis: Long? = null, val waitMillis: Long = 600_000)
+    val nextTurnMillis: Long? = null, val waitMillis: Long = 600_000,
+    val approvalAvailable: Boolean = false)
 
 sealed interface PlayRequestResult {
     data object Counting : PlayRequestResult
@@ -102,7 +103,9 @@ class PlaySessionDispatcher(
         return PlaySessionView(countdown?.id ?: record.state.grant?.id,
             untilReady?.takeIf { it > 0 }, remainingStart?.takeIf { untilReady == 0L && it > 0 },
             access != null, access?.let { (it.deadline.elapsedMillis - now.boot.elapsedMillis).coerceAtLeast(0) },
-            handbackReady, available.turnsLeft, limits.dailyLimit, available.nextTurnInMillis, limits.countdownMillis)
+            handbackReady, available.turnsLeft, limits.dailyLimit, available.nextTurnInMillis, limits.countdownMillis,
+            handbackReady && record.state.grant?.target == ElevationTarget.Play &&
+                record.state.grant?.let { it.deadline.bootId == now.boot.bootId && now.boot.elapsedMillis < it.deadline.elapsedMillis } == true)
     }
 
     fun start(id: String): ElevationOutcome = observe(elevation.start(id, ElevationTarget.Play))
@@ -118,6 +121,10 @@ class PlaySessionDispatcher(
     fun end(id: String, trigger: SessionEnd): ElevationOutcome = observe(elevation.endPackageAccess(id, trigger))
     fun access(): SessionAccess? = elevation.access()
     fun installed(sessionId: String, name: PackageName): Boolean = elevation.installed(sessionId, name)
+
+    fun candidates(): List<ApprovalBinding> = if (handbackReady) elevation.candidates() else emptyList()
+    fun commitApproval(identity: ApprovalBinding, write: ((() -> Boolean) -> Boolean)): Boolean =
+        handbackReady && elevation.commitPlayApproval(identity, write)
 
     private fun observe(outcome: ElevationOutcome): ElevationOutcome {
         handbackReady = outcome != ElevationOutcome.NOT_READY &&

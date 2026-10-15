@@ -145,4 +145,8 @@
     <string name="app_permissions_failed_group">Couldn\'t set %1$s.</string>
     <string name="app_permissions_failed">Couldn\'t set what this app can use.</string>
     <string name="app_permissions_retry">Choose again</string>
+    <string name="play_approval_title">Apps you installed</string>
+    <string name="play_approval_notice">You can add these apps before the 10 minutes end. Done ends this opening.</string>
+    <string name="play_approval_empty">There are no new apps to add.</string>
+    <string name="play_approval_expired">The time to add these apps has ended. Use Add a hidden app to add one later.</string>
 </resources>

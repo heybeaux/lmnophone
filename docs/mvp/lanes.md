@@ -86,6 +86,16 @@ The MVP is built in four parallel lanes. Each lane owns one or more Gradle modul
   through the existing terminal cancellation path, with zero restore steps. The
   existing CANCELLED_AFTER_ROLLBACK receipt identifies this no-effect preview result;
   it is not a rollback of a committing turn-off. No new PIN authority is introduced.
+- `ElevationController.commitPlayApproval(identity, write)` supports the installed preview's
+  existing membership store. The same serial dispatcher closes and reads back Play access first.
+  `write` stages and fsyncs the membership file, then invokes the single-use final-check callback
+  immediately before atomic replacement, without yielding. That callback rechecks process ownership,
+  credential generation, deadline, Play kind, recorded package and original signer. The membership
+  replacement records this approval; the original grant remains available for other candidates.
+  In-process replay is refused; restart discards all grant and candidate authority. This does not
+  replace the full MVP's `ElevationApprovalStore` joint-record protocol. `PlaySessionDispatcher`
+  exposes display candidates and this checked commit to the runtime. `PreviewPermissionAddition`
+  continues to own permission writes/readbacks for both existing fresh-PIN and Play-grant additions.
 - `ElevationController` (self-managed mode), `PlaySessionMachine`, `MonthlyCheck`, `EmergencyFloor` and baseline rules, `NoticeLine` priority.
 - `TimeWindowQuota`: the generic "open for a few minutes" quota. The **web window** (5×/day × 5 min, extendable) and **Wi-Fi sign-in** (3 per 24 h) are built behind a flag that stays off. Their OpenSpec change isn't approved yet; Wi-Fi sign-in comes after the MVP core.
 

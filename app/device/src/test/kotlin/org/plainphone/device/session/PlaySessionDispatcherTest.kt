@@ -35,6 +35,7 @@ class PlaySessionDispatcherTest {
         var fail: String? = null
         var faultHits = 0
         var open = false
+        var battery = BatteryState(50, false)
         var healthStore: org.plainphone.policy.PolicyStore? = null
         var policy: PolicyInput? = PolicyInput("test", "build", home, sms,
             listOf(home, play, dialer, sms, candidate).map { InstalledPackage(it, true, 1) },
@@ -63,7 +64,7 @@ class PlaySessionDispatcherTest {
             override fun readBackPolicy(): Boolean = step("readback")
         }
         fun dispatcher() = PlaySessionDispatcher(store, vault, clock, { healthStore?.let { policy?.copy(health = it.read().health) } ?: policy },
-            { BatteryState(50, false) }, effects, AppApprovalIdSource { "play-${++sequence}" })
+            { battery }, effects, AppApprovalIdSource { "play-${++sequence}" })
         var dispatcher = dispatcher()
         init {
             val self = TrustedPersonId("self")
@@ -240,6 +241,65 @@ class PlaySessionDispatcherTest {
         assertEquals(SessionJournal.Empty, r.store.elevationStore.read()!!.journal)
         assertEquals(ElevationOutcome.IDLE, r.dispatcher.endCurrent(SessionEnd.DONE))
         assertNull(r.store.elevationStore.read()!!.state.grant)
+    }
+
+    @Test fun retainedGrantApprovesWithoutAnotherPinAndNeverExtendsDeadline() {
+        val r = Rig(); val id = r.start()
+        assertTrue(r.dispatcher.installed(id, candidate))
+        val deadline = r.store.elevationStore.read()!!.state.grant!!.deadline
+        assertEquals(ElevationOutcome.ACCESS_CLOSED, r.dispatcher.endCurrent(SessionEnd.LEFT_PACKAGES))
+        var writes = 0
+        assertTrue(r.dispatcher.commitApproval(identity) { check -> if (check()) { writes++; true } else false })
+        assertEquals(1, writes)
+        assertEquals(deadline, r.store.elevationStore.read()!!.state.grant!!.deadline)
+        assertFalse(r.dispatcher.commitApproval(identity) { check -> if (check()) { writes++; true } else false })
+        assertEquals(1, writes)
+    }
+    @Test fun finalCheckRefusesExpiryDoneRestartForeignPackageAndSignerChanges() {
+        for (fault in listOf("expiry", "done", "restart", "signer", "foreign", "battery")) {
+            val r = Rig(); val id = r.start()
+            if (fault != "foreign") assertTrue(r.dispatcher.installed(id, candidate))
+            r.dispatcher.endCurrent(SessionEnd.LEFT_PACKAGES)
+            var writes = 0; var hooks = 0
+            val result = r.dispatcher.commitApproval(identity) { check ->
+                hooks++
+                when (fault) {
+                    "expiry" -> r.now += 600_000
+                    "battery" -> r.battery = BatteryState(4, false)
+                    "done" -> r.dispatcher.done(id)
+                    "restart" -> r.dispatcher.onStart()
+                    "signer" -> r.policy = r.policy!!.copy(installedIdentities = listOf(
+                        ApprovalBinding(candidate, setOf(CertDigest("b".repeat(64))))))
+                }
+                if (check()) { writes++; true } else false
+            }
+            assertFalse(fault, result); assertEquals(fault, 0, writes)
+            assertEquals(fault, if (fault == "foreign") 0 else 1, hooks)
+        }
+    }
+    @Test fun ignoredFinalCheckCannotReportSuccess() {
+        val r = Rig(); val id = r.start(); r.dispatcher.installed(id, candidate)
+        r.dispatcher.endCurrent(SessionEnd.LEFT_PACKAGES)
+        assertFalse(r.dispatcher.commitApproval(identity) { true })
+    }
+
+    @Test fun twoCandidatesCanBeAddedWithinTheSameOriginalGrant() {
+        val r = Rig(); val id = r.start()
+        val second = ApprovalBinding(PackageName("test.second"), setOf(CertDigest("c".repeat(64))))
+        r.policy = r.policy!!.copy(installed = r.policy!!.installed + InstalledPackage(second.packageName, false, 1),
+            installedIdentities = listOf(identity, second))
+        assertTrue(r.dispatcher.installed(id, candidate))
+        assertTrue(r.dispatcher.installed(id, second.packageName))
+        val original = r.store.elevationStore.read()!!.state.grant!!.deadline
+        r.dispatcher.endCurrent(SessionEnd.LEFT_PACKAGES)
+        assertTrue(r.dispatcher.view().approvalAvailable)
+        for (binding in listOf(identity, second)) {
+            assertTrue(r.dispatcher.commitApproval(binding) { check -> check() })
+            assertEquals(original, r.store.elevationStore.read()!!.state.grant!!.deadline)
+        }
+        assertTrue(r.dispatcher.candidates().isEmpty())
+        r.now = original.elapsedMillis
+        assertFalse(r.dispatcher.view().approvalAvailable)
     }
 
 }

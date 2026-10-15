@@ -646,7 +646,14 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         resumed = true
+        val returningFromPlay = runtime.playView.value.active
         runtime.homeResumed()
+        if (returningFromPlay) runtime.endPlay(org.plainphone.policy.SessionEnd.LEFT_PACKAGES) {
+            runOnUiThread {
+                if (resumed && runtime.playView.value.approvalAvailable)
+                    startActivity(Intent(this, org.plainphone.play.PlayActivity::class.java))
+            }
+        }
         runtime.onUserUnlocked()
         enterLockTask()
     }

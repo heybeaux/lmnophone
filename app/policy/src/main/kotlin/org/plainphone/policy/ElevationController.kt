@@ -99,12 +99,14 @@ class ElevationController(
     private var ownedId: String? = null
     private val requests = mutableSetOf<ElevationRequest>()
     private var play: PlaySessionState? = null
+    private val previewApproved = mutableSetOf<Pair<String, PackageName>>()
     private data class Close(val id: String, val retain: Boolean, val outcome: ElevationOutcome)
     private var closing: Close? = null
 
     /** Before any access or other controller work, including Direct Boot. No credential read is needed. */
     @Synchronized fun onStart(): ElevationOutcome {
         updateProtocol?.invalidate(); supervisedUpdates.clear()
+        previewApproved.clear()
         initialized = false; recoveryRequired = true; ownedId = null; requests.clear(); play = null; closing = null
         store.revocationPending = true
         val before = store.read()
@@ -253,14 +255,43 @@ class ElevationController(
         play = result.state
         return result.accepted
     }
-    /** Display/review data only. Future approval integration must recheck this inside its final transaction. */
+    /** Display data only; the commit path independently checks identity and the grant. */
+    @Synchronized fun candidates(): List<ApprovalBinding> = play?.candidates?.keys.orEmpty().mapNotNull(::candidate)
+
+    /** Preview membership is the approval record. The adapter writes it atomically on the same
+     * non-reentrant dispatcher and invokes finalCheck after staging/fsync, immediately before rename.
+     * No authority is returned to UI, persisted or restored. A Play grant remains reusable for other
+     * candidates; the membership record survives restart, while this grant and intake never do.
+     */
+    @Synchronized fun commitPlayApproval(identity: ApprovalBinding, write: ((() -> Boolean) -> Boolean)): Boolean {
+        val grantId = store.read()?.state?.grant?.id ?: return false
+        fun valid(): Boolean {
+            val record = store.read() ?: return false
+            return initialized && closing == null && !store.revocationPending &&
+                record.state.grant?.id == grantId && record.state.grant?.target == ElevationTarget.Play &&
+                record.state.grant?.packageAccessOpen == false && record.journal == SessionJournal.Empty &&
+                (grantId to identity.packageName) !in previewApproved &&
+                battery().allowsDiscretionaryUnhide && approvalMatches(record, identity) && live(record)
+        }
+        if (!valid()) return false
+        var checked = false
+        var accepted = false
+        val saved = write {
+            if (checked) false else { checked = true; accepted = valid(); accepted }
+        }
+        if (!saved || !checked || !accepted) return false
+        previewApproved += grantId to identity.packageName
+        return true
+    }
+
     @Synchronized fun candidate(packageName: PackageName): ApprovalBinding? {
         if (!initialized || closing != null || store.revocationPending) return null
         val before = store.read() ?: return null
         if (!live(before) || before.state.grant?.target != ElevationTarget.Play) return null
         val history = play?.takeIf { it.access.id == before.state.grant.id } ?: return null
         val candidate = PlaySessionMachine.candidate(history, packageName) ?: return null
-        return candidate.takeIf { it == installedIdentity(packageName) }
+        return candidate.takeIf { it == installedIdentity(packageName) &&
+            (before.state.grant.id to packageName) !in previewApproved }
     }
 
     /** No caller-supplied grant, person, session history or candidate ID enters this path. */

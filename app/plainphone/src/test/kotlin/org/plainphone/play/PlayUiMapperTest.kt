@@ -35,4 +35,10 @@ class PlayUiMapperTest {
         assertFalse(playNeedsClosure(PlaySessionView()))
     }
 
+    @Test fun productionApprovalMapperShowsTheGrantNotice() {
+        val ui = playApprovalListUi(AdminContext("Alex"), listOf(HiddenAppRow("test.app", "Test app")))
+        assertTrue(ui.showGrantNotice)
+        assertEquals(1, ui.apps.size)
+    }
+
 }

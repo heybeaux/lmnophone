@@ -66,12 +66,15 @@ class PlaySessionProofInstrumentation : Instrumentation() {
         return uiAutomation.rootInActiveWindow?.let(::find)
     }
     private fun tap(text: String) {
-        waitFor { node { it.text?.toString() == text } != null }
-        var target = node { it.text?.toString() == text }!!
-        while (!target.isClickable) target = target.parent ?: error("not clickable: $text")
-        check(target.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+        report.appendLine("tap: $text")
+        waitFor {
+            var target = node { it.text?.toString() == text || it.contentDescription?.toString() == text }
+                ?: return@waitFor false
+            while (!target.isClickable) target = target.parent ?: return@waitFor false
+            target.isEnabled && target.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)
+        }
     }
-    private fun openUi() {
+    private fun openUi(returnAfter: Boolean = true) {
         runOnMainSync { targetContext.startActivity(Intent(targetContext, PlayActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
         tap("Start the wait")
         waitFor { node { it.isEditable } != null }
@@ -91,6 +94,7 @@ class PlaySessionProofInstrumentation : Instrumentation() {
         Thread.sleep(2000)
         check(shell("dumpsys activity activities").contains("mLockTaskModeState=LOCKED"))
         state("during-ui")
+        if (!returnAfter) return
         shell("input keyevent KEYCODE_BACK")
         waitFor { !runtime.playView.value.active }
         report.appendLine("back to LMNOPhone closed=true")
@@ -117,6 +121,67 @@ class PlaySessionProofInstrumentation : Instrumentation() {
         check(lockPackages() == baseline + PackageName("com.android.vending")) { "widened lock task" }
         state("during")
     }
+    private fun approvalProof() {
+        val id = "org.plainphone.playcandidate"
+        val name = PackageName(id)
+        sendStatus(0, Bundle().apply { putString("readyForInstall", "true") })
+        waitFor { serial.run { play.candidates().isNotEmpty() ||
+            (field(play, "elevation") as ElevationController).candidate(name) != null } }
+        report.appendLine("candidate observed=true")
+        waitFor { shell("dumpsys package $id").contains("hidden=true") }
+        report.appendLine("candidate hidden=true")
+        if (phase == "approve") {
+            home()
+            waitFor { runtime.playView.value.approvalAvailable }
+        } else await { done -> runtime.endPlay(SessionEnd.LEFT_PACKAGES, done) }
+        check(runtime.playView.value.approvalAvailable)
+        report.appendLine("access closed; approval available=true")
+        var selected: org.plainphone.device.approval.AppPermissionRead? = null
+        await { done -> runtime.previewAppPermissions(id, true) { selected = it; done() } }
+        val snapshot = checkNotNull(selected).snapshot
+        val choices = snapshot.groups.associate { it.id to PermissionChoice.ALLOW }
+        check(choices.isNotEmpty())
+        report.appendLine("permissions loaded=true")
+        if (phase == "approve") {
+            // MainActivity must route the real return from Play to the candidate screen.
+            tap("Play test app"); tap("Next"); tap("Add anyway"); tap("Camera: Allow"); tap("Next"); tap("Add Play test app")
+            waitFor { node { it.text?.toString() == "Done. Play test app is on the home screen." } != null }
+            var added = false
+            await { done -> runtime.previewApps { added = it?.any { row -> row.id == id } == true; done() } }
+            check(added)
+            var read: org.plainphone.device.approval.AppPermissionRead? = null
+            await { done -> runtime.previewAppPermissions(id) { read = it; done() } }
+            check(read?.states?.values?.all { it == PermissionReadback.GRANTED } == true)
+            check(name in lockPackages())
+            check(shell("dumpsys package $id").contains("hidden=false"))
+            report.appendLine("UI return -> candidate -> permission Allow -> confirm without PIN -> Added=true")
+            report.appendLine("Home membership=true; permission grant readback=GRANTED; hidden=false; lock-task member=true")
+            tap("OK"); tap("Done")
+            waitFor { !runtime.playView.value.approvalAvailable }
+        } else {
+            if (phase == "approval-expiry") {
+                serial.run { offset += 600000 }
+                await { runtime.tickPlay(it) }
+            } else {
+                sendStatus(0, Bundle().apply { putString("readyForResign", "true") })
+                waitFor { runCatching { serial.run {
+                    val pm = targetContext.packageManager
+                    val info = pm.getPackageInfo(id, android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES or android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES)
+                    info.signingInfo!!.apkContentsSigners.map { org.plainphone.device.facts.CertDigests.sha256(it.toByteArray()) }.toSet() != snapshot.identity.signingCerts
+                } }.getOrDefault(false) }
+                await { runtime.reapply("signer-proof", it) }
+            }
+            var outcome: org.plainphone.device.AppAdditionResult? = null
+            await { done -> runtime.addPlayApp(id, snapshot.selectionIdentity, snapshot, choices, { true }) { outcome = it; done() } }
+            check(outcome == org.plainphone.device.AppAdditionResult.SaveFailed || outcome ==
+                org.plainphone.device.AppAdditionResult.PinRejected(org.plainphone.device.authority.PinAccessResult.Unavailable)) { "unexpected $outcome" }
+            var added = true
+            await { done -> runtime.previewApps { added = it?.any { row -> row.id == id } != false; done() } }
+            check(!added); check(name !in lockPackages())
+            check(shell("dumpsys package $id").contains("hidden=true"))
+            report.appendLine("$phase refused=true; hidden=true; Home membership=false; lock-task member=false")
+        }
+    }
     override fun onStart() {
         val result = Bundle()
         try {
@@ -136,6 +201,11 @@ class PlaySessionProofInstrumentation : Instrumentation() {
                 }
                 result.putString("proof", report.toString()); finish(Activity.RESULT_OK, result); return
             }
+            waitFor { shell("dumpsys activity activities").lineSequence().any {
+                "topResumedActivity=" in it && "org.plainphone/" in it &&
+                    ("MainActivity" in it || "HomeEntry" in it)
+            } }
+            waitForIdleSync()
             waitFor { runtime.gate.value == HomeGate.READY }
             waitFor { shell("dumpsys activity activities").contains("mLockTaskModeState=LOCKED") }
             if (phase == "restart") {
@@ -160,7 +230,14 @@ class PlaySessionProofInstrumentation : Instrumentation() {
                     offset = (last - original.checkpoint()!!.proven.totalMillis).coerceAtLeast(0) + 86400001L
                 }
                 await { runtime.tickPlay(it) }; state("before"); baseline = lockPackages()
-                if (phase == "ui") openUi() else open()
+                if (phase == "ui") openUi()
+                else if (phase in setOf("approve", "approval-expiry", "approval-signer")) openUi(returnAfter = false)
+                else open()
+                if (phase in setOf("approve", "approval-expiry", "approval-signer")) {
+                    approvalProof()
+                    result.putString("proof", report.toString()); result.putString("result", "PASS:$phase")
+                    finish(Activity.RESULT_OK, result); return
+                }
                 report.appendLine("Play screen text=" + uiAutomation.rootInActiveWindow?.let { root ->
                     fun texts(n: android.view.accessibility.AccessibilityNodeInfo): List<String> =
                         listOfNotNull(n.text?.toString()) + (0 until n.childCount).flatMap { n.getChild(it)?.let(::texts).orEmpty() }

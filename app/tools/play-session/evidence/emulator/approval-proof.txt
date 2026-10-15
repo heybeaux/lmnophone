@@ -1,0 +1,53 @@
+Case: approve
+tap: Start the wait
+tap: Continue
+UI fresh PIN -> countdown=true
+tap: OK
+Home countdown notice=true
+tap: Ready – tap to start
+tap: Start
+candidate observed=true
+candidate hidden=true
+access closed; approval available=true
+permissions loaded=true
+tap: Play test app
+tap: Next
+tap: Add anyway
+tap: Camera: Allow
+tap: Next
+tap: Add Play test app
+UI return -> candidate -> permission Allow -> confirm without PIN -> Added=true
+Home membership=true; permission grant readback=GRANTED; hidden=false; lock-task member=true
+tap: OK
+tap: Done
+INSTRUMENTATION_RESULT: result=PASS:approve
+
+Case: approval-expiry
+tap: Start the wait
+tap: Continue
+UI fresh PIN -> countdown=true
+tap: OK
+Home countdown notice=true
+tap: Ready – tap to start
+tap: Start
+candidate observed=true
+candidate hidden=true
+access closed; approval available=true
+permissions loaded=true
+approval-expiry refused=true; hidden=true; Home membership=false; lock-task member=false
+INSTRUMENTATION_RESULT: result=PASS:approval-expiry
+
+Case: approval-signer
+tap: Start the wait
+tap: Continue
+UI fresh PIN -> countdown=true
+tap: OK
+Home countdown notice=true
+tap: Ready – tap to start
+tap: Start
+candidate observed=true
+candidate hidden=true
+access closed; approval available=true
+permissions loaded=true
+approval-signer refused=true; hidden=true; Home membership=false; lock-task member=false
+INSTRUMENTATION_RESULT: result=PASS:approval-signer

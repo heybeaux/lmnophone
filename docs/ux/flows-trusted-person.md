@@ -202,6 +202,18 @@ trusted-person-controls (misleading request).
 Shown when `{tp}` leaves the Play Store and a new app was installed in that session. If more than one was
 installed, each goes through T4 in turn.
 
+### Self-managed Play return (slot 8b)
+
+Returning from Play closes Play access and shows **Apps you installed**. The list contains only
+apps observed during this opening whose original signer still matches. Body: "You can add these apps
+before the 10 minutes end. Done ends this opening." Empty: "There are no new apps to add."
+Primary: **Done**. Done or Back ends the retained grant. A new opening cannot extend this one.
+At expiry: "The time to add these apps has ended. Use Add a hidden app to add one later."
+Each row follows T4a–T4d and the existing permission choices. Confirming inside the live grant does
+not ask for another PIN: the opening's PIN supplies the authority. Outside this grant the existing
+Add a hidden app path still asks for a fresh PIN. A failed activation shows the attention screen;
+a failed permission write keeps the app hidden and uses the existing T4c failure screen.
+
 ### T4a. Add {app}?
 
 ```
