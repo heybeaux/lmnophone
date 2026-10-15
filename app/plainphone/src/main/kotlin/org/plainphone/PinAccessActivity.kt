@@ -227,6 +227,7 @@ class PinAccessActivity : ComponentActivity() {
                                 PinMenuTarget.TurnOff -> flow.turnOff()
                                 PinMenuTarget.ChangePin -> flow.changePin()
                                 PinMenuTarget.NewRecoveryCode -> flow.newRecoveryCode()
+                                PinMenuTarget.Play -> startActivity(Intent(this@PinAccessActivity, org.plainphone.play.PlayActivity::class.java))
                                 PinMenuTarget.Family -> openFamily()
                                 PinMenuTarget.AddHiddenApp -> openApps(hidden = true)
                                 PinMenuTarget.Apps -> openApps()

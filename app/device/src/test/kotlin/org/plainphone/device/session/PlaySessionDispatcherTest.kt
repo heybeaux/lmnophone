@@ -222,4 +222,13 @@ class PlaySessionDispatcherTest {
         assertTrue(r.dispatcher.view().active)
     }
 
+    @Test fun doneAfterReturningConsumesRetainedGrantButNeverRefundsTurn() {
+        val r = Rig(); val id = r.start()
+        assertEquals(ElevationOutcome.ACCESS_CLOSED, r.dispatcher.end(id, SessionEnd.LEFT_PACKAGES))
+        assertNotNull(r.store.elevationStore.read()!!.state.grant)
+        assertEquals(ElevationOutcome.ENDED, r.dispatcher.done(id))
+        assertNull(r.store.elevationStore.read()!!.state.grant)
+        assertEquals(1, r.dispatcher.view().left)
+    }
+
 }

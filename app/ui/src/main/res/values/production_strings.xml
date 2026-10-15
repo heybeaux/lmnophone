@@ -20,4 +20,5 @@
     <string name="ask_not_set_up">Not set up on this phone yet.</string>
     <string name="ask_missing_recipient">No one is set to get requests. This phone’s PIN holder can set it up in More, then PIN settings, then Who gets requests.</string>
     <string name="voice_empty_family">No people to show yet. This phone’s PIN holder can add people in More, then PIN settings, then Voice messages.</string>
+    <string name="play_preview_disclosure">When you open the Play Store or full phone settings, the phone is open for those minutes, and their help pages can show the web. That\'s why you stay with the phone until you tap Done.</string>
 </resources>

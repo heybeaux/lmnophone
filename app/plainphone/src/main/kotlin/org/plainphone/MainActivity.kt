@@ -720,6 +720,11 @@ class MainActivity : ComponentActivity() {
      * PIN-free cancel (wiring 3).
      */
     private fun openNotice() {
+        if (runtime.notice.value is org.plainphone.ui.home.HomeNotice.OpeningUp ||
+            runtime.notice.value == org.plainphone.ui.home.HomeNotice.ReadyToStart) {
+            startActivity(Intent(this, org.plainphone.play.PlayActivity::class.java))
+            return
+        }
         when (val tap = runtime.noticeTap.value) {
             NoticeTap.OPEN_ATTENTION -> attentionOpen = true
             is NoticeTap.ConfirmCancel -> openWaitingChange(tap.requestId)

@@ -8,6 +8,11 @@ import org.plainphone.device.authority.PinEntry
 import org.plainphone.device.authority.PreviewPinAccess
 import org.plainphone.policy.*
 
+data class PlaySessionView(val id: String? = null, val countdownMillis: Long? = null,
+    val readyMillis: Long? = null, val active: Boolean = false, val accessMillis: Long? = null,
+    val handbackReady: Boolean = false, val left: Int = 0, val limit: Int = 0,
+    val nextTurnMillis: Long? = null, val waitMillis: Long = 600_000)
+
 sealed interface PlayRequestResult {
     data object Counting : PlayRequestResult
     data object Busy : PlayRequestResult
@@ -32,9 +37,11 @@ class PlaySessionDispatcher(
     effects: SessionEffects,
     ids: AppApprovalIdSource,
     recoveryEffects: SessionEffects = effects,
+    journal: JournalStore = ElevationSessionJournal(store.elevationStore),
 ) {
-    val sessions = SessionController(store.elevationStore, recoveryEffects, clock, null,
-        AuthorityConsumer(vault::consume), { store.credentials.read()?.mode })
+    val sessions = SessionController(journal, recoveryEffects, clock, null,
+        AuthorityConsumer(vault::consume), { store.credentials.read()?.mode == Mode.TRUSTED },
+        { store.credentials.read()?.mode == Mode.SELF_MANAGED })
     private val elevation = ElevationController(store.elevationStore, store.credentials::read,
         PersonAuthorityConsumer(vault::consumeFor), clock, store::activeLimits, policyInput,
         battery, effects, ids)
@@ -83,9 +90,25 @@ class PlaySessionDispatcher(
         }
     } finally { pin.fill('\u0000') }
 
+    fun view(): PlaySessionView {
+        val record = store.elevationStore.read() ?: return PlaySessionView()
+        val now = clock.checkpoint() ?: return PlaySessionView()
+        val limits = store.activeLimits()
+        val available = record.state.ledger.availability(limits.dailyLimit, now.proven)
+        val countdown = record.state.countdown?.takeIf { it.startedAt.bootId == now.boot.bootId }
+        val untilReady = countdown?.let { (it.startedAt.elapsedMillis + it.durationMillis - now.boot.elapsedMillis).coerceAtLeast(0) }
+        val remainingStart = countdown?.let { (it.startedAt.elapsedMillis + it.durationMillis + 300_000 - now.boot.elapsedMillis).coerceAtLeast(0) }
+        val access = elevation.access()
+        return PlaySessionView(countdown?.id ?: record.state.grant?.id,
+            untilReady?.takeIf { it > 0 }, remainingStart?.takeIf { untilReady == 0L && it > 0 },
+            access != null, access?.let { (it.deadline.elapsedMillis - now.boot.elapsedMillis).coerceAtLeast(0) },
+            handbackReady, available.turnsLeft, limits.dailyLimit, available.nextTurnInMillis, limits.countdownMillis)
+    }
+
     fun start(id: String): ElevationOutcome = observe(elevation.start(id, ElevationTarget.Play))
     fun tick(): ElevationOutcome = observe(elevation.tick())
     fun cancel(id: String): ElevationOutcome = observe(elevation.cancel(id))
+    fun done(id: String): ElevationOutcome = observe(elevation.done(id))
     fun end(id: String, trigger: SessionEnd): ElevationOutcome = observe(elevation.endPackageAccess(id, trigger))
     fun access(): SessionAccess? = elevation.access()
     fun installed(sessionId: String, name: PackageName): Boolean = elevation.installed(sessionId, name)

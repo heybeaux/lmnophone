@@ -606,3 +606,25 @@ profile-free supervised credentials remain closed; every stored profile retains
 its own friction. This read does not create a profile or account identity.
 The preview currently has no full policy-store provisioning: see the Play
 emulator policy-health preflight before wiring an opening path.
+
+The preview uses `PreviewStarterPolicyStore` only in Play's fresh
+`LivePolicyInputAssembler` eligibility read. It strictly validates the existing
+CE starter file under the writer's lock, is read-only, and returns either VALID
+or BOTH_INVALID. Home's lenient reads and every preview policy application stay
+unchanged. No full-engine policy is provisioned or applied.
+
+`BootReapply.sessionFactory` lets the app provide the one shared session
+controller. `PreviewSessionJournal` uses the legacy boot journal before PIN
+enrollment and the policy-owned `ElevationSessionJournal` projection after any
+combined authority record exists; damage never falls back to the legacy record.
+`PolicyRuntime` constructs `PlaySessionDispatcher` once, uses its session controller
+for boot revocation, and serializes PIN requests, Start, end events and package
+intake. `PreviewPlayPlan.open` changes only Play visibility and lock-task membership
+in the existing preview plan. `ReadbackPlayEffects.refresh` applies that same plan
+to new package events without opening another session.
+
+`PlaySessionView` supplies live countdown, Start-window and quota values to
+`playOpeningUi`; `PlayActivity` owns the fresh PIN, ephemeral UI and navigation.
+`PlayEvents` closes on screen off and ringing and checks running-time deadlines;
+`PlayDeadline` is the alarm backstop. No debug receiver or debug source can create
+or shorten a countdown. Emulator time acceleration is in androidTest only.

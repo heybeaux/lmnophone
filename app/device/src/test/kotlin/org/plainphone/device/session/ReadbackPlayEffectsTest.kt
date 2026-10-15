@@ -91,4 +91,15 @@ class ReadbackPlayEffectsTest {
             assertEquals(state, r.port.state[play])
         }
     }
+    @Test fun packageRefreshHidesNewCandidateAndReadbackFailureCannotClaimSuccess() {
+        val r = Rig(); assertTrue(r.effects.open(access))
+        r.port.state[app] = visible()
+        assertTrue(r.effects.refresh(access))
+        assertTrue(r.port.hidden(app.value)); assertFalse(r.port.hidden(play.value))
+        r.port.state[app] = visible(); r.port.hidesStick = false; r.port.ops.clear()
+        assertFalse(r.effects.refresh(access))
+        assertTrue(r.port.ops.contains("hide ${app.value}"))
+        assertFalse(r.effects.readBackPolicy())
+    }
+
 }

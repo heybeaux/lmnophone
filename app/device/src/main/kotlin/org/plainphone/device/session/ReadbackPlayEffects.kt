@@ -41,6 +41,19 @@ class ReadbackPlayEffects(
         verified
     }
 
+    /** A package event re-reads the preview baseline and hides new candidates without reopening access. */
+    fun refresh(access: SessionAccess): Boolean = attempt {
+        val base = decide(null)
+        val opening = decide(access)
+        if (!onlyPlayChanges(base, opening)) return@attempt false
+        baseline = base
+        current = opening
+        val result = applier.apply(opening)
+        verified = result.complete && result.flipFailures.isEmpty() && result.unrepairable.isEmpty() &&
+            applier.disabled(opening).isEmpty() && applier.readBack(opening)
+        verified
+    }
+
     override fun revokeAllRelaxations(): Boolean {
         verified = false
         current = null

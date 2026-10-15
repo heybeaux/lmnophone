@@ -104,6 +104,7 @@ class BootReapply(
      * both. A throw or the default counts as no.
      */
     private val floorComplete: () -> Boolean = { false },
+    sessionFactory: ((SessionEffects) -> SessionController)? = null,
 ) {
     private val applier = ReadbackPolicyApplier(port, onFailure, timings)
     private var plan: PolicyPlan? = null
@@ -120,7 +121,7 @@ class BootReapply(
     /** A failed notice save still needs a pass, even after the visible failure was cleared. */
     val retryPending: Boolean get() = unsaved
 
-    val sessions = SessionController(journal, Effects(), { null }, null, { _, _ -> false })
+    val sessions = sessionFactory?.invoke(Effects()) ?: SessionController(journal, Effects(), { null }, null, { _, _ -> false })
 
     fun run(locked: Boolean): BootOutcome {
         applied = null
