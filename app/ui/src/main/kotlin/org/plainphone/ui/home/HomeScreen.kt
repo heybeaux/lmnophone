@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -109,11 +110,16 @@ fun HomeScreen(state: HomeUiState, onEvent: (HomeEvent) -> Unit) {
                 HomeBottom(state, onEvent = onEvent)
             }.single().measure(natural)
             val apps = subcompose("apps") {
-                LazyColumn(Modifier.fillMaxSize().testTag("home-apps"), reverseLayout = true,
+                // Start at the end as before, but keep composition and focus in visual order.
+                val listState = rememberLazyListState(initialFirstVisibleItemIndex =
+                    state.apps.lastIndex.coerceAtLeast(0),
+                    // Clamp to the end even when the last row is taller than the viewport.
+                    // Leave integer headroom for the list's measurement arithmetic.
+                    initialFirstVisibleItemScrollOffset = Int.MAX_VALUE / 2)
+                LazyColumn(Modifier.fillMaxSize().testTag("home-apps"), state = listState,
                     verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S3, Alignment.Bottom)) {
-                    // Reversing both keeps the supplied visual order, with the last app at the bottom.
                     // Positional keys tolerate duplicate IDs; host insertions may move focus/press state.
-                    items(state.apps.asReversed()) { app ->
+                    items(state.apps) { app ->
                         HomeAppRow(app.name) { onEvent(HomeEvent.OpenApp(app.id)) }
                     }
                 }
