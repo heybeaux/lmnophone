@@ -117,7 +117,7 @@ class PolicyRuntime private constructor(private val context: Context) {
     private val admin = ComponentName(context, PlainphoneAdminReceiver::class.java)
     /** Test builds can drop feature writes ([FeatureFault]); release always writes them. */
     private val port: DevicePolicyPort =
-        FeatureFaultPort(DpmPort(context, admin, ComponentName(context, FlushMarker::class.java))) { FeatureFault.on(context) }
+        FeatureFaultPort(DpmPort(context, admin, ComponentName(context, FlushMarker::class.java), ComponentName(context.packageName, "org.plainphone.HomeEntry"))) { FeatureFault.on(context) }
     private val protectedDir = context.createDeviceProtectedStorageContext().filesDir
     private val packagesPort = AndroidPackageSystemPort(context)
     // Preserve the preview starter list and restriction-free plan during this in-place upgrade.
@@ -518,20 +518,33 @@ class PolicyRuntime private constructor(private val context: Context) {
     @Volatile var giveBackFailureCount: Int = 0
         private set
 
-    fun retryGiveBack(done: () -> Unit) = dispatcher.post {
-        driveGiveBack(retry = true)
+    @Volatile var giveBackRetryAvailable: Boolean = false
+        private set
+
+    fun retryGiveBack(requestId: String, done: () -> Unit) = dispatcher.post {
+        if (authority.waitingOperation()?.identity?.requestId == requestId) driveGiveBack(retry = true)
         done()
     }
 
     /** Before every other policy writer, including update postponement and fallback containment. */
     private fun driveGiveBack(retry: Boolean = false): Boolean {
-        val operation = authority.waitingOperation() ?: return false
-        if (operation.kind != org.plainphone.policy.WaitingChangeKind.TURN_OFF ||
-            operation.phase != org.plainphone.policy.WaitingPhase.COMMITTING) return false
+        val operation = authority.waitingOperation()
+        if (operation == null || operation.kind != org.plainphone.policy.WaitingChangeKind.TURN_OFF ||
+            operation.phase != org.plainphone.policy.WaitingPhase.COMMITTING) {
+            giveBackFailureCount = 0
+            giveBackRetryAvailable = false
+            return false
+        }
         bootCoverage.invalidate()
         packageReadback.invalidate()
+        // Normal launcher activities and some permission state are unavailable during Direct Boot.
+        // Keep the durable forward record and existing emergency access; never run lockdown here.
+        // USER_UNLOCKED/start resumes the same journal once successor checks can be truthful.
+        if (!users.isUserUnlocked) return true
         val result = giveBack.run(operation.identity.requestId, facts.battery() ?: org.plainphone.policy.BatteryState(0, false), retry)
         giveBackFailureCount = result.remaining
+        giveBackRetryAvailable = result.outcome in setOf(org.plainphone.policy.GiveBackOutcome.FAILED,
+            org.plainphone.policy.GiveBackOutcome.NOT_READY)
         waitingNoticeState.value = waiting.notice()
         waitingReadState.value = WaitingRead(waitingNoticeState.value, ZonedDateTime.now())
         noticeTapState.value = NoticeTap.ConfirmCancel(operation.identity.requestId)

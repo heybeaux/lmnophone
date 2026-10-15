@@ -63,6 +63,23 @@ class GiveBackControllerTest {
         assertTrue(port.owner)
     }
 
+    @Test fun `failed result checkpoint stops before the next physical item`() {
+        store.failAt = 2 // inventory saved, then first result write fails
+        assertEquals(GiveBackOutcome.NOT_READY, run().outcome)
+        assertEquals(actions.take(1), port.writes)
+        assertTrue(port.owner)
+    }
+
+    @Test fun `throwing write at every item still records failure and retains owner`() {
+        for (action in actions) {
+            reset(); port.throwAt = action
+            assertEquals(1, run().remaining)
+            assertTrue(port.faultFired)
+            assertTrue(port.owner)
+            assertEquals(GiveBackStatus.FAILED, store.state!!.giveBack!!.entries.single { it.action == action }.status)
+        }
+    }
+
     @Test fun `missing pending wrong or cancelled record never restores`() {
         for (phase in listOf(WaitingPhase.PENDING, WaitingPhase.CANCELLED)) {
             store.state = WaitingState(1, op.withPhase(phase))
@@ -106,17 +123,17 @@ class GiveBackControllerTest {
     }
     private class SimulatedCrash : Error()
     private inner class Store(var state: WaitingState?) : WaitingChangeStore {
-        var saves = 0; var crashAfter: Int? = null; var crashFired = false; var failSave = false
+        var saves = 0; var failAt: Int? = null; var crashAfter: Int? = null; var crashFired = false; var failSave = false
         override fun read() = state
         override fun compareAndSet(expected: WaitingState, replacement: WaitingState): Boolean {
-            if (failSave || state !== expected) return false
+            if (failSave || saves + 1 == failAt || state !== expected) return false
             state = replacement; saves++
             if (saves == crashAfter) { crashFired = true; throw SimulatedCrash() }
             return true
         }
     }
     private inner class Port : GiveBackPort {
-        var owner = true; var fail: GiveBackAction? = null; var failAll = false; var faultFired = false
+        var owner = true; var fail: GiveBackAction? = null; var throwAt: GiveBackAction? = null; var failAll = false; var faultFired = false
         var home = true; var dialer = true; var crashOnRemove = false
         val writes = mutableListOf<GiveBackAction>(); val reads = mutableListOf<GiveBackAction>()
         val events = mutableListOf<String>()
@@ -125,7 +142,11 @@ class GiveBackControllerTest {
         override fun restore(action: GiveBackAction) {
             assertNotNull(store.state!!.giveBack)
             assertTrue(store.state!!.giveBack!!.entries.any { it.action == action })
+            val entries = store.state!!.giveBack!!.entries
+            val index = entries.indexOfFirst { it.action == action }
+            assertTrue(entries.take(index).all { it.status != GiveBackStatus.PENDING })
             writes += action
+            if (throwAt == action) { faultFired = true; throw IllegalStateException("injected DPM write failure") }
         }
         override fun readBack(action: GiveBackAction): Boolean {
             reads += action

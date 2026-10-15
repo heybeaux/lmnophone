@@ -113,7 +113,7 @@ data class WaitingChangeUiState(val context: AdminContext? = null, val stage: Wa
     val happensAtDay: org.plainphone.ui.home.HomeNoticeDay? = null,
     val canSkip: Boolean = false, val canStop: Boolean = false, val turningOff: Boolean = false,
     val sending: Boolean = false, val otherCommitting: Boolean = false, val changeToSelfManaged: Boolean = false,
-    val giveBackFailureCount: Int = 0)
+    val giveBackFailureCount: Int = 0, val giveBackRetryAvailable: Boolean = giveBackFailureCount > 0)
 sealed interface WaitingChangeEvent {
     data object Cancel : WaitingChangeEvent
     data object ConfirmCancel : WaitingChangeEvent

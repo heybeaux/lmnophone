@@ -43,3 +43,19 @@ Android contracts used:
 
 Host tests prove sequencing and persistence logic. Emulator evidence is separate
 under `evidence/emulator/`. No spare-device give-back or live emergency call is authorized by this slice.
+
+API 35 proof found two release details: an empty lock-task policy resolves to
+GLOBAL_ACTIONS (16), the Android default, despite the successful NONE write. The
+readback accepts 0 or that neutral default **only** with an empty package list and
+ActivityManager NONE (not PINNED). Any other feature bits still fail. Also, a
+normal preference for LMNOPhone can survive clearing its persistent preference;
+release clears only LMNOPhone's own ordinary preference and reads HOME again.
+Neither check selects a new default launcher for the person.
+
+A separate `HomeEntry` alias carries HOME. Give-back disables and reads back that
+alias before ownership removal, while MainActivity's LAUNCHER entry remains for
+Retry. Normal lockdown's `DpmPort.setHome` re-enables the alias, including after a
+lost operation record. A successor cannot be Android's resolver or Settings'
+Direct Boot `FallbackHome`. After reboot, give-back holds its forward record until
+user unlock, then resumes: checking an ordinary launcher during Direct Boot would
+incorrectly record a failure merely because it is not yet available.

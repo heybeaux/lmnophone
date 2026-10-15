@@ -22,6 +22,7 @@ class DpmGiveBackPort(private val context: Context, private val admin: Component
     private val am = context.getSystemService(ActivityManager::class.java)
     private val telecom = context.getSystemService(TelecomManager::class.java)
     private val self = context.packageName
+    private val homeEntry = ComponentName(self, "org.plainphone.HomeEntry")
     private val flags = PackageManager.MATCH_UNINSTALLED_PACKAGES or PackageManager.MATCH_DISABLED_COMPONENTS
 
     override fun isDeviceOwner() = dpm.isDeviceOwnerApp(self)
@@ -80,7 +81,16 @@ class DpmGiveBackPort(private val context: Context, private val admin: Component
                 dpm.setLockTaskPackages(admin, emptyArray())
                 dpm.setLockTaskFeatures(admin, DevicePolicyManager.LOCK_TASK_FEATURE_NONE)
             }
-            GiveBackKind.PREFERRED_HOME -> dpm.clearPackagePersistentPreferredActivities(admin, action.target)
+            GiveBackKind.PREFERRED_HOME -> {
+                dpm.clearPackagePersistentPreferredActivities(admin, action.target)
+                // Android can retain a normal user/default preference after removing the DPM one.
+                // Only our own package is cleared; never choose or overwrite another home app.
+                pm.clearPackagePreferredActivities(action.target)
+                // The HOME role can restore a preference asynchronously while this package still
+                // qualifies. Withdraw only the alias, preserving the launcher/retry activity.
+                pm.setComponentEnabledSetting(homeEntry, PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP or PackageManager.SYNCHRONOUS)
+            }
             GiveBackKind.VISIBLE, GiveBackKind.UNSUSPENDED -> error("package effects must use ReadbackGiveBackPort")
         }
     }
@@ -96,10 +106,11 @@ class DpmGiveBackPort(private val context: Context, private val admin: Component
         GiveBackKind.RESET_PROTECTION -> dpm.getFactoryResetProtectionPolicy(admin) == null
         GiveBackKind.PLAY_RESTRICTIONS -> dpm.getApplicationRestrictions(admin, action.target).isEmpty
         GiveBackKind.SYSTEM_UPDATE -> dpm.systemUpdatePolicy == null
-        GiveBackKind.LOCK_TASK -> dpm.getLockTaskPackages(admin).isEmpty() && dpm.getLockTaskFeatures(admin) == 0 &&
-            am.lockTaskModeState == ActivityManager.LOCK_TASK_MODE_NONE
+        GiveBackKind.LOCK_TASK -> releasedLockTask(dpm.getLockTaskPackages(admin).isEmpty(), dpm.getLockTaskFeatures(admin),
+            am.lockTaskModeState == ActivityManager.LOCK_TASK_MODE_NONE)
         // A resolver/chooser is acceptable: it lets the person choose a normal launcher.
-        GiveBackKind.PREFERRED_HOME -> pm.resolveActivity(homeIntent(), PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName != self && anotherHomeResolves()
+        GiveBackKind.PREFERRED_HOME -> pm.getComponentEnabledSetting(homeEntry) == PackageManager.COMPONENT_ENABLED_STATE_DISABLED &&
+            pm.resolveActivity(homeIntent(), PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName != self && anotherHomeResolves()
         GiveBackKind.VISIBLE, GiveBackKind.UNSUSPENDED -> error("package effects must use ReadbackGiveBackPort")
     }
     override fun anotherHomeResolves(): Boolean = homeComponent() != null
@@ -116,7 +127,8 @@ class DpmGiveBackPort(private val context: Context, private val admin: Component
         context.startActivity(homeIntent().setComponent(component).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
     private fun homeComponent(): ComponentName? = pm.queryIntentActivities(homeIntent(), PackageManager.MATCH_DEFAULT_ONLY)
-        .map { it.activityInfo }.firstOrNull { it.packageName != self && it.enabled && it.applicationInfo.enabled }
+        .map { it.activityInfo }.firstOrNull { it.packageName != self && it.packageName != "android" && it.name != "com.android.settings.FallbackHome" &&
+            it.enabled && it.applicationInfo.enabled }
         ?.let { ComponentName(it.packageName, it.name) }
     private fun homeIntent() = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
     private fun installed(name: String): Boolean = try { pm.getApplicationInfo(name, flags).flags and ApplicationInfo.FLAG_INSTALLED != 0 }

@@ -21,7 +21,11 @@ object GiveBackLockTask {
         val stop = Runnable {
             try {
                 val current = synchronized(this) { roots.mapNotNull { it.get() } }
-                current.filter { !it.isDestroyed && it.isTaskRoot }.forEach { it.stopLockTask() }
+                current.filter { !it.isDestroyed && it.isTaskRoot }.forEach {
+                    // A task may disappear while queued. The DPM membership clear still runs;
+                    // ActivityManager's final NONE readback decides whether release succeeded.
+                    try { it.stopLockTask() } catch (_: RuntimeException) { }
+                }
             } finally { done.countDown() }
         }
         if (Looper.myLooper() == Looper.getMainLooper()) stop.run() else {

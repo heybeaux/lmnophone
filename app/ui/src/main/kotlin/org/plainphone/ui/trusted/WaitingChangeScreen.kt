@@ -34,7 +34,7 @@ fun WaitingChangeScreen(state: WaitingChangeUiState, onEvent: (WaitingChangeEven
         WaitingStage.Recovered -> s(R.string.wait_recovered)
         WaitingStage.Repair -> s(R.string.wait_repair)
     }
-    val primary = if (state.giveBackFailureCount > 0) s(R.string.give_back_retry) else when (state.stage) {
+    val primary = if (state.giveBackRetryAvailable) s(R.string.give_back_retry) else when (state.stage) {
         WaitingStage.Details -> s(R.string.wait_cancel)
         WaitingStage.ConfirmCancel -> s(if (state.sending) R.string.wait_cancelling else R.string.wait_yes_cancel)
         WaitingStage.SkipIntro -> s(R.string.admin_recovery_title)

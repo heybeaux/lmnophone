@@ -722,7 +722,7 @@ class MainActivity : ComponentActivity() {
     private fun openNotice() {
         when (val tap = runtime.noticeTap.value) {
             NoticeTap.OPEN_ATTENTION -> attentionOpen = true
-            is NoticeTap.ConfirmCancel -> if (runtime.giveBackFailureCount > 0) openWaitingChange(tap.requestId) else openCancel(tap.requestId)
+            is NoticeTap.ConfirmCancel -> openWaitingChange(tap.requestId)
             else -> {}
         }
     }
@@ -742,7 +742,8 @@ class MainActivity : ComponentActivity() {
         val stage = confirmStage(requestId, wait) ?: return
         val change = getString(waitingChangeTextResource(wait.kind), getString(R.string.app_name))
         cancelScreen = CancelScreen(requestId, WaitingChangeUiState(stage = stage, change = change,
-            turningOff = wait.kind == WaitingChangeKind.TURN_OFF, giveBackFailureCount = runtime.giveBackFailureCount))
+            turningOff = wait.kind == WaitingChangeKind.TURN_OFF, giveBackFailureCount = runtime.giveBackFailureCount,
+            giveBackRetryAvailable = runtime.giveBackRetryAvailable))
     }
 
     /** Anyone holding the phone may cancel the pending change [requestId], without a PIN, if it is still pending. */
@@ -756,10 +757,13 @@ class MainActivity : ComponentActivity() {
      * is saved. Any other choice, or OK afterwards, goes back to Home.
      */
     private fun onCancelEvent(screen: CancelScreen, event: WaitingChangeEvent) {
-        if (screen.state.giveBackFailureCount > 0 && event == WaitingChangeEvent.Ok) {
+        if (screen.state.giveBackRetryAvailable && event == WaitingChangeEvent.Ok) {
             if (screen.state.sending) return
             cancelScreen = screen.copy(state = screen.state.copy(sending = true))
-            runtime.retryGiveBack { runOnUiThread { openWaitingChange(screen.requestId) } }
+            runtime.retryGiveBack(screen.requestId) { runOnUiThread {
+                cancelScreen = null
+                openWaitingChange(screen.requestId)
+            } }
             return
         }
         if (event != WaitingChangeEvent.ConfirmCancel || screen.state.stage != WaitingStage.ConfirmCancel) {
