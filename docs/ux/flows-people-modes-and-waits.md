@@ -509,7 +509,7 @@ app" (TPC "App requests": no request flow). Both ask for the user's PIN.
 - **Body:**
   First there's a {wait}-minute wait. Then you tap Start, and {kind} is open for {deadline} minutes.
   This uses 1 of your {left} openings left today. Restarting the phone stops the wait, and nothing is used up.
-- With 1 left: "This uses 1 of your 1 opening left today." With 0 left, show M7c instead.
+- With 1 left: "This is your last opening today." With 0 left, show M7c instead.
 - **Primary:** Start the wait → PIN → U10a
 - **Secondary:** Not now
 - **Add a hidden app** first shows the list of hidden apps to pick one (name and developer as Android reports them).
@@ -700,3 +700,6 @@ on" next to an estimate). Times are estimates and never shown as a countdown on 
    set it up together, in person.
 5. **Cancel code format.** **Recommendation:** 5 digits, never reused on the phone (TPC), no letters, so
    autocorrect can't change it. AE's call.
+
+M7 Before and Ready, when one opening remains: "This is your last opening today."
+M7 No openings, limit one: "You've used your 1 opening." The rest of M7c is unchanged.

@@ -48,7 +48,7 @@
     <string name="opening_app_title">Add a hidden app?</string>
     <string name="opening_update_title">Install an LMNOPhone update?</string>
     <plurals name="opening_before_body">
-        <item quantity="one">First there\'s a %1$d-minute wait. Then you tap Start, and %2$s is open for %3$d minutes. This uses 1 of your %4$d opening left today. Restarting the phone stops the wait, and nothing is used up.</item>
+        <item quantity="one">First there\'s a %1$d-minute wait. Then you tap Start, and %2$s is open for %3$d minutes. This is your last opening today. Restarting the phone stops the wait, and nothing is used up.</item>
         <item quantity="other">First there\'s a %1$d-minute wait. Then you tap Start, and %2$s is open for %3$d minutes. This uses 1 of your %4$d openings left today. Restarting the phone stops the wait, and nothing is used up.</item>
     </plurals>
     <string name="opening_start_wait">Start the wait</string>
@@ -67,16 +67,19 @@
     <string name="opening_ready_app">Ready to add %1$s</string>
     <string name="opening_ready_update">Ready to install the update</string>
     <plurals name="opening_ready_body">
-        <item quantity="one">Tap Start within %1$d minutes. This uses 1 of your %2$d opening left today.</item>
+        <item quantity="one">Tap Start within %1$d minutes. This is your last opening today.</item>
         <item quantity="other">Tap Start within %1$d minutes. This uses 1 of your %2$d openings left today.</item>
     </plurals>
     <plurals name="opening_ready_body_one">
-        <item quantity="one">Tap Start within 1 minute. This uses 1 of your %1$d opening left today.</item>
+        <item quantity="one">Tap Start within 1 minute. This is your last opening today.</item>
         <item quantity="other">Tap Start within 1 minute. This uses 1 of your %1$d openings left today.</item>
     </plurals>
     <string name="opening_start">Start</string>
     <string name="opening_none">No openings left for now</string>
-    <string name="opening_none_body">You\'ve used your %1$d openings. The next one is available after about %2$s, if the phone stays on. Restarting the phone doesn\'t change this.</string>
+    <plurals name="opening_none_body">
+        <item quantity="one">You\'ve used your %1$d opening. The next one is available after about %2$s, if the phone stays on. Restarting the phone doesn\'t change this.</item>
+        <item quantity="other">You\'ve used your %1$d openings. The next one is available after about %2$s, if the phone stays on. Restarting the phone doesn\'t change this.</item>
+    </plurals>
     <string name="opening_zero">Openings are set to 0 a day. You can change that in Waits and limits; making it higher takes 24 hours.</string>
     <string name="opening_already">Something is already opening.</string>
     <string name="opening_already_countdown">%1$s is counting down. Finish or stop that first.</string>

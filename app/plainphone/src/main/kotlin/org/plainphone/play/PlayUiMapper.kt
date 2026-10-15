@@ -12,11 +12,14 @@ fun playOpeningUi(view: PlaySessionView, context: AdminContext, stage: OpeningSt
         view.readyMillis != null -> OpeningStage.Ready
         view.left <= 0 -> OpeningStage.NoOpenings
         else -> OpeningStage.Before
-    }, OpeningKind.Play, waitMinutes = minutes(view.waitMillis), durationMinutes = 10,
-    minutes = minutes(view.countdownMillis ?: view.readyMillis ?: 0), left = view.left, limit = view.limit,
+    }, OpeningKind.Play, waitMinutes = playWaitMinutes(view.waitMillis), durationMinutes = 10,
+    minutes = playWaitMinutes(view.countdownMillis ?: view.readyMillis ?: 0), left = view.left, limit = view.limit,
     time = time, alreadyOpen = view.active, sending = busy, playDisclosure = true)
 
-private fun minutes(millis: Long) = ((millis + 59999) / 60000).coerceAtLeast(1).toInt()
+/** Ceiling minutes, shared by the PIN menu and opening screens. */
+fun playWaitMinutes(millis: Long): Int =
+    (millis.coerceAtLeast(0) / 60000 + if (millis > 0 && millis % 60000 != 0L) 1 else 0)
+        .coerceIn(1, Int.MAX_VALUE.toLong()).toInt()
 
 /** Attention and an existing waiting change stay ahead of an opening on the single Home line. */
 fun playHomeNotice(view: PlaySessionView, base: org.plainphone.ui.home.HomeNotice?): org.plainphone.ui.home.HomeNotice? {
@@ -25,7 +28,7 @@ fun playHomeNotice(view: PlaySessionView, base: org.plainphone.ui.home.HomeNotic
     if (base != null && base != org.plainphone.ui.home.HomeNotice.SoftwareUpdateWaiting &&
         base != org.plainphone.ui.home.HomeNotice.PreviewTurnOffClosed) return base
     return when {
-        view.countdownMillis != null -> org.plainphone.ui.home.HomeNotice.OpeningUp(minutes(view.countdownMillis!!))
+        view.countdownMillis != null -> org.plainphone.ui.home.HomeNotice.OpeningUp(playWaitMinutes(view.countdownMillis!!))
         view.readyMillis != null -> org.plainphone.ui.home.HomeNotice.ReadyToStart
         else -> base
     }

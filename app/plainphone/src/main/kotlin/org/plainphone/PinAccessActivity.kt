@@ -222,7 +222,7 @@ class PinAccessActivity : ComponentActivity() {
                         } }
                         PinPage.MENU -> if (apps != null) AppsContent(apps!!) else if (family != null) FamilyScreen(family!!) { familyEditor?.event(it) } else AdminMenuScreen(pinMenuUiState(AdminContext(getString(org.plainphone.ui.R.string.current_phone_user)),
                             waitingMenu, homeNotice, needsYouCopy(), menuRequests,
-                            getString(org.plainphone.ui.R.string.play_menu_detail, ((playView.waitMillis + 59999) / 60000).coerceAtLeast(1).toInt()))) { when (it) {
+                            getString(org.plainphone.ui.R.string.play_menu_detail, org.plainphone.play.playWaitMinutes(playView.waitMillis)))) { when (it) {
                             AdminMenuEvent.Done -> finish()
                             is AdminMenuEvent.OpenNotice -> openNeedsYou(it.id)
                             is AdminMenuEvent.Open -> when (pinMenuTarget(it.destination)) {

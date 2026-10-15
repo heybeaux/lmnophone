@@ -74,7 +74,7 @@ fun OpeningScreen(state: OpeningUiState, onEvent: (OpeningEvent) -> Unit) {
                 Words(s(R.string.opening_countdown_rest))
             }
             OpeningStage.Ready -> Words(if (state.minutes == 1) pluralStringResource(R.plurals.opening_ready_body_one, state.left, state.left) else pluralStringResource(R.plurals.opening_ready_body, state.left, state.minutes, state.left))
-            OpeningStage.NoOpenings -> Words(if (state.limit == 0) s(R.string.opening_zero) else s(R.string.opening_none_body, state.limit, state.time))
+            OpeningStage.NoOpenings -> Words(if (state.limit == 0) s(R.string.opening_zero) else pluralStringResource(R.plurals.opening_none_body, state.limit, state.limit, state.time))
             OpeningStage.AlreadyOpening -> Words(if (state.alreadyOpen) s(R.string.opening_already_open, kind, state.time) else s(R.string.opening_already_countdown, kind))
             OpeningStage.AddInstalled -> Words(s(R.string.opening_installed_body, state.time))
             OpeningStage.TooLate -> Words(s(R.string.opening_late_body, app))

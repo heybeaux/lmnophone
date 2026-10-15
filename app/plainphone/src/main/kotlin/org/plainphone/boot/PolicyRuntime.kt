@@ -349,7 +349,8 @@ class PolicyRuntime private constructor(private val context: Context) {
         try {
             play.endCurrent(reason)
             publishPlay()
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            Log.w(TAG, "Play close deferred; handback remains unavailable", error)
             playState.value = playState.value.copy(handbackReady = false, active = false)
         }
     }
