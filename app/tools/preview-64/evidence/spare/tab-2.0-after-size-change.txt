@@ -1,0 +1,28 @@
+font=2.0
+11:24                                    [60, 177, 464, 390] clk=false
+Wed 14 Oct                               [60, 390, 481, 484] clk=false
+Maps                                     [60, 1424, 321, 1548] clk=false
+Camera                                   [60, 1598, 447, 1722] clk=false
+Messages                                 [60, 1772, 535, 1896] clk=false
+Phone                                    [60, 1946, 364, 2070] clk=false
+More                                     [432, 2126, 649, 2235] clk=false
+TAB 1: FOCUS: Camera View [0,1588][1080,1732]
+TAB 2: FOCUS: Messages View [0,1762][1080,1906]
+TAB 3: FOCUS: Phone View [0,1936][1080,2080]
+TAB 4: FOCUS: More View [60,2100][1020,2260]
+TAB 5: FOCUS: Maps View [0,1414][1080,1558]
+TAB 6: FOCUS: Camera View [0,1588][1080,1732]
+SHIFT+TAB 1: FOCUS: Maps View [0,1414][1080,1558]
+SHIFT+TAB 2: FOCUS: More View [60,2100][1020,2260]
+SHIFT+TAB 3: FOCUS: Phone View [0,1936][1080,2080]
+SHIFT+TAB 4: FOCUS: Messages View [0,1762][1080,1906]
+SHIFT+TAB 5: FOCUS: Camera View [0,1588][1080,1732]
+SHIFT+TAB 6: FOCUS: Maps View [0,1414][1080,1558]
+-- after Home again
+11:25                                    [60, 177, 459, 390] clk=false
+Wed 14 Oct                               [60, 390, 481, 484] clk=false
+Maps                                     [60, 1424, 321, 1548] clk=false
+Camera                                   [60, 1598, 447, 1722] clk=false
+Messages                                 [60, 1772, 535, 1896] clk=false
+Phone                                    [60, 1946, 364, 2070] clk=false
+More                                     [432, 2126, 649, 2235] clk=false

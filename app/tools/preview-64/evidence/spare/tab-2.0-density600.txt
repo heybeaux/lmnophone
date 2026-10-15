@@ -1,0 +1,20 @@
+Physical density: 400 
+-- 2.0 + density 600, at rest
+11:26                                    [90, 207, 686, 526] clk=false
+Wed 14 Oct                               [90, 526, 715, 666] clk=false
+Maps                                     [90, 936, 483, 1122] clk=false
+Camera                                   [90, 1197, 670, 1383] clk=false
+Messages                                 [90, 1458, 803, 1644] clk=false
+Phone                                    [90, 1719, 548, 1905] clk=false
+More                                     [377, 1988, 703, 2152] clk=false
+TAB 1: FOCUS: Maps View [0,921][1080,1137]
+TAB 2: FOCUS: Camera View [0,1182][1080,1398]
+TAB 3: FOCUS: Messages View [0,1443][1080,1659]
+TAB 4: FOCUS: Phone View [0,1704][1080,1920]
+TAB 5: FOCUS: More View [90,1950][990,2190]
+TAB 6: FOCUS: Maps View [0,921][1080,1137]
+SHIFT+TAB 1: FOCUS: More View [90,1950][990,2190]
+SHIFT+TAB 2: FOCUS: Phone View [0,1704][1080,1920]
+SHIFT+TAB 3: FOCUS: Messages View [0,1443][1080,1659]
+SHIFT+TAB 4: FOCUS: Camera View [0,1182][1080,1398]
+SHIFT+TAB 5: FOCUS: Maps View [0,921][1080,1137]
