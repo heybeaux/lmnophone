@@ -68,8 +68,9 @@ class DpmPort(
         return if (info.flags and ApplicationInfo.FLAG_INSTALLED == 0) null else info.uid
     }
 
+    /** A hide stored before an uninstall is written again so that it applies (PLA-624, [HiddenPolicyWrite]). */
     override fun setHidden(name: PackageName, hidden: Boolean) {
-        dpm.setApplicationHidden(admin, name.value, hidden)
+        HiddenPolicyWrite.write(hidden, { dpm.setApplicationHidden(admin, name.value, it) }, { packageHidden(name) })
     }
 
     override fun unsuspend(name: PackageName) {
