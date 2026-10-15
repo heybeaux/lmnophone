@@ -20,7 +20,7 @@ class PlaySessionDispatcherTest {
     private val candidate = PackageName("test.newapp")
     private val identity = ApprovalBinding(candidate, setOf(CertDigest("a".repeat(64))))
     private fun pin() = CharArray(6) { '1' }
-    private inner class Rig {
+    private inner class Rig(fullProfile: Boolean = true) {
         var now = 0L
         var sequence = 0
         val clock = RunningClock { ClockReading(RunningTime("epoch", now), BootTime("boot", now)) }
@@ -64,10 +64,11 @@ class PlaySessionDispatcherTest {
         var dispatcher = dispatcher()
         init {
             val self = TrustedPersonId("self")
-            assertTrue(store.initialize(CredentialState(Mode.SELF_MANAGED,
+            if (fullProfile) assertTrue(store.initialize(CredentialState(Mode.SELF_MANAGED,
                 mapOf(self to vault.prepareCredential(pin()).credential),
                 recoveryProfile = RecoveryProfile(mapOf(self to "synthetic-account"), null,
                     FrictionSettings(600_000, 2))), WaitingState(), ElevationRecord()))
+            else assertTrue(menu.enroll(pin()) is PinEnrollmentResult.Created)
             assertTrue(dispatcher.onStart())
             events.clear()
         }
@@ -159,6 +160,27 @@ class PlaySessionDispatcherTest {
         assertEquals(listOf("revoke", "protected", "readback"), r.events)
         assertNull(r.dispatcher.access())
         assertFalse(r.dispatcher.installed(id, candidate))
+    }
+
+    @Test fun activeSessionReportsBusyInsteadOfOfferingAnotherOpening() {
+        val r = Rig(); r.start()
+        assertEquals(PlayRequestResult.Busy, r.dispatcher.request(pin()))
+        assertEquals(1, r.store.elevationStore.read()!!.state.ledger.debits.size)
+    }
+
+    @Test fun previewEnrollmentDoesNotInventFrictionOrRecoveryIdentity() {
+        val r = Rig(fullProfile = false)
+        assertEquals(PlayRequestResult.LimitReached, r.dispatcher.request(pin()))
+        assertNull(r.store.credentials.read()!!.recoveryProfile)
+        assertNull(r.store.elevationStore.read()!!.state.countdown)
+        assertTrue(r.store.elevationStore.read()!!.state.ledger.debits.isEmpty())
+    }
+
+    @Test fun wrongPinNeverCreatesCountdownAndIsWiped() {
+        val r = Rig(); val secret = CharArray(6) { '2' }
+        assertTrue(r.dispatcher.request(secret) is PlayRequestResult.Wrong)
+        assertTrue(secret.all { it == '\u0000' })
+        assertNull(r.store.elevationStore.read()!!.state.countdown)
     }
 
     @Test fun missingInventoryRefusesWithoutInventingAuthorityOrDebit() {
