@@ -10,6 +10,8 @@ import java.io.File
 import org.plainphone.core.PackageName
 import org.plainphone.device.facts.AndroidPackageSystemPort
 import org.plainphone.device.facts.LivePolicyInputAssembler
+import org.plainphone.device.PreviewStarterPolicyStore
+import android.os.UserManager
 import org.plainphone.device.storage.FilePolicyStore
 import org.plainphone.policy.EmergencyFloor
 
@@ -34,6 +36,12 @@ class PlayPolicyPreflightInstrumentation : Instrumentation() {
             val live = LivePolicyInputAssembler(AndroidPackageSystemPort(ctx), FilePolicyStore(dir),
                 emptyList(), PackageName(ctx.packageName),
                 PackageName("com.google.android.apps.messaging")).assemble()
+            val preview = LivePolicyInputAssembler(AndroidPackageSystemPort(ctx),
+                PreviewStarterPolicyStore(ctx.filesDir, { ctx.getSystemService(UserManager::class.java).isUserUnlocked }),
+                emptyList(), PackageName(ctx.packageName), PackageName("com.google.android.apps.messaging")).assemble()
+            result.putString("previewHealth", preview.input.health.name)
+            result.putString("previewFloorUnreadable", preview.unreadableFloorRoles.joinToString(",") { it.name })
+            result.putString("previewHasSystemDialer", EmergencyFloor.compute(preview.input.installed, preview.input.identities).hasSystemDialer.toString())
             val floor = EmergencyFloor.compute(live.input.installed, live.input.identities)
             result.putString("policyRecords", records.size.toString())
             result.putString("health", live.input.health.name)

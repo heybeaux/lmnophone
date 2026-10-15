@@ -56,5 +56,5 @@ class PreviewAppListStore(private val dir: File,
             replace(temp, file)
         } finally { temp.delete() }
     }
-    companion object { private val lock = Any() }
+    companion object { internal val lock = Any() }
 }

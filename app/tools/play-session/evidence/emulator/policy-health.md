@@ -75,3 +75,25 @@ Next integration needs a truthful, persistent preview policy-health source
 selected by the Lead. The existing starter list is present; mapping its health
 requires an explicit contract for missing/unreadable/malformed data. Creating an
 unused full-policy record solely to pass the gate is not this preflight's outcome.
+
+## Strict starter adapter follow-up (2026-10-15 UTC)
+
+After the Lead's read-only starter policy contract, re-provisioned a fresh read-only
+`pla104-a36` with the same setup script. Home reached LOCKED and the read-only
+instrumentation returned:
+
+```text
+health=BOTH_INVALID
+policyRecords=0
+inventory=absent
+floorUnreadable=
+hasSystemDialer=true
+previewHealth=VALID
+previewFloorUnreadable=
+previewHasSystemDialer=true
+result=READ_ONLY_PREFLIGHT_COMPLETE
+```
+
+The adapter created no policy record. The standard full-engine store retains its
+original result. This resolves the health preflight only; it does not prove a
+countdown, opening, closure, new-app intake or Play sign-in.

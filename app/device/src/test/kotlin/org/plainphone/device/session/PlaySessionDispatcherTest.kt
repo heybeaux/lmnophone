@@ -35,6 +35,7 @@ class PlaySessionDispatcherTest {
         var fail: String? = null
         var faultHits = 0
         var open = false
+        var healthStore: org.plainphone.policy.PolicyStore? = null
         var policy: PolicyInput? = PolicyInput("test", "build", home, sms,
             listOf(home, play, dialer, sms, candidate).map { InstalledPackage(it, true, 1) },
             listOf(FloorIdentity(dialer, FloorRole.SYSTEM_DIALER, IdentitySource.OS_MANAGED)),
@@ -61,7 +62,7 @@ class PlaySessionDispatcherTest {
             }
             override fun readBackPolicy(): Boolean = step("readback")
         }
-        fun dispatcher() = PlaySessionDispatcher(store, vault, clock, { policy },
+        fun dispatcher() = PlaySessionDispatcher(store, vault, clock, { healthStore?.let { policy?.copy(health = it.read().health) } ?: policy },
             { BatteryState(50, false) }, effects, AppApprovalIdSource { "play-${++sequence}" })
         var dispatcher = dispatcher()
         init {
@@ -194,4 +195,18 @@ class PlaySessionDispatcherTest {
         assertTrue(r.store.elevationStore.read()!!.state.ledger.debits.isEmpty())
         assertFalse(r.open)
     }
+    @Test fun invalidStarterHealthRefusesPlayAndFaultHookFires() {
+        val r = Rig(); r.policy = r.policy!!.copy(inventory = null)
+        val dir = tmp.newFolder()
+        java.io.File(dir, "starter-list.txt").writeText("test.camera\n")
+        var hits = 0
+        r.healthStore = org.plainphone.device.PreviewStarterPolicyStore(dir, { true }) {
+            hits++; throw java.io.IOException("injected")
+        }
+        assertEquals(PlayRequestResult.Unavailable, r.dispatcher.request(pin()))
+        assertEquals(1, hits)
+        assertNull(r.store.elevationStore.read()!!.state.countdown)
+        assertFalse(r.open)
+    }
+
 }
