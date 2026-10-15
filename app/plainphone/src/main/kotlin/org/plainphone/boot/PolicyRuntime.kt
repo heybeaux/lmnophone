@@ -336,7 +336,10 @@ class PolicyRuntime private constructor(private val context: Context) {
                 val plan = snapshot.plan(false)
                 if (snapshot.floorUnreadable?.isEmpty() == true) plan else null
             }
-        }, port, reads::emergencyRoute, reads::debugging).read()
+        }, port, reads::emergencyRoute, reads::debugging, emergencyFloor = {
+            val live = osFloorRead(packagesPort)
+            if (live.unreadable.isEmpty() && live.floor.hasSystemDialer) live.floor.neverHide else null
+        }).read()
         done(result)
     }
 

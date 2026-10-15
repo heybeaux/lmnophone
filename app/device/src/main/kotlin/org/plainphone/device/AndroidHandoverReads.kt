@@ -31,10 +31,16 @@ class AndroidHandoverReads(private val context: Context, private val port: Devic
             val all = pm.queryIntentActivities(intent, flags or PackageManager.MATCH_UNINSTALLED_PACKAGES or
                 PackageManager.MATCH_DISABLED_COMPONENTS or PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS)
             if (all.isEmpty()) return@map false
-            val selected = pm.resolveActivity(intent, flags)?.activityInfo
-            if (selected == null || candidates.none {
-                    it.activityInfo.packageName == selected.packageName && it.activityInfo.name == selected.name
-                }) return@map false // No resolver, or Android's chooser rather than an emergency UI.
+            if (candidates.isEmpty()) return@map false
+            // More uses this unscoped action. Its selected target must be a real emergency UI.
+            // The generic keyguard action may have several candidates: Telecom selects its target.
+            // EmergencyGate expects that candidate set, not an unscoped resolveActivity result.
+            if (action == "com.android.phone.EmergencyDialer.DIAL") {
+                val selected = pm.resolveActivity(intent, flags)?.activityInfo
+                if (selected == null || candidates.none {
+                        it.activityInfo.packageName == selected.packageName && it.activityInfo.name == selected.name
+                    }) return@map false
+            }
             all.map { candidate ->
                 val activity = candidate.activityInfo
                 val name = PackageName(activity.packageName)

@@ -14,6 +14,8 @@ class HandoverReader(
     private val port: DevicePolicyPort,
     private val emergencyRoute: (PolicyPlan) -> Boolean?,
     private val debugging: (DebuggingKind) -> Int?,
+    /** Preview plans also exempt non-floor system screens; use the actual OS floor there. */
+    private val emergencyFloor: (PolicyPlan) -> Set<org.plainphone.core.PackageName>? = { it.neverHide },
 ) {
     fun read(): HandoverReport {
         // One fresh immutable plan per check, never a cached last successful apply.
@@ -40,9 +42,10 @@ class HandoverReader(
             shownStates.all { !it.hidden && !it.suspended && it.enabled } && readback
     }
     private fun emergency(plan: PolicyPlan): Boolean? {
-        if (plan.neverHide.isEmpty() || plan.emergencyUi.isEmpty()) return null
-        val states = plan.neverHide.map { port.packageState(it) ?: return null }
+        val floor = emergencyFloor(plan) ?: return null
+        if (floor.isEmpty() || plan.emergencyUi.isEmpty()) return null
+        val states = floor.map { port.packageState(it) ?: return null }
         val route = emergencyRoute(plan) ?: return null
-        return !plan.needsAttention && states.all { !it.hidden && !it.suspended && it.enabled } && route
+        return !plan.needsAttention && plan.neverHide.containsAll(floor) && states.all { !it.hidden && !it.suspended && it.enabled } && route
     }
 }

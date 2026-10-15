@@ -645,7 +645,9 @@ or shorten a countdown. Emulator time acceleration is in androidTest only.
 `HandoverReport`: OK, NEEDS_HELPER or COULD_NOT_CHECK. Unknowns count as needing help;
 `ready` is always false while this subset leaves other handover gates unchecked.
 `:device` supplies `HandoverReader` (fresh plan, DeviceOwnerReader, DevicePolicyPort,
-resolve-only emergency route and debugging reads). `ReadbackPolicyApplier.readBackOrNull`
+resolve-only emergency route and debugging reads). The preview supplies the live OS
+emergency floor separately: its keep-visible exemptions include factory-disabled Home
+handlers, which are not emergency components. Unreadable OS roles fail closed. `ReadbackPolicyApplier.readBackOrNull`
 is the diagnostic readback seam; its existing Boolean readback keeps its prior behavior.
 `:plainphone` serializes the snapshot on PolicyRuntime's dispatcher and maps every item
 through `handoverUiState`. `:ui` receives only `HandoverUiState`, with no device reads or
