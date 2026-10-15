@@ -209,4 +209,17 @@ class PlaySessionDispatcherTest {
         assertFalse(r.open)
     }
 
+    @Test fun viewReportsRealCountdownStartWindowAndSpentTurns() {
+        val r = Rig()
+        assertEquals(2, r.dispatcher.view().left)
+        assertEquals(PlayRequestResult.Counting, r.dispatcher.request(pin()))
+        assertEquals(600_000L, r.dispatcher.view().countdownMillis)
+        r.now = 600_000
+        assertEquals(300_000L, r.dispatcher.view().readyMillis)
+        val id = r.dispatcher.view().id!!
+        assertEquals(ElevationOutcome.STARTED, r.dispatcher.start(id))
+        assertEquals(1, r.dispatcher.view().left)
+        assertTrue(r.dispatcher.view().active)
+    }
+
 }
