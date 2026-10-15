@@ -1,0 +1,35 @@
+# normal-after
+Device policy (relevant fields only):
+      UserRestrictionPolicyKey userRestriction_no_network_reset
+      UserRestrictionPolicyKey userRestriction_no_system_error_dialogs
+      UserRestrictionPolicyKey userRestriction_no_add_user
+      UserRestrictionPolicyKey userRestriction_no_config_cell_broadcasts
+      UserRestrictionPolicyKey userRestriction_no_usb_file_transfer
+      UserRestrictionPolicyKey userRestriction_no_safe_boot
+      UserRestrictionPolicyKey userRestriction_no_config_date_time
+      UserRestrictionPolicyKey userRestriction_no_create_windows
+    UserRestrictionPolicyKey userRestriction_no_config_vpn
+    UserRestrictionPolicyKey userRestriction_no_add_managed_profile
+  Permission policy: {}
+  Device Owner Type: -1
+Lock task state:
+mLockTaskModeState=NONE
+Package: org.plainphone
+User 0: ceDataInode=344745 deDataInode=49791 installed=true hidden=false suspended=false distractionFlags=0 stopped=false notLaunched=false enabled=0 instant=false virtual=false quarantined=false
+User 0:
+Package: com.google.android.contacts
+User 0: ceDataInode=344441 deDataInode=49584 installed=true hidden=false suspended=false distractionFlags=0 stopped=false notLaunched=false enabled=0 instant=false virtual=false quarantined=false
+android.permission.READ_CONTACTS: granted=false, flags=[ USER_SET|GRANTED_BY_DEFAULT|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+User 0:
+Package: com.google.android.calendar
+User 0: ceDataInode=344552 deDataInode=49677 installed=true hidden=false suspended=false distractionFlags=0 stopped=true notLaunched=false enabled=0 instant=false virtual=false quarantined=false
+User 0:
+User 0:
+android.permission.READ_CONTACTS: granted=true, flags=[ GRANTED_BY_DEFAULT|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]
+Hidden or uninstalled package query difference:
+Home resolver:
+priority=0 preferredOrder=0 match=0x0 specificIndex=-1 isDefault=false
+android/com.android.internal.app.ResolverActivity
+Dialer resolver:
+priority=0 preferredOrder=0 match=0x108000 specificIndex=-1 isDefault=true
+com.google.android.dialer/com.android.dialer.main.impl.MainActivity

@@ -1,0 +1,27 @@
+INSTRUMENTATION_RESULT: giveBack=GiveBackResult(outcome=OFF, remaining=0)
+INSTRUMENTATION_RESULT: outcome=PASS: run
+INSTRUMENTATION_RESULT: steps=RESTRICTION:no_config_vpn:DONE
+VISIBLE:com.android.chrome:DONE
+VISIBLE:com.android.stk:DONE
+VISIBLE:com.android.vending:DONE
+VISIBLE:com.google.android.apps.docs:DONE
+VISIBLE:com.google.android.apps.photos:DONE
+VISIBLE:com.google.android.apps.youtube.music:DONE
+VISIBLE:com.google.android.calendar:DONE
+VISIBLE:com.google.android.contacts:DONE
+VISIBLE:com.google.android.deskclock:DONE
+VISIBLE:com.google.android.documentsui:DONE
+VISIBLE:com.google.android.gm:DONE
+VISIBLE:com.google.android.googlequicksearchbox:DONE
+VISIBLE:com.google.android.youtube:DONE
+UNINSTALLABLE:com.google.android.contacts:DONE
+PERMISSION:com.google.android.contacts:DONE
+PERMISSION_POLICY::DONE
+INPUT_METHODS::DONE
+ACCESSIBILITY::DONE
+KEYGUARD_FEATURES::DONE
+PLAY_RESTRICTIONS:com.android.vending:DONE
+SYSTEM_UPDATE::DONE
+LOCK_TASK::DONE
+PREFERRED_HOME:org.plainphone:DONE
+INSTRUMENTATION_CODE: -1

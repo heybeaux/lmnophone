@@ -1,0 +1,9 @@
+INSTRUMENTATION_RESULT: calendarHidden=true
+INSTRUMENTATION_RESULT: contactsHidden=true
+INSTRUMENTATION_RESULT: grant=2
+INSTRUMENTATION_RESULT: home=org.plainphone
+INSTRUMENTATION_RESULT: lockFeatures=53
+INSTRUMENTATION_RESULT: lockPackages=com.android.camera2,com.google.android.apps.maps,com.google.android.dialer,com.android.server.telecom,com.google.android.apps.safetyhub,org.plainphone,com.google.android.apps.messaging,com.google.android.cellbroadcastreceiver,com.android.phone
+INSTRUMENTATION_RESULT: outcome=PASS: inspect
+INSTRUMENTATION_RESULT: owner=true
+INSTRUMENTATION_CODE: -1

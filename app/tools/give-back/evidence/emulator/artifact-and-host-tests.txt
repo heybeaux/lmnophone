@@ -1,0 +1,15 @@
+Artifact: development build 61 (0.1.0-preview-61), testOnly
+APK SHA-256: d750141a31c616461ae9e4b25a26705e3a3816105e570fdfa33391642c7e5739
+Instrumentation SHA-256: ef8acd299cb8ca6cc3d51384019bde8401bb28f71c204acc5e1bf237be3e83b8
+Environment: private read-only pla140-a35 AVD, Android API 35; no physical device
+
+policy:test: 688 tests, 0 failures
+device:testDebugUnitTest: 1176 tests, 0 failures
+device:testReleaseUnitTest: 1176 tests, 0 failures
+plainphone:testDebugUnitTest: 339 tests, 0 failures
+ui:testDebugUnitTest: 10 tests, 0 failures
+Source commit: 1f7846dfa5c4eaf172388eed1a90bbdbeecfb715
+Installed APK SHA-256: d750141a31c616461ae9e4b25a26705e3a3816105e570fdfa33391642c7e5739 (matches built APK)
+Android readback: versionCode=61 minSdk=30 targetSdk=36
+Android readback: versionName=0.1.0-preview-61
+Android readback: lastUpdateTime=2026-10-14 20:49:12
