@@ -7,6 +7,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource as s
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import org.plainphone.ui.components.fieldKeyboardNavigation
 import org.plainphone.ui.R
 import org.plainphone.ui.theme.*
 import org.plainphone.ui.components.withoutBidiControls
@@ -51,7 +55,11 @@ fun UpdateScreen(state: UpdateUiState, onEvent: (UpdateEvent) -> Unit) {
                 Text(label, style = PlainphoneType.Small)
                 BasicTextField(state.address, { onEvent(UpdateEvent.AddressChanged(it)) }, enabled = !state.sending,
                     singleLine = true, textStyle = PlainphoneType.Body,
-                    modifier = Modifier.fillMaxWidth().semantics { contentDescription = label }
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
+                    keyboardActions = KeyboardActions(onGo = {
+                        if (state.canContinue && !state.sending) onEvent(UpdateEvent.Continue)
+                    }),
+                    modifier = Modifier.fieldKeyboardNavigation().fillMaxWidth().semantics { contentDescription = label }
                         .border(PlainphoneSpace.Border, PlainphoneColors.Ink3, RoundedCornerShape(PlainphoneSpace.BoxRadius)).padding(PlainphoneSpace.S4))
             }
             UpdateStage.Getting -> { Words(s(R.string.update_getting_body)); CircularProgressIndicator(color = PlainphoneColors.Ink, trackColor = PlainphoneColors.Fill2) }

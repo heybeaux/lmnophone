@@ -6,6 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,6 +16,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import org.plainphone.ui.components.fieldKeyboardNavigation
 import org.plainphone.ui.R
 import org.plainphone.ui.components.ScreenLink
 import org.plainphone.ui.theme.*
@@ -68,6 +71,7 @@ fun FamilyScreen(state: FamilyUiState, onEvent: (FamilyEvent) -> Unit) {
         FamilyStage.Picture -> stringResource(R.string.family_letter)
         else -> stringResource(R.string.admin_continue)
     }
+    val submit = { if (state.canContinue) onEvent(FamilyEvent.Continue) }
     AdminFrame(state.context, title, primary,
         onPrimary = { onEvent(if (state.stage == FamilyStage.List) FamilyEvent.Enable else FamilyEvent.Continue) },
         enabled = state.canContinue, secondary = stringResource(R.string.family_back), onSecondary = { onEvent(FamilyEvent.Back) }) {
@@ -86,12 +90,12 @@ fun FamilyScreen(state: FamilyUiState, onEvent: (FamilyEvent) -> Unit) {
                 }
             }
             FamilyStage.Name -> {
-                FamilyField(stringResource(R.string.family_name), state.name) { onEvent(FamilyEvent.Name(it)) }
-                FamilyField(stringResource(R.string.family_spoken_name, state.context.userName), state.spokenName) { onEvent(FamilyEvent.SpokenName(it)) }
+                FamilyField(stringResource(R.string.family_name), state.name, imeAction = ImeAction.Next) { onEvent(FamilyEvent.Name(it)) }
+                FamilyField(stringResource(R.string.family_spoken_name, state.context.userName), state.spokenName, onSubmit = submit) { onEvent(FamilyEvent.SpokenName(it)) }
                 ScreenLink(stringResource(R.string.family_hear), { onEvent(FamilyEvent.Hear) })
                 if (state.editing) ScreenLink(stringResource(R.string.family_remove), { onEvent(FamilyEvent.AskRemove) })
             }
-            FamilyStage.Number -> FamilyField(stringResource(R.string.family_mobile), state.number, phone = true) { onEvent(FamilyEvent.Number(it)) }
+            FamilyStage.Number -> FamilyField(stringResource(R.string.family_mobile), state.number, phone = true, onSubmit = submit) { onEvent(FamilyEvent.Number(it)) }
             FamilyStage.Picture -> {
                 org.plainphone.ui.user.FamilyLetterPicture(state.name)
                 Words(stringResource(R.string.family_letter))
@@ -103,10 +107,12 @@ fun FamilyScreen(state: FamilyUiState, onEvent: (FamilyEvent) -> Unit) {
 }
 
 @Composable
-private fun FamilyField(label: String, value: String, phone: Boolean = false, onChange: (String) -> Unit) {
+private fun FamilyField(label: String, value: String, phone: Boolean = false,
+    imeAction: ImeAction = ImeAction.Done, onSubmit: () -> Unit = {}, onChange: (String) -> Unit) {
     Text(label, style = PlainphoneType.Small)
-    BasicTextField(value, onChange, textStyle = PlainphoneType.Body,
-        keyboardOptions = KeyboardOptions(keyboardType = if (phone) KeyboardType.Phone else KeyboardType.Text, autoCorrectEnabled = false),
-        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics { contentDescription = label }
+    BasicTextField(value, onChange, textStyle = PlainphoneType.Body, singleLine = phone,
+        keyboardActions = KeyboardActions(onDone = { onSubmit() }),
+        keyboardOptions = KeyboardOptions(keyboardType = if (phone) KeyboardType.Phone else KeyboardType.Text, autoCorrectEnabled = false, imeAction = imeAction),
+        modifier = Modifier.fieldKeyboardNavigation(singleLine = phone, action = imeAction, onSubmit = onSubmit).fillMaxWidth().heightIn(min = 56.dp).semantics { contentDescription = label }
             .border(PlainphoneSpace.Border, PlainphoneColors.Ink3).padding(PlainphoneSpace.S4))
 }

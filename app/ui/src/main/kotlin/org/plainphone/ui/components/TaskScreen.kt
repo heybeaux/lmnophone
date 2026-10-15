@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Density
 import org.plainphone.ui.theme.*
 
 /** The host supplies safe bounds. UX's measured fallback includes the band and actions in one
@@ -105,8 +106,19 @@ internal fun TaskScreen(
         @Composable fun Actions() {
             Column(Modifier.fillMaxWidth().padding(horizontal = PlainphoneSpace.S6)
                 .padding(top = PlainphoneSpace.S2, bottom = PlainphoneSpace.S2),
-                verticalArrangement = Arrangement.spacedBy(PlainphoneSpace.S2)) {
-                if (secondary != null) ScreenLink(secondary, onSecondary, enabled = secondaryEnabled)
+                // Compose the primary first for Tab traversal, but retain the approved visual
+                // layout: secondary above primary. Both remain ordinary focusable buttons.
+                verticalArrangement = object : Arrangement.Vertical {
+                    override val spacing = PlainphoneSpace.S2
+                    override fun Density.arrange(totalSize: Int, sizes: IntArray,
+                        outPositions: IntArray) {
+                        val visualPositions = IntArray(sizes.size)
+                        with(Arrangement.spacedBy(PlainphoneSpace.S2)) {
+                            arrange(totalSize, sizes.reversedArray(), visualPositions)
+                        }
+                        visualPositions.reversedArray().copyInto(outPositions)
+                    }
+                }) {
                 if (primary != null) {
                     val shape = RoundedCornerShape(percent = 50)
                     Box(Modifier.fillMaxWidth().background(
@@ -122,6 +134,7 @@ internal fun TaskScreen(
                             textAlign = TextAlign.Center)
                     }
                 }
+                if (secondary != null) ScreenLink(secondary, onSecondary, enabled = secondaryEnabled)
             }
         }
         key(title, band, back) {

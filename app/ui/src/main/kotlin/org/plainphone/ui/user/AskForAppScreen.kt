@@ -51,7 +51,7 @@ fun AskForAppScreen(state: AskForAppUiState, onEvent: (AskForAppEvent) -> Unit) 
             val focused by interactions.collectIsFocusedAsState()
             BasicTextField(value = state.message,
                 onValueChange = { onEvent(AskForAppEvent.MessageChanged(it)) },
-                modifier = Modifier.fillMaxWidth().testTag("request-message")
+                modifier = Modifier.fieldKeyboardNavigation(singleLine = false).fillMaxWidth().testTag("request-message")
                     .semantics { contentDescription = label }
                     .border(if (focused) PlainphoneSpace.Focus else PlainphoneSpace.Border,
                         if (focused) PlainphoneColors.Ink else PlainphoneColors.Ink3,
