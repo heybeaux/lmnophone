@@ -1,0 +1,14 @@
+Screenshot verification: 1447 tests, 11 established baseline failures.
+No new handover or opening screenshot failures.
+
+org.plainphone.ui.BrandingScreenshotTest.attention[fontScale=1.3]
+org.plainphone.ui.BrandingScreenshotTest.attention[fontScale=1.5]
+org.plainphone.ui.BrandingScreenshotTest.attention[fontScale=1.8]
+org.plainphone.ui.BrandingScreenshotTest.turnOff[fontScale=1.3]
+org.plainphone.ui.BrandingScreenshotTest.turnOff[fontScale=1.5]
+org.plainphone.ui.BrandingScreenshotTest.turnOff[fontScale=1.8]
+org.plainphone.ui.PreviewTurnOffScreenshotTest.maturityNotice[fontScale=1.3]
+org.plainphone.ui.PreviewTurnOffScreenshotTest.maturityNotice[fontScale=1.5]
+org.plainphone.ui.PreviewTurnOffScreenshotTest.maturityNotice[fontScale=1.8]
+org.plainphone.ui.PreviewTurnOffScreenshotTest.maturityNotice[fontScale=1]
+org.plainphone.ui.PreviewTurnOffScreenshotTest.maturityNotice[fontScale=2]
