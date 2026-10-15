@@ -3,6 +3,9 @@
 package org.plainphone.shell
 
 import androidx.compose.runtime.mutableStateOf
+import android.view.KeyEvent
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import org.junit.Rule
@@ -40,6 +43,19 @@ class PersonShellTalkBackTest {
         compose.onNodeWithContentDescription("Messages, 1 unread text").assertHasClickAction().performClick()
         assertEquals(listOf(ShellEffect.OpenDialer, ShellEffect.OpenMessages), steps.map { it.effect })
         compose.onAllNodes(hasClickAction()).assertCountEquals(3)
+        // The production shell and count mapper must also preserve keyboard reachability.
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB)
+        compose.onNodeWithContentDescription("Messages, 1 unread text")
+            .performSemanticsAction(SemanticsActions.RequestFocus) { it() }
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB)
+        compose.onNodeWithContentDescription("Phone, 2 missed calls").assertIsFocused()
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER)
+        compose.waitForIdle()
+        assertEquals(ShellEffect.OpenDialer, steps.last().effect)
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB)
+        compose.onNodeWithText("More").assertIsFocused()
+
         compose.runOnIdle { counts.value = CommunicationCounts(0, null) }
         compose.onNodeWithText("Phone").assertTextEquals("Phone").assertHasClickAction()
         compose.onNodeWithText("Messages").assertTextEquals("Messages").assertHasClickAction()

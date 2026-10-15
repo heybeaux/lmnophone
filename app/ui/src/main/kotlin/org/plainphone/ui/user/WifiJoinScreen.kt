@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +23,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import org.plainphone.ui.components.fieldKeyboardNavigation
 import org.plainphone.ui.R
 import org.plainphone.ui.components.TaskScreen
 import org.plainphone.ui.theme.*
@@ -51,9 +54,10 @@ fun WifiJoinScreen(state: WifiJoinUiState, onEvent: (WifiJoinEvent) -> Unit) {
                 Text(label, style = PlainphoneType.Body)
                 BasicTextField(state.password, { onEvent(WifiJoinEvent.Password(it)) }, enabled = !state.joining,
                     textStyle = PlainphoneType.Body, singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { if (!state.joining) onEvent(WifiJoinEvent.Connect) }),
                     visualTransformation = if (state.showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                    modifier = Modifier.fieldKeyboardNavigation().fillMaxWidth().heightIn(min = 56.dp)
                         .border(PlainphoneSpace.Border, PlainphoneColors.Ink3).padding(PlainphoneSpace.S4)
                         .semantics { contentDescription = label })
                 Row(Modifier.fillMaxWidth().heightIn(min = 56.dp)

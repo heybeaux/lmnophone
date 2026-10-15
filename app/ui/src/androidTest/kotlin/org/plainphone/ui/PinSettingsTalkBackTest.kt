@@ -232,15 +232,16 @@ class PinSettingsTalkBackTest {
     }
     @Test fun allChangedPathsFitAtLargeTextAndLastActionClearsNavigation() {
         data class Page(val name: String, val last: String, val content: @Composable () -> Unit)
+        val namedContext = mutableStateOf(AdminContext("Al", "Al"))
         val pages = listOf(
-            Page("enter", "Continue") { PinScreen(PinUiState(context), {}) },
-            Page("wrong", "Continue") { PinScreen(PinUiState(context, wrongPin = true), {}) },
-            Page("wait", "Use recovery code") { PinScreen(PinUiState(context, PinStage.Locked, wait = "1 minute"), {}) },
-            Page("recovery", "Continue") { PinScreen(PinUiState(context, PinStage.Recovery, wrongRecoveryCode = true), {}) },
-            Page("recovery-wait", "Enter PIN instead") { PinScreen(PinUiState(context, PinStage.RecoveryLocked, wait = "1 minute"), {}) },
-            Page("new-pin", "Continue") { PinScreen(PinUiState(context, PinStage.NewPin, mismatch = true), {}) },
-            Page("code", "I've written it down") { PinScreen(PinUiState(context, PinStage.RecoveryIssued, recoveryCode = "1234-ABCD-5678-EFGH-9012-IJKL-3456-MNOP"), {}) },
-            Page("change-result", "OK") { PinChangeResultScreen(context, false) {} },
+            Page("enter", "Continue") { PinScreen(PinUiState(namedContext.value), {}) },
+            Page("wrong", "Continue") { PinScreen(PinUiState(namedContext.value, wrongPin = true), {}) },
+            Page("wait", "Use recovery code") { PinScreen(PinUiState(namedContext.value, PinStage.Locked, wait = "1 minute"), {}) },
+            Page("recovery", "Continue") { PinScreen(PinUiState(namedContext.value, PinStage.Recovery, wrongRecoveryCode = true), {}) },
+            Page("recovery-wait", "Enter PIN instead") { PinScreen(PinUiState(namedContext.value, PinStage.RecoveryLocked, wait = "1 minute"), {}) },
+            Page("new-pin", "Continue") { PinScreen(PinUiState(namedContext.value, PinStage.NewPin, mismatch = true), {}) },
+            Page("code", "I've written it down") { PinScreen(PinUiState(namedContext.value, PinStage.RecoveryIssued, recoveryCode = "1234-ABCD-5678-EFGH-9012-IJKL-3456-MNOP"), {}) },
+            Page("change-result", "OK") { PinChangeResultScreen(namedContext.value, false) {} },
             Page("menu", "Done – back to the home screen") { AdminMenuScreen(AdminMenuUiState(context,
                 listOf(AdminMenuItem(AdminDestination.Apps), AdminMenuItem(AdminDestination.Requests),
                     AdminMenuItem(AdminDestination.RequestRecipient), AdminMenuItem(AdminDestination.ChangePin),
@@ -278,8 +279,9 @@ class PinSettingsTalkBackTest {
                 } }
             }
         }
-        listOf(1.3f, 1.5f, 2f).forEach { fontScale -> pages.forEachIndexed { index, page ->
-            compose.runOnIdle { scale.floatValue = fontScale; current.intValue = index }
+        listOf("Al", "Maximiliana-Josephine").forEach { name ->
+        listOf(1.3f, 1.5f, 1.8f, 2f).forEach { fontScale -> pages.forEachIndexed { index, page ->
+            compose.runOnIdle { namedContext.value = AdminContext(name, name); scale.floatValue = fontScale; current.intValue = index }
             compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
                 .fetchSemanticsNodes().forEach { node ->
                     val results = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
@@ -311,12 +313,12 @@ class PinSettingsTalkBackTest {
             last.assertIsDisplayed()
             val bounds = last.fetchSemanticsNode().boundsInRoot
             val root = compose.onRoot().fetchSemanticsNode().boundsInRoot
-            assertTrue("${page.name}: action fits safe viewport", bounds.bottom <= root.bottom)
+            val fullBounds = last.getUnclippedBoundsInRoot()
+            assertTrue("${page.name}: whole action fits safe viewport", fullBounds.top >= 0.dp && fullBounds.bottom.value <= root.bottom / compose.density.density)
             // Test host reserves the same 80 dp for system bars as the 360 x 640 goldens.
             val density = compose.density.density
-            assertTrue("${page.name}: footer below spare navigation boundary", last.fetchSemanticsNode().boundsInWindow.bottom < 2280)
             println("PIN_LAYOUT ${page.name} scale=$fontScale bottomDp=${bounds.bottom / density} safeBottomDp=${root.bottom / density} bottomWindowPx=${last.fetchSemanticsNode().boundsInWindow.bottom}")
-        } }
+        } } }
     }
 
 }

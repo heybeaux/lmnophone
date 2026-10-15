@@ -259,9 +259,8 @@ private fun SendBody(text: String) {
 private fun PersonRow(person: VoicePersonUi, family: Boolean = false, onClick: () -> Unit) {
     if (family) {
         val description = if (person.newMessage) stringResource(R.string.family_new_message_desc, person.name) else person.name
-        Column(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description; role = Role.Button
-            onClick { onClick(); true } }
-            .plainphoneAction(onClick = onClick).padding(vertical = PlainphoneSpace.S4),
+        Column(Modifier.fillMaxWidth().plainphoneAction(onClick = onClick)
+            .clearAndSetSemantics { contentDescription = description }.padding(vertical = PlainphoneSpace.S4),
             horizontalAlignment = Alignment.CenterHorizontally) {
             PersonPicture(person, 120.dp, decorative = true)
             Text(person.name, style = PlainphoneType.App, textAlign = TextAlign.Center)
@@ -308,15 +307,16 @@ private fun PersonHeader(person: VoicePersonUi, onEvent: (VoiceUiEvent) -> Unit,
 private fun PersonPicture(person: VoicePersonUi, size: Dp, decorative: Boolean = false, onHearName: (() -> Unit)? = null) {
     val description = stringResource(R.string.voice_picture, person.name)
     val actionLabel = stringResource(R.string.voice_hear_name_action)
-    // The outer box owns the semantics; it clears the inner tap target's, so TalkBack gets one labelled action.
-    Box(Modifier.size(size).then(if (decorative) Modifier.clearAndSetSemantics {} else Modifier.clearAndSetSemantics {
+    // Keep keyboard focus and the spoken action on the same target; clear only the picture.
+    Box(Modifier.size(size)
+        .then(if (onHearName != null) Modifier.plainphoneAction(shape = CircleShape, onClick = onHearName) else Modifier)
+        .then(if (decorative) Modifier.clearAndSetSemantics {} else Modifier.clearAndSetSemantics {
         contentDescription = description
         if (onHearName != null) {
             role = Role.Button
             onClick(label = actionLabel) { onHearName(); true }
         }
     })) { Box(Modifier.fillMaxSize()
-        .then(if (onHearName != null) Modifier.plainphoneAction(shape = CircleShape, onClick = onHearName) else Modifier)
         .background(if (person.pictureInInk) PlainphoneColors.Ink else PlainphoneColors.Fill2, CircleShape)
         .border(PlainphoneSpace.Border, PlainphoneColors.Ink, CircleShape), contentAlignment = Alignment.Center) {
         // Sized in dp, not scaled with the text size: it is a picture.

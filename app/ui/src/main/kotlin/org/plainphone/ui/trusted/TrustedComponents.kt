@@ -11,6 +11,8 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -74,15 +76,16 @@ internal fun AdminFrame(context: AdminContext?, title: String, primary: String? 
 }
 /** No local secret state or persistence. Host supplies and clears it, and owns FLAG_SECURE. */
 @Composable internal fun SecretField(label: String, value: String, tag: String, numeric: Boolean,
-    enabled: Boolean, onChange: (String) -> Unit) {
+    enabled: Boolean, imeAction: ImeAction = ImeAction.Done, onSubmit: () -> Unit, onChange: (String) -> Unit) {
     Text(label, style = PlainphoneType.Small)
     val interactions = remember { MutableInteractionSource() }
     val focused by interactions.collectIsFocusedAsState()
     BasicTextField(value, onChange, enabled = enabled, singleLine = true,
         textStyle = PlainphoneType.Body, interactionSource = interactions,
-        keyboardOptions = KeyboardOptions(keyboardType = if (numeric) KeyboardType.NumberPassword else KeyboardType.Password),
+        keyboardOptions = KeyboardOptions(keyboardType = if (numeric) KeyboardType.NumberPassword else KeyboardType.Password, imeAction = imeAction),
+        keyboardActions = KeyboardActions(onDone = { onSubmit() }),
         visualTransformation = PasswordVisualTransformation(),
-        modifier = Modifier.fillMaxWidth().testTag(tag).semantics { contentDescription = label }
+        modifier = Modifier.fieldKeyboardNavigation().fillMaxWidth().testTag(tag).semantics { contentDescription = label }
             .border(if (focused) PlainphoneSpace.Focus else PlainphoneSpace.Border,
                 if (focused) PlainphoneColors.Ink else PlainphoneColors.Ink3, RoundedCornerShape(PlainphoneSpace.BoxRadius))
             .heightIn(min = 56.dp).padding(PlainphoneSpace.S4))

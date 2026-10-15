@@ -5,6 +5,7 @@ package org.plainphone.ui.trusted
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringResource as s
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -39,6 +40,7 @@ fun PinScreen(state: PinUiState, onEvent: (PinEvent) -> Unit) {
         PinStage.RecoveryIssued -> s(R.string.admin_code_written)
         else -> s(R.string.admin_continue)
     }
+    val submit = { if (state.canContinue && !state.sending) onEvent(PinEvent.Continue) }
     AdminFrame(state.context, title, primary, {
         onEvent(when (state.stage) { PinStage.Locked -> PinEvent.UseRecoveryCode;
             PinStage.RecoveryLocked -> if (state.recoveryLockout == RecoveryLockoutKind.PinAvailable) PinEvent.EnterPin else PinEvent.Ok; PinStage.RecoveryIssued -> PinEvent.Ok; else -> PinEvent.Continue })
@@ -58,7 +60,7 @@ fun PinScreen(state: PinUiState, onEvent: (PinEvent) -> Unit) {
                 if (state.freshExplanation) Words(s(R.string.admin_pin_fresh))
                 state.pendingChange?.let { Words(s(if (self) R.string.admin_recovery_pending_self else R.string.admin_recovery_pending, it.withoutBidiControls())) }
                 if (state.wrongPin) StatusWords(s(R.string.admin_pin_wrong))
-                SecretField(s(R.string.admin_pin_label), state.value, "pin-input", true, !state.sending) { onEvent(PinEvent.ValueChanged(it)) }
+                SecretField(s(R.string.admin_pin_label), state.value, "pin-input", true, !state.sending, onSubmit = submit) { onEvent(PinEvent.ValueChanged(it)) }
             }
             PinStage.Locked -> Words(if (other == null) s(R.string.admin_pin_wait, state.wait)
                 else s(R.string.admin_pin_wait_two, state.wait, name, other))
@@ -67,7 +69,7 @@ fun PinScreen(state: PinUiState, onEvent: (PinEvent) -> Unit) {
                 if (state.wrongRecoveryCode) StatusWords(s(R.string.admin_recovery_wrong))
                 if (self) Words(s(R.string.admin_recovery_self))
                 state.pendingChange?.let { Words(s(if (self) R.string.admin_recovery_pending_self else R.string.admin_recovery_pending, it.withoutBidiControls())) }
-                SecretField(s(R.string.admin_recovery_label), state.value, "recovery-input", false, !state.sending) { onEvent(PinEvent.ValueChanged(it)) }
+                SecretField(s(R.string.admin_recovery_label), state.value, "recovery-input", false, !state.sending, onSubmit = submit) { onEvent(PinEvent.ValueChanged(it)) }
                 Words(s(R.string.admin_recovery_google))
             }
             PinStage.RecoveryLocked -> {
@@ -82,8 +84,8 @@ fun PinScreen(state: PinUiState, onEvent: (PinEvent) -> Unit) {
             }
             PinStage.NewPin -> {
                 if (state.mismatch) StatusWords(s(R.string.admin_pin_mismatch))
-                SecretField(s(R.string.admin_pin_label), state.value, "pin-input", true, !state.sending) { onEvent(PinEvent.ValueChanged(it)) }
-                SecretField(s(R.string.admin_pin_again), state.confirmation, "pin-confirm", true, !state.sending) { onEvent(PinEvent.ConfirmationChanged(it)) }
+                SecretField(s(R.string.admin_pin_label), state.value, "pin-input", true, !state.sending, onSubmit = submit, imeAction = ImeAction.Next) { onEvent(PinEvent.ValueChanged(it)) }
+                SecretField(s(R.string.admin_pin_again), state.confirmation, "pin-confirm", true, !state.sending, onSubmit = submit) { onEvent(PinEvent.ConfirmationChanged(it)) }
             }
             PinStage.RecoveryIssued -> {
                 Words(if (self) s(R.string.admin_code_self) else s(R.string.admin_code_body, state.context.userName.withoutBidiControls()))

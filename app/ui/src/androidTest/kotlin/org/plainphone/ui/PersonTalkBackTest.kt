@@ -101,8 +101,10 @@ class PersonTalkBackTest {
     }
     @Test fun settingsFamilyAndAboutMatrixAtLargeText() {
         data class Page(val title: String, val last: String, val content: @Composable () -> Unit)
-        val pages = listOf(
-            Page("More", "About this phone") { MoreScreen(MoreUiState(MoreMode.Trusted(emptyList(), ""), voicePractice = true, pinHolderOnly = true), {}) },
+        fun pages(name: String): List<Page> {
+        val person = VoicePersonUi("test-person", name)
+        return listOf(
+            Page("More", "About this phone") { MoreScreen(MoreUiState(MoreMode.Trusted(listOf(name), name), voicePractice = true, pinHolderOnly = false), {}) },
             Page("Phone settings", "Show missed calls and unread texts on Home") { PhoneSettingsScreen(PhoneSettingsUiState(), {}) },
             Page("Wi-Fi", "Alex network") { WifiSettingsScreen(WifiSettingsUiState(nearby = emptyList(), choices = listOf(WifiNearbyUi("a", "Alex network"))), {}) },
             Page("Bluetooth", "Pair a new device") { BluetoothSettingsScreen(BluetoothSettingsUiState(true, emptyList(), false), {}) },
@@ -112,31 +114,35 @@ class PersonTalkBackTest {
             Page("Ringtone", "Done") { RingtoneScreen(RingtoneUiState(listOf(RingtoneOption("a", "Chime")), "a", canSave = true), {}) },
             Page("Text size", "Done") { TextSizeScreen(TextSizeUiState("150", true, true), {}) },
             Page("Battery", "Phone settings") { BatteryScreen(BatteryUiState(50), {}) },
-            Page("LMNOPhone", "OK") { AboutScreen(AboutUiState("test", 1, null, emptyList(), emptyList()), {}) },
-            Page("Ask for an app", "OK") { RequestsScreen(RequestsUiState(), {}) },
-            Page("Who do you want to talk to?", "Sam") { VoicePracticeScreen(VoiceUiState.ChoosePerson(listOf(person), fromHome = true, practice = false), {}) },
-            Page("Sam", "Record") { VoicePracticeScreen(VoiceUiState.Person(person), {}) },
-            Page("Sam", "Stop") { VoicePracticeScreen(VoiceUiState.Recording(person), {}) },
-            Page("Sam", "Send to Sam") { VoicePracticeScreen(VoiceUiState.Review(person, canSend = true, practice = false), {}) },
-            Page("Sending to Sam", "Back") { VoicePracticeScreen(VoiceUiState.Sending(person), {}) },
-            Page("Sent to Sam", "Done") { VoicePracticeScreen(VoiceUiState.Sent(person), {}) },
-            Page("Not sent to Sam", "Try again") { VoicePracticeScreen(VoiceUiState.NotSent(person, VoiceUiSendProblem.NotSent), {}) },
+            Page("LMNOPhone", "OK") { AboutScreen(AboutUiState("test", 62, null, emptyList(), listOf(ReleaseNoteUi("61", listOf("PIN settings are easier to read aloud."))), showOlder = true), {}) },
+            Page("Ask for an app", "Send") { RequestsScreen(RequestsUiState(isSetUp = true, recipientName = name, message = "Maps please", canSend = true), {}) },
+            Page("Ask for an app", "Send to $name") { AskForAppScreen(AskForAppUiState(name, message = "Maps please", canSend = true), {}) },
+            Page("Home", "More") { HomeScreen(HomeUiState("10:42", "Thursday 8 October", "Thu 8 Oct", listOf(HomeApp("camera", "Camera")), missedCalls = 99, unreadTexts = 99, showFamily = true), {}) },
+            Page("Who do you want to talk to?", name) { VoicePracticeScreen(VoiceUiState.ChoosePerson(listOf(person), fromHome = true, practice = false), {}) },
+            Page(name, "Record") { VoicePracticeScreen(VoiceUiState.Person(person), {}) },
+            Page(name, "Stop") { VoicePracticeScreen(VoiceUiState.Recording(person), {}) },
+            Page(name, "Send to $name") { VoicePracticeScreen(VoiceUiState.Review(person, canSend = true, practice = false), {}) },
+            Page("Sending to $name", "Back") { VoicePracticeScreen(VoiceUiState.Sending(person), {}) },
+            Page("Sent to $name", "Done") { VoicePracticeScreen(VoiceUiState.Sent(person), {}) },
+            Page("Not sent to $name", "Try again") { VoicePracticeScreen(VoiceUiState.NotSent(person, VoiceUiSendProblem.NotSent), {}) },
             Page("Alex network", "Connect") { WifiJoinScreen(WifiJoinUiState("Alex network", WifiJoinKind.Open), {}) },
         )
-        val page = mutableStateOf(pages.first())
+        }
+        val page = mutableStateOf(pages("Al").first())
         val scale = mutableStateOf(1.3f)
         mount { DeviceConfigurationOverride(DeviceConfigurationOverride.FontScale(scale.value)) { key(page.value) { page.value.content() } } }
-        for (font in listOf(1.3f, 1.5f, 2f)) for (next in pages) {
+        for (name in listOf("Al", "Maximiliana-Josephine")) for (font in listOf(1.3f, 1.5f, 1.8f, 2f)) for (next in pages(name)) {
             compose.runOnIdle { scale.value = font; page.value = next }
-            compose.onNode(hasText(next.title) and heading).assertExists()
+            if (next.title != "Home") compose.onNode(hasText(next.title) and heading).assertExists()
             val last = compose.onNode((hasText(next.last) or hasContentDescription(next.last)) and hasClickAction())
+            val safeBottom = compose.onRoot().getUnclippedBoundsInRoot().bottom
             val before = last.getUnclippedBoundsInRoot()
-            if (before.top < 0.dp || before.bottom > 560.dp) last.performScrollTo()
+            if (before.top < 0.dp || before.bottom > safeBottom) last.performScrollTo()
             last.assertIsDisplayed()
             val bounds = last.getUnclippedBoundsInRoot()
-            assertTrue("${next.title} at $font: last action below safe area", bounds.bottom <= 560.dp && bounds.top >= 0.dp)
+            assertTrue("${next.title} at $font: last action below safe area", bounds.bottom <= safeBottom && bounds.top >= 0.dp)
             noGlyphs()
-            val actions = compose.onAllNodes(hasClickAction()).fetchSemanticsNodes()
+            val actions = compose.onAllNodes(hasClickAction() and SemanticsMatcher.keyNotDefined(SemanticsProperties.EditableText)).fetchSemanticsNodes()
             actions.forEach { node ->
                 val words = node.config.getOrElse(SemanticsProperties.Text) { emptyList() }.map { it.text }
                 val descriptions = node.config.getOrElse(SemanticsProperties.ContentDescription) { emptyList() }
@@ -148,7 +154,9 @@ class PersonTalkBackTest {
             repeat(texts.fetchSemanticsNodes().size) { index ->
                 val results = mutableListOf<TextLayoutResult>()
                 texts[index].performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(results) }
-                assertTrue("${next.title} at $font: clipped text", results.all { !it.didOverflowHeight && (0 until it.lineCount).none(it::isLineEllipsized) })
+                assertTrue("${next.title} at $font: clipped text", results.all { !it.didOverflowHeight && (0 until it.lineCount).all { line ->
+                    !it.isLineEllipsized(line) && it.getLineRight(line) - it.getLineLeft(line) <= it.size.width + 1f
+                } })
             }
         }
     }

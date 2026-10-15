@@ -6,6 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -134,8 +136,9 @@ sealed interface RecipientEvent {
                 Text(state.number, style = PlainphoneType.Body)
             }
             state.editing -> {
-                RequestField(s(R.string.requests_name), state.name) { event(RecipientEvent.Name(it)) }
-                RequestField(s(R.string.requests_number), state.number, phone = true) { event(RecipientEvent.Number(it)) }
+                RequestField(s(R.string.requests_name), state.name, imeAction = ImeAction.Next) { event(RecipientEvent.Name(it)) }
+                RequestField(s(R.string.requests_number), state.number, phone = true, imeAction = ImeAction.Done,
+                    onSubmit = { if (state.canSave) event(RecipientEvent.Continue) }) { event(RecipientEvent.Number(it)) }
             }
             else -> if (state.number.isEmpty()) Text(s(R.string.requests_setup), style = PlainphoneType.Body) else {
                 if (state.name.isNotEmpty()) Text(state.name.withoutBidiControls(), style = PlainphoneType.Body)
@@ -145,10 +148,12 @@ sealed interface RecipientEvent {
         }
     }
 }
-@Composable private fun RequestField(label: String, value: String, phone: Boolean = false, enabled: Boolean = true, change: (String) -> Unit) {
+@Composable private fun RequestField(label: String, value: String, phone: Boolean = false, enabled: Boolean = true,
+    imeAction: ImeAction = ImeAction.Default, onSubmit: () -> Unit = {}, change: (String) -> Unit) {
     Text(label, style = PlainphoneType.Small)
-    BasicTextField(value, change, enabled = enabled, textStyle = PlainphoneType.Body,
-        keyboardOptions = KeyboardOptions(keyboardType = if(phone) KeyboardType.Phone else KeyboardType.Text, autoCorrectEnabled = false),
-        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics { contentDescription = label }
+    BasicTextField(value, change, enabled = enabled, textStyle = PlainphoneType.Body, singleLine = phone,
+        keyboardActions = KeyboardActions(onDone = { onSubmit() }),
+        keyboardOptions = KeyboardOptions(keyboardType = if(phone) KeyboardType.Phone else KeyboardType.Text, autoCorrectEnabled = false, imeAction = imeAction),
+        modifier = Modifier.fieldKeyboardNavigation(singleLine = phone, action = imeAction, onSubmit = onSubmit).fillMaxWidth().heightIn(min = 56.dp).semantics { contentDescription = label }
             .border(PlainphoneSpace.Border, PlainphoneColors.Ink3).padding(PlainphoneSpace.S4))
 }
