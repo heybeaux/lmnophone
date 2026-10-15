@@ -8,6 +8,13 @@ import org.plainphone.device.session.PlaySessionView
 import org.plainphone.ui.trusted.*
 
 class PlayUiMapperTest {
+    @Test fun menuWaitRoundsUpAtMinuteBoundariesWithoutOverflow() {
+        for ((millis, expected) in listOf(-1L to 1, 0L to 1, 1L to 1, 60000L to 1,
+            60001L to 2, 600000L to 10, Long.MAX_VALUE to Int.MAX_VALUE)) {
+            assertEquals(expected, playWaitMinutes(millis))
+        }
+    }
+
     @Test fun mapsRealWaitQuotaCountdownAndReadyWindow() {
         val context = AdminContext("Alex")
         val before = playOpeningUi(PlaySessionView(left = 1, limit = 2, waitMillis = 600000), context)

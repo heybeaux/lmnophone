@@ -29,10 +29,15 @@ class PlayFullBodyScreenshotTest {
                 helper = "the person who set up this phone", canShowDetails = false)) {}
         } } }
     }
+    @Test fun exhaustedQuotaUsesSingularAndPlural() {
+        val res = paparazzi.context.resources
+        assertTrue(res.getQuantityString(R.plurals.opening_none_body, 1, 1, "later").startsWith("You've used your 1 opening."))
+        assertTrue(res.getQuantityString(R.plurals.opening_none_body, 2, 2, "later").startsWith("You've used your 2 openings."))
+    }
     @Test fun countsUseSingularAndPluralInBeforeAndReady() {
         val res = paparazzi.context.resources
         for (left in listOf(1, 2)) {
-            val expected = if (left == 1) "1 opening left" else "2 openings left"
+            val expected = if (left == 1) "This is your last opening today." else "2 openings left"
             assertTrue(res.getQuantityString(R.plurals.opening_before_body, left, 10, "Play", 10, left).contains(expected))
             assertTrue(res.getQuantityString(R.plurals.opening_ready_body, left, 5, left).contains(expected))
             assertTrue(res.getQuantityString(R.plurals.opening_ready_body_one, left, left).contains(expected))
