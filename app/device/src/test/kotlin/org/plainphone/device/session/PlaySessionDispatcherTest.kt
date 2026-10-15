@@ -171,11 +171,12 @@ class PlaySessionDispatcherTest {
         assertEquals(1, r.store.elevationStore.read()!!.state.ledger.debits.size)
     }
 
-    @Test fun previewEnrollmentDoesNotInventFrictionOrRecoveryIdentity() {
+    @Test fun previewEnrollmentUsesStandardLimitsWithoutInventingRecoveryIdentity() {
         val r = Rig(fullProfile = false)
-        assertEquals(PlayRequestResult.LimitReached, r.dispatcher.request(pin()))
+        assertEquals(PlayRequestResult.Counting, r.dispatcher.request(pin()))
         assertNull(r.store.credentials.read()!!.recoveryProfile)
-        assertNull(r.store.elevationStore.read()!!.state.countdown)
+        assertEquals(600_000L, r.store.elevationStore.read()!!.state.countdown!!.durationMillis)
+        assertEquals(ElevationLimits(), r.store.activeLimits())
         assertTrue(r.store.elevationStore.read()!!.state.ledger.debits.isEmpty())
     }
 
@@ -186,10 +187,10 @@ class PlaySessionDispatcherTest {
         assertNull(r.store.elevationStore.read()!!.state.countdown)
     }
 
-    @Test fun missingInventoryRefusesWithoutInventingAuthorityOrDebit() {
+    @Test fun playWithoutInventoryStillRequiresCountdownAndFreshPin() {
         val r = Rig(); r.policy = r.policy!!.copy(inventory = null)
-        assertEquals(PlayRequestResult.Unavailable, r.dispatcher.request(pin()))
-        assertNull(r.store.elevationStore.read()!!.state.countdown)
+        assertEquals(PlayRequestResult.Counting, r.dispatcher.request(pin()))
+        assertNotNull(r.store.elevationStore.read()!!.state.countdown)
         assertTrue(r.store.elevationStore.read()!!.state.ledger.debits.isEmpty())
         assertFalse(r.open)
     }

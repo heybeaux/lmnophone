@@ -100,6 +100,33 @@ class ElevationControllerTest {
     }
     private fun start(r: ElevationRequest): ElevationOutcome = controller.start(r.id, r.target)
 
+    @Test fun `Play alone can prepare without a matching inventory`() {
+        setup(); policy = policy!!.copy(inventory = null)
+        assertNotNull(controller.prepare(person, ElevationTarget.Play))
+        assertNull(controller.prepare(person, ElevationTarget.Settings))
+        policy = policy!!.copy(inventory = inventory, fingerprint = "unknown")
+        assertNotNull(controller.prepare(person, ElevationTarget.Play))
+        assertNull(controller.prepare(person, ElevationTarget.Settings))
+    }
+
+    @Test fun `inventory-free Play retains live health boot and system dialer gates`() {
+        for (change in listOf("invalid", "backup", "locked", "dialer")) {
+            val f = ElevationControllerTest(); f.setup()
+            f.policy = f.policy!!.copy(inventory = null)
+            val request = f.request(); f.advance(600_000)
+            f.policy = when (change) {
+                "invalid" -> f.policy!!.copy(health = PolicyHealth.BOTH_INVALID)
+                "backup" -> f.policy!!.copy(health = PolicyHealth.LAST_KNOWN_GOOD)
+                "locked" -> f.policy!!.copy(lockedBoot = true)
+                else -> f.policy!!.copy(identities = emptyList())
+            }
+            assertTrue(f.start(request) != ElevationOutcome.STARTED, change)
+            assertFalse(f.physicallyOpen, change)
+            assertTrue(f.record!!.state.ledger.debits.isEmpty(), change)
+            assertNull(f.controller.prepare(f.person, ElevationTarget.Play), change)
+        }
+    }
+
     @Test fun `decoded grant and countdown do not restore controller ownership`() {
         setup(); val r = request(); advance(600_000)
         val pending = record!!
@@ -168,7 +195,7 @@ class ElevationControllerTest {
     }
     @Test fun `Start rejects live mode inventory battery operation and credential changes`() {
         for (change in listOf("mode", "generation", "structure", "inventory", "locked", "battery", "clock")) {
-            val f = ElevationControllerTest(); f.setup(); val r = f.request(); f.advance(600_000)
+            val f = ElevationControllerTest(); f.setup(); val r = f.request(if (change == "inventory") ElevationTarget.Settings else ElevationTarget.Play); f.advance(600_000)
             when (change) {
                 "mode" -> f.credentials = CredentialState(Mode.TRUSTED, f.credentials!!.people)
                 "generation" -> f.credentials = f.credentials!!.replacing(f.person, f.credentials!!.people.getValue(f.person).copy(generation = 1))
