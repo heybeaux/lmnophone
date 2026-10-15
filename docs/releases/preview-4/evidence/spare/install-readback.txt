@@ -1,4 +1,4 @@
-preview-4 spare install read-back (ZY22KW6P9J, moto g power 5G 2024, Android 15)
+preview-4 spare install read-back ([REDACTED_SPARE_SERIAL], moto g power 5G 2024, Android 15)
 Driver: Android Platform Engineer (sole driver), PLA-303.
 Candidate: release/preview-4 @ 564208086b41ee8f17068c3345a1f8019745dc1f (APK built from source head 354bcc1; later commits are tools/docs only).
 APK: Lead attachment 607da07d (gzip), decompressed SHA-256 cbf8ad4a80f7cbb1a0eb3eb63b09a4f1d53e1b36de0a55e783db8fa31f4a5232 (matches recorded digest).

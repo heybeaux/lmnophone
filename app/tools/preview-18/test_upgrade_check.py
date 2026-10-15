@@ -75,11 +75,27 @@ class GateTest(unittest.TestCase):
         with self.assertRaises(gate.GateFailure): gate.tap_bounds('<hierarchy/>', 'More')
 
     def test_serial_and_negative_control_guards(self):
+        spare = 'test-spare-serial'
+        driver = {'PLAINPHONE_SPARE_SERIAL': spare, 'PLAINPHONE_SPARE_DRIVER': '1'}
         gate.check_target('emulator-5860', {})
-        for serial in ['emulator-5590', 'emulator-5604', 'emulator-5742', 'unknown', 'ZY22KW6P9J']:
+        for serial in ['emulator-5590', 'emulator-5604', 'emulator-5742', 'unknown', spare]:
             with self.assertRaises(gate.GateFailure): gate.check_target(serial, {})
-        gate.check_target('ZY22KW6P9J', {'PLAINPHONE_SPARE_DRIVER':'1'})
-        with self.assertRaises(gate.GateFailure): gate.check_target('ZY22KW6P9J', {'PLAINPHONE_SPARE_DRIVER':'1', 'EXPECT_DIAL':'912'})
+        for value in ['', None]:
+            env = {'PLAINPHONE_SPARE_DRIVER': '1'}
+            if value is not None:
+                env['PLAINPHONE_SPARE_SERIAL'] = value
+            with self.assertRaisesRegex(gate.GateFailure, 'PLAINPHONE_SPARE_SERIAL'):
+                gate.check_target(spare, env)
+        gate.check_target(spare, driver)
+        with self.assertRaises(gate.GateFailure):
+            gate.check_target('different-test-spare', driver)
+        with self.assertRaises(gate.GateFailure):
+            gate.check_target(spare, {'PLAINPHONE_SPARE_SERIAL': spare})
+        with self.assertRaises(gate.GateFailure):
+            gate.check_target(spare, dict(driver, EXPECT_DIAL='912', PLAINPHONE_CHECK_SELF_TEST='1'))
+        for serial in ['emulator-5590', 'emulator-5604', 'emulator-5742', 'emulator-invalid']:
+            with self.assertRaises(gate.GateFailure):
+                gate.check_target(serial, dict(driver, PLAINPHONE_SPARE_SERIAL=serial))
         with self.assertRaises(gate.GateFailure): gate.check_target('emulator-5860', {'EXPECT_DIAL':'912'})
         gate.check_target('emulator-5860', {'EXPECT_DIAL':'912', 'PLAINPHONE_CHECK_SELF_TEST':'1'})
 

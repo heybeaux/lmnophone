@@ -1,5 +1,5 @@
 import subprocess, sys, time, re, xml.etree.ElementTree as ET
-SER='ZY22KW6P9J'
+SER='[REDACTED_SPARE_SERIAL]'
 def sh(*a): return subprocess.run(['adb','-s',SER,'shell',*a],capture_output=True,text=True,timeout=60).stdout
 def dump():
     for _ in range(3):

@@ -1,12 +1,15 @@
 # Copyright 2026 LMNOPhone contributors
 # SPDX-License-Identifier: Apache-2.0
 """Lead spare Wi-Fi check for build 29. Names never printed. Run from repo root."""
+import os
 import sys, importlib.util, time, re
 from pathlib import Path
 root = Path.cwd()
 spec = importlib.util.spec_from_file_location('gate', root/'app/tools/preview-29/upgrade_check.py')
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-g = m.Gate('ZY22KW6P9J', root/'docs/releases/preview-29/evidence')
+serial = os.environ.get('PLAINPHONE_SPARE_SERIAL', '')
+m.previous.check_target(serial, os.environ)
+g = m.Gate(serial, root/'docs/releases/preview-29/evidence')
 require = m.previous.require; nodes = m.previous.nodes
 loc0 = g.sh('read Location mode before','settings','get','secure','location_mode')
 net0 = g.sh('read saved networks before','cmd','wifi','list-networks')

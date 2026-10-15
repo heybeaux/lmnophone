@@ -1,13 +1,16 @@
 # Copyright 2026 LMNOPhone contributors
 # SPDX-License-Identifier: Apache-2.0
 """Lead spare Bluetooth check for build 30. Read-only; device names never printed. Run from repo root."""
+import os
 import sys, importlib.util, time, re
 from pathlib import Path
 root = Path.cwd()
 spec = importlib.util.spec_from_file_location('gate', root/'app/tools/preview-26/upgrade_check.py')
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 m.Gate.VERSION = 30
-g = m.Gate('ZY22KW6P9J', root/'docs/releases/preview-30/evidence')
+serial = os.environ.get('PLAINPHONE_SPARE_SERIAL', '')
+m.check_target(serial, os.environ)
+g = m.Gate(serial, root/'docs/releases/preview-30/evidence')
 require = m.require; nodes = m.nodes
 def bt():
     d = g.sh('read Bluetooth manager', 'dumpsys', 'bluetooth_manager').splitlines()
