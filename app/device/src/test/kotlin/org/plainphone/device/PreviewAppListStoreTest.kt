@@ -54,6 +54,7 @@ class PreviewAppListStoreTest {
         var hits = 0
         assertFalse(store.add("newapp", listOf("camera"), { true }, finalCheck = {
             hits++
+            assertTrue(java.io.File(dir, "starter-list.txt.new").isFile)
             assertEquals(listOf("camera", "newapp"), store.order())
             assertEquals(setOf("camera"), store.starter())
             false

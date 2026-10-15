@@ -271,7 +271,7 @@ class ElevationController(
                 record.state.grant?.id == grantId && record.state.grant?.target == ElevationTarget.Play &&
                 record.state.grant?.packageAccessOpen == false && record.journal == SessionJournal.Empty &&
                 (grantId to identity.packageName) !in previewApproved &&
-                approvalMatches(record, identity) && live(record)
+                battery().allowsDiscretionaryUnhide && approvalMatches(record, identity) && live(record)
         }
         if (!valid()) return false
         var checked = false

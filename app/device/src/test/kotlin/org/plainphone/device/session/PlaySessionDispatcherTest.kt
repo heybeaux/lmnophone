@@ -35,6 +35,7 @@ class PlaySessionDispatcherTest {
         var fail: String? = null
         var faultHits = 0
         var open = false
+        var battery = BatteryState(50, false)
         var healthStore: org.plainphone.policy.PolicyStore? = null
         var policy: PolicyInput? = PolicyInput("test", "build", home, sms,
             listOf(home, play, dialer, sms, candidate).map { InstalledPackage(it, true, 1) },
@@ -63,7 +64,7 @@ class PlaySessionDispatcherTest {
             override fun readBackPolicy(): Boolean = step("readback")
         }
         fun dispatcher() = PlaySessionDispatcher(store, vault, clock, { healthStore?.let { policy?.copy(health = it.read().health) } ?: policy },
-            { BatteryState(50, false) }, effects, AppApprovalIdSource { "play-${++sequence}" })
+            { battery }, effects, AppApprovalIdSource { "play-${++sequence}" })
         var dispatcher = dispatcher()
         init {
             val self = TrustedPersonId("self")
@@ -255,7 +256,7 @@ class PlaySessionDispatcherTest {
         assertEquals(1, writes)
     }
     @Test fun finalCheckRefusesExpiryDoneRestartForeignPackageAndSignerChanges() {
-        for (fault in listOf("expiry", "done", "restart", "signer", "foreign")) {
+        for (fault in listOf("expiry", "done", "restart", "signer", "foreign", "battery")) {
             val r = Rig(); val id = r.start()
             if (fault != "foreign") assertTrue(r.dispatcher.installed(id, candidate))
             r.dispatcher.endCurrent(SessionEnd.LEFT_PACKAGES)
@@ -264,6 +265,7 @@ class PlaySessionDispatcherTest {
                 hooks++
                 when (fault) {
                     "expiry" -> r.now += 600_000
+                    "battery" -> r.battery = BatteryState(4, false)
                     "done" -> r.dispatcher.done(id)
                     "restart" -> r.dispatcher.onStart()
                     "signer" -> r.policy = r.policy!!.copy(installedIdentities = listOf(

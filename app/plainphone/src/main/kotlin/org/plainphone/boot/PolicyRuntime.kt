@@ -558,7 +558,8 @@ class PolicyRuntime private constructor(private val context: Context) {
                 org.plainphone.device.approval.PreviewPermissionAddition(
                     authenticate = { target, secret ->
                         if (!fromPlay) pins.authenticateAddition(target, secret)
-                        else if (play.candidates().any { it == selection.identity }) PinAccessResult.Open
+                        else if (facts.battery()?.allowsDiscretionaryUnhide == true &&
+                            play.candidates().any { it == selection.identity }) PinAccessResult.Open
                         else PinAccessResult.Unavailable
                     },
                     eligible = { target -> target.identity.packageName.value !in preview.protectedApps() &&
