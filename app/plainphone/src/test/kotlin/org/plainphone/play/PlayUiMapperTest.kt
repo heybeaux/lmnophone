@@ -28,4 +28,11 @@ class PlayUiMapperTest {
         assertEquals(org.plainphone.ui.home.HomeNotice.NeedsAttention, playHomeNotice(view.copy(handbackReady = false), null))
     }
 
+    @Test fun retainedClosedGrantOffersDoneRatherThanAnotherCountdown() {
+        assertTrue(playNeedsClosure(PlaySessionView(id = "grant", handbackReady = true)))
+        assertFalse(playNeedsClosure(PlaySessionView(id = "wait", countdownMillis = 10)))
+        assertFalse(playNeedsClosure(PlaySessionView(id = "ready", readyMillis = 10)))
+        assertFalse(playNeedsClosure(PlaySessionView()))
+    }
+
 }
