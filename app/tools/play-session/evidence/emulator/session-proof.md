@@ -1,6 +1,10 @@
-# Timed Play opening — emulator proof and blocking reinstall finding
+# Timed Play opening — emulator proof and open reinstall finding
 
-Run: 2026-10-15 UTC. PLA-620, build-63 base. **NOT accepted for delivery.**
+Run: 2026-10-15 UTC. PLA-620, build-63 base. **Reinstall finding remains open,
+not fixed.** The Lead deferred it from build 65 to [PLA-624](/PLA/issues/PLA-624)
+on 2026-10-15; the existing review and build-65 delivery path may proceed.
+Delta review is [PLA-625](/PLA/issues/PLA-625), followed by installation in the
+next build after 65 through [PLA-626](/PLA/issues/PLA-626).
 Built and installed on the isolated read-only `pla104-a36` only. Nothing installed
 on the spare; no physical-device commands. Existing reviewer/driver remain assigned.
 
@@ -65,7 +69,7 @@ It displays the signed-out welcome with a Sign in button. No sign-in was attempt
 account-screen behavior and actual Play downloads remain unknown. The fixture was
 installed through the emulator shell, as requested by the proof plan.
 
-## Blocking result: reinstall after a hidden installation
+## Deferred failure: reinstall after a hidden installation
 
 Reproduced independently with both the old calculator fixture and the dedicated
 Play fixture:
@@ -87,8 +91,10 @@ an observation, not an accepted per-install workaround or evidence of a cause.
 
 Cause is not established. A stale platform policy value across uninstall/reinstall
 is a hypothesis only. Do not bypass readback or claim first-install success covers
-this failure. Lead must route the device-side correction and repeat the reinstall
-case before the existing review/driver can accept this slice.
+this failure. The Lead routed the device-side correction to
+[PLA-624](/PLA/issues/PLA-624), including an update over a hidden candidate.
+The failed case remains evidence for that correction and its delta review;
+it is deferred for build 65, not recorded as passing.
 
 The stronger proof also caught and fixed a runtime event-prefix bug:
 BootReceivers emits `package:PACKAGE_ADDED:...`, not `package:ACTION_PACKAGE_ADDED:...`.
