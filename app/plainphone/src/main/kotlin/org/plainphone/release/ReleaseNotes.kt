@@ -8,6 +8,11 @@ data class ReleaseNote(val firstCode: Long, val lastCode: Long, val changes: Lis
 }
 object ReleaseNotes {
     val all = listOf(
+        ReleaseNote(68, 68, listOf("Turning the screen off now closes the Play Store straight away, without waiting for the screen to come back on.",
+            "If the Play Store can't open, LMNOPhone says \"This didn't open. Try again.\" \"Not ready\" now only means the phone check failed.",
+            "With no openings left, you see \"No openings left for now\" straight away. Counts say \"1 opening\" when one is left.",
+            "In PIN settings, Add an app now says it opens the Play Store after the wait.",
+            "Google sign-in is unchanged, and there is still no time-left notice over the Play Store.")),
         ReleaseNote(67, 67, listOf("Going back to LMNOPhone from the Play Store closes it and shows the apps you installed. You can add one right away, within the original 10 minutes, and choose what it can use first.",
             "LMNOPhone checks that each app is still the same app that was installed.",
             "Done, Back or restarting LMNOPhone ends the opening. Apps you don't add stay hidden; you can add them later under Add a hidden app with your PIN.",
