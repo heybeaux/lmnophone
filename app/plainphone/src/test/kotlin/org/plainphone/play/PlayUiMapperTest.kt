@@ -35,6 +35,23 @@ class PlayUiMapperTest {
         assertFalse(playNeedsClosure(PlaySessionView()))
     }
 
+    @Test fun exhaustedQuotaSkipsBeforeButDoesNotHideAnExistingCountdown() {
+        val context = AdminContext("Alex")
+        assertEquals(OpeningStage.NoOpenings, playOpeningUi(PlaySessionView(left = 0, limit = 2), context).stage)
+        for (left in listOf(1, 2)) assertEquals(OpeningStage.Before,
+            playOpeningUi(PlaySessionView(left = left, limit = 2), context).stage)
+        assertEquals(OpeningStage.Countdown,
+            playOpeningUi(PlaySessionView(left = 0, countdownMillis = 1000), context).stage)
+    }
+    @Test fun refusedStartIsNotFailedHandbackEvenWithRetainedGrant() {
+        val ready = PlaySessionView(handbackReady = true)
+        assertNull(playSessionStage(ready, failed = true))
+        assertNull(playSessionStage(ready.copy(id = "grant"), failed = true))
+        assertEquals(SessionStage.NotReady, playSessionStage(ready.copy(handbackReady = false), failed = true))
+        assertEquals(SessionStage.Checking, playSessionStage(ready, failed = true, busy = true))
+        assertEquals(SessionStage.Restored, playSessionStage(ready, returned = true))
+    }
+
     @Test fun productionApprovalMapperShowsTheGrantNotice() {
         val ui = playApprovalListUi(AdminContext("Alex"), listOf(HiddenAppRow("test.app", "Test app")))
         assertTrue(ui.showGrantNotice)

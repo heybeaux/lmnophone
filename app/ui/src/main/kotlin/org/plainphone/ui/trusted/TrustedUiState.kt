@@ -156,7 +156,7 @@ data class UpdateUiState(val context: AdminContext, val stage: UpdateStage, val 
 sealed interface UpdateEvent { data object Continue : UpdateEvent; data class AddressChanged(val value: String) : UpdateEvent }
 
 enum class OpeningKind { Play, Settings, App, Update }
-enum class OpeningStage { Before, Countdown, Ready, NoOpenings, AlreadyOpening, SaveFailed, AddInstalled, TooLate, UsedUp, UpdateExpired }
+enum class OpeningStage { Before, Countdown, Ready, NoOpenings, AlreadyOpening, SaveFailed, OpenFailed, AddInstalled, TooLate, UsedUp, UpdateExpired }
 data class OpeningUiState(val context: AdminContext, val stage: OpeningStage, val kind: OpeningKind,
     val appName: String = "", val waitMinutes: Int = 10, val durationMinutes: Int = 5,
     val minutes: Int = 1, val left: Int = 2, val limit: Int = 2, val time: String = "",

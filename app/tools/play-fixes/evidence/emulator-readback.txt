@@ -1,0 +1,7 @@
+Private emulator, API 36; no physical-device commands.
+screen-off close and readback in 713ms; interactive=false; exact baseline=true; Play hidden=true
+after-screen locked=true
+exact baseline and empty shared journal=true
+openings=2: This uses 1 of your 2 openings left today.; Start the wait visible=true
+openings=1: This uses 1 of your 1 opening left today.; Start the wait visible=true
+openings=0: No openings left for now; Start the wait visible=false

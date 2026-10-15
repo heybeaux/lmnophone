@@ -47,7 +47,10 @@
     <string name="opening_settings_title">Open full phone settings?</string>
     <string name="opening_app_title">Add a hidden app?</string>
     <string name="opening_update_title">Install an LMNOPhone update?</string>
-    <string name="opening_before_body">First there\'s a %1$d-minute wait. Then you tap Start, and %2$s is open for %3$d minutes. This uses 1 of your %4$d openings left today. Restarting the phone stops the wait, and nothing is used up.</string>
+    <plurals name="opening_before_body">
+        <item quantity="one">First there\'s a %1$d-minute wait. Then you tap Start, and %2$s is open for %3$d minutes. This uses 1 of your %4$d opening left today. Restarting the phone stops the wait, and nothing is used up.</item>
+        <item quantity="other">First there\'s a %1$d-minute wait. Then you tap Start, and %2$s is open for %3$d minutes. This uses 1 of your %4$d openings left today. Restarting the phone stops the wait, and nothing is used up.</item>
+    </plurals>
     <string name="opening_start_wait">Start the wait</string>
     <string name="opening_countdown">Opening up in %1$d minutes</string>
     <string name="opening_countdown_one">Opening up in 1 minute</string>
@@ -63,8 +66,14 @@
     <string name="opening_ready">Ready to open %1$s</string>
     <string name="opening_ready_app">Ready to add %1$s</string>
     <string name="opening_ready_update">Ready to install the update</string>
-    <string name="opening_ready_body">Tap Start within %1$d minutes. This uses 1 of your %2$d openings left today.</string>
-    <string name="opening_ready_body_one">Tap Start within 1 minute. This uses 1 of your %1$d openings left today.</string>
+    <plurals name="opening_ready_body">
+        <item quantity="one">Tap Start within %1$d minutes. This uses 1 of your %2$d opening left today.</item>
+        <item quantity="other">Tap Start within %1$d minutes. This uses 1 of your %2$d openings left today.</item>
+    </plurals>
+    <plurals name="opening_ready_body_one">
+        <item quantity="one">Tap Start within 1 minute. This uses 1 of your %1$d opening left today.</item>
+        <item quantity="other">Tap Start within 1 minute. This uses 1 of your %1$d openings left today.</item>
+    </plurals>
     <string name="opening_start">Start</string>
     <string name="opening_none">No openings left for now</string>
     <string name="opening_none_body">You\'ve used your %1$d openings. The next one is available after about %2$s, if the phone stays on. Restarting the phone doesn\'t change this.</string>
@@ -149,4 +158,6 @@
     <string name="play_approval_notice">You can add these apps before the 10 minutes end. Done ends this opening.</string>
     <string name="play_approval_empty">There are no new apps to add.</string>
     <string name="play_approval_expired">The time to add these apps has ended. Use Add a hidden app to add one later.</string>
+    <string name="opening_refused">This didn\'t open. Try again.</string>
+    <string name="play_menu_detail">Opens the Play Store, after a %1$d-minute wait</string>
 </resources>

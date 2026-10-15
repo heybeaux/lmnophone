@@ -112,6 +112,7 @@ class PlayActivity : ComponentActivity() {
         enableEdgeToEdge(SystemBarStyle.light(paper, paper), SystemBarStyle.light(paper, paper))
         setContent {
             val view by runtime.playView.collectAsState()
+            val closure = playSessionStage(view, failed, returned, busy)
             val context = AdminContext(getString(org.plainphone.ui.R.string.current_phone_user))
             LaunchedEffect(view.approvalAvailable) { if (view.approvalAvailable) approvals() }
             LaunchedEffect(wait > 0) {
@@ -131,23 +132,23 @@ class PlayActivity : ComponentActivity() {
                                 PinEvent.Continue -> request()
                                 else -> home()
                             } }
-                        failed || returned || playNeedsClosure(view) -> SessionScreen(SessionUiState(context,
-                            if (busy) SessionStage.Checking else if (failed || !view.handbackReady) SessionStage.NotReady else SessionStage.Restored,
+                        closure != null -> SessionScreen(SessionUiState(context, closure,
                             helper = getString(org.plainphone.ui.R.string.setup_helper), canShowDetails = false)) { event ->
                             if (event == SessionEvent.Continue) {
-                                if (failed || !view.handbackReady) {
+                                if (!view.handbackReady) {
                                     busy = true
-                                    runtime.tickPlay { runOnUiThread { busy = false; failed = !runtime.playView.value.handbackReady } }
+                                    runtime.tickPlay { runOnUiThread { busy = false } }
                                 } else home()
                             }
                         }
-                        else -> OpeningScreen(playOpeningUi(view, context, overrideStage,
+                        else -> OpeningScreen(playOpeningUi(view, context, if (failed) OpeningStage.OpenFailed else overrideStage,
                             view.nextTurnMillis?.let { LocalTime.now().plusNanos(it * 1_000_000).format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)) }.orEmpty(), busy)) { event ->
                             when(event) {
                                 OpeningEvent.Stop -> { view.id?.let(runtime::cancelPlay); home() }
                                 OpeningEvent.NotNow -> home()
                                 OpeningEvent.See -> overrideStage = null
                                 OpeningEvent.Continue -> when {
+                                    failed || view.left <= 0 && view.countdownMillis == null && view.readyMillis == null -> home()
                                     overrideStage != null -> { overrideStage = null; home() }
                                     view.readyMillis != null -> start(view.id)
                                     view.countdownMillis != null -> home()
@@ -201,7 +202,8 @@ class PlayActivity : ComponentActivity() {
                 launched = true
                 startActivity(launch)
             } catch (_: Exception) {
-                launched = false; failed = true; runtime.endPlay(SessionEnd.DONE)
+                launched = false; failed = true; busy = true
+                runtime.endPlay(SessionEnd.DONE) { runOnUiThread { busy = false } }
             }
         } }
     }

@@ -12,9 +12,9 @@ data class NeedsYouCopy(val waiting: (WaitingChangeKind) -> String, val attentio
 private fun WaitingNotice.active() = phase in setOf(WaitingPhase.PENDING, WaitingPhase.COMMITTING, WaitingPhase.ROLLING_BACK)
 
 fun pinMenuUiState(context: AdminContext, waiting: WaitingNotice?, notice: HomeNotice?,
-    copy: NeedsYouCopy, requests: RequestView? = null): AdminMenuUiState {
+    copy: NeedsYouCopy, requests: RequestView? = null, playDetail: String = ""): AdminMenuUiState {
     val count = requests?.takeIf { it.available }?.requests?.size
-    return pinMenuUiState(context, count).copy(needsYou = buildList {
+    return pinMenuUiState(context, count, playDetail).copy(needsYou = buildList {
     waiting?.takeIf { it.active() }?.let { add(AdminNotice("waiting:${it.requestId}", copy.waiting(it.kind))) }
     if (notice == HomeNotice.NeedsAttention) add(AdminNotice("attention", copy.attention))
     if (count != null && count > 0) add(AdminNotice("requests", copy.requests(count, context.userName)))

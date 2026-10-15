@@ -121,6 +121,29 @@ class PlaySessionProofInstrumentation : Instrumentation() {
         check(lockPackages() == baseline + PackageName("com.android.vending")) { "widened lock task" }
         state("during")
     }
+    private fun copyProof() {
+        for (left in 2 downTo 0) {
+            check(runtime.playView.value.left == left)
+            runOnMainSync { targetContext.startActivity(Intent(targetContext, PlayActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            val expected = when (left) {
+                0 -> "No openings left for now"
+                1 -> "This uses 1 of your 1 opening left today."
+                else -> "This uses 1 of your 2 openings left today."
+            }
+            waitFor { node { it.text?.toString()?.contains(expected) == true } != null }
+            val startVisible = node { it.text?.toString() == "Start the wait" } != null
+            check(startVisible == (left > 0))
+            report.appendLine("openings=$left: $expected; Start the wait visible=$startVisible")
+            tap(if (left == 0) "OK" else "Not now")
+            await { runtime.tickPlay(it) }
+            if (left > 0) {
+                open()
+                await { done -> runtime.endPlay(SessionEnd.DONE, done) }
+                home()
+                waitFor { runtime.playView.value.handbackReady }
+            }
+        }
+    }
     private fun approvalProof() {
         val id = "org.plainphone.playcandidate"
         val name = PackageName(id)
@@ -230,6 +253,11 @@ class PlaySessionProofInstrumentation : Instrumentation() {
                     offset = (last - original.checkpoint()!!.proven.totalMillis).coerceAtLeast(0) + 86400001L
                 }
                 await { runtime.tickPlay(it) }; state("before"); baseline = lockPackages()
+                if (phase == "copy") {
+                    copyProof()
+                    result.putString("proof", report.toString()); result.putString("result", "PASS:copy")
+                    finish(Activity.RESULT_OK, result); return
+                }
                 if (phase == "ui") openUi()
                 else if (phase in setOf("approve", "approval-expiry", "approval-signer")) openUi(returnAfter = false)
                 else open()
@@ -258,7 +286,19 @@ class PlaySessionProofInstrumentation : Instrumentation() {
                             waitFor { !runtime.playView.value.active }
                         }
                         "home" -> { home(); waitFor { !runtime.playView.value.active } }
-                        "screen" -> { shell("input keyevent KEYCODE_POWER"); waitFor { !runtime.playView.value.active } }
+                        "screen" -> {
+                            val power = targetContext.getSystemService(android.os.PowerManager::class.java)
+                            check(power.isInteractive) { "screen was not on before trigger" }
+                            val began = SystemClock.elapsedRealtime()
+                            shell("input keyevent KEYCODE_SLEEP")
+                            waitFor { !runtime.playView.value.active && runtime.playView.value.handbackReady }
+                            val elapsed = SystemClock.elapsedRealtime() - began
+                            check(!power.isInteractive) { "screen woke during close" }
+                            check(lockPackages() == baseline)
+                            check(shell("dumpsys package com.android.vending").contains("hidden=true"))
+                            report.appendLine("screen-off close and readback in ${elapsed}ms; interactive=false; exact baseline=true; Play hidden=true")
+                            check(elapsed <= 2000) { "screen-off close exceeded 2 seconds: ${elapsed}ms" }
+                        }
                         "install" -> {
                             report.appendLine("install=" + shell("pm install -r -t /data/local/tmp/play-candidate.apk"))
                             waitFor { shell("dumpsys package org.plainphone.playcandidate").contains("hidden=true") }
