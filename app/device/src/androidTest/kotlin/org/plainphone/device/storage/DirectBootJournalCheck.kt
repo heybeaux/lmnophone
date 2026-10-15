@@ -41,6 +41,7 @@ import org.plainphone.policy.SessionPhase
  * `-e phase uid`, `pause-preparing`, `pause-editing`, `recover` and `containment-cleanup` run the PLA-219 window
  * containment and process-death check ([org.plainphone.device.apply.WindowContainmentCheck]);
  * `-e phase disabled` runs the PLA-233 disabled-package check ([org.plainphone.device.apply.DisabledPackageCheck]);
+ * `-e phase reinstall-hide` runs the PLA-624 hide-after-reinstall probe ([org.plainphone.device.apply.ReinstallHideCheck]);
  * `-e phase uninstall-block` runs the PLA-182 permission write-boundary check ([org.plainphone.device.apply.UninstallBlockCheck]);
  * `-e phase update`, `pending1` and `pending2` run the PLA-167 Update installer check ([org.plainphone.device.update.UpdateInstallerCheck]);
  * `-e phase facts` and `-e phase rotated` run the PLA-132 live package facts check
@@ -81,6 +82,7 @@ class DirectBootJournalCheck : Instrumentation() {
                 "recover" -> org.plainphone.device.apply.WindowContainmentCheck(this, args, ::note).recover()
                 "containment-cleanup" -> org.plainphone.device.apply.WindowContainmentCheck(this, args, ::note).cleanup()
                 "disabled" -> org.plainphone.device.apply.DisabledPackageCheck(targetContext, ::note, ::shell).check()
+                "reinstall-hide" -> org.plainphone.device.apply.ReinstallHideCheck(targetContext, ::note, ::shell).check()
                 "uninstall-block" -> org.plainphone.device.apply.UninstallBlockCheck(targetContext, args, ::note, ::shell).check()
                 "update" -> org.plainphone.device.update.UpdateInstallerCheck(targetContext, args, ::note).update()
                 "pending1" -> org.plainphone.device.update.UpdateInstallerCheck(targetContext, args, ::note).pending1()
